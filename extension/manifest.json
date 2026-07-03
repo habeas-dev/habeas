@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Habeas",
+  "version": "0.1.0",
+  "description": "Reclaim your own personal data from services behind non-automatable walls — within your own session.",
+  "action": { "default_title": "Habeas", "default_popup": "src/ui/popup.html" },
+  "options_page": "src/ui/options.html",
+  "background": { "service_worker": "src/background.js", "type": "module" },
+  "permissions": ["storage", "downloads"],
+  "host_permissions": [
+    "https://www.carrefour.es/*",
+    "https://pro.api.carrefour.es/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://www.carrefour.es/*"],
+      "js": ["src/content/bridge.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    { "resources": ["src/content/hook.js"], "matches": ["https://www.carrefour.es/*"] }
+  ],
+  "browser_specific_settings": { "gecko": { "id": "habeas@habeas.dev" } }
+}

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Habeas · Ajustes</title>
+  <style>
+    body { font: 14px system-ui, sans-serif; max-width: 720px; margin: 24px auto; padding: 0 16px; color: #111; }
+    h2 { margin-top: 28px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin: 8px 0; display: flex; align-items: center; gap: 10px; }
+    .card b { flex: 1; }
+    button { cursor: pointer; border: 1px solid #ccc; background: #f7f7f7; border-radius: 6px; padding: 5px 10px; }
+    input, select { padding: 4px 6px; }
+    code { background: #f4f4f4; padding: 1px 5px; border-radius: 4px; }
+    .muted { color: #888; }
+    small { color: #888; }
+  </style>
+</head>
+<body>
+  <h1>Habeas · Ajustes</h1>
+
+  <h2>Datasources</h2>
+  <div id="ds"></div>
+
+  <h2>Sinks (destinos)</h2>
+  <div id="sinks"></div>
+  <div class="card" style="display:block">
+    <b>Añadir sink</b>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select id="stype">
+        <option value="download">Descargas</option>
+        <option value="local-folder">Carpeta local (= nube si es sincronizada)</option>
+        <option value="drive">Google Drive (nativo)</option>
+        <option value="http">Consumidor HTTP (Tiquetera/Cuéntamo)</option>
+      </select>
+      <span id="sfields"></span>
+      <button id="addsink">Añadir</button>
+    </div>
+  </div>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>
