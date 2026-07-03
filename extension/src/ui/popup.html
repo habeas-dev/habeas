@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Habeas</title>
+  <style>
+    body { font: 13px system-ui, sans-serif; margin: 0; width: 540px; max-height: 560px; overflow: auto; }
+    header { background: #111; color: #fff; padding: 10px 12px; display: flex; gap: 8px; align-items: center; }
+    header b { flex: 1; }
+    header button { background: #333; color: #fff; border: 0; border-radius: 6px; padding: 4px 8px; cursor: pointer; }
+    .bar { padding: 8px 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #eee; }
+    button.primary { background: #111; color: #fff; border: 0; border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+    select { padding: 4px 6px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 5px 8px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+    td.r, th.r { text-align: right; }
+    .muted { color: #888; }
+  </style>
+</head>
+<body>
+  <header><b>Habeas</b><button id="opts">Ajustes</button></header>
+  <div class="bar">
+    <select id="ds"></select>
+    <button id="list" class="primary">Listar documentos</button>
+    <span id="status" class="muted"></span>
+  </div>
+  <div class="bar" id="sendbar" hidden>
+    <span>Enviar a</span>
+    <select id="sink"></select>
+    <button id="send" class="primary">Enviar seleccionados</button>
+  </div>
+  <table id="tbl">
+    <thead><tr><th></th><th>Fecha</th><th>Tipo</th><th>Tienda</th><th class="r">Importe</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
