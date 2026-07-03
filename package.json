@@ -1,0 +1,27 @@
+{
+  "name": "habeas",
+  "version": "0.0.1",
+  "description": "Reclaim your own personal data from services that lock it behind non-automatable walls — a browser extension that extracts your data within your own session. Placeholder release; under active design.",
+  "license": "AGPL-3.0-or-later",
+  "keywords": [
+    "personal-data",
+    "data-portability",
+    "gdpr",
+    "habeas-data",
+    "browser-extension",
+    "self-hosted",
+    "scraper"
+  ],
+  "homepage": "https://habeas.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/habeas-dev/habeas.git"
+  },
+  "bugs": {
+    "url": "https://github.com/habeas-dev/habeas/issues"
+  },
+  "author": "David Marín",
+  "files": [
+    "README.md"
+  ]
+}

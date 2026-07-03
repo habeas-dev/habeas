@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://habeas.dev/schema/adapter.schema.json",
+  "title": "Habeas adapter",
+  "description": "Declarative definition of how to extract a user's own data from one service. Data, not code.",
+  "type": "object",
+  "required": ["id", "version", "name", "hosts", "loginSignal", "list", "dedupeKey", "schema", "capabilities"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Unique id, <service>-<country>, e.g. carrefour-es."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "name": { "type": "string" },
+    "hosts": {
+      "type": "object",
+      "required": ["read"],
+      "additionalProperties": false,
+      "properties": {
+        "read": {
+          "type": "array",
+          "items": { "type": "string", "format": "hostname" },
+          "minItems": 1
+        }
+      }
+    },
+    "loginSignal": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["cookie", "domSelector", "endpoint200"] },
+        "cookie": { "type": "string" },
+        "selector": { "type": "string" },
+        "url": { "type": "string" }
+      }
+    },
+    "list": {
+      "type": "object",
+      "description": "How to enumerate records. Either an HTTP request or a DOM selection.",
+      "properties": {
+        "request": { "$ref": "#/$defs/request" },
+        "dom": { "type": "object", "properties": { "selector": { "type": "string" } } },
+        "itemsPath": { "type": "string", "description": "JSONPath to the array of items in the response." },
+        "pagination": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "enum": ["cursor", "offset", "loadMore", "none"] },
+            "cursorPath": { "type": "string" },
+            "pageParam": { "type": "string" },
+            "sizeParam": { "type": "string" }
+          }
+        }
+      }
+    },
+    "detail": {
+      "type": "object",
+      "description": "How to fetch each record's detail and/or its PDF.",
+      "properties": {
+        "request": { "$ref": "#/$defs/request" },
+        "pdf": {
+          "type": "object",
+          "required": ["urlTemplate"],
+          "properties": {
+            "urlTemplate": { "type": "string" },
+            "credentials": { "enum": ["include", "omit", "same-origin"] }
+          }
+        }
+      }
+    },
+    "fields": {
+      "type": "object",
+      "description": "Map source fields to normalized fields.",
+      "additionalProperties": { "$ref": "#/$defs/fieldMapping" }
+    },
+    "dedupeKey": { "type": "string", "description": "Name of the normalized field used to skip already-extracted records." },
+    "schema": { "type": "string", "pattern": "^[a-z_]+@\\d+$", "description": "Target normalized schema, e.g. receipt@1." },
+    "capabilities": {
+      "type": "object",
+      "required": ["read", "write"],
+      "additionalProperties": false,
+      "properties": {
+        "read": { "type": "array", "items": { "type": "string", "format": "hostname" } },
+        "write": { "type": "array", "items": { "type": "string", "format": "hostname" } }
+      }
+    }
+  },
+  "$defs": {
+    "request": {
+      "type": "object",
+      "required": ["method", "url"],
+      "properties": {
+        "method": { "enum": ["GET", "POST"] },
+        "url": { "type": "string" },
+        "credentials": { "enum": ["include", "omit", "same-origin"] },
+        "headers": { "type": "object", "additionalProperties": { "type": "string" } },
+        "body": {}
+      }
+    },
+    "fieldMapping": {
+      "oneOf": [
+        { "type": "string", "description": "A JSONPath or CSS selector." },
+        {
+          "type": "object",
+          "required": ["path"],
+          "additionalProperties": false,
+          "properties": {
+            "path": { "type": "string" },
+            "transform": {
+              "type": "string",
+              "description": "A bounded, predefined transform, e.g. date:DD/MM/YYYY, money:EUR, regex:<pattern>, trim, lower, upper."
+            }
+          }
+        }
+      ]
+    }
+  }
+}

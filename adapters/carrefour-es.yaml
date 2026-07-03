@@ -1,0 +1,54 @@
+# Carrefour España — in-store e-tickets (receipts)
+#
+# carrefour.es is fully behind Cloudflare and login uses an email OTP. This
+# adapter works ONLY within the user's already-authenticated browser session
+# (the Core never fights Cloudflare and never logs in).
+#
+# STATUS: draft. The internal "Mis compras" endpoint and the PDF URL pattern are
+# still to be discovered via the userscript prototype (DevTools → Network on the
+# logged-in "Mis compras" page). Placeholders are marked TODO.
+
+id: carrefour-es
+version: 0.1.0
+name: Carrefour España — tickets
+hosts:
+  read:
+    - www.carrefour.es
+
+loginSignal:
+  type: cookie          # cookie | domSelector | endpoint200
+  cookie: TODO_session_cookie_name
+
+list:
+  request:
+    method: GET
+    url: https://www.carrefour.es/TODO_internal_receipts_endpoint
+    credentials: include
+  itemsPath: "$.tickets[*]"          # TODO confirm actual JSON shape
+  pagination:
+    type: cursor                     # cursor | offset | loadMore | none
+    cursorPath: "$.nextCursor"
+
+detail:
+  pdf:
+    urlTemplate: https://www.carrefour.es/TODO_ticket_pdf_path
+    credentials: include
+
+fields:
+  externalId: "$.id"
+  date:
+    path: "$.date"
+    transform: "date:DD/MM/YYYY"     # TODO confirm date format
+  total:
+    path: "$.amount"
+    transform: "money:EUR"
+  store: "$.storeName"
+
+dedupeKey: externalId
+schema: receipt@1
+
+capabilities:
+  read:
+    - www.carrefour.es
+  write:
+    - tiquetera.es
