@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://habeas.dev/schema/receipt@1.json",
+  "title": "receipt@1",
+  "description": "A normalized purchase receipt / ticket.",
+  "type": "object",
+  "required": ["externalId", "date", "total", "currency"],
+  "properties": {
+    "externalId": { "type": "string", "description": "Stable id from the source service." },
+    "date": { "type": "string", "format": "date-time" },
+    "total": { "type": "integer", "description": "Total amount in minor units (e.g. cents)." },
+    "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+    "store": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "city": { "type": "string" }
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["description"],
+        "properties": {
+          "description": { "type": "string" },
+          "quantity": { "type": "number" },
+          "unitPrice": { "type": "integer", "description": "Minor units." },
+          "totalPrice": { "type": "integer", "description": "Minor units." }
+        }
+      }
+    },
+    "pdf": {
+      "type": "object",
+      "description": "Optional attached source document.",
+      "properties": {
+        "filename": { "type": "string" },
+        "contentType": { "type": "string" }
+      }
+    },
+    "_source": { "type": "string" },
+    "_host": { "type": "string" },
+    "_capturedAt": { "type": "string", "format": "date-time" },
+    "_schema": { "type": "string" }
+  }
+}
