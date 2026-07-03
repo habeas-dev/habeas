@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Habeas prototype — Carrefour documents
 // @namespace    https://habeas.dev
-// @version      0.2.0
+// @version      0.2.1
 // @description  Prototype: list and download your own Carrefour purchase documents (tickets + online orders) within your logged-in session. Validates the Habeas client-side-in-session model. Not the shipped extension.
 // @match        https://www.carrefour.es/*
 // @run-at       document-start
@@ -40,7 +40,10 @@
       else if (Array.isArray(h)) h.forEach(([k, v]) => (out[k.toLowerCase()] = v));
       else Object.keys(h).forEach(k => (out[k.toLowerCase()] = h[k]));
     } catch (e) { return; }
-    if (out.authorization) captured = out;
+    if (out.authorization) {
+      captured = out;
+      try { console.debug('[Habeas] captured API headers:', Object.keys(out).join(', '), '| token:', String(out.authorization).slice(0, 24) + '…'); } catch (e) {}
+    }
   };
   try {
     const origFetch = win.fetch;
@@ -95,7 +98,7 @@
         responseType: blob ? 'blob' : undefined,
         onload: r => (r.status >= 200 && r.status < 300)
           ? resolve(blob ? r.response : JSON.parse(r.responseText))
-          : reject(new Error('HTTP ' + r.status)),
+          : reject(new Error('HTTP ' + r.status + ' — ' + String(r.responseText || '').replace(/\s+/g, ' ').slice(0, 300))),
         onerror: () => reject(new Error('network')),
         ontimeout: () => reject(new Error('timeout')),
       });
@@ -189,6 +192,7 @@
     b.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:2147483647;padding:10px 14px;background:#111;color:#fff;border:0;border-radius:8px;cursor:pointer;font:14px system-ui,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.3)';
     b.onclick = async () => {
       if (!getAuth()) { alert('Habeas: abre primero "Mis compras" para capturar tu sesión, y vuelve a pulsar Listar.'); return; }
+      console.debug('[Habeas] auth source:', captured ? 'in-flight capture' : 'storage JWT (apikey may be missing!)', '| headers sent:', Object.keys(authHeaders()).join(', '));
       b.disabled = true; b.textContent = 'Habeas: listando…';
       try { renderTable(await inventory()); }
       catch (e) { alert('Habeas: error al listar (' + e.message + ')'); }
