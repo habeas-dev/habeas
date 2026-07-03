@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Habeas prototype — Carrefour documents
 // @namespace    https://habeas.dev
-// @version      0.2.1
+// @version      0.3.0
 // @description  Prototype: list and download your own Carrefour purchase documents (tickets + online orders) within your logged-in session. Validates the Habeas client-side-in-session model. Not the shipped extension.
 // @match        https://www.carrefour.es/*
 // @run-at       document-start
@@ -40,9 +40,13 @@
       else if (Array.isArray(h)) h.forEach(([k, v]) => (out[k.toLowerCase()] = v));
       else Object.keys(h).forEach(k => (out[k.toLowerCase()] = h[k]));
     } catch (e) { return; }
-    if (out.authorization) {
-      captured = out;
-      try { console.debug('[Habeas] captured API headers:', Object.keys(out).join(', '), '| token:', String(out.authorization).slice(0, 24) + '…'); } catch (e) {}
+    // Only the real USER JWT (eyJ...) — ignore the short anonymous / Basic tokens
+    // the SPA also sends. Also grab the CSRF + requestorigin headers the API needs.
+    if (out.authorization && /eyJ/.test(out.authorization)) {
+      const picked = {};
+      ['authorization', 'x-xsrf-token', 'x-csrf-token', 'requestorigin', 'sessionid', 'accept'].forEach(k => { if (out[k]) picked[k] = out[k]; });
+      captured = picked;
+      try { console.debug('[Habeas] captured auth headers:', Object.keys(picked).join(', ')); } catch (e) {}
     }
   };
   try {
@@ -83,11 +87,7 @@
   }
   const getAuth = () => captured || jwtFromStorage();
   function authHeaders() {
-    const c = getAuth(), h = {};
-    if (c) Object.keys(c).forEach(k => {
-      if (k === 'authorization' || /api-?key|subscription|token/.test(k)) h[k] = c[k];
-    });
-    return h;
+    return Object.assign({}, getAuth() || {});
   }
 
   // --- 2. Privileged HTTP (bypasses CORS + CSP) ---

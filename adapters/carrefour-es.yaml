@@ -6,12 +6,13 @@
 # without an Authorization header it returns 401. So this adapter does not rely on
 # cookies — it must reuse the SPA's Bearer token, captured from the live session.
 #
-# STATUS: list endpoint + field mapping CONFIRMED. Still TODO:
-#   1. auth: how to obtain the Bearer token (intercept the SPA's requests).
-#   2. detail/PDF: endpoint for line items and the downloadable ticket PDF.
+# STATUS: VALIDATED end-to-end (Playwright capture + Node replay). Listing all
+# documents and downloading a ticket PDF (200 application/pdf) both work with the
+# headers below. The only browser-only step is the login/token-mint (the user's
+# real session); everything else is plain HTTP to this APIgee host.
 
 id: carrefour-es
-version: 0.2.0
+version: 0.3.0
 name: Carrefour España — tickets
 
 hosts:
@@ -25,8 +26,11 @@ hosts:
 # storage). NOTE: the declarative adapter format needs a new `auth` concept for
 # this — feed back into docs/FUNCTIONAL-SPEC.md.
 auth:
-  type: bearerIntercept         # TODO confirm: also an apikey/x-api-key header?
-  header: Authorization
+  # Confirmed by capture + replay. Replay the USER JWT plus the CSRF/origin headers;
+  # ignore the SPA's short anonymous / Basic tokens (they 401 the data endpoints).
+  type: bearerIntercept
+  tokenMustMatch: "eyJ"                       # only the real user JWT
+  replayHeaders: [authorization, x-xsrf-token, x-csrf-token, requestorigin]
 
 loginSignal:
   type: endpoint200
