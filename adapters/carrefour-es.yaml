@@ -1,54 +1,89 @@
 # Carrefour España — in-store e-tickets (receipts)
 #
-# carrefour.es is fully behind Cloudflare and login uses an email OTP. This
-# adapter works ONLY within the user's already-authenticated browser session
-# (the Core never fights Cloudflare and never logs in).
+# The purchases API lives on pro.api.carrefour.es (Google APIgee gateway), NOT on
+# www.carrefour.es and NOT behind Cloudflare. CORS is fully open
+# (allow-origin: *, allow-headers: *) and auth is a Bearer token ONLY:
+# without an Authorization header it returns 401. So this adapter does not rely on
+# cookies — it must reuse the SPA's Bearer token, captured from the live session.
 #
-# STATUS: draft. The internal "Mis compras" endpoint and the PDF URL pattern are
-# still to be discovered via the userscript prototype (DevTools → Network on the
-# logged-in "Mis compras" page). Placeholders are marked TODO.
+# STATUS: list endpoint + field mapping CONFIRMED. Still TODO:
+#   1. auth: how to obtain the Bearer token (intercept the SPA's requests).
+#   2. detail/PDF: endpoint for line items and the downloadable ticket PDF.
 
 id: carrefour-es
-version: 0.1.0
+version: 0.2.0
 name: Carrefour España — tickets
+
 hosts:
   read:
-    - www.carrefour.es
+    - pro.api.carrefour.es      # purchases API (APIgee)
+    - www.carrefour.es          # SPA origin / where the token is minted
+
+# Auth is a Bearer token, not a cookie. The token is minted by the SPA on
+# www.carrefour.es. The userscript prototype will capture it by monkey-patching
+# fetch/XHR to read the outgoing `Authorization` header (most robust vs. reading
+# storage). NOTE: the declarative adapter format needs a new `auth` concept for
+# this — feed back into docs/FUNCTIONAL-SPEC.md.
+auth:
+  type: bearerIntercept         # TODO confirm: also an apikey/x-api-key header?
+  header: Authorization
 
 loginSignal:
-  type: cookie          # cookie | domSelector | endpoint200
-  cookie: TODO_session_cookie_name
+  type: endpoint200
+  # Session is "active" if the purchases endpoint returns 200 with the token.
 
 list:
   request:
     method: GET
-    url: https://www.carrefour.es/TODO_internal_receipts_endpoint
-    credentials: include
-  itemsPath: "$.tickets[*]"          # TODO confirm actual JSON shape
+    url: https://pro.api.carrefour.es/md-purchasesAccount-v1/purchases
+    credentials: omit           # auth is the Bearer header, not cookies
+    query:
+      from: "{{windowStart}}"   # ISO, e.g. 2 years back
+      to: "{{windowEnd}}"       # ISO, now
+      count: 50
+      ticketOffset: "{{ticketOffset}}"
+      atgfOffset: 0             # online orders (out of scope here)
+      atgnfOffset: 0
+      currentAtgfOrders: 0
+      currentAtgnfOrders: 0
+      currentTickets: 0
+  itemsPath: "$.purchases[*]"
+  # Only in-store tickets; online orders (ATGF/ATGNF) are a separate concern.
+  filter: "$.orderSource == 'TICKET'"
   pagination:
-    type: cursor                     # cursor | offset | loadMore | none
-    cursorPath: "$.nextCursor"
+    type: offset
+    offsetParam: ticketOffset
+    sizeParam: count
+    nextOffsetPath: "$.offsets.ticketOffset"
+    stopWhen: returnedLessThanCount
 
 detail:
+  # TODO: discovered by clicking into a ticket. Expected: line items + PDF.
+  # request: GET https://pro.api.carrefour.es/md-purchasesAccount-v1/purchases/{purchaseId} ?
+  # pdf:     GET https://pro.api.carrefour.es/.../ticket/{purchaseId}.pdf ?
   pdf:
-    urlTemplate: https://www.carrefour.es/TODO_ticket_pdf_path
-    credentials: include
+    urlTemplate: "TODO"
+    credentials: omit
 
 fields:
-  externalId: "$.id"
+  externalId: "$.purchaseId"
   date:
-    path: "$.date"
-    transform: "date:DD/MM/YYYY"     # TODO confirm date format
+    path: "$.purchaseDate"
+    transform: "datetime:Europe/Madrid"   # source has no timezone
   total:
     path: "$.amount"
-    transform: "money:EUR"
-  store: "$.storeName"
+    transform: "money:EUR"                 # decimal euros -> minor units
+  store.name: "$.mallName"
+  store.address: "$.mallAddress"
+  store.id: "$.mallId"
+  purchaseType: "$.purchaseType"           # HYPERMARKET | REFUELING
 
 dedupeKey: externalId
 schema: receipt@1
 
 capabilities:
   read:
+    - pro.api.carrefour.es
     - www.carrefour.es
   write:
     - tiquetera.es
