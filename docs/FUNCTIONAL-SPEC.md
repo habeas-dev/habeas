@@ -123,6 +123,18 @@ Flujo canónico (Ana):
 - **FR-22** Panel de "mis conexiones": adaptadores activos, último sync, revocar en un clic.
 - **FR-23** Vista previa de lo que se va a enviar antes del primer envío ("se enviarán 42 tickets a tiquetera.es").
 
+### 6.8 Inventario de documentos
+
+- **FR-24** El principio es **inventariar antes de exportar**: por cada adaptador
+  activo, el Core enumera **todos los documentos disponibles** (no solo los de un
+  tipo) y construye un **inventario** que se muestra al usuario: fecha, tipo,
+  origen, importe/entidad, y estado (nuevo / ya sincronizado).
+- **FR-25** La extracción/descarga y el envío a un sink son **acciones posteriores
+  del usuario** sobre ese inventario (por documento o en lote), nunca automáticas.
+  Refuerza local-first (SEC-1) y la vista previa antes de enviar (FR-23).
+- **FR-26** El inventario es la unidad de deduplicación y de "qué falta por traer":
+  el Core marca lo ya extraído por `dedupeKey` (FR-4).
+
 ## 7. Seguridad y privacidad
 
 - **SEC-1 Local-first.** Por defecto los datos no salen del navegador; enviar a un sink remoto es una acción explícita del usuario.

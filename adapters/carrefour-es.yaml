@@ -48,8 +48,9 @@ list:
       currentAtgnfOrders: 0
       currentTickets: 0
   itemsPath: "$.purchases[*]"
-  # Only in-store tickets; online orders (ATGF/ATGNF) are a separate concern.
-  filter: "$.orderSource == 'TICKET'"
+  # List ALL available documents — the Core builds a user-facing inventory
+  # (spec §6.8). The receipt@1 mapping below targets in-store tickets
+  # (orderSource == TICKET); online orders (ATGF/ATGNF) are a future invoice map.
   pagination:
     type: offset
     offsetParam: ticketOffset
@@ -58,12 +59,13 @@ list:
     stopWhen: returnedLessThanCount
 
 detail:
-  # TODO: discovered by clicking into a ticket. Expected: line items + PDF.
-  # request: GET https://pro.api.carrefour.es/md-purchasesAccount-v1/purchases/{purchaseId} ?
-  # pdf:     GET https://pro.api.carrefour.es/.../ticket/{purchaseId}.pdf ?
+  # The ticket PDF is a separate service on the same host. The SPA fetches these
+  # bytes and wraps them in a blob: URL for display/download.
+  # No structured line-items endpoint observed — the PDF is the detail artifact,
+  # which suits Tiquetera (it already parses receipt PDFs).
   pdf:
-    urlTemplate: "TODO"
-    credentials: omit
+    urlTemplate: "https://pro.api.carrefour.es/md-ticketsAccount-v1/tickets/{{purchaseId}}/pdf"
+    credentials: omit           # Bearer header, same as the list endpoint
 
 fields:
   externalId: "$.purchaseId"
