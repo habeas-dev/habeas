@@ -135,6 +135,66 @@ Flujo canónico (Ana):
 - **FR-26** El inventario es la unidad de deduplicación y de "qué falta por traer":
   el Core marca lo ya extraído por `dedupeKey` (FR-4).
 
+### 6.9 Modelo de configuración: datasources, sinks y routes
+
+Vocabulario (4 conceptos, 3 configurables + 1 enlace):
+
+| Entidad | Qué es |
+|---|---|
+| **Adapter** | *Tipo* de datasource, declarativo, del catálogo. No configurable por el usuario. |
+| **Datasource** | Un adapter **activado** por el usuario, con sus opciones. Sin secretos (sesión viva). |
+| **Sink** | Un **destino** configurado (carpeta local, Drive nativo, consumidor HTTP). |
+| **Route** | El **enlace** datasource → sink(s), con filtro y reglas de nombrado. |
+
+- **FR-27** Datasource y Sink se configuran **por separado** y se combinan vía Routes: un
+  datasource puede alimentar varios sinks, y un sink recibir de varios datasources.
+- **FR-28** Un **Datasource** es ~zero-config: activar un adapter del catálogo; el adapter indica
+  qué debe hacer el usuario ("entra en el servicio y abre X"). Opciones: ventana temporal, tipos
+  de documento. **No persiste secretos** — la sesión se captura viva en cada sync.
+- **FR-29** Tipos de **Sink** y su configuración:
+  - `local-folder`: handle de carpeta (File System Access) persistido en IndexedDB.
+  - `drive`: cuenta conectada por OAuth (`drive.file`) + `rootFolderId` + `pathTemplate`.
+  - `http`: `url` de ingest + `tokenRef` (pairing token) + `schema` destino (consumidores).
+- **FR-30** **Config vs secretos.** La config (datasources/sinks/routes) es un JSON **versionado en
+  el storage local** del navegador; nada sale sin acción del usuario. Los **secretos** (token OAuth
+  de Drive, pairing tokens) viven en un **almacén aparte** referenciado por `...Ref`, nunca dentro
+  de un adapter ni de la config exportable.
+- **FR-31** **Nombrado por plantilla**, con default fijo y sensato
+  `{service}/{yyyy}/{date}-{externalId}.{ext}`; editable solo si el usuario quiere.
+- **FR-32** El **sink Drive nativo** usa un **client OAuth propio de Habeas** (scope `drive.file`,
+  que **evita** la evaluación de seguridad CASA de Google). El usuario solo pulsa *Conectar*,
+  consiente y elige/crea la carpeta raíz — nada de "trae tu propio client id".
+- **FR-33** **(v1) Destinos inline.** En el inventario de un datasource, "Enviar a ▾ [sink]". La
+  Route como entidad con `mode: auto` (sync automático) es una fase posterior.
+
+Ejemplo de config (storage local):
+
+```jsonc
+{
+  "version": 1,
+  "datasources": [
+    { "id": "carrefour-es", "adapter": "carrefour-es", "enabled": true,
+      "options": { "window": "3y", "includeTypes": ["TICKET"] } }
+  ],
+  "sinks": [
+    { "id": "drive-personal", "type": "drive",
+      "account": "davefx@gmail.com", "rootFolderId": "0AbC...",
+      "pathTemplate": "{service}/{yyyy}/{date}-{externalId}.pdf" },
+    { "id": "tiquetera", "type": "http",
+      "url": "https://tiquetera.es/api/ingest/receipts",
+      "tokenRef": "secret://tiquetera", "schema": "receipt@1" }
+  ],
+  "routes": [
+    { "id": "carrefour-to-drive", "datasource": "carrefour-es",
+      "sink": "drive-personal", "filter": "orderSource == 'TICKET'", "mode": "manual" }
+  ]
+}
+```
+
+Flujo de configuración del **sink Drive nativo**: Ajustes → Sinks → *Añadir Google Drive* →
+*Conectar* (OAuth `drive.file`) → elegir/crear carpeta raíz (`/Habeas`) → (opcional) plantilla →
+disponible para cualquier Route.
+
 ## 7. Seguridad y privacidad
 
 - **SEC-1 Local-first.** Por defecto los datos no salen del navegador; enviar a un sink remoto es una acción explícita del usuario.
