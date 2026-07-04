@@ -1,7 +1,7 @@
 import { getConfig } from '../lib/config.js';
 import { listInventory, fetchPdf } from '../runtime/inventory.js';
 import { writeToSink } from '../sinks/sinks.js';
-import { deliveredSet, markDelivered } from '../lib/state.js';
+import { deliveredSet, markDelivered, getLog, appendLog } from '../lib/state.js';
 import CARREFOUR from '../adapters/carrefour-es.js';
 
 const ADAPTERS = { 'carrefour-es': CARREFOUR };
@@ -22,6 +22,24 @@ async function init() {
   $('#list').onclick = onList;
   $('#send').onclick = onSend;
   $('#sink').onchange = () => render();
+  try { chrome.action.setBadgeText({ text: '' }); } catch (e) {}
+  await renderActivity();
+  chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch['habeas:log']) renderActivity(); });
+}
+
+async function renderActivity() {
+  const el = $('#activity'); if (!el) return;
+  const log = await getLog();
+  el.innerHTML = log.slice(0, 25).map((e) => {
+    const when = (e.t || '').replace('T', ' ').slice(0, 16);
+    const n = e.new ?? e.count;
+    const detail = e.status === 'error' ? `⚠️ error: ${e.error}`
+      : e.status === 'sin novedades' ? 'sin novedades'
+      : e.status === 'sin sesión' ? 'sin sesión'
+      : `${n ?? ''} doc(s) → ${e.sink}`;
+    return `<div style="border-bottom:1px solid #f0f0f0;padding:3px 0;font:12px system-ui">`
+      + `<span style="color:#888">${when}</span> · <b>${e.kind || ''}</b> · ${e.datasource || ''} · ${detail}</div>`;
+  }).join('') || '<p class="muted">Sin actividad todavía.</p>';
 }
 
 function adapterFor(dsId, cfg) {
@@ -107,7 +125,9 @@ async function onSend() {
     const m = `Enviado a "${sink.id}": ${r.written} PDF + manifest (${chosen.length} docs, ${noPdf.length} sin PDF)`;
     $('#status').textContent = m; log(m);
     await markDelivered($('#ds').value, sink.id, chosen.map((c) => c.externalId));
+    await appendLog({ kind: 'manual', datasource: $('#ds').value, sink: sink.id, status: 'ok', count: chosen.length });
     await render();
+    await renderActivity();
   } catch (e) {
     const m = 'Sink error: ' + (e && e.message ? e.message : e);
     $('#status').textContent = m; log(m);

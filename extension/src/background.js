@@ -3,7 +3,7 @@
 // a SW-runnable sink (drive/http) -> mark -> notify. This is triggered by the user's own
 // login, not a background job while they're away.
 import { getConfig } from './lib/config.js';
-import { deliveredSet, markDelivered } from './lib/state.js';
+import { deliveredSet, markDelivered, appendLog } from './lib/state.js';
 import { listInventory, fetchPdf } from './runtime/inventory.js';
 import { writeToSink } from './sinks/sinks.js';
 import { ADAPTERS } from './adapters/index.js';
@@ -40,9 +40,7 @@ async function maybeAutoRun(host) {
     if (o[dk] && Date.now() - o[dk] < DEBOUNCE_MS) continue;
     running.add(route.id);
     await chrome.storage.session.set({ [dk]: Date.now() });
-    runRoute(ds, adapter, sink)
-      .catch((e) => notify('Auto-sync error: ' + (e && e.message ? e.message : e)))
-      .finally(() => running.delete(route.id));
+    runRoute(ds, adapter, sink).finally(() => running.delete(route.id));
   }
 }
 
@@ -56,20 +54,36 @@ async function authFor(adapter) {
 }
 
 async function runRoute(ds, adapter, sink) {
-  const auth = await authFor(adapter);
-  if (!auth) return;
-  const all = await listInventory(adapter, auth);
-  const delivered = await deliveredSet(ds.id, sink.id);
-  const fresh = all.filter((d) => !delivered[d.externalId]);
-  if (!fresh.length) return;
-  const files = new Map();
-  for (const d of fresh) { try { files.set(d.externalId, await fetchPdf(adapter, auth, d.externalId)); } catch (e) { /* no PDF */ } }
-  await writeToSink(sink, fresh, files, { service: adapter.service || ds.adapter, interactive: false });
-  await markDelivered(ds.id, sink.id, fresh.map((d) => d.externalId));
-  notify(`${fresh.length} documento(s) nuevo(s) → ${sink.id}`);
+  const base = { kind: 'auto', datasource: ds.id, sink: sink.id };
+  try {
+    const auth = await authFor(adapter);
+    if (!auth) { await appendLog({ ...base, status: 'sin sesión' }); return; }
+    const all = await listInventory(adapter, auth);
+    const delivered = await deliveredSet(ds.id, sink.id);
+    const fresh = all.filter((d) => !delivered[d.externalId]);
+    if (!fresh.length) { await appendLog({ ...base, status: 'sin novedades', new: 0 }); return; }
+    const files = new Map();
+    for (const d of fresh) { try { files.set(d.externalId, await fetchPdf(adapter, auth, d.externalId)); } catch (e) { /* no PDF */ } }
+    await writeToSink(sink, fresh, files, { service: adapter.service || ds.adapter, interactive: false });
+    await markDelivered(ds.id, sink.id, fresh.map((d) => d.externalId));
+    await appendLog({ ...base, status: 'ok', new: fresh.length });
+    notify(`${fresh.length} documento(s) nuevo(s) → ${sink.id}`);
+    await setBadge(fresh.length);
+  } catch (e) {
+    await appendLog({ ...base, status: 'error', error: (e && e.message) || String(e) });
+    notify('Auto-sync error: ' + ((e && e.message) || e));
+  }
 }
 
 function notify(message) {
   try { chrome.notifications.create({ type: 'basic', iconUrl: 'icon.png', title: 'Habeas', message }); }
   catch (e) {}
+}
+async function setBadge(n) {
+  try {
+    if (n > 0) {
+      await chrome.action.setBadgeText({ text: String(n) });
+      await chrome.action.setBadgeBackgroundColor({ color: '#0a0' });
+    }
+  } catch (e) {}
 }
