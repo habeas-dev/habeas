@@ -3,6 +3,7 @@ import { getConfig, upsert, remove } from '../lib/config.js';
 import { setSecret } from '../lib/secrets.js';
 import { connectDrive, redirectUri } from '../sinks/drive.js';
 import { putHandle } from '../lib/fs.js';
+import { sinkAcceptsSource } from '../sinks/format.js';
 import { watchThemeIcon } from '../lib/theme-icon.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import CARREFOUR from '../adapters/carrefour-es.js';
@@ -53,9 +54,11 @@ async function render() {
   const swSinks = cfg.sinks.filter((s) => s.type === 'drive' || s.type === 'http');
   $('#routes').innerHTML = cfg.datasources.filter((d) => d.enabled).map((d) => {
     const route = (cfg.routes || []).find((r) => r.datasource === d.id && r.mode === 'auto');
-    const opts = swSinks.map((s) => `<option value="${s.id}" ${route && route.sink === s.id ? 'selected' : ''}>${s.id} (${s.type})</option>`).join('');
+    const dsAdapter = CATALOG[d.adapter];
+    const sinks = swSinks.filter((s) => !dsAdapter || sinkAcceptsSource(s, dsAdapter));
+    const opts = sinks.map((s) => `<option value="${s.id}" ${route && route.sink === s.id ? 'selected' : ''}>${s.id} (${s.type})</option>`).join('');
     return `<div class="card row"><b style="flex:1">${d.id}</b><span class="muted">→ auto</span>
-      <select data-rsel="${d.id}" ${swSinks.length ? '' : 'disabled'}>${opts || `<option value="">${t('no_sw_sinks')}</option>`}</select>
+      <select data-rsel="${d.id}" ${sinks.length ? '' : 'disabled'}>${opts || `<option value="">${t('no_sw_sinks')}</option>`}</select>
       <button data-rtoggle="${d.id}" data-on="${route ? 1 : 0}" class="${route ? '' : 'primary'}">${route ? t('disable_auto') : t('enable_auto')}</button></div>`;
   }).join('') || `<p class="muted">${t('enable_ds_first')}</p>`;
   $('#routes').querySelectorAll('[data-rtoggle]').forEach((b) => b.onclick = async () => {
@@ -75,7 +78,7 @@ async function render() {
 function renderFields() {
   const type = $('#stype').value;
   if (type === 'http') {
-    $('#sfields').innerHTML = `id:<input id="sid" size="8"> url:<input id="surl" size="24"> token:<input id="stok" size="12">`;
+    $('#sfields').innerHTML = `id:<input id="sid" size="8"> url:<input id="surl" size="22"> token:<input id="stok" size="10"> <label>${t('sink_accepts')}</label><input id="saccepts" size="14" placeholder="grocery,fuel">`;
   } else if (type === 'drive') {
     $('#sfields').innerHTML = `id:<input id="sid" size="8"> <label>${t('client_id_optional')}</label><input id="sclient" size="26">`
       + `<div style="flex-basis:100%;margin-top:6px"><small>${t('redirect_hint')}</small><br><code>${redirectUri()}</code></div>`;
@@ -92,6 +95,8 @@ async function addSink() {
     sink.url = ($('#surl').value || '').trim();
     sink.tokenRef = 'secret://' + id;
     if ($('#stok').value.trim()) await setSecret(id, $('#stok').value.trim());
+    const acc = (($('#saccepts') && $('#saccepts').value) || '').split(',').map((x) => x.trim()).filter(Boolean);
+    if (acc.length) sink.accepts = { categories: acc };
   } else if (type === 'drive') {
     sink.clientId = ($('#sclient').value || '').trim() || undefined;
     sink.rootFolderName = 'Habeas';

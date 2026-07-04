@@ -16,7 +16,7 @@ export async function listInventory(adapter, auth) {
     const items = data[a.list.itemsPath] || [];
     const fresh = items.filter((p) => !seen.has(p[f.externalId]));
     if (!fresh.length) break;
-    fresh.forEach((p) => { seen.add(p[f.externalId]); all.push(mapDoc(f, p)); });
+    fresh.forEach((p) => { seen.add(p[f.externalId]); all.push(mapDoc(adapter, p)); });
     offs = Object.assign(offs, data[a.list.offsetsPath] || {});
   }
   all.sort((x, y) => (x.date < y.date ? 1 : -1));
@@ -33,12 +33,19 @@ export async function fetchPdf(adapter, auth, externalId) {
   return await res.blob();
 }
 
-function mapDoc(f, p) {
+function mapDoc(adapter, p) {
+  const f = adapter.fields;
   return {
     externalId: p[f.externalId], date: p[f.date], total: p[f.total],
     storeName: p[f.storeName], storeAddress: p[f.storeAddress],
-    type: p[f.type], source: p[f.source], _raw: p,
+    type: p[f.type], source: p[f.source],
+    category: categorize(adapter, p), _raw: p,
   };
+}
+function categorize(adapter, p) {
+  const c = adapter.categorize;
+  if (!c) return (adapter.categories && adapter.categories[0]) || 'other';
+  return (c.map && c.map[p[c.field]]) || c.default || 'other';
 }
 function windowMs(w) {
   const m = /^(\d+)y$/.exec(w || '3y');

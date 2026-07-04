@@ -29,6 +29,16 @@ Content-Type: multipart/form-data
 - Idempotent on `receipt.externalId` per user.
 - Returns per-record status (imported / duplicate / error).
 
+## Compatibility (categories)
+
+Tiquetera only wants **grocery** receipts, so the Habeas HTTP sink pointing at it is
+configured with `accepts: { categories: ["grocery"] }`. Habeas then (a) only offers this
+destination for sources that can emit `grocery`, and (b) sends only the documents whose
+`category` is `grocery` — e.g. Carrefour fuel (`REFUELING`) tickets are filtered out.
+
+Each normalized record carries a `category` (a source classifies its documents; Carrefour:
+`HYPERMARKET`→`grocery`, `REFUELING`→`fuel`).
+
 ## Adapters that feed Tiquetera
 
 - `carrefour-es` — Carrefour España in-store e-tickets.

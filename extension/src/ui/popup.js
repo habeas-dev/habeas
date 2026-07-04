@@ -2,6 +2,7 @@ import { chrome } from '../lib/ext.js';
 import { getConfig } from '../lib/config.js';
 import { listInventory, fetchPdf } from '../runtime/inventory.js';
 import { writeToSink } from '../sinks/sinks.js';
+import { sinkAcceptsSource, acceptsDoc } from '../sinks/format.js';
 import { deliveredSet, markDelivered, getLog, appendLog } from '../lib/state.js';
 import { badgeWorking, badgeClear } from '../lib/badge.js';
 import { getHandle, verifyPermission } from '../lib/fs.js';
@@ -28,11 +29,12 @@ async function init() {
   const cfg = await getConfig();
   const enabled = cfg.datasources.filter((d) => d.enabled);
   $('#ds').innerHTML = enabled.map((d) => `<option value="${d.id}">${d.id}</option>`).join('') || '<option value="">—</option>';
-  $('#sink').innerHTML = cfg.sinks.map((s) => `<option value="${s.id}">${s.id} · ${s.type}</option>`).join('') || '<option value="">—</option>';
+  populateSinks(cfg);
   if (!enabled.length) $('#status').textContent = t('no_datasources');
   $('#list').onclick = onList;
   $('#send').onclick = onSend;
   $('#sink').onchange = () => render();
+  $('#ds').onchange = async () => { populateSinks(await getConfig()); render(); };
   $('#sel-new').onclick = () => setSelection('new');
   $('#sel-all').onclick = () => setSelection('all');
   $('#sel-none').onclick = () => setSelection('none');
@@ -45,6 +47,12 @@ async function init() {
 function adapterFor(dsId, cfg) {
   const ds = cfg.datasources.find((d) => d.id === dsId);
   return { ds, adapter: ds && ADAPTERS[ds.adapter] };
+}
+// Only offer sinks that accept this data source (by category / source allowlist).
+function populateSinks(cfg) {
+  const { adapter } = adapterFor($('#ds').value, cfg);
+  const list = cfg.sinks.filter((s) => !adapter || sinkAcceptsSource(s, adapter));
+  $('#sink').innerHTML = list.map((s) => `<option value="${s.id}">${s.id} · ${s.type}</option>`).join('') || '<option value="">—</option>';
 }
 async function getAuth(adapter) {
   const host = adapter.api.host.replace(/^https?:\/\//, '');
@@ -105,6 +113,9 @@ async function onSend() {
   const auth = await getAuth(adapter);
   const chosen = [...document.querySelectorAll('#tbl input:checked')].map((c) => inventory[+c.dataset.i]);
   if (!chosen.length) { $('#status').textContent = t('nothing_selected'); return; }
+  const eligible = chosen.filter((d) => acceptsDoc(sink, d));
+  const skipped = chosen.length - eligible.length;
+  if (!eligible.length) { $('#status').textContent = t('none_compatible'); return; }
 
   const opts = { service: adapter.service || ds.adapter };
   if (sink.type === 'local-folder') {
@@ -114,21 +125,21 @@ async function onSend() {
     opts.dirHandle = handle;
   }
 
-  $('#status').textContent = t('fetching', [String(chosen.length)]);
+  $('#status').textContent = t('fetching', [String(eligible.length)]);
   await badgeWorking();
   const files = new Map();
   const noPdf = [];
-  for (const d of chosen) {
+  for (const d of eligible) {
     try { files.set(d.externalId, await fetchPdf(adapter, auth, d.externalId)); }
     catch (e) { if (/\b406\b|sin PDF|no PDF/i.test(e.message)) noPdf.push(d.externalId); }
   }
-  log(t('with_without_pdf', [String(files.size), String(noPdf.length)]));
+  log(t('with_without_pdf', [String(files.size), String(noPdf.length)]) + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : ''));
   try {
-    const r = await writeToSink(sink, chosen, files, opts);
-    const m = t('sent_result', [sink.id, String(r.written), String(chosen.length), String(noPdf.length)]);
+    const r = await writeToSink(sink, eligible, files, opts);
+    const m = t('sent_result', [sink.id, String(r.written), String(eligible.length), String(noPdf.length)]);
     $('#status').textContent = m; log(m);
-    await markDelivered($('#ds').value, sink.id, chosen.map((c) => c.externalId));
-    await appendLog({ kind: 'manual', datasource: $('#ds').value, sink: sink.id, status: 'ok', count: chosen.length });
+    await markDelivered($('#ds').value, sink.id, eligible.map((c) => c.externalId));
+    await appendLog({ kind: 'manual', datasource: $('#ds').value, sink: sink.id, status: 'ok', count: eligible.length });
     await render();
     await renderActivity();
   } catch (e) {

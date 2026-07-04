@@ -5,6 +5,13 @@ export default {
   id: 'carrefour-es',
   name: 'Carrefour España — tickets',
   service: 'carrefour',
+  // Categories this source can emit (for sink compatibility) + how to categorize each doc.
+  categories: ['grocery', 'fuel', 'retail'],
+  categorize: {
+    field: 'purchaseType',
+    map: { HYPERMARKET: 'grocery', SUPERMARKET: 'grocery', REFUELING: 'fuel' },
+    default: 'retail',
+  },
   match: ['https://www.carrefour.es/*'],
   auth: {
     tokenMatch: 'eyJ',

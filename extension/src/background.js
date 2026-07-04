@@ -7,6 +7,7 @@ import { getConfig } from './lib/config.js';
 import { deliveredSet, markDelivered, appendLog } from './lib/state.js';
 import { listInventory, fetchPdf } from './runtime/inventory.js';
 import { writeToSink } from './sinks/sinks.js';
+import { acceptsDoc } from './sinks/format.js';
 import { ADAPTERS } from './adapters/index.js';
 import { badgeWorking, badgeCount, badgeError, badgeClear } from './lib/badge.js';
 import { t } from './lib/i18n.js';
@@ -65,14 +66,15 @@ async function runRoute(ds, adapter, sink) {
     const all = await listInventory(adapter, auth);
     const delivered = await deliveredSet(ds.id, sink.id);
     const fresh = all.filter((d) => !delivered[d.externalId]);
-    if (!fresh.length) { await appendLog({ ...base, status: 'none', new: 0 }); await badgeClear(); return; }
+    const eligible = fresh.filter((d) => acceptsDoc(sink, d));
+    if (!eligible.length) { await appendLog({ ...base, status: 'none', new: 0 }); await badgeClear(); return; }
     const files = new Map();
-    for (const d of fresh) { try { files.set(d.externalId, await fetchPdf(adapter, auth, d.externalId)); } catch (e) { /* no PDF */ } }
-    await writeToSink(sink, fresh, files, { service: adapter.service || ds.adapter, interactive: false });
-    await markDelivered(ds.id, sink.id, fresh.map((d) => d.externalId));
-    await appendLog({ ...base, status: 'ok', new: fresh.length });
-    notify(t('notify_new', [String(fresh.length), sink.id]));
-    await badgeCount(fresh.length);
+    for (const d of eligible) { try { files.set(d.externalId, await fetchPdf(adapter, auth, d.externalId)); } catch (e) { /* no PDF */ } }
+    await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, interactive: false });
+    await markDelivered(ds.id, sink.id, eligible.map((d) => d.externalId));
+    await appendLog({ ...base, status: 'ok', new: eligible.length });
+    notify(t('notify_new', [String(eligible.length), sink.id]));
+    await badgeCount(eligible.length);
   } catch (e) {
     await appendLog({ ...base, status: 'error', error: (e && e.message) || String(e) });
     notify(t('notify_autoerr', [(e && e.message) || String(e)]));
