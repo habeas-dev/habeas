@@ -1,0 +1,140 @@
+/* Habeas design system — palette from the logo (deep green + orange), self-hosted
+   Google Fonts (Space Grotesk for headings, Inter for text), light + dark themes. */
+
+@font-face { font-family: 'Inter'; font-weight: 400; font-style: normal; font-display: swap; src: url('../../fonts/inter-400.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 600; font-style: normal; font-display: swap; src: url('../../fonts/inter-600.woff2') format('woff2'); }
+@font-face { font-family: 'Space Grotesk'; font-weight: 600; font-style: normal; font-display: swap; src: url('../../fonts/space-600.woff2') format('woff2'); }
+@font-face { font-family: 'Space Grotesk'; font-weight: 700; font-style: normal; font-display: swap; src: url('../../fonts/space-700.woff2') format('woff2'); }
+
+:root {
+  --brand-900: #0d2e29;
+  --brand-700: #14453d;
+  --brand-600: #1c5a4f;
+  --brand-500: #2a7d6d;
+  --brand-100: #dcece8;
+  --brand-50:  #eef4f1;
+  --accent:      #e08a3c;
+  --accent-600:  #c9752b;
+  --accent-100:  #f8e6d4;
+
+  --bg:      #f4f8f6;
+  --surface: #ffffff;
+  --ink:     #17211d;
+  --muted:   #5f6f6a;
+  --line:    #e2ebe7;
+  --shadow:  0 1px 2px rgba(13,46,41,.04), 0 6px 20px rgba(13,46,41,.06);
+
+  --font-head: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --brand-100: #1e3b35;
+    --brand-50:  #16292450;
+    --bg:      #0e1512;
+    --surface: #14201c;
+    --ink:     #e8f0ed;
+    --muted:   #93a49e;
+    --line:    #22302a;
+    --shadow:  0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { font-family: var(--font-head); font-weight: 600; letter-spacing: -.01em; margin: 0; }
+h1 { font-size: 20px; }
+h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+h3 { font-size: 14px; }
+a { color: var(--brand-500); text-decoration: none; }
+a:hover { text-decoration: underline; }
+small { color: var(--muted); }
+code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; background: var(--brand-50); color: var(--brand-600); padding: 2px 6px; border-radius: 6px; word-break: break-all; }
+
+/* Layout */
+.app { max-width: 860px; margin: 0 auto; padding: 0 20px 40px; }
+.topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px; margin-bottom: 20px;
+  background: var(--brand-700); color: #fff;
+  position: sticky; top: 0; z-index: 10;
+}
+.topbar .logo { width: 30px; height: 30px; }
+.topbar .brand { font-family: var(--font-head); font-weight: 700; font-size: 18px; letter-spacing: -.01em; }
+.topbar .tagline { color: #ffffffb0; font-size: 12.5px; flex: 1; }
+.topbar a { color: #fff; }
+.topbar button { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.25); color: #fff; }
+.topbar button:hover { background: rgba(255,255,255,.26); border-color: rgba(255,255,255,.5); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+  margin: 12px 0;
+}
+.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.section-title { display: flex; align-items: center; gap: 8px; margin: 26px 0 6px; }
+.muted { color: var(--muted); }
+
+/* Buttons */
+button, .btn {
+  font-family: var(--font-body); font-size: 13px; font-weight: 600;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  border-radius: var(--radius-sm); padding: 7px 13px; cursor: pointer;
+  transition: background .12s, border-color .12s, transform .04s;
+}
+button:hover, .btn:hover { border-color: var(--brand-500); }
+button:active { transform: translateY(1px); }
+button:disabled { opacity: .55; cursor: default; }
+button.primary { background: var(--brand-700); border-color: var(--brand-700); color: #fff; }
+button.primary:hover { background: var(--brand-600); border-color: var(--brand-600); }
+button.accent { background: var(--accent); border-color: var(--accent); color: #3a2410; }
+button.accent:hover { background: var(--accent-600); border-color: var(--accent-600); }
+
+/* Inputs */
+input, select {
+  font-family: var(--font-body); font-size: 13px; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); padding: 7px 9px;
+}
+input:focus, select:focus { outline: none; border-color: var(--brand-500); box-shadow: 0 0 0 3px var(--brand-100); }
+label { font-size: 12.5px; color: var(--muted); }
+
+/* Pills / status */
+.pill { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+.pill.new { background: var(--accent-100); color: var(--accent-600); }
+.pill.sent { background: var(--brand-50); color: var(--brand-600); }
+.pill.type { background: var(--line); color: var(--muted); }
+
+/* Table */
+table { width: 100%; border-collapse: collapse; }
+thead th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+tbody td { padding: 9px 10px; border-bottom: 1px solid var(--line); }
+tbody tr:hover { background: var(--brand-50); }
+td.r, th.r { text-align: right; }
+td.r, tbody td:nth-child(2) { white-space: nowrap; }
+
+/* Log / activity */
+.log { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--muted); white-space: pre-wrap; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; margin: 0; max-height: 160px; overflow: auto; }
+.activity-item { padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; display: flex; gap: 8px; align-items: baseline; }
+.activity-item .when { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.activity-item .kind { font-weight: 600; }
+
+@media (prefers-color-scheme: dark) {
+  .pill.sent { background: rgba(42,125,109,.22); color: #8fd3c2; }
+  .pill.type { background: #1e2b26; color: #9fb0aa; }
+  code { background: #17231f; }
+}

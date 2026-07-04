@@ -1,45 +1,41 @@
 <!doctype html>
-<html lang="es">
+<html>
 <head>
   <meta charset="utf-8" />
-  <title>Habeas · Ajustes</title>
-  <style>
-    body { font: 14px system-ui, sans-serif; max-width: 720px; margin: 24px auto; padding: 0 16px; color: #111; }
-    h2 { margin-top: 28px; }
-    .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin: 8px 0; display: flex; align-items: center; gap: 10px; }
-    .card b { flex: 1; }
-    button { cursor: pointer; border: 1px solid #ccc; background: #f7f7f7; border-radius: 6px; padding: 5px 10px; }
-    input, select { padding: 4px 6px; }
-    code { background: #f4f4f4; padding: 1px 5px; border-radius: 4px; }
-    .muted { color: #888; }
-    small { color: #888; }
-  </style>
+  <title>Habeas · Settings</title>
+  <link rel="stylesheet" href="theme.css" />
 </head>
 <body>
-  <h1>Habeas · Ajustes</h1>
-
-  <h2>Datasources</h2>
-  <div id="ds"></div>
-
-  <h2>Sinks (destinos)</h2>
-  <div id="sinks"></div>
-  <div class="card" style="display:block">
-    <b>Añadir sink</b>
-    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <select id="stype">
-        <option value="download">Descargas</option>
-        <option value="local-folder">Carpeta local (= nube si es sincronizada)</option>
-        <option value="drive">Google Drive (nativo)</option>
-        <option value="http">Consumidor HTTP (Tiquetera/Cuéntamo)</option>
-      </select>
-      <span id="sfields"></span>
-      <button id="addsink">Añadir</button>
-    </div>
+  <div class="topbar">
+    <img class="logo" src="../../icon-128.png" alt="" />
+    <span class="brand">Habeas</span>
+    <span class="tagline" data-i18n="settings"></span>
   </div>
 
-  <h2>Sincronización automática</h2>
-  <p class="muted"><small>Se ejecuta cuando <b>tú</b> te logueas en el sitio, y envía solo lo nuevo. Solo sinks Drive/HTTP (los locales necesitan la página abierta).</small></p>
-  <div id="routes"></div>
+  <div class="app">
+    <div class="section-title"><h2 data-i18n="datasources"></h2></div>
+    <div id="ds"></div>
+
+    <div class="section-title"><h2 data-i18n="destinations"></h2></div>
+    <div id="sinks"></div>
+    <div class="card">
+      <b data-i18n="add_destination"></b>
+      <div class="row" style="margin-top:12px">
+        <select id="stype">
+          <option value="download" data-i18n="sink_download"></option>
+          <option value="local-folder" data-i18n="sink_local"></option>
+          <option value="drive" data-i18n="sink_drive"></option>
+          <option value="http" data-i18n="sink_http"></option>
+        </select>
+        <span id="sfields" class="row"></span>
+        <button id="addsink" class="primary" data-i18n="add"></button>
+      </div>
+    </div>
+
+    <div class="section-title"><h2 data-i18n="auto_sync"></h2></div>
+    <p class="muted" data-i18n="auto_help" style="margin:2px 0 8px"></p>
+    <div id="routes"></div>
+  </div>
 
   <script type="module" src="options.js"></script>
 </body>
