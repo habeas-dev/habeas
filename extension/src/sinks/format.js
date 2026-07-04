@@ -9,9 +9,34 @@ export function pathFor(sink, d, opts) {
     externalId: d.externalId, ext: 'pdf',
   });
 }
+// A mapped doc already carries its normalized record (built at inventory time, where the
+// adapter is known). toRecord returns it; the legacy fallback keeps receipt shape for callers
+// that pass a bare doc.
 export function toRecord(d) {
-  return { externalId: d.externalId, date: d.date, total: d.total, currency: 'EUR', category: d.category, store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type };
+  return d.record || buildRecord(d, null);
 }
+
+// Schema-aware normalized record. `receipt@1` is byte-identical to the historical shape so
+// existing manifests do not change. New schemas (invoice/transaction/investment) shape the
+// same mapped doc differently. Currency defaults to EUR unless the adapter overrides it.
+export function buildRecord(d, adapter) {
+  const schema = (adapter && adapter.schema) || 'receipt@1';
+  const kind = String(schema).split('@')[0];
+  const currency = (adapter && adapter.currency) || 'EUR';
+  if (kind === 'transaction') {
+    return { externalId: d.externalId, date: d.date, amount: num(d.amount ?? d.total), currency, category: d.category, description: d.description ?? d.label ?? '', counterparty: d.counterparty ?? d.party ?? '', direction: d.direction ?? dirOf(d.amount ?? d.total), source: d.source, type: d.type };
+  }
+  if (kind === 'investment') {
+    return { externalId: d.externalId, date: d.date, instrument: d.instrument ?? d.label ?? '', isin: d.isin ?? '', units: num(d.units), price: num(d.price), amount: num(d.amount ?? d.total), currency, category: d.category, operation: d.operation ?? d.type, source: d.source };
+  }
+  if (kind === 'invoice') {
+    return { externalId: d.externalId, date: d.date, total: num(d.total), currency, category: d.category, issuer: { name: d.issuer ?? d.storeName ?? d.party ?? '', address: d.issuerAddress ?? d.storeAddress ?? '' }, number: d.number ?? d.externalId, source: d.source, type: d.type };
+  }
+  // receipt@1 (default) — unchanged shape.
+  return { externalId: d.externalId, date: d.date, total: d.total, currency, category: d.category, store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type };
+}
+function num(v) { if (v == null || v === '') return v; const n = Number(v); return Number.isFinite(n) ? n : v; }
+function dirOf(v) { const n = Number(v); return Number.isFinite(n) ? (n < 0 ? 'debit' : 'credit') : undefined; }
 
 // Source-level compatibility: does this sink accept documents from this source at all?
 // A sink with no `accepts` takes everything (download/local/drive). A sink may restrict by

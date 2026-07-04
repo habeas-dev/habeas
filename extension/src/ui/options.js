@@ -6,22 +6,69 @@ import { putHandle } from '../lib/fs.js';
 import { sinkAcceptsSource } from '../sinks/format.js';
 import { watchThemeIcon } from '../lib/theme-icon.js';
 import { applyI18n, t } from '../lib/i18n.js';
-import CARREFOUR from '../adapters/carrefour-es.js';
+import { getAdapters, removeSource } from '../adapters/index.js';
+import { needsConsent, hasConsent, grantConsent, consentDescriptor } from '../lib/consent.js';
+import { exportSource, buildShareUrl, importFromFile } from '../registry/share.js';
+import { saveSource } from '../adapters/index.js';
 
-const CATALOG = { 'carrefour-es': CARREFOUR };
+let CATALOG = {};
 const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// Mandatory consent screen before a community / cross-domain source is enabled. Dynamic host
+// values go in via textContent (never innerHTML) so nothing from a source can inject markup.
+function confirmConsent(desc) {
+  return new Promise((resolve) => {
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9999';
+    const box = document.createElement('div');
+    box.className = 'card';
+    box.style.cssText = 'max-width:540px;margin:16px';
+    const add = (tag, txt, css, cls) => { const e = document.createElement(tag); if (txt != null) e.textContent = txt; if (css) e.style.cssText = css; if (cls) e.className = cls; box.append(e); return e; };
+    add('h3', t('consent_title', [desc.name]));
+    add('p', t('consent_reads', [desc.matchHosts.join(', ') || desc.domain]));
+    add('p', t('consent_replays', [desc.apiHost || desc.domain]));
+    if (desc.crossDomain.length) add('p', t('consent_offsite_warn', [desc.crossDomain.join(', ')]), 'color:#c0392b;font-weight:600;border:1px solid #c0392b;border-radius:8px;padding:8px 10px');
+    add('p', `${t(desc.trust === 'first-party' ? 'trust_first_party' : 'trust_community')} · ${desc.categories.join(', ')}`, null, 'muted');
+    const row = add('div', null, 'margin-top:14px;justify-content:flex-end;gap:8px', 'row');
+    const cancel = document.createElement('button'); cancel.textContent = t('consent_cancel');
+    const ok = document.createElement('button'); ok.className = 'primary'; ok.textContent = t('consent_accept');
+    row.append(cancel, ok); ov.append(box); document.body.append(ov);
+    const done = (v) => { ov.remove(); resolve(v); };
+    cancel.onclick = () => done(false); ok.onclick = () => done(true);
+    ov.onclick = (e) => { if (e.target === ov) done(false); };
+  });
+}
 
 async function render() {
   const cfg = await getConfig();
+  CATALOG = await getAdapters();
 
   $('#ds').innerHTML = Object.values(CATALOG).map((a) => {
     const on = cfg.datasources.some((d) => d.id === a.id && d.enabled);
-    return `<div class="card row"><b style="flex:1">${a.name}</b><code>${a.id}</code>
-      <button data-ds="${a.id}" data-on="${on ? 1 : 0}" class="${on ? '' : 'primary'}">${on ? t('deactivate') : t('activate')}</button></div>`;
+    const community = a.trust !== 'first-party';
+    const trust = community ? t('trust_community') : t('trust_first_party');
+    const extra = community
+      ? `<button data-exp="${a.id}">${t('export_source')}</button><button data-share="${a.id}">${t('share_source')}</button><button data-delsrc="${a.id}">${t('remove')}</button>`
+      : '';
+    return `<div class="card row"><b style="flex:1">${esc(a.name)}</b><span class="pill type">${trust}</span><code>${esc(a.id)}</code>
+      <button data-ds="${esc(a.id)}" data-on="${on ? 1 : 0}" class="${on ? '' : 'primary'}">${on ? t('deactivate') : t('activate')}</button>${extra}</div>`;
   }).join('');
+  $('#ds').querySelectorAll('[data-exp]').forEach((b) => b.onclick = () => exportSource(CATALOG[b.dataset.exp]));
+  $('#ds').querySelectorAll('[data-share]').forEach((b) => b.onclick = () => window.open(buildShareUrl(CATALOG[b.dataset.share]), '_blank', 'noopener'));
+  $('#ds').querySelectorAll('[data-delsrc]').forEach((b) => b.onclick = async () => {
+    await remove('datasources', b.dataset.delsrc);
+    await removeSource(b.dataset.delsrc);
+    render();
+  });
   $('#ds').querySelectorAll('[data-ds]').forEach((b) => b.onclick = async () => {
-    if (b.dataset.on === '1') await remove('datasources', b.dataset.ds);
-    else await upsert('datasources', { id: b.dataset.ds, adapter: b.dataset.ds, enabled: true, options: {} });
+    if (b.dataset.on === '1') { await remove('datasources', b.dataset.ds); return render(); }
+    const adapter = CATALOG[b.dataset.ds];
+    if (adapter && needsConsent(adapter) && !(await hasConsent(adapter))) {
+      if (!(await confirmConsent(consentDescriptor(adapter)))) return; // declined → do not enable
+      await grantConsent(adapter);
+    }
+    await upsert('datasources', { id: b.dataset.ds, adapter: b.dataset.ds, enabled: true, options: {} });
     render();
   });
 
@@ -120,6 +167,19 @@ if (!window.showDirectoryPicker) {
 }
 $('#stype').onchange = renderFields;
 $('#addsink').onclick = addSink;
+$('#create').onclick = () => { location.href = 'author.html'; };
+$('#browse').onclick = () => { location.href = 'marketplace.html'; };
+$('#import').onclick = () => $('#importfile').click();
+$('#importfile').onchange = async (e) => {
+  const file = e.target.files[0]; if (!file) return;
+  try {
+    const adapter = await importFromFile(file);
+    await saveSource(adapter);
+    alert(t('import_ok', [adapter.id]));
+    render();
+  } catch (err) { alert(t('import_err', [err.message])); }
+  e.target.value = '';
+};
 renderFields();
 render();
 watchThemeIcon();

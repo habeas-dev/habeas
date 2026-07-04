@@ -201,9 +201,18 @@ disponible para cualquier Route.
 - **SEC-2 Sin credenciales.** Nunca se almacenan usuario/contraseña del servicio; se depende de la sesión viva.
 - **SEC-3 Capability scope.** Cada adaptador declara y queda confinado a sus hosts de lectura y su sink de escritura; el Core lo hace cumplir.
 - **SEC-4 Adaptadores como datos.** Al no ejecutar JS remoto (además obligado por MV3), un adaptador malicioso no puede exfiltrar libremente; su superficie es el formato declarativo revisado.
-- **SEC-5 Niveles de confianza de adaptador.**
-  - *Comunidad* (tickets, facturas, servicios de bajo riesgo): revisados y firmados en el repo.
-  - *First-party* (**banca, tarjetas, inversión**): **solo** mantenidos y firmados por el proyecto, con listón de revisión mayor. **No** se aceptan adaptadores financieros de la comunidad sin auditoría.
+- **SEC-5 Frontera de confianza = mismo dominio registrable + niveles de confianza.**
+  - **Guard forzado por código:** todo host que una fuente toca (`match`, `api.host`) debe compartir
+    un único eTLD+1, de modo que la sesión capturada solo pueda reenviarse al *mismo* servicio del
+    que se capturó. Las excepciones cross-domain (p.ej. login en `banco.es`, API en `bancoapi.com`)
+    requieren un allowlist explícito `crossDomainHosts` que dispara una **pantalla de consentimiento
+    off-site** destacada. Esto hace la exfiltración de credenciales estructuralmente imposible,
+    independientemente de la categoría. Implementado en `adapters/validate.js#checkHosts` +
+    `lib/consent.js`.
+  - **Niveles de confianza como *etiqueta*, no como bloqueo de categoría:** *first-party* (auditado y
+    mantenido por el proyecto) vs *comunidad*. Las fuentes financieras de la comunidad **se aceptan**
+    bajo el guard + consentimiento — una fuente solo *describe* cómo un servicio estructura los datos
+    propios del usuario, información que cualquier cliente de ese servicio puede obtener.
 - **SEC-6 Datos sensibles.** Para dominios financieros/salud, reforzar local-first y minimización; el envío a un consumidor es opt-in por-adaptador y por-envío.
 - **SEC-7 Transparencia.** Log local auditable de cada lectura y envío.
 

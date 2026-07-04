@@ -5,6 +5,10 @@ export default {
   id: 'carrefour-es',
   name: 'Carrefour España — tickets',
   service: 'carrefour',
+  // Trust tier + registrable domain. All hosts this source touches share this eTLD+1, so it
+  // satisfies the same-domain security guard without a cross-domain exception.
+  trust: 'first-party',
+  domain: 'carrefour.es',
   // Categories this source can emit (for sink compatibility) + how to categorize each doc.
   categories: ['grocery', 'fuel', 'retail'],
   categorize: {
@@ -21,8 +25,12 @@ export default {
     host: 'https://pro.api.carrefour.es',
     list: {
       path: '/md-purchasesAccount-v1/purchases',
+      paging: 'offsets',
       itemsPath: 'purchases',
       offsetsPath: 'offsets',
+      // Multi-offset pagination seed (tickets + online orders); merged with the returned offsets.
+      initialOffsets: { ticketOffset: 0, atgfOffset: 0, atgnfOffset: 0, currentTickets: 0, currentAtgfOrders: 0, currentAtgnfOrders: 0 },
+      range: { from: 'from', to: 'to' },
       window: '3y',
       params: { count: 50 },
     },

@@ -8,7 +8,8 @@ import { deliveredSet, markDelivered, appendLog } from './lib/state.js';
 import { listInventory, fetchPdf } from './runtime/inventory.js';
 import { writeToSink } from './sinks/sinks.js';
 import { acceptsDoc } from './sinks/format.js';
-import { ADAPTERS } from './adapters/index.js';
+import { getAdapters } from './adapters/index.js';
+import { hasConsent } from './lib/consent.js';
 import { badgeWorking, badgeCount, badgeError, badgeClear } from './lib/badge.js';
 import { t } from './lib/i18n.js';
 
@@ -16,15 +17,27 @@ chrome.action.onClicked.addListener(() => {
   chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/popup.html') });
 });
 
+const SAMPLE_CAP = 60;
+
 chrome.runtime.onMessage.addListener((msg) => {
-  if (!msg || msg.type !== 'habeas:auth' || !msg.host) return;
-  const key = 'auth:' + msg.host;
-  chrome.storage.session.get(key).then((o) => {
-    const cur = o[key] || { merged: {}, byPath: {} };
-    cur.merged = { ...cur.merged, ...msg.headers };
-    if (msg.path) cur.byPath[msg.path] = { ...(cur.byPath[msg.path] || {}), ...msg.headers };
-    chrome.storage.session.set({ [key]: cur }).then(() => maybeAutoRun(msg.host));
-  });
+  if (!msg) return;
+  if (msg.type === 'habeas:auth' && msg.host) {
+    const key = 'auth:' + msg.host;
+    chrome.storage.session.get(key).then((o) => {
+      const cur = o[key] || { merged: {}, byPath: {} };
+      cur.merged = { ...cur.merged, ...msg.headers };
+      if (msg.path) cur.byPath[msg.path] = { ...(cur.byPath[msg.path] || {}), ...msg.headers };
+      chrome.storage.session.set({ [key]: cur }).then(() => maybeAutoRun(msg.host));
+    });
+  } else if (msg.type === 'habeas:sample' && msg.domain && msg.sample) {
+    // Record-mode: keep a rolling, de-duplicated (by path) buffer of observed responses.
+    const key = 'samples:' + msg.domain;
+    chrome.storage.session.get(key).then((o) => {
+      const arr = (o[key] || []).filter((x) => x.url !== msg.sample.url);
+      arr.unshift(msg.sample);
+      chrome.storage.session.set({ [key]: arr.slice(0, SAMPLE_CAP) });
+    });
+  }
 });
 
 const DEBOUNCE_MS = 10 * 60 * 1000;
@@ -32,11 +45,13 @@ const running = new Set();
 
 async function maybeAutoRun(host) {
   const cfg = await getConfig();
+  const adapters = await getAdapters();
   for (const route of (cfg.routes || []).filter((r) => r.mode === 'auto')) {
     if (running.has(route.id)) continue;
     const ds = cfg.datasources.find((d) => d.id === route.datasource && d.enabled);
-    const adapter = ds && ADAPTERS[ds.adapter];
+    const adapter = ds && adapters[ds.adapter];
     if (!adapter || hostOf(adapter) !== host) continue;
+    if (!(await hasConsent(adapter))) continue; // community/cross-domain source not yet consented
     const sink = cfg.sinks.find((s) => s.id === route.sink);
     if (!sink || sink.type === 'download' || sink.type === 'local-folder') continue; // need a page
     const dk = 'autoLast:' + route.id;
