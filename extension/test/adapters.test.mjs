@@ -36,3 +36,10 @@ test('adapter with a function value is rejected (data only)', () => {
   const withCode = { ...carrefour, categorize: () => 'x' };
   assert.equal(validateAdapter(withCode).ok, false);
 });
+
+test('http api.host allowed only for loopback (dev/testing sources)', () => {
+  const local = { ...carrefour, id: 'local-mock', domain: 'localhost', match: ['http://localhost/*'], api: { ...carrefour.api, host: 'http://localhost:8443' } };
+  assert.ok(validateAdapter(local).ok, validateAdapter(local).errors.join('; '));
+  const plainHttp = { ...carrefour, id: 'insecure', domain: 'shop.es', match: ['http://shop.es/*'], api: { ...carrefour.api, host: 'http://shop.es' } };
+  assert.equal(validateAdapter(plainHttp).ok, false);
+});

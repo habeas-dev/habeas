@@ -88,7 +88,9 @@ export function validateAdapter(adapter) {
     req(typeof adapter.schema === 'string' && SCHEMA_RE.test(adapter.schema), 'schema like "receipt@1" required');
     req(Array.isArray(adapter.categories) && adapter.categories.length > 0, 'categories[] required');
     const api = adapter.api || {};
-    req(typeof api.host === 'string' && /^https:\/\//.test(api.host), 'api.host must be an https URL');
+    // https everywhere; http only for loopback (local dev/testing sources — can't be MITM'd off-box).
+    const okScheme = typeof api.host === 'string' && (/^https:\/\//.test(api.host) || /^http:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/.test(api.host));
+    req(okScheme, 'api.host must be https (http allowed only for loopback)');
     const list = api.list || {};
     req(typeof list.path === 'string' && list.path.startsWith('/'), 'api.list.path required');
     req(typeof list.itemsPath === 'string' && list.itemsPath.length > 0, 'api.list.itemsPath required');
