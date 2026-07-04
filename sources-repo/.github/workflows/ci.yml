@@ -1,0 +1,59 @@
+name: Sources CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - name: Validate sources (schema + same-domain guard)
+        run: npm run validate
+
+  publish:
+    # Build the catalog and publish sources/ (+ index.json) to Pages on merge to main.
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - name: Build index.json
+        run: npm run build-index
+        env:
+          SOURCES_BASE: https://sources.habeas.dev
+      - name: Assemble Pages site (served at sources.habeas.dev)
+        run: |
+          mkdir -p _site
+          cp sources/*.json _site/          # index.json + each <id>.json
+          cp schema/adapter.schema.json _site/adapter.schema.json
+          echo 'sources.habeas.dev' > _site/CNAME
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4

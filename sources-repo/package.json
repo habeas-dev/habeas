@@ -1,0 +1,15 @@
+{
+  "name": "habeas-sources",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Community source registry for the Habeas browser extension — declarative sources (DATA, not code).",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "validate": "node scripts/ci-validate.mjs",
+    "build-index": "node scripts/build-index.mjs"
+  },
+  "devDependencies": {
+    "ajv": "^8.0.0"
+  }
+}
