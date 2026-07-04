@@ -1,6 +1,7 @@
 import { getConfig, upsert, remove } from '../lib/config.js';
 import { setSecret } from '../lib/secrets.js';
 import { connectDrive, redirectUri } from '../sinks/drive.js';
+import { watchThemeIcon } from '../lib/theme-icon.js';
 import CARREFOUR from '../adapters/carrefour-es.js';
 
 const CATALOG = { 'carrefour-es': CARREFOUR };
@@ -90,3 +91,4 @@ $('#stype').onchange = renderFields;
 $('#addsink').onclick = addSink;
 renderFields();
 render();
+watchThemeIcon();

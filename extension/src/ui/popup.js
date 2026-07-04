@@ -3,6 +3,7 @@ import { listInventory, fetchPdf } from '../runtime/inventory.js';
 import { writeToSink } from '../sinks/sinks.js';
 import { deliveredSet, markDelivered, getLog, appendLog } from '../lib/state.js';
 import { badgeWorking, badgeClear } from '../lib/badge.js';
+import { watchThemeIcon } from '../lib/theme-icon.js';
 import CARREFOUR from '../adapters/carrefour-es.js';
 
 const ADAPTERS = { 'carrefour-es': CARREFOUR };
@@ -24,6 +25,7 @@ async function init() {
   $('#send').onclick = onSend;
   $('#sink').onchange = () => render();
   await badgeClear();
+  watchThemeIcon();
   await renderActivity();
   chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch['habeas:log']) renderActivity(); });
 }
