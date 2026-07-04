@@ -36,6 +36,7 @@ async function onList() {
   if (!adapter) { $('#status').textContent = 'No hay datasource seleccionado.'; return; }
   const auth = await getAuth(adapter);
   if (!auth) { $('#status').textContent = 'Abre carrefour.es → Mis compras para capturar tu sesión, y reintenta.'; return; }
+  console.debug('[Habeas] auth headers sent:', Object.keys(auth).join(', '));
   $('#status').textContent = 'Listando…';
   try {
     inventory = await listInventory(adapter, auth);

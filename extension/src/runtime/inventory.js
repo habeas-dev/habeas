@@ -11,7 +11,7 @@ export async function listInventory(adapter, auth) {
   for (let g = 0; g < 100; g++) {
     const qs = new URLSearchParams({ from, to: now, count: a.list.params.count, ...offs });
     const res = await fetch(a.host + a.list.path + '?' + qs, { headers: auth });
-    if (!res.ok) throw new Error('list ' + res.status);
+    if (!res.ok) throw new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160));
     const data = await res.json();
     const items = data[a.list.itemsPath] || [];
     const fresh = items.filter((p) => !seen.has(p[f.externalId]));
@@ -26,7 +26,7 @@ export async function listInventory(adapter, auth) {
 export async function fetchPdf(adapter, auth, externalId) {
   const url = adapter.api.host + adapter.api.pdf.path.replace('{externalId}', encodeURIComponent(externalId));
   const res = await fetch(url, { headers: auth });
-  if (!res.ok) throw new Error('pdf ' + res.status);
+  if (!res.ok) throw new Error('pdf ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160));
   return await res.blob();
 }
 
