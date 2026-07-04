@@ -6,12 +6,9 @@ import { chrome } from '../lib/ext.js';
 import { validateAdapter } from './validate.js';
 import carrefour from './carrefour-es.js';
 
-// Bundled, project-maintained sources (working, API-verified).
+// Bundled, project-maintained sources (working, API-verified). Only real, verified sources ship
+// here; everything else is user/community DATA loaded from storage at runtime.
 export const BUILTIN = [carrefour];
-
-// Reference design skeletons (NOT API-verified) — kept out of the live catalog. They exist to
-// exercise the generalized runtime + validator and to seed the marketplace / record-mode UX.
-export { EXAMPLE_ADAPTERS } from './examples/index.js';
 
 const STORE_KEY = 'habeas:sources';
 

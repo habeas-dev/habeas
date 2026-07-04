@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { validateAdapter, checkHosts, registrableDomain } from '../src/adapters/validate.js';
 import carrefour from '../src/adapters/carrefour-es.js';
-import { EXAMPLE_ADAPTERS } from '../src/adapters/examples/index.js';
+import { EXAMPLE_ADAPTERS } from './fixtures/index.js';
 
 test('all bundled + example adapters validate', () => {
   for (const a of [carrefour, ...EXAMPLE_ADAPTERS]) {
