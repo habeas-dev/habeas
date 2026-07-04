@@ -41,8 +41,8 @@ function renderFields() {
   if (t === 'http') {
     $('#sfields').innerHTML = ' id:<input id="sid" size="8"> url:<input id="surl" size="26"> token:<input id="stok" size="12">';
   } else if (t === 'drive') {
-    $('#sfields').innerHTML = ' id:<input id="sid" size="8"> Client ID:<input id="sclient" size="30">'
-      + `<div style="margin-top:6px"><small>Redirect URI para Google Console (con la barra final):</small><br><code>${redirectUri()}</code></div>`;
+    $('#sfields').innerHTML = ' id:<input id="sid" size="8"> <small>Client ID (opcional):</small><input id="sclient" size="30">'
+      + `<div style="margin-top:6px"><small>Vacío = usa el client de Habeas. Redirect URI para Google Console (con la barra final):</small><br><code>${redirectUri()}</code></div>`;
   } else {
     $('#sfields').innerHTML = ' id:<input id="sid" size="8">';
   }
@@ -57,7 +57,7 @@ async function addSink() {
     sink.tokenRef = 'secret://' + id;
     if ($('#stok').value.trim()) await setSecret(id, $('#stok').value.trim());
   } else if (t === 'drive') {
-    sink.clientId = ($('#sclient').value || '').trim();
+    sink.clientId = ($('#sclient').value || '').trim() || undefined;
     sink.rootFolderName = 'Habeas';
   }
   await upsert('sinks', sink);
