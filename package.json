@@ -1,7 +1,7 @@
 {
   "name": "habeas",
   "version": "0.0.1",
-  "description": "Reclaim your own personal data from services that lock it behind non-automatable walls — a browser extension that extracts your data within your own session. Placeholder release; under active design.",
+  "description": "Reclaim your own personal data from services that lock it behind non-automatable walls — a browser extension that extracts your data within your own session.",
   "license": "AGPL-3.0-or-later",
   "keywords": [
     "personal-data",
@@ -21,6 +21,14 @@
     "url": "https://github.com/habeas-dev/habeas/issues"
   },
   "author": "David Marín",
+  "scripts": {
+    "lint": "web-ext lint --source-dir extension",
+    "build": "web-ext build --source-dir extension --artifacts-dir dist --overwrite-dest",
+    "package": "npm run lint && npm run build"
+  },
+  "devDependencies": {
+    "web-ext": "^8.3.0"
+  },
   "files": [
     "README.md"
   ]
