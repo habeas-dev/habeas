@@ -7,6 +7,7 @@ import { deliveredSet, markDelivered, appendLog } from './lib/state.js';
 import { listInventory, fetchPdf } from './runtime/inventory.js';
 import { writeToSink } from './sinks/sinks.js';
 import { ADAPTERS } from './adapters/index.js';
+import { badgeWorking, badgeCount, badgeError, badgeClear } from './lib/badge.js';
 
 chrome.action.onClicked.addListener(() => {
   chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/popup.html') });
@@ -55,35 +56,29 @@ async function authFor(adapter) {
 
 async function runRoute(ds, adapter, sink) {
   const base = { kind: 'auto', datasource: ds.id, sink: sink.id };
+  await badgeWorking();
   try {
     const auth = await authFor(adapter);
-    if (!auth) { await appendLog({ ...base, status: 'sin sesión' }); return; }
+    if (!auth) { await appendLog({ ...base, status: 'sin sesión' }); await badgeClear(); return; }
     const all = await listInventory(adapter, auth);
     const delivered = await deliveredSet(ds.id, sink.id);
     const fresh = all.filter((d) => !delivered[d.externalId]);
-    if (!fresh.length) { await appendLog({ ...base, status: 'sin novedades', new: 0 }); return; }
+    if (!fresh.length) { await appendLog({ ...base, status: 'sin novedades', new: 0 }); await badgeClear(); return; }
     const files = new Map();
     for (const d of fresh) { try { files.set(d.externalId, await fetchPdf(adapter, auth, d.externalId)); } catch (e) { /* no PDF */ } }
     await writeToSink(sink, fresh, files, { service: adapter.service || ds.adapter, interactive: false });
     await markDelivered(ds.id, sink.id, fresh.map((d) => d.externalId));
     await appendLog({ ...base, status: 'ok', new: fresh.length });
     notify(`${fresh.length} documento(s) nuevo(s) → ${sink.id}`);
-    await setBadge(fresh.length);
+    await badgeCount(fresh.length);
   } catch (e) {
     await appendLog({ ...base, status: 'error', error: (e && e.message) || String(e) });
     notify('Auto-sync error: ' + ((e && e.message) || e));
+    await badgeError();
   }
 }
 
 function notify(message) {
-  try { chrome.notifications.create({ type: 'basic', iconUrl: 'icon.png', title: 'Habeas', message }); }
+  try { chrome.notifications.create({ type: 'basic', iconUrl: 'icon-128.png', title: 'Habeas', message }); }
   catch (e) {}
-}
-async function setBadge(n) {
-  try {
-    if (n > 0) {
-      await chrome.action.setBadgeText({ text: String(n) });
-      await chrome.action.setBadgeBackgroundColor({ color: '#0a0' });
-    }
-  } catch (e) {}
 }
