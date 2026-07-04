@@ -145,5 +145,16 @@
   "market_installed": { "message": "Installed" },
   "market_installing": { "message": "Installing…" },
   "market_install_ok": { "message": "Installed “$ID$”. Enable it in Settings.", "placeholders": { "id": { "content": "$1" } } },
-  "market_install_err": { "message": "Install failed: $MSG$", "placeholders": { "msg": { "content": "$1" } } }
+  "market_install_err": { "message": "Install failed: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
+
+  "market_details": { "message": "Ratings & comments" },
+  "market_rate": { "message": "Your rating:" },
+  "market_comments": { "message": "Comments" },
+  "market_no_comments": { "message": "No comments yet." },
+  "market_author_ph": { "message": "Name (optional)" },
+  "market_comment_ph": { "message": "Write a comment…" },
+  "market_post": { "message": "Post" },
+  "market_rated": { "message": "Thanks for rating!" },
+  "market_posted": { "message": "Comment posted." },
+  "market_social_off": { "message": "Ratings service unavailable right now." }
 }

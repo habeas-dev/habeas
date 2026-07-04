@@ -24,9 +24,16 @@ try {
   check('carrefour-es appears from the live index', (await carrefour.count()) === 1);
   const status = (await page.locator('#status').textContent())?.trim();
   check('status reflects a loaded registry', /\d/.test(status || ''), status || '');
-  const disabled = await carrefour.locator('button').isDisabled();
-  const btn = (await carrefour.locator('button').textContent())?.trim();
+  const disabled = await carrefour.locator('[data-install]').isDisabled();
+  const btn = (await carrefour.locator('[data-install]').textContent())?.trim();
   check('built-in source shown as already installed (button disabled)', disabled, btn || '');
+
+  // Social panel must render fail-soft even though api.habeas.dev isn't deployed yet.
+  await carrefour.locator('[data-more]').click();
+  const panel = carrefour.locator('[data-panel]');
+  await panel.locator('[data-star]').first().waitFor({ timeout: 8000 }).catch(() => {});
+  const stars = await panel.locator('[data-star]').count();
+  check('ratings/comments panel renders (fail-soft, service offline)', stars === 5, `${stars} stars, comments box present`);
 } finally {
   await ctx.close();
 }

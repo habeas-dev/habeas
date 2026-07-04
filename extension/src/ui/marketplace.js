@@ -1,6 +1,6 @@
 import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
-import { fetchIndex, installFromEntry, getRatings } from '../registry/client.js';
+import { fetchIndex, installFromEntry, getRatings, postRating, getComments, postComment } from '../registry/client.js';
 import { getAdapters } from '../adapters/index.js';
 
 const $ = (s) => document.querySelector(s);
@@ -45,18 +45,63 @@ function render() {
     const installed = !!INSTALLED[e.id];
     const trust = e.trust === 'first-party' ? t('trust_first_party') : t('trust_community');
     const offsite = (e.crossDomain && e.crossDomain.length) ? `<span class="warn" title="${esc(e.crossDomain.join(', '))}">${t('market_offsite')}</span>` : '';
-    return `<div class="card row" data-id="${esc(e.id)}">
-      <div style="flex:1">
-        <b>${esc(e.name || e.id)}</b> <code>${esc(e.id)}</code><br>
-        <span class="muted">${esc((e.categories || []).join(', '))} · ${esc(e.domain || '')}</span>
-        <span class="pill type">${trust}</span> ${offsite}
-        <span class="rating muted" data-rate="${esc(e.id)}"></span>
+    return `<div class="card" data-id="${esc(e.id)}">
+      <div class="row">
+        <div style="flex:1">
+          <b>${esc(e.name || e.id)}</b> <code>${esc(e.id)}</code><br>
+          <span class="muted">${esc((e.categories || []).join(', '))} · ${esc(e.domain || '')}</span>
+          <span class="pill type">${trust}</span> ${offsite}
+          <span class="rating muted" data-rate="${esc(e.id)}"></span>
+        </div>
+        <button data-more="${esc(e.id)}">${t('market_details')}</button>
+        <button data-install="${esc(e.id)}" ${installed ? 'disabled' : ''}>${installed ? t('market_installed') : t('market_install')}</button>
       </div>
-      <button data-install="${esc(e.id)}" ${installed ? 'disabled' : ''}>${installed ? t('market_installed') : t('market_install')}</button>
+      <div class="panel" data-panel="${esc(e.id)}" hidden style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px"></div>
     </div>`;
   }).join('');
   $('#list').querySelectorAll('[data-install]').forEach((b) => b.onclick = () => onInstall(b.dataset.install));
+  $('#list').querySelectorAll('[data-more]').forEach((b) => b.onclick = () => toggleDetails(b.dataset.more));
   list.forEach(fillRating);
+}
+
+const star = (on) => (on ? '★' : '☆');
+
+async function toggleDetails(id) {
+  const panel = document.querySelector(`[data-panel="${id}"]`);
+  if (!panel) return;
+  if (!panel.hidden) { panel.hidden = true; return; }
+  panel.hidden = false;
+  await renderDetails(id, panel);
+}
+
+async function renderDetails(id, panel) {
+  const [rating, comments] = await Promise.all([getRatings(id), getComments(id)]);
+  const stars = [1, 2, 3, 4, 5].map((n) => `<button class="starbtn" data-star="${n}" title="${n}" style="background:none;border:none;cursor:pointer;font-size:18px;padding:0 1px;color:#e0a400">${star(rating && rating.avg >= n)}</button>`).join('');
+  const clist = comments.length
+    ? comments.map((c) => `<div style="margin:6px 0"><span class="muted">${esc(c.author || 'anon')} · ${esc((c.at || '').slice(0, 10))}</span><br>${esc(c.text || '')}</div>`).join('')
+    : `<p class="muted">${t('market_no_comments')}</p>`;
+  panel.innerHTML = `
+    <div class="row"><span>${t('market_rate')}</span> <span data-stars>${stars}</span></div>
+    <div class="section-title" style="margin-top:8px"><h3>${t('market_comments')}</h3></div>
+    <div data-clist>${clist}</div>
+    <div class="row" style="margin-top:8px">
+      <input data-cauthor size="12" placeholder="${esc(t('market_author_ph'))}">
+      <input data-ctext size="30" placeholder="${esc(t('market_comment_ph'))}">
+      <button data-cpost>${t('market_post')}</button>
+    </div>
+    <span class="muted" data-dstatus></span>`;
+  const setStatus = (m) => { const s = panel.querySelector('[data-dstatus]'); if (s) s.textContent = m; };
+  panel.querySelectorAll('[data-star]').forEach((b) => b.onclick = async () => {
+    try { await postRating(id, Number(b.dataset.star)); setStatus(t('market_rated')); await renderDetails(id, panel); fillRating({ id }); }
+    catch (e) { setStatus(t('market_social_off')); }
+  });
+  panel.querySelector('[data-cpost]').onclick = async () => {
+    const text = panel.querySelector('[data-ctext]').value.trim();
+    const author = panel.querySelector('[data-cauthor]').value.trim();
+    if (!text) return;
+    try { await postComment(id, text, author || undefined); setStatus(t('market_posted')); await renderDetails(id, panel); }
+    catch (e) { setStatus(t('market_social_off')); }
+  };
 }
 
 async function fillRating(e) {

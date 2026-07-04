@@ -1,0 +1,18 @@
+{
+  "name": "habeas-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Ratings & comments service for Habeas community sources (Cloudflare Worker + D1).",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute habeas-api --file=schema.sql",
+    "db:init:remote": "wrangler d1 execute habeas-api --remote --file=schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}
