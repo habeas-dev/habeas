@@ -20,6 +20,9 @@ jobs:
 
       - run: npm install
 
+      - name: Test (node:test)
+        run: npm test
+
       - name: Lint (web-ext)
         run: npm run lint
         continue-on-error: true
