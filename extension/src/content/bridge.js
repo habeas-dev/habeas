@@ -1,6 +1,7 @@
 // Isolated content script: injects the page hook and relays captured auth (tagged by
 // endpoint path) to the background, which stores it in storage.session (never on disk).
 (function () {
+  const chrome = globalThis.browser ?? globalThis.chrome;
   const s = document.createElement('script');
   s.src = chrome.runtime.getURL('src/content/hook.js');
   (document.head || document.documentElement).appendChild(s);

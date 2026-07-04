@@ -2,6 +2,7 @@
 // user's own login, runs any `mode: auto` route: list -> only NEW (per ledger) -> send to
 // a SW-runnable sink (drive/http) -> mark -> notify. This is triggered by the user's own
 // login, not a background job while they're away.
+import { chrome } from './lib/ext.js';
 import { getConfig } from './lib/config.js';
 import { deliveredSet, markDelivered, appendLog } from './lib/state.js';
 import { listInventory, fetchPdf } from './runtime/inventory.js';

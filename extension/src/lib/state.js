@@ -1,3 +1,4 @@
+import { chrome } from './ext.js';
 // Delivery ledger — tracks which documents have already been sent to each sink, so we
 // don't re-deliver them. Keyed by "<datasourceId>::<sinkId>" -> { externalId: isoTime }.
 // This is runtime state (storage.local), separate from config and secrets.

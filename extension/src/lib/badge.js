@@ -1,3 +1,4 @@
+import { chrome } from './ext.js';
 // Toolbar action badge states, shared by auto (background) and manual (popup) runs.
 async function set(text, bg, fg) {
   try {

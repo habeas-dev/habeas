@@ -1,3 +1,4 @@
+import { chrome } from '../lib/ext.js';
 import { getConfig, upsert, remove } from '../lib/config.js';
 import { setSecret } from '../lib/secrets.js';
 import { connectDrive, redirectUri } from '../sinks/drive.js';
@@ -32,6 +33,7 @@ async function render() {
     || `<p class="muted">${t('no_sinks')}</p>`;
   $('#sinks').querySelectorAll('[data-del]').forEach((b) => b.onclick = async () => { await remove('sinks', b.dataset.del); render(); });
   $('#sinks').querySelectorAll('[data-folder]').forEach((b) => b.onclick = async () => {
+    if (!window.showDirectoryPicker) { alert(t('fs_unsupported')); return; }
     try {
       const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
       await putHandle('dir:' + b.dataset.folder, handle);
@@ -94,6 +96,7 @@ async function addSink() {
     sink.clientId = ($('#sclient').value || '').trim() || undefined;
     sink.rootFolderName = 'Habeas';
   } else if (type === 'local-folder') {
+    if (!window.showDirectoryPicker) { alert(t('fs_unsupported')); return; }
     try {
       const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
       await putHandle('dir:' + id, handle);

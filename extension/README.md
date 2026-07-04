@@ -1,57 +1,71 @@
-# Habeas extension (MV3) — skeleton
+# Habeas extension (Manifest V3)
 
-Real extension scaffold with the configuration layer from spec §6.9 and the validated
-Carrefour datasource ported from the userscript prototype.
+Cross-browser (Chrome/Chromium **and** Firefox) MV3 extension that extracts your own data
+within your logged-in session and sends it to a destination you choose.
 
 ## Layout
 
 ```
 extension/
-├── manifest.json
+├── manifest.json              # MV3; dual background (service_worker + scripts) for Chrome/Firefox
+├── icon*.png / icon*.svg      # logo (light + dark variants)
+├── _locales/{en,es}/          # i18n messages (en = default)
+├── fonts/                     # self-hosted Space Grotesk + Inter (no third-party requests)
 └── src/
-    ├── background.js          # stores captured session auth in storage.session (never on disk)
+    ├── background.js          # captured auth (storage.session, never on disk) + auto-sync runner
     ├── lib/
+    │   ├── ext.js             # cross-browser API shim (browser ?? chrome)
     │   ├── config.js          # datasources / sinks / routes  (storage.local, versioned JSON)
     │   ├── secrets.js         # sink credentials, SEPARATE store, referenced by secret://
-    │   └── naming.js          # path templates {service}/{yyyy}/{date}-{externalId}.{ext}
-    ├── adapters/
-    │   └── carrefour-es.js    # adapter as data (host, endpoints, auth model, field map)
-    ├── content/
-    │   ├── bridge.js          # isolated: injects hook, relays captured auth to background
-    │   └── hook.js            # page context: captures the user JWT + CSRF headers
-    ├── runtime/
-    │   └── inventory.js       # list all documents + fetch a PDF (uses captured auth)
-    ├── sinks/
-    │   └── sinks.js           # download · local-folder (FS Access) · drive (stub) · http
-    └── ui/
-        ├── popup.html/js      # inventory + "Enviar a ▾" (inline destinations, FR-33)
-        └── options.html/js    # configure datasources & sinks
+    │   ├── state.js           # delivery ledger (dedupe) + activity log
+    │   ├── fs.js              # File System Access directory handles (IndexedDB)
+    │   ├── zip.js             # minimal store-only ZIP writer
+    │   ├── naming.js          # path templates {service}/{yyyy}/{date}-{externalId}.{ext}
+    │   ├── badge.js           # toolbar badge states (working/count/error)
+    │   ├── theme-icon.js      # light/dark toolbar icon
+    │   └── i18n.js            # applyI18n() + t()
+    ├── adapters/              # carrefour-es.js (data, not code) + index.js catalog
+    ├── content/               # bridge.js (isolated) + hook.js (page): capture JWT + CSRF
+    ├── runtime/inventory.js   # enumerate documents + fetch a PDF
+    ├── sinks/                 # sinks.js · format.js · drive.js (native Google Drive)
+    └── ui/                    # popup (app tab) + options + theme.css
 ```
 
-## What works now
+## Features
 
-- **Datasource Carrefour**: capture the user's session (JWT + CSRF) from carrefour.es and
-  enumerate all documents; download each ticket PDF.
-- **Sinks**: `download` and `local-folder` (File System Access — point it at a
-  Drive/Dropbox-synced folder for "cloud" with no OAuth). `http` posts to a consumer.
-- **Config**: enable datasources and add sinks from the options page; config in
-  `storage.local`, secrets in a separate store, session token only in `storage.session`.
+- **Data source: Carrefour España** — captures your session (JWT + CSRF) and enumerates all
+  documents; downloads each ticket PDF. Old tickets Carrefour no longer retains are exported
+  as metadata (in the manifest) only.
+- **Destinations:** `download` (one ZIP + manifest), `local-folder` (File System Access —
+  Chromium; point it at a synced folder for cloud), **`drive`** (native Google Drive,
+  OAuth `drive.file`), `http` (POST to your own endpoint).
+- **Inventory** with *new* / *already-sent* marks and per-sink **dedupe**; select New/All/None.
+- **Automatic mode:** when you log in, new documents sync to a Drive/HTTP destination
+  (desktop notification + activity log).
+- **Config** in `storage.local`, secrets in a separate store, session token only in
+  `storage.session`; UI in English/Spanish.
+
+## Load it (developer / unpacked)
+
+**Chrome / Chromium:** `chrome://extensions` → enable Developer mode → **Load unpacked** →
+pick this `extension/` folder.
+
+**Firefox:** `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on** → pick
+`manifest.json` (or the packaged `dist/habeas-<version>.zip`, built with `web-ext build`).
+
+Then: open the toolbar icon → **Settings**, enable the **Carrefour** data source and add a
+destination. Open `carrefour.es` → *Mis compras* (to capture your session), then in the
+Habeas tab → **List documents** → select → **Send to**.
+
+## Browser notes
+
+- **Local folder** sink needs the File System Access API → Chromium only; on Firefox use
+  Downloads or Drive (the option guards itself).
+- **Google Drive** OAuth uses `launchWebAuthFlow`; the redirect URL differs per browser, so
+  the shipped client currently targets Chromium. For Firefox, register its redirect URL
+  (shown in Settings) on your own OAuth client.
 
 ## Pending
 
-- **Native Google Drive sink** — needs the project's own OAuth client (scope `drive.file`,
-  which avoids Google's CASA assessment). The sink is stubbed until then.
-- **Firefox packaging** — this loads in Chromium (dev: load unpacked). Firefox needs a
-  background-script tweak and testing (Firefox-first is still the target for release).
-- Encrypt secrets at rest; Route entity with `mode: auto`.
-
-## Load it (Chromium, dev)
-
-1. `chrome://extensions` → enable Developer mode → **Load unpacked** → pick `extension/`.
-2. Open the popup → **Ajustes** → activate the **Carrefour** datasource and add a sink
-   (e.g. *Descargas* or *Carpeta local*).
-3. Open `carrefour.es` → **Mis compras** (so the extension captures your session).
-4. Open the popup → **Listar documentos** → select → **Enviar a**.
-
-> Note: for `local-folder`, the folder picker can dismiss the popup on some setups; if so,
-> use *Descargas* for now (the sink UX will move to a dedicated tab).
+- Encrypt secrets at rest; harden dynamic HTML (AMO review flags `innerHTML`).
+- More data sources; AMO / Chrome Web Store submission.

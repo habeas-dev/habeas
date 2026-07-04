@@ -1,3 +1,4 @@
+import { chrome } from './ext.js';
 // Theme-aware toolbar icon. Chrome has no native light/dark action icon, so we switch it
 // from a page context (which can read prefers-color-scheme). Called from the app tab and
 // the options page, so the icon matches the OS theme whenever Habeas is used. The dark
