@@ -14,6 +14,12 @@ let inventory = [];
 const log = (m) => { const el = $('#log'); if (el) el.textContent += m + '\n'; console.debug('[Habeas]', m); };
 const clearLog = () => { const el = $('#log'); if (el) el.textContent = ''; };
 const fmt = (n) => (typeof n === 'number' ? n.toFixed(2) + ' €' : '');
+const localWhen = (iso) => {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso || '';
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+};
 
 async function init() {
   applyI18n();
@@ -124,7 +130,7 @@ async function renderActivity() {
   const el = $('#activity'); if (!el) return;
   const entries = await getLog();
   el.innerHTML = entries.slice(0, 25).map((e) => {
-    const when = (e.t || '').replace('T', ' ').slice(0, 16);
+    const when = localWhen(e.t);
     const n = e.new ?? e.count;
     const detail = e.status === 'error' ? t('st_error', [e.error || ''])
       : e.status === 'none' ? t('st_none')
