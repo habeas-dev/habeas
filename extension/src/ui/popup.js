@@ -2,6 +2,7 @@ import { getConfig } from '../lib/config.js';
 import { listInventory, fetchPdf } from '../runtime/inventory.js';
 import { writeToSink } from '../sinks/sinks.js';
 import { deliveredSet, markDelivered, getLog, appendLog } from '../lib/state.js';
+import { badgeWorking, badgeClear } from '../lib/badge.js';
 import CARREFOUR from '../adapters/carrefour-es.js';
 
 const ADAPTERS = { 'carrefour-es': CARREFOUR };
@@ -22,7 +23,7 @@ async function init() {
   $('#list').onclick = onList;
   $('#send').onclick = onSend;
   $('#sink').onchange = () => render();
-  try { chrome.action.setBadgeText({ text: '' }); } catch (e) {}
+  await badgeClear();
   await renderActivity();
   chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch['habeas:log']) renderActivity(); });
 }
@@ -108,6 +109,7 @@ async function onSend() {
   }
 
   $('#status').textContent = 'Obteniendo ' + chosen.length + ' documentos…';
+  await badgeWorking();
   const files = new Map();
   const noPdf = [];
   const errors = [];
@@ -132,6 +134,7 @@ async function onSend() {
     const m = 'Sink error: ' + (e && e.message ? e.message : e);
     $('#status').textContent = m; log(m);
   }
+  await badgeClear();
 }
 
 const fmt = (n) => (typeof n === 'number' ? n.toFixed(2) + ' €' : '');
