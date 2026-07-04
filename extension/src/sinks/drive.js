@@ -4,11 +4,15 @@
 import { pathFor, buildManifest, jsonBlob, today } from './format.js';
 
 const SCOPE = 'https://www.googleapis.com/auth/drive.file';
+// Habeas ships with its own OAuth client (drive.file, non-sensitive → no CASA). A sink
+// may override with its own Client ID. Client IDs are public, not secrets.
+const DEFAULT_CLIENT_ID = '246972215385-rd4fbb1s7dmogjuqmmfhajcfe17hbubj.apps.googleusercontent.com';
+const cid = (clientId) => clientId || DEFAULT_CLIENT_ID;
 
 export function redirectUri() { return chrome.identity.getRedirectURL(); }
 
 export async function connectDrive(clientId, interactive = true) {
-  if (!clientId) throw new Error('falta el Client ID');
+  clientId = cid(clientId);
   const url = 'https://accounts.google.com/o/oauth2/v2/auth'
     + '?client_id=' + encodeURIComponent(clientId)
     + '&response_type=token'
@@ -25,6 +29,7 @@ export async function connectDrive(clientId, interactive = true) {
 }
 
 async function getToken(clientId, interactive) {
+  clientId = cid(clientId);
   const key = 'gdrive:' + clientId;
   const o = await chrome.storage.session.get(key);
   if (o[key] && o[key].expiresAt > Date.now()) return o[key].token;
@@ -33,7 +38,6 @@ async function getToken(clientId, interactive) {
 }
 
 export async function driveWrite(sink, docs, files, opts) {
-  if (!sink.clientId) throw new Error('Configura el Client ID de Google en Ajustes.');
   const token = await getToken(sink.clientId, true);
   const root = sink.rootFolderName || 'Habeas';
   const cache = {};
