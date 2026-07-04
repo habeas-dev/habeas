@@ -38,7 +38,7 @@ async function getToken(clientId, interactive) {
 }
 
 export async function driveWrite(sink, docs, files, opts) {
-  const token = await getToken(sink.clientId, true);
+  const token = await getToken(sink.clientId, opts.interactive !== false);
   const root = sink.rootFolderName || 'Habeas';
   const service = opts.service || 'documents';
   const cache = {};
