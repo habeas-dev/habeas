@@ -20,9 +20,40 @@ audited and contributed by the community. Output is **normalized per domain**
 
 ## Status
 
-🚧 **Early design.** This is a placeholder release to reserve the package name.
-The functional specification is being drafted. Follow along at
-[habeas.dev](https://habeas.dev).
+**Working alpha** — a real Manifest V3 extension (Chrome/Chromium **and** Firefox) with
+its first data source live end-to-end.
+
+**Data sources**
+
+- **Carrefour España** — in-store tickets (and online orders) from your logged-in account.
+
+**Destinations (sinks)**
+
+- **Downloads** — a single ZIP of PDFs + a normalized `manifest.json`.
+- **Local folder** — via File System Access; point it at a Drive/Dropbox-synced folder for cloud with zero setup.
+- **Google Drive** — native upload (OAuth scope `drive.file`) into a `Habeas/<service>/<year>/` tree + a cumulative manifest.
+- **HTTP** — POST normalized records + PDFs to your own endpoint (e.g. another app).
+
+**Also:** an inventory that marks *new* vs *already-sent* with per-sink dedupe; an
+**automatic mode** that syncs new documents to Drive/HTTP when you log in; a desktop
+notification + activity log; and a fully **internationalized** UI (English / Spanish).
+
+Site: [habeas.dev](https://habeas.dev). This is early software — expect rough edges.
+
+## Install (developer / unpacked)
+
+**Chrome / Chromium** — `chrome://extensions` → enable *Developer mode* → **Load unpacked**
+→ pick the [`extension/`](./extension) folder.
+
+**Firefox** — `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on** →
+pick `extension/manifest.json` (or the packaged `dist/habeas-<version>.zip`).
+
+Then open the toolbar icon → **Settings**, enable the **Carrefour** data source, and add a
+destination. See [`extension/README.md`](./extension/README.md) for details.
+
+> Browser notes: the **local folder** sink needs the File System Access API (Chromium;
+> Firefox falls back to Downloads / Drive), and the **Google Drive** OAuth redirect URL
+> differs per browser, so the shipped client currently targets Chromium.
 
 ## License
 

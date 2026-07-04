@@ -1,3 +1,4 @@
+import { chrome } from './ext.js';
 // i18n helper. Static text: mark elements with data-i18n (textContent) or data-i18n-html
 // (innerHTML). Dynamic text: t('key', [subs]). Uses chrome.i18n / _locales.
 export function t(key, subs) { return chrome.i18n.getMessage(key, subs) || key; }

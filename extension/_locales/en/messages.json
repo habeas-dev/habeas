@@ -40,6 +40,7 @@
   "configure_folder": { "message": "Set the destination folder in Settings." },
   "folder_denied": { "message": "Folder permission denied." },
   "change_folder": { "message": "Change folder" },
+  "fs_unsupported": { "message": "This browser can’t pick a folder (no File System Access). Use Downloads or Drive." },
   "generic_error": { "message": "Error: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
 
   "opt_title": { "message": "Settings" },

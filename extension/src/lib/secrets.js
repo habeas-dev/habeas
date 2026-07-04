@@ -1,3 +1,4 @@
+import { chrome } from './ext.js';
 // Secrets store — SEPARATE from config, referenced by `secret://<name>`.
 // Holds sink credentials (OAuth tokens, pairing tokens). NEVER referenced from an
 // adapter or included in exportable config.

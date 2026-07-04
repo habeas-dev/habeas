@@ -7,7 +7,7 @@
   "action": { "default_title": "Habeas", "default_icon": { "16": "icon-16.png", "48": "icon-48.png", "128": "icon-128.png" } },
   "icons": { "16": "icon-16.png", "48": "icon-48.png", "128": "icon-128.png" },
   "options_page": "src/ui/options.html",
-  "background": { "service_worker": "src/background.js", "type": "module" },
+  "background": { "service_worker": "src/background.js", "scripts": ["src/background.js"], "type": "module" },
   "permissions": ["storage", "downloads", "identity", "notifications"],
   "host_permissions": [
     "https://www.carrefour.es/*",
@@ -24,5 +24,11 @@
   "web_accessible_resources": [
     { "resources": ["src/content/hook.js"], "matches": ["https://www.carrefour.es/*"] }
   ],
-  "browser_specific_settings": { "gecko": { "id": "habeas@habeas.dev" } }
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "habeas@habeas.dev",
+      "strict_min_version": "128.0",
+      "data_collection_permissions": { "required": ["none"] }
+    }
+  }
 }

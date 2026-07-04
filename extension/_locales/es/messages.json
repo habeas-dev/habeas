@@ -40,6 +40,7 @@
   "configure_folder": { "message": "Configura la carpeta destino en Ajustes." },
   "folder_denied": { "message": "Permiso de carpeta denegado." },
   "change_folder": { "message": "Cambiar carpeta" },
+  "fs_unsupported": { "message": "Este navegador no puede elegir carpeta (sin File System Access). Usa Descargas o Drive." },
   "generic_error": { "message": "Error: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
 
   "opt_title": { "message": "Ajustes" },

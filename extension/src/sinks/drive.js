@@ -1,6 +1,7 @@
 // Native Google Drive sink. OAuth via chrome.identity.launchWebAuthFlow (cross-browser,
 // public client, implicit token flow — no client secret) with scope drive.file, which
 // grants access ONLY to files this app creates and needs no Google CASA assessment.
+import { chrome } from '../lib/ext.js';
 import { pathFor, toRecords, mergeRecords } from './format.js';
 
 const SCOPE = 'https://www.googleapis.com/auth/drive.file';
