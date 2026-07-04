@@ -3,6 +3,7 @@ import { listInventory, fetchPdf } from '../runtime/inventory.js';
 import { writeToSink } from '../sinks/sinks.js';
 import { deliveredSet, markDelivered, getLog, appendLog } from '../lib/state.js';
 import { badgeWorking, badgeClear } from '../lib/badge.js';
+import { getHandle, verifyPermission } from '../lib/fs.js';
 import { watchThemeIcon } from '../lib/theme-icon.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import CARREFOUR from '../adapters/carrefour-es.js';
@@ -89,8 +90,10 @@ async function onSend() {
 
   const opts = { service: adapter.service || ds.adapter };
   if (sink.type === 'local-folder') {
-    try { opts.dirHandle = await window.showDirectoryPicker(); }
-    catch (e) { $('#status').textContent = t('folder_cancelled'); return; }
+    const handle = await getHandle('dir:' + sink.id);
+    if (!handle) { $('#status').textContent = t('configure_folder'); return; }
+    if (!(await verifyPermission(handle))) { $('#status').textContent = t('folder_denied'); return; }
+    opts.dirHandle = handle;
   }
 
   $('#status').textContent = t('fetching', [String(chosen.length)]);
