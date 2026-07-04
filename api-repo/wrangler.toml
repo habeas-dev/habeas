@@ -1,0 +1,18 @@
+name = "habeas-api"
+main = "worker.mjs"
+compatibility_date = "2024-11-01"
+workers_dev = true
+
+# D1 binding — create the DB then paste its id here:
+#   wrangler d1 create habeas-api
+[[d1_databases]]
+binding = "DB"
+database_name = "habeas-api"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+# Serve at api.habeas.dev. Requires habeas.dev to be a zone in your Cloudflare account.
+# If it isn't, delete this block and instead add a Custom Domain (api.habeas.dev) to the Worker in
+# the Cloudflare dashboard, or use the *.workers.dev URL and set the extension's API_BASE to it.
+[[routes]]
+pattern = "api.habeas.dev/*"
+zone_name = "habeas.dev"

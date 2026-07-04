@@ -47,7 +47,7 @@ The extension consumes this via `registry/client.js#fetchIndex` and installs wit
 `installFromEntry` (download → `validateAdapter` → `saveSource`). Install never trusts the index
 blindly — it re-validates the downloaded JSON locally.
 
-## 2. The social service — `https://habeas.dev/api` (optional)
+## 2. The social service — `https://api.habeas.dev` (optional)
 
 The **only** mutable/social data. If absent, the marketplace still browses and installs; ratings
 and comments simply don't render. Client: `registry/client.js` (all calls fail soft).

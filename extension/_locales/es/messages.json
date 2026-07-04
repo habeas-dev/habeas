@@ -145,5 +145,16 @@
   "market_installed": { "message": "Instalada" },
   "market_installing": { "message": "Instalando…" },
   "market_install_ok": { "message": "Instalada «$ID$». Actívala en Ajustes.", "placeholders": { "id": { "content": "$1" } } },
-  "market_install_err": { "message": "Falló la instalación: $MSG$", "placeholders": { "msg": { "content": "$1" } } }
+  "market_install_err": { "message": "Falló la instalación: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
+
+  "market_details": { "message": "Valoraciones y comentarios" },
+  "market_rate": { "message": "Tu valoración:" },
+  "market_comments": { "message": "Comentarios" },
+  "market_no_comments": { "message": "Aún no hay comentarios." },
+  "market_author_ph": { "message": "Nombre (opcional)" },
+  "market_comment_ph": { "message": "Escribe un comentario…" },
+  "market_post": { "message": "Publicar" },
+  "market_rated": { "message": "¡Gracias por valorar!" },
+  "market_posted": { "message": "Comentario publicado." },
+  "market_social_off": { "message": "Servicio de valoraciones no disponible ahora." }
 }

@@ -9,7 +9,7 @@ import { validateAdapter } from '../adapters/validate.js';
 import { saveSource } from '../adapters/loader.js';
 
 const INDEX_URL = 'https://habeas-dev.github.io/sources/index.json';
-const API_BASE = 'https://habeas.dev/api';
+const API_BASE = 'https://api.habeas.dev';
 
 // index.json entry shape (see docs/registry.md):
 // { id, name, service, categories[], trust, domain, crossDomain[], version, url, updated }
