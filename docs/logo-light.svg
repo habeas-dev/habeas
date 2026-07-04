@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img">
+  <title>Habeas</title>
+  <desc>Dark-mode variant: the H is light so it reads on a dark toolbar; the arrow keeps the brand orange.</desc>
+  <rect x="22" y="22" width="20" height="84" rx="2" fill="#eef4f1"/>
+  <rect x="66" y="22" width="20" height="84" rx="2" fill="#eef4f1"/>
+  <rect x="38" y="54" width="52" height="18" fill="#e08a3c"/>
+  <polygon points="88,44 110,63 88,82" fill="#e08a3c"/>
+</svg>

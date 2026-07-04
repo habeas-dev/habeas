@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Habeas — your data, in your hands</title>
+  <meta name="description" content="Open-source browser extension that extracts your own data from services that lock it behind non-automatable walls — within your own session." />
+  <link rel="icon" type="image/svg+xml" href="logo.svg" />
+  <link rel="stylesheet" href="style.css" />
+  <meta property="og:title" content="Habeas — your data, in your hands" />
+  <meta property="og:description" content="Reclaim your own data from services that lock it behind non-automatable walls." />
+  <meta property="og:type" content="website" />
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="logo-light.svg" />
+        <img class="logo" src="logo.svg" alt="Habeas" />
+      </picture>
+      <span class="name">Habeas</span>
+      <nav>
+        <a href="#how" data-i18n="nav_how">How it works</a>
+        <a href="https://github.com/habeas-dev/habeas" data-i18n="nav_github">GitHub</a>
+        <span class="langswitch" role="group" aria-label="Language">
+          <button data-lang="en" aria-pressed="true">EN</button>
+          <button data-lang="es" aria-pressed="false">ES</button>
+        </span>
+      </nav>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="wrap">
+      <img class="logo" src="logo-light.svg" alt="" />
+      <p class="tagline" data-i18n="tagline">your data, in your hands</p>
+      <h1 data-i18n="hero_h1">Reclaim your own data.</h1>
+      <p class="sub" data-i18n="hero_sub"></p>
+      <div class="cta">
+        <a class="btn primary" href="https://github.com/habeas-dev/habeas" data-i18n="cta_get">View on GitHub</a>
+        <a class="btn ghost" href="#how" data-i18n="cta_how">How it works</a>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <h2 data-i18n="problem_h2"></h2>
+      <p class="lead" data-i18n="problem_lead"></p>
+    </div>
+  </section>
+
+  <section id="how" class="alt">
+    <div class="wrap">
+      <h2 data-i18n="how_h2"></h2>
+      <p class="lead" data-i18n="how_lead"></p>
+      <div class="grid">
+        <div class="card"><div class="ic">🔐</div><h3 data-i18n="how1_h"></h3><p data-i18n="how1_b"></p></div>
+        <div class="card"><div class="ic">🏠</div><h3 data-i18n="how2_h"></h3><p data-i18n="how2_b"></p></div>
+        <div class="card"><div class="ic">🧩</div><h3 data-i18n="how3_h"></h3><p data-i18n="how3_b"></p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2 data-i18n="dest_h2"></h2>
+      <p class="lead" data-i18n="dest_lead"></p>
+      <div class="grid">
+        <div class="card"><div class="ic">📁</div><h3 data-i18n="dest1_h"></h3><p data-i18n="dest1_b"></p></div>
+        <div class="card"><div class="ic">☁️</div><h3 data-i18n="dest2_h"></h3><p data-i18n="dest2_b"></p></div>
+        <div class="card"><div class="ic">🔗</div><h3 data-i18n="dest3_h"></h3><p data-i18n="dest3_b"></p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <h2 data-i18n="oss_h2"></h2>
+      <p class="lead" data-i18n="oss_lead"></p>
+      <a class="btn dark" href="https://github.com/habeas-dev/habeas" data-i18n="oss_cta">View on GitHub</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div class="row">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="logo-light.svg" />
+          <img class="logo" src="logo.svg" alt="" style="width:22px;height:22px" />
+        </picture>
+        <strong>Habeas</strong>
+        <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <span class="langswitch" role="group" aria-label="Language" style="margin-left:auto">
+          <button data-lang="en" aria-pressed="true">EN</button>
+          <button data-lang="es" aria-pressed="false">ES</button>
+        </span>
+      </div>
+      <p class="legal" data-i18n="footer_legal"></p>
+    </div>
+  </footer>
+
+  <script src="i18n.js"></script>
+</body>
+</html>
