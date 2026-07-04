@@ -2,6 +2,7 @@
 // user controls. All sinks share writeToSink(sink, docs, files, opts).
 import { getSecret } from '../lib/secrets.js';
 import { renderPath } from '../lib/naming.js';
+import { makeZip } from '../lib/zip.js';
 
 export function listSinkTypes() { return ['download', 'local-folder', 'drive', 'http']; }
 
@@ -12,18 +13,20 @@ export async function writeToSink(sink, docs, files, opts = {}) {
 }
 
 const IMPL = {
-  // Browser downloads — zero config.
+  // Browser downloads — a single file goes straight down; multiple are bundled into one
+  // ZIP so the browser's multi-download block never triggers.
   async download(sink, docs, files, opts) {
-    let n = 0;
-    for (const d of docs) {
-      const blob = files.get(d.externalId); if (!blob) continue;
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = pathFor(sink, d, opts).replace(/\//g, '-');
-      document.body.appendChild(a); a.click(); a.remove();
-      await sleep(300); URL.revokeObjectURL(url); n++;
+    const present = docs.filter((d) => files.get(d.externalId));
+    if (!present.length) return { written: 0 };
+    if (present.length === 1) {
+      const d = present[0];
+      triggerDownload(files.get(d.externalId), pathFor(sink, d, opts).replace(/\//g, '-'));
+      return { written: 1 };
     }
-    return { written: n };
+    const entries = present.map((d) => ({ name: pathFor(sink, d, opts), blob: files.get(d.externalId) }));
+    const zip = await makeZip(entries);
+    triggerDownload(zip, `habeas-${opts.service || 'docs'}-${today()}.zip`);
+    return { written: present.length };
   },
 
   // Local folder via File System Access. opts.dirHandle provided by the UI (user gesture).
@@ -70,9 +73,16 @@ function pathFor(sink, d, opts) {
 function toRecord(d) {
   return { externalId: d.externalId, date: d.date, total: d.total, currency: 'EUR', store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type };
 }
+function triggerDownload(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 8000);
+}
+function today() { return new Date().toISOString().slice(0, 10); }
 async function ensureDir(root, parts) {
   let dir = root;
   for (const p of parts.filter(Boolean)) dir = await dir.getDirectoryHandle(p, { create: true });
   return dir;
 }
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
