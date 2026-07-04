@@ -69,6 +69,13 @@ export function draftAdapterFromSamples(samples, ctx = {}) {
   let paging = 'none', list = {};
   if (nextPath) { paging = 'cursor'; list.nextPath = nextPath; list.cursorParam = 'cursor'; }
   else if (offsetsKey) { paging = 'offsets'; list.offsetsPath = offsetsKey; list.initialOffsets = {}; }
+  else {
+    // Page pagination: a `page`-like query param, or a page-count field in the response.
+    const pageParam = [...u.searchParams.keys()].find((k) => /^(page|pagina|pagenumber|pageno|p)$/i.test(k));
+    const pageMeta = findKeyPath(s.json, /(totalpages|pagecount|page_count|total_pages|pagenumber)/i);
+    if (pageParam) { paging = 'page'; list.pageParam = pageParam; list.pageStart = 1; }
+    else if (pageMeta) { paging = 'page'; list.pageParam = 'page'; list.pageStart = 1; }
+  }
 
   // Field guesses.
   const flat = flattenKeys(item);
