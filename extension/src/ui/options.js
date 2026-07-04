@@ -109,6 +109,10 @@ async function addSink() {
 }
 
 applyI18n();
+if (!window.showDirectoryPicker) {
+  const opt = document.querySelector('#stype option[value="local-folder"]');
+  if (opt) opt.remove(); // Firefox: no File System Access, hide the local-folder sink
+}
 $('#stype').onchange = renderFields;
 $('#addsink').onclick = addSink;
 renderFields();
