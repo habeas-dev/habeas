@@ -10,7 +10,7 @@ globalThis.chrome = { storage: { local: {
 
 const { needsConsent, hasConsent, grantConsent, revokeConsent } = await import('../src/lib/consent.js');
 const { default: carrefour } = await import('../src/adapters/carrefour-es.js');
-const { EXAMPLE_ADAPTERS } = await import('../src/adapters/examples/index.js');
+const { EXAMPLE_ADAPTERS } = await import('./fixtures/index.js');
 const bank = EXAMPLE_ADAPTERS.find((a) => a.id === 'examplebank-es');
 const mart = EXAMPLE_ADAPTERS.find((a) => a.id === 'examplemart-es');
 

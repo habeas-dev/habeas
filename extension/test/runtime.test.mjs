@@ -1,9 +1,9 @@
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import carrefour from '../src/adapters/carrefour-es.js';
-import mart from '../src/adapters/examples/examplemart-es.js';
-import bank from '../src/adapters/examples/examplebank-es.js';
-import energy from '../src/adapters/examples/exampleenergy-es.js';
+import mart from './fixtures/examplemart-es.js';
+import bank from './fixtures/examplebank-es.js';
+import energy from './fixtures/exampleenergy-es.js';
 import { listInventory } from '../src/runtime/inventory.js';
 
 const auth = { authorization: 'bearer eyJx' };

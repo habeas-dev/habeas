@@ -38,8 +38,9 @@ domain needs an explicit `crossDomainHosts` allowlist + a **consent** screen); *
 visual mapper `ui/author.*` → test → save); and **sharing** (export/import JSON, prefilled PR to
 `habeas-dev/sources`, `ui/marketplace.*` browse/install from `index.json` + ratings/comments client).
 External infra still to stand up: the `habeas-dev/sources` repo + `index.json` build, and the
-habeas.dev ratings/comments service (contract in `docs/registry.md`). The four `adapters/examples/`
-sources are design skeletons — not yet API-verified against real services.
+habeas.dev ratings/comments service (contract in `docs/registry.md`). Only real, API-verified
+sources ship or get published; fictional design skeletons live in `extension/test/fixtures/` as
+test-only fixtures and never appear in the extension.
 
 ## Repo layout
 
@@ -56,7 +57,7 @@ habeas/
 │       │                    #   naming, badge, theme-icon, i18n, consent, learn (record mode)
 │       ├── adapters/        # loader.js (built-in + community from storage.local, validated),
 │       │                    #   validate.js (schema + same-domain guard), carrefour-es.js,
-│       │                    #   examples/ (design skeletons: receipt/invoice/transaction/investment)
+│       │                    #   (test-only skeletons live in extension/test/fixtures/, never shipped)
 │       ├── content/         # bridge.js (isolated) + hook.js (page): capture JWT+CSRF; learn-mode samples
 │       ├── runtime/         # inventory.js (declarative pager: offsets|page|cursor|none) + infer.js (auto-draft)
 │       ├── registry/        # share.js (export/import + PR) · client.js (index.json + ratings API)
@@ -188,7 +189,8 @@ access — documented, user's responsibility. Full write-up in `README.md` (Lega
 
 - **Stand up community infra:** create `habeas-dev/sources` repo (JSON + CI validation +
   `index.json` build) and the habeas.dev ratings/comments service (contract in `docs/registry.md`).
-- **API-verify the example sources** against real services (they are structurally valid skeletons).
+- **Author real sources** via record mode / community PRs, API-verified against real services,
+  then publish to the registry (the fictional test fixtures must never be published or shipped).
 - **HTTP → Tiquetera** ingest endpoint (POST normalized records + PDFs; pairing token) — the
   category model already supports it.
 - Encrypt secrets at rest; harden dynamic HTML (web-ext/AMO flags `innerHTML`; new UI escapes
