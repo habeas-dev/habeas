@@ -34,6 +34,27 @@ async function render() {
     catch (e) { b.textContent = 'Conectar Drive'; alert('Drive: ' + e.message); }
     finally { b.disabled = false; }
   });
+
+  const swSinks = cfg.sinks.filter((s) => s.type === 'drive' || s.type === 'http');
+  $('#routes').innerHTML = cfg.datasources.filter((d) => d.enabled).map((d) => {
+    const route = (cfg.routes || []).find((r) => r.datasource === d.id && r.mode === 'auto');
+    const opts = swSinks.map((s) => `<option value="${s.id}" ${route && route.sink === s.id ? 'selected' : ''}>${s.id} (${s.type})</option>`).join('');
+    return `<div class="card"><b>${d.id}</b> → auto a
+      <select data-rsel="${d.id}" ${swSinks.length ? '' : 'disabled'}>${opts || '<option value="">(sin sinks Drive/HTTP)</option>'}</select>
+      <button data-rtoggle="${d.id}" data-on="${route ? 1 : 0}">${route ? 'Desactivar auto' : 'Activar auto'}</button></div>`;
+  }).join('') || '<p class="muted">Activa un datasource para configurar auto.</p>';
+  $('#routes').querySelectorAll('[data-rtoggle]').forEach((b) => b.onclick = async () => {
+    const dsId = b.dataset.rtoggle;
+    const existing = ((await getConfig()).routes || []).find((r) => r.datasource === dsId && r.mode === 'auto');
+    if (existing) { await remove('routes', existing.id); }
+    else {
+      const sel = document.querySelector(`[data-rsel="${dsId}"]`);
+      const sinkId = sel && sel.value;
+      if (!sinkId) { alert('Añade un sink Drive o HTTP primero.'); return; }
+      await upsert('routes', { id: dsId + '->' + sinkId, datasource: dsId, sink: sinkId, mode: 'auto' });
+    }
+    render();
+  });
 }
 
 function renderFields() {
