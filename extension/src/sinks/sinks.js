@@ -1,9 +1,10 @@
 // Sinks: pluggable outputs. A sink writes documents (+ their PDF blobs) somewhere the
-// user controls. Every sink also emits a manifest.json with the normalized records for
-// ALL selected documents — including those whose PDF Carrefour no longer retains.
+// user controls. Persistent sinks (local-folder, drive) keep a CUMULATIVE per-service
+// manifest (<service>/manifest.json) so repeated syncs merge instead of clobbering, and
+// different providers never collide. The ephemeral download ZIP carries a snapshot.
 import { getSecret } from '../lib/secrets.js';
 import { makeZip } from '../lib/zip.js';
-import { pathFor, buildManifest, jsonBlob, today } from './format.js';
+import { pathFor, buildManifest, toRecords, mergeRecords, jsonBlob, today } from './format.js';
 import { driveWrite } from './drive.js';
 
 export function listSinkTypes() { return ['download', 'local-folder', 'drive', 'http']; }
@@ -15,14 +16,15 @@ export async function writeToSink(sink, docs, files, opts = {}) {
 }
 
 const IMPL = {
-  // Available PDFs + a manifest.json of ALL selected docs, bundled into one ZIP (the ZIP
+  // Available PDFs + a <service>/manifest.json snapshot, bundled into one ZIP (the ZIP
   // only exists to dodge Chrome's multi-download block; other sinks write files directly).
   async download(sink, docs, files, opts) {
+    const service = opts.service || 'documents';
     const present = docs.filter((d) => files.get(d.externalId));
     const entries = present.map((d) => ({ name: pathFor(sink, d, opts), blob: files.get(d.externalId) }));
-    entries.push({ name: 'manifest.json', blob: jsonBlob(buildManifest(docs, files)) });
+    entries.push({ name: `${service}/manifest.json`, blob: jsonBlob(buildManifest(docs, files)) });
     const zip = await makeZip(entries);
-    triggerDownload(zip, `habeas-${opts.service || 'docs'}-${today()}.zip`);
+    triggerDownload(zip, `habeas-${service}-${today()}.zip`);
     return { written: present.length, total: docs.length };
   },
 
@@ -30,6 +32,7 @@ const IMPL = {
   async ['local-folder'](sink, docs, files, opts) {
     const root = opts.dirHandle;
     if (!root) throw new Error('no directory handle (elige carpeta)');
+    const service = opts.service || 'documents';
     let n = 0;
     for (const d of docs) {
       const blob = files.get(d.externalId); if (!blob) continue;
@@ -37,11 +40,14 @@ const IMPL = {
       const dir = await ensureDir(root, rel.slice(0, -1));
       await writeFile(dir, rel.at(-1), blob); n++;
     }
-    await writeFile(root, 'manifest.json', jsonBlob(buildManifest(docs, files)));
+    const svcDir = await ensureDir(root, [service]);
+    const existing = await readJsonFile(svcDir, 'manifest.json');
+    const merged = mergeRecords(existing, toRecords(docs, files));
+    await writeFile(svcDir, 'manifest.json', jsonBlob(JSON.stringify(merged, null, 2)));
     return { written: n, total: docs.length };
   },
 
-  // Native Google Drive — individual file uploads (no ZIP needed).
+  // Native Google Drive — individual uploads + cumulative manifest (see drive.js).
   drive: (sink, docs, files, opts) => driveWrite(sink, docs, files, opts),
 
   // HTTP consumer (Tiquetera / Cuéntamo): POST normalized records + available PDFs.
@@ -70,4 +76,8 @@ async function ensureDir(root, parts) {
 async function writeFile(dir, name, blob) {
   const fh = await dir.getFileHandle(name, { create: true });
   const w = await fh.createWritable(); await w.write(blob); await w.close();
+}
+async function readJsonFile(dir, name) {
+  try { const fh = await dir.getFileHandle(name); return JSON.parse(await (await fh.getFile()).text()); }
+  catch (e) { return []; }
 }

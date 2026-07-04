@@ -1,7 +1,7 @@
 // Native Google Drive sink. OAuth via chrome.identity.launchWebAuthFlow (cross-browser,
 // public client, implicit token flow — no client secret) with scope drive.file, which
 // grants access ONLY to files this app creates and needs no Google CASA assessment.
-import { pathFor, buildManifest, jsonBlob, today } from './format.js';
+import { pathFor, toRecords, mergeRecords } from './format.js';
 
 const SCOPE = 'https://www.googleapis.com/auth/drive.file';
 // Habeas ships with its own OAuth client (drive.file, non-sensitive → no CASA). A sink
@@ -40,6 +40,7 @@ async function getToken(clientId, interactive) {
 export async function driveWrite(sink, docs, files, opts) {
   const token = await getToken(sink.clientId, true);
   const root = sink.rootFolderName || 'Habeas';
+  const service = opts.service || 'documents';
   const cache = {};
   let n = 0;
   for (const d of docs) {
@@ -49,8 +50,11 @@ export async function driveWrite(sink, docs, files, opts) {
     await uploadFile(token, rel.at(-1), folderId, blob);
     n++;
   }
-  const rootId = await ensureFolderPath(token, [root], cache);
-  await uploadFile(token, `manifest-${today()}.json`, rootId, jsonBlob(buildManifest(docs, files)));
+  // Cumulative per-service manifest: Habeas/<service>/manifest.json (read → merge → write).
+  const svcId = await ensureFolderPath(token, [root, service], cache);
+  const existing = await readJson(token, 'manifest.json', svcId);
+  const merged = mergeRecords(existing, toRecords(docs, files));
+  await putJson(token, 'manifest.json', svcId, JSON.stringify(merged, null, 2));
   return { written: n, total: docs.length };
 }
 
@@ -63,18 +67,42 @@ async function ensureFolderPath(token, parts, cache) {
   }
   return parentId;
 }
-async function findOrCreateFolder(token, name, parentId) {
-  const q = `name='${name.replace(/'/g, "\\'")}' and mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`;
+async function findFile(token, name, parentId, folder = false) {
+  const type = folder ? " and mimeType='application/vnd.google-apps.folder'" : '';
+  const q = `name='${name.replace(/'/g, "\\'")}'${type} and '${parentId}' in parents and trashed=false`;
   const r = await fetch('https://www.googleapis.com/drive/v3/files?fields=files(id)&q=' + encodeURIComponent(q), { headers: { Authorization: 'Bearer ' + token } });
   if (!r.ok) throw new Error('drive list ' + r.status);
   const d = await r.json();
-  if (d.files && d.files[0]) return d.files[0].id;
+  return d.files && d.files[0] ? d.files[0].id : null;
+}
+async function findOrCreateFolder(token, name, parentId) {
+  const id = await findFile(token, name, parentId, true);
+  if (id) return id;
   const cr = await fetch('https://www.googleapis.com/drive/v3/files?fields=id', {
     method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] }),
   });
   if (!cr.ok) throw new Error('drive mkdir ' + cr.status);
   return (await cr.json()).id;
+}
+async function readJson(token, name, parentId) {
+  const id = await findFile(token, name, parentId);
+  if (!id) return [];
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, { headers: { Authorization: 'Bearer ' + token } });
+  if (!r.ok) return [];
+  return r.json().catch(() => []);
+}
+async function putJson(token, name, parentId, text) {
+  const id = await findFile(token, name, parentId);
+  const blob = new Blob([text], { type: 'application/json' });
+  if (id) {
+    const r = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`, {
+      method: 'PATCH', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: blob,
+    });
+    if (!r.ok) throw new Error('drive manifest update ' + r.status);
+  } else {
+    await uploadFile(token, name, parentId, blob);
+  }
 }
 async function uploadFile(token, name, parentId, blob) {
   const boundary = 'habeas' + Math.random().toString(36).slice(2);
