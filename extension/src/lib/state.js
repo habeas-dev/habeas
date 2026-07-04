@@ -29,3 +29,17 @@ export async function forgetDelivered(datasourceId, sinkId) {
   delete st.delivered[keyFor(datasourceId, sinkId)];
   await chrome.storage.local.set({ [KEY]: st });
 }
+
+// Activity log — a rolling record of runs (auto + manual) so the user can see whether a
+// sync happened without opening Drive. Kept in storage.local (last 100 entries).
+const LOG_KEY = 'habeas:log';
+export async function appendLog(entry) {
+  const o = await chrome.storage.local.get(LOG_KEY);
+  const log = o[LOG_KEY] || [];
+  log.unshift({ t: new Date().toISOString(), ...entry });
+  await chrome.storage.local.set({ [LOG_KEY]: log.slice(0, 100) });
+}
+export async function getLog() {
+  const o = await chrome.storage.local.get(LOG_KEY);
+  return o[LOG_KEY] || [];
+}
