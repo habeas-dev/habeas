@@ -27,7 +27,10 @@ function adapterFor(dsId, cfg) {
 async function getAuth(adapter) {
   const host = adapter.api.host.replace(/^https?:\/\//, '');
   const o = await chrome.storage.session.get('auth:' + host);
-  return o['auth:' + host] || null;
+  const store = o['auth:' + host];
+  if (!store) return null;
+  // Prefer the exact headers the SPA used for the endpoint we are about to call.
+  return store.byPath[adapter.api.list.path] || store.merged || null;
 }
 
 async function onList() {
@@ -36,7 +39,7 @@ async function onList() {
   if (!adapter) { $('#status').textContent = 'No hay datasource seleccionado.'; return; }
   const auth = await getAuth(adapter);
   if (!auth) { $('#status').textContent = 'Abre carrefour.es → Mis compras para capturar tu sesión, y reintenta.'; return; }
-  console.debug('[Habeas] auth headers sent:', Object.keys(auth).join(', '));
+  console.debug('[Habeas] auth headers:', Object.keys(auth).join(', '), '| requestorigin:', auth.requestorigin || '(none)');
   $('#status').textContent = 'Listando…';
   try {
     inventory = await listInventory(adapter, auth);
