@@ -68,6 +68,9 @@
   "sink_local": { "message": "Local folder (= cloud if synced)" },
   "sink_drive": { "message": "Google Drive (native)" },
   "sink_http": { "message": "HTTP consumer" },
+  "sink_accepts": { "message": "Accepts:" },
+  "none_compatible": { "message": "No compatible documents for this destination." },
+  "skipped_incompat": { "message": "$N$ skipped (category)", "placeholders": { "n": { "content": "$1" } } },
 
   "st_ok": { "message": "$N$ doc(s) → $SINK$", "placeholders": { "n": { "content": "$1" }, "sink": { "content": "$2" } } },
   "st_none": { "message": "no new documents" },

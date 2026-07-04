@@ -10,7 +10,24 @@ export function pathFor(sink, d, opts) {
   });
 }
 export function toRecord(d) {
-  return { externalId: d.externalId, date: d.date, total: d.total, currency: 'EUR', store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type };
+  return { externalId: d.externalId, date: d.date, total: d.total, currency: 'EUR', category: d.category, store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type };
+}
+
+// Source-level compatibility: does this sink accept documents from this source at all?
+// A sink with no `accepts` takes everything (download/local/drive). A sink may restrict by
+// category and/or an explicit source-id allowlist.
+export function sinkAcceptsSource(sink, adapter) {
+  const a = sink && sink.accepts;
+  if (!a || (!(a.categories && a.categories.length) && !(a.sources && a.sources.length))) return true;
+  if (a.sources && a.sources.includes(adapter.id)) return true;
+  const cats = adapter.categories || [];
+  return !!(a.categories && a.categories.some((c) => cats.includes(c)));
+}
+// Document-level filter: only send docs whose category the sink accepts.
+export function acceptsDoc(sink, doc) {
+  const a = sink && sink.accepts;
+  if (!a || !(a.categories && a.categories.length)) return true;
+  return a.categories.includes(doc.category);
 }
 export function toRecords(docs, files) {
   return docs.map((d) => ({ ...toRecord(d), pdf: files.has(d.externalId) }));
