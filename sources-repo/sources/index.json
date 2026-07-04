@@ -1,0 +1,21 @@
+{
+  "generated": "2026-07-04T17:13:59.320Z",
+  "sources": [
+    {
+      "id": "carrefour-es",
+      "name": "Carrefour España — tickets",
+      "service": "carrefour",
+      "categories": [
+        "grocery",
+        "fuel",
+        "retail"
+      ],
+      "trust": "first-party",
+      "domain": "carrefour.es",
+      "crossDomain": [],
+      "version": "2026-07-04",
+      "url": "https://sources.habeas.dev/carrefour-es.json",
+      "updated": "2026-07-04T17:13:59.320Z"
+    }
+  ]
+}

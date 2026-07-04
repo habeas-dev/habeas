@@ -1,0 +1,114 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://habeas.dev/schema/adapter.schema.json",
+  "title": "Habeas adapter",
+  "description": "Declarative definition of how to extract a user's own data from one service, in the user's live session. DATA, not code — no functions, no eval, no remote JS. This schema mirrors the runtime shape consumed by extension/src/runtime/inventory.js and enforced by extension/src/adapters/validate.js.",
+  "type": "object",
+  "required": ["id", "name", "service", "match", "auth", "api", "fields", "schema", "categories"],
+  "additionalProperties": true,
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "description": "Unique id, <service>-<country>, e.g. carrefour-es." },
+    "name": { "type": "string", "description": "Human-readable source name." },
+    "service": { "type": "string", "description": "Short service slug used for sink folder/service naming." },
+    "trust": { "enum": ["first-party", "community"], "description": "first-party = project-maintained & audited; community = user/contributed." },
+    "domain": { "type": "string", "description": "Registrable domain (eTLD+1) all hosts share, e.g. carrefour.es. If omitted it is derived from api.host." },
+    "crossDomainHosts": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Explicit allowlist of EXTRA hosts/domains outside `domain` that this source reads from or replays the session to (e.g. a bank whose API is on another domain). Presence requires an off-site consent screen. No wildcards."
+    },
+    "currency": { "type": "string", "description": "ISO currency for normalized records; defaults to EUR." },
+    "categories": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "The categories this source can emit (used for sink compatibility)."
+    },
+    "categorize": {
+      "type": "object",
+      "required": ["field"],
+      "additionalProperties": false,
+      "properties": {
+        "field": { "type": "string", "description": "Source field (dotted path allowed) whose value selects a category." },
+        "map": { "type": "object", "additionalProperties": { "type": "string" } },
+        "default": { "type": "string" }
+      }
+    },
+    "match": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "URL match patterns for the login site where the session is captured."
+    },
+    "auth": {
+      "type": "object",
+      "required": ["replayHeaders"],
+      "additionalProperties": false,
+      "properties": {
+        "tokenMatch": { "type": "string", "description": "Substring the captured Authorization must contain to be a real user token (e.g. eyJ)." },
+        "replayHeaders": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Captured request headers to replay when calling the API."
+        },
+        "captureHosts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Extra hosts (besides api.host and match) whose requests are observed to capture auth. All must resolve to `domain` or a crossDomainHosts entry."
+        }
+      }
+    },
+    "api": {
+      "type": "object",
+      "required": ["host", "list"],
+      "additionalProperties": false,
+      "properties": {
+        "host": { "type": "string", "pattern": "^https://", "description": "API origin, https only." },
+        "list": {
+          "type": "object",
+          "required": ["path", "itemsPath"],
+          "additionalProperties": false,
+          "properties": {
+            "path": { "type": "string", "pattern": "^/" },
+            "paging": { "enum": ["offsets", "page", "cursor", "none"], "description": "Pagination strategy. Defaults to offsets if offsetsPath present, else cursor if nextPath present, else none." },
+            "itemsPath": { "type": "string", "description": "Dotted path to the array of items in the response (e.g. data.items)." },
+            "offsetsPath": { "type": "string", "description": "[offsets] Dotted path to the offsets object merged into the next query." },
+            "initialOffsets": { "type": "object", "description": "[offsets] Seed offsets object." },
+            "nextPath": { "type": "string", "description": "[cursor] Dotted path to the next cursor in the response." },
+            "cursorParam": { "type": "string", "description": "[cursor] Query param name for the cursor (default: cursor)." },
+            "pageParam": { "type": "string", "description": "[page] Query param name for the page number (default: page)." },
+            "pageStart": { "type": "number", "description": "[page] First page number (default: 1)." },
+            "range": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "from": { "type": "string", "description": "Query param name for the window start." },
+                "to": { "type": "string", "description": "Query param name for the window end." },
+                "format": { "enum": ["iso", "date"], "description": "iso = full ISO timestamp (default), date = YYYY-MM-DD." }
+              }
+            },
+            "window": { "type": "string", "pattern": "^\\d+y$", "description": "Lookback window for the range, e.g. 3y." },
+            "maxPages": { "type": "number", "description": "Safety cap on pages fetched (default 100)." },
+            "params": { "type": "object", "description": "Static query params. `count` also drives the page-paging stop condition." }
+          }
+        },
+        "pdf": {
+          "type": "object",
+          "required": ["path"],
+          "additionalProperties": false,
+          "properties": {
+            "path": { "type": "string", "description": "PDF path with {externalId} placeholder. Omit api.pdf entirely for metadata-only sources." }
+          }
+        }
+      }
+    },
+    "fields": {
+      "type": "object",
+      "required": ["externalId", "date"],
+      "additionalProperties": { "type": "string" },
+      "description": "Map of normalized field name -> source field (dotted path). Recognized keys depend on `schema`: receipt (total, storeName, storeAddress, type, source), invoice (total, issuer, issuerAddress, number, type, source), transaction (amount, description, counterparty, direction, type, source), investment (instrument, isin, units, price, amount, operation, type)."
+    },
+    "schema": { "type": "string", "pattern": "^[a-z_]+@\\d+$", "description": "Target normalized schema: receipt@1 | invoice@1 | transaction@1 | investment@1." }
+  }
+}

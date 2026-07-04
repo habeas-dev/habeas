@@ -10,7 +10,7 @@ extension needs to *install* works with zero backend.
 ```
 sources/
   <id>.json            # one source per file, e.g. sources/carrefour-es.json
-index.json             # generated catalog (CI), served at https://habeas.dev/sources/index.json
+index.json             # generated catalog (CI), served at https://sources.habeas.dev/index.json
 schema/adapter.schema.json   # copy of the extension's adapter schema (CI validates against it)
 ```
 
@@ -35,7 +35,7 @@ schema/adapter.schema.json   # copy of the extension's adapter schema (CI valida
   "domain": "carrefour.es",
   "crossDomain": [],
   "version": "2026-07-04",
-  "url": "https://habeas.dev/sources/carrefour-es.json",
+  "url": "https://sources.habeas.dev/carrefour-es.json",
   "updated": "2026-07-04T00:00:00Z"
 }
 ```

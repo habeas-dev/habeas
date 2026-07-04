@@ -8,7 +8,7 @@
 import { validateAdapter } from '../adapters/validate.js';
 import { saveSource } from '../adapters/loader.js';
 
-const INDEX_URL = 'https://habeas.dev/sources/index.json';
+const INDEX_URL = 'https://sources.habeas.dev/index.json';
 const API_BASE = 'https://habeas.dev/api';
 
 // index.json entry shape (see docs/registry.md):

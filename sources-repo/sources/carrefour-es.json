@@ -1,0 +1,72 @@
+{
+  "id": "carrefour-es",
+  "name": "Carrefour España — tickets",
+  "service": "carrefour",
+  "trust": "first-party",
+  "domain": "carrefour.es",
+  "categories": [
+    "grocery",
+    "fuel",
+    "retail"
+  ],
+  "categorize": {
+    "field": "purchaseType",
+    "map": {
+      "HYPERMARKET": "grocery",
+      "SUPERMARKET": "grocery",
+      "REFUELING": "fuel"
+    },
+    "default": "retail"
+  },
+  "match": [
+    "https://www.carrefour.es/*"
+  ],
+  "auth": {
+    "tokenMatch": "eyJ",
+    "replayHeaders": [
+      "authorization",
+      "x-xsrf-token",
+      "x-csrf-token",
+      "requestorigin",
+      "sessionid"
+    ]
+  },
+  "api": {
+    "host": "https://pro.api.carrefour.es",
+    "list": {
+      "path": "/md-purchasesAccount-v1/purchases",
+      "paging": "offsets",
+      "itemsPath": "purchases",
+      "offsetsPath": "offsets",
+      "initialOffsets": {
+        "ticketOffset": 0,
+        "atgfOffset": 0,
+        "atgnfOffset": 0,
+        "currentTickets": 0,
+        "currentAtgfOrders": 0,
+        "currentAtgnfOrders": 0
+      },
+      "range": {
+        "from": "from",
+        "to": "to"
+      },
+      "window": "3y",
+      "params": {
+        "count": 50
+      }
+    },
+    "pdf": {
+      "path": "/md-ticketsAccount-v1/tickets/{externalId}/pdf"
+    }
+  },
+  "fields": {
+    "externalId": "purchaseId",
+    "date": "purchaseDate",
+    "total": "amount",
+    "storeName": "mallName",
+    "storeAddress": "mallAddress",
+    "type": "purchaseType",
+    "source": "orderSource"
+  },
+  "schema": "receipt@1"
+}
