@@ -1,0 +1,91 @@
+// Native Google Drive sink. OAuth via chrome.identity.launchWebAuthFlow (cross-browser,
+// public client, implicit token flow — no client secret) with scope drive.file, which
+// grants access ONLY to files this app creates and needs no Google CASA assessment.
+import { pathFor, buildManifest, jsonBlob, today } from './format.js';
+
+const SCOPE = 'https://www.googleapis.com/auth/drive.file';
+
+export function redirectUri() { return chrome.identity.getRedirectURL(); }
+
+export async function connectDrive(clientId, interactive = true) {
+  if (!clientId) throw new Error('falta el Client ID');
+  const url = 'https://accounts.google.com/o/oauth2/v2/auth'
+    + '?client_id=' + encodeURIComponent(clientId)
+    + '&response_type=token'
+    + '&redirect_uri=' + encodeURIComponent(chrome.identity.getRedirectURL())
+    + '&scope=' + encodeURIComponent(SCOPE)
+    + '&prompt=consent';
+  const redir = await chrome.identity.launchWebAuthFlow({ url, interactive });
+  const p = new URLSearchParams(new URL(redir).hash.slice(1));
+  const token = p.get('access_token');
+  if (!token) throw new Error('sin token (' + (p.get('error') || 'desconocido') + ')');
+  const rec = { token, expiresAt: Date.now() + (Number(p.get('expires_in') || 3600) - 60) * 1000 };
+  await chrome.storage.session.set({ ['gdrive:' + clientId]: rec });
+  return rec;
+}
+
+async function getToken(clientId, interactive) {
+  const key = 'gdrive:' + clientId;
+  const o = await chrome.storage.session.get(key);
+  if (o[key] && o[key].expiresAt > Date.now()) return o[key].token;
+  try { return (await connectDrive(clientId, false)).token; }
+  catch (e) { if (!interactive) throw e; return (await connectDrive(clientId, true)).token; }
+}
+
+export async function driveWrite(sink, docs, files, opts) {
+  if (!sink.clientId) throw new Error('Configura el Client ID de Google en Ajustes.');
+  const token = await getToken(sink.clientId, true);
+  const root = sink.rootFolderName || 'Habeas';
+  const cache = {};
+  let n = 0;
+  for (const d of docs) {
+    const blob = files.get(d.externalId); if (!blob) continue;
+    const rel = (root + '/' + pathFor(sink, d, opts)).split('/').filter(Boolean);
+    const folderId = await ensureFolderPath(token, rel.slice(0, -1), cache);
+    await uploadFile(token, rel.at(-1), folderId, blob);
+    n++;
+  }
+  const rootId = await ensureFolderPath(token, [root], cache);
+  await uploadFile(token, `manifest-${today()}.json`, rootId, jsonBlob(buildManifest(docs, files)));
+  return { written: n, total: docs.length };
+}
+
+async function ensureFolderPath(token, parts, cache) {
+  let parentId = 'root', path = '';
+  for (const name of parts) {
+    path += '/' + name;
+    if (!cache[path]) cache[path] = await findOrCreateFolder(token, name, parentId);
+    parentId = cache[path];
+  }
+  return parentId;
+}
+async function findOrCreateFolder(token, name, parentId) {
+  const q = `name='${name.replace(/'/g, "\\'")}' and mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`;
+  const r = await fetch('https://www.googleapis.com/drive/v3/files?fields=files(id)&q=' + encodeURIComponent(q), { headers: { Authorization: 'Bearer ' + token } });
+  if (!r.ok) throw new Error('drive list ' + r.status);
+  const d = await r.json();
+  if (d.files && d.files[0]) return d.files[0].id;
+  const cr = await fetch('https://www.googleapis.com/drive/v3/files?fields=id', {
+    method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] }),
+  });
+  if (!cr.ok) throw new Error('drive mkdir ' + cr.status);
+  return (await cr.json()).id;
+}
+async function uploadFile(token, name, parentId, blob) {
+  const boundary = 'habeas' + Math.random().toString(36).slice(2);
+  const body = new Blob([
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,
+    JSON.stringify({ name, parents: [parentId] }),
+    `\r\n--${boundary}\r\nContent-Type: ${blob.type || 'application/octet-stream'}\r\n\r\n`,
+    blob,
+    `\r\n--${boundary}--`,
+  ]);
+  const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'multipart/related; boundary=' + boundary },
+    body,
+  });
+  if (!r.ok) throw new Error('drive upload ' + r.status + ' ' + (await r.text().catch(() => '')).slice(0, 120));
+  return r.json();
+}

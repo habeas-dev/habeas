@@ -1,5 +1,6 @@
 import { getConfig, upsert, remove } from '../lib/config.js';
 import { setSecret } from '../lib/secrets.js';
+import { connectDrive, redirectUri } from '../sinks/drive.js';
 import CARREFOUR from '../adapters/carrefour-es.js';
 
 const CATALOG = { 'carrefour-es': CARREFOUR };
@@ -20,17 +21,31 @@ async function render() {
   });
 
   $('#sinks').innerHTML = cfg.sinks.map((s) =>
-    `<div class="card"><b>${s.id}</b><code>${s.type}</code>${s.url ? `<small>${s.url}</small>` : ''}
+    `<div class="card"><b>${s.id}</b><code>${s.type}</code>
+      ${s.type === 'drive' ? `<button data-conn="${s.id}">Conectar Drive</button>` : ''}
+      ${s.url ? `<small>${s.url}</small>` : ''}
       <button data-del="${s.id}">Eliminar</button></div>`).join('')
     || '<p class="muted">Aún no hay sinks.</p>';
   $('#sinks').querySelectorAll('[data-del]').forEach((b) => b.onclick = async () => { await remove('sinks', b.dataset.del); render(); });
+  $('#sinks').querySelectorAll('[data-conn]').forEach((b) => b.onclick = async () => {
+    const s = (await getConfig()).sinks.find((x) => x.id === b.dataset.conn);
+    b.disabled = true; b.textContent = 'Conectando…';
+    try { await connectDrive(s.clientId); b.textContent = '✓ Conectado'; }
+    catch (e) { b.textContent = 'Conectar Drive'; alert('Drive: ' + e.message); }
+    finally { b.disabled = false; }
+  });
 }
 
 function renderFields() {
   const t = $('#stype').value;
-  if (t === 'http') $('#sfields').innerHTML = ' id:<input id="sid" size="10"> url:<input id="surl" size="26"> token:<input id="stok" size="14">';
-  else if (t === 'drive') $('#sfields').innerHTML = ' id:<input id="sid" size="10"> <small>(conectar OAuth: pendiente del client de Habeas)</small>';
-  else $('#sfields').innerHTML = ' id:<input id="sid" size="10">';
+  if (t === 'http') {
+    $('#sfields').innerHTML = ' id:<input id="sid" size="8"> url:<input id="surl" size="26"> token:<input id="stok" size="12">';
+  } else if (t === 'drive') {
+    $('#sfields').innerHTML = ' id:<input id="sid" size="8"> Client ID:<input id="sclient" size="30">'
+      + `<div style="margin-top:6px"><small>Redirect URI para Google Console (con la barra final):</small><br><code>${redirectUri()}</code></div>`;
+  } else {
+    $('#sfields').innerHTML = ' id:<input id="sid" size="8">';
+  }
 }
 
 async function addSink() {
@@ -41,6 +56,9 @@ async function addSink() {
     sink.url = ($('#surl').value || '').trim();
     sink.tokenRef = 'secret://' + id;
     if ($('#stok').value.trim()) await setSecret(id, $('#stok').value.trim());
+  } else if (t === 'drive') {
+    sink.clientId = ($('#sclient').value || '').trim();
+    sink.rootFolderName = 'Habeas';
   }
   await upsert('sinks', sink);
   renderFields();
