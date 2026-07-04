@@ -6,6 +6,8 @@ import CARREFOUR from '../adapters/carrefour-es.js';
 const ADAPTERS = { 'carrefour-es': CARREFOUR };
 const $ = (s) => document.querySelector(s);
 let inventory = [];
+const log = (m) => { const el = $('#log'); if (el) el.textContent += m + '\n'; console.debug('[Habeas]', m); };
+const clearLog = () => { const el = $('#log'); if (el) el.textContent = ''; };
 
 async function init() {
   $('#opts').onclick = () => chrome.runtime.openOptionsPage();
@@ -34,6 +36,7 @@ async function getAuth(adapter) {
 }
 
 async function onList() {
+  clearLog();
   const cfg = await getConfig();
   const { adapter } = adapterFor($('#ds').value, cfg);
   if (!adapter) { $('#status').textContent = 'No hay datasource seleccionado.'; return; }
@@ -45,6 +48,7 @@ async function onList() {
     inventory = await listInventory(adapter, auth);
     render();
     $('#status').textContent = inventory.length + ' documentos';
+    log(inventory.length + ' documentos listados');
     $('#sendbar').hidden = inventory.length === 0;
   } catch (e) {
     $('#status').textContent = 'Error: ' + e.message;
@@ -85,14 +89,15 @@ async function onSend() {
     try { files.set(d.externalId, await fetchPdf(adapter, auth, d.externalId)); }
     catch (e) { errors.push(d.externalId + ' → ' + e.message); }
   }
-  console.debug('[Habeas] PDFs obtenidos:', files.size, '/', chosen.length, '| fallos:', errors);
+  log(`PDFs obtenidos: ${files.size}/${chosen.length}` + (errors.length ? `\nfallos:\n  ${errors.join('\n  ')}` : ''));
   try {
     const r = await writeToSink(sink, chosen, files, opts);
     const written = r.written ?? files.size;
-    $('#status').textContent = `Enviados ${written}/${chosen.length} a "${sink.id}"`
-      + (errors.length ? ` · ${errors.length} PDF fallaron (ver consola)` : '');
+    const m = `Enviados ${written}/${chosen.length} a "${sink.id}"`;
+    $('#status').textContent = m; log(m);
   } catch (e) {
-    $('#status').textContent = 'Sink error: ' + e.message;
+    const m = 'Sink error: ' + (e && e.message ? e.message : e);
+    $('#status').textContent = m; log(m);
   }
 }
 

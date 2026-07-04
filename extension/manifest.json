@@ -3,7 +3,7 @@
   "name": "Habeas",
   "version": "0.1.0",
   "description": "Reclaim your own personal data from services behind non-automatable walls — within your own session.",
-  "action": { "default_title": "Habeas", "default_popup": "src/ui/popup.html" },
+  "action": { "default_title": "Habeas" },
   "options_page": "src/ui/options.html",
   "background": { "service_worker": "src/background.js", "type": "module" },
   "permissions": ["storage", "downloads"],
