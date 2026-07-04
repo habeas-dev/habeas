@@ -6,10 +6,11 @@
   "action": { "default_title": "Habeas" },
   "options_page": "src/ui/options.html",
   "background": { "service_worker": "src/background.js", "type": "module" },
-  "permissions": ["storage", "downloads"],
+  "permissions": ["storage", "downloads", "identity"],
   "host_permissions": [
     "https://www.carrefour.es/*",
-    "https://pro.api.carrefour.es/*"
+    "https://pro.api.carrefour.es/*",
+    "https://www.googleapis.com/*"
   ],
   "content_scripts": [
     {
