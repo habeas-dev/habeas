@@ -33,6 +33,9 @@
   "pick_sink": { "message": "Configura un destino en Ajustes." },
   "nothing_selected": { "message": "Nada seleccionado." },
   "folder_cancelled": { "message": "Selección de carpeta cancelada." },
+  "configure_folder": { "message": "Configura la carpeta destino en Ajustes." },
+  "folder_denied": { "message": "Permiso de carpeta denegado." },
+  "change_folder": { "message": "Cambiar carpeta" },
   "generic_error": { "message": "Error: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
 
   "opt_title": { "message": "Ajustes" },

@@ -1,6 +1,7 @@
 import { getConfig, upsert, remove } from '../lib/config.js';
 import { setSecret } from '../lib/secrets.js';
 import { connectDrive, redirectUri } from '../sinks/drive.js';
+import { putHandle } from '../lib/fs.js';
 import { watchThemeIcon } from '../lib/theme-icon.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import CARREFOUR from '../adapters/carrefour-es.js';
@@ -25,10 +26,20 @@ async function render() {
   $('#sinks').innerHTML = cfg.sinks.map((s) =>
     `<div class="card row"><b style="flex:1">${s.id}</b><code>${s.type}</code>
       ${s.type === 'drive' ? `<button data-conn="${s.id}">${t('connect_drive')}</button>` : ''}
+      ${s.type === 'local-folder' ? `<code>${s.folderName || '—'}</code><button data-folder="${s.id}">${t('change_folder')}</button>` : ''}
       ${s.url ? `<small>${s.url}</small>` : ''}
       <button data-del="${s.id}">${t('remove')}</button></div>`).join('')
     || `<p class="muted">${t('no_sinks')}</p>`;
   $('#sinks').querySelectorAll('[data-del]').forEach((b) => b.onclick = async () => { await remove('sinks', b.dataset.del); render(); });
+  $('#sinks').querySelectorAll('[data-folder]').forEach((b) => b.onclick = async () => {
+    try {
+      const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+      await putHandle('dir:' + b.dataset.folder, handle);
+      const s = (await getConfig()).sinks.find((x) => x.id === b.dataset.folder);
+      if (s) { s.folderName = handle.name; await upsert('sinks', s); }
+      render();
+    } catch (e) { /* cancelled */ }
+  });
   $('#sinks').querySelectorAll('[data-conn]').forEach((b) => b.onclick = async () => {
     const s = (await getConfig()).sinks.find((x) => x.id === b.dataset.conn);
     b.disabled = true; b.textContent = t('connecting');
@@ -82,6 +93,12 @@ async function addSink() {
   } else if (type === 'drive') {
     sink.clientId = ($('#sclient').value || '').trim() || undefined;
     sink.rootFolderName = 'Habeas';
+  } else if (type === 'local-folder') {
+    try {
+      const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+      await putHandle('dir:' + id, handle);
+      sink.folderName = handle.name;
+    } catch (e) { return; }
   }
   await upsert('sinks', sink);
   renderFields();
