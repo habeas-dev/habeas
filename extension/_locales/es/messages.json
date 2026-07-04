@@ -21,6 +21,10 @@
   "no_activity": { "message": "Sin actividad todavía." },
   "pill_new": { "message": "nuevo" },
   "pill_sent": { "message": "enviado" },
+  "select_label": { "message": "Seleccionar:" },
+  "sel_new": { "message": "Nuevos" },
+  "sel_all": { "message": "Todos" },
+  "sel_none": { "message": "Ninguno" },
 
   "no_datasources": { "message": "Activa un datasource en Ajustes." },
   "capture_hint": { "message": "Abre el sitio y tu página de compras para capturar tu sesión, y reintenta." },

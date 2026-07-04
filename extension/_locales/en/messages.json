@@ -21,6 +21,10 @@
   "no_activity": { "message": "No activity yet." },
   "pill_new": { "message": "new" },
   "pill_sent": { "message": "sent" },
+  "select_label": { "message": "Select:" },
+  "sel_new": { "message": "New" },
+  "sel_all": { "message": "All" },
+  "sel_none": { "message": "None" },
 
   "no_datasources": { "message": "Activate a data source in Settings." },
   "capture_hint": { "message": "Open the site and your purchases page to capture your session, then retry." },
