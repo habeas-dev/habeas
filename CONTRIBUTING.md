@@ -23,10 +23,15 @@ Adapters are **declarative data, not code** (see `adapters/README.md`). To add o
   everyone rather than allowing arbitrary JS.
 - **Least privilege.** Declare the narrowest `capabilities` (hosts read, sink
   written) that works.
-- **Financial adapters (banking, cards, investment, pensions) are first-party
-  only.** They are maintained and signed by the project and reviewed to a higher
-  bar; community PRs for them will be redirected to a design discussion, not
-  merged as-is.
+- **Same registrable domain (eTLD+1) is the hard boundary.** Every host your
+  adapter reads from or replays the session to must share one registrable domain.
+  If a service legitimately spans domains (e.g. login on `bank.es`, API on
+  `bankapi.com`), list the extra ones in `crossDomainHosts` — this is allowed but
+  triggers a prominent off-site consent screen for the user. No wildcards.
+- **Financial adapters are welcome from the community** under that guard: a source
+  only *describes* how a service structures the user's own data, and the domain
+  boundary prevents credential exfiltration. They carry the `community` trust
+  label; project-maintained ones carry `first-party` (audited to a higher bar).
 
 ## Principles this project will not compromise on
 

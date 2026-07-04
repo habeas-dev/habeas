@@ -8,9 +8,10 @@ import { badgeWorking, badgeClear } from '../lib/badge.js';
 import { getHandle, verifyPermission } from '../lib/fs.js';
 import { watchThemeIcon } from '../lib/theme-icon.js';
 import { applyI18n, t } from '../lib/i18n.js';
-import CARREFOUR from '../adapters/carrefour-es.js';
+import { getAdapters } from '../adapters/index.js';
+import { hasConsent } from '../lib/consent.js';
 
-const ADAPTERS = { 'carrefour-es': CARREFOUR };
+let ADAPTERS = {};
 const $ = (s) => document.querySelector(s);
 let inventory = [];
 const log = (m) => { const el = $('#log'); if (el) el.textContent += m + '\n'; console.debug('[Habeas]', m); };
@@ -26,6 +27,7 @@ const localWhen = (iso) => {
 async function init() {
   applyI18n();
   $('#opts').onclick = () => chrome.runtime.openOptionsPage();
+  ADAPTERS = await getAdapters();
   const cfg = await getConfig();
   const enabled = cfg.datasources.filter((d) => d.enabled);
   $('#ds').innerHTML = enabled.map((d) => `<option value="${d.id}">${d.id}</option>`).join('') || '<option value="">—</option>';
@@ -67,6 +69,7 @@ async function onList() {
   const cfg = await getConfig();
   const { adapter } = adapterFor($('#ds').value, cfg);
   if (!adapter) { $('#status').textContent = t('no_datasources'); return; }
+  if (!(await hasConsent(adapter))) { $('#status').textContent = t('needs_consent'); return; }
   const auth = await getAuth(adapter);
   if (!auth) { $('#status').textContent = t('capture_hint'); return; }
   $('#status').textContent = t('listing');
@@ -91,8 +94,8 @@ async function render() {
        <td><input type="checkbox" data-i="${i}" ${sent ? '' : 'checked'}></td>
        <td>${(d.date || '').slice(0, 10)}</td>
        <td><span class="pill type">${d.type || ''}</span></td>
-       <td>${d.storeName || ''}</td>
-       <td class="r">${fmt(d.total)}</td>
+       <td>${d.storeName || d.label || ''}</td>
+       <td class="r">${fmt(d.total ?? d.amount)}</td>
        <td>${sent ? `<span class="pill sent">${t('pill_sent')}</span>` : `<span class="pill new">${t('pill_new')}</span>`}</td>
      </tr>`;
   }).join('');
@@ -110,6 +113,7 @@ async function onSend() {
   const sink = cfg.sinks.find((s) => s.id === $('#sink').value);
   if (!sink) { $('#status').textContent = t('pick_sink'); return; }
   const { ds, adapter } = adapterFor($('#ds').value, cfg);
+  if (!(await hasConsent(adapter))) { $('#status').textContent = t('needs_consent'); return; }
   const auth = await getAuth(adapter);
   const chosen = [...document.querySelectorAll('#tbl input:checked')].map((c) => inventory[+c.dataset.i]);
   if (!chosen.length) { $('#status').textContent = t('nothing_selected'); return; }

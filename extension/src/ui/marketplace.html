@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Habeas · Community sources</title>
+  <link rel="stylesheet" href="theme.css" />
+  <style>body { min-width: 680px; } .stars { color: #e0a400; } .warn { color: #c0392b; font-weight: 600; }</style>
+</head>
+<body>
+  <div class="topbar">
+    <img class="logo" src="../../icon-dark-128.png" alt="" />
+    <div class="brandwrap">
+      <span class="brand">Habeas</span>
+      <span class="tagline" data-i18n="market_title"></span>
+    </div>
+    <button id="opts" data-i18n="settings"></button>
+  </div>
+
+  <div class="app">
+    <div class="card">
+      <p class="muted" data-i18n="market_intro"></p>
+      <div class="row" style="margin-top:8px">
+        <input id="q" size="28" data-i18n-ph="market_search" />
+        <button id="reload" data-i18n="market_reload"></button>
+        <span id="status" class="muted"></span>
+      </div>
+    </div>
+    <div id="list"></div>
+  </div>
+
+  <script type="module" src="marketplace.js"></script>
+</body>
+</html>

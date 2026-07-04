@@ -29,6 +29,18 @@ per-sink dedupe, **automatic mode** (sync new docs on login), activity log + bad
 notifications, **source categories + sink `accepts` filtering**, full **i18n (en default +
 es)**, a **landing site**, and **CI packaging**.
 
+**Community sources system** (in-extension parts done, verified in node): a **generalized runtime**
+(declarative pager `offsets|page|cursor|none`, dotted field paths, schemas `receipt|invoice|
+transaction|investment`, optional PDF); an **adapter loader + validator** with a **same-registrable-
+domain security guard** (a source's captured session can only be replayed to its own eTLD+1; cross-
+domain needs an explicit `crossDomainHosts` allowlist + a **consent** screen); **record mode**
+(learn-mode hook captures response samples in-session → `runtime/infer.js` auto-drafts a source →
+visual mapper `ui/author.*` → test → save); and **sharing** (export/import JSON, prefilled PR to
+`habeas-dev/sources`, `ui/marketplace.*` browse/install from `index.json` + ratings/comments client).
+External infra still to stand up: the `habeas-dev/sources` repo + `index.json` build, and the
+habeas.dev ratings/comments service (contract in `docs/registry.md`). The four `adapters/examples/`
+sources are design skeletons — not yet API-verified against real services.
+
 ## Repo layout
 
 ```
@@ -39,14 +51,17 @@ habeas/
 │   ├── _locales/{en,es}/    # chrome.i18n messages (en = default_locale)
 │   ├── fonts/               # self-hosted Space Grotesk + Inter (no third-party requests)
 │   └── src/
-│       ├── background.js    # captured auth (storage.session) + auto-sync runner
+│       ├── background.js    # captured auth (storage.session) + auto-sync runner + sample buffer
 │       ├── lib/             # ext.js (browser??chrome shim), config, secrets, state, fs, zip,
-│       │                    #   naming, badge, theme-icon, i18n
-│       ├── adapters/        # carrefour-es.js (data-shaped JS object) + index.js catalog
-│       ├── content/         # bridge.js (isolated) + hook.js (page): capture JWT + CSRF
-│       ├── runtime/inventory.js  # enumerate documents + fetch a PDF + categorize
-│       ├── sinks/           # sinks.js · format.js (records, manifest, compatibility) · drive.js
-│       └── ui/              # popup (app tab) + options + theme.css
+│       │                    #   naming, badge, theme-icon, i18n, consent, learn (record mode)
+│       ├── adapters/        # loader.js (built-in + community from storage.local, validated),
+│       │                    #   validate.js (schema + same-domain guard), carrefour-es.js,
+│       │                    #   examples/ (design skeletons: receipt/invoice/transaction/investment)
+│       ├── content/         # bridge.js (isolated) + hook.js (page): capture JWT+CSRF; learn-mode samples
+│       ├── runtime/         # inventory.js (declarative pager: offsets|page|cursor|none) + infer.js (auto-draft)
+│       ├── registry/        # share.js (export/import + PR) · client.js (index.json + ratings API)
+│       ├── sinks/           # sinks.js · format.js (schema-aware records) · drive.js
+│       └── ui/              # popup · options · author (record mode) · marketplace · theme.css
 ├── docs/                   # habeas.dev landing (GitHub Pages) + FUNCTIONAL-SPEC.md + CNAME
 ├── consumers/              # docs for external consumers (tiquetera.md)
 ├── package.json            # npm scripts: lint/build/package via web-ext
@@ -135,7 +150,14 @@ scaffolding kept as design notes (safe to consolidate later).
 2. **Local-first.** Data never leaves the browser unless the user picks a sink.
 3. **No credential storage, ever.** Rely on the live session; the session token lives only in
    `storage.session` (memory, cleared on browser close).
-4. **Financial adapters are FIRST-PARTY ONLY** (higher review bar, never unaudited community).
+4. **Same registrable domain is the enforced trust boundary.** Every host a source touches
+   (its `match` site, its `api.host`) must share ONE eTLD+1 — so a captured session can only ever
+   be replayed to the *same* service it was captured from. Cross-domain is allowed **only** via an
+   explicit `crossDomainHosts` allowlist, which forces a prominent off-site **consent** screen.
+   This makes silent credential exfiltration structurally impossible regardless of category, so
+   community sources — **financial included** — are permitted under the guard. Trust is surfaced
+   as a *label* (`first-party` audited vs `community`), not a category block. Enforced in
+   `adapters/validate.js` (`checkHosts`) + `lib/consent.js`.
 5. **Triggers are user-initiated / on-login.** No background scraping with a stored session
    while the user is away.
 
@@ -159,11 +181,17 @@ access — documented, user's responsibility. Full write-up in `README.md` (Lega
   `accepts:{categories:["grocery"]}`. See `consumers/tiquetera.md`.
 - **Cuéntamo** (personal finance) — future `transaction`/`investment` sources. Note: for banks,
   PSD2 AIS (licensed aggregator) is the primary path; Habeas covers what PSD2 doesn't (cards,
-  investments, pensions). Financial adapters are first-party only.
+  investments, pensions). Financial sources are allowed from the community under the same-domain
+  guard + consent (rule #4); first-party ones simply carry the audited `first-party` trust label.
 
 ## Roadmap / pending
 
+- **Stand up community infra:** create `habeas-dev/sources` repo (JSON + CI validation +
+  `index.json` build) and the habeas.dev ratings/comments service (contract in `docs/registry.md`).
+- **API-verify the example sources** against real services (they are structurally valid skeletons).
 - **HTTP → Tiquetera** ingest endpoint (POST normalized records + PDFs; pairing token) — the
   category model already supports it.
-- Encrypt secrets at rest; harden dynamic HTML (web-ext/AMO flags `innerHTML`).
-- More data sources; AMO + Chrome Web Store submission; Firefox Drive OAuth redirect.
+- Encrypt secrets at rest; harden dynamic HTML (web-ext/AMO flags `innerHTML`; new UI escapes
+  network/source-derived values but the base pattern remains).
+- AMO + Chrome Web Store submission; Firefox Drive OAuth redirect. Note MV3 review: `scripting` +
+  `optional_host_permissions: https://*/*` (record mode) will need justification at store review.
