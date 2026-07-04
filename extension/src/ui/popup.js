@@ -80,12 +80,17 @@ async function onSend() {
 
   $('#status').textContent = 'Descargando ' + chosen.length + ' PDFs…';
   const files = new Map();
+  const errors = [];
   for (const d of chosen) {
-    try { files.set(d.externalId, await fetchPdf(adapter, auth, d.externalId)); } catch (e) { /* skip */ }
+    try { files.set(d.externalId, await fetchPdf(adapter, auth, d.externalId)); }
+    catch (e) { errors.push(d.externalId + ' → ' + e.message); }
   }
+  console.debug('[Habeas] PDFs obtenidos:', files.size, '/', chosen.length, '| fallos:', errors);
   try {
     const r = await writeToSink(sink, chosen, files, opts);
-    $('#status').textContent = 'Enviados ' + (r.written ?? chosen.length) + ' a "' + sink.id + '"';
+    const written = r.written ?? files.size;
+    $('#status').textContent = `Enviados ${written}/${chosen.length} a "${sink.id}"`
+      + (errors.length ? ` · ${errors.length} PDF fallaron (ver consola)` : '');
   } catch (e) {
     $('#status').textContent = 'Sink error: ' + e.message;
   }
