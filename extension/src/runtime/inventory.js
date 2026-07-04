@@ -25,8 +25,11 @@ export async function listInventory(adapter, auth) {
 
 export async function fetchPdf(adapter, auth, externalId) {
   const url = adapter.api.host + adapter.api.pdf.path.replace('{externalId}', encodeURIComponent(externalId));
-  const res = await fetch(url, { headers: auth });
-  if (!res.ok) throw new Error('pdf ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160));
+  const res = await fetch(url, { headers: { ...auth, accept: 'application/pdf' } });
+  if (!res.ok) {
+    const hint = res.status === 406 ? ' (sin PDF disponible — típico en tickets antiguos)' : '';
+    throw new Error('pdf ' + res.status + hint + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
+  }
   return await res.blob();
 }
 
