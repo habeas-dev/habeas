@@ -1,6 +1,7 @@
 import { getConfig } from '../lib/config.js';
 import { listInventory, fetchPdf } from '../runtime/inventory.js';
 import { writeToSink } from '../sinks/sinks.js';
+import { deliveredSet, markDelivered } from '../lib/state.js';
 import CARREFOUR from '../adapters/carrefour-es.js';
 
 const ADAPTERS = { 'carrefour-es': CARREFOUR };
@@ -20,6 +21,7 @@ async function init() {
   if (!enabled.length) $('#status').textContent = 'Activa un datasource en Ajustes.';
   $('#list').onclick = onList;
   $('#send').onclick = onSend;
+  $('#sink').onchange = () => render();
 }
 
 function adapterFor(dsId, cfg) {
@@ -46,7 +48,7 @@ async function onList() {
   $('#status').textContent = 'Listando…';
   try {
     inventory = await listInventory(adapter, auth);
-    render();
+    await render();
     $('#status').textContent = inventory.length + ' documentos';
     log(inventory.length + ' documentos listados');
     $('#sendbar').hidden = inventory.length === 0;
@@ -55,15 +57,20 @@ async function onList() {
   }
 }
 
-function render() {
-  $('#tbl tbody').innerHTML = inventory.map((d, i) =>
-    `<tr>
-       <td><input type="checkbox" data-i="${i}" checked></td>
+async function render() {
+  const dsId = $('#ds').value, sinkId = $('#sink').value;
+  const delivered = sinkId ? await deliveredSet(dsId, sinkId) : {};
+  $('#tbl tbody').innerHTML = inventory.map((d, i) => {
+    const sent = !!delivered[d.externalId];
+    return `<tr>
+       <td><input type="checkbox" data-i="${i}" ${sent ? '' : 'checked'}></td>
        <td>${(d.date || '').slice(0, 10)}</td>
        <td>${d.type || ''}</td>
        <td>${d.storeName || ''}</td>
        <td class="r">${fmt(d.total)}</td>
-     </tr>`).join('');
+       <td>${sent ? '<span style="color:#888">✓ enviado</span>' : '<b style="color:#0a0">nuevo</b>'}</td>
+     </tr>`;
+  }).join('');
 }
 
 async function onSend() {
@@ -99,6 +106,8 @@ async function onSend() {
     const r = await writeToSink(sink, chosen, files, opts);
     const m = `Enviado a "${sink.id}": ${r.written} PDF + manifest (${chosen.length} docs, ${noPdf.length} sin PDF)`;
     $('#status').textContent = m; log(m);
+    await markDelivered($('#ds').value, sink.id, chosen.map((c) => c.externalId));
+    await render();
   } catch (e) {
     const m = 'Sink error: ' + (e && e.message ? e.message : e);
     $('#status').textContent = m; log(m);
