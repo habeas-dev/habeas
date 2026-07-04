@@ -1,41 +1,56 @@
 <!doctype html>
-<html lang="es">
+<html>
 <head>
   <meta charset="utf-8" />
   <title>Habeas</title>
-  <style>
-    body { font: 13px system-ui, sans-serif; margin: 0; max-width: 820px; }
-    header { background: #111; color: #fff; padding: 10px 12px; display: flex; gap: 8px; align-items: center; }
-    header b { flex: 1; }
-    header button { background: #333; color: #fff; border: 0; border-radius: 6px; padding: 4px 8px; cursor: pointer; }
-    .bar { padding: 8px 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #eee; }
-    button.primary { background: #111; color: #fff; border: 0; border-radius: 6px; padding: 6px 10px; cursor: pointer; }
-    select { padding: 4px 6px; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 5px 8px; text-align: left; border-bottom: 1px solid #f0f0f0; }
-    td.r, th.r { text-align: right; }
-    .muted { color: #888; }
-  </style>
+  <link rel="stylesheet" href="theme.css" />
+  <style>body { min-width: 640px; }</style>
 </head>
 <body>
-  <header><b>Habeas</b><button id="opts">Ajustes</button></header>
-  <div class="bar">
-    <select id="ds"></select>
-    <button id="list" class="primary">Listar documentos</button>
-    <span id="status" class="muted"></span>
+  <div class="topbar">
+    <img class="logo" src="../../icon-128.png" alt="" />
+    <span class="brand">Habeas</span>
+    <span class="tagline" data-i18n="tagline"></span>
+    <button id="opts" data-i18n="settings"></button>
   </div>
-  <div class="bar" id="sendbar" hidden>
-    <span>Enviar a</span>
-    <select id="sink"></select>
-    <button id="send" class="primary">Enviar seleccionados</button>
+
+  <div class="app">
+    <div class="card">
+      <div class="section-title"><h3 data-i18n="about_title"></h3></div>
+      <p class="muted" data-i18n="about_body" style="margin:6px 0 12px"></p>
+      <a id="repo" href="https://github.com/habeas-dev/habeas" target="_blank" rel="noopener" data-i18n="learn_more"></a>
+    </div>
+
+    <div class="section-title"><h2 data-i18n="documents"></h2></div>
+    <div class="card">
+      <div class="row">
+        <select id="ds"></select>
+        <button id="list" class="primary" data-i18n="list_docs"></button>
+        <span id="status" class="muted"></span>
+      </div>
+      <div class="row" id="sendbar" hidden style="margin-top:12px">
+        <span data-i18n="send_to"></span>
+        <select id="sink"></select>
+        <button id="send" class="accent" data-i18n="send_selected"></button>
+      </div>
+      <table id="tbl" style="margin-top:14px">
+        <thead><tr>
+          <th></th>
+          <th data-i18n="th_date"></th>
+          <th data-i18n="th_type"></th>
+          <th data-i18n="th_store"></th>
+          <th class="r" data-i18n="th_amount"></th>
+          <th data-i18n="th_status"></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+      <pre id="log" class="log" style="margin-top:14px"></pre>
+    </div>
+
+    <div class="section-title"><h2 data-i18n="activity"></h2></div>
+    <div class="card"><div id="activity"></div></div>
   </div>
-  <table id="tbl">
-    <thead><tr><th></th><th>Fecha</th><th>Tipo</th><th>Tienda</th><th class="r">Importe</th><th>Estado</th></tr></thead>
-    <tbody></tbody>
-  </table>
-  <pre id="log" style="margin:0;padding:8px 12px;background:#fafafa;border-top:1px solid #eee;white-space:pre-wrap;color:#444;font:12px ui-monospace,monospace"></pre>
-  <h3 style="margin:0;padding:12px 12px 4px;font:600 13px system-ui">Actividad reciente</h3>
-  <div id="activity" style="padding:0 12px 14px"></div>
+
   <script type="module" src="popup.js"></script>
 </body>
 </html>
