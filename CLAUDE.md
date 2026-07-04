@@ -1,98 +1,169 @@
 # Habeas — Claude Code context
 
+> Working context for the **Habeas** repo. Develop it independently of Tiquetera/Cuéntamo
+> (those are separate apps that merely *consume* Habeas output).
+
 ## What this is
 
-**Habeas** is an open-source (AGPL-3.0) **browser extension** that lets a user
-extract their **own** personal data — receipts, invoices, card/investment
-transactions — from services that hide it behind non-automatable walls
-(Cloudflare, Akamai, DataDome) and offer neither an API nor an email export.
+**Habeas** is an open-source (AGPL-3.0) **Manifest V3 browser extension** (Chrome/Chromium
+**and** Firefox) that lets a user extract their **own** personal data — receipts, invoices,
+card/investment transactions — from services that hide it behind non-automatable walls
+(Cloudflare, Akamai…) and offer neither an API nor an email export.
 
-The whole design lives in **`docs/FUNCTIONAL-SPEC.md`** — read it before making
-architectural decisions.
-
-## Status
-
-**Pre-code.** This repo is currently a skeleton + functional spec. The spec is
-the source of truth; code is being scaffolded. The first real adapter (Carrefour
-España) is being validated as a "dirty" userscript before the format is frozen.
+- Site: **habeas.dev** (landing served from `docs/` via GitHub Pages, HTTPS enforced).
+- Repo: **github.com/habeas-dev/habeas** · npm placeholder: **habeas**.
 
 ## Core thesis (do not lose this)
 
-Client-side-in-session beats server-side scraping. Because the extension runs
-**inside the user's real, already-authenticated browser session**, it:
+Client-side-in-session beats server-side scraping. Because the extension runs **inside the
+user's real, already-authenticated browser session**, it never fights anti-bot (inherits the
+user's valid Cloudflare/Akamai session), never stores credentials (the user logs in
+themselves), and lets the user resolve MFA/OTP live. The opposite of how Plaid/Tink/TrueLayer
+operate. Every decision must preserve this.
 
-- never fights anti-bot (it inherits the user's valid Cloudflare/Akamai session),
-- never stores credentials (the user logs in themselves),
-- lets the user resolve MFA/OTP live.
+## Status — working alpha
 
-This is the exact opposite of how Plaid/Tink/TrueLayer operate, and it's the
-reason the project exists. Every design decision should preserve it.
+First data source (Carrefour España) works **end-to-end** in Chrome and Firefox. Implemented:
+capture → inventory → sinks (download / local-folder / **native Google Drive** / http),
+per-sink dedupe, **automatic mode** (sync new docs on login), activity log + badge +
+notifications, **source categories + sink `accepts` filtering**, full **i18n (en default +
+es)**, a **landing site**, and **CI packaging**.
 
-## Architecture
+## Repo layout
 
-- **Core** (`core/`) — the only reviewed code. Trigger, session detection,
-  Capture SDK (authenticated `fetch`, DOM, pagination, PDF/blob download),
-  normalization, sinks, and consent/capability enforcement.
-- **Adapters** (`adapters/`) — one per service. **Mostly declarative** (YAML/JSON
-  *data*, not code). Declares: host match, login signal, list/detail fetch, field
-  mapping (JSONPath/CSS), dedupe key, target schema, and a **capability scope**
-  (which hosts it may read, which sink it may write). Validated against
-  `adapters/schema/adapter.schema.json`.
-- **Schemas** (`schemas/`) — normalized output per domain (`receipt`,
-  `transaction`, `invoice`…). Adapters map **into** these; consumers ingest
-  **these**.
-- **Consumers** (`consumers/`) — external apps that receive normalized records
-  (Tiquetera = receipts, Cuéntamo = finance). **Decoupled**: the core knows
-  nothing about them; they only publish an ingest endpoint + the schema they want.
+```
+habeas/
+├── extension/              # THE EXTENSION — authoritative code lives here
+│   ├── manifest.json       # MV3; dual background (service_worker=Chrome, scripts=Firefox, type module)
+│   ├── icon*.png/.svg       # logo (light + dark variants); topbar/hero use the light one
+│   ├── _locales/{en,es}/    # chrome.i18n messages (en = default_locale)
+│   ├── fonts/               # self-hosted Space Grotesk + Inter (no third-party requests)
+│   └── src/
+│       ├── background.js    # captured auth (storage.session) + auto-sync runner
+│       ├── lib/             # ext.js (browser??chrome shim), config, secrets, state, fs, zip,
+│       │                    #   naming, badge, theme-icon, i18n
+│       ├── adapters/        # carrefour-es.js (data-shaped JS object) + index.js catalog
+│       ├── content/         # bridge.js (isolated) + hook.js (page): capture JWT + CSRF
+│       ├── runtime/inventory.js  # enumerate documents + fetch a PDF + categorize
+│       ├── sinks/           # sinks.js · format.js (records, manifest, compatibility) · drive.js
+│       └── ui/              # popup (app tab) + options + theme.css
+├── docs/                   # habeas.dev landing (GitHub Pages) + FUNCTIONAL-SPEC.md + CNAME
+├── consumers/              # docs for external consumers (tiquetera.md)
+├── package.json            # npm scripts: lint/build/package via web-ext
+├── .github/workflows/build.yml   # CI: build MV3 zip on push, attach to releases on v* tags
+└── adapters/ schemas/ core/ …    # EARLY-SKELETON design artifacts (spec docs), NOT the runtime code
+```
+
+`docs/FUNCTIONAL-SPEC.md` is the design spec (read for architecture rationale). The runtime
+code is in `extension/src/` — the root `core/`, `schemas/`, `adapters/*.yaml` are early
+scaffolding kept as design notes (safe to consolidate later).
+
+## How it works (data flow)
+
+1. **Capture** — `content/hook.js` runs in the page (injected by `bridge.js`), hooks
+   `fetch`/XHR, and captures the auth headers the site's SPA sends to its API, **tagged by
+   endpoint path**. Only the real user JWT (`eyJ…`) is kept (not anonymous/Basic tokens).
+   `bridge.js` relays to `background.js`, which stores them in `storage.session` (never disk).
+2. **Inventory** — the app tab (`ui/popup.*`) or the background reads the captured auth and
+   `runtime/inventory.js` enumerates all documents (paginated) and assigns each a `category`.
+3. **Send** — selected docs are fetched (PDFs) and handed to a **sink**. The manifest of
+   normalized records is always included.
+4. **Auto mode** — on login capture, `background.js` runs any `mode:auto` route: list → filter
+   to NEW (per ledger) and to categories the sink accepts → send to a SW-runnable sink
+   (drive/http) → mark delivered → notify.
+
+## Data model
+
+- **Adapter** (`adapters/carrefour-es.js`) is a plain JS object (data, not imperative code):
+  `id, name, service, categories[], categorize{field,map,default}, match[], auth{tokenMatch,
+  replayHeaders[]}, api{host,list{path,itemsPath,offsetsPath,window,params},pdf{path}},
+  fields{…}, schema`. Add new sources as sibling files + register in `adapters/index.js`.
+- **Normalized record** (`sinks/format.js#toRecord`): `{externalId, date, total, currency,
+  category, store{name,address}, source, type}`.
+- **Categories** classify each document (Carrefour: `HYPERMARKET`→`grocery`, `REFUELING`→
+  `fuel`, default `retail`). **Sinks** may declare `accepts:{categories?,sources?}`; without
+  it they accept everything. Two-layer filter: the UI only offers compatible sinks, and
+  send/auto only deliver docs whose category the sink accepts (`format.js#sinkAcceptsSource`
+  / `#acceptsDoc`). Lets a Tiquetera sink take only `grocery`.
+- **Config** (`lib/config.js`, storage.local): `{datasources[], sinks[], routes[]}`. **Secrets**
+  (`lib/secrets.js`, separate store, `secret://` refs). **Delivery ledger + activity log**
+  (`lib/state.js`). Directory handles for local-folder in IndexedDB (`lib/fs.js`).
+
+## Carrefour specifics (hard-won)
+
+- Login is on `www.carrefour.es` (**behind Cloudflare**; email OTP). The **API is
+  `pro.api.carrefour.es`** (Google APIgee, **NOT** behind Cloudflare, CORS open).
+- **List:** `GET /md-purchasesAccount-v1/purchases?from&to&count&ticketOffset&atgfOffset&
+  atgnfOffset&…` (offset pagination via the returned `offsets`; tickets + online orders).
+- **PDF:** `GET /md-ticketsAccount-v1/tickets/{purchaseId}/pdf`. **Retention:** only recent
+  tickets have a PDF; older ones return **406** → not an error, exported as metadata only.
+- **Auth to replay:** the user JWT (`authorization: bearer eyJ…`) **+ `x-xsrf-token` +
+  `x-csrf-token` + `requestorigin`** (validated per endpoint — the extension captures headers
+  per path and replays the ones the SPA used for `purchases`).
+
+## Cross-browser notes
+
+- **`lib/ext.js`** exports `const chrome = globalThis.browser ?? globalThis.chrome` — imported
+  in every module using extension APIs so promise-based calls work in Firefox too. New modules
+  that touch `chrome.*` MUST import it (content `bridge.js` inlines the same shim).
+- **Background:** manifest has both `service_worker` (Chrome) and `scripts` (Firefox), `type:
+  module`. web-ext lint warns that Firefox ignores `service_worker` — expected.
+- **Gaps in Firefox:** File System Access (`local-folder` sink) is Chromium-only → the option
+  is hidden and guarded on Firefox. Google Drive OAuth `launchWebAuthFlow` uses a
+  **per-browser redirect URL**, so the shipped client only targets Chromium; Firefox users
+  must register the Firefox redirect (shown in Settings) on their own OAuth client.
+
+## Identity & secrets
+
+- Domain `habeas.dev`, GitHub org `habeas-dev`, npm `habeas`.
+- **Google Drive OAuth client** (public, scope `drive.file` → no CASA): default client id is
+  hardcoded in `sinks/drive.js` (`246972215385-…apps.googleusercontent.com`). Client ids are
+  public, not secrets. Redirect URI registered = Chromium's `chromiumapp.org` one.
+
+## Build & CI
+
+- Local: `npm install` then **`npm run package`** (lint + `web-ext build` → `dist/…zip`). The
+  same MV3 zip loads in Chrome and Firefox. `dist/` is gitignored.
+- CI (`.github/workflows/build.yml`): builds the zip on push/PR, uploads it as an artifact,
+  and attaches it to a GitHub Release on `v*` tags.
+- Load unpacked: Chrome `chrome://extensions` → Load unpacked → `extension/`. Firefox
+  `about:debugging` → Load Temporary Add-on → `extension/manifest.json` (or the zip).
 
 ## Non-negotiable rules
 
-1. **Adapters are DATA, not code.** No `eval`, no remotely-hosted JS. Logic that
-   isn't expressible declaratively uses a **bounded** set of predefined
-   transforms only. (MV3 forbids remote code; this is also the security model —
-   a malicious adapter cannot run arbitrary JS.)
-2. **Local-first.** Data never leaves the browser unless the user explicitly
-   approves a sink, per-adapter and (for sensitive data) per-send.
-3. **No credential storage, ever.** Rely on the live user session.
-4. **Capability scope is enforced by the Core.** An adapter reads only its
-   declared hosts and writes only its declared sink, after explicit consent.
-5. **Financial adapters are FIRST-PARTY ONLY.** Banking/cards/investment adapters
-   are maintained & signed by the project, never accepted from the community
-   unaudited, and reviewed to a higher bar.
-6. **Triggers are user-initiated (or on-visit).** No background scraping with a
-   stored session in the MVP — it re-triggers anti-bot/OTP and blurs the legal
-   posture.
-
-## Planned stack (not yet implemented)
-
-- Manifest V3 extension, **Firefox-first** (Chrome Web Store may reject scraping
-  extensions, especially finance-touching ones). TypeScript.
-- Adapter format: YAML validated by `adapters/schema/adapter.schema.json`.
-- npm package `habeas` (unscoped placeholder published); future packages under
-  `@habeas/*`.
-- Identity: domain `habeas.dev`, GitHub org `habeas-dev`.
+1. **Adapters are DATA, not code.** No `eval`, no remotely-hosted JS (also an MV3 rule).
+2. **Local-first.** Data never leaves the browser unless the user picks a sink.
+3. **No credential storage, ever.** Rely on the live session; the session token lives only in
+   `storage.session` (memory, cleared on browser close).
+4. **Financial adapters are FIRST-PARTY ONLY** (higher review bar, never unaudited community).
+5. **Triggers are user-initiated / on-login.** No background scraping with a stored session
+   while the user is away.
 
 ## Legal posture
 
-Framed as **GDPR Art. 20 / habeas data** — the user's right to their own data,
-exercised by the user, in the user's session, via user-run open-source software.
-Not a PSD2-regulated actor (no payment initiation), but data-protection duties
-are maximal → local-first is reinforced for financial/health data. Per-adapter
-risk is documented; ToS compliance for each service is the user's responsibility.
+GDPR Art. 20 / *habeas data* — the user's own data, in the user's session, via user-run OSS.
+Not a PSD2-regulated actor (no payment initiation). ToS of each service may restrict automated
+access — documented, user's responsibility. Full write-up in `README.md` (Legal & Privacy).
 
 ## Conventions
 
-- **Language:** code, comments, docs, and commits in **English** (international
-  OSS project). (Note: sibling apps Tiquetera/Cuéntamo are Spanish; Habeas is not.)
-- **Adapter files:** one per service, named `<service>-<country>.yaml`
-  (e.g. `carrefour-es.yaml`).
-- Keep the Core small and auditable; push service-specific behavior into
-  declarative adapters, never into the Core.
+- **Language:** code, comments, docs, commits in **English** (international OSS).
+- **Commits:** conventional-commits, and **do NOT add `Co-Authored-By: Claude` or
+  `Claude-Session` trailers** (history was rewritten to strip them; keep it that way).
+- Keep the runtime small and auditable; push service-specific behavior into declarative
+  adapters. Validate JS (`node --check`) and locale key parity (en/es) before committing.
 
-## First adapter reference
+## Consumers (decoupled — separate projects)
 
-`adapters/carrefour-es.yaml` — Carrefour España receipts. `carrefour.es` is fully
-behind Cloudflare; login uses an **email OTP**. The extension works only because
-the user is already logged in (real session). Internal "Mis compras" endpoint is
-still to be discovered via the userscript prototype. Target schema: `receipt`.
-Consumer: Tiquetera.
+- **Tiquetera** (Spanish grocery-receipt app) — accepts `grocery` via an HTTP sink
+  `accepts:{categories:["grocery"]}`. See `consumers/tiquetera.md`.
+- **Cuéntamo** (personal finance) — future `transaction`/`investment` sources. Note: for banks,
+  PSD2 AIS (licensed aggregator) is the primary path; Habeas covers what PSD2 doesn't (cards,
+  investments, pensions). Financial adapters are first-party only.
+
+## Roadmap / pending
+
+- **HTTP → Tiquetera** ingest endpoint (POST normalized records + PDFs; pairing token) — the
+  category model already supports it.
+- Encrypt secrets at rest; harden dynamic HTML (web-ext/AMO flags `innerHTML`).
+- More data sources; AMO + Chrome Web Store submission; Firefox Drive OAuth redirect.
