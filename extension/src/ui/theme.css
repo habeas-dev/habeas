@@ -71,8 +71,9 @@ code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; 
   position: sticky; top: 0; z-index: 10;
 }
 .topbar .logo { width: 30px; height: 30px; }
+.topbar .brandwrap { display: flex; align-items: baseline; gap: 10px; flex: 1; min-width: 0; }
 .topbar .brand { font-family: var(--font-head); font-weight: 700; font-size: 18px; letter-spacing: -.01em; }
-.topbar .tagline { color: #ffffffb0; font-size: 12.5px; flex: 1; }
+.topbar .tagline { color: #ffffffb0; font-size: 12.5px; }
 .topbar a { color: #fff; }
 .topbar button { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.25); color: #fff; }
 .topbar button:hover { background: rgba(255,255,255,.26); border-color: rgba(255,255,255,.5); }
