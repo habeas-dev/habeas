@@ -32,6 +32,9 @@ async function init() {
   $('#list').onclick = onList;
   $('#send').onclick = onSend;
   $('#sink').onchange = () => render();
+  $('#sel-new').onclick = () => setSelection('new');
+  $('#sel-all').onclick = () => setSelection('all');
+  $('#sel-none').onclick = () => setSelection('none');
   await badgeClear();
   watchThemeIcon();
   await renderActivity();
@@ -64,6 +67,7 @@ async function onList() {
     $('#status').textContent = t('n_documents', [String(inventory.length)]);
     log(t('n_documents', [String(inventory.length)]));
     $('#sendbar').hidden = inventory.length === 0;
+    $('#selbar').hidden = inventory.length === 0;
   } catch (e) {
     $('#status').textContent = t('generic_error', [e.message]);
   }
@@ -74,7 +78,7 @@ async function render() {
   const delivered = sinkId ? await deliveredSet(dsId, sinkId) : {};
   $('#tbl tbody').innerHTML = inventory.map((d, i) => {
     const sent = !!delivered[d.externalId];
-    return `<tr>
+    return `<tr data-sent="${sent ? '1' : ''}">
        <td><input type="checkbox" data-i="${i}" ${sent ? '' : 'checked'}></td>
        <td>${(d.date || '').slice(0, 10)}</td>
        <td><span class="pill type">${d.type || ''}</span></td>
@@ -83,6 +87,13 @@ async function render() {
        <td>${sent ? `<span class="pill sent">${t('pill_sent')}</span>` : `<span class="pill new">${t('pill_new')}</span>`}</td>
      </tr>`;
   }).join('');
+}
+
+function setSelection(mode) {
+  document.querySelectorAll('#tbl tbody tr').forEach((tr) => {
+    const cb = tr.querySelector('input[type=checkbox]');
+    if (cb) cb.checked = mode === 'all' ? true : mode === 'none' ? false : !tr.dataset.sent;
+  });
 }
 
 async function onSend() {

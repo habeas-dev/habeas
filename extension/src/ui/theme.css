@@ -127,6 +127,7 @@ tbody td { padding: 9px 10px; border-bottom: 1px solid var(--line); }
 tbody tr:hover { background: var(--brand-50); }
 td.r, th.r { text-align: right; }
 td.r, tbody td:nth-child(2) { white-space: nowrap; }
+tbody tr[data-sent="1"] td { color: var(--muted); }
 
 /* Log / activity */
 .log { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--muted); white-space: pre-wrap; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; margin: 0; max-height: 160px; overflow: auto; }
