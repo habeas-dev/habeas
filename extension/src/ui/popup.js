@@ -82,18 +82,22 @@ async function onSend() {
     catch (e) { $('#status').textContent = 'Selección de carpeta cancelada.'; return; }
   }
 
-  $('#status').textContent = 'Descargando ' + chosen.length + ' PDFs…';
+  $('#status').textContent = 'Obteniendo ' + chosen.length + ' documentos…';
   const files = new Map();
+  const noPdf = [];
   const errors = [];
   for (const d of chosen) {
     try { files.set(d.externalId, await fetchPdf(adapter, auth, d.externalId)); }
-    catch (e) { errors.push(d.externalId + ' → ' + e.message); }
+    catch (e) {
+      if (/\b406\b|sin PDF/.test(e.message)) noPdf.push(d.externalId);
+      else errors.push(d.externalId + ' → ' + e.message);
+    }
   }
-  log(`PDFs obtenidos: ${files.size}/${chosen.length}` + (errors.length ? `\nfallos:\n  ${errors.join('\n  ')}` : ''));
+  log(`Con PDF: ${files.size} · sin PDF (Carrefour no los conserva): ${noPdf.length}`
+    + (errors.length ? ` · errores: ${errors.length}\n  ${errors.join('\n  ')}` : ''));
   try {
     const r = await writeToSink(sink, chosen, files, opts);
-    const written = r.written ?? files.size;
-    const m = `Enviados ${written}/${chosen.length} a "${sink.id}"`;
+    const m = `Enviado a "${sink.id}": ${r.written} PDF + manifest (${chosen.length} docs, ${noPdf.length} sin PDF)`;
     $('#status').textContent = m; log(m);
   } catch (e) {
     const m = 'Sink error: ' + (e && e.message ? e.message : e);
