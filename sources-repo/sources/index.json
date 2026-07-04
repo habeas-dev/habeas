@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-04T17:13:59.320Z",
+  "generated": "2026-07-04T17:45:52.134Z",
   "sources": [
     {
       "id": "carrefour-es",
@@ -14,8 +14,8 @@
       "domain": "carrefour.es",
       "crossDomain": [],
       "version": "2026-07-04",
-      "url": "https://sources.habeas.dev/carrefour-es.json",
-      "updated": "2026-07-04T17:13:59.320Z"
+      "url": "https://habeas-dev.github.io/sources/carrefour-es.json",
+      "updated": "2026-07-04T17:45:52.134Z"
     }
   ]
 }

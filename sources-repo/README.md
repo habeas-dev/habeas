@@ -34,8 +34,8 @@ describes public data structure; the domain boundary, not the category, is the s
 ## Publishing
 
 On merge to `main`, CI builds `sources/index.json` and deploys the catalog + source files to
-**https://sources.habeas.dev** (`index.json`, `<id>.json`, `adapter.schema.json`). The extension
-reads `https://sources.habeas.dev/index.json` (`extension/src/registry/client.js`). Ratings and
+**https://habeas-dev.github.io/sources** (`index.json`, `<id>.json`, `adapter.schema.json`). The extension
+reads `https://habeas-dev.github.io/sources/index.json` (`extension/src/registry/client.js`). Ratings and
 comments are served by a separate small service at `https://habeas.dev/api` (optional; the
 extension degrades gracefully without it). See the extension repo's `docs/registry.md`.
 

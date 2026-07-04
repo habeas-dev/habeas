@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path';
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
 const dir = join(root, 'sources');
-const BASE = process.env.SOURCES_BASE || 'https://sources.habeas.dev';
+const BASE = process.env.SOURCES_BASE || 'https://habeas-dev.github.io/sources';
 const now = new Date().toISOString();
 
 const entries = readdirSync(dir)
