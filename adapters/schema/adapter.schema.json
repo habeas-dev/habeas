@@ -45,12 +45,12 @@
       "required": ["replayHeaders"],
       "additionalProperties": false,
       "properties": {
+        "mode": { "enum": ["bearer", "cookie"], "description": "bearer = replay the captured JWT; cookie = rely on the browser's cookies (credentials:include). Endpoints may mix (e.g. cookie list + bearer PDF)." },
         "tokenMatch": { "type": "string", "description": "Substring the captured Authorization must contain to be a real user token (e.g. eyJ)." },
         "replayHeaders": {
           "type": "array",
           "items": { "type": "string" },
-          "minItems": 1,
-          "description": "Captured request headers to replay when calling the API."
+          "description": "Captured request headers to replay when calling the API (may be empty for cookie auth)."
         },
         "captureHosts": {
           "type": "array",

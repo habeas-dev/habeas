@@ -74,6 +74,20 @@ export async function listInventory(adapter, auth) {
 
 const absHost = (h) => (/^https?:\/\//.test(h) ? h : 'https://' + h);
 
+// Resolve the headers to replay for a given endpoint path from the captured auth STORE
+// ({ byPath, merged }). Different endpoints can use different auth (e.g. cookie-authed list +
+// bearer-authed PDF) — each replays what was captured for ITS path, falling back to the union.
+// `allowMerged=false` (cookie endpoints) avoids leaking a bearer captured elsewhere.
+function headersFor(auth, path, allowMerged = true) {
+  if (!auth) return {};
+  if (auth.byPath || auth.merged) {
+    const exact = path && auth.byPath && auth.byPath[path];
+    if (exact) return exact;
+    return allowMerged ? (auth.merged || {}) : {};
+  }
+  return auth; // already a plain headers object (tests / direct callers)
+}
+
 // Which per-document artifact this source produces: a PDF (GET, or POST-generated) or a JSON detail
 // (GET). JSON detail is preferred when present — it's the practical artifact for many services.
 export function documentExt(adapter) {
@@ -97,8 +111,9 @@ export async function fetchPdf(adapter, auth, externalId) {
   const pdf = adapter.api.pdf;
   if (!pdf) throw new Error('no PDF for this source');
   const host = pdf.host ? absHost(pdf.host) : adapter.api.host;
-  const url = host + pdf.path.replace('{externalId}', encodeURIComponent(externalId));
-  const init = { method: pdf.method || 'GET', headers: { ...auth, accept: 'application/pdf' } };
+  const path = pdf.path.replace('{externalId}', encodeURIComponent(externalId));
+  const url = host + path;
+  const init = { method: pdf.method || 'GET', headers: { ...headersFor(auth, path), accept: 'application/pdf' }, credentials: 'include' };
   if (init.method !== 'GET' && pdf.body != null) {
     init.body = String(pdf.body).split('{externalId}').join(externalId);
     init.headers['content-type'] = pdf.contentType || 'application/json';
@@ -117,15 +132,19 @@ export async function fetchDetail(adapter, auth, externalId) {
   const d = adapter.api.detail;
   if (!d) throw new Error('no detail for this source');
   const host = d.host ? absHost(d.host) : adapter.api.host;
-  const url = host + d.path.replace('{externalId}', encodeURIComponent(externalId));
-  const res = await fetch(url, { method: d.method || 'GET', headers: { ...auth, accept: 'application/json' } });
+  const path = d.path.replace('{externalId}', encodeURIComponent(externalId));
+  const url = host + path;
+  const res = await fetch(url, { method: d.method || 'GET', headers: { ...headersFor(auth, path), accept: 'application/json' }, credentials: 'include' });
   if (!res.ok) throw new Error('detail ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
   return new Blob([await res.text()], { type: 'application/json' });
 }
 
 async function fetchList(adapter, auth, params) {
   const url = adapter.api.host + adapter.api.list.path + '?' + new URLSearchParams(params);
-  const res = await fetch(url, { headers: auth });
+  // credentials:'include' carries the user's cookies — the common auth for sites that don't use a
+  // replayed bearer token (in an extension with host access this is not CORS-blocked).
+  const cookie = adapter.auth && adapter.auth.mode === 'cookie';
+  const res = await fetch(url, { headers: headersFor(auth, adapter.api.list.path, !cookie), credentials: 'include' });
   if (!res.ok) throw new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160));
   return await res.json();
 }

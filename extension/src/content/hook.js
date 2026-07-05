@@ -37,7 +37,10 @@
   function postAuth(url, h) {
     const out = {};
     KEYS.forEach((k) => { if (h[k]) out[k] = h[k]; });
-    if (!(out.authorization && /eyJ/.test(out.authorization))) return;
+    // Outside learn mode only keep a real user JWT. During authoring we also capture the headers that
+    // ride alongside COOKIE auth (csrf / origin), so cookie-based sites work without a bearer token.
+    if (!LEARN && !(out.authorization && /eyJ/.test(out.authorization))) return;
+    if (!Object.keys(out).length) return;
     let path = ''; try { path = new URL(url, location.href).pathname; } catch (e) {}
     window.postMessage({ __habeas: true, type: 'auth', host: hostOf(url), path, headers: out }, '*');
   }

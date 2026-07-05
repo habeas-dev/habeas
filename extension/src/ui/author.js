@@ -80,11 +80,12 @@ async function onAnalyze() {
   CANDS = listCandidates(samples);
   if (!CANDS.length) { $('#status').textContent = t('author_no_list'); return; }
   // Let the user pick which captured list is their data (biggest is only a default).
-  $('#f_list').innerHTML = CANDS.map((c, i) => `<option value="${i}">${c.count} · ${esc(c.path)} · ${esc(c.host)}</option>`).join('');
+  $('#f_list').innerHTML = CANDS.map((c, i) => `<option value="${i}">${c.count} ${t('author_items')} · ${esc(c.path)} · ${esc(c.host)}</option>`).join('');
   $('#f_list').onchange = () => drawDraft(CANDS[+$('#f_list').value]);
   $('#findbtn').onclick = onFind;
   $('#f_find').onkeydown = (e) => { if (e.key === 'Enter') onFind(); };
   $('#listpickrow').hidden = CANDS.length <= 1;
+  $('#listhint').hidden = CANDS.length <= 1;
   $('#findstatus').textContent = '';
   $('#mapper').hidden = false;
   drawDraft(CANDS[0]);
@@ -98,7 +99,7 @@ function onFind() {
   if (!matches.length) { $('#findstatus').textContent = t('author_find_none'); return; }
   const i = CANDS.findIndex((c) => c.key === matches[0].key);
   if (i >= 0) { $('#f_list').value = String(i); drawDraft(CANDS[i]); }
-  if (matches.length > 1) { $('#listpickrow').hidden = false; $('#findstatus').textContent = t('author_find_multi', [String(matches.length)]); }
+  if (matches.length > 1) { $('#listpickrow').hidden = false; $('#listhint').hidden = false; $('#findstatus').textContent = t('author_find_multi', [String(matches.length)]); }
   else $('#findstatus').textContent = t('author_find_ok', [String(matches[0].count)]);
 }
 
@@ -187,12 +188,12 @@ async function onTest() {
   if (!v.ok) { $('#status').textContent = t('author_invalid', [v.errors.join('; ')]); return; }
   await ensureHostPermission(adapter.api.host);
   const host = adapter.api.host.replace(/^https?:\/\//, '');
-  const auth = await getAuthFor(host);
-  const headers = auth && (auth.byPath[adapter.api.list.path] || auth.merged);
-  if (!headers) { $('#status').textContent = t('author_no_auth'); return; }
+  // Pass the whole captured store so list/detail/PDF each resolve their own auth (mixed cookie+
+  // bearer). Proceed even with nothing captured — cookies (credentials:'include') may carry it.
+  const authStore = (await getAuthFor(host)) || { byPath: {}, merged: {} };
   $('#status').textContent = t('author_testing');
   try {
-    const docs = await listInventory(adapter, headers);
+    const docs = await listInventory(adapter, authStore);
     $('#preview tbody').innerHTML = docs.slice(0, 3).map((d) =>
       `<tr><td>${esc((d.date || '').slice(0, 10))}</td><td>${esc(d.storeName || d.label || '')}</td><td class="r">${esc(fmt(d.total ?? d.amount))}</td><td>${esc(d.type || '')}</td></tr>`).join('');
     $('#status').textContent = t('author_test_ok', [String(docs.length)]);

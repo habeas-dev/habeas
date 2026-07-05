@@ -83,10 +83,13 @@ async function maybeAutoRun(host) {
 const hostOf = (adapter) => adapter.api.host.replace(/^https?:\/\//, '');
 
 async function authFor(adapter) {
+  const cookie = adapter.auth && adapter.auth.mode === 'cookie';
   const o = await chrome.storage.session.get('auth:' + hostOf(adapter));
   const store = o['auth:' + hostOf(adapter)];
-  if (!store) return null;
-  return store.byPath[adapter.api.list.path] || store.merged || null;
+  // Whole store → each endpoint resolves its own auth (mixed cookie+bearer). Cookie sources proceed
+  // with an empty store (cookies carry the session).
+  if (!store) return cookie ? { byPath: {}, merged: {} } : null;
+  return { byPath: store.byPath || {}, merged: store.merged || {} };
 }
 
 async function runRoute(ds, adapter, sink) {

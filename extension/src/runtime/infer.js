@@ -198,10 +198,14 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
   const name = pick((k) => looksName(k));
   if (name) fields.storeName = name;
 
-  // Auth headers to replay: whatever we captured on the winning request.
+  // Auth model: bearer (replay the captured JWT) vs cookie (rely on the browser's cookies via
+  // credentials:'include'; replay any csrf/origin headers the SPA also sent).
   const reqHeaders = s.reqHeaders || {};
-  const replayHeaders = Object.keys(reqHeaders).filter((h) => HEADER_ALLOW.test(h));
-  if (!replayHeaders.includes('authorization')) replayHeaders.unshift('authorization');
+  const hasBearer = /eyJ/.test(reqHeaders.authorization || '');
+  const captured = Object.keys(reqHeaders).filter((h) => HEADER_ALLOW.test(h) && h !== 'content-type');
+  const auth = hasBearer
+    ? { mode: 'bearer', tokenMatch: 'eyJ', replayHeaders: captured.includes('authorization') ? captured : ['authorization', ...captured] }
+    : { mode: 'cookie', replayHeaders: captured.filter((h) => h !== 'authorization') };
 
   const domain = ctx.domain || host.split('.').slice(-2).join('.');
   const pageHost = ctx.pageHost || domain;
@@ -214,7 +218,7 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
     domain,
     categories: ['other'],
     match: [u.protocol + '//' + pageHost + '/*'],
-    auth: { tokenMatch: 'eyJ', replayHeaders },
+    auth,
     api: {
       host: u.protocol + '//' + host,
       list: Object.assign({ path: u.pathname, paging, itemsPath: best.itemsPath || 'items' }, list),
