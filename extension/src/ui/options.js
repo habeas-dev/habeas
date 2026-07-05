@@ -11,6 +11,7 @@ import { needsConsent, hasConsent, grantConsent, consentDescriptor } from '../li
 import { exportSource, buildShareUrl, importFromFile } from '../registry/share.js';
 import { saveSource } from '../adapters/index.js';
 import { editJson } from './jsoneditor.js';
+import { getGrants, revokeGrant } from '../lib/grants.js';
 
 let CATALOG = {};
 const $ = (s) => document.querySelector(s);
@@ -125,6 +126,16 @@ async function render() {
     }
     render();
   });
+
+  const grants = await getGrants();
+  $('#grants').innerHTML = grants.length
+    ? grants.map((g) => {
+      let originHost = g.origin; try { originHost = new URL(g.origin).host; } catch (e) {}
+      const used = g.lastUsedAt ? `<span class="muted">${esc(String(g.lastUsedAt).slice(0, 10))}</span>` : '';
+      return `<div class="card row"><b style="flex:1">${esc(t('grant_line', [originHost, g.datasourceId]))}</b>${used}<button data-revoke="${esc(g.id)}">${t('grant_revoke')}</button></div>`;
+    }).join('')
+    : `<p class="muted">${t('no_grants')}</p>`;
+  $('#grants').querySelectorAll('[data-revoke]').forEach((b) => b.onclick = async () => { await revokeGrant(b.dataset.revoke); render(); });
 }
 
 function renderFields() {

@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Habeas · Authorize</title>
+  <link rel="stylesheet" href="theme.css" />
+  <style>body { min-width: 460px; max-width: 560px; } .kv { display:grid; grid-template-columns:120px 1fr; gap:6px; margin:6px 0; } .kv b{color:var(--muted)} .warn{color:#c0392b}</style>
+</head>
+<body>
+  <div class="topbar">
+    <img class="logo" src="../../icon-dark-128.png" alt="" />
+    <div class="brandwrap"><span class="brand">Habeas</span><span class="tagline" data-i18n="authz_tagline"></span></div>
+  </div>
+  <div class="app">
+    <div class="card">
+      <p data-i18n="authz_intro"></p>
+      <div class="kv"><b data-i18n="authz_origin"></b><span id="origin" class="warn"></span></div>
+      <div class="kv"><b data-i18n="authz_source"></b><span id="source"></span></div>
+      <div class="kv"><b data-i18n="authz_dest"></b><span id="dest"></span></div>
+      <div class="kv"><b data-i18n="authz_scope"></b><span id="scope"></span></div>
+      <p class="muted" data-i18n="authz_note" style="margin-top:10px"></p>
+      <div class="row" style="margin-top:14px;justify-content:flex-end;gap:8px">
+        <button id="deny" data-i18n="authz_deny"></button>
+        <button id="allow" class="primary" data-i18n="authz_allow"></button>
+      </div>
+      <div id="status" class="muted" style="margin-top:8px"></div>
+    </div>
+  </div>
+  <script type="module" src="authorize.js"></script>
+</body>
+</html>

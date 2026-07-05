@@ -20,6 +20,12 @@
       "matches": ["https://www.carrefour.es/*"],
       "js": ["src/content/bridge.js"],
       "run_at": "document_start"
+    },
+    {
+      "matches": ["https://*/*"],
+      "js": ["src/content/extbridge.js"],
+      "run_at": "document_idle",
+      "all_frames": false
     }
   ],
   "web_accessible_resources": [

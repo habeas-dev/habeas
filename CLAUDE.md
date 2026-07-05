@@ -29,6 +29,15 @@ per-sink dedupe, **automatic mode** (sync new docs on login), activity log + bad
 notifications, **source categories + sink `accepts` filtering**, full **i18n (en default +
 es)**, a **landing site**, and **CI packaging**.
 
+**External hooks** (`lib/exthooks.js` · `lib/grants.js` · `content/extbridge.js` · `ui/authorize.*`):
+any website can, via `window.postMessage` (bridge on all https pages, both browsers — no allowlist),
+**propose** a `source → its-own-origin http sink` workflow and later **request collection**. Two
+enforced rules: **origin-bound sink** (the sink URL host MUST equal the requesting origin — a site
+can only route your data back to itself) and **explicit consent** (`ui/authorize.html`). Approval
+mints a **grant** (`storage.local habeas:grants`, one origin→one route) revocable in Settings →
+Site integrations. `collect` always runs in a **dedicated tab** (foregrounded only for manual login;
+never handles credentials), debounced + logged, no notification. See `consumers/external-hooks.md`.
+
 **Community sources system** (in-extension parts done, verified in node): a **generalized runtime**
 (declarative pager `offsets|page|cursor|none`, dotted field paths, schemas `receipt|invoice|
 transaction|investment`, optional PDF); an **adapter loader + validator** with a **same-registrable-
