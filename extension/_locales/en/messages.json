@@ -161,6 +161,12 @@
   "market_social_off": { "message": "Ratings service unavailable right now." },
 
   "author_map_intro": { "message": "Habeas detected your data. Check each field below shows the right example, then Test and Save. You rarely need “Advanced”." },
+  "author_find_label": { "message": "Find your data" },
+  "author_find_ph": { "message": "a ticket no., an amount…" },
+  "author_find": { "message": "Find" },
+  "author_find_none": { "message": "Not found in the captured data — try another value, or open the exact page/order first." },
+  "author_find_ok": { "message": "Found in a list of $N$ items — mapping below.", "placeholders": { "n": { "content": "$1" } } },
+  "author_which_list": { "message": "Which list is your data?" },
   "author_kind": { "message": "Kind of data" },
   "author_advanced": { "message": "Advanced (usually not needed)" },
   "kind_receipt": { "message": "Receipts / tickets" },

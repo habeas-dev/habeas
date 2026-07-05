@@ -161,6 +161,12 @@
   "market_social_off": { "message": "Servicio de valoraciones no disponible ahora." },
 
   "author_map_intro": { "message": "Habeas detectó tus datos. Comprueba que cada campo de abajo muestra el ejemplo correcto, y pulsa Probar y Guardar. Rara vez necesitas «Avanzado»." },
+  "author_find_label": { "message": "Encuentra tus datos" },
+  "author_find_ph": { "message": "un nº de ticket, un importe…" },
+  "author_find": { "message": "Buscar" },
+  "author_find_none": { "message": "No aparece en lo capturado — prueba otro valor, o abre primero la página/pedido exacto." },
+  "author_find_ok": { "message": "Encontrado en una lista de $N$ elementos — mapeo abajo.", "placeholders": { "n": { "content": "$1" } } },
+  "author_which_list": { "message": "¿Cuál de las listas son tus datos?" },
   "author_kind": { "message": "Tipo de datos" },
   "author_advanced": { "message": "Avanzado (normalmente no hace falta)" },
   "kind_receipt": { "message": "Tickets / recibos" },

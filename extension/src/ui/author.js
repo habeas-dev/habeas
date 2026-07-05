@@ -1,7 +1,7 @@
 import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen } from '../lib/learn.js';
-import { draftAdapterFromSamples } from '../runtime/infer.js';
+import { draftAdapterFromSamples, listCandidates, matchCandidates } from '../runtime/infer.js';
 import { listInventory } from '../runtime/inventory.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { saveSource } from '../adapters/index.js';
@@ -12,6 +12,8 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': 
 const fmt = (n) => (typeof n === 'number' ? n.toFixed(2) : n ?? '');
 let LEARN = null;         // { domain, origin }
 let candidates = [];      // detected source field paths
+let SAMPLES = [];         // captured response samples
+let CANDS = [];           // candidate document lists across the samples
 
 // Normalized fields offered per target schema.
 const SCHEMA_FIELDS = {
@@ -71,11 +73,37 @@ async function onAnalyze() {
       : t('author_no_requests');
     return;
   }
-  const r = draftAdapterFromSamples(samples, { domain: LEARN.domain, pageHost: hostFromOrigin(LEARN.origin) });
+  SAMPLES = samples;
+  CANDS = listCandidates(samples);
+  if (!CANDS.length) { $('#status').textContent = t('author_no_list'); return; }
+  // Let the user pick which captured list is their data (biggest is only a default).
+  $('#f_list').innerHTML = CANDS.map((c, i) => `<option value="${i}">${c.count} · ${esc(c.path)} · ${esc(c.host)}</option>`).join('');
+  $('#f_list').onchange = () => drawDraft(CANDS[+$('#f_list').value]);
+  $('#findbtn').onclick = onFind;
+  $('#f_find').onkeydown = (e) => { if (e.key === 'Enter') onFind(); };
+  $('#listpickrow').hidden = CANDS.length <= 1;
+  $('#findstatus').textContent = '';
+  $('#mapper').hidden = false;
+  drawDraft(CANDS[0]);
+}
+
+// Search: the user types a value they recognise (ticket no., amount…) → jump to the list that has it.
+function onFind() {
+  const q = $('#f_find').value.trim();
+  if (!q) return;
+  const matches = matchCandidates(SAMPLES, q);
+  if (!matches.length) { $('#findstatus').textContent = t('author_find_none'); return; }
+  const m = matches[0];
+  const i = CANDS.findIndex((c) => c.key === m.key);
+  if (i >= 0) { $('#f_list').value = String(i); drawDraft(CANDS[i]); }
+  $('#findstatus').textContent = t('author_find_ok', [String(m.count)]);
+}
+
+function drawDraft(chosen) {
+  const r = draftAdapterFromSamples(SAMPLES, { domain: LEARN.domain, pageHost: hostFromOrigin(LEARN.origin) }, { key: chosen.key });
   if (!r.ok) { $('#status').textContent = t('author_no_list'); return; }
   candidates = r.fieldCandidates; // [{ path, value }]
   fillForm(r.draft);
-  $('#mapper').hidden = false;
   $('#status').textContent = t('author_detected', [r.itemsPath, String(r.count)]);
 }
 
