@@ -24,13 +24,15 @@ export async function startLearning(url) {
   if (!granted) throw new Error('permission denied');
   await registerBridge(origin);
   const domain = registrableDomain(u.hostname);
-  await chrome.storage.session.set({ 'habeas:learn': { active: true, domain, origin, url } });
+  // storage.local (not session): the content-script bridge must read this flag, and content
+  // scripts cannot access storage.session by default (and Firefox lacks setAccessLevel).
+  await chrome.storage.local.set({ 'habeas:learn': { active: true, domain, origin, url } });
   await chrome.tabs.create({ url });
   return { domain, origin };
 }
 
 export async function stopLearning() {
-  await chrome.storage.session.set({ 'habeas:learn': { active: false } });
+  await chrome.storage.local.set({ 'habeas:learn': { active: false } });
 }
 
 export async function getSamples(domain) {

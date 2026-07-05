@@ -45,28 +45,35 @@
       </div>
 
       <div id="mapper" hidden style="margin-top:12px">
-        <div class="inp"><label data-i18n="author_id"></label><input id="f_id" /></div>
-        <div class="inp"><label data-i18n="author_name"></label><input id="f_name" /></div>
-        <div class="inp"><label data-i18n="author_apihost"></label><input id="f_host" /></div>
-        <div class="inp"><label data-i18n="author_listpath"></label><input id="f_path" /></div>
-        <div class="inp"><label data-i18n="author_itemspath"></label><input id="f_items" /></div>
-        <div class="inp"><label data-i18n="author_paging"></label>
-          <select id="f_paging">
-            <option value="none">none</option><option value="page">page</option>
-            <option value="cursor">cursor</option><option value="offsets">offsets</option>
-          </select>
-        </div>
-        <div class="inp"><label data-i18n="author_pdfpath"></label><input id="f_pdf" placeholder="/…/{externalId}/pdf" /></div>
-        <div class="inp"><label data-i18n="author_schema"></label>
+        <p class="muted" data-i18n="author_map_intro"></p>
+        <div class="inp"><label data-i18n="author_kind"></label>
           <select id="f_schema">
-            <option value="receipt@1">receipt@1</option><option value="invoice@1">invoice@1</option>
-            <option value="transaction@1">transaction@1</option><option value="investment@1">investment@1</option>
+            <option value="receipt@1" data-i18n="kind_receipt"></option>
+            <option value="invoice@1" data-i18n="kind_invoice"></option>
+            <option value="transaction@1" data-i18n="kind_transaction"></option>
+            <option value="investment@1" data-i18n="kind_investment"></option>
           </select>
         </div>
         <div class="inp"><label data-i18n="author_categories"></label><input id="f_cats" placeholder="grocery,retail" /></div>
 
         <div class="section-title" style="margin-top:12px"><h3 data-i18n="author_fields"></h3></div>
         <div id="fieldmap"></div>
+
+        <details style="margin-top:12px">
+          <summary data-i18n="author_advanced"></summary>
+          <div class="inp"><label data-i18n="author_id"></label><input id="f_id" /></div>
+          <div class="inp"><label data-i18n="author_name"></label><input id="f_name" /></div>
+          <div class="inp"><label data-i18n="author_apihost"></label><input id="f_host" /></div>
+          <div class="inp"><label data-i18n="author_listpath"></label><input id="f_path" /></div>
+          <div class="inp"><label data-i18n="author_itemspath"></label><input id="f_items" /></div>
+          <div class="inp"><label data-i18n="author_paging"></label>
+            <select id="f_paging">
+              <option value="none">none</option><option value="page">page</option>
+              <option value="cursor">cursor</option><option value="offsets">offsets</option>
+            </select>
+          </div>
+          <div class="inp"><label data-i18n="author_pdfpath"></label><input id="f_pdf" placeholder="/…/{externalId}/pdf" /></div>
+        </details>
 
         <div class="row" style="margin-top:14px">
           <button id="test" data-i18n="author_test"></button>

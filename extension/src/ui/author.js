@@ -20,6 +20,16 @@ const SCHEMA_FIELDS = {
   transaction: ['externalId', 'date', 'amount', 'description', 'counterparty', 'direction', 'type', 'source'],
   investment: ['externalId', 'date', 'instrument', 'isin', 'units', 'price', 'amount', 'operation', 'type'],
 };
+// Plain-language labels (i18n keys) for each normalized field — no jargon in the UI.
+const FIELD_LABEL = {
+  externalId: 'fld_reference', date: 'fld_date', total: 'fld_amount', amount: 'fld_amount',
+  storeName: 'fld_store', storeAddress: 'fld_address', issuerAddress: 'fld_address', type: 'fld_type',
+  source: 'fld_channel', issuer: 'fld_issuer', number: 'fld_invoicenum', description: 'fld_description',
+  counterparty: 'fld_payee', direction: 'fld_direction', instrument: 'fld_instrument', isin: 'fld_isin',
+  units: 'fld_units', price: 'fld_price', operation: 'fld_operation',
+};
+const REQUIRED = new Set(['externalId', 'date']);
+const sampleOf = (v) => { const s = String(v ?? ''); return s.length > 26 ? s.slice(0, 26) + '…' : s; };
 
 async function init() {
   applyI18n();
@@ -30,7 +40,7 @@ async function init() {
   $('#test').onclick = onTest;
   $('#save').onclick = onSave;
   $('#f_schema').onchange = () => renderFieldMap(collectFields());
-  const o = await chrome.storage.session.get('habeas:learn');
+  const o = await chrome.storage.local.get('habeas:learn');
   const l = o['habeas:learn'];
   if (l && l.active) { LEARN = { domain: l.domain, origin: l.origin }; showLearning(); }
 }
@@ -56,7 +66,7 @@ async function onAnalyze() {
   if (!samples.length) { $('#status').textContent = t('author_no_samples'); return; }
   const r = draftAdapterFromSamples(samples, { domain: LEARN.domain, pageHost: hostFromOrigin(LEARN.origin) });
   if (!r.ok) { $('#status').textContent = t('author_no_list'); return; }
-  candidates = r.fieldCandidates.map((f) => f.path);
+  candidates = r.fieldCandidates; // [{ path, value }]
   fillForm(r.draft);
   $('#mapper').hidden = false;
   $('#status').textContent = t('author_detected', [r.itemsPath, String(r.count)]);
@@ -82,10 +92,12 @@ function fillForm(d) {
 function renderFieldMap(current) {
   const kind = ($('#f_schema').value || 'receipt@1').split('@')[0];
   const fields = SCHEMA_FIELDS[kind] || SCHEMA_FIELDS.receipt;
-  const opt = (sel) => ['<option value=""></option>'].concat(candidates.map((c) => `<option value="${esc(c)}" ${c === sel ? 'selected' : ''}>${esc(c)}</option>`)).join('');
+  // Each option shows the source key plus a real example value, so users pick by recognising data.
+  const opt = (sel) => ['<option value=""></option>'].concat(candidates.map((c) =>
+    `<option value="${esc(c.path)}" ${c.path === sel ? 'selected' : ''}>${esc(c.path)}${c.value != null && c.value !== '' ? ' — ' + esc(sampleOf(c.value)) : ''}</option>`)).join('');
   $('#fieldmap').innerHTML = fields.map((f) => {
-    const req = f === 'externalId' || f === 'date' ? ' *' : '';
-    return `<div class="maprow"><label>${f}${req}</label><select data-field="${esc(f)}">${opt(current[f] || '')}</select></div>`;
+    const label = t(FIELD_LABEL[f] || f) + (REQUIRED.has(f) ? ' *' : '');
+    return `<div class="maprow"><label>${esc(label)}</label><select data-field="${esc(f)}">${opt(current[f] || '')}</select></div>`;
   }).join('');
 }
 

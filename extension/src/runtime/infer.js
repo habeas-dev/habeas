@@ -103,10 +103,10 @@ export function draftAdapterFromSamples(samples, ctx = {}) {
     trust: 'community',
     domain,
     categories: ['other'],
-    match: ['https://' + pageHost + '/*'],
+    match: [u.protocol + '//' + pageHost + '/*'],
     auth: { tokenMatch: 'eyJ', replayHeaders },
     api: {
-      host: 'https://' + host,
+      host: u.protocol + '//' + host,
       list: Object.assign({ path: u.pathname, paging, itemsPath: best.path || 'items' }, list),
     },
     fields,
