@@ -45,12 +45,12 @@
       "required": ["replayHeaders"],
       "additionalProperties": false,
       "properties": {
+        "mode": { "enum": ["bearer", "cookie"], "description": "bearer = replay the captured JWT; cookie = rely on the browser's cookies (credentials:include). Endpoints may mix (e.g. cookie list + bearer PDF)." },
         "tokenMatch": { "type": "string", "description": "Substring the captured Authorization must contain to be a real user token (e.g. eyJ)." },
         "replayHeaders": {
           "type": "array",
           "items": { "type": "string" },
-          "minItems": 1,
-          "description": "Captured request headers to replay when calling the API."
+          "description": "Captured request headers to replay when calling the API (may be empty for cookie auth)."
         },
         "captureHosts": {
           "type": "array",
@@ -97,8 +97,25 @@
           "type": "object",
           "required": ["path"],
           "additionalProperties": false,
+          "description": "Per-document PDF. GET by default; some services generate it via POST with the invoice data as the body.",
           "properties": {
-            "path": { "type": "string", "description": "PDF path with {internalId} placeholder. Omit api.pdf entirely for metadata-only sources." }
+            "path": { "type": "string", "description": "PDF path with {internalId} placeholder." },
+            "method": { "enum": ["GET", "POST"] },
+            "host": { "type": "string", "description": "PDF host if different from api.host (still bound by the same-domain guard / crossDomainHosts)." },
+            "body": { "type": "string", "description": "[POST] Request body template; {internalId} is substituted." },
+            "contentType": { "type": "string", "description": "[POST] Content-Type of the body (default application/json)." },
+            "referer": { "type": "string", "description": "Referer header to send (templated with {internalId}) — for services that gate the PDF behind its detail page. Set via declarativeNetRequest." }
+          }
+        },
+        "detail": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Per-document JSON detail (e.g. a full order). Saved as <id>.json. Preferred over a POST-generated PDF. Use `from:'list'` when the list endpoint already returns each item's full data (no extra request).",
+          "properties": {
+            "from": { "enum": ["list"], "description": "'list' → the document IS the already-listed item's JSON (no path/request needed)." },
+            "path": { "type": "string", "description": "Detail path with {internalId} placeholder." },
+            "method": { "enum": ["GET", "POST"] },
+            "host": { "type": "string", "description": "Detail host if different from api.host (same-domain guard applies)." }
           }
         }
       }
