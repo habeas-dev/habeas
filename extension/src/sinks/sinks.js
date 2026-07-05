@@ -60,7 +60,9 @@ const IMPL = {
     if (opts.service) form.append('service', opts.service);
     form.append('records', buildManifest(docs, files));
     for (const d of docs) { const b = files.get(d.internalId); if (b) form.append('files[]', b, d.internalId + '.' + ext); }
-    const res = await fetch(sink.url, { method: 'POST', headers: token ? { Authorization: 'Bearer ' + token } : {}, body: form });
+    // sink.headers: caller-supplied (e.g. an externally-proposed sink's pairing token). tokenRef wins.
+    const headers = { ...(sink.headers || {}), ...(token ? { Authorization: 'Bearer ' + token } : {}) };
+    const res = await fetch(sink.url, { method: 'POST', headers, body: form });
     if (!res.ok) throw new Error('http sink ' + res.status);
     return await res.json().catch(() => ({ written: docs.length, total: docs.length }));
   },
