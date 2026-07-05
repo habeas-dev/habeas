@@ -51,6 +51,13 @@
     try { const u = new URL(url, location.href); abs = u.href; path = u.pathname; } catch (e) {}
     window.postMessage({ __habeas: true, type: 'sample', host: hostOf(url), path, url: abs, method: method || 'GET', status: status || 0, reqHeaders: rh, json }, '*');
   }
+  // Lightweight "we saw a request" ping (host only) — powers the record-mode diagnostic.
+  function postSeen(url) { if (LEARN) try { window.postMessage({ __habeas: true, type: 'seen', host: hostOf(url) }, '*'); } catch (e) {} }
+
+  // Capture scope: normally only the page's own registrable domain (auth). In LEARN mode we also
+  // capture from ANY host the page fetches — the service's API may be on another domain (the final
+  // adapter then declares it via crossDomainHosts + off-site consent).
+  const cap = (url) => sameDomain(url) || LEARN;
 
   const of = window.fetch;
   window.fetch = function (input, init) {
@@ -59,10 +66,11 @@
       url = typeof input === 'string' ? input : input && input.url;
       headers = normalize((init && init.headers) || (input && input.headers));
       method = (init && init.method) || (input && input.method) || 'GET';
-      if (url && sameDomain(url)) postAuth(url, headers);
+      if (url && cap(url)) postAuth(url, headers);
+      if (url) postSeen(url);
     } catch (e) {}
     const p = of.apply(this, arguments);
-    if (url && sameDomain(url)) {
+    if (url && LEARN) {
       try { p.then((res) => { try { res.clone().text().then((t) => postSample(url, method, res.status, headers, t)); } catch (e) {} }).catch(() => {}); } catch (e) {}
     }
     return p;
@@ -73,14 +81,14 @@
     this.__u = u; this.__m = m; this.__h = {};
     try {
       this.addEventListener('load', function () {
-        try { if (sameDomain(this.__u)) postSample(this.__u, this.__m, this.status, this.__h, this.responseText); } catch (e) {}
+        try { postSeen(this.__u); if (LEARN) postSample(this.__u, this.__m, this.status, this.__h, this.responseText); } catch (e) {}
       });
     } catch (e) {}
     return oo.apply(this, arguments);
   };
   XP.setRequestHeader = function (n, v) {
     try {
-      if (this.__u && sameDomain(this.__u)) { this.__h[n.toLowerCase()] = v; postAuth(this.__u, this.__h); }
+      if (this.__u && cap(this.__u)) { this.__h[n.toLowerCase()] = v; postAuth(this.__u, this.__h); }
     } catch (e) {}
     return os.apply(this, arguments);
   };
