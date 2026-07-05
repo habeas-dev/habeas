@@ -1,6 +1,6 @@
 import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
-import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen, getAssets } from '../lib/learn.js';
+import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen, getAssets, getDomTexts } from '../lib/learn.js';
 import { draftAdapterFromSamples, listCandidates, matchCandidates } from '../runtime/infer.js';
 import { listInventory } from '../runtime/inventory.js';
 import { resolveSiteFetch } from '../lib/pagefetch.js';
@@ -15,6 +15,7 @@ let LEARN = null;         // { domain, origin }
 let candidates = [];      // detected source field paths
 let SAMPLES = [];         // captured response samples
 let ASSETS = [];          // captured document (PDF) requests
+let DOMTEXTS = [];        // rendered page texts (public vs internal id)
 let CANDS = [];           // candidate document lists across the samples
 let DRAFT = null;         // the inferred adapter draft (form edits are merged onto this)
 
@@ -78,6 +79,7 @@ async function onAnalyze() {
   }
   SAMPLES = samples;
   ASSETS = await getAssets(LEARN.domain);
+  DOMTEXTS = await getDomTexts(LEARN.domain);
   CANDS = listCandidates(samples);
   if (!CANDS.length) { $('#status').textContent = t('author_no_list'); return; }
   // Let the user pick which captured list is their data (biggest is only a default).
@@ -105,7 +107,7 @@ function onFind() {
 }
 
 function drawDraft(chosen) {
-  const r = draftAdapterFromSamples(SAMPLES, { domain: LEARN.domain, pageHost: hostFromOrigin(LEARN.origin), assets: ASSETS }, { key: chosen.key });
+  const r = draftAdapterFromSamples(SAMPLES, { domain: LEARN.domain, pageHost: hostFromOrigin(LEARN.origin), assets: ASSETS, domTexts: DOMTEXTS }, { key: chosen.key });
   if (!r.ok) { $('#status').textContent = t('author_no_list'); return; }
   DRAFT = r.draft;
   candidates = r.fieldCandidates; // [{ path, value }]

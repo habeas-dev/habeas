@@ -13,12 +13,24 @@
   const PAGE_DOMAIN = regDomain(location.hostname);
   const arm = (on) => window.postMessage({ __habeas: true, type: 'arm', on: !!on }, '*');
 
+  // Capture the RENDERED page text (what the user actually sees) — used to tell a public
+  // receipt/invoice number (visible) from an internal id (only in URLs/traffic).
+  function captureDom() {
+    try {
+      const text = ((document.body && document.body.innerText) || '').slice(0, 100000);
+      if (text) chrome.runtime.sendMessage({ type: 'habeas:dom', domain: PAGE_DOMAIN, url: location.href, text });
+    } catch (e) {}
+  }
+
   // Learn mode is armed per-domain via storage.local (set by the author UI). Uses local, not
   // session, because content scripts can't read storage.session by default.
+  let domScheduled = false;
   function syncLearn() {
     chrome.storage.local.get('habeas:learn').then((o) => {
       const l = o['habeas:learn'];
-      arm(!!(l && l.active && l.domain === PAGE_DOMAIN));
+      const on = !!(l && l.active && l.domain === PAGE_DOMAIN);
+      arm(on);
+      if (on && !domScheduled) { domScheduled = true; setTimeout(captureDom, 1500); setTimeout(captureDom, 4000); }
     });
   }
 

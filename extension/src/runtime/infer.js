@@ -184,11 +184,19 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
     else if (pageMeta) { paging = 'page'; list.pageParam = 'page'; list.pageStart = 1; }
   }
 
-  // Field guesses.
+  // Field guesses. Use the RENDERED page text (if captured) to tell a public receipt/invoice number
+  // (visible to the user) from an internal id (only in URLs/traffic): the internal one is externalId,
+  // the visible one maps to `number`.
   const flat = flattenKeys(item);
+  const domText = (ctx.domTexts || []).map((d) => (typeof d === 'string' ? d : (d && d.text) || '')).join('\n').toLowerCase();
+  const visible = (v) => v != null && v !== '' && String(v).length >= 3 && domText.includes(String(v).toLowerCase());
   const pick = (test) => { const f = flat.find(({ path, value }) => test(path.split('.').pop(), value)); return f && f.path; };
   const fields = {};
-  fields.externalId = pick((k) => looksId(k)) || (flat[0] && flat[0].path);
+  const idFields = flat.filter((f) => looksId(f.path.split('.').pop()) && f.value != null && f.value !== '');
+  const internalId = idFields.find((f) => !visible(f.value)) || idFields[0];
+  fields.externalId = (internalId && internalId.path) || (flat[0] && flat[0].path);
+  const publicNo = idFields.find((f) => visible(f.value) && (!internalId || f.path !== internalId.path));
+  if (publicNo) fields.number = publicNo.path;
   fields.date = pick(looksDate) || '';
   const money = pick((k) => looksMoney(k));
   if (money) fields.total = money;

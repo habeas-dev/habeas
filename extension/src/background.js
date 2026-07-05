@@ -46,6 +46,14 @@ chrome.runtime.onMessage.addListener((msg) => {
       arr.unshift(msg.asset);
       chrome.storage.session.set({ [key]: arr.slice(0, SAMPLE_CAP) });
     });
+  } else if (msg.type === 'habeas:dom' && msg.domain && msg.text) {
+    // Record-mode: rendered page text, to tell public (visible) ids from internal ones.
+    const key = 'dom:' + msg.domain;
+    chrome.storage.session.get(key).then((o) => {
+      const arr = (o[key] || []).filter((x) => x.url !== msg.url);
+      arr.unshift({ url: msg.url, text: msg.text });
+      chrome.storage.session.set({ [key]: arr.slice(0, 12) });
+    });
   } else if (msg.type === 'habeas:seen' && msg.domain) {
     // Record-mode diagnostic: count requests observed per host (did the recorder run at all?).
     const key = 'seen:' + msg.domain;
