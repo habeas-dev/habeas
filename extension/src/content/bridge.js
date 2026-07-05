@@ -11,27 +11,31 @@
     return MULTI.has(two) ? p.slice(-3).join('.') : two;
   }
   const PAGE_DOMAIN = regDomain(location.hostname);
+  const arm = (on) => window.postMessage({ __habeas: true, type: 'arm', on: !!on }, '*');
+
+  // Learn mode is armed per-domain via storage.local (set by the author UI). Uses local, not
+  // session, because content scripts can't read storage.session by default.
+  function syncLearn() {
+    chrome.storage.local.get('habeas:learn').then((o) => {
+      const l = o['habeas:learn'];
+      arm(!!(l && l.active && l.domain === PAGE_DOMAIN));
+    });
+  }
+
+  // Register listeners BEFORE injecting the hook so the hook's "ready" handshake is never missed.
+  window.addEventListener('message', (ev) => {
+    const d = ev.data;
+    if (ev.source !== window || !d || !d.__habeas) return;
+    if (d.type === 'hook-ready') syncLearn();               // (re)send arm state once the hook is live
+    else if (d.type === 'auth') chrome.runtime.sendMessage({ type: 'habeas:auth', host: d.host, path: d.path, headers: d.headers });
+    else if (d.type === 'sample') chrome.runtime.sendMessage({ type: 'habeas:sample', domain: PAGE_DOMAIN, sample: { url: d.url, method: d.method, status: d.status, reqHeaders: d.reqHeaders, json: d.json } });
+  });
+  chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch['habeas:learn']) syncLearn(); });
 
   const s = document.createElement('script');
   s.src = chrome.runtime.getURL('src/content/hook.js');
   (document.head || document.documentElement).appendChild(s);
   s.remove();
 
-  const arm = (on) => window.postMessage({ __habeas: true, type: 'arm', on: !!on }, '*');
-  // Learn mode is armed per-domain via storage.session (set by the author UI).
-  function syncLearn() {
-    chrome.storage.session.get('habeas:learn').then((o) => {
-      const l = o['habeas:learn'];
-      arm(!!(l && l.active && l.domain === PAGE_DOMAIN));
-    });
-  }
-  syncLearn();
-  chrome.storage.onChanged.addListener((ch, area) => { if (area === 'session' && ch['habeas:learn']) syncLearn(); });
-
-  window.addEventListener('message', (ev) => {
-    const d = ev.data;
-    if (ev.source !== window || !d || !d.__habeas) return;
-    if (d.type === 'auth') chrome.runtime.sendMessage({ type: 'habeas:auth', host: d.host, path: d.path, headers: d.headers });
-    else if (d.type === 'sample') chrome.runtime.sendMessage({ type: 'habeas:sample', domain: PAGE_DOMAIN, sample: { url: d.url, method: d.method, status: d.status, reqHeaders: d.reqHeaders, json: d.json } });
-  });
+  syncLearn(); // covers the case where the hook is already listening
 })();

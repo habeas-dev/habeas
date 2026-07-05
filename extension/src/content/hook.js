@@ -46,8 +46,10 @@
     let json; try { json = JSON.parse(bodyText); } catch (e) { return; }
     if (!json || typeof json !== 'object') return;
     const rh = {}; Object.keys(reqHeaders || {}).forEach((k) => { if (HDR_SAMPLE.test(k)) rh[k] = reqHeaders[k]; });
-    let path = ''; try { path = new URL(url, location.href).pathname; } catch (e) {}
-    window.postMessage({ __habeas: true, type: 'sample', host: hostOf(url), path, url: String(url), method: method || 'GET', status: status || 0, reqHeaders: rh, json }, '*');
+    // Resolve to an absolute URL here (only the page knows location.href); SPAs fetch relative URLs.
+    let abs = String(url), path = '';
+    try { const u = new URL(url, location.href); abs = u.href; path = u.pathname; } catch (e) {}
+    window.postMessage({ __habeas: true, type: 'sample', host: hostOf(url), path, url: abs, method: method || 'GET', status: status || 0, reqHeaders: rh, json }, '*');
   }
 
   const of = window.fetch;
@@ -82,4 +84,8 @@
     } catch (e) {}
     return os.apply(this, arguments);
   };
+
+  // Tell the isolated bridge we're live, so it (re)sends the current learn-mode arm state — the
+  // hook loads as an async script and may miss the bridge's initial one-shot arm message.
+  window.postMessage({ __habeas: true, type: 'hook-ready' }, '*');
 })();
