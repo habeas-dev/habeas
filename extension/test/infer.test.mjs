@@ -119,6 +119,18 @@ test('rendered page text distinguishes the public (visible) number from the inte
   assert.equal(r.draft.fields.number, 'receiptId');     // public (rendered)
 });
 
+test('detail endpoint from a navigated (SSR) page with the id in a query param', () => {
+  const uuid = '47dc2ad6-7b3f-4238-8ed9-5888c399a347';
+  const samples = [{ url: 'https://www.decathlon.es/api/orders', status: 200, reqHeaders: {},
+    json: { items: [{ transactionId: uuid, number: '12345', total: 9 }] } }];
+  const domTexts = [{ url: `https://www.decathlon.es/es/account/orderTracking?transactionId=${uuid}&type=store`, text: 'Mis pedidos\nPedido 12345 · 9€' }];
+  const r = draftAdapterFromSamples(samples, { domain: 'decathlon.es', pageHost: 'www.decathlon.es', domTexts });
+  assert.ok(r.draft.api.detail, 'detail inferred from the navigated page');
+  assert.equal(r.draft.api.detail.path, '/es/account/orderTracking?transactionId={externalId}&type=store');
+  assert.equal(r.draft.fields.externalId, 'transactionId'); // internal uuid (in the URL, not rendered)
+  assert.equal(r.draft.fields.number, 'number');             // 12345 is rendered → public
+});
+
 test('infers a POST-generated PDF (body templated by id) from captured assets', () => {
   const samples = [{ url: 'https://api.shop.es/v1/orders', status: 200, reqHeaders: { authorization: 'eyJ' },
     json: { items: [{ id: 'ORD-8', total: 9 }] } }];

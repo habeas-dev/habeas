@@ -2,7 +2,7 @@ import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen, getAssets, getDomTexts } from '../lib/learn.js';
 import { draftAdapterFromSamples, listCandidates, matchCandidates } from '../runtime/infer.js';
-import { listInventory } from '../runtime/inventory.js';
+import { listInventory, fetchDocument } from '../runtime/inventory.js';
 import { resolveSiteFetch } from '../lib/pagefetch.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { saveSource } from '../adapters/index.js';
@@ -21,16 +21,17 @@ let DRAFT = null;         // the inferred adapter draft (form edits are merged o
 
 // Normalized fields offered per target schema.
 const SCHEMA_FIELDS = {
-  receipt: ['externalId', 'date', 'total', 'storeName', 'storeAddress', 'type', 'source'],
-  invoice: ['externalId', 'date', 'total', 'issuer', 'issuerAddress', 'number', 'type', 'source'],
-  transaction: ['externalId', 'date', 'amount', 'description', 'counterparty', 'direction', 'type', 'source'],
-  investment: ['externalId', 'date', 'instrument', 'isin', 'units', 'price', 'amount', 'operation', 'type'],
+  receipt: ['externalId', 'number', 'date', 'total', 'storeName', 'storeAddress', 'type', 'source'],
+  invoice: ['externalId', 'number', 'date', 'total', 'issuer', 'issuerAddress', 'type', 'source'],
+  transaction: ['externalId', 'number', 'date', 'amount', 'description', 'counterparty', 'direction', 'type', 'source'],
+  investment: ['externalId', 'number', 'date', 'instrument', 'isin', 'units', 'price', 'amount', 'operation', 'type'],
 };
-// Plain-language labels (i18n keys) for each normalized field — no jargon in the UI.
+// Plain-language labels (i18n keys) for each normalized field — no jargon in the UI. externalId is
+// the INTERNAL id (links detail/PDF, dedup); `number` is the PUBLIC receipt/invoice number.
 const FIELD_LABEL = {
-  externalId: 'fld_reference', date: 'fld_date', total: 'fld_amount', amount: 'fld_amount',
+  externalId: 'fld_internalid', number: 'fld_number', date: 'fld_date', total: 'fld_amount', amount: 'fld_amount',
   storeName: 'fld_store', storeAddress: 'fld_address', issuerAddress: 'fld_address', type: 'fld_type',
-  source: 'fld_channel', issuer: 'fld_issuer', number: 'fld_invoicenum', description: 'fld_description',
+  source: 'fld_channel', issuer: 'fld_issuer', description: 'fld_description',
   counterparty: 'fld_payee', direction: 'fld_direction', instrument: 'fld_instrument', isin: 'fld_isin',
   units: 'fld_units', price: 'fld_price', operation: 'fld_operation',
 };
@@ -200,7 +201,13 @@ async function onTest() {
     const docs = await listInventory(adapter, authStore, net);
     $('#preview tbody').innerHTML = docs.slice(0, 3).map((d) =>
       `<tr><td>${esc((d.date || '').slice(0, 10))}</td><td>${esc(d.storeName || d.label || '')}</td><td class="r">${esc(fmt(d.total ?? d.amount))}</td><td>${esc(d.type || '')}</td></tr>`).join('');
-    $('#status').textContent = t('author_test_ok', [String(docs.length)]);
+    // Also fetch one document so we can report HOW the per-item detail/PDF loads.
+    let extra = '';
+    if (docs.length && (adapter.api.detail || adapter.api.pdf)) {
+      try { const doc = await fetchDocument(adapter, authStore, docs[0].externalId, net); extra = ' · ' + t('author_doc_via', [t('via_' + doc.via)]); }
+      catch (e) { extra = ' · ' + t('author_doc_fail', [e.message.slice(0, 80)]); }
+    }
+    $('#status').textContent = t('author_test_ok', [String(docs.length)]) + extra;
   } catch (e) { $('#status').textContent = t('author_test_err', [e.message]); }
 }
 

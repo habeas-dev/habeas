@@ -124,19 +124,29 @@ function valueFields(items) {
   return map;
 }
 
-// The per-document DETAIL endpoint: a captured JSON response whose URL carries a document id and
-// whose body actually contains it. Returns `idField` = the item field whose value the URL uses (the
-// internal id), so the draft templates by THAT, not by a guessed (possibly human-facing) number.
-export function inferDetail(samples, items) {
+// The per-document DETAIL endpoint. Two sources: a captured XHR JSON response whose URL+body carry a
+// document id, OR a PAGE the user navigated to whose URL carries the id (server-rendered detail —
+// fetchDetail then extracts the embedded JSON). The id may sit in the PATH or a QUERY param
+// (Decathlon: orderTracking?transactionId=<uuid>). `idField` = the item field the URL uses (the
+// internal id), so the draft templates by THAT, not a guessed public number.
+export function inferDetail(samples, items, domTexts) {
   const vf = valueFields(items);
   if (!vf.size) return null;
   const vals = [...vf.keys()].sort((a, b) => b.length - a.length);
+  const full = (u) => u.pathname + (u.search || '');
+  const templ = (u, id) => full(u).split(id).join('{externalId}');
+
   for (const s of samples || []) {
     if (!s || !s.json || Array.isArray(s.json) || (s.status && s.status >= 300)) continue;
     let u; try { u = new URL(s.url); } catch (e) { continue; }
-    const id = vals.find((v) => u.pathname.includes(v) && deepIncludes(s.json, v.toLowerCase()));
-    if (!id) continue;
-    return { host: u.host, path: u.pathname.split(id).join('{externalId}'), method: (s.method || 'GET').toUpperCase(), idField: vf.get(id) };
+    const id = vals.find((v) => full(u).includes(v) && deepIncludes(s.json, v.toLowerCase()));
+    if (id) return { host: u.host, path: templ(u, id), method: (s.method || 'GET').toUpperCase(), idField: vf.get(id) };
+  }
+  // Server-rendered detail page the user opened (URL carries the id) — no XHR JSON captured.
+  for (const d of domTexts || []) {
+    let u; try { u = new URL(d.url); } catch (e) { continue; }
+    const id = vals.find((v) => full(u).includes(v));
+    if (id) return { host: u.host, path: templ(u, id), method: 'GET', idField: vf.get(id) };
   }
   return null;
 }
@@ -247,7 +257,7 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
 
   // Per-document artifact: prefer the JSON detail (captured passively when the user opens an order);
   // fall back to a captured PDF request.
-  const detail = inferDetail(samples, best.items);
+  const detail = inferDetail(samples, best.items, ctx.domTexts);
   if (detail) {
     draft.api.detail = { path: detail.path, method: detail.method };
     if (detail.host && detail.host !== host) draft.api.detail.host = detail.host;
