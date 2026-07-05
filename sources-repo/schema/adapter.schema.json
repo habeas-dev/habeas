@@ -71,7 +71,7 @@
           "additionalProperties": false,
           "properties": {
             "path": { "type": "string", "pattern": "^/" },
-            "paging": { "enum": ["offsets", "page", "cursor", "none"], "description": "Pagination strategy. Defaults to offsets if offsetsPath present, else cursor if nextPath present, else none." },
+            "paging": { "enum": ["offsets", "offset", "page", "cursor", "none"], "description": "Pagination strategy. Defaults to offsets if offsetsPath present, else cursor if nextPath present, else none." },
             "itemsPath": { "type": "string", "description": "Dotted path to the array of items in the response (e.g. data.items)." },
             "offsetsPath": { "type": "string", "description": "[offsets] Dotted path to the offsets object merged into the next query." },
             "initialOffsets": { "type": "object", "description": "[offsets] Seed offsets object." },

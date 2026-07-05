@@ -126,7 +126,7 @@ async function onSend() {
   const skipped = chosen.length - eligible.length;
   if (!eligible.length) { $('#status').textContent = t('none_compatible'); return; }
 
-  const opts = { service: adapter.service || ds.adapter, ext: documentExt(adapter) || 'pdf' };
+  const opts = { service: adapter.service || ds.adapter, source: adapter.id, ext: documentExt(adapter) || "pdf" };
   if (sink.type === 'local-folder') {
     const handle = await getHandle('dir:' + sink.id);
     if (!handle) { $('#status').textContent = t('configure_folder'); return; }

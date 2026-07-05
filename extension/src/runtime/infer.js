@@ -82,14 +82,14 @@ function collect(samples) {
     for (const a of findArrays(s.json, '', [])) {
       const key = keyOf(s.url, a.path);
       let e = byKey.get(key);
-      if (!e) { e = { key, s, itemsPath: a.path, items: [], seen: new Set(), pages: new Set(), repLen: 0 }; byKey.set(key, e); }
-      e.pages.add(s.url); // distinct pages captured for this list
+      if (!e) { e = { key, s, itemsPath: a.path, items: [], seen: new Set(), pages: new Set(), pageSamples: [], repLen: 0 }; byKey.set(key, e); }
+      if (!e.pages.has(s.url)) { e.pages.add(s.url); e.pageSamples.push({ url: s.url, json: s.json }); } // each captured page
       for (const it of a.arr) { const k = JSON.stringify(it); if (!e.seen.has(k)) { e.seen.add(k); e.items.push(it); } }
       if (a.len > e.repLen) { e.repLen = a.len; e.s = s; } // largest page → best for paging/url/params
     }
   }
   return [...byKey.values()]
-    .map((e) => ({ key: e.key, s: e.s, itemsPath: e.itemsPath, len: e.items.length, pages: e.pages.size, item: e.items[0], items: e.items }))
+    .map((e) => ({ key: e.key, s: e.s, itemsPath: e.itemsPath, len: e.items.length, pages: e.pages.size, item: e.items[0], items: e.items, samples: e.pageSamples }))
     .sort((x, y) => y.len - x.len);
 }
 
@@ -168,6 +168,56 @@ export function inferPdf(assets, items) {
   return null;
 }
 
+// Dotted path to the first leaf whose value equals `val` (used to find where a cursor comes from).
+function pathOfValue(node, val, path = '', depth = 6) {
+  if (node == null || depth < 0) return null;
+  if (typeof node !== 'object') return String(node) === String(val) ? path : null;
+  for (const k of Object.keys(node)) { const p = pathOfValue(node[k], val, path ? path + '.' + k : k, depth - 1); if (p) return p; }
+  return null;
+}
+// Given several captured pages of the SAME list, the cursor param's value on one page is produced by
+// the previous page's response — find that response path (= nextPath).
+function cursorSourcePath(pageSamples, param) {
+  const vals = pageSamples.map((p) => { try { return new URL(p.url).searchParams.get(param); } catch (e) { return null; } }).filter((v) => v != null && v !== '');
+  for (const p of pageSamples) for (const v of vals) { const path = pathOfValue(p.json, v); if (path) return path; }
+  return null;
+}
+
+// Deduce pagination. If several pages were captured, LEARN it by seeing which query param changes and
+// how (1,2,3 → page · 0,N,2N → offset · a changing token → cursor). Otherwise fall back to single-page
+// signals (a cursor/offsets object in the response, or a `page`-like param).
+function deducePaging(best, s, u) {
+  const pages = (best.samples || []).map((p) => { let uu; try { uu = new URL(p.url); } catch (e) { return null; } return uu; }).filter(Boolean);
+  if (pages.length >= 2) {
+    const keys = new Set(); pages.forEach((pu) => { for (const k of pu.searchParams.keys()) keys.add(k); });
+    for (const k of keys) {
+      const distinct = new Set(pages.map((pu) => pu.searchParams.get(k)));
+      if (distinct.size < 2) continue; // constant across pages → not the pagination param
+      const nums = [...distinct].filter((v) => v != null && v !== '').map(Number);
+      if (nums.length >= 2 && nums.every((n) => Number.isFinite(n))) {
+        const sorted = [...new Set(nums)].sort((a, b) => a - b);
+        const step = sorted[1] - sorted[0];
+        if (step > 0 && sorted.every((n, i) => i === 0 || n - sorted[i - 1] === step)) {
+          return step === 1
+            ? { paging: 'page', list: { pageParam: k, pageStart: sorted[0] } }
+            : { paging: 'offset', list: { offsetParam: k, offsetStart: sorted[0], offsetStep: step } };
+        }
+      }
+      const nextPath = cursorSourcePath(best.samples, k); // a token whose source is a response field
+      if (nextPath) return { paging: 'cursor', list: { cursorParam: k, nextPath } };
+    }
+  }
+  const nextPath = findKeyPath(s.json, /(nextcursor|next_cursor|next|cursor|continuation)/i);
+  if (nextPath) return { paging: 'cursor', list: { nextPath, cursorParam: 'cursor' } };
+  const offsetsKey = Object.keys(s.json).find((k) => /offset/i.test(k) && s.json[k] && typeof s.json[k] === 'object');
+  if (offsetsKey) return { paging: 'offsets', list: { offsetsPath: offsetsKey, initialOffsets: {} } };
+  const pageParam = [...u.searchParams.keys()].find((k) => /^(page|pagina|pagenumber|pageno|p)$/i.test(k));
+  if (pageParam) return { paging: 'page', list: { pageParam, pageStart: 1 } };
+  const pageMeta = findKeyPath(s.json, /(totalpages|pagecount|page_count|total_pages|pagenumber)/i);
+  if (pageMeta) return { paging: 'page', list: { pageParam: 'page', pageStart: 1 } };
+  return { paging: 'none', list: {} };
+}
+
 // Build an adapter draft. `ctx` = { domain, pageHost, assets }. `chosen` (optional) = { key }
 // picks a specific captured list; without it the biggest is used.
 export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
@@ -180,19 +230,8 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
   const host = u.host;
   const item = best.item;
 
-  // Pagination guess from the winning response.
-  const nextPath = findKeyPath(s.json, /(nextcursor|next_cursor|next|cursor|continuation)/i);
-  const offsetsKey = Object.keys(s.json).find((k) => /offset/i.test(k) && s.json[k] && typeof s.json[k] === 'object');
-  let paging = 'none', list = {};
-  if (nextPath) { paging = 'cursor'; list.nextPath = nextPath; list.cursorParam = 'cursor'; }
-  else if (offsetsKey) { paging = 'offsets'; list.offsetsPath = offsetsKey; list.initialOffsets = {}; }
-  else {
-    // Page pagination: a `page`-like query param, or a page-count field in the response.
-    const pageParam = [...u.searchParams.keys()].find((k) => /^(page|pagina|pagenumber|pageno|p)$/i.test(k));
-    const pageMeta = findKeyPath(s.json, /(totalpages|pagecount|page_count|total_pages|pagenumber)/i);
-    if (pageParam) { paging = 'page'; list.pageParam = pageParam; list.pageStart = 1; }
-    else if (pageMeta) { paging = 'page'; list.pageParam = 'page'; list.pageStart = 1; }
-  }
+  // Pagination — learned from the multiple captured pages when possible.
+  const { paging, list } = deducePaging(best, s, u);
 
   // Field guesses. Use the RENDERED page text (if captured) to tell a public receipt/invoice number
   // (visible to the user) from an internal id (only in URLs/traffic): the internal one is internalId,
@@ -246,6 +285,7 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
   const params = {};
   const stripKeys = new Set();
   if (paging === 'page' && list.pageParam) stripKeys.add(list.pageParam.toLowerCase());
+  if (paging === 'offset' && list.offsetParam) stripKeys.add(list.offsetParam.toLowerCase());
   if (paging === 'cursor' && list.cursorParam) stripKeys.add(list.cursorParam.toLowerCase());
   for (const [k, v] of u.searchParams) {
     const kl = k.toLowerCase();

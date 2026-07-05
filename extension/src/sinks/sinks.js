@@ -55,6 +55,9 @@ const IMPL = {
     const token = await getSecret(sink.tokenRef);
     const ext = opts.ext || 'pdf';
     const form = new FormData();
+    // Tell the consumer WHICH source produced this data (e.g. "decathlon-es").
+    if (opts.source) form.append('source', opts.source);
+    if (opts.service) form.append('service', opts.service);
     form.append('records', buildManifest(docs, files));
     for (const d of docs) { const b = files.get(d.internalId); if (b) form.append('files[]', b, d.internalId + '.' + ext); }
     const res = await fetch(sink.url, { method: 'POST', headers: token ? { Authorization: 'Bearer ' + token } : {}, body: form });

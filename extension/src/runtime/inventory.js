@@ -51,9 +51,20 @@ export async function listInventory(adapter, auth, net) {
     for (let g = 0; g < maxPages; g++) {
       const data = await call({ ...range, ...baseParams, [pageParam]: page });
       const items = get(data, list.itemsPath) || [];
-      collect(adapter, data, seen, all);
-      if (!items.length || (count && items.length < count)) break;
+      const added = collect(adapter, data, seen, all);
+      if (!items.length || !added) break; // empty page or nothing new → done (don't stop on a short page)
       page++;
+    }
+  } else if (paging === 'offset') {
+    const offsetParam = list.offsetParam || 'offset';
+    const step = list.offsetStep || count || 20;
+    let offset = list.offsetStart ?? 0;
+    for (let g = 0; g < maxPages; g++) {
+      const data = await call({ ...range, ...baseParams, [offsetParam]: offset });
+      const items = get(data, list.itemsPath) || [];
+      const added = collect(adapter, data, seen, all);
+      if (!items.length || !added) break;
+      offset += step;
     }
   } else if (paging === 'cursor') {
     const cursorParam = list.cursorParam || 'cursor';

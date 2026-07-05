@@ -4,6 +4,7 @@ import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getS
 import { draftAdapterFromSamples, listCandidates, matchCandidates } from '../runtime/infer.js';
 import { listInventory, fetchDocument } from '../runtime/inventory.js';
 import { resolveSiteFetch } from '../lib/pagefetch.js';
+import { editJson } from './jsoneditor.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { saveSource } from '../adapters/index.js';
 import { grantConsent } from '../lib/consent.js';
@@ -47,6 +48,10 @@ async function init() {
   $('#test').onclick = onTest;
   $('#save').onclick = onSave;
   $('#f_schema').onchange = () => renderFieldMap(collectFields());
+  $('#editjson').onclick = async () => {
+    const edited = await editJson(buildAdapter());
+    if (edited) { DRAFT = edited; fillForm(DRAFT); $('#status').textContent = t('json_saved'); }
+  };
   const o = await chrome.storage.local.get('habeas:learn');
   const l = o['habeas:learn'];
   if (l && l.active) { LEARN = { domain: l.domain, origin: l.origin }; showLearning(); }

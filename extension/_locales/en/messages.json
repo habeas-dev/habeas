@@ -145,6 +145,12 @@
   "author_test_err": { "message": "Test failed: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
   "author_saved": { "message": "Saved “$ID$”. Enable it in Settings.", "placeholders": { "id": { "content": "$1" } } },
 
+  "edit_json": { "message": "Edit JSON" },
+  "edit_json_title": { "message": "Edit source: $ID$", "placeholders": { "id": { "content": "$1" } } },
+  "json_save": { "message": "Validate & save" },
+  "json_badsyntax": { "message": "Invalid JSON: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
+  "json_invalid": { "message": "Invalid source: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
+  "json_saved": { "message": "Applied — review, Test and Save." },
   "import_source": { "message": "Import (JSON)" },
   "browse_sources": { "message": "Browse community" },
   "export_source": { "message": "Export" },
