@@ -223,7 +223,11 @@ export async function fetchDetail(adapter, auth, internalId, net) {
   const url = host + path;
   // d.headers: static headers the SPA sends for this endpoint (e.g. dkt-ecom-origin). Captured auth
   // and the accept default fill the rest; cookies ride along via credentials:'include'.
-  const res = await NET(url, { method: d.method || 'GET', headers: { accept: 'application/json, text/html', ...(d.headers || {}), ...headersFor(auth, path.split('?')[0]) }, credentials: 'include' });
+  const init = { method: d.method || 'GET', headers: { accept: 'application/json, text/html', ...(d.headers || {}), ...headersFor(auth, path.split('?')[0]) }, credentials: 'include' };
+  // d.referer: some endpoints validate the Referer (e.g. the item's detail page). fetch can't set it
+  // (forbidden header) → declarativeNetRequest, same as the PDF path.
+  const referer = d.referer ? String(d.referer).split('{internalId}').join(internalId) : null;
+  const res = await withReferer(url, referer, () => NET(url, init));
   if (!res.ok) throw new Error('detail ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
   const { json, via } = extractDetail(await res.text(), url, internalId);
   return { blob: new Blob([json], { type: 'application/json' }), via };
@@ -235,7 +239,8 @@ async function fetchList(adapter, auth, params, net) {
   // Run in the site's tab (page context) so cookies + cf_clearance + fingerprint carry through and
   // Cloudflare/Akamai don't challenge it; credentials:'include' carries cookies.
   const cookie = adapter.auth && adapter.auth.mode === 'cookie';
-  const res = await NET(url, { headers: headersFor(auth, adapter.api.list.path, !cookie), credentials: 'include' });
+  const list = adapter.api.list;
+  const res = await NET(url, { headers: { accept: 'application/json', ...(list.headers || {}), ...headersFor(auth, list.path, !cookie) }, credentials: 'include' });
   if (!res.ok) throw new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160));
   return await res.json();
 }
