@@ -101,26 +101,26 @@ export function documentExt(adapter) {
 
 // Fetch a document's file (PDF or JSON detail) as a Blob. Prefers GET-PDF, then JSON detail, then
 // POST-PDF (see documentExt ordering).
-export async function fetchDocument(adapter, auth, externalId, net) {
+export async function fetchDocument(adapter, auth, internalId, net) {
   const ext = documentExt(adapter);
-  if (ext === 'pdf') return { blob: await fetchPdf(adapter, auth, externalId, net), ext, via: 'pdf' };
-  if (ext === 'json') return { ...(await fetchDetail(adapter, auth, externalId, net)), ext };
+  if (ext === 'pdf') return { blob: await fetchPdf(adapter, auth, internalId, net), ext, via: 'pdf' };
+  if (ext === 'json') return { ...(await fetchDetail(adapter, auth, internalId, net)), ext };
   throw new Error('no document for this source');
 }
 
-export async function fetchPdf(adapter, auth, externalId, net) {
+export async function fetchPdf(adapter, auth, internalId, net) {
   const NET = net || ((u, i) => fetch(u, i));
   const pdf = adapter.api.pdf;
   if (!pdf) throw new Error('no PDF for this source');
   const host = pdf.host ? absHost(pdf.host) : adapter.api.host;
-  const path = pdf.path.replace('{externalId}', encodeURIComponent(externalId));
+  const path = pdf.path.replace('{internalId}', encodeURIComponent(internalId));
   const url = host + path;
   const init = { method: pdf.method || 'GET', headers: { ...headersFor(auth, path), accept: 'application/pdf' }, credentials: 'include', wantBlob: true };
   if (init.method !== 'GET' && pdf.body != null) {
-    init.body = String(pdf.body).split('{externalId}').join(externalId);
+    init.body = String(pdf.body).split('{internalId}').join(internalId);
     init.headers['content-type'] = pdf.contentType || 'application/json';
   }
-  const referer = pdf.referer ? String(pdf.referer).split('{externalId}').join(externalId) : null;
+  const referer = pdf.referer ? String(pdf.referer).split('{internalId}').join(internalId) : null;
   const res = await withReferer(url, referer, () => NET(url, init));
   if (!res.ok) {
     const hint = res.status === 406 ? ' (sin PDF disponible — típico en tickets antiguos)' : '';
@@ -191,16 +191,16 @@ export function extractDetail(text, url, id) {
 
 // Per-document JSON detail (an order's full data). Detects the delivery mechanism (AJAX JSON /
 // embedded JSON / HTML table) and returns { blob, via }.
-export async function fetchDetail(adapter, auth, externalId, net) {
+export async function fetchDetail(adapter, auth, internalId, net) {
   const NET = net || ((u, i) => fetch(u, i));
   const d = adapter.api.detail;
   if (!d) throw new Error('no detail for this source');
   const host = d.host ? absHost(d.host) : adapter.api.host;
-  const path = d.path.split('{externalId}').join(encodeURIComponent(externalId));
+  const path = d.path.split('{internalId}').join(encodeURIComponent(internalId));
   const url = host + path;
   const res = await NET(url, { method: d.method || 'GET', headers: { ...headersFor(auth, path.split('?')[0]), accept: 'application/json, text/html' }, credentials: 'include' });
   if (!res.ok) throw new Error('detail ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
-  const { json, via } = extractDetail(await res.text(), url, externalId);
+  const { json, via } = extractDetail(await res.text(), url, internalId);
   return { blob: new Blob([json], { type: 'application/json' }), via };
 }
 
@@ -221,7 +221,7 @@ function collect(adapter, data, seen, all) {
   const f = adapter.fields;
   let added = 0;
   for (const p of items) {
-    const id = get(p, f.externalId);
+    const id = get(p, f.internalId);
     if (seen.has(id)) continue;
     seen.add(id); all.push(mapDoc(adapter, p)); added++;
   }

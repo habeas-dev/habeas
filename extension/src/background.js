@@ -110,13 +110,13 @@ async function runRoute(ds, adapter, sink) {
     const net = await resolveSiteFetch(adapter); // fetch from the user's tab → inherits the session
     const all = await listInventory(adapter, auth, net);
     const delivered = await deliveredSet(ds.id, sink.id);
-    const fresh = all.filter((d) => !delivered[d.externalId]);
+    const fresh = all.filter((d) => !delivered[d.internalId]);
     const eligible = fresh.filter((d) => acceptsDoc(sink, d));
     if (!eligible.length) { await appendLog({ ...base, status: 'none', new: 0 }); await badgeClear(); return; }
     const files = new Map();
-    for (const d of eligible) { try { files.set(d.externalId, (await fetchDocument(adapter, auth, d.externalId, net)).blob); } catch (e) { /* no document */ } }
+    for (const d of eligible) { try { files.set(d.internalId, (await fetchDocument(adapter, auth, d.internalId, net)).blob); } catch (e) { /* no document */ } }
     await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, ext: documentExt(adapter) || 'pdf', interactive: false });
-    await markDelivered(ds.id, sink.id, eligible.map((d) => d.externalId));
+    await markDelivered(ds.id, sink.id, eligible.map((d) => d.internalId));
     await appendLog({ ...base, status: 'ok', new: eligible.length });
     notify(t('notify_new', [String(eligible.length), sink.id]));
     await badgeCount(eligible.length);

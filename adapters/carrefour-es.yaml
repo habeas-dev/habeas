@@ -72,7 +72,7 @@ detail:
     credentials: omit           # Bearer header, same as the list endpoint
 
 fields:
-  externalId: "$.purchaseId"
+  internalId: "$.purchaseId"
   date:
     path: "$.purchaseDate"
     transform: "datetime:Europe/Madrid"   # source has no timezone
@@ -84,7 +84,7 @@ fields:
   store.id: "$.mallId"
   purchaseType: "$.purchaseType"           # HYPERMARKET | REFUELING
 
-dedupeKey: externalId
+dedupeKey: internalId
 schema: receipt@1
 
 capabilities:

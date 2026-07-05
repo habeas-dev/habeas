@@ -4,9 +4,9 @@
   "title": "transaction@1",
   "description": "A normalized financial transaction (card, account or investment movement). Financial adapters are first-party only.",
   "type": "object",
-  "required": ["externalId", "date", "amount", "currency"],
+  "required": ["internalId", "date", "amount", "currency"],
   "properties": {
-    "externalId": { "type": "string", "description": "Stable id from the source service." },
+    "internalId": { "type": "string", "description": "Stable id from the source service." },
     "date": { "type": "string", "format": "date-time" },
     "bookedDate": { "type": "string", "format": "date-time" },
     "amount": { "type": "integer", "description": "Signed amount in minor units; negative = outflow." },

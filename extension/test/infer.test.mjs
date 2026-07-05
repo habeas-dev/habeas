@@ -23,7 +23,7 @@ test('picks the biggest list, its itemsPath, and a valid draft', () => {
 
 test('guesses field mapping from key names', () => {
   const r = draftAdapterFromSamples(carrefourSamples, { domain: 'carrefour.es', pageHost: 'www.carrefour.es' });
-  assert.equal(r.draft.fields.externalId, 'purchaseId');
+  assert.equal(r.draft.fields.internalId, 'purchaseId');
   assert.equal(r.draft.fields.date, 'purchaseDate');
   assert.equal(r.draft.fields.total, 'amount');
   assert.equal(r.draft.fields.storeName, 'mallName');
@@ -94,11 +94,11 @@ test('infers a JSON detail endpoint (preferred document) from a per-order detail
   ];
   const r = draftAdapterFromSamples(samples, { domain: 'shop.es', pageHost: 'www.shop.es' });
   assert.ok(r.draft.api.detail, 'detail inferred');
-  assert.equal(r.draft.api.detail.path, '/v1/orders/{externalId}');
+  assert.equal(r.draft.api.detail.path, '/v1/orders/{internalId}');
   assert.ok(!r.draft.api.pdf, 'no PDF when detail present');
 });
 
-test('externalId is the internal id used in the URL, not the human-facing receipt number', () => {
+test('internalId is the internal id used in the URL, not the human-facing receipt number', () => {
   const samples = [
     { url: 'https://api.shop.es/v1/orders', status: 200, reqHeaders: { authorization: 'eyJ' },
       json: { items: [{ number: 'F-2026-0007', ref: 'abc-123-def', total: 5 }] } },
@@ -106,8 +106,8 @@ test('externalId is the internal id used in the URL, not the human-facing receip
       json: { ref: 'abc-123-def', number: 'F-2026-0007', lines: [] } },
   ];
   const r = draftAdapterFromSamples(samples, { domain: 'shop.es', pageHost: 'www.shop.es' });
-  assert.equal(r.draft.api.detail.path, '/v1/orders/{externalId}');
-  assert.equal(r.draft.fields.externalId, 'ref'); // the URL id, not 'number' (the visible receipt no.)
+  assert.equal(r.draft.api.detail.path, '/v1/orders/{internalId}');
+  assert.equal(r.draft.fields.internalId, 'ref'); // the URL id, not 'number' (the visible receipt no.)
 });
 
 test('rendered page text distinguishes the public (visible) number from the internal id', () => {
@@ -115,7 +115,7 @@ test('rendered page text distinguishes the public (visible) number from the inte
     json: { items: [{ id: 'u-abc-999', receiptId: 'R-2026-42', total: 5 }] } }];
   const domTexts = ['Mis pedidos\nPedido R-2026-42 · 5€']; // the user sees the receipt no., not the uuid
   const r = draftAdapterFromSamples(samples, { domain: 'shop.es', pageHost: 'www.shop.es', domTexts });
-  assert.equal(r.draft.fields.externalId, 'id');        // internal (not rendered)
+  assert.equal(r.draft.fields.internalId, 'id');        // internal (not rendered)
   assert.equal(r.draft.fields.number, 'receiptId');     // public (rendered)
 });
 
@@ -126,8 +126,8 @@ test('detail endpoint from a navigated (SSR) page with the id in a query param',
   const domTexts = [{ url: `https://www.decathlon.es/es/account/orderTracking?transactionId=${uuid}&type=store`, text: 'Mis pedidos\nPedido 12345 · 9€' }];
   const r = draftAdapterFromSamples(samples, { domain: 'decathlon.es', pageHost: 'www.decathlon.es', domTexts });
   assert.ok(r.draft.api.detail, 'detail inferred from the navigated page');
-  assert.equal(r.draft.api.detail.path, '/es/account/orderTracking?transactionId={externalId}&type=store');
-  assert.equal(r.draft.fields.externalId, 'transactionId'); // internal uuid (in the URL, not rendered)
+  assert.equal(r.draft.api.detail.path, '/es/account/orderTracking?transactionId={internalId}&type=store');
+  assert.equal(r.draft.fields.internalId, 'transactionId'); // internal uuid (in the URL, not rendered)
   assert.equal(r.draft.fields.number, 'number');             // 12345 is rendered → public
 });
 
@@ -137,7 +137,7 @@ test('infers a POST-generated PDF (body templated by id) from captured assets', 
   const assets = [{ url: 'https://api.shop.es/v1/pdf', method: 'POST', reqType: 'application/json', reqBody: '{"orderId":"ORD-8"}', status: 200 }];
   const r = draftAdapterFromSamples(samples, { domain: 'shop.es', pageHost: 'www.shop.es', assets });
   assert.equal(r.draft.api.pdf.method, 'POST');
-  assert.equal(r.draft.api.pdf.body, '{"orderId":"{externalId}"}');
+  assert.equal(r.draft.api.pdf.body, '{"orderId":"{internalId}"}');
 });
 
 test('pagination cursor/page is stripped from captured params (starts from the beginning)', () => {

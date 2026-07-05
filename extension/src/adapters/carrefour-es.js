@@ -34,10 +34,10 @@ export default {
       window: '3y',
       params: { count: 50 },
     },
-    pdf: { path: '/md-ticketsAccount-v1/tickets/{externalId}/pdf' },
+    pdf: { path: '/md-ticketsAccount-v1/tickets/{internalId}/pdf' },
   },
   fields: {
-    externalId: 'purchaseId',
+    internalId: 'purchaseId',
     date: 'purchaseDate',
     total: 'amount',
     storeName: 'mallName',

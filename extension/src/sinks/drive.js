@@ -45,7 +45,7 @@ export async function driveWrite(sink, docs, files, opts) {
   const cache = {};
   let n = 0;
   for (const d of docs) {
-    const blob = files.get(d.externalId); if (!blob) continue;
+    const blob = files.get(d.internalId); if (!blob) continue;
     const rel = (root + '/' + pathFor(sink, d, opts)).split('/').filter(Boolean);
     const folderId = await ensureFolderPath(token, rel.slice(0, -1), cache);
     await uploadFile(token, rel.at(-1), folderId, blob);

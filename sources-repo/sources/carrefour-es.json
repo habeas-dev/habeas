@@ -56,11 +56,11 @@
       }
     },
     "pdf": {
-      "path": "/md-ticketsAccount-v1/tickets/{externalId}/pdf"
+      "path": "/md-ticketsAccount-v1/tickets/{internalId}/pdf"
     }
   },
   "fields": {
-    "externalId": "purchaseId",
+    "internalId": "purchaseId",
     "date": "purchaseDate",
     "total": "amount",
     "storeName": "mallName",

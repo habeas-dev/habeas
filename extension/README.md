@@ -20,7 +20,7 @@ extension/
     │   ├── state.js           # delivery ledger (dedupe) + activity log
     │   ├── fs.js              # File System Access directory handles (IndexedDB)
     │   ├── zip.js             # minimal store-only ZIP writer
-    │   ├── naming.js          # path templates {service}/{yyyy}/{date}-{externalId}.{ext}
+    │   ├── naming.js          # path templates {service}/{yyyy}/{date}-{internalId}.{ext}
     │   ├── badge.js           # toolbar badge states (working/count/error)
     │   ├── theme-icon.js      # light/dark toolbar icon
     │   └── i18n.js            # applyI18n() + t()

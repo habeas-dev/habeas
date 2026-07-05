@@ -160,7 +160,7 @@ Vocabulario (4 conceptos, 3 configurables + 1 enlace):
   de Drive, pairing tokens) viven en un **almacén aparte** referenciado por `...Ref`, nunca dentro
   de un adapter ni de la config exportable.
 - **FR-31** **Nombrado por plantilla**, con default fijo y sensato
-  `{service}/{yyyy}/{date}-{externalId}.{ext}`; editable solo si el usuario quiere.
+  `{service}/{yyyy}/{date}-{internalId}.{ext}`; editable solo si el usuario quiere.
 - **FR-32** El **sink Drive nativo** usa un **client OAuth propio de Habeas** (scope `drive.file`,
   que **evita** la evaluación de seguridad CASA de Google). El usuario solo pulsa *Conectar*,
   consiente y elige/crea la carpeta raíz — nada de "trae tu propio client id".
@@ -179,7 +179,7 @@ Ejemplo de config (storage local):
   "sinks": [
     { "id": "drive-personal", "type": "drive",
       "account": "davefx@gmail.com", "rootFolderId": "0AbC...",
-      "pathTemplate": "{service}/{yyyy}/{date}-{externalId}.pdf" },
+      "pathTemplate": "{service}/{yyyy}/{date}-{internalId}.pdf" },
     { "id": "tiquetera", "type": "http",
       "url": "https://tiquetera.es/api/ingest/receipts",
       "tokenRef": "secret://tiquetera", "schema": "receipt@1" }
@@ -301,11 +301,11 @@ detail:
     urlTemplate: "https://www.carrefour.es/{{ticketPdfPath}}"
     credentials: include
 fields:
-  externalId: "$.id"
+  internalId: "$.id"
   date:       { path: "$.date", transform: "date:DD/MM/YYYY" }
   total:      { path: "$.amount", transform: "money:EUR" }
   store:      "$.storeName"
-dedupeKey: externalId
+dedupeKey: internalId
 schema: receipt@1
 capabilities:
   read:  ["www.carrefour.es"]

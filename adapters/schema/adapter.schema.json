@@ -99,12 +99,12 @@
           "additionalProperties": false,
           "description": "Per-document PDF. GET by default; some services generate it via POST with the invoice data as the body.",
           "properties": {
-            "path": { "type": "string", "description": "PDF path with {externalId} placeholder." },
+            "path": { "type": "string", "description": "PDF path with {internalId} placeholder." },
             "method": { "enum": ["GET", "POST"] },
             "host": { "type": "string", "description": "PDF host if different from api.host (still bound by the same-domain guard / crossDomainHosts)." },
-            "body": { "type": "string", "description": "[POST] Request body template; {externalId} is substituted." },
+            "body": { "type": "string", "description": "[POST] Request body template; {internalId} is substituted." },
             "contentType": { "type": "string", "description": "[POST] Content-Type of the body (default application/json)." },
-            "referer": { "type": "string", "description": "Referer header to send (templated with {externalId}) — for services that gate the PDF behind its detail page. Set via declarativeNetRequest." }
+            "referer": { "type": "string", "description": "Referer header to send (templated with {internalId}) — for services that gate the PDF behind its detail page. Set via declarativeNetRequest." }
           }
         },
         "detail": {
@@ -113,7 +113,7 @@
           "additionalProperties": false,
           "description": "Per-document JSON detail (e.g. a full order). Saved as <id>.json. Preferred over a POST-generated PDF.",
           "properties": {
-            "path": { "type": "string", "description": "Detail path with {externalId} placeholder." },
+            "path": { "type": "string", "description": "Detail path with {internalId} placeholder." },
             "method": { "enum": ["GET", "POST"] },
             "host": { "type": "string", "description": "Detail host if different from api.host (same-domain guard applies)." }
           }
@@ -122,7 +122,7 @@
     },
     "fields": {
       "type": "object",
-      "required": ["externalId", "date"],
+      "required": ["internalId", "date"],
       "additionalProperties": { "type": "string" },
       "description": "Map of normalized field name -> source field (dotted path). Recognized keys depend on `schema`: receipt (total, storeName, storeAddress, type, source), invoice (total, issuer, issuerAddress, number, type, source), transaction (amount, description, counterparty, direction, type, source), investment (instrument, isin, units, price, amount, operation, type)."
     },

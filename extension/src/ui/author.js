@@ -21,21 +21,21 @@ let DRAFT = null;         // the inferred adapter draft (form edits are merged o
 
 // Normalized fields offered per target schema.
 const SCHEMA_FIELDS = {
-  receipt: ['externalId', 'number', 'date', 'total', 'storeName', 'storeAddress', 'type', 'source'],
-  invoice: ['externalId', 'number', 'date', 'total', 'issuer', 'issuerAddress', 'type', 'source'],
-  transaction: ['externalId', 'number', 'date', 'amount', 'description', 'counterparty', 'direction', 'type', 'source'],
-  investment: ['externalId', 'number', 'date', 'instrument', 'isin', 'units', 'price', 'amount', 'operation', 'type'],
+  receipt: ['internalId', 'number', 'date', 'total', 'storeName', 'storeAddress', 'type', 'source'],
+  invoice: ['internalId', 'number', 'date', 'total', 'issuer', 'issuerAddress', 'type', 'source'],
+  transaction: ['internalId', 'number', 'date', 'amount', 'description', 'counterparty', 'direction', 'type', 'source'],
+  investment: ['internalId', 'number', 'date', 'instrument', 'isin', 'units', 'price', 'amount', 'operation', 'type'],
 };
-// Plain-language labels (i18n keys) for each normalized field — no jargon in the UI. externalId is
+// Plain-language labels (i18n keys) for each normalized field — no jargon in the UI. internalId is
 // the INTERNAL id (links detail/PDF, dedup); `number` is the PUBLIC receipt/invoice number.
 const FIELD_LABEL = {
-  externalId: 'fld_internalid', number: 'fld_number', date: 'fld_date', total: 'fld_amount', amount: 'fld_amount',
+  internalId: 'fld_internalid', number: 'fld_number', date: 'fld_date', total: 'fld_amount', amount: 'fld_amount',
   storeName: 'fld_store', storeAddress: 'fld_address', issuerAddress: 'fld_address', type: 'fld_type',
   source: 'fld_channel', issuer: 'fld_issuer', description: 'fld_description',
   counterparty: 'fld_payee', direction: 'fld_direction', instrument: 'fld_instrument', isin: 'fld_isin',
   units: 'fld_units', price: 'fld_price', operation: 'fld_operation',
 };
-const REQUIRED = new Set(['externalId', 'date']);
+const REQUIRED = new Set(['internalId', 'date']);
 const sampleOf = (v) => { const s = String(v ?? ''); return s.length > 26 ? s.slice(0, 26) + '…' : s; };
 
 async function init() {
@@ -206,7 +206,7 @@ async function onTest() {
     $('#docwrap').hidden = true;
     if (docs.length && (adapter.api.detail || adapter.api.pdf)) {
       try {
-        const doc = await fetchDocument(adapter, authStore, docs[0].externalId, net);
+        const doc = await fetchDocument(adapter, authStore, docs[0].internalId, net);
         extra = ' · ' + t('author_doc_via', [t('via_' + doc.via)]);
         await showDocPreview(doc);
       } catch (e) { extra = ' · ' + t('author_doc_fail', [e.message.slice(0, 80)]); }
