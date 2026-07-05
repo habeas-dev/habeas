@@ -37,8 +37,9 @@ domain needs an explicit `crossDomainHosts` allowlist + a **consent** screen); *
 (learn-mode hook captures response samples in-session → `runtime/infer.js` auto-drafts a source →
 visual mapper `ui/author.*` → test → save); and **sharing** (export/import JSON, prefilled PR to
 `habeas-dev/sources`, `ui/marketplace.*` browse/install from `index.json` + ratings/comments client).
-External infra still to stand up: the `habeas-dev/sources` repo + `index.json` build, and the
-habeas.dev ratings/comments service (contract in `docs/registry.md`). Only real, API-verified
+External infra is LIVE: the `habeas-dev/sources` catalog at `habeas-dev.github.io/sources/index.json`,
+and the ratings/comments service at `https://api.habeas.dev` (Cloudflare Worker + D1, repo
+`habeas-dev/api`; contract in `docs/registry.md`). Only real, API-verified
 sources ship or get published; fictional design skeletons live in `extension/test/fixtures/` as
 test-only fixtures and never appear in the extension.
 
@@ -187,8 +188,8 @@ access — documented, user's responsibility. Full write-up in `README.md` (Lega
 
 ## Roadmap / pending
 
-- **Stand up community infra:** create `habeas-dev/sources` repo (JSON + CI validation +
-  `index.json` build) and the habeas.dev ratings/comments service (contract in `docs/registry.md`).
+- ~~Stand up community infra~~ DONE: `habeas-dev/sources` (Pages, LIVE) + `api.habeas.dev`
+  (Cloudflare Worker + D1, LIVE). Optional: add CF secrets to `habeas-dev/api` for CI auto-deploy.
 - **Author real sources** via record mode / community PRs, API-verified against real services,
   then publish to the registry (the fictional test fixtures must never be published or shipped).
 - **HTTP → Tiquetera** ingest endpoint (POST normalized records + PDFs; pairing token) — the
