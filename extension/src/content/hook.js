@@ -53,6 +53,16 @@
   }
   // Lightweight "we saw a request" ping (host only) — powers the record-mode diagnostic.
   function postSeen(url) { if (LEARN) try { window.postMessage({ __habeas: true, type: 'seen', host: hostOf(url) }, '*'); } catch (e) {} }
+  // A document asset (PDF/binary). We record the REQUEST (method, url, content-type, body) — never
+  // the response bytes — so we can infer the PDF path AND replay POST-generated PDFs (some services,
+  // e.g. Decathlon, generate the PDF from posted invoice data rather than a simple GET).
+  const isPdfLike = (ct, url) => /pdf|octet-stream/.test(ct || '') || /\.pdf(\?|$)/i.test(String(url || ''));
+  function postAsset(url, opts) {
+    if (!LEARN) return;
+    let abs = String(url); try { abs = new URL(url, location.href).href; } catch (e) {}
+    const body = typeof (opts && opts.reqBody) === 'string' ? opts.reqBody.slice(0, 20000) : '';
+    window.postMessage({ __habeas: true, type: 'asset', host: hostOf(url), url: abs, method: (opts && opts.method) || 'GET', reqType: String((opts && opts.reqType) || ''), reqBody: body, status: (opts && opts.status) || 0 }, '*');
+  }
 
   // Capture scope: normally only the page's own registrable domain (auth). In LEARN mode we also
   // capture from ANY host the page fetches — the service's API may be on another domain (the final
@@ -71,17 +81,31 @@
     } catch (e) {}
     const p = of.apply(this, arguments);
     if (url && LEARN) {
-      try { p.then((res) => { try { res.clone().text().then((t) => postSample(url, method, res.status, headers, t)); } catch (e) {} }).catch(() => {}); } catch (e) {}
+      try {
+        p.then((res) => {
+          try {
+            const ct = (res.headers.get('content-type') || '').toLowerCase();
+            if (isPdfLike(ct, url)) postAsset(url, { method, reqType: headers && headers['content-type'], reqBody: (init && typeof init.body === 'string') ? init.body : '', status: res.status });
+            else res.clone().text().then((t) => postSample(url, method, res.status, headers, t));
+          } catch (e) {}
+        }).catch(() => {});
+      } catch (e) {}
     }
     return p;
   };
 
-  const XP = XMLHttpRequest.prototype, oo = XP.open, os = XP.setRequestHeader;
+  const XP = XMLHttpRequest.prototype, oo = XP.open, os = XP.setRequestHeader, osend = XP.send;
   XP.open = function (m, u) {
-    this.__u = u; this.__m = m; this.__h = {};
+    this.__u = u; this.__m = m; this.__h = {}; this.__body = '';
     try {
       this.addEventListener('load', function () {
-        try { postSeen(this.__u); if (LEARN) postSample(this.__u, this.__m, this.status, this.__h, this.responseText); } catch (e) {}
+        try {
+          postSeen(this.__u);
+          if (!LEARN) return;
+          const ct = ((this.getResponseHeader && this.getResponseHeader('content-type')) || '').toLowerCase();
+          if (isPdfLike(ct, this.__u)) postAsset(this.__u, { method: this.__m, reqType: this.__h['content-type'], reqBody: this.__body, status: this.status });
+          else postSample(this.__u, this.__m, this.status, this.__h, this.responseText);
+        } catch (e) {}
       });
     } catch (e) {}
     return oo.apply(this, arguments);
@@ -92,6 +116,7 @@
     } catch (e) {}
     return os.apply(this, arguments);
   };
+  XP.send = function (b) { try { if (typeof b === 'string') this.__body = b; } catch (e) {} return osend.apply(this, arguments); };
 
   // Tell the isolated bridge we're live, so it (re)sends the current learn-mode arm state — the
   // hook loads as an async script and may miss the bridge's initial one-shot arm message.

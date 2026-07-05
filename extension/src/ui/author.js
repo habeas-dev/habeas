@@ -1,6 +1,6 @@
 import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
-import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen } from '../lib/learn.js';
+import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen, getAssets } from '../lib/learn.js';
 import { draftAdapterFromSamples, listCandidates, matchCandidates } from '../runtime/infer.js';
 import { listInventory } from '../runtime/inventory.js';
 import { validateAdapter } from '../adapters/validate.js';
@@ -13,7 +13,9 @@ const fmt = (n) => (typeof n === 'number' ? n.toFixed(2) : n ?? '');
 let LEARN = null;         // { domain, origin }
 let candidates = [];      // detected source field paths
 let SAMPLES = [];         // captured response samples
+let ASSETS = [];          // captured document (PDF) requests
 let CANDS = [];           // candidate document lists across the samples
+let DRAFT = null;         // the inferred adapter draft (form edits are merged onto this)
 
 // Normalized fields offered per target schema.
 const SCHEMA_FIELDS = {
@@ -74,6 +76,7 @@ async function onAnalyze() {
     return;
   }
   SAMPLES = samples;
+  ASSETS = await getAssets(LEARN.domain);
   CANDS = listCandidates(samples);
   if (!CANDS.length) { $('#status').textContent = t('author_no_list'); return; }
   // Let the user pick which captured list is their data (biggest is only a default).
@@ -100,11 +103,13 @@ function onFind() {
 }
 
 function drawDraft(chosen) {
-  const r = draftAdapterFromSamples(SAMPLES, { domain: LEARN.domain, pageHost: hostFromOrigin(LEARN.origin) }, { key: chosen.key });
+  const r = draftAdapterFromSamples(SAMPLES, { domain: LEARN.domain, pageHost: hostFromOrigin(LEARN.origin), assets: ASSETS }, { key: chosen.key });
   if (!r.ok) { $('#status').textContent = t('author_no_list'); return; }
+  DRAFT = r.draft;
   candidates = r.fieldCandidates; // [{ path, value }]
-  fillForm(r.draft);
-  $('#status').textContent = t('author_detected', [r.itemsPath, String(r.count)]);
+  fillForm(DRAFT);
+  const doc = DRAFT.api.detail ? t('doc_json') : DRAFT.api.pdf ? t('doc_pdf') : t('doc_none');
+  $('#status').textContent = t('author_detected', [r.itemsPath, String(r.count)]) + ' · ' + doc;
 }
 
 function hostFromOrigin(origin) { try { return new URL(origin.replace('/*', '')).host; } catch (e) { return LEARN.domain; } }
@@ -117,11 +122,10 @@ function fillForm(d) {
   $('#f_items').value = (d.api && d.api.list && d.api.list.itemsPath) || '';
   $('#f_paging').value = (d.api && d.api.list && d.api.list.paging) || 'none';
   $('#f_pdf').value = (d.api && d.api.pdf && d.api.pdf.path) || '';
+  $('#f_detail').value = (d.api && d.api.detail && d.api.detail.path) || '';
   $('#f_schema').value = d.schema || 'receipt@1';
   $('#f_cats').value = (d.categories || []).join(',');
   renderFieldMap(d.fields || {});
-  // stash paging extras (nextPath/offsetsPath/params/initialOffsets) + detected replayHeaders
-  $('#mapper').dataset.extra = JSON.stringify({ ...((d.api && d.api.list) || {}), replayHeaders: (d.auth && d.auth.replayHeaders) || [] });
 }
 
 function renderFieldMap(current) {
@@ -142,28 +146,31 @@ function collectFields() {
   return fields;
 }
 
+// Start from the inferred draft and apply only the user's edits — this preserves the inferred
+// pagination, detail/PDF endpoint, replayHeaders, match/domain, etc.
 function buildAdapter() {
-  const extra = JSON.parse($('#mapper').dataset.extra || '{}');
-  const host = $('#f_host').value.trim();
-  const domain = LEARN ? LEARN.domain : (host.replace(/^https?:\/\//, '').split('.').slice(-2).join('.'));
-  const list = { path: $('#f_path').value.trim(), paging: $('#f_paging').value, itemsPath: $('#f_items').value.trim() };
-  if (list.paging === 'cursor') { list.nextPath = extra.nextPath || 'nextCursor'; list.cursorParam = extra.cursorParam || 'cursor'; }
-  if (list.paging === 'offsets') { list.offsetsPath = extra.offsetsPath || 'offsets'; list.initialOffsets = extra.initialOffsets || {}; }
-  if (extra.params) list.params = extra.params;
-  const api = { host, list };
-  if ($('#f_pdf').value.trim()) api.pdf = { path: $('#f_pdf').value.trim() };
+  const a = JSON.parse(JSON.stringify(DRAFT || {}));
+  a.id = $('#f_id').value.trim();
+  a.name = $('#f_name').value.trim();
+  a.schema = $('#f_schema').value;
   const cats = $('#f_cats').value.split(',').map((s) => s.trim()).filter(Boolean);
-  const pageHost = LEARN ? hostFromOrigin(LEARN.origin) : host.replace(/^https?:\/\//, '');
-  const adapter = {
-    id: $('#f_id').value.trim(), name: $('#f_name').value.trim(),
-    service: (domain.split('.')[0] || 'source'), trust: 'community', domain,
-    categories: cats.length ? cats : ['other'],
-    match: ['https://' + pageHost + '/*'],
-    auth: { tokenMatch: 'eyJ', replayHeaders: extra.replayHeaders && extra.replayHeaders.length ? extra.replayHeaders : ['authorization'] },
-    api, fields: collectFields(), schema: $('#f_schema').value,
-  };
-  // carry replayHeaders detected during inference (stored on draft.auth) if present
-  return adapter;
+  a.categories = cats.length ? cats : ['other'];
+  a.fields = collectFields();
+  a.api = a.api || {};
+  a.api.host = $('#f_host').value.trim();
+  a.api.list = a.api.list || {};
+  a.api.list.path = $('#f_path').value.trim();
+  a.api.list.itemsPath = $('#f_items').value.trim();
+  a.api.list.paging = $('#f_paging').value;
+  // Advanced overrides for the per-document artifact.
+  const pdfPath = $('#f_pdf').value.trim();
+  const detailPath = $('#f_detail').value.trim();
+  if (pdfPath) a.api.pdf = { ...(a.api.pdf || {}), path: pdfPath, method: (a.api.pdf && a.api.pdf.method) || 'GET' };
+  else if (!pdfPath && !detailPath && a.api.pdf === undefined) { /* nothing */ }
+  if (detailPath) a.api.detail = { ...(a.api.detail || {}), path: detailPath, method: (a.api.detail && a.api.detail.method) || 'GET' };
+  else if (!detailPath && a.api.detail) delete a.api.detail;
+  a.trust = 'community';
+  return a;
 }
 
 // The API may live on a different host than the login site — request permission to fetch it.

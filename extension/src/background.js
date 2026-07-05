@@ -5,7 +5,7 @@
 import { chrome } from './lib/ext.js';
 import { getConfig } from './lib/config.js';
 import { deliveredSet, markDelivered, appendLog } from './lib/state.js';
-import { listInventory, fetchPdf } from './runtime/inventory.js';
+import { listInventory, fetchDocument, documentExt } from './runtime/inventory.js';
 import { writeToSink } from './sinks/sinks.js';
 import { acceptsDoc } from './sinks/format.js';
 import { getAdapters } from './adapters/index.js';
@@ -35,6 +35,14 @@ chrome.runtime.onMessage.addListener((msg) => {
     chrome.storage.session.get(key).then((o) => {
       const arr = (o[key] || []).filter((x) => x.url !== msg.sample.url);
       arr.unshift(msg.sample);
+      chrome.storage.session.set({ [key]: arr.slice(0, SAMPLE_CAP) });
+    });
+  } else if (msg.type === 'habeas:asset' && msg.domain && msg.asset) {
+    // Record-mode: remember document (PDF) request URLs so we can infer the PDF path.
+    const key = 'assets:' + msg.domain;
+    chrome.storage.session.get(key).then((o) => {
+      const arr = (o[key] || []).filter((x) => x.url !== msg.asset.url);
+      arr.unshift(msg.asset);
       chrome.storage.session.set({ [key]: arr.slice(0, SAMPLE_CAP) });
     });
   } else if (msg.type === 'habeas:seen' && msg.domain) {
@@ -93,8 +101,8 @@ async function runRoute(ds, adapter, sink) {
     const eligible = fresh.filter((d) => acceptsDoc(sink, d));
     if (!eligible.length) { await appendLog({ ...base, status: 'none', new: 0 }); await badgeClear(); return; }
     const files = new Map();
-    for (const d of eligible) { try { files.set(d.externalId, await fetchPdf(adapter, auth, d.externalId)); } catch (e) { /* no PDF */ } }
-    await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, interactive: false });
+    for (const d of eligible) { try { files.set(d.externalId, (await fetchDocument(adapter, auth, d.externalId)).blob); } catch (e) { /* no document */ } }
+    await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, ext: documentExt(adapter) || 'pdf', interactive: false });
     await markDelivered(ds.id, sink.id, eligible.map((d) => d.externalId));
     await appendLog({ ...base, status: 'ok', new: eligible.length });
     notify(t('notify_new', [String(eligible.length), sink.id]));

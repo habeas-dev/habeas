@@ -50,6 +50,12 @@ export async function getSeen(domain) {
   return o['seen:' + domain] || { total: 0, hosts: {} };
 }
 
+// Document (PDF) request URLs observed during capture — used to infer the PDF endpoint.
+export async function getAssets(domain) {
+  const o = await chrome.storage.session.get('assets:' + domain);
+  return o['assets:' + domain] || [];
+}
+
 // Captured auth for a host, as { path -> headers } (plus a 'merged' fallback).
 export async function getAuthFor(host) {
   const o = await chrome.storage.session.get('auth:' + host);

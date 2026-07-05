@@ -59,3 +59,29 @@ test('fetchPdf throws cheaply for a source with no PDF', async () => {
   const { fetchPdf } = await import('../src/runtime/inventory.js');
   await assert.rejects(() => fetchPdf(bank, auth, 't1'), /no PDF/);
 });
+
+test('documentExt prefers GET pdf, then json detail, then POST pdf', async () => {
+  const { documentExt } = await import('../src/runtime/inventory.js');
+  assert.equal(documentExt({ api: { pdf: { path: '/p/{externalId}' } } }), 'pdf');
+  assert.equal(documentExt({ api: { detail: { path: '/d/{externalId}' } } }), 'json');
+  assert.equal(documentExt({ api: { pdf: { path: '/p', method: 'POST' }, detail: { path: '/d' } } }), 'json');
+  assert.equal(documentExt({ api: {} }), null);
+});
+
+test('fetchDetail GETs the JSON detail and returns a json blob', async () => {
+  const { fetchDetail } = await import('../src/runtime/inventory.js');
+  globalThis.fetch = async (u) => { assert.match(u, /\/orders\/ORD-8$/); return { ok: true, text: async () => '{"id":"ORD-8"}' }; };
+  const adapter = { api: { host: 'https://api.shop.es', detail: { path: '/orders/{externalId}' } } };
+  const blob = await fetchDetail(adapter, auth, 'ORD-8');
+  assert.equal(blob.type, 'application/json');
+  assert.equal(await blob.text(), '{"id":"ORD-8"}');
+});
+
+test('fetchDocument returns json for a detail source', async () => {
+  const { fetchDocument } = await import('../src/runtime/inventory.js');
+  globalThis.fetch = async () => ({ ok: true, text: async () => '{"x":1}' });
+  const adapter = { api: { host: 'https://api.shop.es', detail: { path: '/o/{externalId}' } } };
+  const doc = await fetchDocument(adapter, auth, 'A');
+  assert.equal(doc.ext, 'json');
+  assert.equal(await doc.blob.text(), '{"x":1}');
+});

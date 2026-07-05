@@ -51,15 +51,54 @@ export async function listInventory(adapter, auth) {
   return all;
 }
 
+const absHost = (h) => (/^https?:\/\//.test(h) ? h : 'https://' + h);
+
+// Which per-document artifact this source produces: a PDF (GET, or POST-generated) or a JSON detail
+// (GET). JSON detail is preferred when present — it's the practical artifact for many services.
+export function documentExt(adapter) {
+  const pdf = adapter.api.pdf, detail = adapter.api.detail;
+  if (pdf && (!pdf.method || pdf.method === 'GET')) return 'pdf';
+  if (detail) return 'json';
+  if (pdf) return 'pdf';
+  return null;
+}
+
+// Fetch a document's file (PDF or JSON detail) as a Blob. Prefers GET-PDF, then JSON detail, then
+// POST-PDF (see documentExt ordering).
+export async function fetchDocument(adapter, auth, externalId) {
+  const ext = documentExt(adapter);
+  if (ext === 'pdf') return { blob: await fetchPdf(adapter, auth, externalId), ext };
+  if (ext === 'json') return { blob: await fetchDetail(adapter, auth, externalId), ext };
+  throw new Error('no document for this source');
+}
+
 export async function fetchPdf(adapter, auth, externalId) {
-  if (!adapter.api.pdf) throw new Error('no PDF for this source');
-  const url = adapter.api.host + adapter.api.pdf.path.replace('{externalId}', encodeURIComponent(externalId));
-  const res = await fetch(url, { headers: { ...auth, accept: 'application/pdf' } });
+  const pdf = adapter.api.pdf;
+  if (!pdf) throw new Error('no PDF for this source');
+  const host = pdf.host ? absHost(pdf.host) : adapter.api.host;
+  const url = host + pdf.path.replace('{externalId}', encodeURIComponent(externalId));
+  const init = { method: pdf.method || 'GET', headers: { ...auth, accept: 'application/pdf' } };
+  if (init.method !== 'GET' && pdf.body != null) {
+    init.body = String(pdf.body).split('{externalId}').join(externalId);
+    init.headers['content-type'] = pdf.contentType || 'application/json';
+  }
+  const res = await fetch(url, init);
   if (!res.ok) {
     const hint = res.status === 406 ? ' (sin PDF disponible — típico en tickets antiguos)' : '';
     throw new Error('pdf ' + res.status + hint + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
   }
   return await res.blob();
+}
+
+// Per-document JSON detail (e.g. an order's full data). Saved as <id>.json.
+export async function fetchDetail(adapter, auth, externalId) {
+  const d = adapter.api.detail;
+  if (!d) throw new Error('no detail for this source');
+  const host = d.host ? absHost(d.host) : adapter.api.host;
+  const url = host + d.path.replace('{externalId}', encodeURIComponent(externalId));
+  const res = await fetch(url, { method: d.method || 'GET', headers: { ...auth, accept: 'application/json' } });
+  if (!res.ok) throw new Error('detail ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
+  return new Blob([await res.text()], { type: 'application/json' });
 }
 
 async function fetchList(adapter, auth, params) {
