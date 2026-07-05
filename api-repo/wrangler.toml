@@ -8,11 +8,10 @@ workers_dev = true
 [[d1_databases]]
 binding = "DB"
 database_name = "habeas-api"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "29a2d336-6364-4a24-9769-32fb5592fba1"
 
-# Serve at api.habeas.dev. Requires habeas.dev to be a zone in your Cloudflare account.
-# If it isn't, delete this block and instead add a Custom Domain (api.habeas.dev) to the Worker in
-# the Cloudflare dashboard, or use the *.workers.dev URL and set the extension's API_BASE to it.
+# api.habeas.dev as a Worker Custom Domain — wrangler provisions the DNS record + TLS for you
+# (habeas.dev is already a Cloudflare zone). No manual DNS entry needed.
 [[routes]]
-pattern = "api.habeas.dev/*"
-zone_name = "habeas.dev"
+pattern = "api.habeas.dev"
+custom_domain = true
