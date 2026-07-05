@@ -90,7 +90,8 @@
             },
             "window": { "type": "string", "pattern": "^\\d+y$", "description": "Lookback window for the range, e.g. 3y." },
             "maxPages": { "type": "number", "description": "Safety cap on pages fetched (default 100)." },
-            "params": { "type": "object", "description": "Static query params. `count` also drives the page-paging stop condition." }
+            "params": { "type": "object", "description": "Static query params. `count` also drives the page-paging stop condition." },
+            "headers": { "type": "object", "description": "Static headers the SPA sends for the list (e.g. dkt-ecom-origin).", "additionalProperties": { "type": "string" } }
           }
         },
         "pdf": {
@@ -116,7 +117,8 @@
             "path": { "type": "string", "description": "Detail path with {internalId} placeholder." },
             "method": { "enum": ["GET", "POST"] },
             "host": { "type": "string", "description": "Detail host if different from api.host (same-domain guard applies)." },
-            "headers": { "type": "object", "description": "Static headers the SPA sends for this endpoint (e.g. dkt-ecom-origin).", "additionalProperties": { "type": "string" } }
+            "headers": { "type": "object", "description": "Static headers the SPA sends for this endpoint (e.g. dkt-ecom-origin).", "additionalProperties": { "type": "string" } },
+            "referer": { "type": "string", "description": "Referer header to send (templated with {internalId}) — for endpoints that validate it. Set via declarativeNetRequest." }
           }
         }
       }
