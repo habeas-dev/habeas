@@ -10,6 +10,9 @@
     .maprow label { color: var(--muted); }
     .inp { display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center; margin: 4px 0; }
     #samplecount { font-weight: 600; }
+    #preview tbody tr[data-i] { cursor: pointer; }
+    #preview tbody tr[data-i]:hover { background: rgba(127, 127, 127, 0.10); }
+    #preview tbody tr.sel { background: rgba(127, 127, 127, 0.18); }
     #docpreview { max-height: 320px; overflow: auto; margin-top: 4px; font-family: ui-monospace, monospace; font-size: 12px; line-height: 1.5; }
     #docpreview details { margin-left: 2px; }
     #docpreview summary { cursor: pointer; user-select: none; }

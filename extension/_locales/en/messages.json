@@ -154,6 +154,7 @@
   "author_no_auth": { "message": "No captured session for this API yet — browse your data on the site first." },
   "author_testing": { "message": "Testing…" },
   "author_test_ok": { "message": "OK — listed $COUNT$ documents.", "placeholders": { "count": { "content": "$1" } } },
+  "author_doc_fetching": { "message": "downloading $ID$…", "placeholders": { "id": { "content": "$1" } } },
   "author_doc_via": { "message": "detail loads via $VIA$", "placeholders": { "via": { "content": "$1" } } },
   "author_doc_fail": { "message": "detail failed: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
   "via_json": { "message": "an AJAX/API JSON call" },

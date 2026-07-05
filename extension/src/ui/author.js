@@ -15,6 +15,7 @@ const fmt = (n) => (typeof n === 'number' ? n.toFixed(2) : n ?? '');
 let LEARN = null;         // { domain, origin }
 let candidates = [];      // detected source field paths
 let SAMPLES = [];         // captured response samples
+let TEST_COUNT = 0;       // documents listed in the last Test (for the status line)
 let ASSETS = [];          // captured document (PDF) requests
 let DOMTEXTS = [];        // rendered page texts (public vs internal id)
 let CANDS = [];           // candidate document lists across the samples
@@ -204,20 +205,36 @@ async function onTest() {
   $('#status').textContent = t('author_testing');
   try {
     const docs = await listInventory(adapter, authStore, net);
-    $('#preview tbody').innerHTML = docs.slice(0, 3).map((d) =>
-      `<tr><td>${esc((d.date || '').slice(0, 10))}</td><td>${esc(d.storeName || d.label || '')}</td><td class="r">${esc(fmt(d.total ?? d.amount))}</td><td>${esc(d.type || '')}</td></tr>`).join('');
-    // Also fetch one document so we can report HOW the per-item detail/PDF loads AND preview it.
-    let extra = '';
+    // Show ALL listed documents (not a sample) so the user can confirm pagination pulled everything.
+    const MAX_ROWS = 500;
+    const rows = docs.slice(0, MAX_ROWS).map((d) =>
+      `<tr data-i="${esc(d.internalId)}"><td>${esc((d.date || '').slice(0, 10))}</td><td>${esc(d.storeName || d.label || '')}</td><td class="r">${esc(fmt(d.total ?? d.amount))}</td><td>${esc(d.type || '')}</td></tr>`).join('');
+    $('#preview tbody').innerHTML = rows + (docs.length > MAX_ROWS ? `<tr><td colspan="4" class="muted">… +${docs.length - MAX_ROWS}</td></tr>` : '');
+    TEST_COUNT = docs.length;
+    $('#status').textContent = t('author_test_ok', [String(docs.length)]);
     $('#docwrap').hidden = true;
+    // Click any row → test the download/preview of THAT document. Auto-preview the first.
     if (docs.length && (adapter.api.detail || adapter.api.pdf)) {
-      try {
-        const doc = await fetchDocument(adapter, authStore, docs[0].internalId, net);
-        extra = ' · ' + t('author_doc_via', [t('via_' + doc.via)]);
-        await showDocPreview(doc);
-      } catch (e) { extra = ' · ' + t('author_doc_fail', [e.message.slice(0, 80)]); }
+      const trs = $('#preview tbody').querySelectorAll('tr[data-i]');
+      trs.forEach((tr) => { tr.onclick = () => previewDoc(adapter, authStore, net, tr.dataset.i, tr); });
+      previewDoc(adapter, authStore, net, docs[0].internalId, trs[0]);
     }
-    $('#status').textContent = t('author_test_ok', [String(docs.length)]) + extra;
   } catch (e) { $('#status').textContent = t('author_test_err', [e.message]); }
+}
+
+// Fetch and preview one specific document (triggered by clicking its row, or auto for the first).
+async function previewDoc(adapter, authStore, net, internalId, tr) {
+  $('#preview tbody').querySelectorAll('tr.sel').forEach((x) => x.classList.remove('sel'));
+  if (tr) tr.classList.add('sel');
+  $('#docwrap').hidden = true;
+  $('#status').textContent = t('author_test_ok', [String(TEST_COUNT)]) + ' · ' + t('author_doc_fetching', [String(internalId)]);
+  try {
+    const doc = await fetchDocument(adapter, authStore, internalId, net);
+    await showDocPreview(doc);
+    $('#status').textContent = t('author_test_ok', [String(TEST_COUNT)]) + ' · ' + t('author_doc_via', [t('via_' + doc.via)]);
+  } catch (e) {
+    $('#status').textContent = t('author_test_ok', [String(TEST_COUNT)]) + ' · ' + t('author_doc_fail', [(e.message || '').slice(0, 100)]);
+  }
 }
 
 // Collapsible JSON tree. All keys/values are escaped — the detail is untrusted network data.
