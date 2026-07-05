@@ -80,7 +80,7 @@ async function onAnalyze() {
   CANDS = listCandidates(samples);
   if (!CANDS.length) { $('#status').textContent = t('author_no_list'); return; }
   // Let the user pick which captured list is their data (biggest is only a default).
-  $('#f_list').innerHTML = CANDS.map((c, i) => `<option value="${i}">${c.count} ${t('author_items')} · ${esc(c.path)} · ${esc(c.host)}</option>`).join('');
+  $('#f_list').innerHTML = CANDS.map((c, i) => `<option value="${i}">${c.count} ${t('author_items')} · ${c.pages} ${t('author_pages')} · ${esc(c.path)} · ${esc(c.host)}</option>`).join('');
   $('#f_list').onchange = () => drawDraft(CANDS[+$('#f_list').value]);
   $('#findbtn').onclick = onFind;
   $('#f_find').onkeydown = (e) => { if (e.key === 'Enter') onFind(); };

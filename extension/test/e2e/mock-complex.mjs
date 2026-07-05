@@ -23,10 +23,10 @@ if(p.indexOf('/orders/')===0){
   var id=p.split('/orders/')[1];
   // fetch the PDF from the detail page → Referer is this page (retry so the hook's late arm catches it)
   function gp(){return fetch('/api/orders/'+id+'/pdf',{headers:H}).then(function(r){document.getElementById('t').textContent='detail '+id+' pdf '+r.status;});}
-  gp(); var m=0; var ip=setInterval(function(){ if(++m>8){clearInterval(ip);return;} gp(); },500);
+  gp(); var m=0; var ip=setInterval(function(){ if(++m>16){clearInterval(ip);return;} gp(); },500);
 } else {
   var n=0; function go(){Promise.all([J('/api/orders'),J('/api/wishlist'),J('/api/recommendations')]).then(function(){document.getElementById('t').textContent='loaded';}).catch(function(){});}
-  go(); var iv=setInterval(function(){ if(++n>8){clearInterval(iv);return;} go(); },500);
+  go(); var iv=setInterval(function(){ if(++n>16){clearInterval(iv);return;} go(); },500);
 }
 </script></body></html>`;
 

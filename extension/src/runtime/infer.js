@@ -40,17 +40,9 @@ function deepIncludes(node, needle, depth = 6) {
 export function matchCandidates(samples, query) {
   const q = String(query || '').trim().toLowerCase();
   if (!q) return [];
-  const byKey = new Map();
-  for (const s of samples || []) {
-    if (!s || !s.json) continue;
-    for (const a of findArrays(s.json, '', [])) {
-      if (!a.arr.some((it) => deepIncludes(it, q))) continue;
-      const key = keyOf(s.url, a.path);
-      const prev = byKey.get(key);
-      if (!prev || a.len > prev.count) byKey.set(key, { key, url: s.url, itemsPath: a.path, count: a.len });
-    }
-  }
-  return [...byKey.values()].sort((x, y) => y.count - x.count);
+  return collect(samples)
+    .filter((c) => c.items.some((it) => deepIncludes(it, q)))
+    .map((c) => ({ key: c.key, url: c.s.url, itemsPath: c.itemsPath, count: c.len, pages: c.pages }));
 }
 
 // Depth-first search for the first path whose leaf key matches a regex (returns dotted path).
@@ -79,21 +71,26 @@ function keyOf(url, itemsPath) {
   try { const u = new URL(url); return u.host + u.pathname + '#' + itemsPath; } catch (e) { return url + '#' + itemsPath; }
 }
 
-// Every array-of-objects found across the captured samples, deduped by logical list (keeping the
-// largest page as representative), biggest first. The biggest isn't always the right one → the UI
-// lets the user pick / search.
+// Every array-of-objects found across the captured samples, grouped by logical list. Items from all
+// captured PAGES of the same list are aggregated (deduped), so `count` = how many distinct items you
+// browsed (not one page), and detail/PDF inference can match an id from any visited page. A
+// representative sample (the largest page) is kept for URL / pagination / auth inference.
 function collect(samples) {
   const byKey = new Map();
   for (const s of samples || []) {
     if (!s || !s.json || (s.status && s.status >= 300)) continue;
     for (const a of findArrays(s.json, '', [])) {
       const key = keyOf(s.url, a.path);
-      const c = { key, s, itemsPath: a.path, len: a.len, item: a.sample, items: a.arr };
-      const prev = byKey.get(key);
-      if (!prev || c.len > prev.len) byKey.set(key, c);
+      let e = byKey.get(key);
+      if (!e) { e = { key, s, itemsPath: a.path, items: [], seen: new Set(), pages: new Set(), repLen: 0 }; byKey.set(key, e); }
+      e.pages.add(s.url); // distinct pages captured for this list
+      for (const it of a.arr) { const k = JSON.stringify(it); if (!e.seen.has(k)) { e.seen.add(k); e.items.push(it); } }
+      if (a.len > e.repLen) { e.repLen = a.len; e.s = s; } // largest page → best for paging/url/params
     }
   }
-  return [...byKey.values()].sort((x, y) => y.len - x.len);
+  return [...byKey.values()]
+    .map((e) => ({ key: e.key, s: e.s, itemsPath: e.itemsPath, len: e.items.length, pages: e.pages.size, item: e.items[0], items: e.items }))
+    .sort((x, y) => y.len - x.len);
 }
 
 // Public: the candidate lists for the picker UI.
@@ -101,7 +98,7 @@ export function listCandidates(samples) {
   return collect(samples).map((c) => {
     let host = '', path = '';
     try { const u = new URL(c.s.url); host = u.host; path = u.pathname; } catch (e) {}
-    return { key: c.key, url: c.s.url, host, path, itemsPath: c.itemsPath, count: c.len, keys: Object.keys(c.item || {}) };
+    return { key: c.key, url: c.s.url, host, path, itemsPath: c.itemsPath, count: c.len, pages: c.pages, keys: Object.keys(c.item || {}) };
   });
 }
 
