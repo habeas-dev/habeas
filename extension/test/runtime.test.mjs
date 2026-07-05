@@ -35,6 +35,20 @@ test('page paging stops on a partial page', async () => {
   assert.deepEqual(docs.map((d) => d.category).sort(), ['grocery', 'grocery', 'retail']);
 });
 
+test('offset paging advances by offsetStep until an empty page (Decathlon-style: 9/page)', async () => {
+  const adapter = { api: { host: 'https://x.es', list: { path: '/orders', paging: 'offset', itemsPath: 'items', offsetParam: 'from', offsetStart: 0, offsetStep: 9 } }, fields: { internalId: 'id', date: 'd' }, schema: 'receipt@1' };
+  const urls = [];
+  globalThis.fetch = async (u) => {
+    urls.push(u);
+    const from = Number(new URL(u).searchParams.get('from'));
+    const ids = from < 18 ? [from, from + 1].map((n) => ({ id: 'R' + n, d: '2026-01-01' })) : []; // pages until offset 18 → empty
+    return { ok: true, json: async () => ({ items: ids }), text: async () => '' };
+  };
+  const docs = await listInventory(adapter, { authorization: 'eyJ' });
+  assert.equal(docs.length, 4);                                  // 2 + 2 + 0 → 4 docs (paginated past page 1!)
+  assert.deepEqual(urls.map((u) => new URL(u).searchParams.get('from')), ['0', '9', '18']);
+});
+
 test('cursor paging follows nextPath and emits transaction records', async () => {
   stub([
     { transactions: [{ id: 't1', valueDate: '2026-03-01', amount: -12.5, concept: 'Coffee', merchant: { name: 'Bar' }, direction: 'debit', operationType: 'PURCHASE' }], paging: { nextCursor: 'c2' } },

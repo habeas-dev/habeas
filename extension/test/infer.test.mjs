@@ -53,6 +53,36 @@ test('detects page pagination from a `page` query param', () => {
   assert.equal(r.draft.api.list.pageParam, 'page');
 });
 
+// Learn pagination from the ACTUAL pages the user browsed (not just single-sample signals).
+test('learns page pagination from several captured pages', () => {
+  const p = (n) => ({ url: `https://api.shop.es/orders?page=${n}`, status: 200, reqHeaders: {}, json: { items: [{ id: 'O' + n }] } });
+  const r = draftAdapterFromSamples([p(1), p(2), p(3)], { domain: 'shop.es', pageHost: 'www.shop.es' });
+  assert.equal(r.draft.api.list.paging, 'page');
+  assert.equal(r.draft.api.list.pageParam, 'page');
+});
+
+test('learns OFFSET pagination (param `from`, step = page size) from several pages', () => {
+  const p = (off, ids) => ({ url: `https://api.shop.es/orders?from=${off}&limit=2`, status: 200, reqHeaders: {}, json: { items: ids.map((id) => ({ id })) } });
+  const r = draftAdapterFromSamples([p(0, ['A', 'B']), p(2, ['C', 'D']), p(4, ['E'])], { domain: 'shop.es', pageHost: 'www.shop.es' });
+  assert.equal(r.draft.api.list.paging, 'offset');
+  assert.equal(r.draft.api.list.offsetParam, 'from');
+  assert.equal(r.draft.api.list.offsetStep, 2);
+  assert.equal(r.draft.api.list.offsetStart, 0);
+  assert.ok(!('from' in (r.draft.api.list.params || {}))); // the offset param is stripped (start fresh)
+  assert.equal(r.draft.api.list.params.limit, '2');        // page-size param stays
+});
+
+test('learns cursor pagination: page 1 has no token, page 2 carries the response token', () => {
+  const s = [
+    { url: 'https://api.shop.es/tx', status: 200, reqHeaders: {}, json: { items: [{ id: '1' }], paging: { next: 'TOK2' } } },
+    { url: 'https://api.shop.es/tx?cur=TOK2', status: 200, reqHeaders: {}, json: { items: [{ id: '2' }], paging: { next: 'TOK3' } } },
+  ];
+  const r = draftAdapterFromSamples(s, { domain: 'shop.es', pageHost: 'www.shop.es' });
+  assert.equal(r.draft.api.list.paging, 'cursor');
+  assert.equal(r.draft.api.list.cursorParam, 'cur');
+  assert.equal(r.draft.api.list.nextPath, 'paging.next');
+});
+
 // Search-by-value: a non-technical user types a ticket no. / amount to pick the right list.
 const twoLists = [
   { url: 'https://api.shop.es/v1/orders?page=1', status: 200, reqHeaders: { authorization: 'eyJ' },

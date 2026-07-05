@@ -72,7 +72,7 @@ function hasNoCode(v, seen = new Set()) {
 
 const ID_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const SCHEMA_RE = /^[a-z_]+@\d+$/;
-const PAGING = new Set(['offsets', 'page', 'cursor', 'none']);
+const PAGING = new Set(['offsets', 'offset', 'page', 'cursor', 'none']);
 
 export function validateAdapter(adapter) {
   const errors = [];

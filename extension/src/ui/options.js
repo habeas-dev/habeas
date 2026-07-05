@@ -10,6 +10,7 @@ import { getAdapters, removeSource } from '../adapters/index.js';
 import { needsConsent, hasConsent, grantConsent, consentDescriptor } from '../lib/consent.js';
 import { exportSource, buildShareUrl, importFromFile } from '../registry/share.js';
 import { saveSource } from '../adapters/index.js';
+import { editJson } from './jsoneditor.js';
 
 let CATALOG = {};
 const $ = (s) => document.querySelector(s);
@@ -49,11 +50,15 @@ async function render() {
     const community = a.trust !== 'first-party';
     const trust = community ? t('trust_community') : t('trust_first_party');
     const extra = community
-      ? `<button data-exp="${a.id}">${t('export_source')}</button><button data-share="${a.id}">${t('share_source')}</button><button data-delsrc="${a.id}">${t('remove')}</button>`
+      ? `<button data-edit="${esc(a.id)}">${t('edit_json')}</button><button data-exp="${a.id}">${t('export_source')}</button><button data-share="${a.id}">${t('share_source')}</button><button data-delsrc="${a.id}">${t('remove')}</button>`
       : '';
     return `<div class="card row"><b style="flex:1">${esc(a.name)}</b><span class="pill type">${trust}</span><code>${esc(a.id)}</code>
       <button data-ds="${esc(a.id)}" data-on="${on ? 1 : 0}" class="${on ? '' : 'primary'}">${on ? t('deactivate') : t('activate')}</button>${extra}</div>`;
   }).join('');
+  $('#ds').querySelectorAll('[data-edit]').forEach((b) => b.onclick = async () => {
+    const edited = await editJson(CATALOG[b.dataset.edit]);
+    if (edited) { await saveSource(edited); render(); }
+  });
   $('#ds').querySelectorAll('[data-exp]').forEach((b) => b.onclick = () => exportSource(CATALOG[b.dataset.exp]));
   $('#ds').querySelectorAll('[data-share]').forEach((b) => b.onclick = () => window.open(buildShareUrl(CATALOG[b.dataset.share]), '_blank', 'noopener'));
   $('#ds').querySelectorAll('[data-delsrc]').forEach((b) => b.onclick = async () => {
