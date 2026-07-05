@@ -56,6 +56,12 @@ export async function getAssets(domain) {
   return o['assets:' + domain] || [];
 }
 
+// Rendered page texts captured during learn mode — used to classify public vs internal ids.
+export async function getDomTexts(domain) {
+  const o = await chrome.storage.session.get('dom:' + domain);
+  return o['dom:' + domain] || [];
+}
+
 // Captured auth for a host, as { path -> headers } (plus a 'merged' fallback).
 export async function getAuthFor(host) {
   const o = await chrome.storage.session.get('auth:' + host);

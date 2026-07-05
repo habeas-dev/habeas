@@ -110,6 +110,15 @@ test('externalId is the internal id used in the URL, not the human-facing receip
   assert.equal(r.draft.fields.externalId, 'ref'); // the URL id, not 'number' (the visible receipt no.)
 });
 
+test('rendered page text distinguishes the public (visible) number from the internal id', () => {
+  const samples = [{ url: 'https://api.shop.es/v1/orders', status: 200, reqHeaders: { authorization: 'eyJ' },
+    json: { items: [{ id: 'u-abc-999', receiptId: 'R-2026-42', total: 5 }] } }];
+  const domTexts = ['Mis pedidos\nPedido R-2026-42 · 5€']; // the user sees the receipt no., not the uuid
+  const r = draftAdapterFromSamples(samples, { domain: 'shop.es', pageHost: 'www.shop.es', domTexts });
+  assert.equal(r.draft.fields.externalId, 'id');        // internal (not rendered)
+  assert.equal(r.draft.fields.number, 'receiptId');     // public (rendered)
+});
+
 test('infers a POST-generated PDF (body templated by id) from captured assets', () => {
   const samples = [{ url: 'https://api.shop.es/v1/orders', status: 200, reqHeaders: { authorization: 'eyJ' },
     json: { items: [{ id: 'ORD-8', total: 9 }] } }];
