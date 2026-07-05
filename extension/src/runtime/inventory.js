@@ -30,7 +30,10 @@ async function withReferer(targetUrl, referer, fn) {
 
 export async function listInventory(adapter, auth, net) {
   const list = adapter.api.list;
-  const paging = list.paging || (list.offsetsPath ? 'offsets' : list.nextPath ? 'cursor' : 'none');
+  // Resolve the strategy from an explicit `paging`, else from whichever paging field is present
+  // (robust to a blank `paging` — e.g. an editor/UI that didn't offer the right option).
+  const paging = list.paging
+    || (list.offsetsPath ? 'offsets' : list.offsetParam ? 'offset' : list.pageParam ? 'page' : list.nextPath ? 'cursor' : 'none');
   const baseParams = { ...(list.params || {}) };
   const range = rangeParams(list);
   const count = list.params && list.params.count;
@@ -110,9 +113,18 @@ export function documentExt(adapter) {
   return null;
 }
 
-// Fetch a document's file (PDF or JSON detail) as a Blob. Prefers GET-PDF, then JSON detail, then
-// POST-PDF (see documentExt ordering).
-export async function fetchDocument(adapter, auth, internalId, net) {
+// Fetch a document's file (PDF or JSON detail) as a Blob. Accepts a doc object (preferred — carries
+// `_raw`) or a bare internalId. `detail.from:'list'` uses the already-listed item's JSON as the
+// document (no extra request) — ideal when the list endpoint already returns each order's data and
+// there is no safe per-item endpoint. Otherwise: GET-PDF, then JSON detail, then POST-PDF.
+export async function fetchDocument(adapter, auth, docOrId, net) {
+  const doc = docOrId && typeof docOrId === 'object' ? docOrId : null;
+  const internalId = doc ? doc.internalId : docOrId;
+  const detail = adapter.api.detail;
+  if (detail && detail.from === 'list') {
+    const data = doc ? (doc._raw != null ? doc._raw : doc.record || {}) : {};
+    return { blob: new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), ext: 'json', via: 'list' };
+  }
   const ext = documentExt(adapter);
   if (ext === 'pdf') return { blob: await fetchPdf(adapter, auth, internalId, net), ext, via: 'pdf' };
   if (ext === 'json') return { ...(await fetchDetail(adapter, auth, internalId, net)), ext };

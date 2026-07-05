@@ -162,6 +162,7 @@
   "via_table": { "message": "an HTML table on the page" },
   "via_html": { "message": "raw HTML (no structured data found)" },
   "via_pdf": { "message": "a PDF file" },
+  "via_list": { "message": "the list item itself (JSON)" },
   "author_doc_preview": { "message": "Detail preview (first document):" },
   "author_doc_pdf_size": { "message": "PDF · $N$ KB", "placeholders": { "n": { "content": "$1" } } },
   "author_test_err": { "message": "Test failed: $MSG$", "placeholders": { "msg": { "content": "$1" } } },

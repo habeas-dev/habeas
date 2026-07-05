@@ -140,7 +140,7 @@ async function onSend() {
   const files = new Map();
   const noPdf = [];
   for (const d of eligible) {
-    try { files.set(d.internalId, (await fetchDocument(adapter, auth, d.internalId, net)).blob); }
+    try { files.set(d.internalId, (await fetchDocument(adapter, auth, d, net)).blob); }
     catch (e) { if (/\b406\b|sin PDF|no PDF|no document/i.test(e.message)) noPdf.push(d.internalId); }
   }
   log(t('with_without_pdf', [String(files.size), String(noPdf.length)]) + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : ''));

@@ -109,10 +109,10 @@
         },
         "detail": {
           "type": "object",
-          "required": ["path"],
           "additionalProperties": false,
-          "description": "Per-document JSON detail (e.g. a full order). Saved as <id>.json. Preferred over a POST-generated PDF.",
+          "description": "Per-document JSON detail (e.g. a full order). Saved as <id>.json. Preferred over a POST-generated PDF. Use `from:'list'` when the list endpoint already returns each item's full data (no extra request).",
           "properties": {
+            "from": { "enum": ["list"], "description": "'list' → the document IS the already-listed item's JSON (no path/request needed)." },
             "path": { "type": "string", "description": "Detail path with {internalId} placeholder." },
             "method": { "enum": ["GET", "POST"] },
             "host": { "type": "string", "description": "Detail host if different from api.host (same-domain guard applies)." }

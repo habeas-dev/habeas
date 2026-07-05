@@ -216,20 +216,20 @@ async function onTest() {
     // Click any row → test the download/preview of THAT document. Auto-preview the first.
     if (docs.length && (adapter.api.detail || adapter.api.pdf)) {
       const trs = $('#preview tbody').querySelectorAll('tr[data-i]');
-      trs.forEach((tr) => { tr.onclick = () => previewDoc(adapter, authStore, net, tr.dataset.i, tr); });
-      previewDoc(adapter, authStore, net, docs[0].internalId, trs[0]);
+      docs.slice(0, trs.length).forEach((d, i) => { trs[i].onclick = () => previewDoc(adapter, authStore, net, d, trs[i]); });
+      previewDoc(adapter, authStore, net, docs[0], trs[0]);
     }
   } catch (e) { $('#status').textContent = t('author_test_err', [e.message]); }
 }
 
 // Fetch and preview one specific document (triggered by clicking its row, or auto for the first).
-async function previewDoc(adapter, authStore, net, internalId, tr) {
+async function previewDoc(adapter, authStore, net, docItem, tr) {
   $('#preview tbody').querySelectorAll('tr.sel').forEach((x) => x.classList.remove('sel'));
   if (tr) tr.classList.add('sel');
   $('#docwrap').hidden = true;
-  $('#status').textContent = t('author_test_ok', [String(TEST_COUNT)]) + ' · ' + t('author_doc_fetching', [String(internalId)]);
+  $('#status').textContent = t('author_test_ok', [String(TEST_COUNT)]) + ' · ' + t('author_doc_fetching', [String(docItem.internalId)]);
   try {
-    const doc = await fetchDocument(adapter, authStore, internalId, net);
+    const doc = await fetchDocument(adapter, authStore, docItem, net);
     await showDocPreview(doc);
     $('#status').textContent = t('author_test_ok', [String(TEST_COUNT)]) + ' · ' + t('author_doc_via', [t('via_' + doc.via)]);
   } catch (e) {

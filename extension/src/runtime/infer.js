@@ -200,7 +200,9 @@ function deducePaging(best, s, u) {
         if (step > 0 && sorted.every((n, i) => i === 0 || n - sorted[i - 1] === step)) {
           return step === 1
             ? { paging: 'page', list: { pageParam: k, pageStart: sorted[0] } }
-            : { paging: 'offset', list: { offsetParam: k, offsetStart: sorted[0], offsetStep: step } };
+            // Start from the beginning (offset 0), not the smallest captured offset — the user may
+            // have browsed pages 2,3… so page 1 (from=0) wasn't among the samples.
+            : { paging: 'offset', list: { offsetParam: k, offsetStart: 0, offsetStep: step } };
         }
       }
       const nextPath = cursorSourcePath(best.samples, k); // a token whose source is a response field

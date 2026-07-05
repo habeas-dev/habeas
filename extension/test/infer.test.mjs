@@ -72,6 +72,14 @@ test('learns OFFSET pagination (param `from`, step = page size) from several pag
   assert.equal(r.draft.api.list.params.limit, '2');        // page-size param stays
 });
 
+test('offset pagination starts at 0 even if page 1 (from=0) was not captured', () => {
+  const p = (off) => ({ url: `https://api.shop.es/o?from=${off}&size=9`, status: 200, reqHeaders: {}, json: { items: [{ id: 'x' + off }] } });
+  const r = draftAdapterFromSamples([p(9), p(18), p(27)], { domain: 'shop.es', pageHost: 'www.shop.es' });
+  assert.equal(r.draft.api.list.paging, 'offset');
+  assert.equal(r.draft.api.list.offsetStart, 0); // not 9 — start from the beginning
+  assert.equal(r.draft.api.list.offsetStep, 9);
+});
+
 test('learns cursor pagination: page 1 has no token, page 2 carries the response token', () => {
   const s = [
     { url: 'https://api.shop.es/tx', status: 200, reqHeaders: {}, json: { items: [{ id: '1' }], paging: { next: 'TOK2' } } },

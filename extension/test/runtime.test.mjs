@@ -4,7 +4,7 @@ import carrefour from '../src/adapters/carrefour-es.js';
 import mart from './fixtures/examplemart-es.js';
 import bank from './fixtures/examplebank-es.js';
 import energy from './fixtures/exampleenergy-es.js';
-import { listInventory } from '../src/runtime/inventory.js';
+import { listInventory, fetchDocument } from '../src/runtime/inventory.js';
 
 const auth = { authorization: 'bearer eyJx' };
 function stub(pages) {
@@ -47,6 +47,23 @@ test('offset paging advances by offsetStep until an empty page (Decathlon-style:
   const docs = await listInventory(adapter, { authorization: 'eyJ' });
   assert.equal(docs.length, 4);                                  // 2 + 2 + 0 → 4 docs (paginated past page 1!)
   assert.deepEqual(urls.map((u) => new URL(u).searchParams.get('from')), ['0', '9', '18']);
+});
+
+test('runtime resolves offset paging from offsetParam when `paging` is blank', async () => {
+  const adapter = { api: { host: 'https://x.es', list: { path: '/o', paging: '', itemsPath: 'items', offsetParam: 'from', offsetStart: 0, offsetStep: 2 } }, fields: { internalId: 'id', date: 'd' }, schema: 'receipt@1' };
+  globalThis.fetch = async (u) => { const from = Number(new URL(u).searchParams.get('from')); const ids = from < 4 ? [from, from + 1].map((n) => ({ id: 'R' + n, d: '2026-01-01' })) : []; return { ok: true, json: async () => ({ items: ids }) }; };
+  const docs = await listInventory(adapter, { authorization: 'eyJ' });
+  assert.equal(docs.length, 4); // paginated despite paging:'' (offsetParam drives it)
+});
+
+test('fetchDocument from:list returns the raw list item as JSON (no network)', async () => {
+  const adapter = { api: { host: 'https://x.es', list: { path: '/l' }, detail: { from: 'list' } }, fields: { internalId: 'id' }, schema: 'receipt@1' };
+  let called = false; globalThis.fetch = async () => { called = true; return { ok: true, text: async () => '' }; };
+  const doc = { internalId: 'A', _raw: { id: 'A', total: 9, lines: [{ sku: 'x' }] } };
+  const { blob, via } = await fetchDocument(adapter, {}, doc);
+  assert.equal(via, 'list');
+  assert.equal(called, false); // no request — the item is already in hand
+  assert.deepEqual(JSON.parse(await blob.text()), { id: 'A', total: 9, lines: [{ sku: 'x' }] });
 });
 
 test('cursor paging follows nextPath and emits transaction records', async () => {
