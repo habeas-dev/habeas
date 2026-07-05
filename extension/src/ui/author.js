@@ -201,14 +201,50 @@ async function onTest() {
     const docs = await listInventory(adapter, authStore, net);
     $('#preview tbody').innerHTML = docs.slice(0, 3).map((d) =>
       `<tr><td>${esc((d.date || '').slice(0, 10))}</td><td>${esc(d.storeName || d.label || '')}</td><td class="r">${esc(fmt(d.total ?? d.amount))}</td><td>${esc(d.type || '')}</td></tr>`).join('');
-    // Also fetch one document so we can report HOW the per-item detail/PDF loads.
+    // Also fetch one document so we can report HOW the per-item detail/PDF loads AND preview it.
     let extra = '';
+    $('#docwrap').hidden = true;
     if (docs.length && (adapter.api.detail || adapter.api.pdf)) {
-      try { const doc = await fetchDocument(adapter, authStore, docs[0].externalId, net); extra = ' · ' + t('author_doc_via', [t('via_' + doc.via)]); }
-      catch (e) { extra = ' · ' + t('author_doc_fail', [e.message.slice(0, 80)]); }
+      try {
+        const doc = await fetchDocument(adapter, authStore, docs[0].externalId, net);
+        extra = ' · ' + t('author_doc_via', [t('via_' + doc.via)]);
+        await showDocPreview(doc);
+      } catch (e) { extra = ' · ' + t('author_doc_fail', [e.message.slice(0, 80)]); }
     }
     $('#status').textContent = t('author_test_ok', [String(docs.length)]) + extra;
   } catch (e) { $('#status').textContent = t('author_test_err', [e.message]); }
+}
+
+// Collapsible JSON tree. All keys/values are escaped — the detail is untrusted network data.
+function jsonTree(v, key, depth = 0) {
+  const label = key != null ? `<span class="tk">${esc(key)}</span>: ` : '';
+  if (v === null) return `<div class="tl">${label}<span class="tn">null</span></div>`;
+  if (typeof v !== 'object') {
+    const cls = typeof v === 'number' ? 'tnum' : typeof v === 'boolean' ? 'tb' : 'ts';
+    const shown = typeof v === 'string' ? '"' + (v.length > 200 ? v.slice(0, 200) + '…' : v) + '"' : String(v);
+    return `<div class="tl">${label}<span class="${cls}">${esc(shown)}</span></div>`;
+  }
+  const isArr = Array.isArray(v);
+  let entries = isArr ? v.map((x, i) => [i, x]) : Object.entries(v);
+  let more = '';
+  if (entries.length > 100) { more = `<div class="tl tmeta">… +${entries.length - 100}</div>`; entries = entries.slice(0, 100); }
+  const brief = `<span class="tmeta">${isArr ? '[' + v.length + ']' : '{' + Object.keys(v).length + '}'}</span>`;
+  const open = depth < 1 ? ' open' : '';
+  return `<details${open}><summary>${label}${brief}</summary><div class="tc">${entries.map(([k, x]) => jsonTree(x, k, depth + 1)).join('') + more}</div></details>`;
+}
+
+// Preview the fetched document: a collapsible JSON tree for a detail, a size note for a PDF.
+async function showDocPreview(doc) {
+  const el = $('#docpreview');
+  if (doc.ext === 'json') {
+    const text = await doc.blob.text();
+    let data, ok = true;
+    try { data = JSON.parse(text); } catch (e) { ok = false; }
+    el.innerHTML = ok ? jsonTree(data) : `<div class="tl">${esc(text.slice(0, 3000))}</div>`;
+  } else {
+    el.textContent = t('author_doc_pdf_size', [String(Math.max(1, Math.round(doc.blob.size / 1024)))]);
+  }
+  $('#docwrap').hidden = false;
 }
 
 async function onSave() {
