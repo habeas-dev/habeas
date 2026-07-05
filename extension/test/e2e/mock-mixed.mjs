@@ -15,11 +15,11 @@ if(p.indexOf('/orders/')===0){
   var id=p.split('/orders/')[1];
   // PDF via a bearer JWT (no cookie needed)
   function gp(){return fetch('/api/orders/'+id+'/pdf',{headers:{authorization:'bearer eyJMOCKTOKEN.a.b'}}).then(function(r){document.getElementById('t').textContent='pdf '+r.status;});}
-  gp(); var m=0; var ip=setInterval(function(){ if(++m>8){clearInterval(ip);return;} gp(); },500);
+  gp(); var m=0; var ip=setInterval(function(){ if(++m>16){clearInterval(ip);return;} gp(); },500);
 } else {
   // LIST via the session cookie (no Authorization header)
   function gl(){return fetch('/api/orders').then(function(r){document.getElementById('t').textContent=(r.ok?'loaded':'list '+r.status);});}
-  gl(); var n=0; var il=setInterval(function(){ if(++n>8){clearInterval(il);return;} gl(); },500);
+  gl(); var n=0; var il=setInterval(function(){ if(++n>16){clearInterval(il);return;} gl(); },500);
 }
 </script></body></html>`;
 

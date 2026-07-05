@@ -81,7 +81,8 @@ test('pages of the same list dedupe to one candidate', () => {
   ];
   const cands = listCandidates(paged);
   assert.equal(cands.length, 1);
-  assert.equal(cands[0].count, 2); // keeps the larger page as representative
+  assert.equal(cands[0].count, 3); // aggregated across pages: A-1 + A-2 + A-3
+  assert.equal(cands[0].pages, 2); // two pages captured
 });
 
 test('infers a JSON detail endpoint (preferred document) from a per-order detail response', () => {
