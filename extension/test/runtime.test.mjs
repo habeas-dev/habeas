@@ -88,6 +88,22 @@ test('fetchDetail extracts embedded JSON from a server-rendered page (via=embedd
   assert.equal(JSON.parse(await blob.text()).order.id, 'X');
 });
 
+test('detail narrows the embedded app state to just the requested purchase', async () => {
+  const { fetchDetail } = await import('../src/runtime/inventory.js');
+  const state = { props: { pageProps: {
+    orders: [{ id: 'A', total: 1 }, { id: 'B', total: 2 }],           // the WHOLE list (all purchases)
+    order: { id: 'B', total: 2, lines: [{ sku: 'x' }], address: 'C/ Y' }, // the one being viewed
+  } } };
+  const html = `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify(state)}</script>`;
+  globalThis.fetch = async () => ({ ok: true, text: async () => html });
+  const adapter = { api: { host: 'https://x.es', detail: { path: '/o?id={externalId}' } } };
+  const { blob } = await fetchDetail(adapter, {}, 'B');
+  const data = JSON.parse(await blob.text());
+  assert.equal(data.id, 'B');                 // only order B
+  assert.ok(data.lines && data.address);      // the rich detail
+  assert.ok(!('orders' in data));             // NOT the whole state with every purchase
+});
+
 test('fetchDetail parses an HTML table (via=table)', async () => {
   const { fetchDetail } = await import('../src/runtime/inventory.js');
   const html = '<table><tr><td>Total</td><td>9,90 €</td></tr><tr><td>Estado</td><td>Entregado</td></tr></table>';
