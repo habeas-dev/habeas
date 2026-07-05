@@ -94,7 +94,7 @@ async function render() {
   const dsId = $('#ds').value, sinkId = $('#sink').value;
   const delivered = sinkId ? await deliveredSet(dsId, sinkId) : {};
   $('#tbl tbody').innerHTML = inventory.map((d, i) => {
-    const sent = !!delivered[d.externalId];
+    const sent = !!delivered[d.internalId];
     return `<tr data-sent="${sent ? '1' : ''}">
        <td><input type="checkbox" data-i="${i}" ${sent ? '' : 'checked'}></td>
        <td>${(d.date || '').slice(0, 10)}</td>
@@ -140,15 +140,15 @@ async function onSend() {
   const files = new Map();
   const noPdf = [];
   for (const d of eligible) {
-    try { files.set(d.externalId, (await fetchDocument(adapter, auth, d.externalId, net)).blob); }
-    catch (e) { if (/\b406\b|sin PDF|no PDF|no document/i.test(e.message)) noPdf.push(d.externalId); }
+    try { files.set(d.internalId, (await fetchDocument(adapter, auth, d.internalId, net)).blob); }
+    catch (e) { if (/\b406\b|sin PDF|no PDF|no document/i.test(e.message)) noPdf.push(d.internalId); }
   }
   log(t('with_without_pdf', [String(files.size), String(noPdf.length)]) + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : ''));
   try {
     const r = await writeToSink(sink, eligible, files, opts);
     const m = t('sent_result', [sink.id, String(r.written), String(eligible.length), String(noPdf.length)]);
     $('#status').textContent = m; log(m);
-    await markDelivered($('#ds').value, sink.id, eligible.map((c) => c.externalId));
+    await markDelivered($('#ds').value, sink.id, eligible.map((c) => c.internalId));
     await appendLog({ kind: 'manual', datasource: $('#ds').value, sink: sink.id, status: 'ok', count: eligible.length });
     await render();
     await renderActivity();

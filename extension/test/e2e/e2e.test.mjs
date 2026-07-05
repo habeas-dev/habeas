@@ -34,9 +34,9 @@ function mockAdapter(port) {
     api: {
       host: 'http://localhost:' + port,
       list: { path: '/api/list', paging: 'offsets', itemsPath: 'receipts', offsetsPath: 'offsets', initialOffsets: { o: 0 }, params: { count: 50 } },
-      pdf: { path: '/api/pdf/{externalId}' },
+      pdf: { path: '/api/pdf/{internalId}' },
     },
-    fields: { externalId: 'id', date: 'date', total: 'total', storeName: 'shop', type: 'kind', source: 'channel' },
+    fields: { internalId: 'id', date: 'date', total: 'total', storeName: 'shop', type: 'kind', source: 'channel' },
     schema: 'receipt@1',
   };
 }

@@ -134,7 +134,7 @@ export function inferDetail(samples, items, domTexts) {
   if (!vf.size) return null;
   const vals = [...vf.keys()].sort((a, b) => b.length - a.length);
   const full = (u) => u.pathname + (u.search || '');
-  const templ = (u, id) => full(u).split(id).join('{externalId}');
+  const templ = (u, id) => full(u).split(id).join('{internalId}');
 
   for (const s of samples || []) {
     if (!s || !s.json || Array.isArray(s.json) || (s.status && s.status >= 300)) continue;
@@ -160,9 +160,9 @@ export function inferPdf(assets, items) {
     let u; try { u = new URL(a.url); } catch (e) { continue; }
     const id = vals.find((v) => u.pathname.includes(v) || String(a.reqBody || '').includes(v));
     const pdf = { method: (a.method || 'GET').toUpperCase(), path: u.pathname };
-    if (id && u.pathname.includes(id)) pdf.path = u.pathname.split(id).join('{externalId}');
-    if (pdf.method !== 'GET' && a.reqBody) { pdf.body = id ? String(a.reqBody).split(id).join('{externalId}') : String(a.reqBody); if (a.reqType) pdf.contentType = a.reqType; }
-    if (a.referer && id && a.referer.includes(id)) pdf.referer = a.referer.split(id).join('{externalId}');
+    if (id && u.pathname.includes(id)) pdf.path = u.pathname.split(id).join('{internalId}');
+    if (pdf.method !== 'GET' && a.reqBody) { pdf.body = id ? String(a.reqBody).split(id).join('{internalId}') : String(a.reqBody); if (a.reqType) pdf.contentType = a.reqType; }
+    if (a.referer && id && a.referer.includes(id)) pdf.referer = a.referer.split(id).join('{internalId}');
     return { host: u.host, pdf, idField: id ? vf.get(id) : undefined };
   }
   return null;
@@ -195,7 +195,7 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
   }
 
   // Field guesses. Use the RENDERED page text (if captured) to tell a public receipt/invoice number
-  // (visible to the user) from an internal id (only in URLs/traffic): the internal one is externalId,
+  // (visible to the user) from an internal id (only in URLs/traffic): the internal one is internalId,
   // the visible one maps to `number`.
   const flat = flattenKeys(item);
   const domText = (ctx.domTexts || []).map((d) => (typeof d === 'string' ? d : (d && d.text) || '')).join('\n').toLowerCase();
@@ -204,7 +204,7 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
   const fields = {};
   const idFields = flat.filter((f) => looksId(f.path.split('.').pop()) && f.value != null && f.value !== '');
   const internalId = idFields.find((f) => !visible(f.value)) || idFields[0];
-  fields.externalId = (internalId && internalId.path) || (flat[0] && flat[0].path);
+  fields.internalId = (internalId && internalId.path) || (flat[0] && flat[0].path);
   const publicNo = idFields.find((f) => visible(f.value) && (!internalId || f.path !== internalId.path));
   if (publicNo) fields.number = publicNo.path;
   fields.date = pick(looksDate) || '';
@@ -261,10 +261,10 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
   if (detail) {
     draft.api.detail = { path: detail.path, method: detail.method };
     if (detail.host && detail.host !== host) draft.api.detail.host = detail.host;
-    if (detail.idField) fields.externalId = detail.idField; // the internal id used in the URL
+    if (detail.idField) fields.internalId = detail.idField; // the internal id used in the URL
   } else if (ctx.assets) {
     const p = inferPdf(ctx.assets, best.items);
-    if (p) { draft.api.pdf = p.pdf; if (p.host && p.host !== host) draft.api.pdf.host = p.host; if (p.idField) fields.externalId = p.idField; }
+    if (p) { draft.api.pdf = p.pdf; if (p.host && p.host !== host) draft.api.pdf.host = p.host; if (p.idField) fields.internalId = p.idField; }
   }
 
   // The list array's field candidates power the visual mapper dropdowns.

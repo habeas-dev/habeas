@@ -28,7 +28,7 @@ Financial categories are **welcome** from the community under the same-domain gu
 
 See `schema/adapter.schema.json` and the reference sources in `sources/`. Minimum:
 `id, name, service, domain, categories, match, auth.replayHeaders, api.host, api.list.{path,
-itemsPath}, fields.{externalId,date}, schema`. Pick `schema` from `receipt@1 | invoice@1 |
+itemsPath}, fields.{internalId,date}, schema`. Pick `schema` from `receipt@1 | invoice@1 |
 transaction@1 | investment@1`.
 
 ## Checklist

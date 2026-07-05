@@ -27,7 +27,7 @@ export default {
     },
   },
   fields: {
-    externalId: 'id',
+    internalId: 'id',
     date: 'valueDate',
     amount: 'amount',
     description: 'concept',

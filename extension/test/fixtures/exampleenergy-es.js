@@ -18,10 +18,10 @@ export default {
       paging: 'none',
       itemsPath: 'invoices',
     },
-    pdf: { path: '/api/invoices/{externalId}/pdf' },
+    pdf: { path: '/api/invoices/{internalId}/pdf' },
   },
   fields: {
-    externalId: 'invoiceNumber',
+    internalId: 'invoiceNumber',
     date: 'issueDate',
     total: 'amountDue',
     issuer: 'supplierName',

@@ -20,10 +20,10 @@ export default {
       pageStart: 1,
       params: { count: 50 },
     },
-    pdf: { path: '/v1/receipts/{externalId}/pdf' },
+    pdf: { path: '/v1/receipts/{internalId}/pdf' },
   },
   fields: {
-    externalId: 'id',
+    internalId: 'id',
     date: 'purchasedAt',
     total: 'amount',
     storeName: 'store.name',

@@ -20,8 +20,8 @@ const IMPL = {
   // only exists to dodge Chrome's multi-download block; other sinks write files directly).
   async download(sink, docs, files, opts) {
     const service = opts.service || 'documents';
-    const present = docs.filter((d) => files.get(d.externalId));
-    const entries = present.map((d) => ({ name: pathFor(sink, d, opts), blob: files.get(d.externalId) }));
+    const present = docs.filter((d) => files.get(d.internalId));
+    const entries = present.map((d) => ({ name: pathFor(sink, d, opts), blob: files.get(d.internalId) }));
     entries.push({ name: `${service}/manifest.json`, blob: jsonBlob(buildManifest(docs, files)) });
     const zip = await makeZip(entries);
     triggerDownload(zip, `habeas-${service}-${today()}.zip`);
@@ -35,7 +35,7 @@ const IMPL = {
     const service = opts.service || 'documents';
     let n = 0;
     for (const d of docs) {
-      const blob = files.get(d.externalId); if (!blob) continue;
+      const blob = files.get(d.internalId); if (!blob) continue;
       const rel = pathFor(sink, d, opts).split('/');
       const dir = await ensureDir(root, rel.slice(0, -1));
       await writeFile(dir, rel.at(-1), blob); n++;
@@ -56,7 +56,7 @@ const IMPL = {
     const ext = opts.ext || 'pdf';
     const form = new FormData();
     form.append('records', buildManifest(docs, files));
-    for (const d of docs) { const b = files.get(d.externalId); if (b) form.append('files[]', b, d.externalId + '.' + ext); }
+    for (const d of docs) { const b = files.get(d.internalId); if (b) form.append('files[]', b, d.internalId + '.' + ext); }
     const res = await fetch(sink.url, { method: 'POST', headers: token ? { Authorization: 'Bearer ' + token } : {}, body: form });
     if (!res.ok) throw new Error('http sink ' + res.status);
     return await res.json().catch(() => ({ written: docs.length, total: docs.length }));

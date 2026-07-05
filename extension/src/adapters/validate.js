@@ -99,7 +99,7 @@ export function validateAdapter(adapter) {
     req(typeof list.itemsPath === 'string' && list.itemsPath.length > 0, 'api.list.itemsPath required');
     req(!list.paging || PAGING.has(list.paging), 'api.list.paging must be offsets|page|cursor|none');
     const fields = adapter.fields || {};
-    req(typeof fields.externalId === 'string', 'fields.externalId required');
+    req(typeof fields.internalId === 'string', 'fields.internalId required');
     req(typeof fields.date === 'string', 'fields.date required');
     const auth = adapter.auth || {};
     req(Array.isArray(auth.replayHeaders), 'auth.replayHeaders must be an array (may be empty for cookie auth)');

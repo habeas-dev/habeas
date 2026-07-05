@@ -70,7 +70,7 @@ try {
 
   // Non-technical: labels are plain language (no raw jargon), and the technical block is collapsed.
   const labels = await author.locator('#fieldmap .maprow label').allTextContents();
-  const noJargon = !labels.some((l) => /externalId|itemsPath|storeName/.test(l));
+  const noJargon = !labels.some((l) => /internalId|itemsPath|storeName/.test(l));
   check('field labels are plain language (no jargon)', noJargon, labels.join(' | '));
   const advancedCollapsed = await author.locator('#mapper details').evaluate((e) => !e.open).catch(() => false);
   check('technical fields hidden under collapsed Advanced', advancedCollapsed);

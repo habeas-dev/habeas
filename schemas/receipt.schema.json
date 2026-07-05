@@ -4,9 +4,9 @@
   "title": "receipt@1",
   "description": "A normalized purchase receipt / ticket.",
   "type": "object",
-  "required": ["externalId", "date", "total", "currency"],
+  "required": ["internalId", "date", "total", "currency"],
   "properties": {
-    "externalId": { "type": "string", "description": "Stable id from the source service." },
+    "internalId": { "type": "string", "description": "Stable id from the source service." },
     "date": { "type": "string", "format": "date-time" },
     "total": { "type": "integer", "description": "Total amount in minor units (e.g. cents)." },
     "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },

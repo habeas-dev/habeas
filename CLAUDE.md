@@ -95,7 +95,7 @@ scaffolding kept as design notes (safe to consolidate later).
   `id, name, service, categories[], categorize{field,map,default}, match[], auth{tokenMatch,
   replayHeaders[]}, api{host,list{path,itemsPath,offsetsPath,window,params},pdf{path}},
   fields{…}, schema`. Add new sources as sibling files + register in `adapters/index.js`.
-- **Normalized record** (`sinks/format.js#toRecord`): `{externalId, date, total, currency,
+- **Normalized record** (`sinks/format.js#toRecord`): `{internalId, date, total, currency,
   category, store{name,address}, source, type}`.
 - **Categories** classify each document (Carrefour: `HYPERMARKET`→`grocery`, `REFUELING`→
   `fuel`, default `retail`). **Sinks** may declare `accepts:{categories?,sources?}`; without

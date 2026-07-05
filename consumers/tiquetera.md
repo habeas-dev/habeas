@@ -26,7 +26,7 @@ Content-Type: multipart/form-data
 - files[]: the receipt PDFs referenced by records[].pdf
 ```
 
-- Idempotent on `receipt.externalId` per user.
+- Idempotent on `receipt.internalId` per user.
 - Returns per-record status (imported / duplicate / error).
 
 ## Compatibility (categories)

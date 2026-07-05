@@ -19,7 +19,7 @@ export default {
     },
   },
   fields: {
-    externalId: 'movementId',
+    internalId: 'movementId',
     date: 'tradeDate',
     instrument: 'instrumentName',
     isin: 'isin',

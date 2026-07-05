@@ -3,11 +3,11 @@ import { renderPath } from '../lib/naming.js';
 
 export function pathFor(sink, d, opts) {
   const ext = (opts && opts.ext) || 'pdf';
-  const tpl = sink.pathTemplate || '{service}/{yyyy}/{date}-{externalId}.{ext}';
+  const tpl = sink.pathTemplate || '{service}/{yyyy}/{date}-{internalId}.{ext}';
   return renderPath(tpl, {
     service: (opts && opts.service) || 'documents',
     date: (d.date || '').slice(0, 10),
-    externalId: d.externalId, ext,
+    internalId: d.internalId, ext,
   });
 }
 // A mapped doc already carries its normalized record (built at inventory time, where the
@@ -25,19 +25,19 @@ export function buildRecord(d, adapter) {
   const kind = String(schema).split('@')[0];
   const currency = (adapter && adapter.currency) || 'EUR';
   // `number` = the public receipt/invoice number the user sees (distinct from the internal
-  // externalId). Added only when mapped, so receipt@1 stays byte-identical when absent.
+  // internalId). Added only when mapped, so receipt@1 stays byte-identical when absent.
   const withNumber = (r) => (d.number != null ? { ...r, number: d.number } : r);
   if (kind === 'transaction') {
-    return withNumber({ externalId: d.externalId, date: d.date, amount: num(d.amount ?? d.total), currency, category: d.category, description: d.description ?? d.label ?? '', counterparty: d.counterparty ?? d.party ?? '', direction: d.direction ?? dirOf(d.amount ?? d.total), source: d.source, type: d.type });
+    return withNumber({ internalId: d.internalId, date: d.date, amount: num(d.amount ?? d.total), currency, category: d.category, description: d.description ?? d.label ?? '', counterparty: d.counterparty ?? d.party ?? '', direction: d.direction ?? dirOf(d.amount ?? d.total), source: d.source, type: d.type });
   }
   if (kind === 'investment') {
-    return withNumber({ externalId: d.externalId, date: d.date, instrument: d.instrument ?? d.label ?? '', isin: d.isin ?? '', units: num(d.units), price: num(d.price), amount: num(d.amount ?? d.total), currency, category: d.category, operation: d.operation ?? d.type, source: d.source });
+    return withNumber({ internalId: d.internalId, date: d.date, instrument: d.instrument ?? d.label ?? '', isin: d.isin ?? '', units: num(d.units), price: num(d.price), amount: num(d.amount ?? d.total), currency, category: d.category, operation: d.operation ?? d.type, source: d.source });
   }
   if (kind === 'invoice') {
-    return { externalId: d.externalId, date: d.date, total: num(d.total), currency, category: d.category, issuer: { name: d.issuer ?? d.storeName ?? d.party ?? '', address: d.issuerAddress ?? d.storeAddress ?? '' }, number: d.number ?? d.externalId, source: d.source, type: d.type };
+    return { internalId: d.internalId, date: d.date, total: num(d.total), currency, category: d.category, issuer: { name: d.issuer ?? d.storeName ?? d.party ?? '', address: d.issuerAddress ?? d.storeAddress ?? '' }, number: d.number ?? d.internalId, source: d.source, type: d.type };
   }
   // receipt@1 (default) — unchanged shape (number appended only when present).
-  return withNumber({ externalId: d.externalId, date: d.date, total: d.total, currency, category: d.category, store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type });
+  return withNumber({ internalId: d.internalId, date: d.date, total: d.total, currency, category: d.category, store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type });
 }
 function num(v) { if (v == null || v === '') return v; const n = Number(v); return Number.isFinite(n) ? n : v; }
 function dirOf(v) { const n = Number(v); return Number.isFinite(n) ? (n < 0 ? 'debit' : 'credit') : undefined; }
@@ -59,13 +59,13 @@ export function acceptsDoc(sink, doc) {
   return a.categories.includes(doc.category);
 }
 export function toRecords(docs, files) {
-  return docs.map((d) => ({ ...toRecord(d), pdf: files.has(d.externalId) }));
+  return docs.map((d) => ({ ...toRecord(d), pdf: files.has(d.internalId) }));
 }
-// Merge new records into an existing manifest array by externalId (new wins), newest first.
+// Merge new records into an existing manifest array by internalId (new wins), newest first.
 export function mergeRecords(existing, incoming) {
   const map = new Map();
-  for (const r of existing || []) if (r && r.externalId) map.set(r.externalId, r);
-  for (const r of incoming) map.set(r.externalId, r);
+  for (const r of existing || []) if (r && r.internalId) map.set(r.internalId, r);
+  for (const r of incoming) map.set(r.internalId, r);
   return [...map.values()].sort((a, b) => ((a.date || '') < (b.date || '') ? 1 : -1));
 }
 export function buildManifest(docs, files) {

@@ -24,5 +24,5 @@ authors agree on the contract.
 - `POST` with the pairing token in an `Authorization` header.
 - Body: an array of normalized records for a declared schema + version.
 - PDFs (when present) uploaded as multipart/attachment.
-- Idempotent on the record's `externalId` (the extension also dedupes, but
+- Idempotent on the record's `internalId` (the extension also dedupes, but
   consumers must tolerate re-sends).

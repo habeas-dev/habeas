@@ -93,7 +93,7 @@ try {
   await author.click('#save');
   await author.waitForTimeout(500);
   const saved = ((await getStore(seed, 'local', 'habeas:sources')) || []).find((a) => a.id === 'localhost');
-  check('saved source has a templated Referer-gated PDF', !!(saved && saved.api.pdf && /\{externalId\}/.test(saved.api.pdf.referer || '')), saved && JSON.stringify(saved.api.pdf));
+  check('saved source has a templated Referer-gated PDF', !!(saved && saved.api.pdf && /\{internalId\}/.test(saved.api.pdf.referer || '')), saved && JSON.stringify(saved.api.pdf));
 
   // Use the source: enable it + a download sink, then send → the runtime must fetch the PDF with the
   // Referer set via declarativeNetRequest (the mock 403s without it).
