@@ -1,6 +1,6 @@
 import { chrome } from '../lib/ext.js';
 import { getConfig } from '../lib/config.js';
-import { listInventory, fetchPdf } from '../runtime/inventory.js';
+import { listInventory, fetchDocument, documentExt } from '../runtime/inventory.js';
 import { writeToSink } from '../sinks/sinks.js';
 import { sinkAcceptsSource, acceptsDoc } from '../sinks/format.js';
 import { deliveredSet, markDelivered, getLog, appendLog } from '../lib/state.js';
@@ -121,7 +121,7 @@ async function onSend() {
   const skipped = chosen.length - eligible.length;
   if (!eligible.length) { $('#status').textContent = t('none_compatible'); return; }
 
-  const opts = { service: adapter.service || ds.adapter };
+  const opts = { service: adapter.service || ds.adapter, ext: documentExt(adapter) || 'pdf' };
   if (sink.type === 'local-folder') {
     const handle = await getHandle('dir:' + sink.id);
     if (!handle) { $('#status').textContent = t('configure_folder'); return; }
@@ -134,8 +134,8 @@ async function onSend() {
   const files = new Map();
   const noPdf = [];
   for (const d of eligible) {
-    try { files.set(d.externalId, await fetchPdf(adapter, auth, d.externalId)); }
-    catch (e) { if (/\b406\b|sin PDF|no PDF/i.test(e.message)) noPdf.push(d.externalId); }
+    try { files.set(d.externalId, (await fetchDocument(adapter, auth, d.externalId)).blob); }
+    catch (e) { if (/\b406\b|sin PDF|no PDF|no document/i.test(e.message)) noPdf.push(d.externalId); }
   }
   log(t('with_without_pdf', [String(files.size), String(noPdf.length)]) + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : ''));
   try {

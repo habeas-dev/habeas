@@ -36,7 +36,10 @@ export function registrableDomain(urlOrHost) {
 // Every host an adapter reads from / replays credentials to.
 export function collectHosts(adapter) {
   const hosts = new Set();
-  if (adapter.api && adapter.api.host) hosts.add(hostOf(adapter.api.host));
+  const api = adapter.api || {};
+  if (api.host) hosts.add(hostOf(api.host));
+  if (api.pdf && api.pdf.host) hosts.add(hostOf(api.pdf.host));       // the session is replayed here too
+  if (api.detail && api.detail.host) hosts.add(hostOf(api.detail.host));
   for (const m of adapter.match || []) hosts.add(hostOf(m));
   for (const h of adapter.captureHosts || []) hosts.add(hostOf(h));
   return [...hosts].filter(Boolean);

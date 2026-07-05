@@ -51,11 +51,12 @@ const IMPL = {
   drive: (sink, docs, files, opts) => driveWrite(sink, docs, files, opts),
 
   // HTTP consumer (Tiquetera / Cuéntamo): POST normalized records + available PDFs.
-  async http(sink, docs, files) {
+  async http(sink, docs, files, opts = {}) {
     const token = await getSecret(sink.tokenRef);
+    const ext = opts.ext || 'pdf';
     const form = new FormData();
     form.append('records', buildManifest(docs, files));
-    for (const d of docs) { const b = files.get(d.externalId); if (b) form.append('files[]', b, d.externalId + '.pdf'); }
+    for (const d of docs) { const b = files.get(d.externalId); if (b) form.append('files[]', b, d.externalId + '.' + ext); }
     const res = await fetch(sink.url, { method: 'POST', headers: token ? { Authorization: 'Bearer ' + token } : {}, body: form });
     if (!res.ok) throw new Error('http sink ' + res.status);
     return await res.json().catch(() => ({ written: docs.length, total: docs.length }));

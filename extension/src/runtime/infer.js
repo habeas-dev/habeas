@@ -88,7 +88,7 @@ function collect(samples) {
     if (!s || !s.json || (s.status && s.status >= 300)) continue;
     for (const a of findArrays(s.json, '', [])) {
       const key = keyOf(s.url, a.path);
-      const c = { key, s, itemsPath: a.path, len: a.len, item: a.sample };
+      const c = { key, s, itemsPath: a.path, len: a.len, item: a.sample, items: a.arr };
       const prev = byKey.get(key);
       if (!prev || c.len > prev.len) byKey.set(key, c);
     }
@@ -105,7 +105,44 @@ export function listCandidates(samples) {
   });
 }
 
-// Build an adapter draft. `ctx` = { domain, pageHost }. `chosen` (optional) = { url, itemsPath }
+function getPath(obj, path) {
+  if (obj == null || path == null) return undefined;
+  if (String(path).indexOf('.') < 0) return obj[path];
+  return String(path).split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
+}
+
+// The per-document DETAIL endpoint: a captured JSON response whose URL carries a document id and
+// whose body actually contains it (i.e. the detail of that one order). Preferred over PDF for
+// services where the JSON detail is the practical artifact (e.g. Decathlon).
+export function inferDetail(samples, items, idField) {
+  const idVals = [...new Set((items || []).map((it) => getPath(it, idField)).filter((v) => v != null && v !== '').map(String))];
+  if (!idVals.length) return null;
+  for (const s of samples || []) {
+    if (!s || !s.json || Array.isArray(s.json) || (s.status && s.status >= 300)) continue;
+    let u; try { u = new URL(s.url); } catch (e) { continue; }
+    const id = idVals.find((v) => u.pathname.includes(v) && deepIncludes(s.json, v.toLowerCase()));
+    if (!id) continue;
+    return { host: u.host, path: u.pathname.split(id).join('{externalId}'), method: (s.method || 'GET').toUpperCase() };
+  }
+  return null;
+}
+
+// The PDF endpoint, from captured document (asset) requests. Handles GET .../{id}/pdf and
+// POST-generated PDFs (body templated by id).
+export function inferPdf(assets, items, idField) {
+  const idVals = [...new Set((items || []).map((it) => getPath(it, idField)).filter((v) => v != null && v !== '').map(String))];
+  for (const a of assets || []) {
+    let u; try { u = new URL(a.url); } catch (e) { continue; }
+    const id = idVals.find((v) => u.pathname.includes(v) || String(a.reqBody || '').includes(v));
+    const pdf = { method: (a.method || 'GET').toUpperCase(), path: u.pathname };
+    if (id && u.pathname.includes(id)) pdf.path = u.pathname.split(id).join('{externalId}');
+    if (pdf.method !== 'GET' && a.reqBody) { pdf.body = id ? String(a.reqBody).split(id).join('{externalId}') : String(a.reqBody); if (a.reqType) pdf.contentType = a.reqType; }
+    return { host: u.host, pdf };
+  }
+  return null;
+}
+
+// Build an adapter draft. `ctx` = { domain, pageHost, assets }. `chosen` (optional) = { key }
 // picks a specific captured list; without it the biggest is used.
 export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
   const cand = collect(samples);
@@ -179,6 +216,17 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
     params[k] = v;
   }
   if (Object.keys(params).length) draft.api.list.params = params;
+
+  // Per-document artifact: prefer the JSON detail (captured passively when the user opens an order);
+  // fall back to a captured PDF request.
+  const detail = inferDetail(samples, best.items, fields.externalId);
+  if (detail) {
+    draft.api.detail = { path: detail.path, method: detail.method };
+    if (detail.host && detail.host !== host) draft.api.detail.host = detail.host;
+  } else if (ctx.assets) {
+    const p = inferPdf(ctx.assets, best.items, fields.externalId);
+    if (p) { draft.api.pdf = p.pdf; if (p.host && p.host !== host) draft.api.pdf.host = p.host; }
+  }
 
   // The list array's field candidates power the visual mapper dropdowns.
   return { ok: true, draft, fieldCandidates: flat, itemsPath: best.itemsPath, host, count: best.len };

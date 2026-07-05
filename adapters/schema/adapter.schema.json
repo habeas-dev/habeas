@@ -97,8 +97,24 @@
           "type": "object",
           "required": ["path"],
           "additionalProperties": false,
+          "description": "Per-document PDF. GET by default; some services generate it via POST with the invoice data as the body.",
           "properties": {
-            "path": { "type": "string", "description": "PDF path with {externalId} placeholder. Omit api.pdf entirely for metadata-only sources." }
+            "path": { "type": "string", "description": "PDF path with {externalId} placeholder." },
+            "method": { "enum": ["GET", "POST"] },
+            "host": { "type": "string", "description": "PDF host if different from api.host (still bound by the same-domain guard / crossDomainHosts)." },
+            "body": { "type": "string", "description": "[POST] Request body template; {externalId} is substituted." },
+            "contentType": { "type": "string", "description": "[POST] Content-Type of the body (default application/json)." }
+          }
+        },
+        "detail": {
+          "type": "object",
+          "required": ["path"],
+          "additionalProperties": false,
+          "description": "Per-document JSON detail (e.g. a full order). Saved as <id>.json. Preferred over a POST-generated PDF.",
+          "properties": {
+            "path": { "type": "string", "description": "Detail path with {externalId} placeholder." },
+            "method": { "enum": ["GET", "POST"] },
+            "host": { "type": "string", "description": "Detail host if different from api.host (same-domain guard applies)." }
           }
         }
       }

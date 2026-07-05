@@ -84,6 +84,28 @@ test('pages of the same list dedupe to one candidate', () => {
   assert.equal(cands[0].count, 2); // keeps the larger page as representative
 });
 
+test('infers a JSON detail endpoint (preferred document) from a per-order detail response', () => {
+  const samples = [
+    { url: 'https://api.shop.es/v1/orders?page=1', status: 200, reqHeaders: { authorization: 'eyJ' },
+      json: { items: [{ id: 'ORD-7', total: 5 }, { id: 'ORD-8', total: 9 }] } },
+    { url: 'https://api.shop.es/v1/orders/ORD-8', status: 200, reqHeaders: { authorization: 'eyJ' },
+      json: { id: 'ORD-8', lines: [{ sku: 'a' }], total: 9 } },
+  ];
+  const r = draftAdapterFromSamples(samples, { domain: 'shop.es', pageHost: 'www.shop.es' });
+  assert.ok(r.draft.api.detail, 'detail inferred');
+  assert.equal(r.draft.api.detail.path, '/v1/orders/{externalId}');
+  assert.ok(!r.draft.api.pdf, 'no PDF when detail present');
+});
+
+test('infers a POST-generated PDF (body templated by id) from captured assets', () => {
+  const samples = [{ url: 'https://api.shop.es/v1/orders', status: 200, reqHeaders: { authorization: 'eyJ' },
+    json: { items: [{ id: 'ORD-8', total: 9 }] } }];
+  const assets = [{ url: 'https://api.shop.es/v1/pdf', method: 'POST', reqType: 'application/json', reqBody: '{"orderId":"ORD-8"}', status: 200 }];
+  const r = draftAdapterFromSamples(samples, { domain: 'shop.es', pageHost: 'www.shop.es', assets });
+  assert.equal(r.draft.api.pdf.method, 'POST');
+  assert.equal(r.draft.api.pdf.body, '{"orderId":"{externalId}"}');
+});
+
 test('pagination cursor/page is stripped from captured params (starts from the beginning)', () => {
   const cursor = [{ url: 'https://api.shop.es/v1/tx?cursor=PAGE3TOKEN&limit=50', status: 200, reqHeaders: { authorization: 'eyJ' },
     json: { transactions: [{ id: 't9', valueDate: '2026-03-09', amount: -3 }], paging: { nextCursor: 'c4' } } }];

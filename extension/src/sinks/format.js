@@ -2,11 +2,12 @@
 import { renderPath } from '../lib/naming.js';
 
 export function pathFor(sink, d, opts) {
-  const tpl = sink.pathTemplate || '{service}/{yyyy}/{date}-{externalId}.pdf';
+  const ext = (opts && opts.ext) || 'pdf';
+  const tpl = sink.pathTemplate || '{service}/{yyyy}/{date}-{externalId}.{ext}';
   return renderPath(tpl, {
-    service: opts.service || 'documents',
+    service: (opts && opts.service) || 'documents',
     date: (d.date || '').slice(0, 10),
-    externalId: d.externalId, ext: 'pdf',
+    externalId: d.externalId, ext,
   });
 }
 // A mapped doc already carries its normalized record (built at inventory time, where the
