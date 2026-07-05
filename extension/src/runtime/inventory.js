@@ -152,15 +152,38 @@ function parseTables(html) {
   return out.length ? out : null;
 }
 
-// Detect HOW the detail delivers its data and return the extracted JSON + the mechanism:
-//   'json'     — the response IS JSON (an AJAX/API endpoint, or a JSON page)
-//   'embedded' — JSON embedded in the page's HTML (__NEXT_DATA__, application/json, JSON-LD…)
-//   'table'    — data rendered directly in an HTML table / definition list
-//   'html'     — none of the above; raw HTML kept so nothing is lost
-export function extractDetail(text, url) {
+const nodeSize = (v) => { if (v == null || typeof v !== 'object') return 1; let n = 1; for (const k in v) n += nodeSize(v[k]); return n; };
+
+// Server-rendered/AJAX payloads often carry the WHOLE app state (every purchase). Narrow to the ONE
+// document: the richest object that either has the id as a direct property value, or is stored under
+// a key === the id (a map keyed by id). Falls back to the whole payload if the id isn't found.
+export function pickDetailById(root, id) {
+  if (id == null || root == null || typeof root !== 'object') return root;
+  const idStr = String(id);
+  let best = null, bestSize = -1;
+  const consider = (node) => { if (node && typeof node === 'object' && !Array.isArray(node)) { const s = nodeSize(node); if (s > bestSize) { bestSize = s; best = node; } } };
+  const visit = (node) => {
+    if (node == null || typeof node !== 'object') return;
+    if (!Array.isArray(node)) {
+      if (Object.keys(node).some((k) => { const v = node[k]; return v != null && typeof v !== 'object' && String(v) === idStr; })) consider(node);
+      if (Object.prototype.hasOwnProperty.call(node, idStr)) consider(node[idStr]);
+    }
+    for (const k in node) visit(node[k]);
+  };
+  visit(root);
+  return best || root;
+}
+
+// Detect HOW the detail delivers its data and return the extracted JSON (narrowed to `id`) + the
+// mechanism: 'json' (AJAX/API), 'embedded' (JSON in the page HTML), 'table' (HTML table), 'html'.
+export function extractDetail(text, url, id) {
   const t = (text || '').trim();
-  if (t[0] === '{' || t[0] === '[') { try { JSON.parse(t); return { json: t, via: 'json' }; } catch (e) {} }
-  for (const re of EMBED_RES) { const m = re.exec(text || ''); if (m) { try { JSON.parse(m[1].trim()); return { json: m[1].trim(), via: 'embedded' }; } catch (e) {} } }
+  let parsed, via;
+  if (t[0] === '{' || t[0] === '[') { try { parsed = JSON.parse(t); via = 'json'; } catch (e) {} }
+  if (parsed === undefined) {
+    for (const re of EMBED_RES) { const m = re.exec(text || ''); if (m) { try { parsed = JSON.parse(m[1].trim()); via = 'embedded'; break; } catch (e) {} } }
+  }
+  if (parsed !== undefined) return { json: JSON.stringify(id != null ? pickDetailById(parsed, id) : parsed), via };
   const tables = parseTables(text || '');
   if (tables) return { json: JSON.stringify(tables.length === 1 ? tables[0] : tables), via: 'table' };
   return { json: JSON.stringify({ _url: url, _html: (text || '').slice(0, 300000) }), via: 'html' };
@@ -177,7 +200,7 @@ export async function fetchDetail(adapter, auth, externalId, net) {
   const url = host + path;
   const res = await NET(url, { method: d.method || 'GET', headers: { ...headersFor(auth, path.split('?')[0]), accept: 'application/json, text/html' }, credentials: 'include' });
   if (!res.ok) throw new Error('detail ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
-  const { json, via } = extractDetail(await res.text(), url);
+  const { json, via } = extractDetail(await res.text(), url, externalId);
   return { blob: new Blob([json], { type: 'application/json' }), via };
 }
 
