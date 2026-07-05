@@ -1,6 +1,7 @@
 import { chrome } from '../lib/ext.js';
 import { getConfig } from '../lib/config.js';
 import { listInventory, fetchDocument, documentExt } from '../runtime/inventory.js';
+import { resolveSiteFetch } from '../lib/pagefetch.js';
 import { writeToSink } from '../sinks/sinks.js';
 import { sinkAcceptsSource, acceptsDoc } from '../sinks/format.js';
 import { deliveredSet, markDelivered, getLog, appendLog } from '../lib/state.js';
@@ -77,7 +78,8 @@ async function onList() {
   if (!auth) { $('#status').textContent = t('capture_hint'); return; }
   $('#status').textContent = t('listing');
   try {
-    inventory = await listInventory(adapter, auth);
+    const net = await resolveSiteFetch(adapter);
+    inventory = await listInventory(adapter, auth, net);
     await render();
     $('#status').textContent = t('n_documents', [String(inventory.length)]);
     log(t('n_documents', [String(inventory.length)]));
@@ -134,10 +136,11 @@ async function onSend() {
 
   $('#status').textContent = t('fetching', [String(eligible.length)]);
   await badgeWorking();
+  const net = await resolveSiteFetch(adapter);
   const files = new Map();
   const noPdf = [];
   for (const d of eligible) {
-    try { files.set(d.externalId, (await fetchDocument(adapter, auth, d.externalId)).blob); }
+    try { files.set(d.externalId, (await fetchDocument(adapter, auth, d.externalId, net)).blob); }
     catch (e) { if (/\b406\b|sin PDF|no PDF|no document/i.test(e.message)) noPdf.push(d.externalId); }
   }
   log(t('with_without_pdf', [String(files.size), String(noPdf.length)]) + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : ''));

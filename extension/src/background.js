@@ -6,6 +6,7 @@ import { chrome } from './lib/ext.js';
 import { getConfig } from './lib/config.js';
 import { deliveredSet, markDelivered, appendLog } from './lib/state.js';
 import { listInventory, fetchDocument, documentExt } from './runtime/inventory.js';
+import { resolveSiteFetch } from './lib/pagefetch.js';
 import { writeToSink } from './sinks/sinks.js';
 import { acceptsDoc } from './sinks/format.js';
 import { getAdapters } from './adapters/index.js';
@@ -98,13 +99,14 @@ async function runRoute(ds, adapter, sink) {
   try {
     const auth = await authFor(adapter);
     if (!auth) { await appendLog({ ...base, status: 'nosession' }); await badgeClear(); return; }
-    const all = await listInventory(adapter, auth);
+    const net = await resolveSiteFetch(adapter); // fetch from the user's tab → inherits the session
+    const all = await listInventory(adapter, auth, net);
     const delivered = await deliveredSet(ds.id, sink.id);
     const fresh = all.filter((d) => !delivered[d.externalId]);
     const eligible = fresh.filter((d) => acceptsDoc(sink, d));
     if (!eligible.length) { await appendLog({ ...base, status: 'none', new: 0 }); await badgeClear(); return; }
     const files = new Map();
-    for (const d of eligible) { try { files.set(d.externalId, (await fetchDocument(adapter, auth, d.externalId)).blob); } catch (e) { /* no document */ } }
+    for (const d of eligible) { try { files.set(d.externalId, (await fetchDocument(adapter, auth, d.externalId, net)).blob); } catch (e) { /* no document */ } }
     await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, ext: documentExt(adapter) || 'pdf', interactive: false });
     await markDelivered(ds.id, sink.id, eligible.map((d) => d.externalId));
     await appendLog({ ...base, status: 'ok', new: eligible.length });
