@@ -172,6 +172,8 @@
   "author_find_ok": { "message": "Encontrado en una lista de $N$ elementos — mapeo abajo.", "placeholders": { "n": { "content": "$1" } } },
   "author_find_multi": { "message": "Encontrado en $N$ listas — elige la correcta abajo.", "placeholders": { "n": { "content": "$1" } } },
   "author_which_list": { "message": "¿Cuál de las listas son tus datos?" },
+  "author_items": { "message": "elementos" },
+  "author_list_hint": { "message": "El número es cuántos elementos había en la página capturada. Al usar la fuente se pagina para traerlos todos — aquí no eliges páginas, solo la lista correcta." },
   "author_kind": { "message": "Tipo de datos" },
   "author_advanced": { "message": "Avanzado (normalmente no hace falta)" },
   "kind_receipt": { "message": "Tickets / recibos" },

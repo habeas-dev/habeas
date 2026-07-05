@@ -57,11 +57,14 @@ function populateSinks(cfg) {
   $('#sink').innerHTML = list.map((s) => `<option value="${s.id}">${s.id} · ${s.type}</option>`).join('') || '<option value="">—</option>';
 }
 async function getAuth(adapter) {
+  const cookie = adapter.auth && adapter.auth.mode === 'cookie';
   const host = adapter.api.host.replace(/^https?:\/\//, '');
   const o = await chrome.storage.session.get('auth:' + host);
   const store = o['auth:' + host];
-  if (!store) return null;
-  return store.byPath[adapter.api.list.path] || store.merged || null;
+  // Return the whole store so each endpoint (list / detail / PDF) resolves its own auth (mixed
+  // cookie+bearer is supported). Cookie sources proceed with an empty store (cookies carry it).
+  if (!store) return cookie ? { byPath: {}, merged: {} } : null;
+  return { byPath: store.byPath || {}, merged: store.merged || {} };
 }
 
 async function onList() {

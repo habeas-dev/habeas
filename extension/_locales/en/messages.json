@@ -172,6 +172,8 @@
   "author_find_ok": { "message": "Found in a list of $N$ items — mapping below.", "placeholders": { "n": { "content": "$1" } } },
   "author_find_multi": { "message": "Found in $N$ lists — pick the right one below.", "placeholders": { "n": { "content": "$1" } } },
   "author_which_list": { "message": "Which list is your data?" },
+  "author_items": { "message": "items" },
+  "author_list_hint": { "message": "The number is how many items were in the captured page. When you use the source it paginates to fetch them all — you don't pick pages here, just the right list." },
   "author_kind": { "message": "Kind of data" },
   "author_advanced": { "message": "Advanced (usually not needed)" },
   "kind_receipt": { "message": "Receipts / tickets" },

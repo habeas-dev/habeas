@@ -102,7 +102,7 @@ export function validateAdapter(adapter) {
     req(typeof fields.externalId === 'string', 'fields.externalId required');
     req(typeof fields.date === 'string', 'fields.date required');
     const auth = adapter.auth || {};
-    req(Array.isArray(auth.replayHeaders) && auth.replayHeaders.length > 0, 'auth.replayHeaders[] required');
+    req(Array.isArray(auth.replayHeaders), 'auth.replayHeaders must be an array (may be empty for cookie auth)');
 
     const h = checkHosts(adapter);
     req(h.ok, h.offenders.length
