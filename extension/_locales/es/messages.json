@@ -140,6 +140,8 @@
   "via_table": { "message": "una tabla HTML en la página" },
   "via_html": { "message": "HTML sin datos estructurados" },
   "via_pdf": { "message": "un archivo PDF" },
+  "author_doc_preview": { "message": "Vista previa del detalle (primer documento):" },
+  "author_doc_pdf_size": { "message": "PDF · $N$ KB", "placeholders": { "n": { "content": "$1" } } },
   "author_test_err": { "message": "Falló la prueba: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
   "author_saved": { "message": "Guardada «$ID$». Actívala en Ajustes.", "placeholders": { "id": { "content": "$1" } } },
 

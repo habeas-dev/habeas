@@ -10,6 +10,15 @@
     .maprow label { color: var(--muted); }
     .inp { display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center; margin: 4px 0; }
     #samplecount { font-weight: 600; }
+    #docpreview { max-height: 320px; overflow: auto; margin-top: 4px; font-family: ui-monospace, monospace; font-size: 12px; line-height: 1.5; }
+    #docpreview details { margin-left: 2px; }
+    #docpreview summary { cursor: pointer; user-select: none; }
+    #docpreview .tc { margin-left: 10px; border-left: 1px solid var(--line); padding-left: 8px; }
+    #docpreview .tk { color: var(--muted); }
+    #docpreview .ts { color: #2e7d32; }
+    #docpreview .tnum { color: #1565c0; }
+    #docpreview .tb, #docpreview .tn { color: #8e44ad; }
+    #docpreview .tmeta { color: var(--muted); }
   </style>
 </head>
 <body>
@@ -99,6 +108,10 @@
           <th data-i18n="th_date"></th><th data-i18n="th_store"></th>
           <th class="r" data-i18n="th_amount"></th><th data-i18n="th_type"></th>
         </tr></thead><tbody></tbody></table>
+        <div id="docwrap" hidden style="margin-top:10px">
+          <b data-i18n="author_doc_preview"></b>
+          <div id="docpreview"></div>
+        </div>
       </div>
     </div>
   </div>
