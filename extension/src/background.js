@@ -37,6 +37,15 @@ chrome.runtime.onMessage.addListener((msg) => {
       arr.unshift(msg.sample);
       chrome.storage.session.set({ [key]: arr.slice(0, SAMPLE_CAP) });
     });
+  } else if (msg.type === 'habeas:seen' && msg.domain) {
+    // Record-mode diagnostic: count requests observed per host (did the recorder run at all?).
+    const key = 'seen:' + msg.domain;
+    chrome.storage.session.get(key).then((o) => {
+      const seen = o[key] || { total: 0, hosts: {} };
+      seen.total++;
+      if (msg.host) seen.hosts[msg.host] = (seen.hosts[msg.host] || 0) + 1;
+      chrome.storage.session.set({ [key]: seen });
+    });
   }
 });
 

@@ -1,6 +1,6 @@
 import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
-import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor } from '../lib/learn.js';
+import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen } from '../lib/learn.js';
 import { draftAdapterFromSamples } from '../runtime/infer.js';
 import { listInventory } from '../runtime/inventory.js';
 import { validateAdapter } from '../adapters/validate.js';
@@ -63,7 +63,14 @@ async function onAnalyze() {
   if (!LEARN) { $('#learnstatus').textContent = t('author_start_first'); return; }
   const samples = await getSamples(LEARN.domain);
   $('#samplecount').textContent = String(samples.length);
-  if (!samples.length) { $('#status').textContent = t('author_no_samples'); return; }
+  if (!samples.length) {
+    const seen = await getSeen(LEARN.domain);
+    const hosts = Object.keys(seen.hosts || {});
+    $('#status').textContent = seen.total
+      ? t('author_no_list_seen', [String(seen.total), hosts.join(', ')])
+      : t('author_no_requests');
+    return;
+  }
   const r = draftAdapterFromSamples(samples, { domain: LEARN.domain, pageHost: hostFromOrigin(LEARN.origin) });
   if (!r.ok) { $('#status').textContent = t('author_no_list'); return; }
   candidates = r.fieldCandidates; // [{ path, value }]
@@ -131,10 +138,19 @@ function buildAdapter() {
   return adapter;
 }
 
+// The API may live on a different host than the login site — request permission to fetch it.
+async function ensureHostPermission(hostUrl) {
+  try {
+    const origin = new URL(hostUrl).origin + '/*';
+    if (!(await chrome.permissions.contains({ origins: [origin] }))) await chrome.permissions.request({ origins: [origin] });
+  } catch (e) { /* best effort */ }
+}
+
 async function onTest() {
   const adapter = buildAdapter();
   const v = validateAdapter(adapter);
   if (!v.ok) { $('#status').textContent = t('author_invalid', [v.errors.join('; ')]); return; }
+  await ensureHostPermission(adapter.api.host);
   const host = adapter.api.host.replace(/^https?:\/\//, '');
   const auth = await getAuthFor(host);
   const headers = auth && (auth.byPath[adapter.api.list.path] || auth.merged);

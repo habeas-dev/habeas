@@ -29,6 +29,7 @@
     if (d.type === 'hook-ready') syncLearn();               // (re)send arm state once the hook is live
     else if (d.type === 'auth') chrome.runtime.sendMessage({ type: 'habeas:auth', host: d.host, path: d.path, headers: d.headers });
     else if (d.type === 'sample') chrome.runtime.sendMessage({ type: 'habeas:sample', domain: PAGE_DOMAIN, sample: { url: d.url, method: d.method, status: d.status, reqHeaders: d.reqHeaders, json: d.json } });
+    else if (d.type === 'seen') chrome.runtime.sendMessage({ type: 'habeas:seen', domain: PAGE_DOMAIN, host: d.host });
   });
   chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch['habeas:learn']) syncLearn(); });
 
