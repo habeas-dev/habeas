@@ -170,6 +170,7 @@
   "author_find": { "message": "Buscar" },
   "author_find_none": { "message": "No aparece en lo capturado — prueba otro valor, o abre primero la página/pedido exacto." },
   "author_find_ok": { "message": "Encontrado en una lista de $N$ elementos — mapeo abajo.", "placeholders": { "n": { "content": "$1" } } },
+  "author_find_multi": { "message": "Encontrado en $N$ listas — elige la correcta abajo.", "placeholders": { "n": { "content": "$1" } } },
   "author_which_list": { "message": "¿Cuál de las listas son tus datos?" },
   "author_kind": { "message": "Tipo de datos" },
   "author_advanced": { "message": "Avanzado (normalmente no hace falta)" },

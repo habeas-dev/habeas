@@ -170,6 +170,7 @@
   "author_find": { "message": "Find" },
   "author_find_none": { "message": "Not found in the captured data — try another value, or open the exact page/order first." },
   "author_find_ok": { "message": "Found in a list of $N$ items — mapping below.", "placeholders": { "n": { "content": "$1" } } },
+  "author_find_multi": { "message": "Found in $N$ lists — pick the right one below.", "placeholders": { "n": { "content": "$1" } } },
   "author_which_list": { "message": "Which list is your data?" },
   "author_kind": { "message": "Kind of data" },
   "author_advanced": { "message": "Advanced (usually not needed)" },
