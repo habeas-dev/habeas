@@ -8,7 +8,7 @@
   "icons": { "16": "icon-16.png", "48": "icon-48.png", "128": "icon-128.png" },
   "options_page": "src/ui/options.html",
   "background": { "service_worker": "src/background.js", "scripts": ["src/background.js"], "type": "module" },
-  "permissions": ["storage", "downloads", "identity", "notifications", "scripting"],
+  "permissions": ["storage", "downloads", "identity", "notifications", "scripting", "declarativeNetRequestWithHostAccess"],
   "host_permissions": [
     "https://www.carrefour.es/*",
     "https://pro.api.carrefour.es/*",

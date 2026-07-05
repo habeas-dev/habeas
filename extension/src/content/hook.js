@@ -61,7 +61,8 @@
     if (!LEARN) return;
     let abs = String(url); try { abs = new URL(url, location.href).href; } catch (e) {}
     const body = typeof (opts && opts.reqBody) === 'string' ? opts.reqBody.slice(0, 20000) : '';
-    window.postMessage({ __habeas: true, type: 'asset', host: hostOf(url), url: abs, method: (opts && opts.method) || 'GET', reqType: String((opts && opts.reqType) || ''), reqBody: body, status: (opts && opts.status) || 0 }, '*');
+    // location.href = the page the PDF was requested from — the Referer many services require.
+    window.postMessage({ __habeas: true, type: 'asset', host: hostOf(url), url: abs, method: (opts && opts.method) || 'GET', reqType: String((opts && opts.reqType) || ''), reqBody: body, referer: location.href, status: (opts && opts.status) || 0 }, '*');
   }
 
   // Capture scope: normally only the page's own registrable domain (auth). In LEARN mode we also

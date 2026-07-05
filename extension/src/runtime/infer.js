@@ -111,33 +111,52 @@ function getPath(obj, path) {
   return String(path).split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
 }
 
+// Map each item field's value (as a string) to its dotted field path. Used to discover which field
+// is the INTERNAL id — the one whose value actually appears in the detail/PDF URL — as opposed to a
+// human-facing receipt/invoice number that only shows in the data.
+function valueFields(items) {
+  const map = new Map();
+  for (const it of (items || []).slice(0, 50)) {
+    for (const f of flattenKeys(it)) {
+      const v = f.value;
+      if (v == null || v === '') continue;
+      const s = String(v);
+      if (s.length >= 3 && !map.has(s)) map.set(s, f.path);
+    }
+  }
+  return map;
+}
+
 // The per-document DETAIL endpoint: a captured JSON response whose URL carries a document id and
-// whose body actually contains it (i.e. the detail of that one order). Preferred over PDF for
-// services where the JSON detail is the practical artifact (e.g. Decathlon).
-export function inferDetail(samples, items, idField) {
-  const idVals = [...new Set((items || []).map((it) => getPath(it, idField)).filter((v) => v != null && v !== '').map(String))];
-  if (!idVals.length) return null;
+// whose body actually contains it. Returns `idField` = the item field whose value the URL uses (the
+// internal id), so the draft templates by THAT, not by a guessed (possibly human-facing) number.
+export function inferDetail(samples, items) {
+  const vf = valueFields(items);
+  if (!vf.size) return null;
+  const vals = [...vf.keys()].sort((a, b) => b.length - a.length);
   for (const s of samples || []) {
     if (!s || !s.json || Array.isArray(s.json) || (s.status && s.status >= 300)) continue;
     let u; try { u = new URL(s.url); } catch (e) { continue; }
-    const id = idVals.find((v) => u.pathname.includes(v) && deepIncludes(s.json, v.toLowerCase()));
+    const id = vals.find((v) => u.pathname.includes(v) && deepIncludes(s.json, v.toLowerCase()));
     if (!id) continue;
-    return { host: u.host, path: u.pathname.split(id).join('{externalId}'), method: (s.method || 'GET').toUpperCase() };
+    return { host: u.host, path: u.pathname.split(id).join('{externalId}'), method: (s.method || 'GET').toUpperCase(), idField: vf.get(id) };
   }
   return null;
 }
 
-// The PDF endpoint, from captured document (asset) requests. Handles GET .../{id}/pdf and
-// POST-generated PDFs (body templated by id).
-export function inferPdf(assets, items, idField) {
-  const idVals = [...new Set((items || []).map((it) => getPath(it, idField)).filter((v) => v != null && v !== '').map(String))];
+// The PDF endpoint, from captured document (asset) requests. Handles GET .../{id}/pdf, POST-generated
+// PDFs (body templated by id), and a Referer requirement. Also returns the URL `idField`.
+export function inferPdf(assets, items) {
+  const vf = valueFields(items);
+  const vals = [...vf.keys()].sort((a, b) => b.length - a.length);
   for (const a of assets || []) {
     let u; try { u = new URL(a.url); } catch (e) { continue; }
-    const id = idVals.find((v) => u.pathname.includes(v) || String(a.reqBody || '').includes(v));
+    const id = vals.find((v) => u.pathname.includes(v) || String(a.reqBody || '').includes(v));
     const pdf = { method: (a.method || 'GET').toUpperCase(), path: u.pathname };
     if (id && u.pathname.includes(id)) pdf.path = u.pathname.split(id).join('{externalId}');
     if (pdf.method !== 'GET' && a.reqBody) { pdf.body = id ? String(a.reqBody).split(id).join('{externalId}') : String(a.reqBody); if (a.reqType) pdf.contentType = a.reqType; }
-    return { host: u.host, pdf };
+    if (a.referer && id && a.referer.includes(id)) pdf.referer = a.referer.split(id).join('{externalId}');
+    return { host: u.host, pdf, idField: id ? vf.get(id) : undefined };
   }
   return null;
 }
@@ -219,13 +238,14 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
 
   // Per-document artifact: prefer the JSON detail (captured passively when the user opens an order);
   // fall back to a captured PDF request.
-  const detail = inferDetail(samples, best.items, fields.externalId);
+  const detail = inferDetail(samples, best.items);
   if (detail) {
     draft.api.detail = { path: detail.path, method: detail.method };
     if (detail.host && detail.host !== host) draft.api.detail.host = detail.host;
+    if (detail.idField) fields.externalId = detail.idField; // the internal id used in the URL
   } else if (ctx.assets) {
-    const p = inferPdf(ctx.assets, best.items, fields.externalId);
-    if (p) { draft.api.pdf = p.pdf; if (p.host && p.host !== host) draft.api.pdf.host = p.host; }
+    const p = inferPdf(ctx.assets, best.items);
+    if (p) { draft.api.pdf = p.pdf; if (p.host && p.host !== host) draft.api.pdf.host = p.host; if (p.idField) fields.externalId = p.idField; }
   }
 
   // The list array's field candidates power the visual mapper dropdowns.

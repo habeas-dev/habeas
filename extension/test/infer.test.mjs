@@ -97,6 +97,18 @@ test('infers a JSON detail endpoint (preferred document) from a per-order detail
   assert.ok(!r.draft.api.pdf, 'no PDF when detail present');
 });
 
+test('externalId is the internal id used in the URL, not the human-facing receipt number', () => {
+  const samples = [
+    { url: 'https://api.shop.es/v1/orders', status: 200, reqHeaders: { authorization: 'eyJ' },
+      json: { items: [{ number: 'F-2026-0007', ref: 'abc-123-def', total: 5 }] } },
+    { url: 'https://api.shop.es/v1/orders/abc-123-def', status: 200, reqHeaders: { authorization: 'eyJ' },
+      json: { ref: 'abc-123-def', number: 'F-2026-0007', lines: [] } },
+  ];
+  const r = draftAdapterFromSamples(samples, { domain: 'shop.es', pageHost: 'www.shop.es' });
+  assert.equal(r.draft.api.detail.path, '/v1/orders/{externalId}');
+  assert.equal(r.draft.fields.externalId, 'ref'); // the URL id, not 'number' (the visible receipt no.)
+});
+
 test('infers a POST-generated PDF (body templated by id) from captured assets', () => {
   const samples = [{ url: 'https://api.shop.es/v1/orders', status: 200, reqHeaders: { authorization: 'eyJ' },
     json: { items: [{ id: 'ORD-8', total: 9 }] } }];

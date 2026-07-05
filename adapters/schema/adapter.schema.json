@@ -103,7 +103,8 @@
             "method": { "enum": ["GET", "POST"] },
             "host": { "type": "string", "description": "PDF host if different from api.host (still bound by the same-domain guard / crossDomainHosts)." },
             "body": { "type": "string", "description": "[POST] Request body template; {externalId} is substituted." },
-            "contentType": { "type": "string", "description": "[POST] Content-Type of the body (default application/json)." }
+            "contentType": { "type": "string", "description": "[POST] Content-Type of the body (default application/json)." },
+            "referer": { "type": "string", "description": "Referer header to send (templated with {externalId}) — for services that gate the PDF behind its detail page. Set via declarativeNetRequest." }
           }
         },
         "detail": {

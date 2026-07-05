@@ -96,10 +96,10 @@ function onFind() {
   if (!q) return;
   const matches = matchCandidates(SAMPLES, q);
   if (!matches.length) { $('#findstatus').textContent = t('author_find_none'); return; }
-  const m = matches[0];
-  const i = CANDS.findIndex((c) => c.key === m.key);
+  const i = CANDS.findIndex((c) => c.key === matches[0].key);
   if (i >= 0) { $('#f_list').value = String(i); drawDraft(CANDS[i]); }
-  $('#findstatus').textContent = t('author_find_ok', [String(m.count)]);
+  if (matches.length > 1) { $('#listpickrow').hidden = false; $('#findstatus').textContent = t('author_find_multi', [String(matches.length)]); }
+  else $('#findstatus').textContent = t('author_find_ok', [String(matches[0].count)]);
 }
 
 function drawDraft(chosen) {

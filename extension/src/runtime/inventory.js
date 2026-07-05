@@ -6,6 +6,27 @@
 // runtime stays source-agnostic. Carrefour uses `offsets` paging; other sources use
 // `page` / `cursor` / `none`.
 import { buildRecord } from '../sinks/format.js';
+import { chrome } from '../lib/ext.js';
+
+// Some services gate the PDF behind a Referer that must be the document's detail page. A page/
+// extension fetch cannot set Referer (forbidden header) — declarativeNetRequest is the MV3 way.
+let __ruleSeq = 1;
+async function withReferer(targetUrl, referer, fn) {
+  if (!referer || !(chrome && chrome.declarativeNetRequest)) return fn();
+  const id = 100000 + ((__ruleSeq++) % 90000);
+  try {
+    await chrome.declarativeNetRequest.updateSessionRules({
+      removeRuleIds: [id],
+      addRules: [{
+        id, priority: 1,
+        action: { type: 'modifyHeaders', requestHeaders: [{ header: 'referer', operation: 'set', value: referer }] },
+        condition: { urlFilter: targetUrl, resourceTypes: ['xmlhttprequest'] },
+      }],
+    });
+  } catch (e) { return fn(); }
+  try { return await fn(); }
+  finally { try { await chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: [id] }); } catch (e) {} }
+}
 
 export async function listInventory(adapter, auth) {
   const list = adapter.api.list;
@@ -82,7 +103,8 @@ export async function fetchPdf(adapter, auth, externalId) {
     init.body = String(pdf.body).split('{externalId}').join(externalId);
     init.headers['content-type'] = pdf.contentType || 'application/json';
   }
-  const res = await fetch(url, init);
+  const referer = pdf.referer ? String(pdf.referer).split('{externalId}').join(externalId) : null;
+  const res = await withReferer(url, referer, () => fetch(url, init));
   if (!res.ok) {
     const hint = res.status === 406 ? ' (sin PDF disponible — típico en tickets antiguos)' : '';
     throw new Error('pdf ' + res.status + hint + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
