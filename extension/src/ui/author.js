@@ -3,6 +3,7 @@ import { applyI18n, t } from '../lib/i18n.js';
 import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen, getAssets } from '../lib/learn.js';
 import { draftAdapterFromSamples, listCandidates, matchCandidates } from '../runtime/infer.js';
 import { listInventory } from '../runtime/inventory.js';
+import { resolveSiteFetch } from '../lib/pagefetch.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { saveSource } from '../adapters/index.js';
 import { grantConsent } from '../lib/consent.js';
@@ -191,9 +192,10 @@ async function onTest() {
   // Pass the whole captured store so list/detail/PDF each resolve their own auth (mixed cookie+
   // bearer). Proceed even with nothing captured — cookies (credentials:'include') may carry it.
   const authStore = (await getAuthFor(host)) || { byPath: {}, merged: {} };
+  const net = await resolveSiteFetch(adapter); // fetch from the site's tab → passes Cloudflare
   $('#status').textContent = t('author_testing');
   try {
-    const docs = await listInventory(adapter, authStore);
+    const docs = await listInventory(adapter, authStore, net);
     $('#preview tbody').innerHTML = docs.slice(0, 3).map((d) =>
       `<tr><td>${esc((d.date || '').slice(0, 10))}</td><td>${esc(d.storeName || d.label || '')}</td><td class="r">${esc(fmt(d.total ?? d.amount))}</td><td>${esc(d.type || '')}</td></tr>`).join('');
     $('#status').textContent = t('author_test_ok', [String(docs.length)]);

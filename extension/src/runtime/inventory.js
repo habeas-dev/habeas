@@ -28,7 +28,7 @@ async function withReferer(targetUrl, referer, fn) {
   finally { try { await chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: [id] }); } catch (e) {} }
 }
 
-export async function listInventory(adapter, auth) {
+export async function listInventory(adapter, auth, net) {
   const list = adapter.api.list;
   const paging = list.paging || (list.offsetsPath ? 'offsets' : list.nextPath ? 'cursor' : 'none');
   const baseParams = { ...(list.params || {}) };
@@ -36,11 +36,12 @@ export async function listInventory(adapter, auth) {
   const count = list.params && list.params.count;
   const maxPages = list.maxPages || 100;
   const seen = new Set(), all = [];
+  const call = (params) => fetchList(adapter, auth, params, net);
 
   if (paging === 'offsets') {
     let offs = { ...(list.initialOffsets || {}) };
     for (let g = 0; g < maxPages; g++) {
-      const data = await fetchList(adapter, auth, { ...range, ...baseParams, ...offs });
+      const data = await call({ ...range, ...baseParams, ...offs });
       if (!collect(adapter, data, seen, all)) break;
       offs = Object.assign(offs, get(data, list.offsetsPath) || {});
     }
@@ -48,7 +49,7 @@ export async function listInventory(adapter, auth) {
     const pageParam = list.pageParam || 'page';
     let page = list.pageStart ?? 1;
     for (let g = 0; g < maxPages; g++) {
-      const data = await fetchList(adapter, auth, { ...range, ...baseParams, [pageParam]: page });
+      const data = await call({ ...range, ...baseParams, [pageParam]: page });
       const items = get(data, list.itemsPath) || [];
       collect(adapter, data, seen, all);
       if (!items.length || (count && items.length < count)) break;
@@ -60,13 +61,13 @@ export async function listInventory(adapter, auth) {
     for (let g = 0; g < maxPages; g++) {
       const params = { ...range, ...baseParams };
       if (cursor) params[cursorParam] = cursor;
-      const data = await fetchList(adapter, auth, params);
+      const data = await call(params);
       const added = collect(adapter, data, seen, all);
       cursor = get(data, list.nextPath);
       if (!added || !cursor) break;
     }
   } else { // 'none' — single request
-    collect(adapter, await fetchList(adapter, auth, { ...range, ...baseParams }), seen, all);
+    collect(adapter, await call({ ...range, ...baseParams }), seen, all);
   }
   all.sort((x, y) => (x.date < y.date ? 1 : -1));
   return all;
@@ -100,26 +101,27 @@ export function documentExt(adapter) {
 
 // Fetch a document's file (PDF or JSON detail) as a Blob. Prefers GET-PDF, then JSON detail, then
 // POST-PDF (see documentExt ordering).
-export async function fetchDocument(adapter, auth, externalId) {
+export async function fetchDocument(adapter, auth, externalId, net) {
   const ext = documentExt(adapter);
-  if (ext === 'pdf') return { blob: await fetchPdf(adapter, auth, externalId), ext };
-  if (ext === 'json') return { blob: await fetchDetail(adapter, auth, externalId), ext };
+  if (ext === 'pdf') return { blob: await fetchPdf(adapter, auth, externalId, net), ext };
+  if (ext === 'json') return { blob: await fetchDetail(adapter, auth, externalId, net), ext };
   throw new Error('no document for this source');
 }
 
-export async function fetchPdf(adapter, auth, externalId) {
+export async function fetchPdf(adapter, auth, externalId, net) {
+  const NET = net || ((u, i) => fetch(u, i));
   const pdf = adapter.api.pdf;
   if (!pdf) throw new Error('no PDF for this source');
   const host = pdf.host ? absHost(pdf.host) : adapter.api.host;
   const path = pdf.path.replace('{externalId}', encodeURIComponent(externalId));
   const url = host + path;
-  const init = { method: pdf.method || 'GET', headers: { ...headersFor(auth, path), accept: 'application/pdf' }, credentials: 'include' };
+  const init = { method: pdf.method || 'GET', headers: { ...headersFor(auth, path), accept: 'application/pdf' }, credentials: 'include', wantBlob: true };
   if (init.method !== 'GET' && pdf.body != null) {
     init.body = String(pdf.body).split('{externalId}').join(externalId);
     init.headers['content-type'] = pdf.contentType || 'application/json';
   }
   const referer = pdf.referer ? String(pdf.referer).split('{externalId}').join(externalId) : null;
-  const res = await withReferer(url, referer, () => fetch(url, init));
+  const res = await withReferer(url, referer, () => NET(url, init));
   if (!res.ok) {
     const hint = res.status === 406 ? ' (sin PDF disponible — típico en tickets antiguos)' : '';
     throw new Error('pdf ' + res.status + hint + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
@@ -128,23 +130,25 @@ export async function fetchPdf(adapter, auth, externalId) {
 }
 
 // Per-document JSON detail (e.g. an order's full data). Saved as <id>.json.
-export async function fetchDetail(adapter, auth, externalId) {
+export async function fetchDetail(adapter, auth, externalId, net) {
+  const NET = net || ((u, i) => fetch(u, i));
   const d = adapter.api.detail;
   if (!d) throw new Error('no detail for this source');
   const host = d.host ? absHost(d.host) : adapter.api.host;
   const path = d.path.replace('{externalId}', encodeURIComponent(externalId));
   const url = host + path;
-  const res = await fetch(url, { method: d.method || 'GET', headers: { ...headersFor(auth, path), accept: 'application/json' }, credentials: 'include' });
+  const res = await NET(url, { method: d.method || 'GET', headers: { ...headersFor(auth, path), accept: 'application/json' }, credentials: 'include' });
   if (!res.ok) throw new Error('detail ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
   return new Blob([await res.text()], { type: 'application/json' });
 }
 
-async function fetchList(adapter, auth, params) {
+async function fetchList(adapter, auth, params, net) {
+  const NET = net || ((u, i) => fetch(u, i));
   const url = adapter.api.host + adapter.api.list.path + '?' + new URLSearchParams(params);
-  // credentials:'include' carries the user's cookies — the common auth for sites that don't use a
-  // replayed bearer token (in an extension with host access this is not CORS-blocked).
+  // Run in the site's tab (page context) so cookies + cf_clearance + fingerprint carry through and
+  // Cloudflare/Akamai don't challenge it; credentials:'include' carries cookies.
   const cookie = adapter.auth && adapter.auth.mode === 'cookie';
-  const res = await fetch(url, { headers: headersFor(auth, adapter.api.list.path, !cookie), credentials: 'include' });
+  const res = await NET(url, { headers: headersFor(auth, adapter.api.list.path, !cookie), credentials: 'include' });
   if (!res.ok) throw new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160));
   return await res.json();
 }
