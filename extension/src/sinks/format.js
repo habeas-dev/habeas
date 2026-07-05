@@ -24,17 +24,20 @@ export function buildRecord(d, adapter) {
   const schema = (adapter && adapter.schema) || 'receipt@1';
   const kind = String(schema).split('@')[0];
   const currency = (adapter && adapter.currency) || 'EUR';
+  // `number` = the public receipt/invoice number the user sees (distinct from the internal
+  // externalId). Added only when mapped, so receipt@1 stays byte-identical when absent.
+  const withNumber = (r) => (d.number != null ? { ...r, number: d.number } : r);
   if (kind === 'transaction') {
-    return { externalId: d.externalId, date: d.date, amount: num(d.amount ?? d.total), currency, category: d.category, description: d.description ?? d.label ?? '', counterparty: d.counterparty ?? d.party ?? '', direction: d.direction ?? dirOf(d.amount ?? d.total), source: d.source, type: d.type };
+    return withNumber({ externalId: d.externalId, date: d.date, amount: num(d.amount ?? d.total), currency, category: d.category, description: d.description ?? d.label ?? '', counterparty: d.counterparty ?? d.party ?? '', direction: d.direction ?? dirOf(d.amount ?? d.total), source: d.source, type: d.type });
   }
   if (kind === 'investment') {
-    return { externalId: d.externalId, date: d.date, instrument: d.instrument ?? d.label ?? '', isin: d.isin ?? '', units: num(d.units), price: num(d.price), amount: num(d.amount ?? d.total), currency, category: d.category, operation: d.operation ?? d.type, source: d.source };
+    return withNumber({ externalId: d.externalId, date: d.date, instrument: d.instrument ?? d.label ?? '', isin: d.isin ?? '', units: num(d.units), price: num(d.price), amount: num(d.amount ?? d.total), currency, category: d.category, operation: d.operation ?? d.type, source: d.source });
   }
   if (kind === 'invoice') {
     return { externalId: d.externalId, date: d.date, total: num(d.total), currency, category: d.category, issuer: { name: d.issuer ?? d.storeName ?? d.party ?? '', address: d.issuerAddress ?? d.storeAddress ?? '' }, number: d.number ?? d.externalId, source: d.source, type: d.type };
   }
-  // receipt@1 (default) — unchanged shape.
-  return { externalId: d.externalId, date: d.date, total: d.total, currency, category: d.category, store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type };
+  // receipt@1 (default) — unchanged shape (number appended only when present).
+  return withNumber({ externalId: d.externalId, date: d.date, total: d.total, currency, category: d.category, store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type });
 }
 function num(v) { if (v == null || v === '') return v; const n = Number(v); return Number.isFinite(n) ? n : v; }
 function dirOf(v) { const n = Number(v); return Number.isFinite(n) ? (n < 0 ? 'debit' : 'credit') : undefined; }

@@ -103,8 +103,8 @@ export function documentExt(adapter) {
 // POST-PDF (see documentExt ordering).
 export async function fetchDocument(adapter, auth, externalId, net) {
   const ext = documentExt(adapter);
-  if (ext === 'pdf') return { blob: await fetchPdf(adapter, auth, externalId, net), ext };
-  if (ext === 'json') return { blob: await fetchDetail(adapter, auth, externalId, net), ext };
+  if (ext === 'pdf') return { blob: await fetchPdf(adapter, auth, externalId, net), ext, via: 'pdf' };
+  if (ext === 'json') return { ...(await fetchDetail(adapter, auth, externalId, net)), ext };
   throw new Error('no document for this source');
 }
 
@@ -129,17 +129,56 @@ export async function fetchPdf(adapter, auth, externalId, net) {
   return await res.blob();
 }
 
-// Per-document JSON detail (e.g. an order's full data). Saved as <id>.json.
+const EMBED_RES = [
+  /<script[^>]*id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i,
+  /<script[^>]*type=["']application\/json["'][^>]*>([\s\S]*?)<\/script>/i,
+  /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i,
+  /window\.__NUXT__\s*=\s*([\s\S]*?);?\s*<\/script>/i,
+  /window\.__INITIAL_STATE__\s*=\s*([\s\S]*?);?\s*<\/script>/i,
+];
+const stripTags = (s) => (s || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
+
+// Parse HTML tables / definition lists into JSON (case: data rendered directly in a table).
+function parseTables(html) {
+  const out = [];
+  for (const tbl of html.match(/<table[\s\S]*?<\/table>/gi) || []) {
+    const rows = (tbl.match(/<tr[\s\S]*?<\/tr>/gi) || []).map((tr) => (tr.match(/<t[dh][\s\S]*?<\/t[dh]>/gi) || []).map(stripTags)).filter((r) => r.some((c) => c));
+    if (!rows.length) continue;
+    if (rows.every((r) => r.length === 2)) { const o = {}; for (const [k, v] of rows) if (k) o[k] = v; out.push(o); }
+    else { const head = rows[0]; out.push(rows.slice(1).map((r) => { const o = {}; head.forEach((h, i) => { if (h) o[h] = r[i]; }); return o; })); }
+  }
+  const dl = [...html.matchAll(/<dt[^>]*>([\s\S]*?)<\/dt>\s*<dd[^>]*>([\s\S]*?)<\/dd>/gi)];
+  if (dl.length) { const o = {}; for (const m of dl) { const k = stripTags(m[1]); if (k) o[k] = stripTags(m[2]); } out.push(o); }
+  return out.length ? out : null;
+}
+
+// Detect HOW the detail delivers its data and return the extracted JSON + the mechanism:
+//   'json'     — the response IS JSON (an AJAX/API endpoint, or a JSON page)
+//   'embedded' — JSON embedded in the page's HTML (__NEXT_DATA__, application/json, JSON-LD…)
+//   'table'    — data rendered directly in an HTML table / definition list
+//   'html'     — none of the above; raw HTML kept so nothing is lost
+export function extractDetail(text, url) {
+  const t = (text || '').trim();
+  if (t[0] === '{' || t[0] === '[') { try { JSON.parse(t); return { json: t, via: 'json' }; } catch (e) {} }
+  for (const re of EMBED_RES) { const m = re.exec(text || ''); if (m) { try { JSON.parse(m[1].trim()); return { json: m[1].trim(), via: 'embedded' }; } catch (e) {} } }
+  const tables = parseTables(text || '');
+  if (tables) return { json: JSON.stringify(tables.length === 1 ? tables[0] : tables), via: 'table' };
+  return { json: JSON.stringify({ _url: url, _html: (text || '').slice(0, 300000) }), via: 'html' };
+}
+
+// Per-document JSON detail (an order's full data). Detects the delivery mechanism (AJAX JSON /
+// embedded JSON / HTML table) and returns { blob, via }.
 export async function fetchDetail(adapter, auth, externalId, net) {
   const NET = net || ((u, i) => fetch(u, i));
   const d = adapter.api.detail;
   if (!d) throw new Error('no detail for this source');
   const host = d.host ? absHost(d.host) : adapter.api.host;
-  const path = d.path.replace('{externalId}', encodeURIComponent(externalId));
+  const path = d.path.split('{externalId}').join(encodeURIComponent(externalId));
   const url = host + path;
-  const res = await NET(url, { method: d.method || 'GET', headers: { ...headersFor(auth, path), accept: 'application/json' }, credentials: 'include' });
+  const res = await NET(url, { method: d.method || 'GET', headers: { ...headersFor(auth, path.split('?')[0]), accept: 'application/json, text/html' }, credentials: 'include' });
   if (!res.ok) throw new Error('detail ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
-  return new Blob([await res.text()], { type: 'application/json' });
+  const { json, via } = extractDetail(await res.text(), url);
+  return { blob: new Blob([json], { type: 'application/json' }), via };
 }
 
 async function fetchList(adapter, auth, params, net) {

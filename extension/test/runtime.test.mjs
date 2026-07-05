@@ -68,20 +68,44 @@ test('documentExt prefers GET pdf, then json detail, then POST pdf', async () =>
   assert.equal(documentExt({ api: {} }), null);
 });
 
-test('fetchDetail GETs the JSON detail and returns a json blob', async () => {
+test('fetchDetail GETs the JSON detail (via=json)', async () => {
   const { fetchDetail } = await import('../src/runtime/inventory.js');
   globalThis.fetch = async (u) => { assert.match(u, /\/orders\/ORD-8$/); return { ok: true, text: async () => '{"id":"ORD-8"}' }; };
   const adapter = { api: { host: 'https://api.shop.es', detail: { path: '/orders/{externalId}' } } };
-  const blob = await fetchDetail(adapter, auth, 'ORD-8');
+  const { blob, via } = await fetchDetail(adapter, auth, 'ORD-8');
+  assert.equal(via, 'json');
   assert.equal(blob.type, 'application/json');
   assert.equal(await blob.text(), '{"id":"ORD-8"}');
 });
 
-test('fetchDocument returns json for a detail source', async () => {
+test('fetchDetail extracts embedded JSON from a server-rendered page (via=embedded)', async () => {
+  const { fetchDetail } = await import('../src/runtime/inventory.js');
+  const html = '<html><body><h1>Pedido</h1><script id="__NEXT_DATA__" type="application/json">{"order":{"id":"X","total":9}}</script></body></html>';
+  globalThis.fetch = async () => ({ ok: true, text: async () => html });
+  const adapter = { api: { host: 'https://www.shop.es', detail: { path: '/account/orderTracking?transactionId={externalId}&type=store' } } };
+  const { blob, via } = await fetchDetail(adapter, {}, 'X-UUID');
+  assert.equal(via, 'embedded');
+  assert.equal(JSON.parse(await blob.text()).order.id, 'X');
+});
+
+test('fetchDetail parses an HTML table (via=table)', async () => {
+  const { fetchDetail } = await import('../src/runtime/inventory.js');
+  const html = '<table><tr><td>Total</td><td>9,90 €</td></tr><tr><td>Estado</td><td>Entregado</td></tr></table>';
+  globalThis.fetch = async () => ({ ok: true, text: async () => html });
+  const adapter = { api: { host: 'https://www.shop.es', detail: { path: '/d/{externalId}' } } };
+  const { blob, via } = await fetchDetail(adapter, {}, 'A');
+  assert.equal(via, 'table');
+  const data = JSON.parse(await blob.text());
+  assert.equal(data.Total, '9,90 €');
+  assert.equal(data.Estado, 'Entregado');
+});
+
+test('fetchDocument returns json + via for a detail source', async () => {
   const { fetchDocument } = await import('../src/runtime/inventory.js');
   globalThis.fetch = async () => ({ ok: true, text: async () => '{"x":1}' });
   const adapter = { api: { host: 'https://api.shop.es', detail: { path: '/o/{externalId}' } } };
   const doc = await fetchDocument(adapter, auth, 'A');
   assert.equal(doc.ext, 'json');
+  assert.equal(doc.via, 'json');
   assert.equal(await doc.blob.text(), '{"x":1}');
 });
