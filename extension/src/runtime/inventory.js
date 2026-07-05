@@ -221,7 +221,9 @@ export async function fetchDetail(adapter, auth, internalId, net) {
   const host = d.host ? absHost(d.host) : adapter.api.host;
   const path = d.path.split('{internalId}').join(encodeURIComponent(internalId));
   const url = host + path;
-  const res = await NET(url, { method: d.method || 'GET', headers: { ...headersFor(auth, path.split('?')[0]), accept: 'application/json, text/html' }, credentials: 'include' });
+  // d.headers: static headers the SPA sends for this endpoint (e.g. dkt-ecom-origin). Captured auth
+  // and the accept default fill the rest; cookies ride along via credentials:'include'.
+  const res = await NET(url, { method: d.method || 'GET', headers: { accept: 'application/json, text/html', ...(d.headers || {}), ...headersFor(auth, path.split('?')[0]) }, credentials: 'include' });
   if (!res.ok) throw new Error('detail ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
   const { json, via } = extractDetail(await res.text(), url, internalId);
   return { blob: new Blob([json], { type: 'application/json' }), via };

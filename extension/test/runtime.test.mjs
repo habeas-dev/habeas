@@ -4,7 +4,7 @@ import carrefour from '../src/adapters/carrefour-es.js';
 import mart from './fixtures/examplemart-es.js';
 import bank from './fixtures/examplebank-es.js';
 import energy from './fixtures/exampleenergy-es.js';
-import { listInventory, fetchDocument } from '../src/runtime/inventory.js';
+import { listInventory, fetchDocument, fetchDetail } from '../src/runtime/inventory.js';
 
 const auth = { authorization: 'bearer eyJx' };
 function stub(pages) {
@@ -54,6 +54,18 @@ test('runtime resolves offset paging from offsetParam when `paging` is blank', a
   globalThis.fetch = async (u) => { const from = Number(new URL(u).searchParams.get('from')); const ids = from < 4 ? [from, from + 1].map((n) => ({ id: 'R' + n, d: '2026-01-01' })) : []; return { ok: true, json: async () => ({ items: ids }) }; };
   const docs = await listInventory(adapter, { authorization: 'eyJ' });
   assert.equal(docs.length, 4); // paginated despite paging:'' (offsetParam drives it)
+});
+
+test('fetchDetail sends static detail.headers and templates the id in the query', async () => {
+  const adapter = { api: { host: 'https://www.decathlon.es', detail: { path: '/web-engage/ajax/order?associationId={internalId}&orderManager=cube', headers: { 'dkt-ecom-origin': 'web-navigate-front', 'dkt-ecom-country': 'ES' } } }, fields: { internalId: 'associationId' }, schema: 'receipt@1' };
+  let seen;
+  globalThis.fetch = async (u, init) => { seen = { u, headers: init.headers, cred: init.credentials }; return { ok: true, text: async () => JSON.stringify({ associationId: 'UUID-1', total: 5 }) }; };
+  const { via } = await fetchDetail(adapter, {}, 'UUID-1');
+  assert.equal(via, 'json');
+  assert.equal(seen.headers['dkt-ecom-origin'], 'web-navigate-front');
+  assert.equal(seen.headers['dkt-ecom-country'], 'ES');
+  assert.equal(seen.cred, 'include');                       // cookie session rides along
+  assert.ok(seen.u.includes('associationId=UUID-1'), seen.u);
 });
 
 test('fetchDocument from:list returns the raw list item as JSON (no network)', async () => {

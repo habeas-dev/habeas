@@ -115,7 +115,8 @@
             "from": { "enum": ["list"], "description": "'list' → the document IS the already-listed item's JSON (no path/request needed)." },
             "path": { "type": "string", "description": "Detail path with {internalId} placeholder." },
             "method": { "enum": ["GET", "POST"] },
-            "host": { "type": "string", "description": "Detail host if different from api.host (same-domain guard applies)." }
+            "host": { "type": "string", "description": "Detail host if different from api.host (same-domain guard applies)." },
+            "headers": { "type": "object", "description": "Static headers the SPA sends for this endpoint (e.g. dkt-ecom-origin).", "additionalProperties": { "type": "string" } }
           }
         }
       }
