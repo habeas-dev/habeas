@@ -1,7 +1,7 @@
 name = "habeas-api"
 main = "worker.mjs"
 compatibility_date = "2024-11-01"
-workers_dev = true
+workers_dev = false
 
 # D1 binding — create the DB then paste its id here:
 #   wrangler d1 create habeas-api
