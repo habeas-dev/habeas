@@ -176,7 +176,7 @@
     };
     p.querySelector('#habeas-json').onclick = () => {
       const manifest = docs.map(d => ({
-        externalId: d.purchaseId, date: d.purchaseDate, total: d.amount, currency: 'EUR',
+        internalId: d.purchaseId, date: d.purchaseDate, total: d.amount, currency: 'EUR',
         store: { name: d.mallName, address: d.mallAddress, id: d.mallId },
         purchaseType: d.purchaseType, orderSource: d.orderSource,
       }));
