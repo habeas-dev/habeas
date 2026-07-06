@@ -30,7 +30,7 @@
       "referer": "https://www.dia.es/my-account/tickets"
     },
     "pdf": {
-      "path": "/api/v3/eservice-back/customer/current/tickets/{ticket_unique_code}/invoice?invoice-to-download={invoices.0}&nif-to-download=A80782519",
+      "path": "/api/v3/eservice-back/customer/current/tickets/{ticket_unique_code}/invoice?invoice-to-download={invoices.0}",
       "method": "GET",
       "referer": "https://www.dia.es/my-account/tickets"
     }
