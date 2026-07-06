@@ -597,6 +597,9 @@ function get(obj, path) {
   return String(path).split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
 }
 function windowMs(w) {
-  const m = /^(\d+)y$/.exec(w || '3y');
-  return (m ? +m[1] : 3) * 365 * 24 * 3600 * 1000;
+  // Accept days / months / years — e.g. "90d" (WiZink: only the last 90 days need no extra auth), "6m", "3y".
+  const m = /^(\d+)\s*([dmy])$/.exec(String(w || '3y').trim());
+  const n = m ? +m[1] : 3, unit = m ? m[2] : 'y';
+  const days = unit === 'd' ? n : unit === 'm' ? n * 30 : n * 365;
+  return days * 24 * 3600 * 1000;
 }
