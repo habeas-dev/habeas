@@ -24,6 +24,20 @@ function jsonTree(v, key, depth = 0) {
   return `<details${depth < 1 ? ' open' : ''}><summary style="cursor:pointer">${label}${brief}</summary><div style="margin-left:10px;border-left:1px solid #ccc;padding-left:8px">${entries.map(([k, x]) => jsonTree(x, k, depth + 1)).join('') + more}</div></details>`;
 }
 
+// Render an HTML document (printable invoice) in a sandboxed iframe (no scripts/same-origin) so the
+// user sees the actual page, not its source — with a toggle to inspect the raw HTML.
+function renderHtmlDoc(el, html) {
+  el.innerHTML = '';
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('sandbox', '');
+  iframe.style.cssText = 'width:100%;height:340px;border:1px solid #ccc;background:#fff;border-radius:4px';
+  iframe.srcdoc = html;
+  const toggle = document.createElement('a'); toggle.href = '#'; toggle.textContent = t('view_source'); toggle.style.cssText = 'font-size:12px;display:inline-block;margin-top:4px';
+  const pre = document.createElement('pre'); pre.textContent = html; pre.style.cssText = 'display:none;white-space:pre-wrap;max-height:240px;overflow:auto;font-size:11px;margin-top:4px';
+  toggle.onclick = (e) => { e.preventDefault(); const show = pre.style.display === 'none'; pre.style.display = show ? 'block' : 'none'; toggle.textContent = t(show ? 'view_rendered' : 'view_source'); };
+  el.append(iframe, document.createElement('br'), toggle, pre);
+}
+
 async function getAuthFor(host) {
   const o = await chrome.storage.session.get('auth:' + host);
   const s = o['auth:' + host];
@@ -107,8 +121,10 @@ export function editJson(adapter) {
       status.textContent = t('author_test_ok', [String(total)]) + ' · ' + t('author_doc_fetching', [String(docItem.internalId)]);
       try {
         const doc = await fetchDocument(ad, auth, docItem, net);
-        if (doc.ext === 'pdf') { if (el) el.textContent = t('author_doc_pdf_size', [String(Math.round((await doc.blob.text()).length / 1024))]); }
-        else { const text = await doc.blob.text(); let data; try { data = JSON.parse(text); } catch (e) {} if (el) el.innerHTML = data !== undefined ? jsonTree(data) : escf(text.slice(0, 5000)); }
+        if (!el) { /* nothing */ }
+        else if (doc.ext === 'pdf') { el.textContent = t('author_doc_pdf_size', [String(Math.round((await doc.blob.text()).length / 1024))]); }
+        else if (doc.ext === 'html') { renderHtmlDoc(el, await doc.blob.text()); } // render the printable page, not its source
+        else { const text = await doc.blob.text(); let data; try { data = JSON.parse(text); } catch (e) {} el.innerHTML = data !== undefined ? jsonTree(data) : escf(text.slice(0, 5000)); }
         status.textContent = t('author_test_ok', [String(total)]) + ' · ' + t('author_doc_via', [t('via_' + doc.via)]);
       } catch (e) {
         status.textContent = t('author_test_ok', [String(total)]) + ' · ' + t('author_doc_fail', [((e && e.message) || '').slice(0, 100)]);
