@@ -258,7 +258,18 @@ function jsonTree(v, key, depth = 0) {
 // Preview the fetched document: a collapsible JSON tree for a detail, a size note for a PDF.
 async function showDocPreview(doc) {
   const el = $('#docpreview');
-  if (doc.ext === 'json') {
+  if (doc.ext === 'html') { // render the printable page in a sandboxed iframe (not its source)
+    el.innerHTML = '';
+    const html = await doc.blob.text();
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('sandbox', '');
+    iframe.style.cssText = 'width:100%;height:340px;border:1px solid var(--line);background:#fff;border-radius:4px';
+    iframe.srcdoc = html;
+    const toggle = document.createElement('a'); toggle.href = '#'; toggle.textContent = t('view_source'); toggle.style.cssText = 'font-size:12px;display:inline-block;margin-top:4px';
+    const pre = document.createElement('pre'); pre.textContent = html; pre.style.cssText = 'display:none;white-space:pre-wrap;max-height:240px;overflow:auto;font-size:11px;margin-top:4px';
+    toggle.onclick = (e) => { e.preventDefault(); const show = pre.style.display === 'none'; pre.style.display = show ? 'block' : 'none'; toggle.textContent = t(show ? 'view_rendered' : 'view_source'); };
+    el.append(iframe, document.createElement('br'), toggle, pre);
+  } else if (doc.ext === 'json') {
     const text = await doc.blob.text();
     let data, ok = true;
     try { data = JSON.parse(text); } catch (e) { ok = false; }
