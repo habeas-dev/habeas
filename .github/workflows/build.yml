@@ -8,6 +8,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write # softprops/action-gh-release creates the Release and uploads the zip on v* tags
+
 jobs:
   build:
     runs-on: ubuntu-latest
