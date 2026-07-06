@@ -70,8 +70,8 @@ const HEADER_ALLOW = /^(authorization|x-.*token|x-.*csrf|x-xsrf-token|requestori
 function appHeaders(reqHeaders) {
   const out = {};
   for (const k of Object.keys(reqHeaders || {})) {
-    if (HEADER_ALLOW.test(k) || /^content-type$/i.test(k)) continue; // auth handled separately; CT set per request
-    if (reqHeaders[k]) out[k] = reqHeaders[k];
+    if (HEADER_ALLOW.test(k)) continue; // auth handled separately (auth.replayHeaders)
+    if (reqHeaders[k]) out[k] = reqHeaders[k]; // includes content-type — some GET APIs require it
   }
   return out;
 }
