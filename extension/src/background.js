@@ -5,11 +5,11 @@
 import { chrome } from './lib/ext.js';
 import { getConfig } from './lib/config.js';
 import { deliveredSet, markDelivered, appendLog } from './lib/state.js';
-import { listInventory, fetchDocument, documentExt } from './runtime/inventory.js';
+import { listInventory, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
 import { resolveSiteFetch } from './lib/pagefetch.js';
 import { renderPage } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
-import { acceptsDoc } from './sinks/format.js';
+import { acceptsDoc, sinkAcceptsArtifact } from './sinks/format.js';
 import { getAdapters } from './adapters/index.js';
 import { hasConsent } from './lib/consent.js';
 import { badgeWorking, badgeCount, badgeError, badgeClear } from './lib/badge.js';
@@ -123,8 +123,13 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     const fresh = all.filter((d) => !delivered[d.internalId]);
     const eligible = fresh.filter((d) => acceptsDoc(sink, d));
     if (!eligible.length) { await appendLog({ ...base, status: 'none', new: 0 }); await badgeClear(); return { status: 'done', new: 0 }; }
+    const kinds = artifactKinds(adapter).filter((k) => sinkAcceptsArtifact(sink, k.kind));
     const files = new Map();
-    for (const d of eligible) { try { files.set(d.internalId, (await fetchDocument(adapter, auth, d, net, renderPage)).blob); } catch (e) { /* no document */ } }
+    for (const d of eligible) {
+      const arts = [];
+      for (const k of kinds) { try { arts.push(await fetchArtifact(adapter, auth, d, net, renderPage, k.kind)); } catch (e) { /* artifact unavailable */ } }
+      if (arts.length) files.set(d.internalId, arts);
+    }
     await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, source: adapter.id, ext: documentExt(adapter) || 'pdf', interactive: !!opts.interactive });
     await markDelivered(ds.id, sink.id, eligible.map((d) => d.internalId));
     await appendLog({ ...base, status: 'ok', new: eligible.length });

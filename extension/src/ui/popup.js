@@ -1,10 +1,10 @@
 import { chrome } from '../lib/ext.js';
 import { getConfig } from '../lib/config.js';
-import { listInventory, fetchDocument, documentExt } from '../runtime/inventory.js';
+import { listInventory, artifactKinds, fetchArtifact, documentExt } from '../runtime/inventory.js';
 import { resolveSiteFetch } from '../lib/pagefetch.js';
 import { renderPage } from '../lib/render.js';
 import { writeToSink } from '../sinks/sinks.js';
-import { sinkAcceptsSource, acceptsDoc } from '../sinks/format.js';
+import { sinkAcceptsSource, acceptsDoc, sinkAcceptsArtifact } from '../sinks/format.js';
 import { deliveredSet, markDelivered, getLog, appendLog } from '../lib/state.js';
 import { badgeWorking, badgeClear } from '../lib/badge.js';
 import { getHandle, verifyPermission } from '../lib/fs.js';
@@ -138,11 +138,13 @@ async function onSend() {
   $('#status').textContent = t('fetching', [String(eligible.length)]);
   await badgeWorking();
   const net = await resolveSiteFetch(adapter);
+  const kinds = artifactKinds(adapter).filter((k) => sinkAcceptsArtifact(sink, k.kind));
   const files = new Map();
   const noPdf = [];
   for (const d of eligible) {
-    try { files.set(d.internalId, (await fetchDocument(adapter, auth, d, net, renderPage)).blob); }
-    catch (e) { if (/\b406\b|sin PDF|no PDF|no document/i.test(e.message)) noPdf.push(d.internalId); }
+    const arts = [];
+    for (const k of kinds) { try { arts.push(await fetchArtifact(adapter, auth, d, net, renderPage, k.kind)); } catch (e) { /* artifact unavailable */ } }
+    if (arts.length) files.set(d.internalId, arts); else noPdf.push(d.internalId);
   }
   log(t('with_without_pdf', [String(files.size), String(noPdf.length)]) + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : ''));
   try {

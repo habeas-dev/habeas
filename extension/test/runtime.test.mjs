@@ -4,7 +4,8 @@ import carrefour from '../src/adapters/carrefour-es.js';
 import mart from './fixtures/examplemart-es.js';
 import bank from './fixtures/examplebank-es.js';
 import energy from './fixtures/exampleenergy-es.js';
-import { listInventory, fetchDocument, fetchDetail, normalizeDate } from '../src/runtime/inventory.js';
+import { listInventory, fetchDocument, fetchDetail, normalizeDate, artifactKinds, fetchArtifact } from '../src/runtime/inventory.js';
+import { sinkAcceptsArtifact } from '../src/sinks/format.js';
 
 const auth = { authorization: 'bearer eyJx' };
 function stub(pages) {
@@ -81,6 +82,21 @@ test('detail.as:html fetches the print page and inlines its CSS + images (self-c
   assert.match(html, /<style>body\{color:red\}<\/style>/);        // CSS inlined
   assert.match(html, /data:image\/png;base64,/);                   // image inlined as data URI
   assert.match(html, /<base href="https:\/\/www\.hover\.com\/">/); // base added for anything else
+});
+
+test('artifacts: a source produces BOTH data (JSON) and a document (rendered HTML); sink chooses', async () => {
+  const render = async () => '<html><body><h1>Invoice X</h1></body></html>';
+  globalThis.fetch = async (u) => (String(u).includes('/api/') ? { ok: true, text: async () => JSON.stringify({ id: 'X', total: 5 }) } : { ok: true, text: async () => '' });
+  const adapter = { name: 'Hover', api: { host: 'https://h.es', list: { path: '/l', paging: 'none', itemsPath: 'items' }, detail: { path: '/api/receipts/{internalId}' }, document: { path: '/receipts/{internalId}', as: 'render' } }, fields: { internalId: 'id' }, schema: 'receipt@1' };
+  assert.deepEqual(artifactKinds(adapter).map((k) => k.kind).sort(), ['data', 'document']);
+  const data = await fetchArtifact(adapter, {}, { internalId: 'X' }, null, render, 'data');
+  assert.equal(data.ext, 'json'); assert.match(await data.blob.text(), /"id"/);
+  const doc = await fetchArtifact(adapter, {}, { internalId: 'X' }, null, render, 'document');
+  assert.equal(doc.ext, 'html'); assert.match(await doc.blob.text(), /Invoice X/);
+  // sink filtering: default = both; accepts.artifacts narrows.
+  assert.ok(sinkAcceptsArtifact({}, 'data') && sinkAcceptsArtifact({}, 'document'));
+  const s = { accepts: { artifacts: ['document'] } };
+  assert.ok(sinkAcceptsArtifact(s, 'document') && !sinkAcceptsArtifact(s, 'data'));
 });
 
 test('detail.as:render captures the FINAL rendered DOM (via injected render) + inlines assets', async () => {

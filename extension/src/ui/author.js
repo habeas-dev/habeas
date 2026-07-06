@@ -2,7 +2,7 @@ import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen, getAssets, getDomTexts } from '../lib/learn.js';
 import { draftAdapterFromSamples, listCandidates, matchCandidates } from '../runtime/infer.js';
-import { listInventory, fetchDocument } from '../runtime/inventory.js';
+import { listInventory, artifactKinds, fetchArtifact } from '../runtime/inventory.js';
 import { resolveSiteFetch } from '../lib/pagefetch.js';
 import { editJson } from './jsoneditor.js';
 import { renderPage } from '../lib/render.js';
@@ -215,7 +215,7 @@ async function onTest() {
     $('#status').textContent = t('author_test_ok', [String(docs.length)]);
     $('#docwrap').hidden = true;
     // Click any row → test the download/preview of THAT document. Auto-preview the first.
-    if (docs.length && (adapter.api.detail || adapter.api.pdf)) {
+    if (docs.length && artifactKinds(adapter).length) {
       const trs = $('#preview tbody').querySelectorAll('tr[data-i]');
       docs.slice(0, trs.length).forEach((d, i) => { trs[i].onclick = () => previewDoc(adapter, authStore, net, d, trs[i]); });
       previewDoc(adapter, authStore, net, docs[0], trs[0]);
@@ -230,7 +230,8 @@ async function previewDoc(adapter, authStore, net, docItem, tr) {
   $('#docwrap').hidden = true;
   $('#status').textContent = t('author_test_ok', [String(TEST_COUNT)]) + ' · ' + t('author_doc_fetching', [String(docItem.internalId)]);
   try {
-    const doc = await fetchDocument(adapter, authStore, docItem, net, renderPage);
+    const kind = artifactKinds(adapter).some((k) => k.kind === 'document') ? 'document' : 'data';
+    const doc = await fetchArtifact(adapter, authStore, docItem, net, renderPage, kind);
     await showDocPreview(doc);
     $('#status').textContent = t('author_test_ok', [String(TEST_COUNT)]) + ' · ' + t('author_doc_via', [t('via_' + doc.via)]);
   } catch (e) {

@@ -128,6 +128,21 @@
             "headers": { "type": "object", "description": "Static headers the SPA sends for this endpoint (e.g. dkt-ecom-origin).", "additionalProperties": { "type": "string" } },
             "referer": { "type": "string", "description": "Referer header to send (templated with {internalId}) — for endpoints that validate it. Set via declarativeNetRequest." }
           }
+        },
+        "document": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "The PRESENTABLE artifact (the archival/print document), separate from `detail` (structured data). A source may have BOTH; a sink chooses via accepts.artifacts. `as:render` (client-rendered page → captured), `as:html` (server-rendered page), `as:invoice` (generated from the detail JSON), or a plain PDF (path + optional method/body). Saved as <id>.html or <id>.pdf.",
+          "properties": {
+            "as": { "enum": ["html", "invoice", "render"], "description": "How to produce the document (see detail.as). Absent → a plain PDF at `path`." },
+            "waitFor": { "type": "string", "description": "[render] CSS selector to wait for before capturing." },
+            "waitMs": { "type": "number", "description": "[render] Fixed wait in ms (default 3500)." },
+            "path": { "type": "string", "description": "Path with {internalId} placeholder." },
+            "method": { "enum": ["GET", "POST"] },
+            "host": { "type": "string", "description": "Host if different from api.host (same-domain guard applies)." },
+            "headers": { "type": "object", "additionalProperties": { "type": "string" } },
+            "referer": { "type": "string", "description": "Referer (templated with {internalId})." }
+          }
         }
       }
     },

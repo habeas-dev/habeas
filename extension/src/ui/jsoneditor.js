@@ -1,7 +1,7 @@
 import { chrome } from '../lib/ext.js';
 import { t } from '../lib/i18n.js';
 import { validateAdapter } from '../adapters/validate.js';
-import { listInventory, fetchDocument } from '../runtime/inventory.js';
+import { listInventory, artifactKinds, fetchArtifact } from '../runtime/inventory.js';
 import { resolveSiteFetch } from '../lib/pagefetch.js';
 import { renderPage } from '../lib/render.js';
 
@@ -108,7 +108,7 @@ export function editJson(adapter) {
       // Cloudflare. Say so (a paged/referer-gated source only fully works from your tab).
       if (!net) { status.textContent = t('author_test_ok', [String(docs.length)]) + ' · ⚠ ' + t('je_no_tab'); return; }
       status.textContent = t('author_test_ok', [String(docs.length)]);
-      if (docs.length && (ad.api.detail || ad.api.pdf)) {
+      if (docs.length && artifactKinds(ad).length) {
         const trs = results.querySelectorAll('tr[data-i]');
         docs.slice(0, trs.length).forEach((d, i) => { trs[i].onclick = () => preview(ad, auth, net, d, trs[i], docs.length); });
         preview(ad, auth, net, docs[0], trs[0], docs.length);
@@ -121,7 +121,8 @@ export function editJson(adapter) {
       const el = results.querySelector('#je_doc'); if (el) el.innerHTML = '';
       status.textContent = t('author_test_ok', [String(total)]) + ' · ' + t('author_doc_fetching', [String(docItem.internalId)]);
       try {
-        const doc = await fetchDocument(ad, auth, docItem, net, renderPage);
+        const kind = artifactKinds(ad).some((k) => k.kind === 'document') ? 'document' : 'data';
+        const doc = await fetchArtifact(ad, auth, docItem, net, renderPage, kind);
         if (!el) { /* nothing */ }
         else if (doc.ext === 'pdf') { el.textContent = t('author_doc_pdf_size', [String(Math.round((await doc.blob.text()).length / 1024))]); }
         else if (doc.ext === 'html') { renderHtmlDoc(el, await doc.blob.text()); } // render the printable page, not its source
