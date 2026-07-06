@@ -121,7 +121,7 @@ export function editJson(adapter) {
       const el = results.querySelector('#je_doc'); if (el) el.innerHTML = '';
       status.textContent = t('author_test_ok', [String(total)]) + ' · ' + t('author_doc_fetching', [String(docItem.internalId)]);
       try {
-        const kind = artifactKinds(ad).some((k) => k.kind === 'document') ? 'document' : 'data';
+        const kind = artifactKinds(ad, docItem).some((k) => k.kind === 'document') ? 'document' : 'data'; // per-doc: no invoice → preview the data
         const doc = await fetchArtifact(ad, auth, docItem, net, renderPage, kind);
         if (!el) { /* nothing */ }
         else if (doc.ext === 'pdf') { el.textContent = t('author_doc_pdf_size', [String(Math.round((await doc.blob.text()).length / 1024))]); }

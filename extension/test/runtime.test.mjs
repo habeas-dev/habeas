@@ -4,7 +4,7 @@ import carrefour from '../src/adapters/carrefour-es.js';
 import mart from './fixtures/examplemart-es.js';
 import bank from './fixtures/examplebank-es.js';
 import energy from './fixtures/exampleenergy-es.js';
-import { listInventory, fetchDocument, fetchDetail, normalizeDate, artifactKinds, fetchArtifact } from '../src/runtime/inventory.js';
+import { listInventory, fetchDocument, fetchDetail, fetchPdf, normalizeDate, artifactKinds, fetchArtifact } from '../src/runtime/inventory.js';
 import { sinkAcceptsArtifact } from '../src/sinks/format.js';
 
 const auth = { authorization: 'bearer eyJx' };
@@ -158,6 +158,24 @@ test('runtime resolves offset paging from offsetParam when `paging` is blank', a
   globalThis.fetch = async (u) => { const from = Number(new URL(u).searchParams.get('from')); const ids = from < 4 ? [from, from + 1].map((n) => ({ id: 'R' + n, d: '2026-01-01' })) : []; return { ok: true, json: async () => ({ items: ids }) }; };
   const docs = await listInventory(adapter, { authorization: 'eyJ' });
   assert.equal(docs.length, 4); // paginated despite paging:'' (offsetParam drives it)
+});
+
+test('artifactKinds drops a document a doc cannot fill (Dia ticket with no invoice) — no error', () => {
+  const adapter = { api: { detail: { path: '/t/{internalId}' }, pdf: { path: '/t/{ticket_unique_code}/invoice?inv={invoices.0}' } }, fields: {}, schema: 'receipt@1' };
+  const withInv = { internalId: '1', _raw: { ticket_unique_code: 'ES1', invoices: ['A'] } };
+  const noInv = { internalId: '2', _raw: { ticket_unique_code: 'ES2', invoices: [] } };
+  assert.deepEqual(artifactKinds(adapter).map((k) => k.kind), ['data', 'document']); // adapter-level: both possible
+  assert.deepEqual(artifactKinds(adapter, withInv).map((k) => k.kind), ['data', 'document']);
+  assert.deepEqual(artifactKinds(adapter, noInv).map((k) => k.kind), ['data']); // no invoice → no document artifact
+});
+
+test('fetchPdf templates {field.path} and bails cleanly when a field is missing', async () => {
+  let url = '';
+  globalThis.fetch = async (u) => { url = String(u); return { ok: true, status: 200, blob: async () => new Blob(['%PDF']) }; };
+  const adapter = { api: { host: 'https://x.es', pdf: { path: '/t/{ticket_unique_code}/invoice?inv={invoices.0}' } }, fields: {}, schema: 'receipt@1' };
+  await fetchPdf(adapter, { byPath: {}, merged: {} }, { internalId: '1', _raw: { ticket_unique_code: 'ES1', invoices: ['A'] } });
+  assert.equal(url, 'https://x.es/t/ES1/invoice?inv=A');
+  await assert.rejects(fetchPdf(adapter, { byPath: {}, merged: {} }, { internalId: '2', _raw: { ticket_unique_code: 'ES2', invoices: [] } }), /no document/);
 });
 
 test('detail path templates {field.path} from the list item (Dia-style multi-param detail)', async () => {

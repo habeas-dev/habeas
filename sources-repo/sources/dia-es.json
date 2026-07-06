@@ -1,0 +1,46 @@
+{
+  "id": "dia-es",
+  "name": "Dia España — tickets",
+  "service": "dia",
+  "trust": "community",
+  "domain": "dia.es",
+  "country": "ES",
+  "version": "2026-07-06",
+  "categories": ["grocery"],
+  "match": ["https://www.dia.es/*"],
+  "auth": {
+    "mode": "cookie",
+    "replayHeaders": []
+  },
+  "api": {
+    "host": "https://www.dia.es",
+    "list": {
+      "path": "/my-account/tickets",
+      "from": "html",
+      "paging": "none",
+      "itemsPath": "INITIAL_STATE.ticketsList"
+    },
+    "detail": {
+      "path": "/api/v3/eservice-back/customer/current/tickets/{internalId}?begin={detail_params.begin}&business={detail_params.business}&country={detail_params.country}&pos={detail_params.pos}&store={detail_params.store}",
+      "method": "GET",
+      "headers": {
+        "x-requested-with": "XMLHttpRequest",
+        "x-locale": "es"
+      },
+      "referer": "https://www.dia.es/my-account/tickets"
+    },
+    "pdf": {
+      "path": "/api/v3/eservice-back/customer/current/tickets/{ticket_unique_code}/invoice?invoice-to-download={invoices.0}&nif-to-download=A80782519",
+      "method": "GET",
+      "referer": "https://www.dia.es/my-account/tickets"
+    }
+  },
+  "fields": {
+    "internalId": "detail_params.ticket",
+    "number": "invoices.0",
+    "date": "submitted_date",
+    "total": "total_amount",
+    "storeName": "store_info.city"
+  },
+  "schema": "receipt@1"
+}

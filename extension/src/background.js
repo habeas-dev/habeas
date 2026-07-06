@@ -156,7 +156,11 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     const files = new Map();
     for (const d of eligible) {
       const arts = [];
-      for (const k of kinds) { try { arts.push(await fetchArtifact(adapter, auth, d, net, renderPage, k.kind)); } catch (e) { /* artifact unavailable */ } }
+      const avail = artifactKinds(adapter, d); // per-doc: drops the document (e.g. invoice PDF) if this doc lacks it
+      for (const k of kinds) {
+        if (!avail.some((a) => a.kind === k.kind)) continue; // this ticket has no such artifact (no invoice) → skip cleanly
+        try { arts.push(await fetchArtifact(adapter, auth, d, net, renderPage, k.kind)); } catch (e) { /* artifact unavailable */ }
+      }
       if (arts.length) files.set(d.internalId, arts);
     }
     setStatus(t('status_sending', [String(eligible.length), sink.id]));
