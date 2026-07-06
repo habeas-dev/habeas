@@ -119,12 +119,29 @@
           "description": "Per-document JSON detail (e.g. a full order). Saved as <id>.json. Preferred over a POST-generated PDF. Use `from:'list'` when the list endpoint already returns each item's full data (no extra request).",
           "properties": {
             "from": { "enum": ["list"], "description": "'list' → the document IS the already-listed item's JSON (no path/request needed)." },
-            "as": { "enum": ["html", "invoice"], "description": "'html' → fetch the path as a page and store it self-contained (assets inlined) — e.g. a server-rendered print/receipt page. 'invoice' → render a clean printable invoice from the detail JSON. Both save a printable .html." },
+            "as": { "enum": ["html", "invoice", "render"], "description": "'render' → open the path in a background tab, let the SPA render + fetch its data in the user's session, then capture the FINAL DOM self-contained (cross-browser; the faithful document for client-rendered pages). 'html' → fetch the path as a page and store it self-contained (server-rendered). 'invoice' → render a clean printable invoice from the detail JSON. All save a printable .html." },
+            "waitFor": { "type": "string", "description": "[render] CSS selector to wait for before capturing (robust). If absent, waits waitMs." },
+            "waitMs": { "type": "number", "description": "[render] Fixed wait in ms before capturing (default 3500) when waitFor is not set." },
             "path": { "type": "string", "description": "Detail path with {internalId} placeholder." },
             "method": { "enum": ["GET", "POST"] },
             "host": { "type": "string", "description": "Detail host if different from api.host (same-domain guard applies)." },
             "headers": { "type": "object", "description": "Static headers the SPA sends for this endpoint (e.g. dkt-ecom-origin).", "additionalProperties": { "type": "string" } },
             "referer": { "type": "string", "description": "Referer header to send (templated with {internalId}) — for endpoints that validate it. Set via declarativeNetRequest." }
+          }
+        },
+        "document": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "The PRESENTABLE artifact (the archival/print document), separate from `detail` (structured data). A source may have BOTH; a sink chooses via accepts.artifacts. `as:render` (client-rendered page → captured), `as:html` (server-rendered page), `as:invoice` (generated from the detail JSON), or a plain PDF (path + optional method/body). Saved as <id>.html or <id>.pdf.",
+          "properties": {
+            "as": { "enum": ["html", "invoice", "render"], "description": "How to produce the document (see detail.as). Absent → a plain PDF at `path`." },
+            "waitFor": { "type": "string", "description": "[render] CSS selector to wait for before capturing." },
+            "waitMs": { "type": "number", "description": "[render] Fixed wait in ms (default 3500)." },
+            "path": { "type": "string", "description": "Path with {internalId} placeholder." },
+            "method": { "enum": ["GET", "POST"] },
+            "host": { "type": "string", "description": "Host if different from api.host (same-domain guard applies)." },
+            "headers": { "type": "object", "additionalProperties": { "type": "string" } },
+            "referer": { "type": "string", "description": "Referer (templated with {internalId})." }
           }
         }
       }

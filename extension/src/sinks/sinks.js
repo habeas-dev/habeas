@@ -20,12 +20,13 @@ const IMPL = {
   // only exists to dodge Chrome's multi-download block; other sinks write files directly).
   async download(sink, docs, files, opts) {
     const service = opts.service || 'documents';
-    const present = docs.filter((d) => files.get(d.internalId));
-    const entries = present.map((d) => ({ name: pathFor(sink, d, opts), blob: files.get(d.internalId) }));
+    const entries = [];
+    for (const d of docs) for (const art of files.get(d.internalId) || []) entries.push({ name: pathFor(sink, d, opts, art.ext), blob: art.blob });
+    const written = entries.length;
     entries.push({ name: `${service}/manifest.json`, blob: jsonBlob(buildManifest(docs, files)) });
     const zip = await makeZip(entries);
     triggerDownload(zip, `habeas-${service}-${today()}.zip`);
-    return { written: present.length, total: docs.length };
+    return { written, total: docs.length };
   },
 
   // Local folder via File System Access (point it at a synced folder for "cloud").
@@ -35,10 +36,11 @@ const IMPL = {
     const service = opts.service || 'documents';
     let n = 0;
     for (const d of docs) {
-      const blob = files.get(d.internalId); if (!blob) continue;
-      const rel = pathFor(sink, d, opts).split('/');
-      const dir = await ensureDir(root, rel.slice(0, -1));
-      await writeFile(dir, rel.at(-1), blob); n++;
+      for (const art of files.get(d.internalId) || []) {
+        const rel = pathFor(sink, d, opts, art.ext).split('/');
+        const dir = await ensureDir(root, rel.slice(0, -1));
+        await writeFile(dir, rel.at(-1), art.blob); n++;
+      }
     }
     const svcDir = await ensureDir(root, [service]);
     const existing = await readJsonFile(svcDir, 'manifest.json');
@@ -53,13 +55,12 @@ const IMPL = {
   // HTTP consumer (Tiquetera / Cuéntamo): POST normalized records + available PDFs.
   async http(sink, docs, files, opts = {}) {
     const token = await getSecret(sink.tokenRef);
-    const ext = opts.ext || 'pdf';
     const form = new FormData();
     // Tell the consumer WHICH source produced this data (e.g. "decathlon-es").
     if (opts.source) form.append('source', opts.source);
     if (opts.service) form.append('service', opts.service);
     form.append('records', buildManifest(docs, files));
-    for (const d of docs) { const b = files.get(d.internalId); if (b) form.append('files[]', b, d.internalId + '.' + ext); }
+    for (const d of docs) for (const art of files.get(d.internalId) || []) form.append('files[]', art.blob, d.internalId + '.' + art.ext);
     // sink.headers: caller-supplied (e.g. an externally-proposed sink's pairing token). tokenRef wins.
     const headers = { ...(sink.headers || {}), ...(token ? { Authorization: 'Bearer ' + token } : {}) };
     const res = await fetch(sink.url, { method: 'POST', headers, body: form });

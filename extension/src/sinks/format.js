@@ -1,8 +1,8 @@
 // Shared formatting helpers used by every sink.
 import { renderPath } from '../lib/naming.js';
 
-export function pathFor(sink, d, opts) {
-  const ext = (opts && opts.ext) || 'pdf';
+export function pathFor(sink, d, opts, ext) {
+  ext = ext || (opts && opts.ext) || 'pdf';
   const tpl = sink.pathTemplate || '{service}/{yyyy}/{date}-{internalId}.{ext}';
   return renderPath(tpl, {
     service: (opts && opts.service) || 'documents',
@@ -51,6 +51,12 @@ export function sinkAcceptsSource(sink, adapter) {
   if (a.sources && a.sources.includes(adapter.id)) return true;
   const cats = adapter.categories || [];
   return !!(a.categories && a.categories.some((c) => cats.includes(c)));
+}
+// Artifact filter: which artifact kinds ('data' | 'document') this sink takes. No `accepts.artifacts`
+// → all (generic file sinks store both the JSON and the presentable HTML/PDF).
+export function sinkAcceptsArtifact(sink, kind) {
+  const a = sink && sink.accepts && sink.accepts.artifacts;
+  return !a || !a.length || a.includes(kind);
 }
 // Document-level filter: only send docs whose category the sink accepts.
 export function acceptsDoc(sink, doc) {

@@ -40,6 +40,7 @@ export function collectHosts(adapter) {
   if (api.host) hosts.add(hostOf(api.host));
   if (api.pdf && api.pdf.host) hosts.add(hostOf(api.pdf.host));       // the session is replayed here too
   if (api.detail && api.detail.host) hosts.add(hostOf(api.detail.host));
+  if (api.document && api.document.host) hosts.add(hostOf(api.document.host));
   for (const m of adapter.match || []) hosts.add(hostOf(m));
   for (const h of adapter.captureHosts || []) hosts.add(hostOf(h));
   return [...hosts].filter(Boolean);

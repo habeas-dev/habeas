@@ -45,11 +45,12 @@ export async function driveWrite(sink, docs, files, opts) {
   const cache = {};
   let n = 0;
   for (const d of docs) {
-    const blob = files.get(d.internalId); if (!blob) continue;
-    const rel = (root + '/' + pathFor(sink, d, opts)).split('/').filter(Boolean);
-    const folderId = await ensureFolderPath(token, rel.slice(0, -1), cache);
-    await uploadFile(token, rel.at(-1), folderId, blob);
-    n++;
+    for (const art of files.get(d.internalId) || []) {
+      const rel = (root + '/' + pathFor(sink, d, opts, art.ext)).split('/').filter(Boolean);
+      const folderId = await ensureFolderPath(token, rel.slice(0, -1), cache);
+      await uploadFile(token, rel.at(-1), folderId, art.blob);
+      n++;
+    }
   }
   // Cumulative per-service manifest: Habeas/<service>/manifest.json (read → merge → write).
   const svcId = await ensureFolderPath(token, [root, service], cache);

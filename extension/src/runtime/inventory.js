@@ -149,6 +149,35 @@ export function renderInvoiceHtml(doc, detail, adapter) {
   </body></html>`;
 }
 
+// Two artifact kinds per document: `data` (the structured JSON detail) and `document` (the
+// presentable file — rendered/print HTML or PDF). A source can produce either or BOTH; a sink chooses
+// which to take (sink.accepts.artifacts). `api.detail` (plain) = data; `api.document` (as:render|
+// html|invoice) or `api.pdf` = document; a legacy `api.detail.as` counts as the document.
+const docExtOf = (cfg) => (cfg.as === 'render' || cfg.as === 'html' || cfg.as === 'invoice' ? 'html' : 'pdf');
+const documentCfg = (api) => api.document || (api.detail && api.detail.as ? api.detail : null);
+export function artifactKinds(adapter) {
+  const api = adapter.api || {}, out = [];
+  if (api.detail && !api.detail.as) out.push({ kind: 'data', ext: 'json' });
+  const dc = documentCfg(api);
+  if (dc) out.push({ kind: 'document', ext: docExtOf(dc) });
+  else if (api.pdf) out.push({ kind: 'document', ext: 'pdf' });
+  return out;
+}
+// Fetch one artifact. Reuses fetchDocument by PROJECTING the adapter so the requested artifact sits
+// on api.detail/api.pdf (no change to the low-level fetchers).
+export async function fetchArtifact(adapter, auth, doc, net, render, kind) {
+  const api = adapter.api;
+  if (kind === 'data') {
+    const a = { ...adapter, api: { ...api, detail: api.detail, pdf: undefined, document: undefined } };
+    const r = await fetchDocument(a, auth, doc, net, render);
+    return { kind, ext: 'json', blob: r.blob, via: r.via };
+  }
+  const dc = documentCfg(api);
+  const a = dc ? { ...adapter, api: { ...api, detail: dc, pdf: undefined } } : { ...adapter, api: { ...api, detail: undefined } };
+  const r = await fetchDocument(a, auth, doc, net, render);
+  return { kind, ext: r.ext, blob: r.blob, via: r.via };
+}
+
 // Fetch a document's file (PDF or JSON detail) as a Blob. Accepts a doc object (preferred — carries
 // `_raw`) or a bare internalId. `detail.from:'list'` uses the already-listed item's JSON as the
 // document (no extra request) — ideal when the list endpoint already returns each order's data and
