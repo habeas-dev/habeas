@@ -91,6 +91,12 @@ const absHost = (h) => (/^https?:\/\//.test(h) ? h : 'https://' + h);
 // Template an id into a path. Don't percent-encode a path/URL-like id (e.g. a row's href
 // "/…/receipts/123.pdf") — that would break its slashes; encode only opaque ids.
 const tid = (id) => (/[/:]/.test(String(id)) ? String(id) : encodeURIComponent(id));
+// Fill a URL/referer template: {internalId} + any {dotted.path} taken from the doc's raw list item
+// (e.g. Dia's detail needs {detail_params.begin}/{detail_params.pos}/… from the listed ticket).
+const applyTmpl = (str, doc, id) => String(str).replace(/\{([^}]+)\}/g, (m, k) => {
+  const v = k === 'internalId' ? id : (doc && doc._raw ? get(doc._raw, k) : undefined);
+  return v == null ? m : tid(v);
+});
 
 // Resolve the headers to replay for a given endpoint path from the captured auth STORE
 // ({ byPath, merged }). Different endpoints can use different auth (e.g. cookie-authed list +
@@ -199,13 +205,13 @@ export async function fetchDocument(adapter, auth, docOrId, net, render) {
   }
   if (detail && detail.as === 'html') return fetchHtmlDoc(adapter, auth, internalId, net); // fetch the print page, self-contained
   if (detail && detail.as === 'invoice') { // render a clean printable invoice from the detail JSON
-    const dj = await fetchDetail(adapter, auth, internalId, net);
+    const dj = await fetchDetail(adapter, auth, doc || internalId, net);
     let data = {}; try { data = JSON.parse(await dj.blob.text()); } catch (e) {}
     return { blob: new Blob([renderInvoiceHtml(doc || { internalId }, data, adapter)], { type: 'text/html' }), ext: 'html', via: 'invoice' };
   }
   const ext = documentExt(adapter);
   if (ext === 'pdf') return { blob: await fetchPdf(adapter, auth, internalId, net), ext, via: 'pdf' };
-  if (ext === 'json') return { ...(await fetchDetail(adapter, auth, internalId, net)), ext };
+  if (ext === 'json') return { ...(await fetchDetail(adapter, auth, doc || internalId, net)), ext };
   throw new Error('no document for this source');
 }
 
@@ -333,19 +339,21 @@ async function fetchHtmlDoc(adapter, auth, internalId, net) {
   return { blob: new Blob([html], { type: 'text/html' }), ext: 'html', via: 'page' };
 }
 
-export async function fetchDetail(adapter, auth, internalId, net) {
+export async function fetchDetail(adapter, auth, docOrId, net) {
   const NET = net || ((u, i) => fetch(u, i));
+  const doc = docOrId && typeof docOrId === 'object' ? docOrId : null;
+  const internalId = doc ? doc.internalId : docOrId;
   const d = adapter.api.detail;
   if (!d) throw new Error('no detail for this source');
   const host = d.host ? absHost(d.host) : adapter.api.host;
-  const path = d.path.split('{internalId}').join(tid(internalId));
+  const path = applyTmpl(d.path, doc, internalId); // {internalId} + {field.path} from the list item
   const url = host + path;
   // d.headers: static headers the SPA sends for this endpoint (e.g. dkt-ecom-origin). Captured auth
   // and the accept default fill the rest; cookies ride along via credentials:'include'.
   const init = { method: d.method || 'GET', headers: { accept: 'application/json, text/html', ...(d.headers || {}), ...headersFor(auth, path.split('?')[0]) }, credentials: 'include' };
   // d.referer: some endpoints validate the Referer (e.g. the item's detail page). fetch can't set it
   // (forbidden header) → declarativeNetRequest, same as the PDF path.
-  const referer = d.referer ? String(d.referer).split('{internalId}').join(internalId) : null;
+  const referer = d.referer ? applyTmpl(d.referer, doc, internalId) : null;
   if (referer) init.referrer = referer; // page-context fetch sets it same-origin (reliable); DNR is the fallback
   const res = await withReferer(url, referer, () => NET(url, init));
   if (!res.ok) throw new Error('detail ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
@@ -395,11 +403,14 @@ const unescapeHtml = (s) => String(s).replace(/&quot;/g, '"').replace(/&#0?39;/g
 // Bootstrap JSON embedded in a page: <script> blobs (Next/Nuxt/JSON-LD) AND React/Inertia
 // `data-props`/`data-page`/`data-state` attributes (HTML-entity escaped) — hover.com uses the latter.
 export function embeddedObjects(html) {
-  const out = [];
-  for (const re of EMBED_RES) { const m = re.exec(html || ''); if (m) { try { out.push(JSON.parse(m[1].trim())); } catch (e) {} } }
-  for (const m of (html || '').matchAll(/data-(?:props|page|state)=(['"])([\s\S]*?)\1/gi)) {
-    try { out.push(JSON.parse(unescapeHtml(m[2]))); } catch (e) {}
-  }
+  const out = [], H = html || '';
+  const push = (s) => { try { out.push(JSON.parse(String(s).trim())); } catch (e) {} };
+  // ALL <script type="application/json"> blocks (Next, JSON-LD, Vike's vike_pageContext, …), not just
+  // the first — so itemsPath can pick the right one when a page has several.
+  for (const m of H.matchAll(/<script\b[^>]*\btype=["']application\/(?:ld\+)?json["'][^>]*>([\s\S]*?)<\/script>/gi)) push(m[1]);
+  for (const m of H.matchAll(/<script\b[^>]*\bid=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/gi)) push(m[1]);
+  for (const m of H.matchAll(/window\.__(?:NUXT|INITIAL_STATE)__\s*=\s*([\s\S]*?);?\s*<\/script>/gi)) push(m[1]);
+  for (const m of H.matchAll(/data-(?:props|page|state)=(['"])([\s\S]*?)\1/gi)) push(unescapeHtml(m[2]));
   return out;
 }
 function parseHtmlRows(html) {
