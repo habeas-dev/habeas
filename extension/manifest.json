@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extName__",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "__MSG_extDesc__",
   "default_locale": "en",
   "action": { "default_title": "Habeas", "default_icon": { "16": "icon-16.png", "48": "icon-48.png", "128": "icon-128.png" } },
@@ -34,8 +34,11 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "habeas@habeas.dev",
-      "strict_min_version": "128.0",
+      "strict_min_version": "140.0",
       "data_collection_permissions": { "required": ["none"] }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
     }
   }
 }
