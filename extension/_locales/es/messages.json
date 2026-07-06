@@ -163,6 +163,8 @@
   "via_html": { "message": "HTML sin datos estructurados" },
   "via_pdf": { "message": "un archivo PDF" },
   "via_list": { "message": "el propio elemento de la lista (JSON)" },
+  "via_page": { "message": "la página de impresión (HTML autocontenido)" },
+  "via_invoice": { "message": "una factura imprimible generada (HTML)" },
   "author_doc_preview": { "message": "Vista previa del detalle (primer documento):" },
   "author_doc_pdf_size": { "message": "PDF · $N$ KB", "placeholders": { "n": { "content": "$1" } } },
   "author_test_err": { "message": "Falló la prueba: $MSG$", "placeholders": { "msg": { "content": "$1" } } },

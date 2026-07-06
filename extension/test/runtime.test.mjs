@@ -67,6 +67,33 @@ test('mapDoc normalizes a textual date field to ISO (and sorts by it)', async ()
   assert.equal(docs[1].date, '2021-10-22');
 });
 
+test('detail.as:html fetches the print page and inlines its CSS + images (self-contained)', async () => {
+  const page = '<html><head><link rel="stylesheet" href="/css/print.css"></head><body><h1>Receipt</h1><img src="/logo.png"></body></html>';
+  globalThis.fetch = async (u) => {
+    if (u.endsWith('/css/print.css')) return { ok: true, text: async () => 'body{color:red}' };
+    if (u.endsWith('/logo.png')) return { ok: true, blob: async () => new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' }) };
+    return { ok: true, text: async () => page };
+  };
+  const adapter = { name: 'Hover', api: { host: 'https://www.hover.com', detail: { path: '/control_panel/receipts/{internalId}', as: 'html' } }, fields: { internalId: 'id' }, schema: 'receipt@1' };
+  const { blob, ext, via } = await fetchDocument(adapter, { byPath: {}, merged: {} }, { internalId: 'abc' });
+  assert.equal(ext, 'html'); assert.equal(via, 'page');
+  const html = await blob.text();
+  assert.match(html, /<style>body\{color:red\}<\/style>/);        // CSS inlined
+  assert.match(html, /data:image\/png;base64,/);                   // image inlined as data URI
+  assert.match(html, /<base href="https:\/\/www\.hover\.com\/">/); // base added for anything else
+});
+
+test('detail.as:invoice renders a clean printable HTML invoice from the JSON detail', async () => {
+  globalThis.fetch = async () => ({ ok: true, text: async () => JSON.stringify({ invoice: 'INV-9', date: '2021-10-22', total: '18.99', lines: [{ item: 'domain', price: '18.99' }] }) });
+  const adapter = { name: 'Hover', api: { host: 'https://x.es', detail: { path: '/r/{internalId}', as: 'invoice' } }, fields: { internalId: 'invoice' }, schema: 'receipt@1' };
+  const doc = { internalId: 'INV-9', record: { number: 'INV-9', date: '2021-10-22', total: '18.99', currency: 'EUR' } };
+  const { blob, ext, via } = await fetchDocument(adapter, {}, doc);
+  assert.equal(ext, 'html'); assert.equal(via, 'invoice');
+  const html = await blob.text();
+  assert.match(html, /<!doctype html>/i);
+  assert.match(html, /INV-9/); assert.match(html, /18\.99/); assert.match(html, /Hover/);
+});
+
 test('html list: extracts React data-props bootstrap JSON (hover.com style)', async () => {
   const props = { initialData: { path: '/', data: { receipts: [
     { id: 'r-1', date: '2026-01-02', total: '18.99', num: 'INV-1' },
