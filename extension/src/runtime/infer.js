@@ -71,7 +71,12 @@ function appHeaders(reqHeaders) {
   const out = {};
   for (const k of Object.keys(reqHeaders || {})) {
     if (HEADER_ALLOW.test(k)) continue; // auth handled separately (auth.replayHeaders)
-    if (reqHeaders[k]) out[k] = reqHeaders[k]; // includes content-type — some GET APIs require it
+    const v = reqHeaders[k];
+    if (!v) continue;
+    // Skip ephemeral/session tokens (e.g. anti-bot like `uzlc`): long, token-shaped, no spaces.
+    // Hardcoding them breaks on rotation and isn't publishable — capture live via replayHeaders instead.
+    if (String(v).length > 40 && /^[A-Za-z0-9._~:+/=-]+$/.test(String(v))) continue;
+    out[k] = v; // config-ish headers (dkt-ecom-origin, content-type) — safe to carry
   }
   return out;
 }

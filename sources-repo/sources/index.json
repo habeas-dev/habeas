@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-06T05:46:18.334Z",
+  "generated": "2026-07-06T06:39:11.399Z",
   "sources": [
     {
       "id": "carrefour-es",
@@ -15,7 +15,7 @@
       "crossDomain": [],
       "version": "2026-07-06",
       "url": "https://habeas-dev.github.io/sources/carrefour-es.json",
-      "updated": "2026-07-06T05:46:18.334Z"
+      "updated": "2026-07-06T06:39:11.399Z"
     },
     {
       "id": "decathlon-es",
@@ -29,7 +29,21 @@
       "crossDomain": [],
       "version": "2026-07-06",
       "url": "https://habeas-dev.github.io/sources/decathlon-es.json",
-      "updated": "2026-07-06T05:46:18.334Z"
+      "updated": "2026-07-06T06:39:11.399Z"
+    },
+    {
+      "id": "hover-com",
+      "name": "Hover — Receipts",
+      "service": "hover",
+      "categories": [
+        "domains"
+      ],
+      "trust": "community",
+      "domain": "hover.com",
+      "crossDomain": [],
+      "version": "2026-07-06",
+      "url": "https://habeas-dev.github.io/sources/hover-com.json",
+      "updated": "2026-07-06T06:39:11.399Z"
     }
   ]
 }

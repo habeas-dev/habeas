@@ -1,0 +1,31 @@
+{
+  "id": "hover-com",
+  "name": "Hover — Receipts",
+  "service": "hover",
+  "trust": "community",
+  "domain": "hover.com",
+  "version": "2026-07-06",
+  "categories": ["domains"],
+  "match": ["https://www.hover.com/*"],
+  "auth": { "mode": "cookie", "replayHeaders": [] },
+  "api": {
+    "host": "https://www.hover.com",
+    "list": {
+      "path": "/api/control_panel/settings/receipts",
+      "paging": "none",
+      "itemsPath": "settings.receipts.orders"
+    },
+    "detail": {
+      "path": "/api/control_panel/settings/receipts/{internalId}",
+      "method": "GET"
+    }
+  },
+  "fields": {
+    "internalId": "invoice",
+    "number": "invoice",
+    "date": "date",
+    "total": "total",
+    "storeName": "text"
+  },
+  "schema": "receipt@1"
+}
