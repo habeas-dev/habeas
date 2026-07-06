@@ -47,6 +47,20 @@ test('html list: parses items from a server-rendered table (from:html), incl. ro
   assert.ok(docs.every((d) => d.date && d.total));
 });
 
+test('html list: extracts React data-props bootstrap JSON (hover.com style)', async () => {
+  const props = { initialData: { path: '/', data: { receipts: [
+    { id: 'r-1', date: '2026-01-02', total: '18.99', num: 'INV-1' },
+    { id: 'r-2', date: '2026-02-02', total: '17.99', num: 'INV-2' },
+  ] } }, feature_flags: [] };
+  const html = `<div id='app' data-props='${JSON.stringify(props).replace(/"/g, '&quot;')}'></div>`;
+  globalThis.fetch = async () => ({ ok: true, text: async () => html });
+  const adapter = { api: { host: 'https://www.hover.com', list: { path: '/control_panel/settings/receipts', from: 'html', itemsPath: 'initialData.data.receipts', paging: 'none' } }, fields: { internalId: 'id', date: 'date', total: 'total', number: 'num' }, schema: 'invoice@1' };
+  const docs = await listInventory(adapter, { byPath: {}, merged: {} });
+  assert.equal(docs.length, 2);
+  assert.deepEqual(docs.map((d) => d.internalId).sort(), ['r-1', 'r-2']);
+  assert.ok(docs.every((d) => d.date && d.total));
+});
+
 test('offset paging advances by offsetStep until an empty page (Decathlon-style: 9/page)', async () => {
   const adapter = { api: { host: 'https://x.es', list: { path: '/orders', paging: 'offset', itemsPath: 'items', offsetParam: 'from', offsetStart: 0, offsetStep: 9 } }, fields: { internalId: 'id', date: 'd' }, schema: 'receipt@1' };
   const urls = [];

@@ -268,12 +268,23 @@ async function fetchList(adapter, auth, params, net) {
 // (largest) HTML table — each row → an object keyed by column header, plus `href` of its link(s).
 export function extractListItems(html, list) {
   if (list.itemsPath) {
-    for (const re of EMBED_RES) {
-      const m = re.exec(html || '');
-      if (m) { try { const arr = get(JSON.parse(m[1].trim()), list.itemsPath); if (Array.isArray(arr)) return arr; } catch (e) {} }
+    for (const obj of embeddedObjects(html || '')) {
+      const arr = get(obj, list.itemsPath);
+      if (Array.isArray(arr)) return arr;
     }
   }
   return parseHtmlRows(html || '');
+}
+const unescapeHtml = (s) => String(s).replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+// Bootstrap JSON embedded in a page: <script> blobs (Next/Nuxt/JSON-LD) AND React/Inertia
+// `data-props`/`data-page`/`data-state` attributes (HTML-entity escaped) — hover.com uses the latter.
+export function embeddedObjects(html) {
+  const out = [];
+  for (const re of EMBED_RES) { const m = re.exec(html || ''); if (m) { try { out.push(JSON.parse(m[1].trim())); } catch (e) {} } }
+  for (const m of (html || '').matchAll(/data-(?:props|page|state)=(['"])([\s\S]*?)\1/gi)) {
+    try { out.push(JSON.parse(unescapeHtml(m[2]))); } catch (e) {}
+  }
+  return out;
 }
 function parseHtmlRows(html) {
   const tables = (html.match(/<table[\s\S]*?<\/table>/gi) || []).sort((a, b) => b.length - a.length);
