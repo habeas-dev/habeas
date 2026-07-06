@@ -20,7 +20,7 @@ async function withReferer(targetUrl, referer, fn) {
       addRules: [{
         id, priority: 1,
         action: { type: 'modifyHeaders', requestHeaders: [{ header: 'referer', operation: 'set', value: referer }] },
-        condition: { urlFilter: targetUrl, resourceTypes: ['xmlhttprequest'] },
+        condition: { urlFilter: (targetUrl || '').split('?')[0], resourceTypes: ['xmlhttprequest'] },
       }],
     });
   } catch (e) { return fn(); }
@@ -227,6 +227,7 @@ export async function fetchDetail(adapter, auth, internalId, net) {
   // d.referer: some endpoints validate the Referer (e.g. the item's detail page). fetch can't set it
   // (forbidden header) → declarativeNetRequest, same as the PDF path.
   const referer = d.referer ? String(d.referer).split('{internalId}').join(internalId) : null;
+  if (referer) init.referrer = referer; // page-context fetch sets it same-origin (reliable); DNR is the fallback
   const res = await withReferer(url, referer, () => NET(url, init));
   if (!res.ok) throw new Error('detail ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
   const { json, via } = extractDetail(await res.text(), url, internalId);
@@ -250,6 +251,7 @@ async function fetchList(adapter, auth, params, net) {
     const page = list.pageParam ? (Number(params[list.pageParam]) || 1) : Math.floor(off / size) + 1;
     referer = String(list.referer).split('{from}').join(String(off)).split('{offset}').join(String(off)).split('{page}').join(String(page));
   }
+  if (referer) init.referrer = referer; // same-origin referer set from the tab; DNR is the fallback
   const res = await withReferer(url, referer, () => NET(url, init));
   if (!res.ok) throw new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160));
   return await res.json();
