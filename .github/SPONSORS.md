@@ -98,15 +98,88 @@ Cada patrocinio —único o mensual— mantiene una herramienta de privacidad en
 
 ---
 
-## Suggested sponsor tiers
+## Suggested sponsor tiers — full descriptions
 
-| Tier (monthly) | Name | Blurb |
-|---|---|---|
-| $3 | **Supporter** | You keep the lights on for the community infra. Our thanks in the README backers list. |
-| $10 | **Advocate** | Fund the review/store fees that keep Habeas installable by everyone. README + a shout-out. |
-| $25 | **Source patron** | Directly funds authoring & verifying new sources. Suggest a service you want supported. |
-| $100 | **Sustainer** | Meaningful backing for security work and independence. Logo/name in the README + site. |
-| One-time | **Tip** | Any amount — a thank-you for a tool that already helped you get your data out. |
+Paste each block into the corresponding tier's **description** field. Rewards are recognition only —
+**never gated features**: Habeas stays fully free and AGPL for everyone, sponsors or not.
 
-*(Tiers are non-binding suggestions; keep them free of paywalled features — Habeas stays fully free and
-AGPL for everyone.)*
+### $3 / month — 🌱 Supporter
+**EN:** Thank you 🙏 A few euros a month keep the community infrastructure — the sources registry and
+the ratings service — online for everyone. You'll be listed in the **Backers** section of the README.
+
+**ES:** Gracias 🙏 Unos pocos euros al mes mantienen en marcha la infraestructura comunitaria —el
+registro de fuentes y el servicio de valoraciones— para todo el mundo. Aparecerás en la sección
+**Backers** del README.
+
+### $10 / month — 📣 Advocate
+**EN:** You cover the unglamorous essentials: store review fees, upkeep, and the ongoing work of
+keeping Habeas installable and up to date on Chrome and Firefox for everyone. Listed in the README,
+with our gratitude.
+
+**ES:** Cubres lo esencial poco vistoso: tasas de revisión en las tiendas, mantenimiento y el trabajo
+continuo de mantener Habeas instalable y al día en Chrome y Firefox para todos. Con tu nombre en el
+README y nuestro agradecimiento.
+
+### $25 / month — 🧩 Source patron
+**EN:** Directly funds the hands-on work of reverse-engineering and verifying **new sources** against
+real services — the core of what makes Habeas useful. Listed in the README, and you're welcome to
+suggest a service you'd like supported next (no promises on timing, but your voice is heard).
+
+**ES:** Financia directamente el trabajo de ingeniería inversa y verificación de **nuevas fuentes**
+contra servicios reales — el núcleo de lo que hace útil a Habeas. Con tu nombre en el README, y puedes
+sugerir un servicio que te gustaría que se soporte (sin promesas de plazos, pero se te escucha).
+
+### $100 / month — 🛡️ Sustainer
+**EN:** Meaningful backing for security work and long-term independence. Your name or logo goes in the
+README **and** on habeas.dev, and you're welcome to share input on the roadmap. This is the level that
+says: *keep this independent, forever* — no VC, no data business.
+
+**ES:** Un apoyo de peso para la seguridad y la independencia a largo plazo. Tu nombre o logo va en el
+README **y** en habeas.dev, y puedes aportar sobre la hoja de ruta. Es el nivel que dice: *que siga
+siendo independiente, siempre* — sin inversores, sin negocio de datos.
+
+### One-time — ☕ Tip
+**EN:** Not into subscriptions? Leave a one-time tip of any amount — a simple thank-you for a tool that
+already helped you get your own data out. Optionally added to the Backers list.
+
+**ES:** ¿No te van las suscripciones? Deja una propina única de cualquier importe — un simple gracias
+por una herramienta que ya te ayudó a sacar tus propios datos. Si quieres, te añadimos a los Backers.
+
+---
+
+## Welcome message (shown to a sponsor right after they sponsor)
+
+**EN**
+
+> Thank you for sponsoring Habeas! 💚
+>
+> You're directly keeping a free, privacy-first tool for reclaiming your own data **independent** —
+> no company, no data business behind it. That's only possible because of people like you.
+>
+> A few things:
+> - **Get listed** (or stay anonymous): reply here or open an issue with the name / handle / logo
+>   you'd like in the README — or tell me you'd rather not be listed.
+> - **Shape it:** a service you'd love Habeas to support, an idea, or feedback? I genuinely want to
+>   hear it → https://github.com/habeas-dev/habeas/issues
+> - Nothing about your support gates anything: Habeas stays **fully free and AGPL** for everyone.
+>
+> Truly — thank you for helping people get their own data back.
+> — the Habeas maintainers · habeas.dev
+
+**ES**
+
+> ¡Gracias por patrocinar Habeas! 💚
+>
+> Estás manteniendo **independiente** una herramienta libre y centrada en la privacidad para
+> recuperar tus propios datos — sin empresa ni negocio de datos detrás. Solo es posible gracias a
+> gente como tú.
+>
+> Un par de cosas:
+> - **Aparecer** (o quedar anónimo): responde aquí o abre una incidencia con el nombre / handle /
+>   logo que quieras en el README — o dime que prefieres no aparecer.
+> - **Aporta:** ¿un servicio que te encantaría que Habeas soporte, una idea, feedback? Me interesa de
+>   verdad → https://github.com/habeas-dev/habeas/issues
+> - Tu apoyo no bloquea nada: Habeas sigue **100% gratis y AGPL** para todo el mundo.
+>
+> De verdad — gracias por ayudar a que la gente recupere sus datos.
+> — el equipo de Habeas · habeas.dev
