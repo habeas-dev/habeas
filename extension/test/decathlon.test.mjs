@@ -11,7 +11,9 @@ import { listInventory, fetchDocument } from '../src/runtime/inventory.js';
 //          {"name":"InvalidInputParameters"} unless the Referer is the item's orderTracking page
 //          (transactionId=UUID) AND the header is present.
 const N = 27; // three pages of 9
-const item = (i) => ({ orderTransactionId: 'uuid-' + i, orderNumber: 'F-' + i, orderDate: '2026-01-0' + ((i % 9) + 1), orderTotalPrice: 10 + i, orderOrigin: 'store' });
+// The list item's id used in the detail URL is `associationId` (the verified field — NOT
+// orderTransactionId, which is a different id that the order endpoint rejects with InvalidInputParameters).
+const item = (i) => ({ associationId: 'uuid-' + i, orderTransactionId: 'other-' + i, orderNumber: 'F-' + i, orderDate: '2026-01-0' + ((i % 9) + 1), orderTotalPrice: 10 + i, orderOrigin: 'store' });
 const page = (from) => (from >= N ? [] : Array.from({ length: Math.min(9, N - from) }, (_, k) => item(from + k)));
 const resp = (json, status = 200) => ({ ok: status < 300, status, json: async () => json, text: async () => JSON.stringify(json) });
 
@@ -41,16 +43,16 @@ const ADAPTER = {
     list: {
       path: '/web-engage/ajax/myPurchase', paging: 'offset', itemsPath: 'items',
       offsetParam: 'from', offsetStart: 0, offsetStep: 9, params: { size: '9' },
-      headers: { 'dkt-ecom-country': 'ES', 'dkt-ecom-origin': 'web-navigate-front' },
+      headers: { 'dkt-ecom-country': 'ES', 'dkt-ecom-origin': 'web-navigate-front', 'content-type': 'application/json' },
       referer: 'https://www.decathlon.es/es/account/myPurchase?page={page}',
     },
     detail: {
       path: '/web-engage/ajax/order?associationId={internalId}&orderManager=cube', method: 'GET',
-      headers: { 'dkt-ecom-country': 'ES', 'dkt-ecom-origin': 'web-navigate-front' },
+      headers: { 'dkt-ecom-country': 'ES', 'dkt-ecom-origin': 'web-navigate-front', 'content-type': 'application/json' },
       referer: 'https://www.decathlon.es/es/account/orderTracking?transactionId={internalId}&type=store',
     },
   },
-  fields: { internalId: 'orderTransactionId', number: 'orderNumber', date: 'orderDate', total: 'orderTotalPrice', storeName: 'orderOrigin' },
+  fields: { internalId: 'associationId', number: 'orderNumber', date: 'orderDate', total: 'orderTotalPrice', storeName: 'orderOrigin' },
   schema: 'receipt@1',
 };
 const AUTH = { byPath: {}, merged: {} };
