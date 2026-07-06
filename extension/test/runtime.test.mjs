@@ -35,6 +35,18 @@ test('page paging stops on a partial page', async () => {
   assert.deepEqual(docs.map((d) => d.category).sort(), ['grocery', 'grocery', 'retail']);
 });
 
+test('html list: parses items from a server-rendered table (from:html), incl. row links', async () => {
+  const html = `<table><tr><th>Date</th><th>Amount</th><th></th></tr>
+    <tr><td>2026-01-02</td><td>10.00</td><td><a href="/receipts/A1.pdf">PDF</a></td></tr>
+    <tr><td>2026-01-05</td><td>7.50</td><td><a href="/receipts/A2.pdf">PDF</a></td></tr></table>`;
+  globalThis.fetch = async () => ({ ok: true, text: async () => html, json: async () => { throw new Error('not json'); } });
+  const adapter = { api: { host: 'https://x.es', list: { path: '/control_panel/settings/receipts', from: 'html', paging: 'none' } }, fields: { internalId: 'href', date: 'Date', total: 'Amount' }, schema: 'invoice@1' };
+  const docs = await listInventory(adapter, { byPath: {}, merged: {} });
+  assert.equal(docs.length, 2);
+  assert.deepEqual(docs.map((d) => d.internalId).sort(), ['/receipts/A1.pdf', '/receipts/A2.pdf']); // id from the row's link
+  assert.ok(docs.every((d) => d.date && d.total));
+});
+
 test('offset paging advances by offsetStep until an empty page (Decathlon-style: 9/page)', async () => {
   const adapter = { api: { host: 'https://x.es', list: { path: '/orders', paging: 'offset', itemsPath: 'items', offsetParam: 'from', offsetStart: 0, offsetStep: 9 } }, fields: { internalId: 'id', date: 'd' }, schema: 'receipt@1' };
   const urls = [];

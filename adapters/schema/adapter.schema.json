@@ -67,12 +67,13 @@
         "host": { "type": "string", "pattern": "^https://", "description": "API origin, https only." },
         "list": {
           "type": "object",
-          "required": ["path", "itemsPath"],
+          "required": ["path"],
           "additionalProperties": false,
           "properties": {
             "path": { "type": "string", "pattern": "^/" },
+            "from": { "enum": ["html"], "description": "'html' → the list is server-rendered: fetch the page and parse items from embedded JSON (at itemsPath) or the largest HTML table (rows → objects keyed by column header, plus `href`)." },
             "paging": { "enum": ["offsets", "offset", "page", "cursor", "none"], "description": "Pagination strategy. Defaults to offsets if offsetsPath present, else cursor if nextPath present, else none." },
-            "itemsPath": { "type": "string", "description": "Dotted path to the array of items in the response (e.g. data.items)." },
+            "itemsPath": { "type": "string", "description": "Dotted path to the array of items in the response (e.g. data.items). For from:html, the path into embedded page JSON (omit to parse an HTML table)." },
             "offsetsPath": { "type": "string", "description": "[offsets] Dotted path to the offsets object merged into the next query." },
             "initialOffsets": { "type": "object", "description": "[offsets] Seed offsets object." },
             "nextPath": { "type": "string", "description": "[cursor] Dotted path to the next cursor in the response." },

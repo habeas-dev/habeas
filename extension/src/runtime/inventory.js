@@ -53,7 +53,7 @@ export async function listInventory(adapter, auth, net) {
     let page = list.pageStart ?? 1;
     for (let g = 0; g < maxPages; g++) {
       const data = await call({ ...range, ...baseParams, [pageParam]: page });
-      const items = get(data, list.itemsPath) || [];
+      const items = get(data, itemsPathOf(list)) || [];
       const added = collect(adapter, data, seen, all);
       if (!items.length || !added) break; // empty page or nothing new → done (don't stop on a short page)
       page++;
@@ -64,7 +64,7 @@ export async function listInventory(adapter, auth, net) {
     let offset = list.offsetStart ?? 0;
     for (let g = 0; g < maxPages; g++) {
       const data = await call({ ...range, ...baseParams, [offsetParam]: offset });
-      const items = get(data, list.itemsPath) || [];
+      const items = get(data, itemsPathOf(list)) || [];
       const added = collect(adapter, data, seen, all);
       if (!items.length || !added) break;
       offset += step;
@@ -88,6 +88,9 @@ export async function listInventory(adapter, auth, net) {
 }
 
 const absHost = (h) => (/^https?:\/\//.test(h) ? h : 'https://' + h);
+// Template an id into a path. Don't percent-encode a path/URL-like id (e.g. a row's href
+// "/…/receipts/123.pdf") — that would break its slashes; encode only opaque ids.
+const tid = (id) => (/[/:]/.test(String(id)) ? String(id) : encodeURIComponent(id));
 
 // Resolve the headers to replay for a given endpoint path from the captured auth STORE
 // ({ byPath, merged }). Different endpoints can use different auth (e.g. cookie-authed list +
@@ -136,7 +139,7 @@ export async function fetchPdf(adapter, auth, internalId, net) {
   const pdf = adapter.api.pdf;
   if (!pdf) throw new Error('no PDF for this source');
   const host = pdf.host ? absHost(pdf.host) : adapter.api.host;
-  const path = pdf.path.replace('{internalId}', encodeURIComponent(internalId));
+  const path = pdf.path.replace('{internalId}', tid(internalId));
   const url = host + path;
   const init = { method: pdf.method || 'GET', headers: { ...headersFor(auth, path), accept: 'application/pdf' }, credentials: 'include', wantBlob: true };
   if (init.method !== 'GET' && pdf.body != null) {
@@ -219,7 +222,7 @@ export async function fetchDetail(adapter, auth, internalId, net) {
   const d = adapter.api.detail;
   if (!d) throw new Error('no detail for this source');
   const host = d.host ? absHost(d.host) : adapter.api.host;
-  const path = d.path.split('{internalId}').join(encodeURIComponent(internalId));
+  const path = d.path.split('{internalId}').join(tid(internalId));
   const url = host + path;
   // d.headers: static headers the SPA sends for this endpoint (e.g. dkt-ecom-origin). Captured auth
   // and the accept default fill the rest; cookies ride along via credentials:'include'.
@@ -236,12 +239,14 @@ export async function fetchDetail(adapter, auth, internalId, net) {
 
 async function fetchList(adapter, auth, params, net) {
   const NET = net || ((u, i) => fetch(u, i));
-  const url = adapter.api.host + adapter.api.list.path + '?' + new URLSearchParams(params);
+  const list = adapter.api.list;
+  const html = list.from === 'html';
+  const qs = new URLSearchParams(params).toString();
+  const url = adapter.api.host + list.path + (qs ? '?' + qs : '');
   // Run in the site's tab (page context) so cookies + cf_clearance + fingerprint carry through and
   // Cloudflare/Akamai don't challenge it; credentials:'include' carries cookies.
   const cookie = adapter.auth && adapter.auth.mode === 'cookie';
-  const list = adapter.api.list;
-  const init = { headers: { accept: 'application/json', ...(list.headers || {}), ...headersFor(auth, list.path, !cookie) }, credentials: 'include' };
+  const init = { headers: { accept: html ? 'text/html' : 'application/json', ...(list.headers || {}), ...headersFor(auth, list.path, !cookie) }, credentials: 'include' };
   // list.referer: some endpoints only honour the offset/page when the Referer reflects the page the
   // SPA was on. Template it per request with {from}/{offset}/{page}; set via DNR (fetch can't).
   let referer = null;
@@ -254,12 +259,46 @@ async function fetchList(adapter, auth, params, net) {
   if (referer) init.referrer = referer; // same-origin referer set from the tab; DNR is the fallback
   const res = await withReferer(url, referer, () => NET(url, init));
   if (!res.ok) throw new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160));
+  // Server-rendered list (no JSON API): parse the items out of the page HTML.
+  if (html) return { __items: extractListItems(await res.text(), list) };
   return await res.json();
 }
 
+// Extract list items from a server-rendered page: embedded JSON at `itemsPath`, else the rows of the
+// (largest) HTML table — each row → an object keyed by column header, plus `href` of its link(s).
+export function extractListItems(html, list) {
+  if (list.itemsPath) {
+    for (const re of EMBED_RES) {
+      const m = re.exec(html || '');
+      if (m) { try { const arr = get(JSON.parse(m[1].trim()), list.itemsPath); if (Array.isArray(arr)) return arr; } catch (e) {} }
+    }
+  }
+  return parseHtmlRows(html || '');
+}
+function parseHtmlRows(html) {
+  const tables = (html.match(/<table[\s\S]*?<\/table>/gi) || []).sort((a, b) => b.length - a.length);
+  const tbl = tables[0];
+  if (!tbl) return [];
+  const trs = tbl.match(/<tr[\s\S]*?<\/tr>/gi) || [];
+  if (trs.length < 2) return [];
+  const head = (trs[0].match(/<t[dh][\s\S]*?<\/t[dh]>/gi) || []).map(stripTags);
+  const out = [];
+  for (let i = 1; i < trs.length; i++) {
+    const cells = trs[i].match(/<t[dh][\s\S]*?<\/t[dh]>/gi) || [];
+    if (!cells.length) continue;
+    const o = {};
+    cells.forEach((c, k) => { o[head[k] || 'col' + k] = stripTags(c); });
+    const hrefs = [...trs[i].matchAll(/href=["']([^"']+)["']/gi)].map((m) => m[1]);
+    if (hrefs.length) { o.href = hrefs[0]; o.hrefs = hrefs; }
+    out.push(o);
+  }
+  return out;
+}
+const itemsPathOf = (list) => (list.from === 'html' ? '__items' : list.itemsPath);
+
 // Map fresh items onto the shared docs array; returns how many were newly added.
 function collect(adapter, data, seen, all) {
-  const items = get(data, adapter.api.list.itemsPath) || [];
+  const items = get(data, itemsPathOf(adapter.api.list)) || [];
   const f = adapter.fields;
   let added = 0;
   for (const p of items) {
