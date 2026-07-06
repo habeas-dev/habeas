@@ -175,6 +175,7 @@
   "json_invalid": { "message": "Source no válido: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
   "json_saved": { "message": "Aplicado — revisa, Prueba y Guarda." },
   "import_source": { "message": "Importar (JSON)" },
+  "paste_source": { "message": "Escribir/pegar JSON" },
   "browse_sources": { "message": "Explorar comunidad" },
   "export_source": { "message": "Exportar" },
   "share_source": { "message": "Compartir" },

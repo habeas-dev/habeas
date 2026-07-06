@@ -6,7 +6,10 @@
 //      the record-mode author UI can auto-draft an adapter. Off by default.
 (function () {
   const KEYS = ['authorization', 'x-xsrf-token', 'x-csrf-token', 'requestorigin', 'sessionid'];
-  const HDR_SAMPLE = /^(authorization|x-.*token|x-.*csrf|x-xsrf-token|requestorigin|sessionid|content-type)$/i;
+  // Capture the app-specific request headers (auth, csrf, and custom ones like dkt-ecom-*) so the
+  // draft can replay them. Skip standard headers the browser sets itself (and can't be replayed).
+  const HDR_SKIP = /^(accept|accept-language|accept-encoding|user-agent|referer|referrer|origin|cookie|content-length|host|connection|cache-control|pragma|priority|dnt|te|range|if-[a-z-]+|sec-[a-z-]+|upgrade-insecure-requests|traceparent|tracestate)$/i;
+  const HDR_SAMPLE = { test: (k) => !HDR_SKIP.test(k) };
   const MULTI = new Set(['co.uk', 'org.uk', 'com.es', 'com.br', 'com.mx', 'com.ar', 'co.jp', 'com.au']);
   function regDomain(host) {
     const p = String(host || '').toLowerCase().split(':')[0].split('.').filter(Boolean);

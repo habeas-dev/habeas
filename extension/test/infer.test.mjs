@@ -80,6 +80,23 @@ test('offset pagination starts at 0 even if page 1 (from=0) was not captured', (
   assert.equal(r.draft.api.list.offsetStep, 9);
 });
 
+test('de oficio: carries app headers + per-page/per-item Referer into the draft', () => {
+  const uuid = 'abc-uuid-1';
+  const samples = [
+    { url: 'https://www.x.es/ajax/list?from=0', status: 200, reqHeaders: { 'dkt-ecom-origin': 'web', authorization: 'eyJ' }, json: { items: [{ id: uuid, total: 5 }] } },
+    { url: 'https://www.x.es/ajax/order?associationId=' + uuid, status: 200, reqHeaders: { 'dkt-ecom-origin': 'web' }, json: { id: uuid, lines: [] } },
+  ];
+  const domTexts = [
+    { url: 'https://www.x.es/account/order?transactionId=' + uuid, text: 'Pedido' },
+    { url: 'https://www.x.es/account/list?page=2', text: 'Mis pedidos' },
+  ];
+  const r = draftAdapterFromSamples(samples, { domain: 'x.es', pageHost: 'www.x.es', domTexts });
+  assert.equal(r.draft.api.list.headers['dkt-ecom-origin'], 'web');           // app header, not auth
+  assert.equal(r.draft.api.list.referer, 'https://www.x.es/account/list?page={page}');
+  assert.equal(r.draft.api.detail.headers['dkt-ecom-origin'], 'web');
+  assert.equal(r.draft.api.detail.referer, 'https://www.x.es/account/order?transactionId={internalId}');
+});
+
 test('learns cursor pagination: page 1 has no token, page 2 carries the response token', () => {
   const s = [
     { url: 'https://api.shop.es/tx', status: 200, reqHeaders: {}, json: { items: [{ id: '1' }], paging: { next: 'TOK2' } } },
