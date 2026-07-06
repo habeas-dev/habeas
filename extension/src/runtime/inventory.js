@@ -241,7 +241,9 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
   // document for it. Bail cleanly (callers treat it as "artifact unavailable") instead of a bad request.
   if (/\{[^}]+\}/.test(path)) throw new Error('no document for this item');
   const url = host + path;
-  const init = { method: pdf.method || 'GET', headers: { ...headersFor(auth, path.split('?')[0]), accept: 'application/pdf' }, credentials: 'include', wantBlob: true };
+  // accept:*/* not application/pdf — some servers (Dia's invoice endpoint) return 204 No Content for a
+  // bare application/pdf Accept but serve the real PDF for the browser-default */*.
+  const init = { method: pdf.method || 'GET', headers: { accept: '*/*', ...(pdf.headers || {}), ...headersFor(auth, path.split('?')[0]) }, credentials: 'include', wantBlob: true };
   if (init.method !== 'GET' && pdf.body != null) {
     init.body = applyTmpl(pdf.body, doc, internalId);
     init.headers['content-type'] = pdf.contentType || 'application/json';
