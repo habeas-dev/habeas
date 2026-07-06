@@ -1,0 +1,47 @@
+{
+  "id": "decathlon-es",
+  "name": "Decathlon España — tickets",
+  "service": "decathlon",
+  "trust": "community",
+  "domain": "decathlon.es",
+  "version": "2026-07-06",
+  "categories": ["other"],
+  "match": ["https://www.decathlon.es/*"],
+  "auth": { "mode": "cookie", "replayHeaders": [] },
+  "api": {
+    "host": "https://www.decathlon.es",
+    "list": {
+      "path": "/web-engage/ajax/myPurchase",
+      "paging": "offset",
+      "itemsPath": "items",
+      "offsetParam": "from",
+      "offsetStart": 0,
+      "offsetStep": 9,
+      "params": { "size": "9" },
+      "headers": {
+        "content-type": "application/json",
+        "dkt-ecom-country": "ES",
+        "dkt-ecom-origin": "web-navigate-front"
+      },
+      "referer": "https://www.decathlon.es/es/account/myPurchase?page={page}"
+    },
+    "detail": {
+      "path": "/web-engage/ajax/order?associationId={internalId}&orderManager=cube",
+      "method": "GET",
+      "headers": {
+        "content-type": "application/json",
+        "dkt-ecom-country": "ES",
+        "dkt-ecom-origin": "web-navigate-front"
+      },
+      "referer": "https://www.decathlon.es/es/account/orderTracking?transactionId={internalId}&type=store"
+    }
+  },
+  "fields": {
+    "internalId": "associationId",
+    "number": "orderNumber",
+    "date": "orderDate",
+    "total": "orderTotalPrice",
+    "storeName": "orderOrigin"
+  },
+  "schema": "receipt@1"
+}
