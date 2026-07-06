@@ -171,6 +171,8 @@
   "edit_json": { "message": "Edit JSON" },
   "edit_json_title": { "message": "Edit source: $ID$", "placeholders": { "id": { "content": "$1" } } },
   "json_save": { "message": "Validate & save" },
+  "je_test": { "message": "Test" },
+  "je_no_tab": { "message": "Tip: open the site in a tab and log in, so the test runs in your session." },
   "json_badsyntax": { "message": "Invalid JSON: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
   "json_invalid": { "message": "Invalid source: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
   "json_saved": { "message": "Applied — review, Test and Save." },
