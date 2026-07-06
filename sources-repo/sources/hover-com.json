@@ -4,10 +4,18 @@
   "service": "hover",
   "trust": "community",
   "domain": "hover.com",
+  "country": "global",
   "version": "2026-07-06",
-  "categories": ["domains"],
-  "match": ["https://www.hover.com/*"],
-  "auth": { "mode": "cookie", "replayHeaders": [] },
+  "categories": [
+    "domains"
+  ],
+  "match": [
+    "https://www.hover.com/*"
+  ],
+  "auth": {
+    "mode": "cookie",
+    "replayHeaders": []
+  },
   "api": {
     "host": "https://www.hover.com",
     "list": {

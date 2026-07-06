@@ -18,7 +18,7 @@ const entries = readdirSync(dir)
     return {
       id: a.id, name: a.name, service: a.service,
       categories: a.categories || [], trust: a.trust || 'community',
-      domain: a.domain, crossDomain: a.crossDomainHosts || [],
+      domain: a.domain, country: a.country || null, crossDomain: a.crossDomainHosts || [],
       version: (a.version || now.slice(0, 10)),
       url: `${BASE}/${f}`, updated: now,
     };

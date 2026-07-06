@@ -4,6 +4,7 @@
   "service": "carrefour",
   "trust": "first-party",
   "domain": "carrefour.es",
+  "country": "ES",
   "categories": [
     "grocery",
     "fuel",

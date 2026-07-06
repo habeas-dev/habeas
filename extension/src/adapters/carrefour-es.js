@@ -9,6 +9,7 @@ export default {
   // satisfies the same-domain security guard without a cross-domain exception.
   trust: 'first-party',
   domain: 'carrefour.es',
+  country: 'ES',
   // Categories this source can emit (for sink compatibility) + how to categorize each doc.
   categories: ['grocery', 'fuel', 'retail'],
   categorize: {
