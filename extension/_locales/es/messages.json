@@ -76,6 +76,13 @@
   "st_none": { "message": "sin novedades" },
   "st_nosession": { "message": "sin sesión" },
   "st_error": { "message": "error: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
+  "status_listing": { "message": "Comprobando $NAME$…", "placeholders": { "name": { "content": "$1" } } },
+  "status_fetching": { "message": "Descargando $N$ nuevos de $NAME$…", "placeholders": { "n": { "content": "$1" }, "name": { "content": "$2" } } },
+  "status_sending": { "message": "Enviando $N$ a $SINK$…", "placeholders": { "n": { "content": "$1" }, "sink": { "content": "$2" } } },
+  "status_done": { "message": "$NAME$: $N$ nuevos sincronizados", "placeholders": { "name": { "content": "$1" }, "n": { "content": "$2" } } },
+  "status_none": { "message": "$NAME$: nada nuevo", "placeholders": { "name": { "content": "$1" } } },
+  "status_nosession": { "message": "$NAME$: inicia sesión para sincronizar", "placeholders": { "name": { "content": "$1" } } },
+  "status_error": { "message": "$NAME$ error: $MSG$", "placeholders": { "name": { "content": "$1" }, "msg": { "content": "$2" } } },
   "notify_new": { "message": "$N$ documento(s) nuevo(s) → $SINK$", "placeholders": { "n": { "content": "$1" }, "sink": { "content": "$2" } } },
   "notify_autoerr": { "message": "Error de auto-sync: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
 

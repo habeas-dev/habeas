@@ -11,3 +11,6 @@ export const badgeWorking = () => set('…', '#f1c40f', '#000'); // yellow — a
 export const badgeCount = (n) => set(String(n), '#0a8a0a', '#fff'); // green — N new synced
 export const badgeError = () => set('!', '#c0392b', '#fff'); // red — last run failed
 export const badgeClear = () => set('', '#000');
+
+// The toolbar icon's tooltip — shows what Habeas is doing (or its last result) on hover.
+export const setStatus = (msg) => { try { chrome.action.setTitle({ title: msg ? 'Habeas — ' + msg : 'Habeas' }); } catch (e) {} };

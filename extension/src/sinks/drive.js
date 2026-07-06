@@ -19,8 +19,14 @@ export async function connectDrive(clientId, interactive = true) {
     + '&response_type=token'
     + '&redirect_uri=' + encodeURIComponent(chrome.identity.getRedirectURL())
     + '&scope=' + encodeURIComponent(SCOPE)
-    + '&prompt=consent';
-  const redir = await chrome.identity.launchWebAuthFlow({ url, interactive });
+    // Silent refresh must NOT force a prompt (prompt=none → Google redirects with a token if the
+    // user is signed in and already consented); the interactive first-connect asks for consent.
+    + '&prompt=' + (interactive ? 'consent' : 'none');
+  const details = { url, interactive };
+  // Non-interactive flow: don't abort the moment the auth page loads — wait for its silent redirect
+  // back with the token (the case the "User interaction required" error asks us to handle).
+  if (!interactive) { details.abortOnLoadForNonInteractive = false; details.timeoutMsForNonInteractive = 8000; }
+  const redir = await chrome.identity.launchWebAuthFlow(details);
   const p = new URLSearchParams(new URL(redir).hash.slice(1));
   const token = p.get('access_token');
   if (!token) throw new Error('sin token (' + (p.get('error') || 'desconocido') + ')');
