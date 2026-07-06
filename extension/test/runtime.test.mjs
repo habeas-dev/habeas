@@ -192,6 +192,17 @@ test('api.groups: lists transactions per account, tagging each with its account 
   assert.equal(byId['A1-t1']._group.iban, 'ES11'); // record carries its group
 });
 
+test('list.range + window "90d" requests only the last ~90 days (WiZink: avoids extra auth)', async () => {
+  let url = '';
+  globalThis.fetch = async (u) => { url = String(u); return { ok: true, json: async () => ({ items: [] }) }; };
+  const adapter = { api: { host: 'https://b.es', list: { path: '/tx', paging: 'none', itemsPath: 'items', range: { from: 'from', to: 'to', format: 'date' }, window: '90d' } }, fields: { internalId: 'id' }, auth: { mode: 'cookie' }, schema: 'transaction@1' };
+  await listInventory(adapter, { byPath: {}, merged: {} });
+  const u = new URL(url);
+  const days = (new Date(u.searchParams.get('to')) - new Date(u.searchParams.get('from'))) / 86400000;
+  assert.ok(days >= 89 && days <= 91, 'window ~90 days, got ' + days);
+  assert.match(u.searchParams.get('from'), /^\d{4}-\d{2}-\d{2}$/); // format:'date'
+});
+
 test('listGroups enumerates the accounts with their mapped fields', async () => {
   globalThis.fetch = async () => ({ ok: true, json: async () => ({ accounts: [{ resourceId: 'A1', iban: 'ES11', alias: 'Nómina' }] }) });
   const adapter = { api: { host: 'https://bank.es', groups: { path: '/accounts', itemsPath: 'accounts', fields: { id: 'resourceId', iban: 'iban', name: 'alias' } }, list: { path: '/x' } }, fields: {}, auth: { mode: 'cookie' }, schema: 'transaction@1' };
