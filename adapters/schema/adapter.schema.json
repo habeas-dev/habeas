@@ -119,6 +119,7 @@
           "description": "Per-document JSON detail (e.g. a full order). Saved as <id>.json. Preferred over a POST-generated PDF. Use `from:'list'` when the list endpoint already returns each item's full data (no extra request).",
           "properties": {
             "from": { "enum": ["list"], "description": "'list' → the document IS the already-listed item's JSON (no path/request needed)." },
+            "as": { "enum": ["html", "invoice"], "description": "'html' → fetch the path as a page and store it self-contained (assets inlined) — e.g. a server-rendered print/receipt page. 'invoice' → render a clean printable invoice from the detail JSON. Both save a printable .html." },
             "path": { "type": "string", "description": "Detail path with {internalId} placeholder." },
             "method": { "enum": ["GET", "POST"] },
             "host": { "type": "string", "description": "Detail host if different from api.host (same-domain guard applies)." },

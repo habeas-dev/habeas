@@ -110,10 +110,43 @@ function headersFor(auth, path, allowMerged = true) {
 // (GET). JSON detail is preferred when present — it's the practical artifact for many services.
 export function documentExt(adapter) {
   const pdf = adapter.api.pdf, detail = adapter.api.detail;
+  if (detail && (detail.as === 'html' || detail.as === 'invoice')) return 'html'; // printable invoice
   if (pdf && (!pdf.method || pdf.method === 'GET')) return 'pdf';
   if (detail) return 'json';
   if (pdf) return 'pdf';
   return null;
+}
+
+// A clean, self-contained, printable HTML invoice generated from the receipt's detail JSON + record.
+// Cross-browser (no external assets, no tab render); the user prints it to PDF. All values escaped.
+const escH = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function flattenRows(obj, prefix, depth, rows) {
+  rows = rows || []; depth = depth || 0;
+  if (obj == null || typeof obj !== 'object' || depth > 4) return rows;
+  for (const k of Object.keys(obj)) {
+    const v = obj[k], key = prefix ? prefix + ' · ' + k : k;
+    if (v && typeof v === 'object') {
+      if (Array.isArray(v) && v.every((x) => x == null || typeof x !== 'object')) rows.push([key, v.join(', ')]);
+      else flattenRows(v, key, depth + 1, rows);
+    } else if (v !== '' && v != null) rows.push([key, v]);
+  }
+  return rows;
+}
+export function renderInvoiceHtml(doc, detail, adapter) {
+  const r = (doc && doc.record) || doc || {};
+  const rows = flattenRows(detail).slice(0, 200).map(([k, v]) => `<tr><td class="k">${escH(k)}</td><td>${escH(v)}</td></tr>`).join('');
+  const title = `${adapter.name || adapter.service} — ${r.number || (doc && doc.internalId) || ''}`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${escH(title)}</title><style>
+    body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:720px;margin:40px auto;color:#1a1a1a;padding:0 16px}
+    h1{font-size:20px;margin:0 0 4px} .meta{color:#666;margin-bottom:10px} .total{font-size:18px;font-weight:700;margin:10px 0 18px}
+    table{border-collapse:collapse;width:100%;font-size:13px} td{border-bottom:1px solid #eee;padding:6px 8px;vertical-align:top} td.k{color:#666;width:38%}
+    @media print{body{margin:0}}
+  </style></head><body>
+    <h1>${escH(adapter.name || adapter.service)}</h1>
+    <div class="meta">${r.number ? 'Nº ' + escH(r.number) : ''}${r.date ? ' · ' + escH(r.date) : ''}</div>
+    ${r.total != null && r.total !== '' ? `<div class="total">${escH(r.total)} ${escH(r.currency || '')}</div>` : ''}
+    <table>${rows}</table>
+  </body></html>`;
 }
 
 // Fetch a document's file (PDF or JSON detail) as a Blob. Accepts a doc object (preferred — carries
@@ -127,6 +160,12 @@ export async function fetchDocument(adapter, auth, docOrId, net) {
   if (detail && detail.from === 'list') {
     const data = doc ? (doc._raw != null ? doc._raw : doc.record || {}) : {};
     return { blob: new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), ext: 'json', via: 'list' };
+  }
+  if (detail && detail.as === 'html') return fetchHtmlDoc(adapter, auth, internalId, net); // fetch the print page, self-contained
+  if (detail && detail.as === 'invoice') { // render a clean printable invoice from the detail JSON
+    const dj = await fetchDetail(adapter, auth, internalId, net);
+    let data = {}; try { data = JSON.parse(await dj.blob.text()); } catch (e) {}
+    return { blob: new Blob([renderInvoiceHtml(doc || { internalId }, data, adapter)], { type: 'text/html' }), ext: 'html', via: 'invoice' };
   }
   const ext = documentExt(adapter);
   if (ext === 'pdf') return { blob: await fetchPdf(adapter, auth, internalId, net), ext, via: 'pdf' };
@@ -217,6 +256,47 @@ export function extractDetail(text, url, id) {
 
 // Per-document JSON detail (an order's full data). Detects the delivery mechanism (AJAX JSON /
 // embedded JSON / HTML table) and returns { blob, via }.
+// Fetch an HTML document (e.g. hover's server-rendered receipt/print page) and make it self-contained:
+// inline its stylesheets and images so it renders offline and prints to PDF anywhere (cross-browser,
+// no tab render). A <base> covers anything not inlined.
+async function toDataUrl(blob) {
+  const buf = new Uint8Array(await blob.arrayBuffer());
+  let s = ''; for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+  return `data:${blob.type || 'application/octet-stream'};base64,${btoa(s)}`;
+}
+async function inlineAssets(html, baseUrl, NET) {
+  let base; try { base = new URL(baseUrl); } catch (e) { return html; }
+  const abs = (u) => { try { return new URL(u, base).href; } catch (e) { return null; } };
+  let budget = 25; // cap fetched assets
+  for (const m of [...html.matchAll(/<link\b[^>]*rel=["']stylesheet["'][^>]*>/gi)]) {
+    if (budget-- <= 0) break;
+    const href = (m[0].match(/href=["']([^"']+)["']/i) || [])[1]; const u = href && abs(href);
+    if (!u) continue;
+    try { const css = await (await NET(u, { credentials: 'include' })).text(); html = html.replace(m[0], `<style>${css}</style>`); } catch (e) {}
+  }
+  for (const m of [...html.matchAll(/<img\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi)]) {
+    if (budget-- <= 0) break;
+    const u = abs(m[1]); if (!u || /^data:/i.test(m[1])) continue;
+    try { const du = await toDataUrl(await (await NET(u, { credentials: 'include', wantBlob: true })).blob()); html = html.split('"' + m[1] + '"').join('"' + du + '"').split("'" + m[1] + "'").join("'" + du + "'"); } catch (e) {}
+  }
+  if (!/<base\b/i.test(html)) html = html.replace(/<head\b[^>]*>/i, (h) => h + `<base href="${base.origin}/">`);
+  return html;
+}
+async function fetchHtmlDoc(adapter, auth, internalId, net) {
+  const NET = net || ((u, i) => fetch(u, i));
+  const d = adapter.api.detail;
+  const host = d.host ? absHost(d.host) : adapter.api.host;
+  const path = d.path.split('{internalId}').join(tid(internalId));
+  const url = host + path;
+  const init = { headers: { accept: 'text/html', ...(d.headers || {}), ...headersFor(auth, path.split('?')[0]) }, credentials: 'include' };
+  const referer = d.referer ? String(d.referer).split('{internalId}').join(internalId) : null;
+  if (referer) init.referrer = referer;
+  const res = await withReferer(url, referer, () => NET(url, init));
+  if (!res.ok) throw new Error('detail ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
+  const html = await inlineAssets(await res.text(), url, NET);
+  return { blob: new Blob([html], { type: 'text/html' }), ext: 'html', via: 'page' };
+}
+
 export async function fetchDetail(adapter, auth, internalId, net) {
   const NET = net || ((u, i) => fetch(u, i));
   const d = adapter.api.detail;
