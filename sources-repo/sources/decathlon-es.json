@@ -5,7 +5,7 @@
   "trust": "community",
   "domain": "decathlon.es",
   "version": "2026-07-06",
-  "categories": ["other"],
+  "categories": ["sports"],
   "match": ["https://www.decathlon.es/*"],
   "auth": { "mode": "cookie", "replayHeaders": [] },
   "api": {

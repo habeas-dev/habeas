@@ -6,8 +6,8 @@ export default {
   service: 'examplebroker',
   trust: 'community',
   domain: 'examplebroker.es',
-  categories: ['fund', 'equity', 'pension', 'investment'],
-  categorize: { field: 'assetClass', map: { FUND: 'fund', STOCK: 'equity', PENSION: 'pension' }, default: 'investment' },
+  categories: ['investment', 'pension'],
+  categorize: { field: 'assetClass', map: { FUND: 'investment', STOCK: 'investment', PENSION: 'pension' }, default: 'investment' },
   match: ['https://app.examplebroker.es/*'],
   auth: { tokenMatch: 'eyJ', replayHeaders: ['authorization'] },
   api: {
