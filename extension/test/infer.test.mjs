@@ -83,7 +83,7 @@ test('offset pagination starts at 0 even if page 1 (from=0) was not captured', (
 test('de oficio: carries app headers + per-page/per-item Referer into the draft', () => {
   const uuid = 'abc-uuid-1';
   const samples = [
-    { url: 'https://www.x.es/ajax/list?from=0', status: 200, reqHeaders: { 'dkt-ecom-origin': 'web', authorization: 'eyJ' }, json: { items: [{ id: uuid, total: 5 }] } },
+    { url: 'https://www.x.es/ajax/list?from=0', status: 200, reqHeaders: { 'dkt-ecom-origin': 'web', uzlc: '7f90002ccd10c5-5282-4783-8bdf-72955fcdba6b1-17833170669122135021-0043a616a68c5392', authorization: 'eyJ' }, json: { items: [{ id: uuid, total: 5 }] } },
     { url: 'https://www.x.es/ajax/order?associationId=' + uuid, status: 200, reqHeaders: { 'dkt-ecom-origin': 'web' }, json: { id: uuid, lines: [] } },
   ];
   const domTexts = [
@@ -92,6 +92,7 @@ test('de oficio: carries app headers + per-page/per-item Referer into the draft'
   ];
   const r = draftAdapterFromSamples(samples, { domain: 'x.es', pageHost: 'www.x.es', domTexts });
   assert.equal(r.draft.api.list.headers['dkt-ecom-origin'], 'web');           // app header, not auth
+  assert.ok(!('uzlc' in r.draft.api.list.headers), 'ephemeral anti-bot token not hardcoded');
   assert.equal(r.draft.api.list.referer, 'https://www.x.es/account/list?page={page}');
   assert.equal(r.draft.api.detail.headers['dkt-ecom-origin'], 'web');
   assert.equal(r.draft.api.detail.referer, 'https://www.x.es/account/order?transactionId={internalId}');
