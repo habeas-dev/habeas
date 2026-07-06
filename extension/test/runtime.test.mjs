@@ -4,7 +4,7 @@ import carrefour from '../src/adapters/carrefour-es.js';
 import mart from './fixtures/examplemart-es.js';
 import bank from './fixtures/examplebank-es.js';
 import energy from './fixtures/exampleenergy-es.js';
-import { listInventory, listGroups, fetchDocument, fetchDetail, fetchPdf, normalizeDate, artifactKinds, fetchArtifact } from '../src/runtime/inventory.js';
+import { listInventory, listGroups, fetchDocument, fetchDetail, fetchPdf, normalizeDate, normalizeAmount, parseHtmlItems, artifactKinds, fetchArtifact } from '../src/runtime/inventory.js';
 import { sinkAcceptsArtifact } from '../src/sinks/format.js';
 
 const auth = { authorization: 'bearer eyJx' };
@@ -190,6 +190,72 @@ test('api.groups: lists transactions per account, tagging each with its account 
   assert.ok(urls.includes('https://bank.es/accounts/A1/transactions')); // per-account URL templated
   assert.ok(urls.includes('https://bank.es/accounts/A2/transactions'));
   assert.equal(byId['A1-t1']._group.iban, 'ES11'); // record carries its group
+});
+
+test('AEM/WiZink pipeline: CSRF prelude → groups POST (regex each) → per-card movements POST → parse', async () => {
+  const csrfPage = '<input type="hidden" name="securityToken" value="TOK12345678" />';
+  const groupsHtml = "<a onclick=\"goToCardDetail('ACC1', 'CARD1', 'today');\">c1</a>"
+    + "<a onclick=\"goToCardDetail('ACC1', 'CARD1', 'today');\">dup</a>" // duplicate → deduped
+    + "<a onclick=\"goToCardDetail('ACC2', 'CARD2', 'today');\">c2</a>";
+  const movHtml = (n) => `<div class="movement-item"><h4>SHOP ${n}</h4><span class="movement-date">30 JUN</span><span class="movement-amount">10,00 €</span></div>`;
+  const seen = { csrfInBody: null };
+  globalThis.fetch = async (url, init) => {
+    const u = new URL(url); const pn = u.searchParams.get('pagename') || '';
+    if ((init.body || '').includes('{csrf}')) throw new Error('unfilled {csrf}');
+    if (init.method === 'POST') seen.csrfInBody = ((init.body || '').match(/securityToken=([A-Z0-9]+)/) || [])[1];
+    let body = '';
+    if (u.pathname === '/csrf') body = csrfPage;
+    else if (pn.endsWith('NewGlobalPosition')) body = groupsHtml;
+    else if (pn.endsWith('NewToday')) body = movHtml(init.body.match(/accountNumber=(ACC\d)/)[1]);
+    return { ok: true, status: 200, text: async () => body };
+  };
+  const adapter = {
+    api: {
+      host: 'https://b.es',
+      csrf: { path: '/csrf', match: "securityToken['\"]?\\s*(?:value=|:)\\s*['\"]([A-Z0-9]{6,})" },
+      groups: { from: 'html', path: '/s', method: 'POST', params: { pagename: 'X/NewGlobalPosition' }, body: 'securityToken={csrf}',
+        rows: { each: "goToCardDetail\\('([^']+)',\\s*'([^']+)'", fields: { accountNumber: { group: 1 }, cardNumber: { group: 2 } } },
+        fields: { id: 'accountNumber', accountNumber: 'accountNumber', cardNumber: 'cardNumber' } },
+      list: { from: 'html', path: '/s', method: 'POST', paging: 'none', params: { pagename: 'X/NewToday' },
+        body: 'accountNumber={group.accountNumber}&cardNumber={group.cardNumber}&securityToken={csrf}',
+        rows: { row: 'movement-item', require: 'date', fields: { concept: { tag: 'h4' }, date: { sel: 'movement-date' }, amount: { sel: 'movement-amount' } } } },
+    },
+    fields: { internalId: '{group.accountNumber}|{date}|{concept}', date: 'date', total: 'amount', counterparty: 'concept', account: '{group.accountNumber}' },
+    auth: { mode: 'cookie' }, currency: 'EUR', schema: 'transaction@1',
+  };
+  const groups = await listGroups(adapter, { byPath: {}, merged: {} });
+  assert.deepEqual(groups.map((g) => g.accountNumber), ['ACC1', 'ACC2']); // deduped
+  const docs = await listInventory(adapter, { byPath: {}, merged: {} });
+  assert.equal(seen.csrfInBody, 'TOK12345678'); // prelude token injected into POST bodies
+  assert.equal(docs.length, 2); // one movement per card
+  assert.equal(docs[0].total, 10); assert.match(docs[0].date, /^\d{4}-06-30$/);
+  assert.deepEqual(new Set(docs.map((d) => d.account)), new Set(['ACC1', 'ACC2']));
+});
+
+test('parseHtmlItems extracts records from repeated HTML blocks (WiZink AEM movements shape)', () => {
+  const html = '<ul>'
+    + '<li><div class="movement-item mcc-5734"><h4>ACME REST</h4><span class="card-number-masked">*4321</span>'
+    + '<span class="movement-date">30 JUN</span><span class="movement-amount">21,00 €</span>'
+    + '<div class="movement-options"><a data-category="RESTAURACION">x</a></div></div></li>'
+    + '<li><div class="movement-item mcc-9999"><h4>FOO SHOP</h4><span class="card-number-masked">*4321</span>'
+    + '<span class="movement-date">01 JUL</span><span class="movement-amount">1.234,56 €</span>'
+    + '<div class="movement-options"><a data-category="OCIO">y</a></div></div></li>'
+    + '<li><div class="movement-item summary"><h4>Tu forma de pago</h4></div></li></ul>'; // header row → dropped by require
+  const cfg = { row: 'movement-item', require: 'date', fields: { concept: { tag: 'h4' }, card: { sel: 'card-number-masked' }, date: { sel: 'movement-date' }, total: { sel: 'movement-amount' }, category: { attr: 'data-category' }, mcc: { re: 'mcc-(\\d+)' } } };
+  const items = parseHtmlItems(html, cfg);
+  assert.equal(items.length, 2); // the no-date summary row is dropped
+  assert.deepEqual(items[0], { concept: 'ACME REST', card: '*4321', date: '30 JUN', total: '21,00 €', category: 'RESTAURACION', mcc: '5734' });
+  assert.equal(items[1].total, '1.234,56 €');
+});
+
+test('normalizeAmount parses Spanish/EUR amounts; normalizeDate infers year for "DD MON"', () => {
+  assert.equal(normalizeAmount('21,00 €'), 21);
+  assert.equal(normalizeAmount('1.234,56 €'), 1234.56);
+  assert.equal(normalizeAmount('-5,00'), -5);
+  assert.equal(normalizeAmount('5,00-'), -5);
+  assert.equal(normalizeAmount(42), 42);
+  assert.match(normalizeDate('30 JUN'), /^\d{4}-06-30$/); // day/month fixed; year inferred
+  assert.match(normalizeDate('1 ene'), /^\d{4}-01-01$/);
 });
 
 test('list.range + window "90d" requests only the last ~90 days (WiZink: avoids extra auth)', async () => {

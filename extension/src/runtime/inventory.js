@@ -33,18 +33,35 @@ async function withReferer(targetUrl, referer, fn) {
 // record carries its group (doc._group). Without groups, it's a single flat listing.
 export async function listInventory(adapter, auth, net, opts) {
   const byDate = (x, y) => (x.date < y.date ? 1 : -1);
+  // CSRF prelude (AEM/WiZink): fetch a page, extract the securityToken, expose it as {csrf} in every
+  // subsequent list/group/pdf template via auth.__csrf.
+  const a = adapter.api.csrf ? { ...(auth || {}), __csrf: await fetchCsrf(adapter, auth, net) } : auth;
   if (adapter.api.groups) {
-    let groups = await listGroups(adapter, auth, net);
+    let groups = await listGroups(adapter, a, net);
     // opts.groupId restricts to one account (a consumer's collect{group} asks for a single account).
     if (opts && opts.groupId != null) groups = groups.filter((g) => String(g.id) === String(opts.groupId));
     const all = [];
-    for (const g of groups) all.push(...await pageList(adapter, auth, net, g));
+    for (const g of groups) all.push(...await pageList(adapter, a, net, g));
     all.sort(byDate);
     return all;
   }
-  const all = await pageList(adapter, auth, net, null);
+  const all = await pageList(adapter, a, net, null);
   all.sort(byDate);
   return all;
+}
+
+// CSRF prelude: GET a page and extract a token (e.g. WiZink's securityToken hidden input / JS var) with
+// a regex (adapter.api.csrf.match, capture group 1). Reused as {csrf} in POST bodies and PDF URLs.
+async function fetchCsrf(adapter, auth, net) {
+  const NET = net || ((u, i) => fetch(u, i));
+  const c = adapter.api.csrf;
+  const host = c.host ? absHost(c.host) : adapter.api.host;
+  const url = host + c.path;
+  const init = { method: c.method || 'GET', headers: { accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', ...(c.headers || {}), ...headersFor(auth, c.path, false) }, credentials: 'include' };
+  const res = await NET(url, init);
+  if (!res.ok) throw new Error('csrf ' + res.status);
+  const m = (await res.text()).match(new RegExp(c.match));
+  return m ? m[1] : '';
 }
 
 // Enumerate the accounts/cards/portfolios a source groups its items by (id/name/… per adapter.api.groups.fields).
@@ -53,11 +70,15 @@ export async function listGroups(adapter, auth, net) {
   const g = adapter.api.groups;
   if (!g) return [];
   const items = await fetchGroupItems(adapter, auth, net);
-  return (items || []).map((item) => {
+  const seen = new Set(), out = [];
+  for (const item of (items || [])) {
     const grp = { _raw: item };
     for (const k of Object.keys(g.fields || {})) grp[k] = get(item, g.fields[k]);
-    return grp;
-  });
+    if (grp.id != null && grp.id !== '' && seen.has(grp.id)) continue; // dedup (repeated onclick handlers per card)
+    if (grp.id != null && grp.id !== '') seen.add(grp.id);
+    out.push(grp);
+  }
+  return out;
 }
 async function fetchGroupItems(adapter, auth, net) {
   const NET = net || ((u, i) => fetch(u, i));
@@ -68,7 +89,9 @@ async function fetchGroupItems(adapter, auth, net) {
   const isHtml = g.from === 'html';
   const cookie = adapter.auth && adapter.auth.mode === 'cookie';
   const accept = isHtml ? 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' : 'application/json';
-  const init = { headers: { accept, ...(g.headers || {}), ...headersFor(auth, g.path, !cookie) }, credentials: 'include' };
+  const method = (g.method || 'GET').toUpperCase();
+  const init = { method, headers: { accept, ...(g.headers || {}), ...headersFor(auth, g.path, !cookie) }, credentials: 'include' };
+  if (method === 'POST' && g.body != null) { init.body = fillTmpl(g.body, null, auth, g.params || {}); init.headers['content-type'] = g.contentType || 'application/x-www-form-urlencoded'; }
   if (g.referer) init.referrer = g.referer;
   const res = await withReferer(url, g.referer || null, () => NET(url, init));
   if (!res.ok) throw new Error('groups ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
@@ -146,6 +169,13 @@ const applyTmpl = (str, doc, id) => String(str).replace(/\{([^}]+)\}/g, (m, k) =
 });
 // {group.field} → the current group's (e.g. bank account's) value. Templates the per-group list URL.
 const tmplGroup = (str, group) => (group ? String(str).replace(/\{group\.([^}]+)\}/g, (m, k) => { const v = get(group, k); return v == null ? m : tid(v); }) : String(str));
+// Fill a POST-body/URL template: {group.*} + {csrf} (the CSRF token from the prelude, on auth.__csrf) +
+// any {paramName} from the request params (paging/range). Values are URL-encoded (form-urlencoded body).
+function fillTmpl(str, group, auth, params) {
+  let s = tmplGroup(str, group).split('{csrf}').join((auth && auth.__csrf) || '');
+  for (const k of Object.keys(params || {})) s = s.split('{' + k + '}').join(params[k] == null ? '' : String(params[k]));
+  return s;
+}
 // Resolve a field mapping: a plain dotted path into the item, OR a template referencing {group.*}
 // (and/or item fields) — e.g. account: "{group.iban}", internalId: "{group.id}-{transactionId}". A lone
 // {x} preserves the raw value's type; a template with surrounding text interpolates to a string.
@@ -456,7 +486,13 @@ async function fetchList(adapter, auth, params, net, group) {
   // A bare `accept: text/html` can trip content negotiation (Dia returns 204 No Content for it); send the
   // full browser navigation Accept so the server serves the real SSR page.
   const htmlAccept = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
-  const init = { headers: { accept: html ? htmlAccept : 'application/json', ...(list.headers || {}), ...headersFor(auth, path.split('?')[0], !cookie) }, credentials: 'include' };
+  const method = (list.method || 'GET').toUpperCase();
+  const init = { method, headers: { accept: html ? htmlAccept : 'application/json', ...(list.headers || {}), ...headersFor(auth, path.split('?')[0], !cookie) }, credentials: 'include' };
+  // POST list (AEM/WiZink send params in the body): fill {group.*} + {csrf} (from the prelude) + {paramName}.
+  if (method === 'POST' && list.body != null) {
+    init.body = fillTmpl(list.body, group, auth, gparams);
+    init.headers['content-type'] = list.contentType || 'application/x-www-form-urlencoded';
+  }
   // list.referer: some endpoints only honour the offset/page when the Referer reflects the page the
   // SPA was on. Template it per request with {from}/{offset}/{page} (+ {group.*}); set via DNR (fetch can't).
   let referer = null;
@@ -477,6 +513,7 @@ async function fetchList(adapter, auth, params, net, group) {
 // Extract list items from a server-rendered page: embedded JSON at `itemsPath`, else the rows of the
 // (largest) HTML table — each row → an object keyed by column header, plus `href` of its link(s).
 export function extractListItems(html, list) {
+  if (list.rows) return parseHtmlItems(html || '', list.rows); // repeated-block extraction (AEM/WiZink)
   if (list.itemsPath) {
     for (const obj of embeddedObjects(html || '')) {
       const arr = get(obj, list.itemsPath);
@@ -484,6 +521,44 @@ export function extractListItems(html, list) {
     }
   }
   return parseHtmlRows(html || '');
+}
+
+const escapeRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// Extract records from repeated HTML blocks that aren't a clean table/JSON — e.g. WiZink's AEM movements.
+// cfg = { row: 'movement-item', fields: { date:{sel:'movement-date'}, total:{sel:'movement-amount'},
+//   concept:{tag:'h4'}, category:{attr:'data-category'}, id:{re:'movItem_(\\d+)'} } }. A row spans from one
+// `row` class marker to the next; a field is the first element carrying a class (sel) / a tag / an attribute / a regex group.
+export function parseHtmlItems(html, cfg) {
+  if (!cfg) return [];
+  // `each` regex mode: each match is a row; fields map to capture groups ({group:1}) or sub-extract from m[0].
+  if (cfg.each) {
+    const re = new RegExp(cfg.each, 'g'), out = []; let m;
+    while ((m = re.exec(html || ''))) {
+      const o = {}; for (const k of Object.keys(cfg.fields || {})) { const f = cfg.fields[k]; o[k] = f.group != null ? (m[f.group] || '') : extractField(m[0], f); }
+      out.push(o);
+    }
+    return out;
+  }
+  if (!cfg.row) return [];
+  const re = new RegExp('class=["\'][^"\']*\\b' + escapeRe(cfg.row) + '\\b', 'g');
+  const idx = []; let m; while ((m = re.exec(html || ''))) idx.push(m.index);
+  const req = cfg.require ? (Array.isArray(cfg.require) ? cfg.require : [cfg.require]) : [];
+  const out = [];
+  for (let i = 0; i < idx.length; i++) {
+    const block = String(html).slice(idx[i], i + 1 < idx.length ? idx[i + 1] : undefined);
+    const o = {}; for (const k of Object.keys(cfg.fields || {})) o[k] = extractField(block, cfg.fields[k]);
+    if (req.every((k) => o[k] != null && o[k] !== '')) out.push(o); // drop header/summary rows missing required fields
+  }
+  return out;
+}
+function extractField(block, s) {
+  try {
+    if (s.re) { const m = block.match(new RegExp(s.re, 'i')); return m ? String(m[1] != null ? m[1] : m[0]).trim() : ''; }
+    if (s.attr) { const m = block.match(new RegExp(escapeRe(s.attr) + '\\s*=\\s*["\']([^"\']*)["\']', 'i')); return m ? m[1].trim() : ''; }
+    if (s.tag) { const m = block.match(new RegExp('<' + s.tag + '\\b[^>]*>([\\s\\S]*?)<\\/' + s.tag + '>', 'i')); return m ? stripTags(m[1]) : ''; }
+    if (s.sel) { const m = block.match(new RegExp('class=["\'][^"\']*\\b' + escapeRe(s.sel) + '\\b[^"\']*["\'][^>]*>([\\s\\S]*?)<', 'i')); return m ? stripTags(m[1]) : ''; }
+  } catch (e) {}
+  return '';
 }
 const unescapeHtml = (s) => String(s).replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 // Bootstrap JSON embedded in a page: <script> blobs (Next/Nuxt/JSON-LD) AND React/Inertia
@@ -547,7 +622,25 @@ export function normalizeDate(v) {
     const day = a > 12 ? a : (b > 12 ? b : a), mon = a > 12 ? b : (b > 12 ? a : b); // D/M unless clearly M/D
     return `${y}-${pad2(mon)}-${pad2(day)}`;
   }
+  m = low.match(/^(\d{1,2})\s+(?:de\s+)?([a-záéíóúñ]{3,})\.?$/); // DD MON (no year) — WiZink movements; infer year
+  if (m && MONTHS[m[2]]) {
+    const now = new Date(), mon = MONTHS[m[2]];
+    let y = now.getFullYear();
+    if (new Date(Date.UTC(y, mon - 1, +m[1])).getTime() - now.getTime() > 7 * 86400000) y -= 1; // future → last year
+    return `${y}-${pad2(mon)}-${pad2(+m[1])}`;
+  }
   const d = new Date(s); return isNaN(+d) ? s : d.toISOString().slice(0, 10);
+}
+
+// Spanish/EUR amount text → number. "21,00 €" → 21 · "1.234,56 €" → 1234.56 · "-5,00"/"5,00-" → -5.
+export function normalizeAmount(v) {
+  if (v == null || v === '' || typeof v === 'number') return v;
+  let s = String(v).replace(/[\s ]|€|eur/gi, '');
+  if (!s) return v;
+  const neg = /^-|-$|^\(|\)$/.test(s);
+  s = s.replace(/[()+\-]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'); // strip thousands '.', decimal ','→'.'
+  const n = parseFloat(s);
+  return isNaN(n) ? v : (neg ? -n : n);
 }
 
 // Map fresh items onto the shared docs array; returns how many were newly added.
@@ -569,6 +662,7 @@ function mapDoc(adapter, p, group) {
   if (group) doc._group = group; // the parent (account) this record belongs to
   for (const k in f) doc[k] = resolveField(f[k], p, group);
   if (doc.date != null && doc.date !== '') doc.date = normalizeDate(doc.date); // textual/locale → ISO
+  for (const k of ['total', 'amount']) if (typeof doc[k] === 'string' && doc[k] !== '') doc[k] = normalizeAmount(doc[k]); // "21,00 €" → 21
   doc.category = categorize(adapter, p);
   // A generic display label across schemas (store / issuer / counterparty / instrument / …).
   doc.label = doc.storeName || doc.issuer || doc.counterparty || doc.instrument || doc.description || doc.party || '';
