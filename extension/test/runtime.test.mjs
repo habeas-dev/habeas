@@ -83,6 +83,21 @@ test('detail.as:html fetches the print page and inlines its CSS + images (self-c
   assert.match(html, /<base href="https:\/\/www\.hover\.com\/">/); // base added for anything else
 });
 
+test('detail.as:render captures the FINAL rendered DOM (via injected render) + inlines assets', async () => {
+  // The SPA shell fetched statically is empty; the injected render returns the DOM AFTER the app ran.
+  const rendered = '<html><head><link rel="stylesheet" href="/app.css"></head><body><h1>Invoice INV-9</h1><div>Total 18.99</div></body></html>';
+  const render = async (url, opts) => { render.calledWith = { url, opts }; return rendered; };
+  globalThis.fetch = async (u) => (u.endsWith('/app.css') ? { ok: true, text: async () => '.inv{}' } : { ok: true, text: async () => '' });
+  const adapter = { name: 'Hover', api: { host: 'https://www.hover.com', detail: { path: '/control_panel/receipts/{internalId}', as: 'render', waitFor: '.receipt' } }, fields: { internalId: 'invoice' }, schema: 'receipt@1' };
+  const { blob, ext, via } = await fetchDocument(adapter, {}, { internalId: 'abc' }, null, render);
+  assert.equal(ext, 'html'); assert.equal(via, 'render');
+  assert.equal(render.calledWith.url, 'https://www.hover.com/control_panel/receipts/abc');
+  assert.equal(render.calledWith.opts.waitFor, '.receipt');
+  const html = await blob.text();
+  assert.match(html, /Invoice INV-9/);            // the real rendered content
+  assert.match(html, /<style>\.inv\{\}<\/style>/); // its CSS inlined → self-contained
+});
+
 test('detail.as:invoice renders a clean printable HTML invoice from the JSON detail', async () => {
   globalThis.fetch = async () => ({ ok: true, text: async () => JSON.stringify({ invoice: 'INV-9', date: '2021-10-22', total: '18.99', lines: [{ item: 'domain', price: '18.99' }] }) });
   const adapter = { name: 'Hover', api: { host: 'https://x.es', detail: { path: '/r/{internalId}', as: 'invoice' } }, fields: { internalId: 'invoice' }, schema: 'receipt@1' };

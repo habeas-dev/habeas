@@ -7,6 +7,7 @@ import { getConfig } from './lib/config.js';
 import { deliveredSet, markDelivered, appendLog } from './lib/state.js';
 import { listInventory, fetchDocument, documentExt } from './runtime/inventory.js';
 import { resolveSiteFetch } from './lib/pagefetch.js';
+import { renderPage } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
 import { acceptsDoc } from './sinks/format.js';
 import { getAdapters } from './adapters/index.js';
@@ -123,7 +124,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     const eligible = fresh.filter((d) => acceptsDoc(sink, d));
     if (!eligible.length) { await appendLog({ ...base, status: 'none', new: 0 }); await badgeClear(); return { status: 'done', new: 0 }; }
     const files = new Map();
-    for (const d of eligible) { try { files.set(d.internalId, (await fetchDocument(adapter, auth, d, net)).blob); } catch (e) { /* no document */ } }
+    for (const d of eligible) { try { files.set(d.internalId, (await fetchDocument(adapter, auth, d, net, renderPage)).blob); } catch (e) { /* no document */ } }
     await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, source: adapter.id, ext: documentExt(adapter) || 'pdf', interactive: !!opts.interactive });
     await markDelivered(ds.id, sink.id, eligible.map((d) => d.internalId));
     await appendLog({ ...base, status: 'ok', new: eligible.length });

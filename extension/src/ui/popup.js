@@ -2,6 +2,7 @@ import { chrome } from '../lib/ext.js';
 import { getConfig } from '../lib/config.js';
 import { listInventory, fetchDocument, documentExt } from '../runtime/inventory.js';
 import { resolveSiteFetch } from '../lib/pagefetch.js';
+import { renderPage } from '../lib/render.js';
 import { writeToSink } from '../sinks/sinks.js';
 import { sinkAcceptsSource, acceptsDoc } from '../sinks/format.js';
 import { deliveredSet, markDelivered, getLog, appendLog } from '../lib/state.js';
@@ -140,7 +141,7 @@ async function onSend() {
   const files = new Map();
   const noPdf = [];
   for (const d of eligible) {
-    try { files.set(d.internalId, (await fetchDocument(adapter, auth, d, net)).blob); }
+    try { files.set(d.internalId, (await fetchDocument(adapter, auth, d, net, renderPage)).blob); }
     catch (e) { if (/\b406\b|sin PDF|no PDF|no document/i.test(e.message)) noPdf.push(d.internalId); }
   }
   log(t('with_without_pdf', [String(files.size), String(noPdf.length)]) + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : ''));
