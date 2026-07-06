@@ -6,6 +6,24 @@ import { chrome } from './ext.js';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Is this tab showing an anti-bot interstitial (Cloudflare "Just a moment…", Turnstile, Akamai)
+// rather than the real site? We must NOT collect there — the session isn't valid yet.
+export async function isChallenged(tabId) {
+  if (!tabId || !chrome.scripting) return false;
+  try {
+    const [r] = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => {
+        const t = (document.title || '').toLowerCase();
+        if (/just a moment|checking your browser|attention required|un momento|verificando|verifying you are human/.test(t)) return true;
+        if (document.querySelector('#challenge-running, #cf-challenge-running, #cf-please-wait, .cf-turnstile, [data-translate="checking_browser"]')) return true;
+        return /cf-browser-verification|_cf_chl_opt|challenge-platform|__cf_chl|akam[ai]/.test((document.documentElement.outerHTML || '').slice(0, 6000));
+      },
+    });
+    return !!(r && r.result);
+  } catch (e) { return false; }
+}
+
 export async function renderPage(url, opts = {}) {
   const waitMs = opts.waitMs || 3500;
   const timeout = opts.timeout || 20000;

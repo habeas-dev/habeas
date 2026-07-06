@@ -7,7 +7,7 @@ import { getConfig } from './lib/config.js';
 import { deliveredSet, markDelivered, appendLog } from './lib/state.js';
 import { listInventory, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
 import { resolveSiteFetch } from './lib/pagefetch.js';
-import { renderPage } from './lib/render.js';
+import { renderPage, isChallenged } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
 import { acceptsDoc, sinkAcceptsArtifact } from './sinks/format.js';
 import { getAdapters } from './adapters/index.js';
@@ -27,7 +27,7 @@ chrome.action.onClicked.addListener(() => {
 chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
   if (info.status !== 'complete' || !tab || !tab.url || !/^https:\/\//.test(tab.url)) return;
   let host; try { host = new URL(tab.url).host; } catch (e) { return; }
-  maybeAutoRunForSite(host).catch(() => {});
+  maybeAutoRunForSite(host, tabId).catch(() => {});
 });
 
 const SAMPLE_CAP = 60;
@@ -87,10 +87,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 const DEBOUNCE_MS = 10 * 60 * 1000;
 const running = new Set();
 
-async function runAutoRoutes(matches) {
+async function runAutoRoutes(matches, tabId) {
   const cfg = await getConfig();
   if (!(cfg.routes || []).some((r) => r.mode === 'auto')) return;
   const adapters = await getAdapters();
+  let challenge = null; // lazily checked once, only when we're actually about to run
   for (const route of (cfg.routes || []).filter((r) => r.mode === 'auto')) {
     if (running.has(route.id)) continue;
     const ds = cfg.datasources.find((d) => d.id === route.datasource && d.enabled);
@@ -102,6 +103,9 @@ async function runAutoRoutes(matches) {
     const dk = 'autoLast:' + route.id;
     const o = await chrome.storage.session.get(dk);
     if (o[dk] && Date.now() - o[dk] < DEBOUNCE_MS) continue;
+    // Don't run on a Cloudflare/anti-bot interstitial — the real session isn't available yet. When the
+    // challenge passes, the page reloads → onUpdated fires again → this runs on the real site.
+    if (tabId != null) { if (challenge === null) challenge = await isChallenged(tabId); if (challenge) return; }
     running.add(route.id);
     await chrome.storage.session.set({ [dk]: Date.now() });
     runRoute(ds, adapter, sink).finally(() => running.delete(route.id));
@@ -110,7 +114,7 @@ async function runAutoRoutes(matches) {
 // Trigger A: captured auth (a bearer source's JWT was seen). host = the API host.
 const maybeAutoRun = (host) => runAutoRoutes((a) => hostOf(a) === host);
 // Trigger B: the user navigated to the source's site — works for cookie sources too (no JWT to capture).
-const maybeAutoRunForSite = (host) => runAutoRoutes((a) => siteMatches(a, host));
+const maybeAutoRunForSite = (host, tabId) => runAutoRoutes((a) => siteMatches(a, host), tabId);
 
 const hostOf = (adapter) => adapter.api.host.replace(/^https?:\/\//, '');
 const bareHost = (m) => String(m).replace(/^[a-z]+:\/\//i, '').replace(/[:/].*$/, '').replace(/^\*\./, '');
