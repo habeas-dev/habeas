@@ -126,6 +126,7 @@
   "author_tip_detail": { "message": "Then open the detail of one item — that captures the per-item data endpoint." },
   "author_tip_pdf": { "message": "If you want the PDFs, download one invoice/receipt from its detail page during capture." },
   "author_tip_wait": { "message": "Give each page a second to load its data before moving on, then come back and Analyze." },
+  "author_note_advanced": { "message": "Heads-up: capture doesn't work on every site. Some — heavily protected SPAs or advanced anti-bot walls (seen on certain retailers) — don't expose their data to record mode, and nothing gets captured. If that happens you can still build the source by hand: open the site's DevTools → Network, find the request that returns your data, and use \"Write/paste JSON\" (in Settings) to define it — like the shipped sources were made." },
   "author_url_ph": { "message": "https://www.example.com/your-account" },
   "author_start": { "message": "Grant access & open site" },
   "author_stop": { "message": "Stop learning" },
