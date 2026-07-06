@@ -110,7 +110,7 @@ function headersFor(auth, path, allowMerged = true) {
 // (GET). JSON detail is preferred when present — it's the practical artifact for many services.
 export function documentExt(adapter) {
   const pdf = adapter.api.pdf, detail = adapter.api.detail;
-  if (detail && (detail.as === 'html' || detail.as === 'invoice')) return 'html'; // printable invoice
+  if (detail && (detail.as === 'html' || detail.as === 'invoice' || detail.as === 'render')) return 'html'; // printable invoice
   if (pdf && (!pdf.method || pdf.method === 'GET')) return 'pdf';
   if (detail) return 'json';
   if (pdf) return 'pdf';
@@ -153,13 +153,20 @@ export function renderInvoiceHtml(doc, detail, adapter) {
 // `_raw`) or a bare internalId. `detail.from:'list'` uses the already-listed item's JSON as the
 // document (no extra request) — ideal when the list endpoint already returns each order's data and
 // there is no safe per-item endpoint. Otherwise: GET-PDF, then JSON detail, then POST-PDF.
-export async function fetchDocument(adapter, auth, docOrId, net) {
+export async function fetchDocument(adapter, auth, docOrId, net, render) {
   const doc = docOrId && typeof docOrId === 'object' ? docOrId : null;
   const internalId = doc ? doc.internalId : docOrId;
   const detail = adapter.api.detail;
   if (detail && detail.from === 'list') {
     const data = doc ? (doc._raw != null ? doc._raw : doc.record || {}) : {};
     return { blob: new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), ext: 'json', via: 'list' };
+  }
+  if (detail && detail.as === 'render') { // render the SPA page in a tab, capture the FINAL DOM, self-contain it
+    if (!render) throw new Error('rendering needs a tab — open the site and retry');
+    const host = detail.host ? absHost(detail.host) : adapter.api.host;
+    const url = host + detail.path.split('{internalId}').join(tid(internalId));
+    const html = await inlineAssets(await render(url, { waitFor: detail.waitFor, waitMs: detail.waitMs }), url, net || ((u, i) => fetch(u, i)));
+    return { blob: new Blob([html], { type: 'text/html' }), ext: 'html', via: 'render' };
   }
   if (detail && detail.as === 'html') return fetchHtmlDoc(adapter, auth, internalId, net); // fetch the print page, self-contained
   if (detail && detail.as === 'invoice') { // render a clean printable invoice from the detail JSON

@@ -5,6 +5,7 @@ import { draftAdapterFromSamples, listCandidates, matchCandidates } from '../run
 import { listInventory, fetchDocument } from '../runtime/inventory.js';
 import { resolveSiteFetch } from '../lib/pagefetch.js';
 import { editJson } from './jsoneditor.js';
+import { renderPage } from '../lib/render.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { saveSource } from '../adapters/index.js';
 import { grantConsent } from '../lib/consent.js';
@@ -229,7 +230,7 @@ async function previewDoc(adapter, authStore, net, docItem, tr) {
   $('#docwrap').hidden = true;
   $('#status').textContent = t('author_test_ok', [String(TEST_COUNT)]) + ' · ' + t('author_doc_fetching', [String(docItem.internalId)]);
   try {
-    const doc = await fetchDocument(adapter, authStore, docItem, net);
+    const doc = await fetchDocument(adapter, authStore, docItem, net, renderPage);
     await showDocPreview(doc);
     $('#status').textContent = t('author_test_ok', [String(TEST_COUNT)]) + ' · ' + t('author_doc_via', [t('via_' + doc.via)]);
   } catch (e) {

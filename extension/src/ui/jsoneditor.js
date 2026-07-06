@@ -3,6 +3,7 @@ import { t } from '../lib/i18n.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { listInventory, fetchDocument } from '../runtime/inventory.js';
 import { resolveSiteFetch } from '../lib/pagefetch.js';
+import { renderPage } from '../lib/render.js';
 
 const escf = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmt = (n) => (n == null || n === '' ? '' : String(n));
@@ -120,7 +121,7 @@ export function editJson(adapter) {
       const el = results.querySelector('#je_doc'); if (el) el.innerHTML = '';
       status.textContent = t('author_test_ok', [String(total)]) + ' · ' + t('author_doc_fetching', [String(docItem.internalId)]);
       try {
-        const doc = await fetchDocument(ad, auth, docItem, net);
+        const doc = await fetchDocument(ad, auth, docItem, net, renderPage);
         if (!el) { /* nothing */ }
         else if (doc.ext === 'pdf') { el.textContent = t('author_doc_pdf_size', [String(Math.round((await doc.blob.text()).length / 1024))]); }
         else if (doc.ext === 'html') { renderHtmlDoc(el, await doc.blob.text()); } // render the printable page, not its source
