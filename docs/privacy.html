@@ -31,11 +31,16 @@
       <nav>
         <a href="/">Home</a>
         <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <span class="langswitch" role="group" aria-label="Language">
+          <button data-lang="en" aria-pressed="true">EN</button>
+          <button data-lang="es" aria-pressed="false">ES</button>
+        </span>
       </nav>
     </div>
   </header>
 
   <main class="doc">
+    <div data-lang-content="en">
     <h1>Privacy Policy</h1>
     <p class="updated">Last updated: 6 July 2026</p>
 
@@ -130,11 +135,11 @@
     <p>Questions or requests: open an issue at
       <a href="https://github.com/habeas-dev/habeas">github.com/habeas-dev/habeas</a>.</p>
 
-    <hr />
+    </div><!-- /en -->
 
-    <h1 lang="es">Política de Privacidad</h1>
-    <p class="updated" lang="es">Última actualización: 6 de julio de 2026</p>
-    <div lang="es">
+    <div data-lang-content="es" lang="es" hidden>
+    <h1>Política de Privacidad</h1>
+    <p class="updated">Última actualización: 6 de julio de 2026</p>
       <p><strong>Habeas</strong> es una extensión de navegador libre y de código abierto (AGPL-3.0) que te ayuda a
         extraer <em>tus propios</em> datos —tickets, facturas, movimientos de tarjeta e inversiones— de servicios
         sin API ni exportación, íntegramente dentro de tu propia sesión ya autenticada. Habeas no es una empresa y
@@ -211,5 +216,22 @@
         <a href="https://github.com/habeas-dev/habeas">github.com/habeas-dev/habeas</a>.</p>
     </div>
   </main>
+
+  <script>
+    (function () {
+      const KEY = 'habeas-lang';
+      const saved = localStorage.getItem(KEY);
+      const lang = (saved === 'en' || saved === 'es') ? saved
+        : ((navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en');
+      const btns = document.querySelectorAll('.langswitch button[data-lang]');
+      function apply(l) {
+        document.documentElement.lang = l;
+        document.querySelectorAll('[data-lang-content]').forEach((el) => { el.hidden = el.getAttribute('data-lang-content') !== l; });
+        btns.forEach((b) => b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === l)));
+      }
+      btns.forEach((b) => b.addEventListener('click', () => { const l = b.getAttribute('data-lang'); localStorage.setItem(KEY, l); apply(l); }));
+      apply(lang);
+    })();
+  </script>
 </body>
 </html>
