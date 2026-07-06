@@ -77,6 +77,22 @@ const ID_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const SCHEMA_RE = /^[a-z_]+@\d+$/;
 const PAGING = new Set(['offsets', 'offset', 'page', 'cursor', 'none']);
 
+// Canonical category catalog — the ONLY values a source may emit (used for sink compatibility).
+// One source of truth; keep in sync with the schema enum and docs/categories.md. Extend here.
+export const CATEGORIES = [
+  // Retail purchases (receipts)
+  'grocery', 'fuel', 'sports', 'fashion', 'electronics', 'home', 'diy', 'pharmacy',
+  'restaurant', 'marketplace', 'travel', 'entertainment', 'retail',
+  // Services (invoices)
+  'energy', 'water', 'telecom', 'utility', 'tolls', 'transport', 'insurance',
+  'subscription', 'education', 'healthcare', 'government',
+  // Financial (transactions / holdings)
+  'card', 'cash', 'banking', 'investment', 'pension', 'crypto', 'loan',
+  // Fallback
+  'other',
+];
+const CATSET = new Set(CATEGORIES);
+
 export function validateAdapter(adapter) {
   const errors = [];
   const req = (cond, msg) => { if (!cond) errors.push(msg); };
@@ -90,6 +106,13 @@ export function validateAdapter(adapter) {
     req(Array.isArray(adapter.match) && adapter.match.length > 0, 'match[] required');
     req(typeof adapter.schema === 'string' && SCHEMA_RE.test(adapter.schema), 'schema like "receipt@1" required');
     req(Array.isArray(adapter.categories) && adapter.categories.length > 0, 'categories[] required');
+    const badCats = (adapter.categories || []).filter((c) => !CATSET.has(c));
+    req(!badCats.length, `unknown categor${badCats.length > 1 ? 'ies' : 'y'}: ${badCats.join(', ')} — use the allowed catalog (see docs/categories.md)`);
+    if (adapter.categorize) {
+      const czVals = [adapter.categorize.default, ...Object.values(adapter.categorize.map || {})].filter((v) => v != null);
+      const badCz = czVals.filter((c) => !CATSET.has(c));
+      req(!badCz.length, `categorize maps to unknown categor${badCz.length > 1 ? 'ies' : 'y'}: ${badCz.join(', ')}`);
+    }
     const api = adapter.api || {};
     // https everywhere; http only for loopback (local dev/testing sources — can't be MITM'd off-box).
     const okScheme = typeof api.host === 'string' && (/^https:\/\//.test(api.host) || /^http:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/.test(api.host));

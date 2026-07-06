@@ -11,8 +11,8 @@ export default {
   trust: 'community',
   domain: 'examplebank.es',
   crossDomainHosts: ['api.examplebank.com'],
-  categories: ['card', 'cash', 'transaction'],
-  categorize: { field: 'operationType', map: { PURCHASE: 'card', WITHDRAWAL: 'cash' }, default: 'transaction' },
+  categories: ['card', 'cash', 'banking'],
+  categorize: { field: 'operationType', map: { PURCHASE: 'card', WITHDRAWAL: 'cash' }, default: 'banking' },
   match: ['https://particulares.examplebank.es/*'],
   auth: { tokenMatch: 'eyJ', replayHeaders: ['authorization', 'x-csrf-token'] },
   api: {
