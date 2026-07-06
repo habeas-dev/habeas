@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<style>
+  :root{
+    --bg1:#0b3b39; --bg2:#0f766e; --ink:#0d1b1a; --pane:#ffffff; --line:#e4e9e8;
+    --muted:#6b7a78; --accent:#0f766e; --accentink:#ffffff; --chip:#e8f3f1; --chipink:#0f766e;
+    --ok:#0f766e; --warnbg:#fff6e6; --warnink:#8a5a00;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,-apple-system,sans-serif}
+  html,body{width:1280px;height:800px;overflow:hidden}
+  .shot{width:1280px;height:800px;display:none;position:relative;
+    background:radial-gradient(1200px 700px at 78% -10%, #14958a 0%, var(--bg2) 38%, var(--bg1) 100%);
+    color:#eafcf9;padding:64px 72px}
+  body[data-shot="1"] #s1,body[data-shot="2"] #s2,body[data-shot="3"] #s3,
+  body[data-shot="4"] #s4,body[data-shot="5"] #s5{display:block}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px;opacity:.95}
+  .brand .dot{width:22px;height:22px;border-radius:6px;background:#eafcf9}
+  h1.head{font-size:44px;line-height:1.1;font-weight:800;margin:22px 0 8px;max-width:820px;letter-spacing:-.5px}
+  p.sub{font-size:20px;opacity:.85;max-width:660px}
+  .stage{position:absolute;right:64px;bottom:56px}
+  .pane{background:var(--pane);color:var(--ink);border-radius:16px;box-shadow:0 30px 70px rgba(0,0,0,.35);overflow:hidden}
+  .top{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);font-weight:700}
+  .top .logo{width:18px;height:18px;border-radius:5px;background:var(--accent)}
+  .top .ver{margin-left:auto;color:var(--muted);font-weight:500;font-size:12px}
+  .body{padding:16px}
+  .row{display:flex;align-items:center;gap:10px}
+  .muted{color:var(--muted)}
+  .chip{display:inline-block;background:var(--chip);color:var(--chipink);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600}
+  .chip.fp{background:#dfeee0;color:#256a34}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:9px;padding:9px 14px;font-weight:700;font-size:13px}
+  .btn.g{background:#eef2f1;color:#334}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{ text-align:left;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}
+  td{padding:9px 8px;border-bottom:1px solid var(--line)}
+  td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+  .tabs{display:flex;gap:6px;padding:12px 16px 0}
+  .tab{padding:8px 12px;border-radius:9px 9px 0 0;font-size:13px;font-weight:600;color:var(--muted);background:#f4f7f6}
+  .tab.on{background:#fff;color:var(--accent);box-shadow:inset 0 -2px 0 var(--accent)}
+  .card{border:1px solid var(--line);border-radius:12px;padding:14px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .name{font-weight:700}
+  .sel{border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .warn{background:var(--warnbg);color:var(--warnink);border-radius:10px;padding:10px 12px;font-size:13px}
+  .credit{position:absolute;left:72px;bottom:34px;font-size:13px;opacity:.7}
+</style>
+</head>
+<body>
+
+<!-- 1 · popup: tickets -->
+<section class="shot" id="s1">
+  <div class="brand"><span class="dot"></span> Habeas</div>
+  <h1 class="head">Exporta tus tickets y facturas</h1>
+  <p class="sub">De servicios que no lo ponen fácil — dentro de tu propia sesión.</p>
+  <div class="stage">
+    <div class="pane" style="width:430px">
+      <div class="top"><span class="logo"></span> Habeas <span class="ver">v0.1.5</span></div>
+      <div class="body">
+        <div class="row" style="margin-bottom:12px">
+          <div class="sel" style="flex:1">🛒 Dia España — tickets</div>
+          <button class="btn">Sincronizar</button>
+        </div>
+        <table>
+          <thead><tr><th>Fecha</th><th>Tienda</th><th class="r">Total</th></tr></thead>
+          <tbody>
+            <tr><td>2026-06-01</td><td>Dia · Cobeña</td><td class="r">9,77 €</td></tr>
+            <tr><td>2026-05-18</td><td>Dia · Cobeña</td><td class="r">36,25 €</td></tr>
+            <tr><td>2026-05-14</td><td>Dia · Cobeña</td><td class="r">83,41 €</td></tr>
+            <tr><td>2026-05-05</td><td>Dia · Cobeña</td><td class="r">21,40 €</td></tr>
+            <tr><td>2025-10-03</td><td>Dia · Torrelaguna</td><td class="r">20,95 €</td></tr>
+          </tbody>
+        </table>
+        <div class="row muted" style="margin-top:12px;font-size:12px">5 documentos · enviados a Google Drive</div>
+      </div>
+    </div>
+  </div>
+  <div class="credit">Local-first · código abierto (AGPL-3.0) · sin contraseñas guardadas</div>
+</section>
+
+<!-- 2 · fuentes -->
+<section class="shot" id="s2">
+  <div class="brand"><span class="dot"></span> Habeas</div>
+  <h1 class="head">Fuentes propias y de la comunidad</h1>
+  <p class="sub">Añade un servicio con un clic, o graba la tuya — las fuentes son datos, nunca código.</p>
+  <div class="stage">
+    <div class="pane" style="width:560px">
+      <div class="tabs"><span class="tab on">Fuentes</span><span class="tab">Destinos</span><span class="tab">Sincronización</span><span class="tab">Integraciones</span></div>
+      <div class="body">
+        <div class="grid2">
+          <div class="card"><div class="name">Carrefour España</div><div class="muted" style="font-size:12px;margin:4px 0 8px">🇪🇸 alimentación · combustible</div><span class="chip fp">first-party</span></div>
+          <div class="card"><div class="name">Dia España</div><div class="muted" style="font-size:12px;margin:4px 0 8px">🇪🇸 alimentación</div><span class="chip">comunidad</span></div>
+          <div class="card"><div class="name">Decathlon España</div><div class="muted" style="font-size:12px;margin:4px 0 8px">🇪🇸 deporte</div><span class="chip">comunidad</span></div>
+          <div class="card"><div class="name">Hover</div><div class="muted" style="font-size:12px;margin:4px 0 8px">🌐 dominios</div><span class="chip">comunidad</span></div>
+        </div>
+        <div class="row" style="margin-top:14px;gap:8px"><button class="btn">+ Añadir fuente</button><button class="btn g">Explorar catálogo</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="credit">Guard de mismo dominio — una sesión solo se reenvía a su propio servicio</div>
+</section>
+
+<!-- 3 · destinos -->
+<section class="shot" id="s3">
+  <div class="brand"><span class="dot"></span> Habeas</div>
+  <h1 class="head">Envíalo donde quieras</h1>
+  <p class="sub">Un inventario, el destino que elijas. Nada sale del navegador hasta que eliges uno.</p>
+  <div class="stage">
+    <div class="pane" style="width:560px">
+      <div class="tabs"><span class="tab">Fuentes</span><span class="tab on">Destinos</span><span class="tab">Sincronización</span><span class="tab">Integraciones</span></div>
+      <div class="body">
+        <div class="grid2">
+          <div class="card"><div class="name">📥 Descarga</div><div class="muted" style="font-size:12px;margin-top:4px">Guarda ficheros en tu equipo</div></div>
+          <div class="card"><div class="name">📁 Carpeta local</div><div class="muted" style="font-size:12px;margin-top:4px">Una carpeta que eliges en disco</div></div>
+          <div class="card"><div class="name">☁️ Google Drive <span class="chip fp" style="font-size:11px">conectado</span></div><div class="muted" style="font-size:12px;margin-top:4px">Solo los ficheros que Habeas crea (drive.file)</div></div>
+          <div class="card"><div class="name">🔗 Endpoint HTTP</div><div class="muted" style="font-size:12px;margin-top:4px">Una URL que tú configuras</div></div>
+        </div>
+        <div class="warn" style="margin-top:14px">Habeas nunca lee tus demás ficheros de Drive, ni guarda tus contraseñas.</div>
+      </div>
+    </div>
+  </div>
+  <div class="credit">Un destino puede filtrar por categoría — p.ej. una app de finanzas que solo toma alimentación</div>
+</section>
+
+<!-- 4 · modo grabación -->
+<section class="shot" id="s4">
+  <div class="brand"><span class="dot"></span> Habeas</div>
+  <h1 class="head">Enséñale una fuente nueva — sin código</h1>
+  <p class="sub">El modo grabación observa la API del propio sitio mientras navegas y redacta la fuente por ti.</p>
+  <div class="stage">
+    <div class="pane" style="width:580px">
+      <div class="top"><span class="logo"></span> Nueva fuente — grabar y probar</div>
+      <div class="body">
+        <div class="row" style="gap:8px;margin-bottom:12px"><div class="sel" style="flex:1">https://www.ejemplo.com</div><button class="btn">Aprender del sitio</button></div>
+        <div class="muted" style="font-size:12px;margin-bottom:6px">Lista detectada · 24 documentos · probando 3</div>
+        <table>
+          <thead><tr><th>Fecha</th><th>Parte</th><th class="r">Importe</th><th>Doc</th></tr></thead>
+          <tbody>
+            <tr><td>2026-06-12</td><td>Tienda Acme</td><td class="r">14,90 €</td><td>📄 PDF</td></tr>
+            <tr><td>2026-05-30</td><td>Tienda Acme</td><td class="r">58,00 €</td><td>📄 PDF</td></tr>
+            <tr><td>2026-05-21</td><td>Tienda Acme</td><td class="r">7,25 €</td><td>datos</td></tr>
+          </tbody>
+        </table>
+        <div class="row" style="margin-top:14px;gap:8px"><button class="btn">Guardar fuente</button><button class="btn g">Compartir con la comunidad</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="credit">Redacta una fuente declarativa y auditable — sin código remoto</div>
+</section>
+
+<!-- 5 · integraciones / consentimiento -->
+<section class="shot" id="s5">
+  <div class="brand"><span class="dot"></span> Habeas</div>
+  <h1 class="head">Tú apruebas cada flujo de datos</h1>
+  <p class="sub">Una web puede proponer un flujo, pero nada se ejecuta hasta que aceptas — y solo hacia esa web.</p>
+  <div class="stage">
+    <div class="pane" style="width:520px">
+      <div class="top"><span class="logo"></span> Autorizar integración</div>
+      <div class="body">
+        <p style="font-size:15px;margin-bottom:10px"><b>cuentamo.app</b> quiere crear un flujo de datos:</p>
+        <div class="card" style="margin-bottom:10px">
+          <div class="row" style="justify-content:space-between"><span class="name">Dia España — tickets</span><span class="muted">→</span><span class="name">cuentamo.app</span></div>
+        </div>
+        <ul class="muted" style="font-size:13px;margin:0 0 14px 18px;line-height:1.7">
+          <li>Lee tus datos de Dia <b>en tu sesión</b></li>
+          <li>Los envía <b>solo a cuentamo.app</b> (su propio dominio)</li>
+          <li>Revocable cuando quieras en Ajustes → Integraciones</li>
+        </ul>
+        <div class="row" style="gap:8px"><button class="btn">Aceptar</button><button class="btn g">Rechazar</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="credit">Ligado al origen + consentimiento explícito — la exfiltración silenciosa es imposible</div>
+</section>
+
+</body>
+</html>
