@@ -80,7 +80,6 @@ export function editJson(adapter) {
         const host = ad.api.host.replace(/^https?:\/\//, '');
         const auth = (await getAuthFor(host)) || { byPath: {}, merged: {} };
         const net = await resolveSiteFetch(ad);
-        if (!net) status.textContent = t('je_no_tab');
         const docs = await listInventory(ad, auth, net);
         renderDocs(ad, auth, net, docs);
       } catch (e) { status.textContent = t('author_test_err', [(e && e.message) || String(e)]); }
@@ -90,6 +89,9 @@ export function editJson(adapter) {
       const MAX = 500;
       const rows = docs.slice(0, MAX).map((d) => `<tr data-i="${escf(d.internalId)}" style="cursor:pointer"><td>${escf((d.date || '').slice(0, 10))}</td><td>${escf(d.storeName || d.label || '')}</td><td style="text-align:right">${escf(fmt(d.total ?? d.amount))}</td><td>${escf(d.type || '')}</td></tr>`).join('');
       results.innerHTML = `<table style="width:100%;font-size:12px"><thead><tr><th>${t('th_date')}</th><th>${t('th_store')}</th><th style="text-align:right">${t('th_amount')}</th><th>${t('th_type')}</th></tr></thead><tbody>${rows}${docs.length > MAX ? `<tr><td colspan="4" class="muted">… +${docs.length - MAX}</td></tr>` : ''}</tbody></table><div id="je_doc" style="margin-top:8px;max-height:280px;overflow:auto;font-family:ui-monospace,monospace;font-size:12px"></div>`;
+      // No site tab → the fetch ran from the extension, which can't set a same-origin Referer or ride
+      // Cloudflare. Say so (a paged/referer-gated source only fully works from your tab).
+      if (!net) { status.textContent = t('author_test_ok', [String(docs.length)]) + ' · ⚠ ' + t('je_no_tab'); return; }
       status.textContent = t('author_test_ok', [String(docs.length)]);
       if (docs.length && (ad.api.detail || ad.api.pdf)) {
         const trs = results.querySelectorAll('tr[data-i]');
