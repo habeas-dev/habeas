@@ -17,6 +17,16 @@ let CATALOG = {};
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+// Starting point for "Paste JSON" — a minimal, valid-shaped source to edit or paste over.
+const PASTE_TEMPLATE = {
+  id: 'my-source', name: 'My source', service: 'service', trust: 'community', domain: 'example.com',
+  categories: ['other'], match: ['https://www.example.com/*'],
+  auth: { mode: 'cookie', replayHeaders: [] },
+  api: { host: 'https://www.example.com', list: { path: '/api/list', paging: 'none', itemsPath: 'items' } },
+  fields: { internalId: 'id', number: 'number', date: 'date', total: 'total', storeName: 'store' },
+  schema: 'receipt@1',
+};
+
 // Mandatory consent screen before a community / cross-domain source is enabled. Dynamic host
 // values go in via textContent (never innerHTML) so nothing from a source can inject markup.
 function confirmConsent(desc) {
@@ -185,6 +195,10 @@ $('#stype').onchange = renderFields;
 $('#addsink').onclick = addSink;
 $('#create').onclick = () => { location.href = 'author.html'; };
 $('#browse').onclick = () => { location.href = 'marketplace.html'; };
+$('#paste').onclick = async () => {
+  const adapter = await editJson(PASTE_TEMPLATE);
+  if (adapter) { await saveSource(adapter); render(); }
+};
 $('#import').onclick = () => $('#importfile').click();
 $('#importfile').onchange = async (e) => {
   const file = e.target.files[0]; if (!file) return;

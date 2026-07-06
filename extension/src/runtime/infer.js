@@ -65,6 +65,22 @@ const looksName = (k) => /(store|shop|merchant|comercio|tienda|name|nombre|suppl
 
 const HEADER_ALLOW = /^(authorization|x-.*token|x-.*csrf|x-xsrf-token|requestorigin|sessionid)$/i;
 
+// App-specific request headers (e.g. dkt-ecom-origin) that a request needs but that aren't auth
+// (auth is replayed via auth.replayHeaders) — carried into list.headers / detail.headers de oficio.
+function appHeaders(reqHeaders) {
+  const out = {};
+  for (const k of Object.keys(reqHeaders || {})) {
+    if (HEADER_ALLOW.test(k) || /^content-type$/i.test(k)) continue; // auth handled separately; CT set per request
+    if (reqHeaders[k]) out[k] = reqHeaders[k];
+  }
+  return out;
+}
+// The full navigated-page URL that carries `id` (the item's detail page) → a referer template.
+function refererForId(domTexts, id) {
+  for (const d of domTexts || []) { if (d && d.url && String(d.url).includes(id)) return String(d.url).split(id).join('{internalId}'); }
+  return null;
+}
+
 // A logical list is identified by host + endpoint path + itemsPath — the SAME list across pages
 // (different offset/page/cursor in the query) collapses to one candidate.
 function keyOf(url, itemsPath) {
@@ -136,17 +152,19 @@ export function inferDetail(samples, items, domTexts) {
   const full = (u) => u.pathname + (u.search || '');
   const templ = (u, id) => full(u).split(id).join('{internalId}');
 
+  // Prefer a real XHR JSON endpoint (the SPA's per-item data call) — auto-carry its app headers and
+  // the detail-page URL as the Referer (both often required, e.g. Decathlon's order endpoint).
   for (const s of samples || []) {
     if (!s || !s.json || Array.isArray(s.json) || (s.status && s.status >= 300)) continue;
     let u; try { u = new URL(s.url); } catch (e) { continue; }
     const id = vals.find((v) => full(u).includes(v) && deepIncludes(s.json, v.toLowerCase()));
-    if (id) return { host: u.host, path: templ(u, id), method: (s.method || 'GET').toUpperCase(), idField: vf.get(id) };
+    if (id) return { host: u.host, path: templ(u, id), method: (s.method || 'GET').toUpperCase(), idField: vf.get(id), headers: appHeaders(s.reqHeaders), referer: refererForId(domTexts, id) };
   }
-  // Server-rendered detail page the user opened (URL carries the id) — no XHR JSON captured.
+  // Fallback: a server-rendered detail page the user opened (URL carries the id) — no XHR captured.
   for (const d of domTexts || []) {
     let u; try { u = new URL(d.url); } catch (e) { continue; }
     const id = vals.find((v) => full(u).includes(v));
-    if (id) return { host: u.host, path: templ(u, id), method: 'GET', idField: vf.get(id) };
+    if (id) return { host: u.host, path: templ(u, id), method: 'GET', idField: vf.get(id), referer: String(d.url).split(id).join('{internalId}') };
   }
   return null;
 }
@@ -297,12 +315,21 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
   }
   if (Object.keys(params).length) draft.api.list.params = params;
 
+  // De oficio: carry the list request's app headers (e.g. dkt-ecom-origin) and, if a paged account
+  // page was navigated, a per-page Referer template (some endpoints only honour the offset then).
+  const lh = appHeaders(s.reqHeaders);
+  if (Object.keys(lh).length) draft.api.list.headers = lh;
+  const pageRef = (ctx.domTexts || []).find((d) => { try { const uu = new URL(d.url); return uu.host === host && /[?&]page=\d+/.test(uu.search); } catch (e) { return false; } });
+  if (pageRef) draft.api.list.referer = String(pageRef.url).replace(/([?&]page=)\d+/, '$1{page}');
+
   // Per-document artifact: prefer the JSON detail (captured passively when the user opens an order);
-  // fall back to a captured PDF request.
+  // fall back to a captured PDF request. Auto-carry the detail's app headers + detail-page Referer.
   const detail = inferDetail(samples, best.items, ctx.domTexts);
   if (detail) {
     draft.api.detail = { path: detail.path, method: detail.method };
     if (detail.host && detail.host !== host) draft.api.detail.host = detail.host;
+    if (detail.headers && Object.keys(detail.headers).length) draft.api.detail.headers = detail.headers;
+    if (detail.referer) draft.api.detail.referer = detail.referer;
     if (detail.idField) fields.internalId = detail.idField; // the internal id used in the URL
   } else if (ctx.assets) {
     const p = inferPdf(ctx.assets, best.items);
