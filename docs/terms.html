@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Habeas — Terms of Service</title>
+  <meta name="description" content="Terms of Service for Habeas: a free, open-source, local-first browser extension you run yourself to extract your own data. Provided as-is, no warranty." />
+  <link rel="icon" type="image/svg+xml" href="logo.svg" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    .doc h1 { font-size: 2rem; margin: 24px 0 4px; }
+    .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
+    .doc h3 { font-size: 1.02rem; margin: 20px 0 6px; }
+    .doc p, .doc li { line-height: 1.65; }
+    .doc ul { padding-left: 1.2em; }
+    .doc .updated { color: var(--muted, #888); margin-bottom: 8px; }
+    .doc .box { border: 1px solid var(--line, #3333); border-radius: 10px; padding: 14px 16px; margin: 18px 0; }
+    .doc hr { border: none; border-top: 1px solid var(--line, #3333); margin: 48px 0; }
+    .doc a { color: inherit; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="logo-light.svg" />
+        <img class="logo" src="logo.svg" alt="Habeas" />
+      </picture>
+      <span class="name">Habeas</span>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/sources.html">Sources</a>
+        <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <span class="langswitch" role="group" aria-label="Language">
+          <button data-lang="en" aria-pressed="true">EN</button>
+          <button data-lang="es" aria-pressed="false">ES</button>
+        </span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="doc">
+    <div data-lang-content="en">
+    <h1>Terms of Service</h1>
+    <p class="updated">Last updated: 6 July 2026</p>
+
+    <p><strong>Habeas</strong> is a free, open-source (AGPL-3.0) browser extension that helps you extract
+      <em>your own</em> personal data — receipts, invoices, card and investment records — from services that
+      offer no API or export, entirely inside your own, already-authenticated browser session. These Terms
+      govern your use of the extension and this website (<code>habeas.dev</code>). By installing or using
+      Habeas you agree to them; if you do not agree, do not use it.</p>
+
+    <div class="box"><strong>The short version:</strong> Habeas is software you run yourself, on your own data,
+      in your own session. It is provided free and <em>as-is</em>, with no warranty. You are responsible for how
+      you use it, including complying with the terms of the services you point it at.</div>
+
+    <h2>1. What Habeas is (and isn't)</h2>
+    <p>Habeas is a tool, not a service that acts on your behalf on a server. It is not a company, does not hold
+      accounts, and runs no servers that see your documents or your login session. It never stores or transmits
+      your passwords — you log in yourself. There is no background scraping while you are away.</p>
+
+    <h2>2. License</h2>
+    <p>Habeas is licensed under the <strong>GNU Affero General Public License v3.0 (AGPL-3.0)</strong>. Your rights
+      to use, study, modify, and redistribute it are governed by that license, whose full text ships with the
+      source at <a href="https://github.com/habeas-dev/habeas">github.com/habeas-dev/habeas</a>. These Terms do not
+      limit any rights the AGPL grants you.</p>
+
+    <h2>3. Your data, your session, your responsibility</h2>
+    <ul>
+      <li>Habeas operates on <strong>your own</strong> data, in <strong>your own</strong> authenticated session
+        (GDPR Art. 20 data portability / <em>habeas data</em>). Use it only to access data you are entitled to.</li>
+      <li>Each third-party service has its own <strong>Terms of Service</strong> that may restrict automated or
+        programmatic access. <strong>Complying with them is your responsibility</strong>, not Habeas's. Some
+        services may rate-limit, warn, or suspend accounts for automated access — you accept that risk.</li>
+      <li>You choose every destination your data goes to. Habeas sends nothing anywhere unless you configure and
+        trigger it.</li>
+    </ul>
+
+    <h2>4. Acceptable use</h2>
+    <p>You agree not to use Habeas to access data that is not yours, to circumvent security controls protecting
+      other people's data, or for any unlawful purpose. You are solely responsible for the "source" definitions
+      you install and for any endpoint you configure as a destination.</p>
+
+    <h2>5. Third-party services &amp; Google Drive</h2>
+    <p>Habeas interacts with services you already use; your relationship with each of them is governed by their own
+      terms and privacy policies. If you connect <strong>Google Drive</strong> as a destination, Habeas uses the
+      <code>drive.file</code> scope to write <em>only the files it creates</em> in your Drive; its use of Google
+      user data follows our <a href="/privacy.html">Privacy Policy</a> and the
+      <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data
+      Policy</a>, including the Limited Use requirements.</p>
+
+    <h2>6. Community sources &amp; contributions</h2>
+    <p>Community "source" definitions are static JSON data (no executable code) describing how to read a given
+      service. They are provided by contributors and offered without warranty; a <em>community</em> label marks
+      those that are not first-party audited. If you contribute a source, you confirm you have the right to do so
+      and license your contribution under the project's terms.</p>
+
+    <h2>7. No warranty</h2>
+    <p>Habeas is provided <strong>"AS IS" and "AS AVAILABLE", without warranty of any kind</strong>, express or
+      implied, including but not limited to merchantability, fitness for a particular purpose, accuracy, and
+      non-infringement. We do not warrant that it will work with any given service, that extracted data will be
+      complete or correct, or that it will be uninterrupted or error-free. Services change and may break a source
+      at any time.</p>
+
+    <h2>8. Limitation of liability</h2>
+    <p>To the maximum extent permitted by law, the authors and contributors shall not be liable for any indirect,
+      incidental, special, consequential, or punitive damages, or any loss of data, profits, or goodwill, arising
+      from your use of (or inability to use) Habeas. This does not exclude liability that cannot be excluded under
+      applicable law.</p>
+
+    <h2>9. Not a regulated financial actor</h2>
+    <p>Habeas performs no payment initiation and is not a payment or account-information service provider under
+      PSD2 or any equivalent regime. It is a personal data-portability tool. It provides no financial, legal, or
+      tax advice.</p>
+
+    <h2>10. Changes to these Terms</h2>
+    <p>We may update these Terms; the "Last updated" date will change and material changes will be noted in the
+      GitHub repository. Continued use after a change means you accept the updated Terms.</p>
+
+    <h2>11. Governing law</h2>
+    <p>These Terms are governed by the laws of Spain, without regard to conflict-of-laws rules, and subject to any
+      mandatory consumer protections of your country of residence.</p>
+
+    <h2>12. Contact</h2>
+    <p>Questions: open an issue at
+      <a href="https://github.com/habeas-dev/habeas">github.com/habeas-dev/habeas</a>.
+      See also our <a href="/privacy.html">Privacy Policy</a>.</p>
+
+    </div><!-- /en -->
+
+    <div data-lang-content="es" lang="es" hidden>
+    <h1>Condiciones del Servicio</h1>
+    <p class="updated">Última actualización: 6 de julio de 2026</p>
+
+    <p><strong>Habeas</strong> es una extensión de navegador libre y de código abierto (AGPL-3.0) que te ayuda a
+      extraer <em>tus propios</em> datos —tickets, facturas, movimientos de tarjeta e inversiones— de servicios sin
+      API ni exportación, íntegramente dentro de tu propia sesión ya autenticada. Estas Condiciones regulan tu uso
+      de la extensión y de este sitio web (<code>habeas.dev</code>). Al instalar o usar Habeas las aceptas; si no
+      estás de acuerdo, no lo uses.</p>
+
+    <div class="box"><strong>En corto:</strong> Habeas es software que ejecutas tú mismo, sobre tus propios datos,
+      en tu propia sesión. Se ofrece gratis y <em>tal cual</em>, sin garantía. Eres responsable de cómo lo usas,
+      incluido cumplir los términos de los servicios a los que lo apuntes.</div>
+
+    <h2>1. Qué es Habeas (y qué no)</h2>
+    <p>Habeas es una herramienta, no un servicio que actúe por ti en un servidor. No es una empresa, no gestiona
+      cuentas y no tiene servidores que vean tus documentos ni tu sesión. Nunca guarda ni transmite tus
+      contraseñas —inicias sesión tú—. No hay scraping en segundo plano mientras no estás.</p>
+
+    <h2>2. Licencia</h2>
+    <p>Habeas se licencia bajo la <strong>GNU Affero General Public License v3.0 (AGPL-3.0)</strong>. Tus derechos
+      de uso, estudio, modificación y redistribución se rigen por esa licencia, cuyo texto completo acompaña al
+      código en <a href="https://github.com/habeas-dev/habeas">github.com/habeas-dev/habeas</a>. Estas Condiciones
+      no limitan ningún derecho que te otorgue la AGPL.</p>
+
+    <h2>3. Tus datos, tu sesión, tu responsabilidad</h2>
+    <ul>
+      <li>Habeas opera sobre <strong>tus propios</strong> datos, en <strong>tu propia</strong> sesión autenticada
+        (GDPR Art. 20 / <em>habeas data</em>). Úsalo solo para acceder a datos a los que tengas derecho.</li>
+      <li>Cada servicio tiene sus propias <strong>Condiciones</strong> que pueden restringir el acceso automatizado.
+        <strong>Cumplirlas es tu responsabilidad</strong>, no de Habeas. Algunos servicios pueden limitar, avisar o
+        suspender cuentas por acceso automatizado: asumes ese riesgo.</li>
+      <li>Tú eliges cada destino. Habeas no envía nada a ningún sitio salvo que lo configures y lo dispares.</li>
+    </ul>
+
+    <h2>4. Uso aceptable</h2>
+    <p>Aceptas no usar Habeas para acceder a datos que no son tuyos, eludir controles de seguridad que protegen datos
+      de otras personas, ni con fines ilícitos. Eres el único responsable de las definiciones de "source" que
+      instales y de cualquier endpoint que configures como destino.</p>
+
+    <h2>5. Servicios de terceros y Google Drive</h2>
+    <p>Habeas interactúa con servicios que ya usas; tu relación con cada uno se rige por sus propios términos y
+      políticas. Si conectas <strong>Google Drive</strong> como destino, Habeas usa el permiso <code>drive.file</code>
+      para escribir <em>solo los ficheros que él crea</em> en tu Drive; su uso de datos de usuario de Google sigue
+      nuestra <a href="/privacy.html">Política de Privacidad</a> y la
+      <a href="https://developers.google.com/terms/api-services-user-data-policy">Política de Datos de Usuario de las
+      APIs de Google</a>, incluidos los requisitos de Uso Limitado.</p>
+
+    <h2>6. Fuentes comunitarias y contribuciones</h2>
+    <p>Las definiciones "source" comunitarias son datos JSON estáticos (sin código ejecutable) que describen cómo
+      leer un servicio. Las aportan colaboradores y se ofrecen sin garantía; la etiqueta <em>community</em> marca las
+      que no están auditadas por el proyecto. Si contribuyes una fuente, confirmas que tienes derecho a hacerlo y la
+      licencias bajo los términos del proyecto.</p>
+
+    <h2>7. Sin garantía</h2>
+    <p>Habeas se ofrece <strong>"TAL CUAL" y "SEGÚN DISPONIBILIDAD", sin garantía de ningún tipo</strong>, expresa o
+      implícita, incluidas sin limitación las de comerciabilidad, idoneidad para un fin, exactitud y no infracción.
+      No garantizamos que funcione con un servicio concreto, que los datos extraídos sean completos o correctos, ni
+      que sea ininterrumpido o sin errores. Los servicios cambian y pueden romper una fuente en cualquier momento.</p>
+
+    <h2>8. Limitación de responsabilidad</h2>
+    <p>En la máxima medida permitida por la ley, los autores y colaboradores no serán responsables de daños
+      indirectos, incidentales, especiales, consecuentes o punitivos, ni de pérdida de datos, beneficios o fondo de
+      comercio, derivados del uso (o la imposibilidad de uso) de Habeas. Esto no excluye la responsabilidad que no
+      pueda excluirse conforme a la ley aplicable.</p>
+
+    <h2>9. No es un actor financiero regulado</h2>
+    <p>Habeas no realiza iniciación de pagos y no es un proveedor de servicios de pago ni de información de cuentas
+      bajo PSD2 ni régimen equivalente. Es una herramienta de portabilidad de datos personales. No ofrece
+      asesoramiento financiero, legal ni fiscal.</p>
+
+    <h2>10. Cambios en las Condiciones</h2>
+    <p>Podemos actualizar estas Condiciones; cambiará la fecha de "Última actualización" y los cambios materiales se
+      anotarán en el repositorio de GitHub. Seguir usándolo tras un cambio implica que aceptas las nuevas
+      Condiciones.</p>
+
+    <h2>11. Ley aplicable</h2>
+    <p>Estas Condiciones se rigen por la legislación de España, sin perjuicio de las normas imperativas de protección
+      al consumidor de tu país de residencia.</p>
+
+    <h2>12. Contacto</h2>
+    <p>Dudas: abre una incidencia en
+      <a href="https://github.com/habeas-dev/habeas">github.com/habeas-dev/habeas</a>.
+      Consulta también nuestra <a href="/privacy.html">Política de Privacidad</a>.</p>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const KEY = 'habeas-lang';
+      const saved = localStorage.getItem(KEY);
+      const lang = (saved === 'en' || saved === 'es') ? saved
+        : ((navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en');
+      const btns = document.querySelectorAll('.langswitch button[data-lang]');
+      function apply(l) {
+        document.documentElement.lang = l;
+        document.querySelectorAll('[data-lang-content]').forEach((el) => { el.hidden = el.getAttribute('data-lang-content') !== l; });
+        btns.forEach((b) => b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === l)));
+      }
+      btns.forEach((b) => b.addEventListener('click', () => { const l = b.getAttribute('data-lang'); localStorage.setItem(KEY, l); apply(l); }));
+      apply(lang);
+    })();
+  </script>
+</body>
+</html>
