@@ -240,7 +240,17 @@ async function fetchList(adapter, auth, params, net) {
   // Cloudflare/Akamai don't challenge it; credentials:'include' carries cookies.
   const cookie = adapter.auth && adapter.auth.mode === 'cookie';
   const list = adapter.api.list;
-  const res = await NET(url, { headers: { accept: 'application/json', ...(list.headers || {}), ...headersFor(auth, list.path, !cookie) }, credentials: 'include' });
+  const init = { headers: { accept: 'application/json', ...(list.headers || {}), ...headersFor(auth, list.path, !cookie) }, credentials: 'include' };
+  // list.referer: some endpoints only honour the offset/page when the Referer reflects the page the
+  // SPA was on. Template it per request with {from}/{offset}/{page}; set via DNR (fetch can't).
+  let referer = null;
+  if (list.referer) {
+    const off = Number(params[list.offsetParam] ?? params[list.pageParam] ?? 0);
+    const size = Number(params.size || params.count || list.offsetStep || 1) || 1;
+    const page = list.pageParam ? (Number(params[list.pageParam]) || 1) : Math.floor(off / size) + 1;
+    referer = String(list.referer).split('{from}').join(String(off)).split('{offset}').join(String(off)).split('{page}').join(String(page));
+  }
+  const res = await withReferer(url, referer, () => NET(url, init));
   if (!res.ok) throw new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160));
   return await res.json();
 }
