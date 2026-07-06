@@ -307,6 +307,36 @@ function parseHtmlRows(html) {
 }
 const itemsPathOf = (list) => (list.from === 'html' ? '__items' : list.itemsPath);
 
+// Normalize a date value to ISO (YYYY-MM-DD). Handles ISO/ISO-datetime, epoch s/ms, textual months
+// (English + Spanish, "October 22, 2021" / "22 de octubre de 2021"), and D/M/Y numeric — so lists
+// sort correctly and records are consistent. Unparseable → returned unchanged.
+const MONTHS = {};
+[['january', 'jan', 'enero', 'ene'], ['february', 'feb', 'febrero'], ['march', 'mar', 'marzo'],
+  ['april', 'apr', 'abril', 'abr'], ['may', 'mayo'], ['june', 'jun', 'junio'], ['july', 'jul', 'julio'],
+  ['august', 'aug', 'agosto', 'ago'], ['september', 'sep', 'sept', 'septiembre', 'setiembre'],
+  ['october', 'oct', 'octubre'], ['november', 'nov', 'noviembre'], ['december', 'dec', 'diciembre', 'dic'],
+].forEach((names, i) => names.forEach((n) => { MONTHS[n] = i + 1; }));
+const pad2 = (n) => String(n).padStart(2, '0');
+export function normalizeDate(v) {
+  if (v == null || v === '') return v;
+  const s = String(v).trim();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  if (/^\d{10,13}$/.test(s)) { const n = Number(s); const d = new Date(n < 1e12 ? n * 1000 : n); if (!isNaN(+d)) return d.toISOString().slice(0, 10); }
+  const low = s.toLowerCase();
+  m = low.match(/\b([a-záéíóúñ]{3,})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b/); // Month DD, YYYY
+  if (m && MONTHS[m[1]]) return `${m[3]}-${pad2(MONTHS[m[1]])}-${pad2(m[2])}`;
+  m = low.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:de\s+)?([a-záéíóúñ]{3,})\.?\s+(?:de\s+)?(\d{4})\b/); // DD [de] Month [de] YYYY
+  if (m && MONTHS[m[2]]) return `${m[3]}-${pad2(MONTHS[m[2]])}-${pad2(m[1])}`;
+  m = s.match(/^(\d{1,4})[/.-](\d{1,2})[/.-](\d{1,4})$/); // numeric D/M/Y, M/D/Y or Y/M/D
+  if (m) {
+    if (m[1].length === 4) return `${m[1]}-${pad2(+m[2])}-${pad2(+m[3])}`;
+    const a = +m[1], b = +m[2], y = +m[3] < 100 ? 2000 + +m[3] : +m[3];
+    const day = a > 12 ? a : (b > 12 ? b : a), mon = a > 12 ? b : (b > 12 ? a : b); // D/M unless clearly M/D
+    return `${y}-${pad2(mon)}-${pad2(day)}`;
+  }
+  const d = new Date(s); return isNaN(+d) ? s : d.toISOString().slice(0, 10);
+}
+
 // Map fresh items onto the shared docs array; returns how many were newly added.
 function collect(adapter, data, seen, all) {
   const items = get(data, itemsPathOf(adapter.api.list)) || [];
@@ -323,6 +353,7 @@ function collect(adapter, data, seen, all) {
 function mapDoc(adapter, p) {
   const f = adapter.fields, doc = { _raw: p };
   for (const k in f) doc[k] = get(p, f[k]);
+  if (doc.date != null && doc.date !== '') doc.date = normalizeDate(doc.date); // textual/locale → ISO
   doc.category = categorize(adapter, p);
   // A generic display label across schemas (store / issuer / counterparty / instrument / …).
   doc.label = doc.storeName || doc.issuer || doc.counterparty || doc.instrument || doc.description || doc.party || '';

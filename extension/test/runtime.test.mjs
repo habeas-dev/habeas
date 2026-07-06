@@ -4,7 +4,7 @@ import carrefour from '../src/adapters/carrefour-es.js';
 import mart from './fixtures/examplemart-es.js';
 import bank from './fixtures/examplebank-es.js';
 import energy from './fixtures/exampleenergy-es.js';
-import { listInventory, fetchDocument, fetchDetail } from '../src/runtime/inventory.js';
+import { listInventory, fetchDocument, fetchDetail, normalizeDate } from '../src/runtime/inventory.js';
 
 const auth = { authorization: 'bearer eyJx' };
 function stub(pages) {
@@ -45,6 +45,26 @@ test('html list: parses items from a server-rendered table (from:html), incl. ro
   assert.equal(docs.length, 2);
   assert.deepEqual(docs.map((d) => d.internalId).sort(), ['/receipts/A1.pdf', '/receipts/A2.pdf']); // id from the row's link
   assert.ok(docs.every((d) => d.date && d.total));
+});
+
+test('normalizeDate: American textual + Spanish + numeric → ISO', () => {
+  assert.equal(normalizeDate('October 22, 2021'), '2021-10-22');
+  assert.equal(normalizeDate('Oct 5 2021'), '2021-10-05');
+  assert.equal(normalizeDate('22 de octubre de 2021'), '2021-10-22');
+  assert.equal(normalizeDate('2021-10-22'), '2021-10-22');
+  assert.equal(normalizeDate('2021-10-22T10:00:00Z'), '2021-10-22');
+  assert.equal(normalizeDate('22/10/2021'), '2021-10-22');
+  assert.equal(normalizeDate(''), '');
+  assert.equal(normalizeDate('not a date'), 'not a date');
+});
+
+test('mapDoc normalizes a textual date field to ISO (and sorts by it)', async () => {
+  const items = [{ id: 'a', d: 'October 22, 2021', t: 5 }, { id: 'b', d: 'January 3, 2022', t: 9 }];
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ items }) });
+  const adapter = { api: { host: 'https://x.es', list: { path: '/l', paging: 'none', itemsPath: 'items' } }, fields: { internalId: 'id', date: 'd', total: 't' }, schema: 'invoice@1' };
+  const docs = await listInventory(adapter, { byPath: {}, merged: {} });
+  assert.equal(docs[0].date, '2022-01-03'); // newest first (ISO sort works)
+  assert.equal(docs[1].date, '2021-10-22');
 });
 
 test('html list: extracts React data-props bootstrap JSON (hover.com style)', async () => {
