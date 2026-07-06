@@ -74,6 +74,29 @@ to your sink a `multipart/form-data` with: `records` (JSON manifest of normalize
 `files[]` (PDFs when available), `source` (e.g. `carrefour-es`) and `service`. Re-running only ever
 sends what's new.
 
+## C. List groups (accounts) — for sources that group their data
+
+Some sources (a **bank** with several accounts, a broker with several portfolios) split their data
+into **groups**. Before collecting, ask which groups exist so the user can pick:
+
+```js
+const res = await habeas('list-groups', { grantId });
+// status: 'ok'           → res.groups: [{ id, name, iban, currency, … }]  (fields per the source; sensitive ones may be masked, e.g. "ES12 **** 3456")
+//       | 'needs-login'  (Habeas opened the source's login tab; retry after the user authenticates)
+//       | 'denied'       (no such grant for your origin)
+```
+
+Then collect **one group at a time** by passing its `id`:
+
+```js
+await habeas('collect', { grantId, group: accountId }); // only that account's items are listed + delivered
+```
+
+`list-groups` is grant-gated and origin-bound like everything else; it enumerates **in the source's
+own tab** (in-session) and returns **metadata only** — never the items, never to another origin. A
+source with no groups returns `groups: []` (use plain `collect`). Omitting `group` in `collect`
+delivers **all** groups.
+
 ## What Habeas will never do
 
 - Send your users' data anywhere but your own origin.

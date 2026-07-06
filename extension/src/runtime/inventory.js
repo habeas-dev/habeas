@@ -28,7 +28,55 @@ async function withReferer(targetUrl, referer, fn) {
   finally { try { await chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: [id] }); } catch (e) {} }
 }
 
-export async function listInventory(adapter, auth, net) {
+// Enumerate a source's documents. A source with `api.groups` (e.g. a bank: many accounts) enumerates
+// the groups first, then lists each group's items with {group.*} templated into the list request; each
+// record carries its group (doc._group). Without groups, it's a single flat listing.
+export async function listInventory(adapter, auth, net, opts) {
+  const byDate = (x, y) => (x.date < y.date ? 1 : -1);
+  if (adapter.api.groups) {
+    let groups = await listGroups(adapter, auth, net);
+    // opts.groupId restricts to one account (a consumer's collect{group} asks for a single account).
+    if (opts && opts.groupId != null) groups = groups.filter((g) => String(g.id) === String(opts.groupId));
+    const all = [];
+    for (const g of groups) all.push(...await pageList(adapter, auth, net, g));
+    all.sort(byDate);
+    return all;
+  }
+  const all = await pageList(adapter, auth, net, null);
+  all.sort(byDate);
+  return all;
+}
+
+// Enumerate the accounts/cards/portfolios a source groups its items by (id/name/… per adapter.api.groups.fields).
+// Cheap — no item data. Used by the runtime (per-group listing) and by the external `listGroups` hook.
+export async function listGroups(adapter, auth, net) {
+  const g = adapter.api.groups;
+  if (!g) return [];
+  const items = await fetchGroupItems(adapter, auth, net);
+  return (items || []).map((item) => {
+    const grp = { _raw: item };
+    for (const k of Object.keys(g.fields || {})) grp[k] = get(item, g.fields[k]);
+    return grp;
+  });
+}
+async function fetchGroupItems(adapter, auth, net) {
+  const NET = net || ((u, i) => fetch(u, i));
+  const g = adapter.api.groups;
+  const host = g.host ? absHost(g.host) : adapter.api.host;
+  const qs = g.params ? new URLSearchParams(g.params).toString() : '';
+  const url = host + g.path + (qs ? '?' + qs : '');
+  const isHtml = g.from === 'html';
+  const cookie = adapter.auth && adapter.auth.mode === 'cookie';
+  const accept = isHtml ? 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' : 'application/json';
+  const init = { headers: { accept, ...(g.headers || {}), ...headersFor(auth, g.path, !cookie) }, credentials: 'include' };
+  if (g.referer) init.referrer = g.referer;
+  const res = await withReferer(url, g.referer || null, () => NET(url, init));
+  if (!res.ok) throw new Error('groups ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
+  if (isHtml) return extractListItems(await res.text(), g); // embedded state → itemsPath
+  return get(await res.json(), g.itemsPath) || [];
+}
+
+async function pageList(adapter, auth, net, group) {
   const list = adapter.api.list;
   // Resolve the strategy from an explicit `paging`, else from whichever paging field is present
   // (robust to a blank `paging` — e.g. an editor/UI that didn't offer the right option).
@@ -39,13 +87,13 @@ export async function listInventory(adapter, auth, net) {
   const count = list.params && list.params.count;
   const maxPages = list.maxPages || 100;
   const seen = new Set(), all = [];
-  const call = (params) => fetchList(adapter, auth, params, net);
+  const call = (params) => fetchList(adapter, auth, params, net, group);
 
   if (paging === 'offsets') {
     let offs = { ...(list.initialOffsets || {}) };
     for (let g = 0; g < maxPages; g++) {
       const data = await call({ ...range, ...baseParams, ...offs });
-      if (!collect(adapter, data, seen, all)) break;
+      if (!collect(adapter, data, seen, all, group)) break;
       offs = Object.assign(offs, get(data, list.offsetsPath) || {});
     }
   } else if (paging === 'page') {
@@ -54,7 +102,7 @@ export async function listInventory(adapter, auth, net) {
     for (let g = 0; g < maxPages; g++) {
       const data = await call({ ...range, ...baseParams, [pageParam]: page });
       const items = get(data, itemsPathOf(list)) || [];
-      const added = collect(adapter, data, seen, all);
+      const added = collect(adapter, data, seen, all, group);
       if (!items.length || !added) break; // empty page or nothing new → done (don't stop on a short page)
       page++;
     }
@@ -65,7 +113,7 @@ export async function listInventory(adapter, auth, net) {
     for (let g = 0; g < maxPages; g++) {
       const data = await call({ ...range, ...baseParams, [offsetParam]: offset });
       const items = get(data, itemsPathOf(list)) || [];
-      const added = collect(adapter, data, seen, all);
+      const added = collect(adapter, data, seen, all, group);
       if (!items.length || !added) break;
       offset += step;
     }
@@ -76,15 +124,14 @@ export async function listInventory(adapter, auth, net) {
       const params = { ...range, ...baseParams };
       if (cursor) params[cursorParam] = cursor;
       const data = await call(params);
-      const added = collect(adapter, data, seen, all);
+      const added = collect(adapter, data, seen, all, group);
       cursor = get(data, list.nextPath);
       if (!added || !cursor) break;
     }
   } else { // 'none' — single request
-    collect(adapter, await call({ ...range, ...baseParams }), seen, all);
+    collect(adapter, await call({ ...range, ...baseParams }), seen, all, group);
   }
-  all.sort((x, y) => (x.date < y.date ? 1 : -1));
-  return all;
+  return all; // sorted by the caller (listInventory) across all groups
 }
 
 const absHost = (h) => (/^https?:\/\//.test(h) ? h : 'https://' + h);
@@ -97,6 +144,18 @@ const applyTmpl = (str, doc, id) => String(str).replace(/\{([^}]+)\}/g, (m, k) =
   const v = k === 'internalId' ? id : (doc && doc._raw ? get(doc._raw, k) : undefined);
   return v == null ? m : tid(v);
 });
+// {group.field} → the current group's (e.g. bank account's) value. Templates the per-group list URL.
+const tmplGroup = (str, group) => (group ? String(str).replace(/\{group\.([^}]+)\}/g, (m, k) => { const v = get(group, k); return v == null ? m : tid(v); }) : String(str));
+// Resolve a field mapping: a plain dotted path into the item, OR a template referencing {group.*}
+// (and/or item fields) — e.g. account: "{group.iban}", internalId: "{group.id}-{transactionId}". A lone
+// {x} preserves the raw value's type; a template with surrounding text interpolates to a string.
+function resolveField(value, item, group) {
+  if (typeof value !== 'string' || value.indexOf('{') < 0) return get(item, value);
+  const pick = (k) => (k.indexOf('group.') === 0 ? (group ? get(group, k.slice(6)) : undefined) : get(item, k));
+  const single = value.match(/^\{([^}]+)\}$/);
+  if (single) return pick(single[1]);
+  return value.replace(/\{([^}]+)\}/g, (m, k) => { const v = pick(k); return v == null ? '' : String(v); });
+}
 
 // Resolve the headers to replay for a given endpoint path from the captured auth STORE
 // ({ byPath, merged }). Different endpoints can use different auth (e.g. cookie-authed list +
@@ -382,27 +441,30 @@ export async function fetchDetail(adapter, auth, docOrId, net) {
   return { blob: new Blob([json], { type: 'application/json' }), via };
 }
 
-async function fetchList(adapter, auth, params, net) {
+async function fetchList(adapter, auth, params, net, group) {
   const NET = net || ((u, i) => fetch(u, i));
   const list = adapter.api.list;
   const html = list.from === 'html';
-  const qs = new URLSearchParams(params).toString();
-  const url = adapter.api.host + list.path + (qs ? '?' + qs : '');
+  // {group.*} in the list path / param values / referer → the account (group) currently being listed.
+  const path = tmplGroup(list.path, group);
+  const gparams = {}; for (const k of Object.keys(params || {})) gparams[k] = tmplGroup(params[k], group);
+  const qs = new URLSearchParams(gparams).toString();
+  const url = adapter.api.host + path + (qs ? '?' + qs : '');
   // Run in the site's tab (page context) so cookies + cf_clearance + fingerprint carry through and
   // Cloudflare/Akamai don't challenge it; credentials:'include' carries cookies.
   const cookie = adapter.auth && adapter.auth.mode === 'cookie';
   // A bare `accept: text/html` can trip content negotiation (Dia returns 204 No Content for it); send the
   // full browser navigation Accept so the server serves the real SSR page.
   const htmlAccept = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
-  const init = { headers: { accept: html ? htmlAccept : 'application/json', ...(list.headers || {}), ...headersFor(auth, list.path, !cookie) }, credentials: 'include' };
+  const init = { headers: { accept: html ? htmlAccept : 'application/json', ...(list.headers || {}), ...headersFor(auth, path.split('?')[0], !cookie) }, credentials: 'include' };
   // list.referer: some endpoints only honour the offset/page when the Referer reflects the page the
-  // SPA was on. Template it per request with {from}/{offset}/{page}; set via DNR (fetch can't).
+  // SPA was on. Template it per request with {from}/{offset}/{page} (+ {group.*}); set via DNR (fetch can't).
   let referer = null;
   if (list.referer) {
     const off = Number(params[list.offsetParam] ?? params[list.pageParam] ?? 0);
     const size = Number(params.size || params.count || list.offsetStep || 1) || 1;
     const page = list.pageParam ? (Number(params[list.pageParam]) || 1) : Math.floor(off / size) + 1;
-    referer = String(list.referer).split('{from}').join(String(off)).split('{offset}').join(String(off)).split('{page}').join(String(page));
+    referer = tmplGroup(String(list.referer).split('{from}').join(String(off)).split('{offset}').join(String(off)).split('{page}').join(String(page)), group);
   }
   if (referer) init.referrer = referer; // same-origin referer set from the tab; DNR is the fallback
   const res = await withReferer(url, referer, () => NET(url, init));
@@ -489,21 +551,23 @@ export function normalizeDate(v) {
 }
 
 // Map fresh items onto the shared docs array; returns how many were newly added.
-function collect(adapter, data, seen, all) {
+function collect(adapter, data, seen, all, group) {
   const items = get(data, itemsPathOf(adapter.api.list)) || [];
   const f = adapter.fields;
   let added = 0;
   for (const p of items) {
-    const id = get(p, f.internalId);
-    if (seen.has(id)) continue;
-    seen.add(id); all.push(mapDoc(adapter, p)); added++;
+    const id = resolveField(f.internalId, p, group); // may be templated with {group.*} for cross-group uniqueness
+    if (id != null && seen.has(id)) continue;
+    if (id != null) seen.add(id);
+    all.push(mapDoc(adapter, p, group)); added++;
   }
   return added;
 }
 
-function mapDoc(adapter, p) {
+function mapDoc(adapter, p, group) {
   const f = adapter.fields, doc = { _raw: p };
-  for (const k in f) doc[k] = get(p, f[k]);
+  if (group) doc._group = group; // the parent (account) this record belongs to
+  for (const k in f) doc[k] = resolveField(f[k], p, group);
   if (doc.date != null && doc.date !== '') doc.date = normalizeDate(doc.date); // textual/locale → ISO
   doc.category = categorize(adapter, p);
   // A generic display label across schemas (store / issuer / counterparty / instrument / …).
