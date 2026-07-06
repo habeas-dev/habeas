@@ -1,0 +1,10 @@
+# Drives the "Sponsor" button on the repo.
+# NOTE: for the button to go live, the habeas-dev org must be enrolled in GitHub Sponsors
+# (github.com/sponsors → set up the org account, identity + payout). This file is the repo side.
+github: [habeas-dev]
+
+# Optional non-GitHub channels (work immediately, no enrollment) — uncomment and fill in:
+# open_collective: habeas
+# ko_fi: habeas
+# liberapay: habeas
+# custom: ["https://habeas.dev/donate"]
