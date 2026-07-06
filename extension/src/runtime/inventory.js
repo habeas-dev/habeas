@@ -161,12 +161,26 @@ export function renderInvoiceHtml(doc, detail, adapter) {
 // html|invoice) or `api.pdf` = document; a legacy `api.detail.as` counts as the document.
 const docExtOf = (cfg) => (cfg.as === 'render' || cfg.as === 'html' || cfg.as === 'invoice' ? 'html' : 'pdf');
 const documentCfg = (api) => api.document || (api.detail && api.detail.as ? api.detail : null);
-export function artifactKinds(adapter) {
+// True unless a {field.path} placeholder (other than {internalId}) is missing from this doc's raw item.
+// Lets a per-doc-conditional artifact (Dia's invoice PDF needs {invoices.0}) be skipped for docs that
+// don't have it (a ticket with no invoice) instead of firing a malformed request.
+function tmplResolvable(str, doc) {
+  for (const m of String(str || '').matchAll(/\{([^}]+)\}/g)) {
+    const k = m[1];
+    if (k === 'internalId') continue;
+    const v = doc && doc._raw ? get(doc._raw, k) : undefined;
+    if (v == null || v === '') return false;
+  }
+  return true;
+}
+// Which artifacts this source produces. With a `doc`, drops any document whose template fields the doc
+// can't fill (e.g. a Dia ticket without an associated invoice) — no artifact, no error.
+export function artifactKinds(adapter, doc) {
   const api = adapter.api || {}, out = [];
   if (api.detail && !api.detail.as) out.push({ kind: 'data', ext: 'json' });
   const dc = documentCfg(api);
-  if (dc) out.push({ kind: 'document', ext: docExtOf(dc) });
-  else if (api.pdf) out.push({ kind: 'document', ext: 'pdf' });
+  if (dc) { if (!doc || tmplResolvable(dc.path, doc)) out.push({ kind: 'document', ext: docExtOf(dc) }); }
+  else if (api.pdf) { if (!doc || tmplResolvable(api.pdf.path, doc)) out.push({ kind: 'document', ext: 'pdf' }); }
   return out;
 }
 // Fetch one artifact. Reuses fetchDocument by PROJECTING the adapter so the requested artifact sits
@@ -210,24 +224,29 @@ export async function fetchDocument(adapter, auth, docOrId, net, render) {
     return { blob: new Blob([renderInvoiceHtml(doc || { internalId }, data, adapter)], { type: 'text/html' }), ext: 'html', via: 'invoice' };
   }
   const ext = documentExt(adapter);
-  if (ext === 'pdf') return { blob: await fetchPdf(adapter, auth, internalId, net), ext, via: 'pdf' };
+  if (ext === 'pdf') return { blob: await fetchPdf(adapter, auth, doc || internalId, net), ext, via: 'pdf' };
   if (ext === 'json') return { ...(await fetchDetail(adapter, auth, doc || internalId, net)), ext };
   throw new Error('no document for this source');
 }
 
-export async function fetchPdf(adapter, auth, internalId, net) {
+export async function fetchPdf(adapter, auth, docOrId, net) {
   const NET = net || ((u, i) => fetch(u, i));
+  const doc = docOrId && typeof docOrId === 'object' ? docOrId : null;
+  const internalId = doc ? doc.internalId : docOrId;
   const pdf = adapter.api.pdf;
   if (!pdf) throw new Error('no PDF for this source');
   const host = pdf.host ? absHost(pdf.host) : adapter.api.host;
-  const path = pdf.path.replace('{internalId}', tid(internalId));
+  const path = applyTmpl(pdf.path, doc, internalId); // {internalId} + {field.path} (Dia: {ticket_unique_code}/{invoices.0})
+  // A leftover {field} means this doc can't fill the template (e.g. a ticket with no invoice) — no
+  // document for it. Bail cleanly (callers treat it as "artifact unavailable") instead of a bad request.
+  if (/\{[^}]+\}/.test(path)) throw new Error('no document for this item');
   const url = host + path;
-  const init = { method: pdf.method || 'GET', headers: { ...headersFor(auth, path), accept: 'application/pdf' }, credentials: 'include', wantBlob: true };
+  const init = { method: pdf.method || 'GET', headers: { ...headersFor(auth, path.split('?')[0]), accept: 'application/pdf' }, credentials: 'include', wantBlob: true };
   if (init.method !== 'GET' && pdf.body != null) {
-    init.body = String(pdf.body).split('{internalId}').join(internalId);
+    init.body = applyTmpl(pdf.body, doc, internalId);
     init.headers['content-type'] = pdf.contentType || 'application/json';
   }
-  const referer = pdf.referer ? String(pdf.referer).split('{internalId}').join(internalId) : null;
+  const referer = pdf.referer ? applyTmpl(pdf.referer, doc, internalId) : null;
   const res = await withReferer(url, referer, () => NET(url, init));
   if (!res.ok) {
     const hint = res.status === 406 ? ' (sin PDF disponible — típico en tickets antiguos)' : '';
@@ -370,7 +389,10 @@ async function fetchList(adapter, auth, params, net) {
   // Run in the site's tab (page context) so cookies + cf_clearance + fingerprint carry through and
   // Cloudflare/Akamai don't challenge it; credentials:'include' carries cookies.
   const cookie = adapter.auth && adapter.auth.mode === 'cookie';
-  const init = { headers: { accept: html ? 'text/html' : 'application/json', ...(list.headers || {}), ...headersFor(auth, list.path, !cookie) }, credentials: 'include' };
+  // A bare `accept: text/html` can trip content negotiation (Dia returns 204 No Content for it); send the
+  // full browser navigation Accept so the server serves the real SSR page.
+  const htmlAccept = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
+  const init = { headers: { accept: html ? htmlAccept : 'application/json', ...(list.headers || {}), ...headersFor(auth, list.path, !cookie) }, credentials: 'include' };
   // list.referer: some endpoints only honour the offset/page when the Referer reflects the page the
   // SPA was on. Template it per request with {from}/{offset}/{page}; set via DNR (fetch can't).
   let referer = null;

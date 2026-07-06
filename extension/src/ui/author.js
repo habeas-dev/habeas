@@ -230,7 +230,7 @@ async function previewDoc(adapter, authStore, net, docItem, tr) {
   $('#docwrap').hidden = true;
   $('#status').textContent = t('author_test_ok', [String(TEST_COUNT)]) + ' · ' + t('author_doc_fetching', [String(docItem.internalId)]);
   try {
-    const kind = artifactKinds(adapter).some((k) => k.kind === 'document') ? 'document' : 'data';
+    const kind = artifactKinds(adapter, docItem).some((k) => k.kind === 'document') ? 'document' : 'data'; // per-doc: no invoice → preview the data
     const doc = await fetchArtifact(adapter, authStore, docItem, net, renderPage, kind);
     await showDocPreview(doc);
     $('#status').textContent = t('author_test_ok', [String(TEST_COUNT)]) + ' · ' + t('author_doc_via', [t('via_' + doc.via)]);

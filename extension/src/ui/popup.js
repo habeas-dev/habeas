@@ -28,6 +28,7 @@ const localWhen = (iso) => {
 
 async function init() {
   applyI18n();
+  try { const v = $('#version'); if (v) v.textContent = 'v' + chrome.runtime.getManifest().version; } catch (e) {}
   $('#opts').onclick = () => chrome.runtime.openOptionsPage();
   ADAPTERS = await getAdapters();
   const cfg = await getConfig();
@@ -143,7 +144,11 @@ async function onSend() {
   const noPdf = [];
   for (const d of eligible) {
     const arts = [];
-    for (const k of kinds) { try { arts.push(await fetchArtifact(adapter, auth, d, net, renderPage, k.kind)); } catch (e) { /* artifact unavailable */ } }
+    const avail = artifactKinds(adapter, d); // per-doc: skip a document artifact this doc lacks (e.g. no invoice)
+    for (const k of kinds) {
+      if (!avail.some((a) => a.kind === k.kind)) continue;
+      try { arts.push(await fetchArtifact(adapter, auth, d, net, renderPage, k.kind)); } catch (e) { /* artifact unavailable */ }
+    }
     if (arts.length) files.set(d.internalId, arts); else noPdf.push(d.internalId);
   }
   log(t('with_without_pdf', [String(files.size), String(noPdf.length)]) + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : ''));
