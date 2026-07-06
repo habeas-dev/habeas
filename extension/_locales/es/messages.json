@@ -126,6 +126,7 @@
   "author_tip_detail": { "message": "Después abre el detalle de un elemento — eso captura el endpoint de datos por elemento." },
   "author_tip_pdf": { "message": "Si quieres los PDF, descarga una factura/recibo desde su página de detalle durante la captura." },
   "author_tip_wait": { "message": "Deja que cada página cargue sus datos un segundo antes de seguir, y luego vuelve y pulsa Analizar." },
+  "author_note_advanced": { "message": "Aviso: la captura no funciona en todas las webs. Algunas —SPAs muy protegidas o con anti-bot avanzado (visto en ciertas tiendas)— no exponen sus datos al grabador y no se captura nada. Si pasa, aún puedes crear la fuente a mano: abre DevTools → Red del sitio, localiza la petición que devuelve tus datos, y usa «Escribir/pegar JSON» (en Ajustes) para definirla — así se hicieron las fuentes que ya vienen." },
   "author_url_ph": { "message": "https://www.ejemplo.com/mi-cuenta" },
   "author_start": { "message": "Dar acceso y abrir la web" },
   "author_stop": { "message": "Dejar de aprender" },
