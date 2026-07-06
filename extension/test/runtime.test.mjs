@@ -160,6 +160,24 @@ test('runtime resolves offset paging from offsetParam when `paging` is blank', a
   assert.equal(docs.length, 4); // paginated despite paging:'' (offsetParam drives it)
 });
 
+test('detail path templates {field.path} from the list item (Dia-style multi-param detail)', async () => {
+  let url = '';
+  globalThis.fetch = async (u) => { url = String(u); return { ok: true, text: async () => JSON.stringify({ id: 't1' }) }; };
+  const adapter = { api: { host: 'https://x.es', detail: { path: '/tickets/{internalId}?begin={dp.begin}&pos={dp.pos}&c={dp.country}' } }, fields: { internalId: 'id' }, schema: 'receipt@1' };
+  const doc = { internalId: 't1', _raw: { id: 't1', dp: { begin: 1780328485000, pos: 2, country: 'ES' } } };
+  await fetchDetail(adapter, { byPath: {}, merged: {} }, doc);
+  assert.equal(url, 'https://x.es/tickets/t1?begin=1780328485000&pos=2&c=ES'); // per-item params, not just {internalId}
+});
+
+test('embeddedObjects finds the right <script type=application/json> among several (itemsPath into it)', async () => {
+  const html = '<script type="application/ld+json">{"@type":"Org"}</script>'
+    + '<script id="vike_pageContext" type="application/json">{"INITIAL_STATE":{"ticketsList":[{"id":"A"},{"id":"B"}]}}</script>';
+  globalThis.fetch = async () => ({ ok: true, text: async () => html });
+  const adapter = { api: { host: 'https://x.es', list: { path: '/l', from: 'html', paging: 'none', itemsPath: 'INITIAL_STATE.ticketsList' } }, fields: { internalId: 'id' }, schema: 'receipt@1' };
+  const docs = await listInventory(adapter, { byPath: {}, merged: {} });
+  assert.deepEqual(docs.map((d) => d.internalId).sort(), ['A', 'B']);
+});
+
 test('fetchDetail sends static detail.headers and templates the id in the query', async () => {
   const adapter = { api: { host: 'https://www.decathlon.es', detail: { path: '/web-engage/ajax/order?associationId={internalId}&orderManager=cube', headers: { 'dkt-ecom-origin': 'web-navigate-front', 'dkt-ecom-country': 'ES' } } }, fields: { internalId: 'associationId' }, schema: 'receipt@1' };
   let seen;
