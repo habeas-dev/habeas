@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Habeas — Sources</title>
+  <meta name="description" content="Browse the catalog of community and first-party sources you can install in the Habeas extension." />
+  <link rel="icon" type="image/svg+xml" href="logo.svg" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .doc { max-width: 900px; margin: 0 auto; padding: 8px 20px 64px; }
+    .doc h1 { font-size: 2rem; margin: 24px 0 4px; }
+    .doc .sub { color: var(--muted, #888); margin: 0 0 24px; line-height: 1.6; }
+    .srcgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    .src { border: 1px solid var(--line, #3333); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .src .top { display: flex; align-items: baseline; gap: 8px; }
+    .src .name { font-weight: 700; font-size: 1.05rem; }
+    .src .pill { font-size: .72rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line, #3335); color: var(--muted, #888); white-space: nowrap; }
+    .src .pill.fp { border-color: #2e7d3288; color: #2e7d32; }
+    .src .meta { color: var(--muted, #888); font-size: .88rem; }
+    .src .cats { display: flex; flex-wrap: wrap; gap: 6px; }
+    .src .cat { font-size: .74rem; padding: 2px 8px; border-radius: 6px; background: rgba(127,127,127,.12); }
+    .src .foot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 8px; }
+    .src .rate { font-size: .86rem; color: var(--muted, #888); }
+    .src a.view { font-size: .82rem; }
+    .note { color: var(--muted, #888); margin-top: 28px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="logo-light.svg" />
+        <img class="logo" src="logo.svg" alt="Habeas" />
+      </picture>
+      <span class="name">Habeas</span>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <span class="langswitch" role="group" aria-label="Language">
+          <button data-lang="en" aria-pressed="true">EN</button>
+          <button data-lang="es" aria-pressed="false">ES</button>
+        </span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="doc">
+    <h1 data-t="title">Sources</h1>
+    <p class="sub" data-t="intro"></p>
+    <div id="list" class="srcgrid" aria-live="polite"></div>
+    <p id="msg" class="note"></p>
+    <p class="note" data-t="cta"></p>
+  </main>
+
+  <script>
+    const STR = {
+      en: {
+        title: 'Sources',
+        intro: 'The catalog of sources you can install in the Habeas extension. Each one describes — as data, never code — how to read your own documents from a service, within your own session. First-party sources are audited; community ones are contributed and open to ratings & scrutiny.',
+        cta: 'Install any of these from the extension: Settings → Browse sources. Contribute a new one at github.com/habeas-dev/sources.',
+        loading: 'Loading the catalog…',
+        failed: 'Couldn’t load the catalog right now. See it on GitHub: github.com/habeas-dev/sources.',
+        empty: 'No sources published yet.',
+        fp: 'first-party', community: 'community',
+        norate: 'no ratings yet', view: 'View JSON',
+        count: (n) => `${n} source${n === 1 ? '' : 's'}`,
+      },
+      es: {
+        title: 'Fuentes',
+        intro: 'El catálogo de fuentes que puedes instalar en la extensión Habeas. Cada una describe —como datos, nunca código— cómo leer tus propios documentos de un servicio, dentro de tu propia sesión. Las first-party están auditadas; las de la comunidad son aportadas y abiertas a valoraciones y escrutinio.',
+        cta: 'Instala cualquiera desde la extensión: Ajustes → Explorar fuentes. Aporta una nueva en github.com/habeas-dev/sources.',
+        loading: 'Cargando el catálogo…',
+        failed: 'No se pudo cargar el catálogo ahora mismo. Míralo en GitHub: github.com/habeas-dev/sources.',
+        empty: 'Aún no hay fuentes publicadas.',
+        fp: 'first-party', community: 'comunidad',
+        norate: 'sin valoraciones', view: 'Ver JSON',
+        count: (n) => `${n} ${n === 1 ? 'fuente' : 'fuentes'}`,
+      },
+    };
+    const INDEX = 'https://habeas-dev.github.io/sources/index.json';
+    const API = 'https://api.habeas.dev';
+    const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    let LANG = 'en', SOURCES = null, RATINGS = {};
+
+    function card(s) {
+      const t = STR[LANG];
+      const fp = s.trust === 'first-party';
+      const cats = (s.categories || []).map((c) => `<span class="cat">${esc(c)}</span>`).join('');
+      const r = RATINGS[s.id];
+      const rate = r && r.count ? `★ ${(+r.avg).toFixed(1)} · ${r.count}` : t.norate;
+      return `<div class="src">
+        <div class="top"><span class="name">${esc(s.name)}</span><span class="pill ${fp ? 'fp' : ''}">${fp ? t.fp : t.community}</span></div>
+        <div class="meta">${esc(s.service)} · ${esc(s.domain)}</div>
+        <div class="cats">${cats}</div>
+        <div class="foot"><span class="rate">${rate}</span><a class="view" href="${esc(s.url)}" rel="noopener">${t.view} →</a></div>
+      </div>`;
+    }
+
+    function render() {
+      const t = STR[LANG];
+      document.querySelectorAll('[data-t]').forEach((el) => { const v = t[el.getAttribute('data-t')]; if (typeof v === 'string') el.textContent = v; });
+      document.querySelectorAll('.langswitch button[data-lang]').forEach((b) => b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === LANG)));
+      const list = document.getElementById('list'), msg = document.getElementById('msg');
+      if (SOURCES === null) { list.innerHTML = ''; msg.textContent = t.loading; return; }
+      if (SOURCES === false) { list.innerHTML = ''; msg.textContent = t.failed; return; }
+      if (!SOURCES.length) { list.innerHTML = ''; msg.textContent = t.empty; return; }
+      list.innerHTML = SOURCES.map(card).join('');
+      msg.textContent = t.count(SOURCES.length);
+    }
+
+    function setLang(l) { LANG = l; document.documentElement.lang = l; try { localStorage.setItem('habeas-lang', l); } catch (e) {} render(); }
+    document.querySelectorAll('.langswitch button[data-lang]').forEach((b) => b.addEventListener('click', () => setLang(b.getAttribute('data-lang'))));
+    (function () { let l; try { l = localStorage.getItem('habeas-lang'); } catch (e) {} if (l !== 'en' && l !== 'es') l = (navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en'; LANG = l; document.documentElement.lang = l; })();
+    render();
+
+    fetch(INDEX).then((r) => r.json()).then((data) => {
+      SOURCES = (data.sources || []).slice().sort((a, b) => (a.trust === b.trust ? a.name.localeCompare(b.name) : a.trust === 'first-party' ? -1 : 1));
+      render();
+      // Ratings are a nice-to-have — fetch per source, fail-soft, re-render as they arrive.
+      SOURCES.forEach((s) => fetch(`${API}/sources/${encodeURIComponent(s.id)}/ratings`).then((r) => r.json()).then((v) => { RATINGS[s.id] = v; render(); }).catch(() => {}));
+    }).catch(() => { SOURCES = false; render(); });
+  </script>
+</body>
+</html>
