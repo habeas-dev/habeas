@@ -5,7 +5,7 @@
 import { chrome } from './lib/ext.js';
 import { getConfig } from './lib/config.js';
 import { deliveredSet, markDelivered, appendLog } from './lib/state.js';
-import { listInventory, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
+import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
 import { resolveSiteFetch } from './lib/pagefetch.js';
 import { renderPage, isChallenged } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
@@ -146,7 +146,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     const auth = await authFor(adapter);
     if (!auth) { await appendLog({ ...base, status: 'nosession' }); await badgeClear(); setStatus(t('status_nosession', [name])); return { status: 'nosession' }; }
     const net = opts.net || await resolveSiteFetch(adapter); // fetch from the user's tab → inherits the session
-    const all = await listInventory(adapter, auth, net);
+    const all = await listInventory(adapter, auth, net, { groupId: opts.groupId }); // opts.groupId → one account only (ext collect{group})
     const delivered = await deliveredSet(ds.id, sink.id);
     const fresh = all.filter((d) => !delivered[d.internalId]);
     const eligible = fresh.filter((d) => acceptsDoc(sink, d));
@@ -203,8 +203,43 @@ async function handleExt(api, payload, origin) {
   if (!origin) return { ok: false, status: 'error', error: 'no origin' };
   if (api === 'propose-workflow') return proposeWorkflow(origin, payload);
   if (api === 'collect') return collectForGrant(origin, payload);
+  if (api === 'list-groups') return listGroupsForGrant(origin, payload);
   if (api === 'status') return extStatus(origin);
   return { ok: false, status: 'error', error: 'unknown api' };
+}
+
+// Mask a sensitive group value (IBAN, card number) before exposing it to a consumer that only needs
+// to let the user pick an account: keep the first/last 4, hide the middle.
+function maskValue(v) { const s = String(v == null ? '' : v); return s.length <= 8 ? s : s.slice(0, 4) + ' **** ' + s.slice(-4); }
+
+// A granted consumer asks which groups (accounts/cards) the source exposes, so it can let the user
+// pick before requesting collection. Grant-gated + origin-bound; enumerates in the source's tab
+// (in-session), masks the fields the adapter marks sensitive; returns metadata only, never items.
+async function listGroupsForGrant(origin, payload) {
+  const grant = await getGrant(payload && payload.grantId);
+  if (!grantUsableBy(grant, origin)) return { ok: false, status: 'denied', error: 'no grant for this origin' };
+  const cfg = await getConfig();
+  const adapters = await getAdapters();
+  const ds = cfg.datasources.find((d) => d.id === grant.datasourceId && d.enabled);
+  const adapter = ds && adapters[ds.adapter];
+  if (!adapter) return { ok: false, status: 'error', error: 'route not found' };
+  if (!adapter.api.groups) return { ok: true, status: 'ok', groups: [] }; // this source has no groups
+  const net = await resolveSiteFetch(adapter).catch(() => null);
+  if (!net || !(await hasLiveSession(adapter))) {
+    // Need a logged-in tab on the source site to enumerate in-session; open one and ask to retry.
+    const tab = await chrome.tabs.create({ url: siteBaseUrl(adapter), active: true }).catch(() => null);
+    injectCapture(tab && tab.id);
+    await appendLog({ kind: 'ext-groups', origin, source: ds.id, status: 'needs-login' });
+    return { ok: true, status: 'needs-login' };
+  }
+  const auth = await authFor(adapter);
+  const groups = await listGroups(adapter, auth, net);
+  const fieldNames = Object.keys(adapter.api.groups.fields || {});
+  const mask = adapter.api.groups.mask || [];
+  const out = groups.map((g) => { const o = {}; for (const k of fieldNames) o[k] = mask.includes(k) ? maskValue(g[k]) : g[k]; return o; });
+  await touchGrant(grant.id, new Date().toISOString());
+  await appendLog({ kind: 'ext-groups', origin, source: ds.id, status: 'ok', count: out.length });
+  return { ok: true, status: 'ok', groups: out };
 }
 
 async function proposeWorkflow(origin, payload) {
@@ -249,8 +284,9 @@ async function collectForGrant(origin, payload) {
   const tab = await chrome.tabs.create({ url: siteBaseUrl(adapter), active: !live }).catch(() => null);
   injectCapture(tab && tab.id); // best-effort: capture the JWT/csrf as the user browses/logs in
 
-  if (live) { runExternalCollect(grant, ds, adapter, sink, tab && tab.id); return { ok: true, status: 'collecting' }; }
-  await addPending(host, { grantId: grant.id, tabId: tab && tab.id, origin });
+  const groupId = payload && payload.group != null ? payload.group : undefined; // collect one account only
+  if (live) { runExternalCollect(grant, ds, adapter, sink, tab && tab.id, groupId); return { ok: true, status: 'collecting' }; }
+  await addPending(host, { grantId: grant.id, tabId: tab && tab.id, origin, groupId });
   await appendLog({ kind: 'ext-collect', origin, source: ds.id, status: 'needs-login' });
   return { ok: true, status: 'needs-login' };
 }
@@ -268,9 +304,9 @@ function injectCapture(tabId) {
   try { chrome.scripting.executeScript({ target: { tabId }, files: ['src/content/bridge.js'] }).catch(() => {}); } catch (e) {}
 }
 
-async function runExternalCollect(grant, ds, adapter, sink, tabId) {
+async function runExternalCollect(grant, ds, adapter, sink, tabId, groupId) {
   const net = tabId ? await resolveSiteFetch(adapter).catch(() => null) : null;
-  return runRoute(ds, adapter, sink, { kind: 'ext', origin: grant.origin, interactive: true, net: net || undefined });
+  return runRoute(ds, adapter, sink, { kind: 'ext', origin: grant.origin, interactive: true, net: net || undefined, groupId });
 }
 
 async function addPending(host, entry) {
@@ -295,7 +331,7 @@ async function runPendingExternalCollects(host) {
     const ds = cfg.datasources.find((d) => d.id === grant.datasourceId && d.enabled);
     const adapter = ds && adapters[ds.adapter];
     const sink = cfg.sinks.find((s) => s.id === grant.sinkId);
-    if (adapter && sink) runExternalCollect(grant, ds, adapter, sink, entry.tabId);
+    if (adapter && sink) runExternalCollect(grant, ds, adapter, sink, entry.tabId, entry.groupId);
   }
 }
 

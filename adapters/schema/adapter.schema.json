@@ -66,6 +66,23 @@
       "additionalProperties": false,
       "properties": {
         "host": { "type": "string", "pattern": "^https://", "description": "API origin, https only." },
+        "groups": {
+          "type": "object",
+          "required": ["path", "fields"],
+          "additionalProperties": false,
+          "description": "Optional parent enumeration (e.g. bank accounts): list the groups first, then `list` runs once per group with {group.*} templated into its path/params/referer. Each record carries its group (doc._group).",
+          "properties": {
+            "path": { "type": "string", "description": "Endpoint that returns the groups (e.g. /accounts)." },
+            "host": { "type": "string", "description": "Host if different from api.host (same-domain guard still applies)." },
+            "itemsPath": { "type": "string", "description": "Dotted path to the groups array in the JSON response (or embedded state when from:html)." },
+            "from": { "enum": ["html"], "description": "'html' → read the groups out of the page's embedded SSR state at itemsPath." },
+            "params": { "type": "object", "additionalProperties": { "type": "string" } },
+            "headers": { "type": "object", "additionalProperties": { "type": "string" } },
+            "referer": { "type": "string" },
+            "fields": { "type": "object", "description": "Map group fields (id/name/iban/currency…) from dotted paths; referenced as {group.<name>} in list/fields and returned by the listGroups hook.", "additionalProperties": { "type": "string" } },
+            "mask": { "type": "array", "items": { "type": "string" }, "description": "Group field names to mask before exposing to a consumer (e.g. ['iban'] → ES12 **** 3456)." }
+          }
+        },
         "list": {
           "type": "object",
           "required": ["path"],

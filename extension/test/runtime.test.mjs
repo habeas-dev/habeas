@@ -4,7 +4,7 @@ import carrefour from '../src/adapters/carrefour-es.js';
 import mart from './fixtures/examplemart-es.js';
 import bank from './fixtures/examplebank-es.js';
 import energy from './fixtures/exampleenergy-es.js';
-import { listInventory, fetchDocument, fetchDetail, fetchPdf, normalizeDate, artifactKinds, fetchArtifact } from '../src/runtime/inventory.js';
+import { listInventory, listGroups, fetchDocument, fetchDetail, fetchPdf, normalizeDate, artifactKinds, fetchArtifact } from '../src/runtime/inventory.js';
 import { sinkAcceptsArtifact } from '../src/sinks/format.js';
 
 const auth = { authorization: 'bearer eyJx' };
@@ -158,6 +158,46 @@ test('runtime resolves offset paging from offsetParam when `paging` is blank', a
   globalThis.fetch = async (u) => { const from = Number(new URL(u).searchParams.get('from')); const ids = from < 4 ? [from, from + 1].map((n) => ({ id: 'R' + n, d: '2026-01-01' })) : []; return { ok: true, json: async () => ({ items: ids }) }; };
   const docs = await listInventory(adapter, { authorization: 'eyJ' });
   assert.equal(docs.length, 4); // paginated despite paging:'' (offsetParam drives it)
+});
+
+test('api.groups: lists transactions per account, tagging each with its account ({group.*})', async () => {
+  const accounts = { accounts: [{ resourceId: 'A1', iban: 'ES11', alias: 'Nómina' }, { resourceId: 'A2', iban: 'ES22', alias: 'Ahorro' }] };
+  const tx = {
+    A1: { transactions: { booked: [{ transactionId: 't1', bookingDate: '2026-01-02', transactionAmount: { amount: -10, currency: 'EUR' } }] } },
+    A2: { transactions: { booked: [{ transactionId: 't2', bookingDate: '2026-01-03', transactionAmount: { amount: 20, currency: 'EUR' } }] } },
+  };
+  const urls = [];
+  globalThis.fetch = async (u) => {
+    urls.push(String(u));
+    if (String(u).endsWith('/accounts')) return { ok: true, json: async () => accounts };
+    const m = String(u).match(/accounts\/(A\d)\/transactions/);
+    return { ok: true, json: async () => tx[m[1]] };
+  };
+  const adapter = {
+    api: {
+      host: 'https://bank.es',
+      groups: { path: '/accounts', itemsPath: 'accounts', fields: { id: 'resourceId', iban: 'iban', name: 'alias' } },
+      list: { path: '/accounts/{group.id}/transactions', paging: 'none', itemsPath: 'transactions.booked' },
+    },
+    fields: { internalId: '{group.id}-{transactionId}', date: 'bookingDate', total: 'transactionAmount.amount', account: '{group.iban}', accountName: '{group.name}' },
+    auth: { mode: 'cookie' }, schema: 'transaction@1',
+  };
+  const docs = await listInventory(adapter, { byPath: {}, merged: {} });
+  assert.equal(docs.length, 2);
+  const byId = Object.fromEntries(docs.map((d) => [d.internalId, d]));
+  assert.equal(byId['A1-t1'].account, 'ES11'); assert.equal(byId['A1-t1'].accountName, 'Nómina');
+  assert.equal(byId['A2-t2'].account, 'ES22'); assert.equal(byId['A2-t2'].total, 20);
+  assert.ok(urls.includes('https://bank.es/accounts/A1/transactions')); // per-account URL templated
+  assert.ok(urls.includes('https://bank.es/accounts/A2/transactions'));
+  assert.equal(byId['A1-t1']._group.iban, 'ES11'); // record carries its group
+});
+
+test('listGroups enumerates the accounts with their mapped fields', async () => {
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ accounts: [{ resourceId: 'A1', iban: 'ES11', alias: 'Nómina' }] }) });
+  const adapter = { api: { host: 'https://bank.es', groups: { path: '/accounts', itemsPath: 'accounts', fields: { id: 'resourceId', iban: 'iban', name: 'alias' } }, list: { path: '/x' } }, fields: {}, auth: { mode: 'cookie' }, schema: 'transaction@1' };
+  const groups = await listGroups(adapter, { byPath: {}, merged: {} });
+  assert.equal(groups.length, 1);
+  assert.deepEqual({ id: groups[0].id, iban: groups[0].iban, name: groups[0].name }, { id: 'A1', iban: 'ES11', name: 'Nómina' });
 });
 
 test('artifactKinds drops a document a doc cannot fill (Dia ticket with no invoice) — no error', () => {
