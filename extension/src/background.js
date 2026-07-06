@@ -21,6 +21,15 @@ chrome.action.onClicked.addListener(() => {
   chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/popup.html') });
 });
 
+// Auto-sync trigger for cookie sources (and any source): when the user lands on the source's own
+// site (tab finished loading in their session), try the auto routes. `tab.url` is only visible for
+// hosts we have permission for — i.e. exactly the enabled/consented sources. Debounced in runAutoRoutes.
+chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
+  if (info.status !== 'complete' || !tab || !tab.url || !/^https:\/\//.test(tab.url)) return;
+  let host; try { host = new URL(tab.url).host; } catch (e) { return; }
+  maybeAutoRunForSite(host).catch(() => {});
+});
+
 const SAMPLE_CAP = 60;
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -78,14 +87,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 const DEBOUNCE_MS = 10 * 60 * 1000;
 const running = new Set();
 
-async function maybeAutoRun(host) {
+async function runAutoRoutes(matches) {
   const cfg = await getConfig();
+  if (!(cfg.routes || []).some((r) => r.mode === 'auto')) return;
   const adapters = await getAdapters();
   for (const route of (cfg.routes || []).filter((r) => r.mode === 'auto')) {
     if (running.has(route.id)) continue;
     const ds = cfg.datasources.find((d) => d.id === route.datasource && d.enabled);
     const adapter = ds && adapters[ds.adapter];
-    if (!adapter || hostOf(adapter) !== host) continue;
+    if (!adapter || !matches(adapter)) continue;
     if (!(await hasConsent(adapter))) continue; // community/cross-domain source not yet consented
     const sink = cfg.sinks.find((s) => s.id === route.sink);
     if (!sink || sink.type === 'download' || sink.type === 'local-folder') continue; // need a page
@@ -97,8 +107,20 @@ async function maybeAutoRun(host) {
     runRoute(ds, adapter, sink).finally(() => running.delete(route.id));
   }
 }
+// Trigger A: captured auth (a bearer source's JWT was seen). host = the API host.
+const maybeAutoRun = (host) => runAutoRoutes((a) => hostOf(a) === host);
+// Trigger B: the user navigated to the source's site — works for cookie sources too (no JWT to capture).
+const maybeAutoRunForSite = (host) => runAutoRoutes((a) => siteMatches(a, host));
 
 const hostOf = (adapter) => adapter.api.host.replace(/^https?:\/\//, '');
+const bareHost = (m) => String(m).replace(/^[a-z]+:\/\//i, '').replace(/[:/].*$/, '').replace(/^\*\./, '');
+function siteMatches(adapter, host) {
+  if (!host) return false;
+  const dom = adapter.domain;
+  if (dom && (host === dom || host.endsWith('.' + dom))) return true;
+  for (const m of adapter.match || []) { const h = bareHost(m); if (h && (host === h || host.endsWith('.' + h))) return true; }
+  return hostOf(adapter) === host;
+}
 
 async function authFor(adapter) {
   const cookie = adapter.auth && adapter.auth.mode === 'cookie';
