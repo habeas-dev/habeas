@@ -12,6 +12,7 @@
     "service": { "type": "string", "description": "Short service slug used for sink folder/service naming." },
     "trust": { "enum": ["first-party", "community"], "description": "first-party = project-maintained & audited; community = user/contributed." },
     "domain": { "type": "string", "description": "Registrable domain (eTLD+1) all hosts share, e.g. carrefour.es. If omitted it is derived from api.host." },
+    "country": { "type": "string", "pattern": "^([A-Z]{2}|global)$", "description": "ISO 3166-1 alpha-2 country code of the service (e.g. ES, FR, US) or 'global'. Used to filter the catalog." },
     "crossDomainHosts": {
       "type": "array",
       "items": { "type": "string" },

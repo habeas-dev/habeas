@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-06T09:00:58.216Z",
+  "generated": "2026-07-06T09:50:04.530Z",
   "sources": [
     {
       "id": "carrefour-es",
@@ -12,10 +12,11 @@
       ],
       "trust": "first-party",
       "domain": "carrefour.es",
+      "country": "ES",
       "crossDomain": [],
       "version": "2026-07-06",
       "url": "https://habeas-dev.github.io/sources/carrefour-es.json",
-      "updated": "2026-07-06T09:00:58.216Z"
+      "updated": "2026-07-06T09:50:04.530Z"
     },
     {
       "id": "decathlon-es",
@@ -26,10 +27,11 @@
       ],
       "trust": "community",
       "domain": "decathlon.es",
+      "country": "ES",
       "crossDomain": [],
       "version": "2026-07-06",
       "url": "https://habeas-dev.github.io/sources/decathlon-es.json",
-      "updated": "2026-07-06T09:00:58.216Z"
+      "updated": "2026-07-06T09:50:04.530Z"
     },
     {
       "id": "hover-com",
@@ -40,10 +42,11 @@
       ],
       "trust": "community",
       "domain": "hover.com",
+      "country": "global",
       "crossDomain": [],
       "version": "2026-07-06",
       "url": "https://habeas-dev.github.io/sources/hover-com.json",
-      "updated": "2026-07-06T09:00:58.216Z"
+      "updated": "2026-07-06T09:50:04.530Z"
     }
   ]
 }
