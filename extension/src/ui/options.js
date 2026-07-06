@@ -210,6 +210,19 @@ $('#importfile').onchange = async (e) => {
   } catch (err) { alert(t('import_err', [err.message])); }
   e.target.value = '';
 };
+// Four tabs (sources / destinations / auto-sync / site integrations) — keeps Settings short.
+(function initTabs() {
+  const btns = [...document.querySelectorAll('.tab-btn')];
+  const show = (name) => {
+    document.querySelectorAll('.tab').forEach((s) => { s.hidden = s.dataset.tab !== name; });
+    btns.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
+    try { localStorage.setItem('habeas-settings-tab', name); } catch (e) {}
+  };
+  btns.forEach((b) => { b.onclick = () => show(b.dataset.tab); });
+  let saved; try { saved = localStorage.getItem('habeas-settings-tab'); } catch (e) {}
+  show(btns.some((b) => b.dataset.tab === saved) ? saved : 'sources');
+})();
+
 renderFields();
 render();
 watchThemeIcon();
