@@ -43,6 +43,7 @@ document to one via `categorize: { field, map: { <value>: <category> }, default:
 | `transport` | Public transport, mobility |
 | `insurance` | Insurance premiums |
 | `subscription` | Memberships, SaaS |
+| `domains` | Domain names & hosting (e.g. Hover, GoDaddy, Namecheap) |
 | `education` | Tuition, courses |
 | `healthcare` | Medical, dental services |
 | `government` | Taxes, public fees |

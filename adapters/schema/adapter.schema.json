@@ -20,7 +20,7 @@
     "currency": { "type": "string", "description": "ISO currency for normalized records; defaults to EUR." },
     "categories": {
       "type": "array",
-      "items": { "enum": ["grocery", "fuel", "sports", "fashion", "electronics", "home", "diy", "pharmacy", "restaurant", "marketplace", "travel", "entertainment", "retail", "energy", "water", "telecom", "utility", "tolls", "transport", "insurance", "subscription", "education", "healthcare", "government", "card", "cash", "banking", "investment", "pension", "crypto", "loan", "other"] },
+      "items": { "enum": ["grocery", "fuel", "sports", "fashion", "electronics", "home", "diy", "pharmacy", "restaurant", "marketplace", "travel", "entertainment", "retail", "energy", "water", "telecom", "utility", "tolls", "transport", "insurance", "subscription", "domains", "education", "healthcare", "government", "card", "cash", "banking", "investment", "pension", "crypto", "loan", "other"] },
       "minItems": 1,
       "description": "The categories this source can emit (used for sink compatibility). Must be from the canonical catalog — see docs/categories.md."
     },
