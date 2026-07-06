@@ -71,6 +71,18 @@
     window.postMessage({ __habeas: true, type: 'asset', host: hostOf(url), url: abs, method: (opts && opts.method) || 'GET', reqType: String((opts && opts.reqType) || ''), reqBody: body, referer: location.href, status: (opts && opts.status) || 0 }, '*');
   }
 
+  // A PDF/receipt downloaded by clicking a link is a browser navigation, NOT a fetch/XHR — the hooks
+  // below never see it. Capture such clicks (learn mode) so the PDF path can still be inferred.
+  document.addEventListener('click', (ev) => {
+    if (!LEARN) return;
+    const a = ev.target && ev.target.closest && ev.target.closest('a[href]');
+    if (!a) return;
+    const href = a.getAttribute('href') || '';
+    if (isPdfLike('', a.href || href) || a.hasAttribute('download') || /(receipt|invoice|factura|ticket|download|\.pdf)/i.test(href)) {
+      postAsset(a.href || href, { method: 'GET' });
+    }
+  }, true);
+
   // Capture scope: normally only the page's own registrable domain (auth). In LEARN mode we also
   // capture from ANY host the page fetches — the service's API may be on another domain (the final
   // adapter then declares it via crossDomainHosts + off-site consent).
