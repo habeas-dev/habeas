@@ -169,6 +169,17 @@ test('artifactKinds drops a document a doc cannot fill (Dia ticket with no invoi
   assert.deepEqual(artifactKinds(adapter, noInv).map((k) => k.kind), ['data']); // no invoice → no document artifact
 });
 
+test('a source can override the request Accept via headers (pdf + detail)', async () => {
+  let acc = '';
+  globalThis.fetch = async (u, i) => { acc = (i.headers || {}).accept; return { ok: true, status: 200, text: async () => '{}', blob: async () => new Blob(['%PDF']) }; };
+  const pdfAd = { api: { host: 'https://x.es', pdf: { path: '/p/{internalId}', headers: { accept: 'application/pdf' } } }, fields: {}, schema: 'receipt@1' };
+  await fetchPdf(pdfAd, { byPath: {}, merged: {} }, 'id1');
+  assert.equal(acc, 'application/pdf'); // definition overrides the */* default
+  const detAd = { api: { host: 'https://x.es', detail: { path: '/d/{internalId}', headers: { accept: 'application/xml' } } }, fields: {}, schema: 'receipt@1' };
+  await fetchDetail(detAd, { byPath: {}, merged: {} }, 'id1');
+  assert.equal(acc, 'application/xml'); // detail.headers overrides the default too
+});
+
 test('fetchPdf templates {field.path} and bails cleanly when a field is missing', async () => {
   let url = '';
   globalThis.fetch = async (u) => { url = String(u); return { ok: true, status: 200, blob: async () => new Blob(['%PDF']) }; };

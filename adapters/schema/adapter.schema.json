@@ -106,12 +106,13 @@
           "additionalProperties": false,
           "description": "Per-document PDF. GET by default; some services generate it via POST with the invoice data as the body.",
           "properties": {
-            "path": { "type": "string", "description": "PDF path with {internalId} placeholder." },
+            "path": { "type": "string", "description": "PDF path templated with {internalId} and any {field.path} from the list item (e.g. {ticket_unique_code}, {invoices.0})." },
             "method": { "enum": ["GET", "POST"] },
             "host": { "type": "string", "description": "PDF host if different from api.host (still bound by the same-domain guard / crossDomainHosts)." },
-            "body": { "type": "string", "description": "[POST] Request body template; {internalId} is substituted." },
+            "body": { "type": "string", "description": "[POST] Request body template; {internalId} / {field.path} are substituted." },
             "contentType": { "type": "string", "description": "[POST] Content-Type of the body (default application/json)." },
-            "referer": { "type": "string", "description": "Referer header to send (templated with {internalId}) — for services that gate the PDF behind its detail page. Set via declarativeNetRequest." }
+            "headers": { "type": "object", "description": "Static request headers; overrides the runtime defaults (e.g. set a specific Accept). The default Accept for a PDF is */*.", "additionalProperties": { "type": "string" } },
+            "referer": { "type": "string", "description": "Referer header to send (templated with {internalId}/{field.path}) — for services that gate the PDF behind its detail page. Set via declarativeNetRequest." }
           }
         },
         "detail": {
