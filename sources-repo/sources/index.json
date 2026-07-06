@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-04T17:45:52.134Z",
+  "generated": "2026-07-06T05:10:49.505Z",
   "sources": [
     {
       "id": "carrefour-es",
@@ -13,9 +13,23 @@
       "trust": "first-party",
       "domain": "carrefour.es",
       "crossDomain": [],
-      "version": "2026-07-04",
+      "version": "2026-07-06",
       "url": "https://habeas-dev.github.io/sources/carrefour-es.json",
-      "updated": "2026-07-04T17:45:52.134Z"
+      "updated": "2026-07-06T05:10:49.505Z"
+    },
+    {
+      "id": "decathlon-es",
+      "name": "Decathlon España — tickets",
+      "service": "decathlon",
+      "categories": [
+        "other"
+      ],
+      "trust": "community",
+      "domain": "decathlon.es",
+      "crossDomain": [],
+      "version": "2026-07-06",
+      "url": "https://habeas-dev.github.io/sources/decathlon-es.json",
+      "updated": "2026-07-06T05:10:49.505Z"
     }
   ]
 }

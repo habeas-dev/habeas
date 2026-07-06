@@ -79,6 +79,9 @@
             "cursorParam": { "type": "string", "description": "[cursor] Query param name for the cursor (default: cursor)." },
             "pageParam": { "type": "string", "description": "[page] Query param name for the page number (default: page)." },
             "pageStart": { "type": "number", "description": "[page] First page number (default: 1)." },
+            "offsetParam": { "type": "string", "description": "[offset] Query param name for the item offset (default: offset)." },
+            "offsetStart": { "type": "number", "description": "[offset] First offset (default: 0)." },
+            "offsetStep": { "type": "number", "description": "[offset] Offset increment per page (the page size)." },
             "range": {
               "type": "object",
               "additionalProperties": false,
