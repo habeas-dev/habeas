@@ -103,14 +103,15 @@ function collect(samples) {
     for (const a of findArrays(s.json, '', [])) {
       const key = keyOf(s.url, a.path);
       let e = byKey.get(key);
-      if (!e) { e = { key, s, itemsPath: a.path, items: [], seen: new Set(), pages: new Set(), pageSamples: [], repLen: 0 }; byKey.set(key, e); }
+      if (!e) { e = { key, s, itemsPath: a.path, items: [], seen: new Set(), pages: new Set(), pageSamples: [], repLen: 0, fromHtml: false }; byKey.set(key, e); }
       if (!e.pages.has(s.url)) { e.pages.add(s.url); e.pageSamples.push({ url: s.url, json: s.json }); } // each captured page
+      e.fromHtml = e.fromHtml || !!s.fromHtml; // the array came from embedded page state (SSR), not an XHR
       for (const it of a.arr) { const k = JSON.stringify(it); if (!e.seen.has(k)) { e.seen.add(k); e.items.push(it); } }
       if (a.len > e.repLen) { e.repLen = a.len; e.s = s; } // largest page → best for paging/url/params
     }
   }
   return [...byKey.values()]
-    .map((e) => ({ key: e.key, s: e.s, itemsPath: e.itemsPath, len: e.items.length, pages: e.pages.size, item: e.items[0], items: e.items, samples: e.pageSamples }))
+    .map((e) => ({ key: e.key, s: e.s, itemsPath: e.itemsPath, len: e.items.length, pages: e.pages.size, item: e.items[0], items: e.items, samples: e.pageSamples, fromHtml: e.fromHtml }))
     .sort((x, y) => y.len - x.len);
 }
 
@@ -150,26 +151,49 @@ function valueFields(items) {
 // fetchDetail then extracts the embedded JSON). The id may sit in the PATH or a QUERY param
 // (Decathlon: orderTracking?transactionId=<uuid>). `idField` = the item field the URL uses (the
 // internal id), so the draft templates by THAT, not a guessed public number.
+// Find the dotted path in an item whose LEAF key === paramName and whose value === paramValue.
+// Correlates a detail-URL query param (begin/pos/store…) to the list item's field that feeds it —
+// works even for short values (pos=2) that valueFields skips, because the param name disambiguates.
+function fieldByKeyVal(item, key, val) {
+  for (const f of flattenKeys(item, '', 6)) {
+    if (f.path.split('.').pop().toLowerCase() === String(key).toLowerCase() && String(f.value) === String(val)) return f.path;
+  }
+  return null;
+}
+
 export function inferDetail(samples, items, domTexts) {
   const vf = valueFields(items);
   if (!vf.size) return null;
   const vals = [...vf.keys()].sort((a, b) => b.length - a.length);
   const full = (u) => u.pathname + (u.search || '');
-  const templ = (u, id) => full(u).split(id).join('{internalId}');
+  // Template the id (path or query) as {internalId} AND every OTHER query param whose value comes from
+  // the same item (matched by param name + value) as {field.path} — so detail endpoints that need
+  // per-item params (Dia: begin/pos/store/country/business) are reproduced, not frozen to one ticket.
+  const templ = (u, id, item) => {
+    const path0 = u.pathname.split(id).join('{internalId}');
+    const parts = [];
+    for (const [k, v] of u.searchParams.entries()) {
+      if (v === id) { parts.push(k + '={internalId}'); continue; }
+      const fp = item ? fieldByKeyVal(item, k, v) : null;
+      parts.push(k + '=' + (fp ? '{' + fp + '}' : v));
+    }
+    return path0 + (u.search ? '?' + parts.join('&') : '');
+  };
+  const itemFor = (id) => (items || []).find((it) => String(getPath(it, vf.get(id))) === String(id)) || (items || [])[0];
 
   // Prefer a real XHR JSON endpoint (the SPA's per-item data call) — auto-carry its app headers and
   // the detail-page URL as the Referer (both often required, e.g. Decathlon's order endpoint).
   for (const s of samples || []) {
-    if (!s || !s.json || Array.isArray(s.json) || (s.status && s.status >= 300)) continue;
+    if (!s || !s.json || Array.isArray(s.json) || s.fromHtml || (s.status && s.status >= 300)) continue;
     let u; try { u = new URL(s.url); } catch (e) { continue; }
     const id = vals.find((v) => full(u).includes(v) && deepIncludes(s.json, v.toLowerCase()));
-    if (id) return { host: u.host, path: templ(u, id), method: (s.method || 'GET').toUpperCase(), idField: vf.get(id), headers: appHeaders(s.reqHeaders), referer: refererForId(domTexts, id) };
+    if (id) return { host: u.host, path: templ(u, id, itemFor(id)), method: (s.method || 'GET').toUpperCase(), idField: vf.get(id), headers: appHeaders(s.reqHeaders), referer: refererForId(domTexts, id) };
   }
   // Fallback: a server-rendered detail page the user opened (URL carries the id) — no XHR captured.
   for (const d of domTexts || []) {
     let u; try { u = new URL(d.url); } catch (e) { continue; }
     const id = vals.find((v) => full(u).includes(v));
-    if (id) return { host: u.host, path: templ(u, id), method: 'GET', idField: vf.get(id), referer: String(d.url).split(id).join('{internalId}') };
+    if (id) return { host: u.host, path: templ(u, id, itemFor(id)), method: 'GET', idField: vf.get(id), referer: String(d.url).split(id).join('{internalId}') };
   }
   return null;
 }
@@ -300,7 +324,9 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
     auth,
     api: {
       host: u.protocol + '//' + host,
-      list: Object.assign({ path: u.pathname, paging, itemsPath: best.itemsPath || 'items' }, list),
+      // from:'html' when the list came from the page's embedded SSR state (Vike/Next/…) rather than an
+      // XHR — the runtime then fetches the page HTML and reads itemsPath out of its embedded JSON.
+      list: Object.assign({ path: u.pathname, paging, itemsPath: best.itemsPath || 'items' }, best.fromHtml ? { from: 'html' } : {}, list),
     },
     fields,
     schema: 'receipt@1',

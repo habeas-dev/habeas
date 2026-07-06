@@ -35,6 +35,23 @@ test('detects offsets pagination', () => {
   assert.equal(r.draft.api.list.offsetsPath, 'offsets');
 });
 
+test('auto-detects an SSR embedded list (fromHtml) + a detail with per-item params (Dia-shape)', () => {
+  const it = (ticket) => ({ detail_params: { begin: 1780328485000, business: 1, country: 'ES', pos: 2, store: 15500, ticket }, submitted_date: '2026-06-01T15:41:25Z', total_amount: 9.77, store_info: { city: 'Cobeña' } });
+  const samples = [
+    // The list is embedded in the page's SSR state (Vike) — bridge posts it as a fromHtml sample.
+    { url: 'https://www.dia.es/my-account/tickets', method: 'GET', status: 200, reqHeaders: {}, fromHtml: true, json: { INITIAL_STATE: { ticketsList: [it(464414), it(460615)] } } },
+    // The detail XHR the user triggered by opening a ticket — id in the path, per-item params in the query.
+    { url: 'https://www.dia.es/api/v3/eservice-back/customer/current/tickets/464414?begin=1780328485000&business=1&country=ES&pos=2&store=15500', method: 'GET', status: 200, reqHeaders: {}, json: { header: { code: 464414 }, total_amount: 9.77 } },
+  ];
+  const { ok, draft } = draftAdapterFromSamples(samples, { domain: 'dia.es', pageHost: 'www.dia.es' });
+  assert.ok(ok);
+  assert.equal(draft.api.list.from, 'html'); // read from embedded page state, not an XHR
+  assert.equal(draft.api.list.itemsPath, 'INITIAL_STATE.ticketsList');
+  assert.equal(draft.fields.internalId, 'detail_params.ticket');
+  assert.equal(draft.api.detail.path,
+    '/api/v3/eservice-back/customer/current/tickets/{internalId}?begin={detail_params.begin}&business={detail_params.business}&country={detail_params.country}&pos={detail_params.pos}&store={detail_params.store}');
+});
+
 test('detects cursor pagination via a nextCursor field', () => {
   const s = [{ url: 'https://api.x.es/tx', method: 'GET', status: 200, reqHeaders: { authorization: 'eyJ' },
     json: { transactions: [{ id: '1', valueDate: '2026-01-01', amount: 1 }], paging: { nextCursor: 'c2' } } }];
