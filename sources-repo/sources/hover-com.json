@@ -17,7 +17,8 @@
     },
     "detail": {
       "path": "/api/control_panel/settings/receipts/{internalId}",
-      "method": "GET"
+      "method": "GET",
+      "as": "invoice"
     }
   },
   "fields": {
