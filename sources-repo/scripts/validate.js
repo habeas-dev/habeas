@@ -85,7 +85,7 @@ export const CATEGORIES = [
   'restaurant', 'marketplace', 'travel', 'entertainment', 'retail',
   // Services (invoices)
   'energy', 'water', 'telecom', 'utility', 'tolls', 'transport', 'insurance',
-  'subscription', 'education', 'healthcare', 'government',
+  'subscription', 'domains', 'education', 'healthcare', 'government',
   // Financial (transactions / holdings)
   'card', 'cash', 'banking', 'investment', 'pension', 'crypto', 'loan',
   // Fallback
@@ -119,7 +119,7 @@ export function validateAdapter(adapter) {
     req(okScheme, 'api.host must be https (http allowed only for loopback)');
     const list = api.list || {};
     req(typeof list.path === 'string' && list.path.startsWith('/'), 'api.list.path required');
-    req(typeof list.itemsPath === 'string' && list.itemsPath.length > 0, 'api.list.itemsPath required');
+    req(list.from === 'html' || (typeof list.itemsPath === 'string' && list.itemsPath.length > 0), 'api.list.itemsPath required (unless list.from is "html")');
     req(!list.paging || PAGING.has(list.paging), 'api.list.paging must be offsets|page|cursor|none');
     const fields = adapter.fields || {};
     req(typeof fields.internalId === 'string', 'fields.internalId required');

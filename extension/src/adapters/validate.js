@@ -85,7 +85,7 @@ export const CATEGORIES = [
   'restaurant', 'marketplace', 'travel', 'entertainment', 'retail',
   // Services (invoices)
   'energy', 'water', 'telecom', 'utility', 'tolls', 'transport', 'insurance',
-  'subscription', 'education', 'healthcare', 'government',
+  'subscription', 'domains', 'education', 'healthcare', 'government',
   // Financial (transactions / holdings)
   'card', 'cash', 'banking', 'investment', 'pension', 'crypto', 'loan',
   // Fallback
