@@ -20,6 +20,19 @@
       const text = ((document.body && document.body.innerText) || '').slice(0, 100000);
       if (text) chrome.runtime.sendMessage({ type: 'habeas:dom', domain: PAGE_DOMAIN, url: location.href, text });
     } catch (e) {}
+    captureEmbeddedJson();
+  }
+
+  // SSR frameworks (Vike, Next, Nuxt, Inertia…) put the page's loaded data in a <script
+  // type="application/json"> or a data-props attribute — the list may be there rather than in an XHR.
+  // Post each parsed blob as a sample tagged fromHtml so the inference can offer a from:html list.
+  function captureEmbeddedJson() {
+    try {
+      const objs = [];
+      document.querySelectorAll('script[type="application/json"],script[type="application/ld+json"]').forEach((s) => { try { const o = JSON.parse(s.textContent); if (o && typeof o === 'object') objs.push(o); } catch (e) {} });
+      document.querySelectorAll('[data-props],[data-page],[data-state]').forEach((el) => { for (const a of ['data-props', 'data-page', 'data-state']) { const v = el.getAttribute(a); if (v) { try { const o = JSON.parse(v); if (o && typeof o === 'object') objs.push(o); } catch (e) {} } } });
+      for (const json of objs.slice(0, 6)) chrome.runtime.sendMessage({ type: 'habeas:sample', domain: PAGE_DOMAIN, sample: { url: location.href, method: 'GET', status: 200, reqHeaders: {}, json, fromHtml: true } });
+    } catch (e) {}
   }
 
   // Learn mode is armed per-domain via storage.local (set by the author UI). Uses local, not
