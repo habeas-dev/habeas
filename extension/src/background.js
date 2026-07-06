@@ -12,7 +12,7 @@ import { writeToSink } from './sinks/sinks.js';
 import { acceptsDoc, sinkAcceptsArtifact } from './sinks/format.js';
 import { getAdapters } from './adapters/index.js';
 import { hasConsent } from './lib/consent.js';
-import { badgeWorking, badgeCount, badgeError, badgeClear } from './lib/badge.js';
+import { badgeWorking, badgeCount, badgeError, badgeClear, setStatus } from './lib/badge.js';
 import { t } from './lib/i18n.js';
 import { validateProposal, originHost } from './lib/exthooks.js';
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant } from './lib/grants.js';
@@ -135,16 +135,19 @@ async function authFor(adapter) {
 async function runRoute(ds, adapter, sink, opts = {}) {
   const kind = opts.kind || 'auto';
   const base = { kind, datasource: ds.id, sink: sink.id, ...(opts.origin ? { origin: opts.origin } : {}) };
+  const name = adapter.name || ds.adapter;
   await badgeWorking();
+  setStatus(t('status_listing', [name]));
   try {
     const auth = await authFor(adapter);
-    if (!auth) { await appendLog({ ...base, status: 'nosession' }); await badgeClear(); return { status: 'nosession' }; }
+    if (!auth) { await appendLog({ ...base, status: 'nosession' }); await badgeClear(); setStatus(t('status_nosession', [name])); return { status: 'nosession' }; }
     const net = opts.net || await resolveSiteFetch(adapter); // fetch from the user's tab → inherits the session
     const all = await listInventory(adapter, auth, net);
     const delivered = await deliveredSet(ds.id, sink.id);
     const fresh = all.filter((d) => !delivered[d.internalId]);
     const eligible = fresh.filter((d) => acceptsDoc(sink, d));
-    if (!eligible.length) { await appendLog({ ...base, status: 'none', new: 0 }); await badgeClear(); return { status: 'done', new: 0 }; }
+    if (!eligible.length) { await appendLog({ ...base, status: 'none', new: 0 }); await badgeClear(); setStatus(t('status_none', [name])); return { status: 'done', new: 0 }; }
+    setStatus(t('status_fetching', [String(eligible.length), name]));
     const kinds = artifactKinds(adapter).filter((k) => sinkAcceptsArtifact(sink, k.kind));
     const files = new Map();
     for (const d of eligible) {
@@ -152,17 +155,21 @@ async function runRoute(ds, adapter, sink, opts = {}) {
       for (const k of kinds) { try { arts.push(await fetchArtifact(adapter, auth, d, net, renderPage, k.kind)); } catch (e) { /* artifact unavailable */ } }
       if (arts.length) files.set(d.internalId, arts);
     }
+    setStatus(t('status_sending', [String(eligible.length), sink.id]));
     await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, source: adapter.id, ext: documentExt(adapter) || 'pdf', interactive: !!opts.interactive });
     await markDelivered(ds.id, sink.id, eligible.map((d) => d.internalId));
     await appendLog({ ...base, status: 'ok', new: eligible.length });
     if (kind === 'auto') notify(t('notify_new', [String(eligible.length), sink.id])); // external collect: the tab + activity log are the surface (no extra notification)
     await badgeCount(eligible.length);
+    setStatus(t('status_done', [String(eligible.length), name]));
     return { status: 'done', new: eligible.length };
   } catch (e) {
-    await appendLog({ ...base, status: 'error', error: (e && e.message) || String(e) });
-    if (kind === 'auto') notify(t('notify_autoerr', [(e && e.message) || String(e)]));
+    const msg = (e && e.message) || String(e);
+    await appendLog({ ...base, status: 'error', error: msg });
+    if (kind === 'auto') notify(t('notify_autoerr', [msg]));
     await badgeError();
-    return { status: 'error', error: (e && e.message) || String(e) };
+    setStatus(t('status_error', [name, msg.slice(0, 80)]));
+    return { status: 'error', error: msg };
   }
 }
 
