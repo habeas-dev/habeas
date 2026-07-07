@@ -216,8 +216,8 @@ function esc(value) {
 function flag(code) {
   if (!code) return '';
   if (code === 'global') return '🌐';
-  if (!/^[A-Za-z]{2}$/.test(code)) return '';
-  return code.toUpperCase().replace(/./g, (char) => String.fromCodePoint(0x1F1E6 + char.charCodeAt(0) - 65));
+  if (!/^[a-z]{2}$/i.test(code)) return '';
+  return code.toUpperCase().replace(/./g, (char) => String.fromCodePoint(0x1F1E6 + char.charCodeAt(0) - 'A'.charCodeAt(0)));
 }
 
 function pickRandomSources(sources, count) {
@@ -230,7 +230,8 @@ function pickRandomSources(sources, count) {
 }
 
 function previewCard(source) {
-  return `<div class="src"><div class="top"><span class="name">${esc(source.name)}</span></div><div class="meta">${source.country ? `${flag(source.country)} ` : ''}${esc(source.service)}</div></div>`;
+  const country = typeof source.country === 'string' ? source.country : '';
+  return `<div class="src"><div class="top"><span class="name">${esc(source.name)}</span></div><div class="meta">${country ? `${flag(country)} ` : ''}${esc(source.service)}</div></div>`;
 }
 
 function renderSourcePreview() {
@@ -250,7 +251,7 @@ function initSourcePreview() {
     if (!response.ok) throw new Error('catalog fetch failed');
     return response.json();
   }).then((data) => {
-    const sources = Array.isArray(data?.sources) ? data.sources.filter((source) => source && source.name && source.service) : [];
+    const sources = Array.isArray(data?.sources) ? data.sources.filter((source) => source && typeof source.name === 'string' && typeof source.service === 'string') : [];
     if (!sources.length) return;
     SOURCE_COUNT = sources.length;
     SOURCE_PREVIEW = pickRandomSources(sources, Math.min(SOURCE_PREVIEW_LIMIT, sources.length));
