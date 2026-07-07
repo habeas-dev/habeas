@@ -144,6 +144,7 @@
     </div>
   </main>
 
+  <script src="nav-i18n.js"></script>
   <script>
     (function () {
       const KEY = 'habeas-lang';
@@ -157,6 +158,7 @@
       const btns = document.querySelectorAll('.langswitch button[data-lang]');
       function apply(l) {
         document.documentElement.lang = l;
+        globalThis.habeasApplyTopNavLanguage?.(l);
         document.querySelectorAll('[data-lang-content]').forEach((el) => { el.hidden = el.getAttribute('data-lang-content') !== l; });
         btns.forEach((b) => b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === l)));
       }

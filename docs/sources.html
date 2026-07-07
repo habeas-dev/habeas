@@ -63,6 +63,7 @@
     <p class="note" data-t="cta"></p>
   </main>
 
+  <script src="nav-i18n.js"></script>
   <script>
     const STR = {
       en: {
@@ -131,11 +132,11 @@
       msg.textContent = t.count(shown.length);
     }
 
-    function setLang(l) { LANG = l; document.documentElement.lang = l; try { localStorage.setItem('habeas-lang', l); } catch (e) {} render(); }
+    function setLang(l) { LANG = l; document.documentElement.lang = l; globalThis.habeasApplyTopNavLanguage?.(l); try { localStorage.setItem('habeas-lang', l); } catch (e) {} render(); }
     document.querySelectorAll('.langswitch button[data-lang]').forEach((b) => b.addEventListener('click', () => setLang(b.getAttribute('data-lang'))));
     document.getElementById('country').addEventListener('change', (e) => { FILTER = e.target.value; render(); });
     document.getElementById('format').addEventListener('change', (e) => { FMT = e.target.value; render(); });
-    (function () { let l; try { l = localStorage.getItem('habeas-lang'); } catch (e) {} if (l !== 'en' && l !== 'es') l = (navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en'; LANG = l; document.documentElement.lang = l; })();
+    (function () { let l; try { l = localStorage.getItem('habeas-lang'); } catch (e) {} if (l !== 'en' && l !== 'es') l = (navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en'; LANG = l; document.documentElement.lang = l; globalThis.habeasApplyTopNavLanguage?.(l); })();
     render();
 
     fetch(INDEX).then((r) => r.json()).then((data) => {
