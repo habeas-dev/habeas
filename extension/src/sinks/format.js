@@ -3,12 +3,20 @@ import { renderPath } from '../lib/naming.js';
 
 export function pathFor(sink, d, opts, ext) {
   ext = ext || (opts && opts.ext) || 'pdf';
-  const tpl = sink.pathTemplate || '{service}/{yyyy}/{date}-{internalId}.{ext}';
+  const group = groupDir(d); // grouped source (bank account/card) → its own top-level folder
+  const tpl = sink.pathTemplate || ((group ? '{group}/' : '') + '{service}/{yyyy}/{date}-{internalId}.{ext}');
   return renderPath(tpl, {
     service: (opts && opts.service) || 'documents',
     date: (d.date || '').slice(0, 10),
-    internalId: d.internalId, ext,
+    internalId: d.internalId, ext, group,
   });
+}
+// A friendly, filesystem-safe folder name for the doc's group: product name + last 4 (e.g. "WiZink Oro 8765").
+function groupDir(d) {
+  const g = d && d._group;
+  if (!g) return '';
+  const last4 = String(g.mask || g.iban || g.id || '').match(/(\d{4})\s*$/);
+  return [g.name || g.alias, last4 ? last4[1] : ''].filter(Boolean).join(' ').trim() || String(g.id || '').slice(-8);
 }
 // A mapped doc already carries its normalized record (built at inventory time, where the
 // adapter is known). toRecord returns it; the legacy fallback keeps receipt shape for callers

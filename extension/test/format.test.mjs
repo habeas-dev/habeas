@@ -1,6 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sinkAcceptsArtifact, sourceFormats } from '../src/sinks/format.js';
+import { sinkAcceptsArtifact, sourceFormats, pathFor } from '../src/sinks/format.js';
+
+test('pathFor puts a grouped doc under a top-level group folder (name + last4)', () => {
+  const doc = { internalId: 'ACC1|2026-06-23', date: '2026-06-23', _group: { name: 'WiZink Oro', mask: '**** **** **** 8765' } };
+  const p = pathFor({}, doc, { service: 'wizink' }, 'xls');
+  assert.match(p, /^WiZink Oro 8765\/wizink\/2026\/2026-06-23-/); // group folder = name + last4
+  assert.ok(p.endsWith('.xls'));
+  const flat = pathFor({}, { internalId: 'x', date: '2026-01-01' }, { service: 's' }, 'pdf'); // no group → no group folder
+  assert.equal(flat, 's/2026/2026-01-01-x.pdf');
+});
 
 test('sinkAcceptsArtifact filters by artifact kind AND format (ext)', () => {
   const pdfOnly = { accepts: { formats: ['pdf'] } };
