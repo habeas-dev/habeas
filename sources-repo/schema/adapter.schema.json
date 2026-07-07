@@ -136,7 +136,18 @@
             "method": { "enum": ["GET", "POST"] },
             "body": { "type": "string", "description": "[POST] Body template; {group.*}, {csrf}, the paging param ({page}/{pagina}) and static params are substituted." },
             "contentType": { "type": "string", "description": "[POST] Body Content-Type (default application/x-www-form-urlencoded)." },
-            "rows": { "$ref": "#/$defs/rows" }
+            "rows": { "$ref": "#/$defs/rows" },
+            "maxPeriods": { "type": "number", "description": "[periods] Cap on how many past statement periods to fetch (default 24)." },
+            "periods": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Multi-period list assembly (e.g. WiZink card movements): fetch the current (unbilled) period plus one fetch per past statement date, all parsed with the shared list.rows row parser and concatenated. Each sub-config POSTs to list.path (query = params, form body = body with {group.*}/{csrf} filled; past.body may template {period} = a statement date). Statements behind the site extra-auth wall are skipped.",
+              "properties": {
+                "current": { "$ref": "#/$defs/period", "description": "The current unbilled period; all its movements come back in one response." },
+                "dates": { "$ref": "#/$defs/period", "description": "Returns the past statement dates; needs its own `rows` to extract them (e.g. from callOperations('YYYY-MM-DD'))." },
+                "past": { "$ref": "#/$defs/period", "description": "One past statement's movements; body may template {period} = the statement date." }
+              }
+            }
           }
         },
         "pdf": {
@@ -197,6 +208,16 @@
     "schema": { "type": "string", "pattern": "^[a-z_]+@\\d+$", "description": "Target normalized schema: receipt@1 | invoice@1 | transaction@1 | investment@1." }
   },
   "$defs": {
+    "period": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "One period fetch in a multi-period list (see api.list.periods).",
+      "properties": {
+        "params": { "type": "object", "description": "Static query params (e.g. pagename).", "additionalProperties": { "type": "string" } },
+        "body": { "type": "string", "description": "[POST] Form body template; {group.*}, {csrf} and (for past) {period} are substituted." },
+        "rows": { "$ref": "#/$defs/rows" }
+      }
+    },
     "rows": {
       "type": "object",
       "additionalProperties": false,

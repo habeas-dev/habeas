@@ -41,11 +41,11 @@ export async function listInventory(adapter, auth, net, opts) {
     // opts.groupId restricts to one account (a consumer's collect{group} asks for a single account).
     if (opts && opts.groupId != null) groups = groups.filter((g) => String(g.id) === String(opts.groupId));
     const all = [];
-    for (const g of groups) all.push(...await pageList(adapter, a, net, g));
+    for (const g of groups) all.push(...await pageList(adapter, a, net, g, opts));
     all.sort(byDate);
     return all;
   }
-  const all = await pageList(adapter, a, net, null);
+  const all = await pageList(adapter, a, net, null, opts);
   all.sort(byDate);
   return all;
 }
@@ -104,8 +104,11 @@ async function fetchGroupItems(adapter, auth, net) {
   return get(await res.json(), g.itemsPath) || [];
 }
 
-async function pageList(adapter, auth, net, group) {
+async function pageList(adapter, auth, net, group, opts) {
   const list = adapter.api.list;
+  // Multi-period sources (WiZink card movements) assemble a group's list from several period fetches
+  // (current month + one per past statement) instead of a single paged endpoint — handled apart.
+  if (list.periods) return pageListPeriods(adapter, auth, net, group, opts);
   // Resolve the strategy from an explicit `paging`, else from whichever paging field is present
   // (robust to a blank `paging` — e.g. an editor/UI that didn't offer the right option).
   const paging = list.paging
@@ -160,6 +163,81 @@ async function pageList(adapter, auth, net, group) {
     collect(adapter, await call({ ...range, ...baseParams }), seen, all, group);
   }
   return all; // sorted by the caller (listInventory) across all groups
+}
+
+// Multi-period list assembly (e.g. WiZink card movements): a group's movements aren't one paged list
+// but SEVERAL period fetches — the current (unbilled) month plus one fetch per past monthly statement
+// — each parsed with the SAME shared row parser (list.rows) and concatenated. Shape:
+//   list.periods = {
+//     current: { params, body },                    // this month's movements (one response)
+//     dates:   { params, body, rows },              // → the past statement dates (rows extracts them)
+//     past:    { params, body /* body may use {period} = a statement date */ },
+//   }
+// The CSRF token is single-use, so it's refetched before every period fetch. Statements older than the
+// site's ~90-day extra-auth wall fail / return nothing → those fetches are skipped (logged via opts.log),
+// never fatal; we stop after 2 consecutive misses. list.maxPeriods caps the fan-out (default 24).
+async function pageListPeriods(adapter, auth, net, group, opts) {
+  const list = adapter.api.list;
+  const P = list.periods || {};
+  const rows = list.rows;                           // shared movement-row parser (current + past)
+  const maxPeriods = list.maxPeriods || 24;
+  const log = (opts && typeof opts.log === 'function') ? opts.log : () => {};
+  const gname = (group && (group.accountNumber != null ? group.accountNumber : group.id)) || '';
+  const raw = [];
+  const refresh = async () => (adapter.api.csrf ? { ...(auth || {}), __csrf: await fetchCsrf(adapter, auth, net) } : (auth || {}));
+  const tag = (items, period) => items.forEach((it, i) => { it._period = period; it._idx = i; raw.push(it); });
+
+  // 1. current (unbilled) month — every movement is in this one response (no server pagination).
+  if (P.current) {
+    try { tag(parseHtmlItems(await fetchPeriodHtml(adapter, await refresh(), net, group, P.current), rows), 'current'); }
+    catch (e) { log(`${adapter.service || 'source'} ${gname}: current-month movements failed — ${e.message}`); }
+  }
+  // 2. past statement dates (each a callOperations('YYYY-MM-DD') on the card page).
+  let dates = [];
+  if (P.dates) {
+    try { dates = parseHtmlItems(await fetchPeriodHtml(adapter, await refresh(), net, group, P.dates), P.dates.rows || rows).map((r) => r.statementDate).filter(Boolean); }
+    catch (e) { log(`${adapter.service || 'source'} ${gname}: statement-date list failed — ${e.message}`); }
+  }
+  dates = [...new Set(dates)].slice(0, maxPeriods); // newest-first as the site returns them; cap fan-out
+  // 3. one fetch per past statement. Stop after 2 consecutive empty/failed fetches — the ~90-day
+  //    extra-auth wall makes older statements unreachable; skip gracefully rather than abort the list.
+  let misses = 0;
+  for (const d of dates) {
+    if (misses >= 2) { log(`${adapter.service || 'source'} ${gname}: stopping past statements at ${d} (hit the ~90-day auth wall)`); break; }
+    let items = null;
+    try { items = parseHtmlItems(await fetchPeriodHtml(adapter, await refresh(), net, group, P.past, { period: d }), rows); }
+    catch (e) { log(`${adapter.service || 'source'} ${gname}: statement ${d} skipped — ${e.message}`); }
+    if (!items || !items.length) { if (items) log(`${adapter.service || 'source'} ${gname}: statement ${d} had no movements — skipped`); misses++; continue; }
+    misses = 0;
+    tag(items, d);
+  }
+  // Map + dedup exactly like the paged path (collect builds each doc's record + internalId).
+  const seen = new Set(), all = [];
+  collect(adapter, { __items: raw }, seen, all, group);
+  return all;
+}
+
+// POST one period page (current / dates / past) and return its raw HTML. Mirrors fetchList's request
+// shape: query string = periodCfg.params, form body = periodCfg.body with {group.*}/{csrf}/{period} filled.
+async function fetchPeriodHtml(adapter, auth, net, group, periodCfg, extra) {
+  const NET = net || ((u, i) => fetch(u, i));
+  const list = adapter.api.list;
+  const path = tmplGroup(list.path, group);
+  const params = periodCfg.params || {};
+  const gparams = {}; for (const k of Object.keys(params)) gparams[k] = tmplGroup(String(params[k]), group);
+  const qs = new URLSearchParams(gparams).toString();
+  const url = adapter.api.host + path + (qs ? '?' + qs : '');
+  const cookie = adapter.auth && adapter.auth.mode === 'cookie';
+  const htmlAccept = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
+  const method = (list.method || 'POST').toUpperCase();
+  const init = { method, headers: { accept: htmlAccept, ...(list.headers || {}), ...headersFor(auth, path.split('?')[0], !cookie) }, credentials: 'include' };
+  if (periodCfg.body != null) {
+    init.body = fillTmpl(periodCfg.body, group, auth, extra || {}); // {group.*} + {csrf} + {period}
+    init.headers['content-type'] = list.contentType || 'application/x-www-form-urlencoded';
+  }
+  const res = await NET(url, init);
+  if (!res.ok) throw new Error('period ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
+  return await res.text();
 }
 
 const absHost = (h) => (/^https?:\/\//.test(h) ? h : 'https://' + h);
@@ -668,13 +746,13 @@ export function normalizeAmount(v) {
 // Map fresh items onto the shared docs array; returns how many were newly added.
 function collect(adapter, data, seen, all, group) {
   const items = get(data, itemsPathOf(adapter.api.list)) || [];
-  const f = adapter.fields;
   let added = 0;
   for (const p of items) {
-    const id = resolveField(f.internalId, p, group); // may be templated with {group.*} for cross-group uniqueness
+    const doc = mapDoc(adapter, p, group); // carries doc.internalId (templated {group.*}, or synthesized for periods)
+    const id = doc.internalId;
     if (id != null && seen.has(id)) continue;
     if (id != null) seen.add(id);
-    all.push(mapDoc(adapter, p, group)); added++;
+    all.push(doc); added++;
   }
   return added;
 }
@@ -683,6 +761,11 @@ function mapDoc(adapter, p, group) {
   const f = adapter.fields, doc = { _raw: p };
   if (group) doc._group = group; // the parent (account) this record belongs to
   for (const k in f) doc[k] = resolveField(f[k], p, group);
+  // Multi-period grouped rows (WiZink movements) carry NO per-movement id in the HTML. If the source's
+  // fields.internalId didn't resolve to one, synthesize a STABLE composite from the group + period +
+  // per-period index + raw date + raw amount, so re-runs dedupe (same input → same id).
+  if ((doc.internalId == null || doc.internalId === '') && adapter.api && adapter.api.list && adapter.api.list.periods)
+    doc.internalId = [group && (group.accountNumber != null ? group.accountNumber : group.id), p._period, p._idx, p.date, p.amount].filter((x) => x != null && x !== '').join('|');
   if (doc.date != null && doc.date !== '') doc.date = normalizeDate(doc.date); // textual/locale → ISO
   for (const k of ['total', 'amount']) if (typeof doc[k] === 'string' && doc[k] !== '') doc[k] = normalizeAmount(doc[k]); // "21,00 €" → 21
   doc.category = categorize(adapter, p);

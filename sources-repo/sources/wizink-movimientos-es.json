@@ -1,0 +1,120 @@
+{
+  "id": "wizink-movimientos-es",
+  "name": "WiZink España — movimientos de tarjeta",
+  "service": "wizink",
+  "trust": "first-party",
+  "domain": "wizink.es",
+  "country": "ES",
+  "version": "2026-07-08",
+  "currency": "EUR",
+  "categories": [
+    "card"
+  ],
+  "match": [
+    "https://www.wizink.es/*"
+  ],
+  "auth": {
+    "mode": "cookie",
+    "replayHeaders": [],
+    "resetCookies": true
+  },
+  "api": {
+    "host": "https://www.wizink.es",
+    "csrf": {
+      "path": "/clientes/posicion-global",
+      "match": "securityToken['\"]?\\s*(?:value=|:)\\s*['\"]([A-Za-z0-9]{12,})"
+    },
+    "groups": {
+      "from": "html",
+      "path": "/cs/Satellite",
+      "method": "POST",
+      "params": {
+        "pagename": "ECOM_SiteEntry/WZPRI/NewGlobalPosition"
+      },
+      "body": "ECOM_Page_Category=New Global Position&ECOM_Page_Sub_Category=New Global Position&securityToken={csrf}",
+      "rows": {
+        "each": "goToCardDetail\\('([^']+)',\\s*'([^']+)'[\\s\\S]{0,180}?c-card__summary[\\s\\S]{0,150}?card-product-name[^>]*>(?:<span[^>]*>[^<]*</span>)?\\s*([^<]+?)\\s*</span>[\\s\\S]{0,200}?card-security-code[^>]*>(?:<span[^>]*>[^<]*</span>)?\\s*([^<]*\\d{4})",
+        "fields": {
+          "accountNumber": {
+            "group": 1
+          },
+          "cardNumber": {
+            "group": 2
+          },
+          "name": {
+            "group": 3
+          },
+          "mask": {
+            "group": 4
+          }
+        }
+      },
+      "fields": {
+        "id": "accountNumber",
+        "accountNumber": "accountNumber",
+        "cardNumber": "cardNumber",
+        "name": "name",
+        "mask": "mask"
+      }
+    },
+    "list": {
+      "from": "html",
+      "path": "/cs/Satellite",
+      "method": "POST",
+      "maxPeriods": 24,
+      "periods": {
+        "current": {
+          "params": {
+            "pagename": "ECOM_SiteEntry/WZPRI/CardDetail/NewToday"
+          },
+          "body": "accountNumber={group.accountNumber}&cardNumber={group.cardNumber}&option=today&securityToken={csrf}"
+        },
+        "dates": {
+          "params": {
+            "pagename": "ECOM_SiteEntry/WZPRI/CardDetail/Today/ListExtracts"
+          },
+          "body": "cardNumber={group.cardNumber}&accountNumber={group.accountNumber}&securityToken={csrf}",
+          "rows": {
+            "each": "callOperations\\('([0-9-]+)'\\)",
+            "fields": {
+              "statementDate": {
+                "group": 1
+              }
+            }
+          }
+        },
+        "past": {
+          "params": {
+            "pagename": "ECOM_SiteEntry/WZPRI/CardDetail/ExtractOnScreenDetail"
+          },
+          "body": "securityToken={csrf}&ic2Error=false&accountNumber={group.accountNumber}&cardNumber={group.cardNumber}&cardLogo=505&cahsback=null&statementDate={period}&calculatePaymentInfo=false&fromPrincipalAccount=&inStatementRepository=&verMas=false&flagStatementsHistory="
+        }
+      },
+      "rows": {
+        "row": "movement-item",
+        "require": [
+          "date"
+        ],
+        "fields": {
+          "date": {
+            "sel": "movement-date"
+          },
+          "description": {
+            "sel": "movement-location"
+          },
+          "amount": {
+            "sel": "movement-amount"
+          }
+        }
+      }
+    }
+  },
+  "fields": {
+    "internalId": "{group.accountNumber}|{_period}|{_idx}|{date}|{amount}",
+    "date": "date",
+    "amount": "amount",
+    "description": "description",
+    "account": "{group.accountNumber}"
+  },
+  "schema": "transaction@1"
+}
