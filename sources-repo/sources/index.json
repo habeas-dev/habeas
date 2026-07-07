@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-07T12:37:37.675Z",
+  "generated": "2026-07-07T13:28:41.012Z",
   "sources": [
     {
       "id": "carrefour-es",
@@ -19,7 +19,7 @@
       "crossDomain": [],
       "version": "2026-07-07",
       "url": "https://habeas-dev.github.io/sources/carrefour-es.json",
-      "updated": "2026-07-07T12:37:37.675Z"
+      "updated": "2026-07-07T13:28:41.012Z"
     },
     {
       "id": "decathlon-es",
@@ -37,7 +37,7 @@
       "crossDomain": [],
       "version": "2026-07-06",
       "url": "https://habeas-dev.github.io/sources/decathlon-es.json",
-      "updated": "2026-07-07T12:37:37.675Z"
+      "updated": "2026-07-07T13:28:41.012Z"
     },
     {
       "id": "dia-es",
@@ -56,7 +56,7 @@
       "crossDomain": [],
       "version": "2026-07-06",
       "url": "https://habeas-dev.github.io/sources/dia-es.json",
-      "updated": "2026-07-07T12:37:37.675Z"
+      "updated": "2026-07-07T13:28:41.012Z"
     },
     {
       "id": "hover-com",
@@ -75,7 +75,7 @@
       "crossDomain": [],
       "version": "2026-07-06",
       "url": "https://habeas-dev.github.io/sources/hover-com.json",
-      "updated": "2026-07-07T12:37:37.675Z"
+      "updated": "2026-07-07T13:28:41.012Z"
     },
     {
       "id": "wizink-extractos-excel-es",
@@ -93,7 +93,25 @@
       "crossDomain": [],
       "version": "2026-07-07",
       "url": "https://habeas-dev.github.io/sources/wizink-extractos-excel-es.json",
-      "updated": "2026-07-07T12:37:37.675Z"
+      "updated": "2026-07-07T13:28:41.012Z"
+    },
+    {
+      "id": "wizink-extractos-pdf-es",
+      "name": "WiZink España — extractos (PDF)",
+      "service": "wizink",
+      "categories": [
+        "banking"
+      ],
+      "trust": "first-party",
+      "domain": "wizink.es",
+      "country": "ES",
+      "formats": [
+        "pdf"
+      ],
+      "crossDomain": [],
+      "version": "2026-07-07",
+      "url": "https://habeas-dev.github.io/sources/wizink-extractos-pdf-es.json",
+      "updated": "2026-07-07T13:28:41.012Z"
     }
   ]
 }
