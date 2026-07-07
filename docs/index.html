@@ -4,11 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Habeas — export your own data from your own session</title>
-  <meta name="description" content="Open-source browser extension that exports your own receipts, invoices and transactions from your authenticated browser session — no stored credentials, no server-side scraping." />
+  <meta name="description" content="Open-source browser runtime that helps you preserve your own receipts, invoices, statements and reports from your authenticated browser session — no stored credentials, no server-side scraping." />
   <link rel="icon" type="image/svg+xml" href="logo.svg" />
   <link rel="stylesheet" href="style.css" />
   <meta property="og:title" content="Habeas — export your own data from your own session" />
-  <meta property="og:description" content="Open-source browser extension that exports your own receipts, invoices and transactions from your authenticated browser session." />
+  <meta property="og:description" content="Open-source browser runtime that helps you preserve your own receipts, invoices, statements and reports from your authenticated browser session." />
   <meta property="og:type" content="website" />
 </head>
 <body>
@@ -33,8 +33,8 @@
   </header>
 
   <div class="hero">
+    <img class="hero-bg-logo" src="logo-light.svg" alt="" aria-hidden="true" />
     <div class="wrap">
-      <img class="logo" src="logo-light.svg" alt="" />
       <p class="tagline" data-i18n="tagline">your data, in your hands</p>
       <h1 data-i18n="hero_h1">Export your own data.</h1>
       <p class="sub" data-i18n="hero_sub"></p>
@@ -87,15 +87,45 @@
       <div class="flow-card">
         <h3 data-i18n="flow_h"></h3>
         <div class="flow">
-          <div class="flow-step" data-i18n="flow_step_1"></div>
+          <div class="flow-step" data-i18n="flow_step_source"></div>
           <div class="flow-arrow" aria-hidden="true">↓</div>
-          <div class="flow-step" data-i18n="flow_step_2"></div>
+          <div class="flow-step" data-i18n="flow_step_runtime"></div>
           <div class="flow-arrow" aria-hidden="true">↓</div>
-          <div class="flow-step" data-i18n="flow_step_3"></div>
-          <div class="flow-arrow" aria-hidden="true">↓</div>
-          <div class="flow-step" data-i18n="flow_step_4"></div>
+          <div class="flow-step" data-i18n="flow_step_sink"></div>
         </div>
         <p class="flow-note" data-i18n="flow_note"></p>
+        <div class="grid">
+          <div class="card"><div class="ic">🔌</div><h3 data-i18n="flow_access_h"></h3><p data-i18n="flow_access_b"></p></div>
+          <div class="card"><div class="ic">📄</div><h3 data-i18n="flow_native_h"></h3><p data-i18n="flow_native_b"></p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2 data-i18n="source_defs_h2"></h2>
+      <p class="lead" data-i18n="source_defs_lead"></p>
+      <div class="grid">
+        <div class="card"><div class="ic">🧩</div><h3 data-i18n="source_defs1_h"></h3><p data-i18n="source_defs1_b"></p></div>
+        <div class="card"><div class="ic">🌱</div><h3 data-i18n="source_defs2_h"></h3><p data-i18n="source_defs2_b"></p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <h2 data-i18n="recorder_h2"></h2>
+      <p class="lead" data-i18n="recorder_lead"></p>
+      <div class="card">
+        <h3 data-i18n="recorder_steps_h"></h3>
+        <ol class="plain-list">
+          <li data-i18n="recorder_step_1"></li>
+          <li data-i18n="recorder_step_2"></li>
+          <li data-i18n="recorder_step_3"></li>
+          <li data-i18n="recorder_step_4"></li>
+        </ol>
+        <p class="flow-note" data-i18n="recorder_note"></p>
       </div>
     </div>
   </section>
@@ -156,6 +186,21 @@
           <a class="btn primary" href="https://github.com/habeas-dev/habeas/releases" data-i18n="install_firefox_cta">Get the latest build</a>
           <p class="lead" style="font-size:.82rem;opacity:.6;margin-top:10px" data-i18n="install_soon_firefox"></p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2 data-i18n="dev_h2"></h2>
+      <p class="lead" data-i18n="dev_lead"></p>
+      <div class="card">
+        <ul class="plain-list">
+          <li data-i18n="dev_1"></li>
+          <li data-i18n="dev_2"></li>
+          <li data-i18n="dev_3"></li>
+          <li data-i18n="dev_4"></li>
+        </ul>
       </div>
     </div>
   </section>

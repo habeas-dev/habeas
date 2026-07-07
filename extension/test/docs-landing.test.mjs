@@ -11,9 +11,12 @@ const sectionMarkers = [
   'id="sources-preview"',
   'problem_h2',
   'how_h2',
+  'source_defs_h2',
+  'recorder_h2',
   'why_h2',
   'dest_h2',
   'id="install"',
+  'dev_h2',
   'oss_h2',
 ];
 
@@ -118,10 +121,22 @@ test('landing page keeps the new information hierarchy', async () => {
   });
 
   assert.doesNotMatch(html, /data-i18n="hero_note"/);
+  assert.match(html, /class="hero-bg-logo"/);
   assert.match(html, /class="feature-strip"/);
   assert.equal((html.match(/class="feature-pill"/g) || []).length, 4);
   assert.match(css, /\.feature-pill:empty\s*\{[^}]*display\s*:\s*none/);
+  assert.match(css, /\.hero \.hero-bg-logo\s*\{[^}]*opacity\s*:\s*\.08/);
+  assert.match(css, /\.hero \.cta \.btn\.ghost\s*\{[^}]*border-color\s*:\s*rgba\(255,255,255,\s*\.38\)/);
+  assert.match(css, /\.hero \.cta \.btn\.ghost\s*\{[^}]*background\s*:\s*rgba\(255,255,255,\s*\.08\)/);
+  assert.match(css, /\.hero \.cta \.btn\.ghost:hover\s*\{[^}]*border-color\s*:\s*rgba\(255,255,255,\s*\.5\)/);
+  assert.match(css, /\.hero \.cta \.btn\.ghost:hover\s*\{[^}]*background\s*:\s*rgba\(255,255,255,\s*\.14\)/);
   assert.match(html, /data-i18n="flow_h"/);
+  assert.match(html, /data-i18n="flow_step_source"/);
+  assert.match(html, /data-i18n="flow_step_runtime"/);
+  assert.match(html, /data-i18n="flow_step_sink"/);
+  assert.match(html, /data-i18n="source_defs_h2"/);
+  assert.match(html, /data-i18n="recorder_h2"/);
+  assert.match(html, /data-i18n="dev_h2"/);
   assert.match(html, /class="compare-table"/);
   assert.match(html, /<a href="\/sources\.html" data-i18n="sources_cta"><\/a>/);
 });
