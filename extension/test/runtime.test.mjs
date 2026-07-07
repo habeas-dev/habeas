@@ -259,6 +259,16 @@ test('parseHtmlItems extracts records from repeated HTML blocks (WiZink AEM move
   assert.equal(items[1].total, '1.234,56 €');
 });
 
+test('parseHtmlItems collapses whitespace so a bounded `each` reaches its target (WiZink card label)', () => {
+  const html = "<a onclick=\"goToCardDetail('ACC1', 'CARD1', 'today');\"\n\n       class=\"card-link\">\n   <div class=\"c-card__summary\">\n     <span class=\"card-product-name\"><span class=\"sr-only\">Nombre: </span>WiZink Oro</span>\n     <span class=\"card-security-code\"><span class=\"sr-only\">Nº: </span> **** **** **** 9417 </span></div></a>";
+  const cfg = { each: "goToCardDetail\\('([^']+)',\\s*'([^']+)'[\\s\\S]{0,180}?c-card__summary[\\s\\S]{0,150}?card-product-name[^>]*>(?:<span[^>]*>[^<]*</span>)?\\s*([^<]+?)\\s*</span>[\\s\\S]{0,200}?card-security-code[^>]*>(?:<span[^>]*>[^<]*</span>)?\\s*([^<]*\\d{4})", fields: { accountNumber: { group: 1 }, name: { group: 3 }, mask: { group: 4 } } };
+  const items = parseHtmlItems(html, cfg);
+  assert.equal(items.length, 1);
+  assert.equal(items[0].accountNumber, 'ACC1');
+  assert.equal(items[0].name, 'WiZink Oro');
+  assert.equal(items[0].mask.replace(/\s+/g, ' ').trim(), '**** **** **** 9417');
+});
+
 test('normalizeAmount parses Spanish/EUR amounts; normalizeDate infers year for "DD MON"', () => {
   assert.equal(normalizeAmount('21,00 €'), 21);
   assert.equal(normalizeAmount('1.234,56 €'), 1234.56);
