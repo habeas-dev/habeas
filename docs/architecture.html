@@ -41,34 +41,72 @@
         <a href="/sources.html">Sources</a>
         <a href="/architecture.html">Architecture</a>
         <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
         <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <span class="langswitch" role="group" aria-label="Language">
+          <button data-lang="en" aria-pressed="true">EN</button>
+          <button data-lang="es" aria-pressed="false">ES</button>
+        </span>
       </nav>
     </div>
   </header>
 
   <main class="doc">
     <article id="architecture-content" aria-live="polite">
-      <p class="status">Loading ARCHITECTURE.md…</p>
+      <p class="status">Loading architecture…</p>
     </article>
   </main>
 
   <script>
-    const ARCHITECTURE_MD_URL = 'https://raw.githubusercontent.com/habeas-dev/habeas/main/ARCHITECTURE.md';
+    const ARCHITECTURE_MD_URL_EN = 'https://raw.githubusercontent.com/habeas-dev/habeas/main/ARCHITECTURE.md';
+    const ARCHITECTURE_MD_URL_ES = 'https://raw.githubusercontent.com/habeas-dev/habeas/main/ARCHITECTURE.es.md';
     const MARKDOWN_RENDER_URL = 'https://api.github.com/markdown';
+    const TEXT = {
+      en: {
+        loading: 'Loading architecture…',
+        unavailable: 'Could not render markdown from GitHub right now. You can still read the canonical source directly.',
+        open: 'Open ARCHITECTURE.md',
+      },
+      es: {
+        loading: 'Cargando arquitectura…',
+        unavailable: 'No se pudo renderizar el markdown desde GitHub ahora mismo. Aun así, puedes leer la fuente canónica directamente.',
+        open: 'Abrir ARCHITECTURE.es.md',
+      },
+    };
     const content = document.getElementById('architecture-content');
     const htmlEscapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    let lang = 'en';
+    let currentRequest = 0;
 
     function esc(value) {
       return String(value == null ? '' : value).replace(/[&<>"']/g, (char) => htmlEscapes[char]);
     }
 
-    function fallback(markdown) {
-      content.innerHTML = `<p class="status">Could not render markdown from GitHub right now. You can still read the canonical source directly.</p><p><a href="${ARCHITECTURE_MD_URL}">Open ARCHITECTURE.md</a></p><pre><code>${esc(markdown)}</code></pre>`;
+    function markdownUrlFor(language) {
+      return language === 'es' ? ARCHITECTURE_MD_URL_ES : ARCHITECTURE_MD_URL_EN;
     }
 
-    async function renderArchitecture() {
+    function setLanguage(next) {
+      lang = next === 'es' ? 'es' : 'en';
+      document.documentElement.lang = lang;
+      document.querySelectorAll('.langswitch button[data-lang]').forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.getAttribute('data-lang') === lang));
+      });
+    }
+
+    function fallback(markdown, language) {
+      const t = TEXT[language];
+      const url = markdownUrlFor(language);
+      content.innerHTML = `<p class="status">${esc(t.unavailable)}</p><p><a href="${url}">${esc(t.open)}</a></p><pre><code>${esc(markdown)}</code></pre>`;
+    }
+
+    async function renderArchitecture(language) {
+      const requestId = ++currentRequest;
+      const t = TEXT[language];
+      const markdownUrl = markdownUrlFor(language);
+      content.innerHTML = `<p class="status">${esc(t.loading)}</p>`;
       try {
-        const mdResponse = await fetch(ARCHITECTURE_MD_URL);
+        const mdResponse = await fetch(markdownUrl);
         if (!mdResponse.ok) throw new Error('markdown fetch failed');
         const markdown = await mdResponse.text();
 
@@ -82,19 +120,37 @@
           }),
         });
         if (!htmlResponse.ok) throw new Error('markdown render failed');
+        if (requestId !== currentRequest) return;
         content.innerHTML = await htmlResponse.text();
       } catch (error) {
         try {
-          const mdResponse = await fetch(ARCHITECTURE_MD_URL);
+          const mdResponse = await fetch(markdownUrl);
           if (!mdResponse.ok) throw new Error('markdown refetch failed');
-          fallback(await mdResponse.text());
+          if (requestId !== currentRequest) return;
+          fallback(await mdResponse.text(), language);
         } catch (finalError) {
-          fallback('');
+          if (requestId !== currentRequest) return;
+          fallback('', language);
         }
       }
     }
 
-    renderArchitecture();
+    (function init() {
+      const saved = localStorage.getItem('habeas-lang');
+      const initial = (saved === 'en' || saved === 'es')
+        ? saved
+        : ((navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en');
+      setLanguage(initial);
+      document.querySelectorAll('.langswitch button[data-lang]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const next = button.getAttribute('data-lang');
+          localStorage.setItem('habeas-lang', next);
+          setLanguage(next);
+          renderArchitecture(lang);
+        });
+      });
+      renderArchitecture(lang);
+    })();
   </script>
 </body>
 </html>
