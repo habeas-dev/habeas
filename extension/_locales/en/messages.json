@@ -83,6 +83,11 @@
   "status_none": { "message": "$NAME$: nothing new", "placeholders": { "name": { "content": "$1" } } },
   "status_nosession": { "message": "$NAME$: sign in to sync", "placeholders": { "name": { "content": "$1" } } },
   "status_error": { "message": "$NAME$ error: $MSG$", "placeholders": { "name": { "content": "$1" }, "msg": { "content": "$2" } } },
+  "group_pick_title": { "message": "Choose an account" },
+  "group_pick_sub": { "message": "This source has several accounts. Pick one, or all." },
+  "group_all": { "message": "All accounts" },
+  "group_continue": { "message": "Continue" },
+  "group_n": { "message": "Account $N$", "placeholders": { "n": { "content": "$1" } } },
   "notify_new": { "message": "$N$ new document(s) → $SINK$", "placeholders": { "n": { "content": "$1" }, "sink": { "content": "$2" } } },
   "notify_autoerr": { "message": "Auto-sync error: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
 

@@ -83,6 +83,11 @@
   "status_none": { "message": "$NAME$: nada nuevo", "placeholders": { "name": { "content": "$1" } } },
   "status_nosession": { "message": "$NAME$: inicia sesión para sincronizar", "placeholders": { "name": { "content": "$1" } } },
   "status_error": { "message": "$NAME$ error: $MSG$", "placeholders": { "name": { "content": "$1" }, "msg": { "content": "$2" } } },
+  "group_pick_title": { "message": "Elige una cuenta" },
+  "group_pick_sub": { "message": "Esta fuente tiene varias cuentas. Elige una, o todas." },
+  "group_all": { "message": "Todas las cuentas" },
+  "group_continue": { "message": "Continuar" },
+  "group_n": { "message": "Cuenta $N$", "placeholders": { "n": { "content": "$1" } } },
   "notify_new": { "message": "$N$ documento(s) nuevo(s) → $SINK$", "placeholders": { "n": { "content": "$1" }, "sink": { "content": "$2" } } },
   "notify_autoerr": { "message": "Error de auto-sync: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
 

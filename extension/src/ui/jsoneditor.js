@@ -3,6 +3,7 @@ import { t } from '../lib/i18n.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { listInventory, artifactKinds, fetchArtifact } from '../runtime/inventory.js';
 import { resolveSiteFetch } from '../lib/pagefetch.js';
+import { pickGroup } from './grouppicker.js';
 import { renderPage } from '../lib/render.js';
 
 const escf = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -95,7 +96,8 @@ export function editJson(adapter) {
         const host = ad.api.host.replace(/^https?:\/\//, '');
         const auth = (await getAuthFor(host)) || { byPath: {}, merged: {} };
         const net = await resolveSiteFetch(ad);
-        const docs = await listInventory(ad, auth, net);
+        const groupId = await pickGroup(ad, auth, net); // grouped source (bank accounts/cards) → let the user choose
+        const docs = await listInventory(ad, auth, net, { groupId });
         renderDocs(ad, auth, net, docs);
       } catch (e) { status.textContent = t('author_test_err', [(e && e.message) || String(e)]); }
     }

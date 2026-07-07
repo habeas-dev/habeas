@@ -69,7 +69,11 @@ async function fetchCsrf(adapter, auth, net) {
 export async function listGroups(adapter, auth, net) {
   const g = adapter.api.groups;
   if (!g) return [];
-  const items = await fetchGroupItems(adapter, auth, net);
+  // Self-contained: if the source needs a CSRF token and one isn't already on auth (a direct caller —
+  // the group picker or the external listGroups hook), run the prelude here. listInventory passes an
+  // auth that already has __csrf, so it isn't fetched twice.
+  const a = adapter.api.csrf && !(auth && auth.__csrf) ? { ...(auth || {}), __csrf: await fetchCsrf(adapter, auth, net) } : auth;
+  const items = await fetchGroupItems(adapter, a, net);
   const seen = new Set(), out = [];
   for (const item of (items || [])) {
     const grp = { _raw: item };
