@@ -82,7 +82,7 @@ async function loadLanding({ fetchImpl } = {}) {
     document,
     fetch: fetchImpl || (() => Promise.reject(new Error('unexpected fetch'))),
     globalThis: {},
-    console,
+    console: { debug() {} },
   };
   context.globalThis = context;
   vm.runInNewContext(`${script}\nglobalThis.__I18N = I18N;`, context);

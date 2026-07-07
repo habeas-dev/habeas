@@ -220,7 +220,7 @@ function flag(code) {
   return code.toUpperCase().replace(/./g, (char) => String.fromCodePoint(0x1F1E6 + char.charCodeAt(0) - 'A'.charCodeAt(0)));
 }
 
-function shuffle(sources) {
+function shuffleArray(sources) {
   const pool = sources.slice();
   for (let i = pool.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -230,7 +230,7 @@ function shuffle(sources) {
 }
 
 function pickRandomSources(sources, count) {
-  return shuffle(sources).slice(0, count);
+  return shuffleArray(sources).slice(0, count);
 }
 
 function previewCard(source) {
@@ -264,7 +264,9 @@ function initSourcePreview() {
     SOURCE_COUNT = sources.length;
     SOURCE_PREVIEW = pickRandomSources(sources, Math.min(SOURCE_PREVIEW_LIMIT, sources.length));
     renderSourcePreview();
-  }).catch(() => {});
+  }).catch((error) => {
+    console.debug('Source catalog unavailable:', error);
+  });
 }
 
 function apply(lang) {

@@ -71,7 +71,17 @@ section .lead { color: var(--muted); font-size: 17px; max-width: 640px; margin-b
 .card h3 { font-size: 18px; margin-bottom: 8px; }
 .card p { color: var(--muted); margin: 0; font-size: 15px; }
 .card .ic { font-size: 22px; margin-bottom: 10px; }
-.section-badge { display: inline-flex; margin: 0 0 14px; padding: 6px 12px; border: 1px solid color-mix(in srgb, var(--green-500) 28%, var(--line)); border-radius: 999px; color: var(--green-700); background: color-mix(in srgb, var(--green-500) 10%, var(--surface)); font-size: 13px; font-weight: 600; }
+.section-badge {
+  display: inline-flex;
+  margin: 0 0 14px;
+  padding: 6px 12px;
+  border: 1px solid color-mix(in srgb, var(--green-500) 28%, var(--line));
+  border-radius: 999px;
+  color: var(--green-700);
+  background: color-mix(in srgb, var(--green-500) 10%, var(--surface));
+  font-size: 13px;
+  font-weight: 600;
+}
 .srcgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
 .src { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 8px; }
 .src .top { display: flex; align-items: flex-start; gap: 8px; }
