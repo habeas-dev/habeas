@@ -63,6 +63,7 @@ header nav a { color: var(--ink); }
 .hero .cta .btn.ghost:hover { background: rgba(255,255,255,.08); color: #fff; }
 .feature-strip { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 34px 0 0; padding: 0; list-style: none; }
 .feature-pill { border: 1px solid rgba(255,255,255,.2); border-radius: 999px; padding: 8px 12px; font-size: 13px; color: #fff; background: rgba(255,255,255,.08); }
+.feature-pill:empty { display: none; }
 
 /* Sections */
 section { padding: 64px 0; }
