@@ -75,7 +75,16 @@ section .lead { color: var(--muted); font-size: 17px; max-width: 640px; margin-b
 .flow-card, .compare-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 24px; margin-top: 24px; }
 .flow-card h3 { font-size: 20px; margin-bottom: 18px; }
 .flow { display: grid; gap: 12px; justify-items: center; }
-.flow-step { width: min(100%, 280px); padding: 14px 18px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); background: color-mix(in srgb, var(--bg) 55%, var(--surface)); font-weight: 600; text-align: center; }
+.flow-step {
+  width: min(100%, 280px);
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  background: color-mix(in srgb, var(--bg) 55%, var(--surface));
+  font-weight: 600;
+  text-align: center;
+}
 .flow-arrow { color: var(--muted); font-size: 18px; line-height: 1; }
 .flow-note { color: var(--muted); margin: 18px 0 0; font-size: 15px; }
 .compare-table { width: 100%; border-collapse: collapse; font-size: 15px; }
