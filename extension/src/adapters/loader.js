@@ -10,6 +10,12 @@ import carrefour from './carrefour-es.js';
 // here; everything else is user/community DATA loaded from storage at runtime.
 export const BUILTIN = [carrefour];
 
+// A source is "built-in" (shipped, non-editable) only if it's bundled here. Everything the user
+// imports/records lives in storage.local and is always editable/removable — regardless of its
+// declared `trust` (which is just an audited-vs-community LABEL, not an ownership/lock signal).
+const BUILTIN_IDS = new Set(BUILTIN.map((a) => a.id));
+export const isBuiltinSource = (id) => BUILTIN_IDS.has(id);
+
 const STORE_KEY = 'habeas:sources';
 
 export async function getStoredSources() {
