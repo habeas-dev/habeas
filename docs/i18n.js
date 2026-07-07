@@ -186,6 +186,7 @@ const I18N = {
 
 const SOURCES_INDEX = 'https://habeas-dev.github.io/sources/index.json';
 const SOURCE_PREVIEW_LIMIT = 8;
+const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 let LANG = 'en';
 let SOURCE_PREVIEW = [];
 let SOURCE_COUNT = 0;
@@ -210,7 +211,7 @@ function safeUpdateMetaTag(selector, attr, value) {
 }
 
 function esc(value) {
-  return String(value == null ? '' : value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+  return String(value == null ? '' : value).replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
 }
 
 function flag(code) {
@@ -252,21 +253,21 @@ function renderSourcePreview() {
   section.hidden = false;
 }
 
-function initSourcePreview() {
+async function initSourcePreview() {
   const section = document.getElementById('sources-preview');
   if (!section) return;
-  fetch(SOURCES_INDEX).then((response) => {
+  try {
+    const response = await fetch(SOURCES_INDEX);
     if (!response.ok) throw new Error('catalog fetch failed');
-    return response.json();
-  }).then((data) => {
+    const data = await response.json();
     const sources = Array.isArray(data?.sources) ? data.sources.filter(isValidSource) : [];
     if (!sources.length) return;
     SOURCE_COUNT = sources.length;
     SOURCE_PREVIEW = pickRandomSources(sources, Math.min(SOURCE_PREVIEW_LIMIT, sources.length));
     renderSourcePreview();
-  }).catch((error) => {
+  } catch (error) {
     console.debug('Source catalog unavailable:', error);
-  });
+  }
 }
 
 function apply(lang) {
