@@ -141,7 +141,7 @@ async function onSend() {
   $('#status').textContent = t('fetching', [String(eligible.length)]);
   await badgeWorking();
   const net = await resolveSiteFetch(adapter);
-  const kinds = artifactKinds(adapter).filter((k) => sinkAcceptsArtifact(sink, k.kind));
+  const kinds = artifactKinds(adapter).filter((k) => sinkAcceptsArtifact(sink, k));
   const files = new Map();
   const noPdf = [];
   for (const d of eligible) {

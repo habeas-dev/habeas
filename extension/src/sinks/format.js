@@ -54,9 +54,19 @@ export function sinkAcceptsSource(sink, adapter) {
 }
 // Artifact filter: which artifact kinds ('data' | 'document') this sink takes. No `accepts.artifacts`
 // → all (generic file sinks store both the JSON and the presentable HTML/PDF).
-export function sinkAcceptsArtifact(sink, kind) {
-  const a = sink && sink.accepts && sink.accepts.artifacts;
-  return !a || !a.length || a.includes(kind);
+export function sinkAcceptsArtifact(sink, artifact) {
+  // Accepts the full artifact {kind, ext} (preferred) or a bare kind string (back-compat).
+  const kind = artifact && typeof artifact === 'object' ? artifact.kind : artifact;
+  const ext = artifact && typeof artifact === 'object' ? artifact.ext : undefined;
+  const acc = (sink && sink.accepts) || {};
+  if (acc.artifacts && acc.artifacts.length && !acc.artifacts.includes(kind)) return false;
+  // accepts.formats: file formats the sink takes (e.g. ['pdf'] or ['xls','csv']). Absent → any.
+  if (acc.formats && acc.formats.length && ext != null && !acc.formats.includes(ext)) return false;
+  return true;
+}
+// The distinct file formats a source produces (json | pdf | xls | html | …), from its artifact kinds.
+export function sourceFormats(artifactKinds) {
+  return [...new Set((artifactKinds || []).map((k) => k.ext).filter(Boolean))];
 }
 // Document-level filter: only send docs whose category the sink accepts.
 export function acceptsDoc(sink, doc) {
