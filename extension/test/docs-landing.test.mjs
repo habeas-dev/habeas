@@ -43,13 +43,13 @@ test('landing page keeps the new information hierarchy', async () => {
   const { html } = await loadLanding();
   const positions = sectionMarkers.map((marker) => html.indexOf(marker));
 
+  let previousPosition = -1;
   sectionMarkers.forEach((marker, index) => {
     const position = positions[index];
     assert.notEqual(position, -1, `missing section marker '${marker}'`);
+    assert.ok(previousPosition < position, `section marker '${marker}' should come after the previous section`);
+    previousPosition = position;
   });
-  for (let i = 1; i < positions.length; i += 1) {
-    assert.ok(positions[i - 1] < positions[i], 'sections should appear in the expected order');
-  }
 
   assert.match(html, /data-i18n="hero_note"/);
   assert.match(html, /class="feature-strip"/);
