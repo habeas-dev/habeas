@@ -19,6 +19,11 @@ test('first-party same-domain source needs no consent', async () => {
   assert.equal(await hasConsent(carrefour), true);
 });
 
+test('a user-imported source claiming first-party still needs consent (only built-ins are trusted)', () => {
+  const fake = { ...carrefour, id: 'not-a-builtin', trust: 'first-party' }; // not shipped → self-declared trust ignored
+  assert.equal(needsConsent(fake), true);
+});
+
 test('community source requires consent, granted then persists', async () => {
   assert.equal(needsConsent(mart), true);
   assert.equal(await hasConsent(bank), false);

@@ -6,7 +6,7 @@ import { putHandle } from '../lib/fs.js';
 import { sinkAcceptsSource } from '../sinks/format.js';
 import { watchThemeIcon } from '../lib/theme-icon.js';
 import { applyI18n, t } from '../lib/i18n.js';
-import { getAdapters, removeSource } from '../adapters/index.js';
+import { getAdapters, removeSource, isBuiltinSource } from '../adapters/index.js';
 import { needsConsent, hasConsent, grantConsent, consentDescriptor } from '../lib/consent.js';
 import { exportSource, buildShareUrl, importFromFile } from '../registry/share.js';
 import { saveSource } from '../adapters/index.js';
@@ -58,9 +58,12 @@ async function render() {
 
   $('#ds').innerHTML = Object.values(CATALOG).map((a) => {
     const on = cfg.datasources.some((d) => d.id === a.id && d.enabled);
-    const community = a.trust !== 'first-party';
-    const trust = community ? t('trust_community') : t('trust_first_party');
-    const extra = community
+    // Only BUILT-IN sources can carry the audited "first-party" label; a user-imported source is always
+    // shown as community and is fully editable/removable (a self-declared trust in its JSON is ignored).
+    const builtin = isBuiltinSource(a.id);
+    const trust = builtin && a.trust === 'first-party' ? t('trust_first_party') : t('trust_community');
+    const editable = !builtin;
+    const extra = editable
       ? `<button data-edit="${esc(a.id)}">${t('edit_json')}</button><button data-exp="${a.id}">${t('export_source')}</button><button data-share="${a.id}">${t('share_source')}</button><button data-delsrc="${a.id}">${t('remove')}</button>`
       : '';
     return `<div class="card row"><b style="flex:1">${esc(a.name)}</b><span class="pill type">${trust}</span><code>${esc(a.id)}</code>

@@ -5,10 +5,15 @@
 // must be re-granted. This is the human gate that backs the code-enforced same-domain guard.
 import { chrome } from './ext.js';
 import { checkHosts } from '../adapters/validate.js';
+import { isBuiltinSource } from '../adapters/loader.js';
 
 const KEY = 'habeas:consent';
 
 const stripHost = (m) => String(m).replace(/^[a-z]+:\/\//i, '').replace(/\/.*$/, '');
+// Only a BUILT-IN source can be trusted as first-party (project-audited). A user-imported source is
+// always community for consent purposes — its self-declared `trust` in the JSON is ignored, so it can
+// never skip the consent gate by claiming first-party.
+const effectiveTrust = (adapter) => (isBuiltinSource(adapter.id) ? (adapter.trust || 'community') : 'community');
 
 // What the consent screen shows, plus the signature we store on acceptance.
 export function consentDescriptor(adapter) {
@@ -16,7 +21,7 @@ export function consentDescriptor(adapter) {
   return {
     id: adapter.id,
     name: adapter.name || adapter.id,
-    trust: adapter.trust || 'community',
+    trust: effectiveTrust(adapter),
     categories: adapter.categories || [],
     matchHosts: (adapter.match || []).map(stripHost),
     apiHost: adapter.api && adapter.api.host ? stripHost(adapter.api.host) : '',
@@ -29,7 +34,7 @@ export function consentDescriptor(adapter) {
 
 // First-party sources whose hosts all share one registrable domain are trusted implicitly.
 export function needsConsent(adapter) {
-  return (adapter.trust || 'community') === 'community' || (adapter.crossDomainHosts || []).length > 0;
+  return effectiveTrust(adapter) === 'community' || (adapter.crossDomainHosts || []).length > 0;
 }
 
 export async function hasConsent(adapter) {
