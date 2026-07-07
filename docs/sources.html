@@ -20,6 +20,7 @@
     .src .meta { color: var(--muted, #888); font-size: .88rem; }
     .src .cats { display: flex; flex-wrap: wrap; gap: 6px; }
     .src .cat { font-size: .74rem; padding: 2px 8px; border-radius: 6px; background: rgba(127,127,127,.12); }
+    .src .cat.fmt { background: rgba(15,118,110,.14); color: #14a89a; text-transform: uppercase; font-size: .66rem; letter-spacing: .3px; }
     .src .foot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 8px; }
     .src .rate { font-size: .86rem; color: var(--muted, #888); }
     .src a.view { font-size: .82rem; }
@@ -51,6 +52,7 @@
     <p class="sub" data-t="intro"></p>
     <div class="filters" style="margin:0 0 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <label><span data-t="country"></span> <select id="country"></select></label>
+      <label><span data-t="format"></span> <select id="format"></select></label>
     </div>
     <div id="list" class="srcgrid" aria-live="polite"></div>
     <p id="msg" class="note"></p>
@@ -68,7 +70,7 @@
         empty: 'No sources published yet.',
         fp: 'first-party', community: 'community',
         norate: 'no ratings yet', view: 'View JSON',
-        country: 'Country:', all: 'All', global: 'Global',
+        country: 'Country:', all: 'All', global: 'Global', format: 'Format:',
         count: (n) => `${n} source${n === 1 ? '' : 's'}`,
       },
       es: {
@@ -80,26 +82,27 @@
         empty: 'Aún no hay fuentes publicadas.',
         fp: 'first-party', community: 'comunidad',
         norate: 'sin valoraciones', view: 'Ver JSON',
-        country: 'País:', all: 'Todos', global: 'Global',
+        country: 'País:', all: 'Todos', global: 'Global', format: 'Formato:',
         count: (n) => `${n} ${n === 1 ? 'fuente' : 'fuentes'}`,
       },
     };
     const INDEX = 'https://habeas-dev.github.io/sources/index.json';
     const API = 'https://api.habeas.dev';
     const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-    let LANG = 'en', SOURCES = null, RATINGS = {}, FILTER = '';
+    let LANG = 'en', SOURCES = null, RATINGS = {}, FILTER = '', FMT = '';
     const flag = (code) => !code ? '' : code === 'global' ? '🌐' : (/^[A-Za-z]{2}$/.test(code) ? code.toUpperCase().replace(/./g, (c) => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)) : '');
 
     function card(s) {
       const t = STR[LANG];
       const fp = s.trust === 'first-party';
       const cats = (s.categories || []).map((c) => `<span class="cat">${esc(c)}</span>`).join('');
+      const fmts = (s.formats || []).map((f) => `<span class="cat fmt">${esc(f)}</span>`).join('');
       const r = RATINGS[s.id];
       const rate = r && r.count ? `★ ${(+r.avg).toFixed(1)} · ${r.count}` : t.norate;
       return `<div class="src">
         <div class="top"><span class="name">${esc(s.name)}</span><span class="pill ${fp ? 'fp' : ''}">${fp ? t.fp : t.community}</span></div>
         <div class="meta">${s.country ? flag(s.country) + ' ' : ''}${esc(s.service)} · ${esc(s.domain)}</div>
-        <div class="cats">${cats}</div>
+        <div class="cats">${cats}${fmts}</div>
         <div class="foot"><span class="rate">${rate}</span><a class="view" href="${esc(s.url)}" rel="noopener">${t.view} →</a></div>
       </div>`;
     }
@@ -112,11 +115,14 @@
       if (SOURCES === null) { list.innerHTML = ''; msg.textContent = t.loading; return; }
       if (SOURCES === false) { list.innerHTML = ''; msg.textContent = t.failed; return; }
       if (!SOURCES.length) { list.innerHTML = ''; msg.textContent = t.empty; return; }
-      // Country filter dropdown (built from the catalog; preserves the current selection).
+      // Filter dropdowns (built from the catalog; preserve the current selection).
       const sel = document.getElementById('country');
       const countries = [...new Set(SOURCES.map((s) => s.country).filter(Boolean))].sort();
       sel.innerHTML = `<option value="">${t.all}</option>` + countries.map((c) => `<option value="${esc(c)}"${c === FILTER ? ' selected' : ''}>${flag(c)} ${c === 'global' ? t.global : esc(c)}</option>`).join('');
-      const shown = FILTER ? SOURCES.filter((s) => s.country === FILTER) : SOURCES;
+      const fsel = document.getElementById('format');
+      const formats = [...new Set(SOURCES.flatMap((s) => s.formats || []))].sort();
+      fsel.innerHTML = `<option value="">${t.all}</option>` + formats.map((f) => `<option value="${esc(f)}"${f === FMT ? ' selected' : ''}>${esc(f.toUpperCase())}</option>`).join('');
+      const shown = SOURCES.filter((s) => (!FILTER || s.country === FILTER) && (!FMT || (s.formats || []).includes(FMT)));
       list.innerHTML = shown.map(card).join('');
       msg.textContent = t.count(shown.length);
     }
@@ -124,6 +130,7 @@
     function setLang(l) { LANG = l; document.documentElement.lang = l; try { localStorage.setItem('habeas-lang', l); } catch (e) {} render(); }
     document.querySelectorAll('.langswitch button[data-lang]').forEach((b) => b.addEventListener('click', () => setLang(b.getAttribute('data-lang'))));
     document.getElementById('country').addEventListener('change', (e) => { FILTER = e.target.value; render(); });
+    document.getElementById('format').addEventListener('change', (e) => { FMT = e.target.value; render(); });
     (function () { let l; try { l = localStorage.getItem('habeas-lang'); } catch (e) {} if (l !== 'en' && l !== 'es') l = (navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en'; LANG = l; document.documentElement.lang = l; })();
     render();
 

@@ -11,6 +11,16 @@ const dir = join(root, 'sources');
 const BASE = process.env.SOURCES_BASE || 'https://habeas-dev.github.io/sources';
 const now = new Date().toISOString();
 
+// The file formats a source produces (json | pdf | xls | html …), mirroring the runtime's artifactKinds.
+function formatsOf(a) {
+  const api = a.api || {}, out = new Set();
+  if (api.detail && !api.detail.as) out.add('json');
+  const dc = api.document || (api.detail && api.detail.as ? api.detail : null);
+  if (dc) out.add(dc.as === 'render' || dc.as === 'html' || dc.as === 'invoice' ? 'html' : 'pdf');
+  else if (api.pdf) out.add(api.pdf.ext || 'pdf');
+  return [...out];
+}
+
 const entries = readdirSync(dir)
   .filter((f) => f.endsWith('.json') && f !== 'index.json')
   .map((f) => {
@@ -18,7 +28,7 @@ const entries = readdirSync(dir)
     return {
       id: a.id, name: a.name, service: a.service,
       categories: a.categories || [], trust: a.trust || 'community',
-      domain: a.domain, country: a.country || null, crossDomain: a.crossDomainHosts || [],
+      domain: a.domain, country: a.country || null, formats: formatsOf(a), crossDomain: a.crossDomainHosts || [],
       version: (a.version || now.slice(0, 10)),
       url: `${BASE}/${f}`, updated: now,
     };

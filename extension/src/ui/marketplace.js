@@ -33,7 +33,7 @@ async function load() {
 
 function matches(e, q) {
   if (!q) return true;
-  const hay = [e.id, e.name, e.service, e.domain, e.country, (e.categories || []).join(' ')].join(' ').toLowerCase();
+  const hay = [e.id, e.name, e.service, e.domain, e.country, (e.categories || []).join(' '), (e.formats || []).join(' ')].join(' ').toLowerCase();
   return hay.includes(q.toLowerCase());
 }
 const flag = (code) => !code ? '' : code === 'global' ? '🌐' : (/^[A-Za-z]{2}$/.test(code) ? code.toUpperCase().replace(/./g, (c) => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)) : '');
@@ -50,7 +50,7 @@ function render() {
       <div class="row">
         <div style="flex:1">
           <b>${esc(e.name || e.id)}</b> <code>${esc(e.id)}</code><br>
-          <span class="muted">${e.country ? flag(e.country) + ' ' : ''}${esc((e.categories || []).join(', '))} · ${esc(e.domain || '')}</span>
+          <span class="muted">${e.country ? flag(e.country) + ' ' : ''}${esc((e.categories || []).join(', '))} · ${esc(e.domain || '')}${(e.formats || []).length ? ' · ' + esc((e.formats || []).join('/').toUpperCase()) : ''}</span>
           <span class="pill type">${trust}</span> ${offsite}
           <span class="rating muted" data-rate="${esc(e.id)}"></span>
         </div>

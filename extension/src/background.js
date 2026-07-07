@@ -152,7 +152,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     const eligible = fresh.filter((d) => acceptsDoc(sink, d));
     if (!eligible.length) { await appendLog({ ...base, status: 'none', new: 0 }); await badgeClear(); setStatus(t('status_none', [name])); return { status: 'done', new: 0 }; }
     setStatus(t('status_fetching', [String(eligible.length), name]));
-    const kinds = artifactKinds(adapter).filter((k) => sinkAcceptsArtifact(sink, k.kind));
+    const kinds = artifactKinds(adapter).filter((k) => sinkAcceptsArtifact(sink, k));
     const files = new Map();
     for (const d of eligible) {
       const arts = [];
