@@ -176,6 +176,16 @@ function fillTmpl(str, group, auth, params) {
   for (const k of Object.keys(params || {})) s = s.split('{' + k + '}').join(params[k] == null ? '' : String(params[k]));
   return s;
 }
+// Unified document-URL/body templater for a doc: {internalId} + {csrf} + {group.*} (doc._group, e.g. the
+// card) + {field.path} (doc._raw, e.g. the statement's statementDate). Values are URL-encoded.
+function fillDocTmpl(str, doc, id, csrf) {
+  return String(str).replace(/\{([^}]+)\}/g, (m, k) => {
+    if (k === 'internalId') return tid(id);
+    if (k === 'csrf') return csrf == null ? '' : String(csrf);
+    const v = k.indexOf('group.') === 0 ? (doc && doc._group ? get(doc._group, k.slice(6)) : undefined) : (doc && doc._raw ? get(doc._raw, k) : undefined);
+    return v == null ? m : tid(v);
+  });
+}
 // Resolve a field mapping: a plain dotted path into the item, OR a template referencing {group.*}
 // (and/or item fields) — e.g. account: "{group.iban}", internalId: "{group.id}-{transactionId}". A lone
 // {x} preserves the raw value's type; a template with surrounding text interpolates to a string.
@@ -256,8 +266,8 @@ const documentCfg = (api) => api.document || (api.detail && api.detail.as ? api.
 function tmplResolvable(str, doc) {
   for (const m of String(str || '').matchAll(/\{([^}]+)\}/g)) {
     const k = m[1];
-    if (k === 'internalId') continue;
-    const v = doc && doc._raw ? get(doc._raw, k) : undefined;
+    if (k === 'internalId' || k === 'csrf') continue; // always available at fetch time
+    const v = k.indexOf('group.') === 0 ? (doc && doc._group ? get(doc._group, k.slice(6)) : undefined) : (doc && doc._raw ? get(doc._raw, k) : undefined);
     if (v == null || v === '') return false;
   }
   return true;
@@ -269,7 +279,7 @@ export function artifactKinds(adapter, doc) {
   if (api.detail && !api.detail.as) out.push({ kind: 'data', ext: 'json' });
   const dc = documentCfg(api);
   if (dc) { if (!doc || tmplResolvable(dc.path, doc)) out.push({ kind: 'document', ext: docExtOf(dc) }); }
-  else if (api.pdf) { if (!doc || tmplResolvable(api.pdf.path, doc)) out.push({ kind: 'document', ext: 'pdf' }); }
+  else if (api.pdf) { if (!doc || tmplResolvable(api.pdf.path, doc)) out.push({ kind: 'document', ext: api.pdf.ext || 'pdf' }); }
   return out;
 }
 // Fetch one artifact. Reuses fetchDocument by PROJECTING the adapter so the requested artifact sits
@@ -313,7 +323,7 @@ export async function fetchDocument(adapter, auth, docOrId, net, render) {
     return { blob: new Blob([renderInvoiceHtml(doc || { internalId }, data, adapter)], { type: 'text/html' }), ext: 'html', via: 'invoice' };
   }
   const ext = documentExt(adapter);
-  if (ext === 'pdf') return { blob: await fetchPdf(adapter, auth, doc || internalId, net), ext, via: 'pdf' };
+  if (ext === 'pdf') return { blob: await fetchPdf(adapter, auth, doc || internalId, net), ext: adapter.api.pdf.ext || 'pdf', via: 'pdf' };
   if (ext === 'json') return { ...(await fetchDetail(adapter, auth, doc || internalId, net)), ext };
   throw new Error('no document for this source');
 }
@@ -325,7 +335,8 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
   const pdf = adapter.api.pdf;
   if (!pdf) throw new Error('no PDF for this source');
   const host = pdf.host ? absHost(pdf.host) : adapter.api.host;
-  const path = applyTmpl(pdf.path, doc, internalId); // {internalId} + {field.path} (Dia: {ticket_unique_code}/{invoices.0})
+  const csrf = auth && auth.__csrf;
+  const path = fillDocTmpl(pdf.path, doc, internalId, csrf); // {internalId} + {field.path} + {group.*} + {csrf}
   // A leftover {field} means this doc can't fill the template (e.g. a ticket with no invoice) — no
   // document for it. Bail cleanly (callers treat it as "artifact unavailable") instead of a bad request.
   if (/\{[^}]+\}/.test(path)) throw new Error('no document for this item');
@@ -334,10 +345,10 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
   // bare application/pdf Accept but serve the real PDF for the browser-default */*.
   const init = { method: pdf.method || 'GET', headers: { accept: '*/*', ...(pdf.headers || {}), ...headersFor(auth, path.split('?')[0]) }, credentials: 'include', wantBlob: true };
   if (init.method !== 'GET' && pdf.body != null) {
-    init.body = applyTmpl(pdf.body, doc, internalId);
+    init.body = fillDocTmpl(pdf.body, doc, internalId, csrf);
     init.headers['content-type'] = pdf.contentType || 'application/json';
   }
-  const referer = pdf.referer ? applyTmpl(pdf.referer, doc, internalId) : null;
+  const referer = pdf.referer ? fillDocTmpl(pdf.referer, doc, internalId, csrf) : null;
   const res = await withReferer(url, referer, () => NET(url, init));
   if (!res.ok) {
     const hint = res.status === 406 ? ' (sin PDF disponible — típico en tickets antiguos)' : '';
