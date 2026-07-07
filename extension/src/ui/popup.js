@@ -2,6 +2,7 @@ import { chrome } from '../lib/ext.js';
 import { getConfig } from '../lib/config.js';
 import { listInventory, artifactKinds, fetchArtifact, documentExt } from '../runtime/inventory.js';
 import { resolveSiteFetch } from '../lib/pagefetch.js';
+import { pickGroup } from './grouppicker.js';
 import { renderPage } from '../lib/render.js';
 import { writeToSink } from '../sinks/sinks.js';
 import { sinkAcceptsSource, acceptsDoc, sinkAcceptsArtifact } from '../sinks/format.js';
@@ -81,7 +82,8 @@ async function onList() {
   $('#status').textContent = t('listing');
   try {
     const net = await resolveSiteFetch(adapter);
-    inventory = await listInventory(adapter, auth, net);
+    const groupId = await pickGroup(adapter, auth, net); // grouped source → pick which account/card first
+    inventory = await listInventory(adapter, auth, net, { groupId });
     await render();
     $('#status').textContent = t('n_documents', [String(inventory.length)]);
     log(t('n_documents', [String(inventory.length)]));
