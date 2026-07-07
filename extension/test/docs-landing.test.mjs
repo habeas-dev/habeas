@@ -164,7 +164,7 @@ test('landing page i18n keys exist in both languages', async () => {
 });
 
 test('architecture page is public and renders the canonical ARCHITECTURE.md source', async () => {
-  const [html, indexHtml, privacyHtml, sourcesHtml, termsHtml, whyHtml] = await Promise.all([
+  const [architectureHtml, indexHtml, privacyHtml, sourcesHtml, termsHtml, whyHtml] = await Promise.all([
     fs.readFile(path.join(docsDir, 'architecture.html'), 'utf8'),
     fs.readFile(path.join(docsDir, 'index.html'), 'utf8'),
     fs.readFile(path.join(docsDir, 'privacy.html'), 'utf8'),
@@ -173,17 +173,17 @@ test('architecture page is public and renders the canonical ARCHITECTURE.md sour
     fs.readFile(path.join(docsDir, 'why-habeas.html'), 'utf8'),
   ]);
 
-  assert.match(html, /<title>Habeas Architecture<\/title>/);
-  assert.match(html, /<meta name="description" content="Technical architecture and design principles behind Habeas\." \/>/);
-  assert.match(html, /<meta property="og:title" content="Habeas Architecture" \/>/);
-  assert.match(html, /<meta property="og:description" content="Technical architecture and design principles behind Habeas\." \/>/);
-  assert.match(html, /<link rel="canonical" href="https:\/\/habeas\.dev\/architecture\.html" \/>/);
-  assert.match(html, /const ARCHITECTURE_MD_URL = 'https:\/\/raw\.githubusercontent\.com\/habeas-dev\/habeas\/main\/ARCHITECTURE\.md';/);
-  assert.match(html, /const MARKDOWN_RENDER_URL = 'https:\/\/api\.github\.com\/markdown';/);
-  assert.match(html, /mode:\s*'gfm'/);
-  assert.match(html, /context:\s*'habeas-dev\/habeas'/);
-  assert.match(html, /id="architecture-content"/);
-  assert.match(html, /Loading ARCHITECTURE\.md…/);
+  assert.match(architectureHtml, /<title>Habeas Architecture<\/title>/);
+  assert.match(architectureHtml, /<meta name="description" content="Technical architecture and design principles behind Habeas\." \/>/);
+  assert.match(architectureHtml, /<meta property="og:title" content="Habeas Architecture" \/>/);
+  assert.match(architectureHtml, /<meta property="og:description" content="Technical architecture and design principles behind Habeas\." \/>/);
+  assert.match(architectureHtml, /<link rel="canonical" href="https:\/\/habeas\.dev\/architecture\.html" \/>/);
+  assert.match(architectureHtml, /const ARCHITECTURE_MD_URL = 'https:\/\/raw\.githubusercontent\.com\/habeas-dev\/habeas\/main\/ARCHITECTURE\.md';/);
+  assert.match(architectureHtml, /const MARKDOWN_RENDER_URL = 'https:\/\/api\.github\.com\/markdown';/);
+  assert.match(architectureHtml, /mode:\s*'gfm'/);
+  assert.match(architectureHtml, /context:\s*'habeas-dev\/habeas'/);
+  assert.match(architectureHtml, /id="architecture-content"/);
+  assert.match(architectureHtml, /Loading ARCHITECTURE\.md…/);
 
   for (const page of [indexHtml, privacyHtml, sourcesHtml, termsHtml, whyHtml]) {
     assert.match(page, /href="\/architecture\.html"/);
