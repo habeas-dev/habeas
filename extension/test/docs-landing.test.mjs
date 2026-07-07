@@ -140,7 +140,7 @@ test('landing page keeps the new information hierarchy', async () => {
   assert.match(html, /class="compare-table"/);
   assert.match(html, /<a href="\/sources\.html" data-i18n="sources_cta"><\/a>/);
   assert.match(html, /<a href="\/why-habeas\.html" data-i18n="nav_why">Why Habeas\?<\/a>/);
-  assert.match(html, /<a href="\/architecture" data-i18n="nav_architecture">Architecture<\/a>/);
+  assert.match(html, /<a href="\/architecture\.html" data-i18n="nav_architecture">Architecture<\/a>/);
 });
 
 test('landing page i18n keys exist in both languages', async () => {
@@ -165,7 +165,7 @@ test('landing page i18n keys exist in both languages', async () => {
 
 test('architecture page is public and renders the canonical ARCHITECTURE.md source', async () => {
   const [html, indexHtml, privacyHtml, sourcesHtml, termsHtml, whyHtml] = await Promise.all([
-    fs.readFile(path.join(docsDir, 'architecture/index.html'), 'utf8'),
+    fs.readFile(path.join(docsDir, 'architecture.html'), 'utf8'),
     fs.readFile(path.join(docsDir, 'index.html'), 'utf8'),
     fs.readFile(path.join(docsDir, 'privacy.html'), 'utf8'),
     fs.readFile(path.join(docsDir, 'sources.html'), 'utf8'),
@@ -177,7 +177,7 @@ test('architecture page is public and renders the canonical ARCHITECTURE.md sour
   assert.match(html, /<meta name="description" content="Technical architecture and design principles behind Habeas\." \/>/);
   assert.match(html, /<meta property="og:title" content="Habeas Architecture" \/>/);
   assert.match(html, /<meta property="og:description" content="Technical architecture and design principles behind Habeas\." \/>/);
-  assert.match(html, /<link rel="canonical" href="https:\/\/habeas\.dev\/architecture" \/>/);
+  assert.match(html, /<link rel="canonical" href="https:\/\/habeas\.dev\/architecture\.html" \/>/);
   assert.match(html, /const ARCHITECTURE_MD_URL = 'https:\/\/raw\.githubusercontent\.com\/habeas-dev\/habeas\/main\/ARCHITECTURE\.md';/);
   assert.match(html, /const MARKDOWN_RENDER_URL = 'https:\/\/api\.github\.com\/markdown';/);
   assert.match(html, /mode:\s*'gfm'/);
@@ -186,7 +186,7 @@ test('architecture page is public and renders the canonical ARCHITECTURE.md sour
   assert.match(html, /Loading ARCHITECTURE\.md…/);
 
   for (const page of [indexHtml, privacyHtml, sourcesHtml, termsHtml, whyHtml]) {
-    assert.match(page, /href="\/architecture"/);
+    assert.match(page, /href="\/architecture\.html"/);
   }
 });
 
@@ -194,7 +194,7 @@ test('sitemap includes all public website pages', async () => {
   const sitemap = await fs.readFile(path.join(docsDir, 'sitemap.xml'), 'utf8');
   const expectedUrls = [
     'https://habeas.dev/',
-    'https://habeas.dev/architecture',
+    'https://habeas.dev/architecture.html',
     'https://habeas.dev/privacy.html',
     'https://habeas.dev/sources.html',
     'https://habeas.dev/terms.html',
@@ -203,7 +203,7 @@ test('sitemap includes all public website pages', async () => {
 
   assert.match(sitemap, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
   for (const url of expectedUrls) {
-    assert.match(sitemap, new RegExp(`<loc>${url.replace(/\./g, '\\.')}</loc>`));
+    assert.ok(sitemap.includes(`<loc>${url}</loc>`), `missing url ${url}`);
   }
   assert.equal((sitemap.match(/<loc>/g) || []).length, expectedUrls.length);
 });
