@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Why Habeas? — user control, privacy, and data sovereignty</title>
+  <meta name="description" content="Why Habeas exists: to help people keep their own receipts, invoices, statements, and reports without handing control or credentials to another intermediary." />
+  <link rel="canonical" href="https://habeas.dev/why-habeas.html" />
+  <link rel="icon" type="image/svg+xml" href="logo.svg" />
+  <link rel="stylesheet" href="style.css" />
+  <meta property="og:title" content="Why Habeas? — user control, privacy, and data sovereignty" />
+  <meta property="og:description" content="Habeas helps people keep and move their own data from services that make export difficult, while preserving privacy and minimizing trust in third parties." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://habeas.dev/why-habeas.html" />
+  <style>
+    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
+    .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
+    .doc p, .doc li { line-height: 1.65; }
+    .doc ul { padding-left: 1.2em; }
+    .doc .lead { color: var(--muted, #888); margin: 0 0 24px; max-width: 720px; }
+    .doc .box { border: 1px solid var(--line, #3333); border-radius: 10px; padding: 14px 16px; margin: 18px 0; }
+    .doc .principles { margin-top: 24px; }
+    .doc .principles .card p { margin-top: 8px; }
+    .doc .principles .card h3 { margin: 0; }
+    .doc a { color: inherit; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="logo-light.svg" />
+        <img class="logo" src="logo.svg" alt="Habeas" />
+      </picture>
+      <span class="name">Habeas</span>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/sources.html">Sources</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <span class="langswitch" role="group" aria-label="Language">
+          <button data-lang="en" aria-pressed="true">EN</button>
+          <button data-lang="es" aria-pressed="false">ES</button>
+        </span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="doc">
+    <div data-lang-content="en">
+      <h1>Why Habeas?</h1>
+      <p class="lead">Habeas exists for a simple reason: people should be able to keep and move their own data without surrendering more control in the process.</p>
+
+      <p>Receipts, invoices, statements, investment reports, and similar records are often visible on the websites that created them. But visibility is not the same as control. Many services offer no useful export, keep only partial history, or force people to download documents one by one.</p>
+
+      <div class="box"><strong>The practical gap:</strong> your data may legally be yours, but in practice it can still be difficult to preserve, reuse, or move to another tool.</div>
+
+      <h2>What problem does Habeas solve?</h2>
+      <p>Habeas helps you recover access to your own records when a service already lets you see them, but makes them hard to keep. It gives you a way to collect those documents from inside your normal browser session and save them where <em>you</em> choose.</p>
+
+      <h2>Why isn't data portability already enough?</h2>
+      <p>In theory, people are supposed to have access to their own information. In everyday life, that promise often stops at a website dashboard. The service may not provide an API, may not support bulk export, or may make automation fail behind anti-bot systems.</p>
+      <p>Just as importantly, many existing workarounds ask users to trust yet another intermediary with their credentials and their history. That solves one barrier by creating another.</p>
+
+      <h2>Why should users have direct control?</h2>
+      <p>Your records are not valuable only on the website that generated them. You may need them for budgeting, accounting, taxes, switching apps, or simply keeping your own archive. Direct control matters because access should not depend on whether a platform decides to keep a convenient export button forever.</p>
+      <p>Habeas is built around the idea that people should be able to exercise their rights with tools they can inspect, run themselves, and point at destinations they trust.</p>
+
+      <h2>What principles guide Habeas?</h2>
+      <div class="grid principles">
+        <div class="card">
+          <h3>Data sovereignty</h3>
+          <p>Your documents should remain accessible to you, even when a service offers a poor export experience.</p>
+        </div>
+        <div class="card">
+          <h3>User control</h3>
+          <p>You decide when to collect data and where it goes. Nothing should leave your browser unless you choose it.</p>
+        </div>
+        <div class="card">
+          <h3>Privacy by design</h3>
+          <p>Using a data portability tool should not require creating a new database of passwords, sessions, or personal records somewhere else.</p>
+        </div>
+        <div class="card">
+          <h3>Transparency and trust minimization</h3>
+          <p>The safer model is the one that asks you to trust fewer third parties, fewer servers, and fewer hidden processes.</p>
+        </div>
+      </div>
+
+      <h2>Why does the architecture follow these principles?</h2>
+      <p>Habeas runs where the website already knows it is talking to you: inside your own authenticated browser session. That means you log in yourself, handle MFA yourself, and keep your credentials to yourself.</p>
+      <p>This architecture is not a technical gimmick. It is a consequence of the project's values. If the goal is to give users more control, the tool should avoid unnecessary intermediaries, avoid storing credentials, and keep the flow understandable.</p>
+
+      <div class="box"><strong>In short:</strong> Habeas is designed so that trust is earned through architecture, not requested through a password prompt.</div>
+    </div>
+
+    <div data-lang-content="es" lang="es" hidden>
+      <h1>¿Por qué Habeas?</h1>
+      <p class="lead">Habeas existe por una razón sencilla: las personas deberían poder conservar y mover sus propios datos sin perder aún más control en el proceso.</p>
+
+      <p>Tickets, facturas, extractos, informes de inversión y registros similares suelen ser visibles en las webs que los generaron. Pero verlos no es lo mismo que controlarlos. Muchos servicios no ofrecen una exportación útil, conservan solo parte del historial o fuerzan a descargar documento por documento.</p>
+
+      <div class="box"><strong>La brecha práctica:</strong> tus datos pueden ser tuyos en lo legal, pero en la práctica seguir siendo difíciles de conservar, reutilizar o mover a otra herramienta.</div>
+
+      <h2>¿Qué problema resuelve Habeas?</h2>
+      <p>Habeas te ayuda a recuperar acceso práctico a tus propios registros cuando un servicio ya te deja verlos, pero te lo pone difícil para conservarlos. Te da una forma de recoger esos documentos desde tu sesión normal del navegador y guardarlos donde <em>tú</em> elijas.</p>
+
+      <h2>¿Por qué la portabilidad de datos actual no basta?</h2>
+      <p>En teoría, las personas deberían poder acceder a su propia información. En la vida real, esa promesa muchas veces se queda en un panel web. El servicio puede no tener API, no ofrecer exportación masiva o hacer que la automatización falle detrás de sistemas anti-bot.</p>
+      <p>Y además, muchos atajos existentes piden confiar tus credenciales y tu historial a otro intermediario. Eso resuelve una barrera creando otra.</p>
+
+      <h2>¿Por qué importa el control directo?</h2>
+      <p>Tus registros no solo valen dentro de la web que los generó. Puedes necesitarlos para contabilidad, impuestos, cambiar de app o simplemente mantener tu propio archivo. El control directo importa porque el acceso no debería depender de que una plataforma decida mantener para siempre un botón de exportación cómodo.</p>
+      <p>Habeas parte de la idea de que la gente debería poder ejercer sus derechos con herramientas que pueda inspeccionar, ejecutar por sí misma y conectar con destinos en los que confía.</p>
+
+      <h2>¿Qué principios guían Habeas?</h2>
+      <div class="grid principles">
+        <div class="card">
+          <h3>Soberanía de los datos</h3>
+          <p>Tus documentos deberían seguir siendo accesibles para ti, incluso cuando un servicio ofrece una mala experiencia de exportación.</p>
+        </div>
+        <div class="card">
+          <h3>Control del usuario</h3>
+          <p>Tú decides cuándo recoger datos y a dónde van. Nada debería salir del navegador salvo que tú lo elijas.</p>
+        </div>
+        <div class="card">
+          <h3>Privacidad desde el diseño</h3>
+          <p>Usar una herramienta de portabilidad no debería exigir crear otra base de datos de contraseñas, sesiones o registros personales.</p>
+        </div>
+        <div class="card">
+          <h3>Transparencia y mínima confianza necesaria</h3>
+          <p>El modelo más seguro es el que te pide confiar en menos terceros, menos servidores y menos procesos opacos.</p>
+        </div>
+      </div>
+
+      <h2>¿Por qué la arquitectura sigue esos principios?</h2>
+      <p>Habeas se ejecuta donde la web ya sabe que está hablando contigo: dentro de tu propia sesión autenticada del navegador. Eso significa que inicias sesión tú, resuelves la MFA tú y mantienes tus credenciales para ti.</p>
+      <p>Esta arquitectura no es un truco técnico. Es una consecuencia de los valores del proyecto. Si el objetivo es dar más control a los usuarios, la herramienta debe evitar intermediarios innecesarios, evitar guardar credenciales y mantener el flujo comprensible.</p>
+
+      <div class="box"><strong>En corto:</strong> Habeas está diseñado para que la confianza se gane por su arquitectura, no porque te pida una contraseña.</div>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const KEY = 'habeas-lang';
+      const saved = localStorage.getItem(KEY);
+      const lang = (saved === 'en' || saved === 'es') ? saved
+        : ((navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en');
+      const btns = document.querySelectorAll('.langswitch button[data-lang]');
+      function apply(l) {
+        document.documentElement.lang = l;
+        document.querySelectorAll('[data-lang-content]').forEach((el) => { el.hidden = el.getAttribute('data-lang-content') !== l; });
+        btns.forEach((b) => b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === l)));
+      }
+      btns.forEach((b) => b.addEventListener('click', () => { const l = b.getAttribute('data-lang'); localStorage.setItem(KEY, l); apply(l); }));
+      apply(lang);
+    })();
+  </script>
+</body>
+</html>
