@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Habeas Architecture</title>
+  <meta name="description" content="Technical architecture and design principles behind Habeas." />
+  <link rel="canonical" href="https://habeas.dev/architecture.html" />
+  <link rel="icon" type="image/svg+xml" href="logo.svg" />
+  <link rel="stylesheet" href="style.css" />
+  <meta property="og:title" content="Habeas Architecture" />
+  <meta property="og:description" content="Technical architecture and design principles behind Habeas." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://habeas.dev/architecture.html" />
+  <style>
+    .doc { max-width: 860px; margin: 0 auto; padding: 8px 20px 64px; }
+    .doc h1 { font-size: 2rem; margin: 24px 0 14px; }
+    .doc h2 { font-size: 1.4rem; margin: 30px 0 10px; }
+    .doc h3 { font-size: 1.1rem; margin: 24px 0 8px; }
+    .doc p, .doc li, .doc blockquote { line-height: 1.68; }
+    .doc ul, .doc ol { padding-left: 1.35em; }
+    .doc pre { overflow-x: auto; padding: 14px 16px; border: 1px solid var(--line, #3333); border-radius: 10px; background: color-mix(in srgb, var(--surface) 88%, var(--bg)); }
+    .doc code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .92em; }
+    .doc blockquote { margin: 18px 0; padding: 0 16px; border-left: 3px solid var(--line, #3333); color: var(--muted, #888); }
+    .doc hr { border: none; border-top: 1px solid var(--line, #3333); margin: 30px 0; }
+    .doc a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+    .doc .status { color: var(--muted, #888); margin: 18px 0 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="logo-light.svg" />
+        <img class="logo" src="logo.svg" alt="Habeas" />
+      </picture>
+      <span class="name">Habeas</span>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/why-habeas.html">Why Habeas?</a>
+        <a href="/sources.html">Sources</a>
+        <a href="/architecture.html">Architecture</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="doc">
+    <article id="architecture-content" aria-live="polite">
+      <p class="status">Loading ARCHITECTURE.md…</p>
+    </article>
+  </main>
+
+  <script>
+    const ARCHITECTURE_MD_URL = 'https://raw.githubusercontent.com/habeas-dev/habeas/main/ARCHITECTURE.md';
+    const MARKDOWN_RENDER_URL = 'https://api.github.com/markdown';
+    const content = document.getElementById('architecture-content');
+    const htmlEscapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+    function esc(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, (char) => htmlEscapes[char]);
+    }
+
+    function fallback(markdown) {
+      content.innerHTML = `<p class="status">Could not render markdown from GitHub right now. You can still read the canonical source directly.</p><p><a href="${ARCHITECTURE_MD_URL}">Open ARCHITECTURE.md</a></p><pre><code>${esc(markdown)}</code></pre>`;
+    }
+
+    async function renderArchitecture() {
+      try {
+        const mdResponse = await fetch(ARCHITECTURE_MD_URL);
+        if (!mdResponse.ok) throw new Error('markdown fetch failed');
+        const markdown = await mdResponse.text();
+
+        const htmlResponse = await fetch(MARKDOWN_RENDER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: markdown,
+            mode: 'gfm',
+            context: 'habeas-dev/habeas',
+          }),
+        });
+        if (!htmlResponse.ok) throw new Error('markdown render failed');
+        content.innerHTML = await htmlResponse.text();
+      } catch (error) {
+        try {
+          const mdResponse = await fetch(ARCHITECTURE_MD_URL);
+          if (!mdResponse.ok) throw new Error('markdown refetch failed');
+          fallback(await mdResponse.text());
+        } catch (finalError) {
+          fallback('');
+        }
+      }
+    }
+
+    renderArchitecture();
+  </script>
+</body>
+</html>
