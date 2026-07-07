@@ -26,9 +26,16 @@ async function loadLanding() {
     localStorage: { getItem: () => null, setItem: () => {} },
     navigator: { language: 'en' },
     document: {
+      documentElement: {},
       _listeners: {},
       addEventListener(type, listener) {
         this._listeners[type] = listener;
+      },
+      querySelector() {
+        return null;
+      },
+      querySelectorAll() {
+        return [];
       },
     },
     globalThis: {},

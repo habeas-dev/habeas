@@ -55,7 +55,6 @@ const I18N = {
     flow_step_2: 'Your authenticated browser',
     flow_step_3: 'Habeas extension',
     flow_step_4: 'ZIP / Drive / Folder / HTTP',
-    flow_a11y: 'Data flow: website, then your authenticated browser, then the Habeas extension, then your chosen destination such as ZIP, Drive, Folder or HTTP.',
     flow_note: 'No backend logs into third-party services. No credentials leave the browser.',
     why_h2: 'Why Habeas is different',
     why_lead: 'Traditional aggregators move the login and scraping to their servers. Habeas does not.',
@@ -142,7 +141,6 @@ const I18N = {
     flow_step_2: 'Tu navegador autenticado',
     flow_step_3: 'Extensión Habeas',
     flow_step_4: 'ZIP / Drive / Carpeta / HTTP',
-    flow_a11y: 'Flujo de datos: sitio web, luego tu navegador autenticado, luego la extensión Habeas y después el destino que elijas, como ZIP, Drive, Carpeta o HTTP.',
     flow_note: 'Ningún backend inicia sesión en servicios de terceros. Ninguna credencial sale del navegador.',
     why_h2: 'Por qué Habeas es diferente',
     why_lead: 'Los agregadores tradicionales trasladan el login y el scraping a sus servidores. Habeas no.',
@@ -184,7 +182,7 @@ function detectLang() {
   return (navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en';
 }
 
-function updateMetaTag(selector, attr, value) {
+function safeUpdateMetaTag(selector, attr, value) {
   const el = document.querySelector(selector);
   if (!el) return;
   el.setAttribute(attr, value);
@@ -194,9 +192,9 @@ function apply(lang) {
   const dict = I18N[lang] || I18N.en;
   document.documentElement.lang = lang;
   document.title = dict.title;
-  updateMetaTag('meta[name="description"]', 'content', dict.desc);
-  updateMetaTag('meta[property="og:title"]', 'content', dict.title);
-  updateMetaTag('meta[property="og:description"]', 'content', dict.desc);
+  safeUpdateMetaTag('meta[name="description"]', 'content', dict.desc);
+  safeUpdateMetaTag('meta[property="og:title"]', 'content', dict.title);
+  safeUpdateMetaTag('meta[property="og:description"]', 'content', dict.desc);
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const v = dict[el.dataset.i18n];
     if (v != null) el.textContent = v;
