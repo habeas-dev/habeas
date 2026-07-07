@@ -190,6 +190,24 @@ test('architecture page is public and renders the canonical ARCHITECTURE.md sour
   }
 });
 
+test('sitemap includes all public website pages', async () => {
+  const sitemap = await fs.readFile(path.join(docsDir, 'sitemap.xml'), 'utf8');
+  const expectedUrls = [
+    'https://habeas.dev/',
+    'https://habeas.dev/architecture',
+    'https://habeas.dev/privacy.html',
+    'https://habeas.dev/sources.html',
+    'https://habeas.dev/terms.html',
+    'https://habeas.dev/why-habeas.html',
+  ];
+
+  assert.match(sitemap, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+  for (const url of expectedUrls) {
+    assert.match(sitemap, new RegExp(`<loc>${url.replace(/\./g, '\\.')}</loc>`));
+  }
+  assert.equal((sitemap.match(/<loc>/g) || []).length, expectedUrls.length);
+});
+
 test('why habeas page is public, discoverable, and has concise philosophy content', async () => {
   const [html, indexHtml, privacyHtml, sourcesHtml, termsHtml] = await Promise.all([
     fs.readFile(path.join(docsDir, 'why-habeas.html'), 'utf8'),
