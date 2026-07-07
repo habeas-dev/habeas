@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Habeas — your data, in your hands</title>
-  <meta name="description" content="Open-source browser extension that extracts your own data from services that lock it behind non-automatable walls — within your own session." />
+  <title>Habeas — export your own data from your own session</title>
+  <meta name="description" content="Open-source browser extension that exports your own receipts, invoices and transactions from your authenticated browser session — no stored credentials, no server-side scraping." />
   <link rel="icon" type="image/svg+xml" href="logo.svg" />
   <link rel="stylesheet" href="style.css" />
-  <meta property="og:title" content="Habeas — your data, in your hands" />
-  <meta property="og:description" content="Reclaim your own data from services that lock it behind non-automatable walls." />
+  <meta property="og:title" content="Habeas — export your own data from your own session" />
+  <meta property="og:description" content="Open-source browser extension that exports your own receipts, invoices and transactions from your authenticated browser session." />
   <meta property="og:type" content="website" />
 </head>
 <body>
@@ -36,14 +36,97 @@
     <div class="wrap">
       <img class="logo" src="logo-light.svg" alt="" />
       <p class="tagline" data-i18n="tagline">your data, in your hands</p>
-      <h1 data-i18n="hero_h1">Reclaim your own data.</h1>
+      <h1 data-i18n="hero_h1">Export your own receipts, invoices and transactions.</h1>
       <p class="sub" data-i18n="hero_sub"></p>
+      <p class="hero-note" data-i18n="hero_note"></p>
       <div class="cta">
-        <a class="btn primary" href="#install" data-i18n="cta_install">Install</a>
-        <a class="btn ghost" href="#how" data-i18n="cta_how">How it works</a>
+        <a class="btn primary" href="#install" data-i18n="cta_install">Download alpha build</a>
+        <a class="btn ghost" href="#how" data-i18n="cta_how">See how it works</a>
+      </div>
+      <div class="feature-strip" aria-label="Highlights">
+        <span class="feature-pill" data-i18n="feature_1"></span>
+        <span class="feature-pill" data-i18n="feature_2"></span>
+        <span class="feature-pill" data-i18n="feature_3"></span>
+        <span class="feature-pill" data-i18n="feature_4"></span>
+        <span class="feature-pill" data-i18n="feature_5"></span>
       </div>
     </div>
   </div>
+
+  <section>
+    <div class="wrap">
+      <h2 data-i18n="problem_h2"></h2>
+      <p class="lead" data-i18n="problem_lead"></p>
+      <div class="grid">
+        <div class="card"><div class="ic">🧱</div><h3 data-i18n="problem1_h"></h3><p data-i18n="problem1_b"></p></div>
+        <div class="card"><div class="ic">🧾</div><h3 data-i18n="problem2_h"></h3><p data-i18n="problem2_b"></p></div>
+        <div class="card"><div class="ic">🤖</div><h3 data-i18n="problem3_h"></h3><p data-i18n="problem3_b"></p></div>
+        <div class="card"><div class="ic">⚖️</div><h3 data-i18n="problem4_h"></h3><p data-i18n="problem4_b"></p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how" class="alt">
+    <div class="wrap">
+      <h2 data-i18n="how_h2"></h2>
+      <p class="lead" data-i18n="how_lead"></p>
+      <div class="grid">
+        <div class="card"><div class="ic">🔐</div><h3 data-i18n="how1_h"></h3><p data-i18n="how1_b"></p></div>
+        <div class="card"><div class="ic">🔄</div><h3 data-i18n="how2_h"></h3><p data-i18n="how2_b"></p></div>
+        <div class="card"><div class="ic">📤</div><h3 data-i18n="how3_h"></h3><p data-i18n="how3_b"></p></div>
+      </div>
+      <div class="flow-card">
+        <h3 data-i18n="flow_h"></h3>
+        <div class="flow" aria-hidden="true">
+          <div class="flow-step" data-i18n="flow_step_1"></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step" data-i18n="flow_step_2"></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step" data-i18n="flow_step_3"></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step" data-i18n="flow_step_4"></div>
+        </div>
+        <p class="flow-note" data-i18n="flow_note"></p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2 data-i18n="why_h2"></h2>
+      <p class="lead" data-i18n="why_lead"></p>
+      <div class="compare-card">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th data-i18n="why_col_traditional"></th>
+              <th data-i18n="why_col_habeas"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th data-i18n="why_row_1"></th><td data-i18n="why_row_1_traditional"></td><td data-i18n="why_row_1_habeas"></td></tr>
+            <tr><th data-i18n="why_row_2"></th><td data-i18n="why_row_2_traditional"></td><td data-i18n="why_row_2_habeas"></td></tr>
+            <tr><th data-i18n="why_row_3"></th><td data-i18n="why_row_3_traditional"></td><td data-i18n="why_row_3_habeas"></td></tr>
+            <tr><th data-i18n="why_row_4"></th><td data-i18n="why_row_4_traditional"></td><td data-i18n="why_row_4_habeas"></td></tr>
+            <tr><th data-i18n="why_row_5"></th><td data-i18n="why_row_5_traditional"></td><td data-i18n="why_row_5_habeas"></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2 data-i18n="dest_h2"></h2>
+      <p class="lead" data-i18n="dest_lead"></p>
+      <div class="grid">
+        <div class="card"><div class="ic">📁</div><h3 data-i18n="dest1_h"></h3><p data-i18n="dest1_b"></p></div>
+        <div class="card"><div class="ic">☁️</div><h3 data-i18n="dest2_h"></h3><p data-i18n="dest2_b"></p></div>
+        <div class="card"><div class="ic">🔗</div><h3 data-i18n="dest3_h"></h3><p data-i18n="dest3_b"></p></div>
+      </div>
+    </div>
+  </section>
 
   <section id="install" class="alt">
     <div class="wrap">
@@ -64,37 +147,6 @@
           <a class="btn primary" href="https://github.com/habeas-dev/habeas/releases" data-i18n="install_firefox_cta">Get the latest build</a>
           <p class="lead" style="font-size:.82rem;opacity:.6;margin-top:10px" data-i18n="install_soon_firefox"></p>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="wrap">
-      <h2 data-i18n="problem_h2"></h2>
-      <p class="lead" data-i18n="problem_lead"></p>
-    </div>
-  </section>
-
-  <section id="how" class="alt">
-    <div class="wrap">
-      <h2 data-i18n="how_h2"></h2>
-      <p class="lead" data-i18n="how_lead"></p>
-      <div class="grid">
-        <div class="card"><div class="ic">🔐</div><h3 data-i18n="how1_h"></h3><p data-i18n="how1_b"></p></div>
-        <div class="card"><div class="ic">🏠</div><h3 data-i18n="how2_h"></h3><p data-i18n="how2_b"></p></div>
-        <div class="card"><div class="ic">🧩</div><h3 data-i18n="how3_h"></h3><p data-i18n="how3_b"></p></div>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="wrap">
-      <h2 data-i18n="dest_h2"></h2>
-      <p class="lead" data-i18n="dest_lead"></p>
-      <div class="grid">
-        <div class="card"><div class="ic">📁</div><h3 data-i18n="dest1_h"></h3><p data-i18n="dest1_b"></p></div>
-        <div class="card"><div class="ic">☁️</div><h3 data-i18n="dest2_h"></h3><p data-i18n="dest2_b"></p></div>
-        <div class="card"><div class="ic">🔗</div><h3 data-i18n="dest3_h"></h3><p data-i18n="dest3_b"></p></div>
       </div>
     </div>
   </section>
