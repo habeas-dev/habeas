@@ -56,10 +56,10 @@ header nav a { color: var(--ink); }
 .hero .logo { width: 76px; height: 76px; margin-bottom: 18px; }
 .hero .tagline { color: #ffffffc0; font-size: 15px; margin: 0 0 26px; }
 .hero h1 { font-size: clamp(34px, 6vw, 56px); font-weight: 700; }
-.hero p.sub { max-width: 620px; margin: 20px auto 34px; font-size: 18px; color: #ffffffd8; }
-.hero .hero-note { max-width: 760px; margin: -14px auto 28px; font-size: 15px; color: #ffffffb5; }
+.hero p.sub { max-width: 620px; margin: 20px auto 14px; font-size: 18px; color: #ffffffd8; }
+.hero .hero-note { max-width: 760px; margin: 0 auto 28px; font-size: 15px; color: #ffffffb5; }
 .hero .cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
-.feature-strip { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 28px; }
+.feature-strip { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 28px 0 0; padding: 0; list-style: none; }
 .feature-pill { border: 1px solid rgba(255,255,255,.2); border-radius: 999px; padding: 8px 12px; font-size: 13px; color: #fff; background: rgba(255,255,255,.08); }
 
 /* Sections */

@@ -186,7 +186,11 @@ function detectLang() {
 
 function updateMetaTag(selector, attr, value) {
   const el = document.querySelector(selector);
-  if (el) el.setAttribute(attr, value);
+  if (!el) {
+    console.warn(`Missing required meta tag: ${selector}`);
+    return;
+  }
+  el.setAttribute(attr, value);
 }
 
 function apply(lang) {
