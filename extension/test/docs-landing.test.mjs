@@ -128,6 +128,8 @@ test('landing page keeps the new information hierarchy', async () => {
   assert.match(css, /\.hero \.hero-bg-logo\s*\{[^}]*opacity\s*:\s*\.08/);
   assert.match(css, /\.hero \.cta \.btn\.ghost\s*\{[^}]*border-color\s*:\s*rgba\(255,255,255,\s*\.38\)/);
   assert.match(css, /\.hero \.cta \.btn\.ghost\s*\{[^}]*background\s*:\s*rgba\(255,255,255,\s*\.08\)/);
+  assert.match(css, /\.hero \.cta \.btn\.ghost:hover\s*\{[^}]*border-color\s*:\s*rgba\(255,255,255,\s*\.5\)/);
+  assert.match(css, /\.hero \.cta \.btn\.ghost:hover\s*\{[^}]*background\s*:\s*rgba\(255,255,255,\s*\.14\)/);
   assert.match(html, /data-i18n="flow_h"/);
   assert.match(html, /data-i18n="flow_step_source"/);
   assert.match(html, /data-i18n="flow_step_runtime"/);
