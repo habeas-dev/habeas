@@ -192,6 +192,17 @@ test('api.groups: lists transactions per account, tagging each with its account 
   assert.equal(byId['A1-t1']._group.iban, 'ES11'); // record carries its group
 });
 
+test('document templates {group.*}+{csrf} and honors pdf.ext (WiZink Excel statement)', async () => {
+  let url = '';
+  globalThis.fetch = async (u) => { url = String(u); return { ok: true, status: 200, blob: async () => new Blob(['x']) }; };
+  const adapter = { api: { host: 'https://b.es', pdf: { path: '/dl?acc={group.accountNumber}&date={statementDate}&t={csrf}', method: 'GET', ext: 'xls' } }, fields: {}, schema: 'invoice@1' };
+  const doc = { internalId: '1', _raw: { statementDate: '2026-06-23' }, _group: { accountNumber: 'ACC1' } };
+  assert.deepEqual(artifactKinds(adapter, doc).map((k) => k.ext), ['xls']); // custom ext
+  const r = await fetchArtifact(adapter, { byPath: {}, merged: {}, __csrf: 'TOK' }, doc, globalThis.fetch, null, 'document');
+  assert.equal(r.ext, 'xls');
+  assert.equal(url, 'https://b.es/dl?acc=ACC1&date=2026-06-23&t=TOK'); // {group.*}, {field}, {csrf} all filled
+});
+
 test('AEM/WiZink pipeline: CSRF prelude → groups POST (regex each) → per-card movements POST → parse', async () => {
   const csrfPage = '<input type="hidden" name="securityToken" value="TOK12345678" />';
   const groupsHtml = "<a onclick=\"goToCardDetail('ACC1', 'CARD1', 'today');\">c1</a>"
