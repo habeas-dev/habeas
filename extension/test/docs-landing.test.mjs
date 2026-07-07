@@ -139,6 +139,7 @@ test('landing page keeps the new information hierarchy', async () => {
   assert.match(html, /data-i18n="dev_h2"/);
   assert.match(html, /class="compare-table"/);
   assert.match(html, /<a href="\/sources\.html" data-i18n="sources_cta"><\/a>/);
+  assert.match(html, /<a href="\/why-habeas\.html" data-i18n="nav_why">Why Habeas\?<\/a>/);
 });
 
 test('landing page i18n keys exist in both languages', async () => {
@@ -153,8 +154,41 @@ test('landing page i18n keys exist in both languages', async () => {
 
   assert.equal(i18n.en.title, 'Habeas — export your own data from your own session');
   assert.equal(i18n.en.hero_h1, 'Export your own data.');
+  assert.equal(i18n.en.nav_why, 'Why Habeas?');
   assert.equal(i18n.es.why_h2, 'Por qué Habeas es diferente');
+  assert.equal(i18n.es.nav_why, 'Por qué Habeas');
   assert.equal(i18n.es.hero_h1, 'Exporta tus propios datos.');
+});
+
+test('why habeas page is public, discoverable, and has concise philosophy content', async () => {
+  const [html, indexHtml, privacyHtml, sourcesHtml, termsHtml] = await Promise.all([
+    fs.readFile(path.join(docsDir, 'why-habeas.html'), 'utf8'),
+    fs.readFile(path.join(docsDir, 'index.html'), 'utf8'),
+    fs.readFile(path.join(docsDir, 'privacy.html'), 'utf8'),
+    fs.readFile(path.join(docsDir, 'sources.html'), 'utf8'),
+    fs.readFile(path.join(docsDir, 'terms.html'), 'utf8'),
+  ]);
+
+  assert.match(html, /<title>Why Habeas\? — user control, privacy, and data sovereignty<\/title>/);
+  assert.match(html, /<meta name="description" content="Why Habeas exists: to help people keep their own receipts, invoices, statements, and reports without handing control or credentials to another intermediary\." \/>/);
+  assert.match(html, /<link rel="canonical" href="https:\/\/habeas\.dev\/why-habeas\.html" \/>/);
+  assert.match(html, /<meta property="og:title" content="Why Habeas\? — user control, privacy, and data sovereignty" \/>/);
+  assert.match(html, /<h1>Why Habeas\?<\/h1>/);
+  assert.match(html, /What problem does Habeas solve\?/);
+  assert.match(html, /Why isn't data portability already enough\?/);
+  assert.match(html, /Why should users have direct control\?/);
+  assert.match(html, /What principles guide Habeas\?/);
+  assert.match(html, /Why does the architecture follow these principles\?/);
+  assert.match(html, /Data sovereignty/);
+  assert.match(html, /Privacy by design/);
+  assert.match(html, /trust is earned through architecture, not requested through a password prompt/i);
+  assert.match(html, /<a href="\/">Home<\/a>/);
+  assert.match(html, /<a href="\/sources\.html">Sources<\/a>/);
+  assert.match(html, /<a href="\/privacy\.html">Privacy<\/a>/);
+
+  for (const page of [indexHtml, privacyHtml, sourcesHtml, termsHtml]) {
+    assert.match(page, /href="\/why-habeas\.html"/);
+  }
 });
 
 test('landing page loads a compact localized source preview from the catalog index only', async () => {
