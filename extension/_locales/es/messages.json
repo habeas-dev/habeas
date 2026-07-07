@@ -29,6 +29,8 @@
   "no_datasources": { "message": "Activa un datasource en Ajustes." },
   "capture_hint": { "message": "Abre el sitio y tu página de compras para capturar tu sesión, y reintenta." },
   "login_in_tab": { "message": "Inicia sesión en el sitio en la pestaña que acabamos de abrir y vuelve a intentarlo." },
+  "cookies_cleared": { "message": "Borradas $N$ cookies del sitio para un login limpio.", "placeholders": { "n": { "content": "$1" } } },
+  "cookies_cleared_login": { "message": "Borradas $N$ cookies del sitio — inicia sesión en la pestaña nueva y prueba de nuevo.", "placeholders": { "n": { "content": "$1" } } },
   "listing": { "message": "Listando…" },
   "n_documents": { "message": "$COUNT$ documentos", "placeholders": { "count": { "content": "$1" } } },
   "fetching": { "message": "Obteniendo $COUNT$ documentos…", "placeholders": { "count": { "content": "$1" } } },

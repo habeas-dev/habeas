@@ -1,7 +1,7 @@
 import { chrome } from '../lib/ext.js';
 import { getConfig } from '../lib/config.js';
 import { listInventory, artifactKinds, fetchArtifact, documentExt } from '../runtime/inventory.js';
-import { ensureSiteFetch } from '../lib/pagefetch.js';
+import { ensureSiteFetch, recoverSession } from '../lib/pagefetch.js';
 import { pickGroup } from './grouppicker.js';
 import { renderPage } from '../lib/render.js';
 import { writeToSink } from '../sinks/sinks.js';
@@ -90,9 +90,11 @@ async function onList() {
     $('#sendbar').hidden = inventory.length === 0;
     $('#selbar').hidden = inventory.length === 0;
   } catch (e) {
-    // CSRF / not-logged-in → make sure the site tab is open so the user can authenticate, then retry.
-    if (/csrf|40[13]|forbidden|unauthor|sign ?in|log ?in|session/i.test(e.message || '')) {
-      await ensureSiteFetch(adapter, { open: true });
+    // CSRF / not-logged-in / bad-request (corrupted cookies) → clear cookies if the source opts in and
+    // open a clean tab so the user can log in fresh, then retry.
+    if (/csrf|4\d\d|5\d\d|forbidden|unauthor|sign ?in|log ?in|session|not logged/i.test(e.message || '')) {
+      const cleared = await recoverSession(adapter);
+      if (cleared) log(t('cookies_cleared', [String(cleared)]));
       $('#status').textContent = t('login_in_tab');
     } else $('#status').textContent = t('generic_error', [e.message]);
   }

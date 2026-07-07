@@ -61,7 +61,8 @@ async function fetchCsrf(adapter, auth, net) {
   const res = await NET(url, init);
   if (!res.ok) throw new Error('csrf ' + res.status);
   const m = (await res.text()).match(new RegExp(c.match));
-  return m ? m[1] : '';
+  if (!m) throw new Error('csrf token not found (not logged in?)'); // 200 but the page isn't the logged-in one
+  return m[1];
 }
 
 // Enumerate the accounts/cards/portfolios a source groups its items by (id/name/… per adapter.api.groups.fields).

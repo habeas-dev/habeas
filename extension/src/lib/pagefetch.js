@@ -57,7 +57,12 @@ export function makePageFetch(tabId) {
 // Find an open tab on the source's site and return a page-bound fetch (or null if none is open —
 // the caller then falls back to a direct extension fetch, which works for non-anti-bot APIs).
 export async function resolveSiteFetch(adapter) {
-  // Build valid match patterns (no port/path) from the domain and match hosts.
+  const tab = await findSiteTab(adapter);
+  return tab ? makePageFetch(tab.id) : null;
+}
+
+// The open browser tab (if any) sitting on the source's site — the in-session context to fetch through.
+async function findSiteTab(adapter) {
   const pats = [];
   if (adapter.domain) pats.push(`*://*.${adapter.domain}/*`, `*://${adapter.domain}/*`);
   for (const m of adapter.match || []) {
@@ -66,8 +71,7 @@ export async function resolveSiteFetch(adapter) {
   }
   let tabs = [];
   try { tabs = await chrome.tabs.query({ url: pats }); } catch (e) {}
-  const tab = tabs.find((t) => t && t.id != null && /^https?:/.test(t.url || ''));
-  return tab ? makePageFetch(tab.id) : null;
+  return tabs.find((t) => t && t.id != null && /^https?:/.test(t.url || '')) || null;
 }
 
 // The site's base URL (from the source's match / api host) — where a tab is opened to establish the
@@ -85,9 +89,6 @@ export function siteBaseUrl(adapter) {
 export async function ensureSiteFetch(adapter, { open = false } = {}) {
   const existing = await resolveSiteFetch(adapter);
   if (existing || !open) return existing;
-  // Opening a fresh tab = the user isn't already on the site. If the source opts in (auth.resetCookies —
-  // WiZink corrupts its own cookies and then 500s the login), wipe the site's cookies for a clean login.
-  if (adapter.auth && adapter.auth.resetCookies) { try { await clearSiteCookies(cookieDomain(adapter)); } catch (e) {} }
   let tab; try { tab = await chrome.tabs.create({ url: siteBaseUrl(adapter), active: true }); } catch (e) { return null; }
   if (!tab || tab.id == null) return null;
   await waitTabComplete(tab.id);
@@ -95,6 +96,21 @@ export async function ensureSiteFetch(adapter, { open = false } = {}) {
 }
 
 const cookieDomain = (adapter) => (adapter.domain || ((adapter.api && adapter.api.host) || '').replace(/^https?:\/\//, '').replace(/[:/].*$/, ''));
+
+// Called when an operation failed for auth reasons (CSRF / 401 / 403 / 500 login). For a resetCookies
+// source (WiZink corrupts its own cookies), wipe them and open a FRESH tab so the user gets a clean
+// login — this fires even when a stale tab is already open. Returns how many cookies were cleared.
+export async function recoverSession(adapter) {
+  let cleared = 0;
+  if (adapter.auth && adapter.auth.resetCookies) { try { cleared = await clearSiteCookies(cookieDomain(adapter)); } catch (e) {} }
+  // Reload the open site tab (now cookieless → clean login) or open one; focus it so the user logs in.
+  const tab = await findSiteTab(adapter);
+  try {
+    if (tab) { await chrome.tabs.update(tab.id, { active: true }); await chrome.tabs.reload(tab.id); }
+    else await chrome.tabs.create({ url: siteBaseUrl(adapter), active: true });
+  } catch (e) {}
+  return cleared;
+}
 
 // Remove every cookie for a registrable domain (and its subdomains). Needs the `cookies` permission +
 // host access for the domain. Used to recover from a site whose corrupted cookies block a fresh login.

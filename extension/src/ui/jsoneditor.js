@@ -2,7 +2,7 @@ import { chrome } from '../lib/ext.js';
 import { t } from '../lib/i18n.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { listInventory, artifactKinds, fetchArtifact } from '../runtime/inventory.js';
-import { ensureSiteFetch } from '../lib/pagefetch.js';
+import { ensureSiteFetch, recoverSession } from '../lib/pagefetch.js';
 import { pickGroup } from './grouppicker.js';
 import { renderPage } from '../lib/render.js';
 
@@ -99,7 +99,14 @@ export function editJson(adapter) {
         const groupId = await pickGroup(ad, auth, net); // grouped source (bank accounts/cards) → let the user choose
         const docs = await listInventory(ad, auth, net, { groupId });
         renderDocs(ad, auth, net, docs);
-      } catch (e) { status.textContent = t('author_test_err', [(e && e.message) || String(e)]); }
+      } catch (e) {
+        const msg = (e && e.message) || String(e);
+        // CSRF / not-logged-in / bad-request (corrupted cookies) → reset cookies (if opted in) + clean tab.
+        if (/csrf|4\d\d|5\d\d|forbidden|unauthor|sign ?in|log ?in|session|not logged/i.test(msg)) {
+          const cleared = await recoverSession(ad);
+          status.textContent = cleared ? t('cookies_cleared_login', [String(cleared)]) : t('login_in_tab');
+        } else status.textContent = t('author_test_err', [msg]);
+      }
     }
 
     function renderDocs(ad, auth, net, docs) {
