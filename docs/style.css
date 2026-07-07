@@ -107,6 +107,8 @@ section .lead { color: var(--muted); font-size: 17px; max-width: 640px; margin-b
 }
 .flow-arrow { color: var(--muted); font-size: 18px; line-height: 1; }
 .flow-note { color: var(--muted); margin: 18px 0 0; font-size: 15px; }
+.plain-list { margin: 12px 0 0; padding-left: 20px; color: var(--muted); }
+.plain-list li + li { margin-top: 8px; }
 .compare-table { width: 100%; border-collapse: collapse; font-size: 15px; }
 .compare-table th, .compare-table td { padding: 14px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
 .compare-table thead th { font-family: var(--font-head); font-size: 16px; }
