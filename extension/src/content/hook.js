@@ -47,15 +47,26 @@
     let path = ''; try { path = new URL(url, location.href).pathname; } catch (e) {}
     window.postMessage({ __habeas: true, type: 'auth', host: hostOf(url), path, headers: out }, '*');
   }
-  function postSample(url, method, status, reqHeaders, bodyText) {
-    if (!LEARN || !bodyText || bodyText.length > 400000) return;
-    let json; try { json = JSON.parse(bodyText); } catch (e) { return; }
-    if (!json || typeof json !== 'object') return;
+  // A response sample. JSON responses power the classic SPA-API inference; HTML responses (an AJAX
+  // endpoint that returns a table fragment) are kept too — tagged `kind:'html'` — so the inference
+  // can draft a `from:'html'` source. The request body is carried (capped) to reconstruct paging
+  // (e.g. a POST `pagina=1`). Cookies/secrets are never sent (only allow-listed request headers).
+  function postSample(url, method, status, reqHeaders, bodyText, contentType, reqBody) {
+    if (!LEARN || !bodyText || bodyText.length > 600000) return;
     const rh = {}; Object.keys(reqHeaders || {}).forEach((k) => { if (HDR_SAMPLE.test(k)) rh[k] = reqHeaders[k]; });
-    // Resolve to an absolute URL here (only the page knows location.href); SPAs fetch relative URLs.
     let abs = String(url), path = '';
     try { const u = new URL(url, location.href); abs = u.href; path = u.pathname; } catch (e) {}
-    window.postMessage({ __habeas: true, type: 'sample', host: hostOf(url), path, url: abs, method: method || 'GET', status: status || 0, reqHeaders: rh, json }, '*');
+    const body = typeof reqBody === 'string' ? reqBody.slice(0, 20000) : '';
+    let json; try { json = JSON.parse(bodyText); } catch (e) {}
+    if (json && typeof json === 'object') {
+      window.postMessage({ __habeas: true, type: 'sample', host: hostOf(url), path, url: abs, method: method || 'GET', status: status || 0, reqHeaders: rh, json, reqBody: body }, '*');
+      return;
+    }
+    // Not JSON — keep it only if it's HTML (content-type says so, or it opens with an HTML tag).
+    const looksHtml = /html|xml/i.test(contentType || '') || /^\s*<(!doctype|html|table|div|tr|tbody|ul|ol|section|body|main)\b/i.test(bodyText);
+    if (!looksHtml) return;
+    const html = bodyText.length > 500000 ? bodyText.slice(0, 500000) : bodyText;
+    window.postMessage({ __habeas: true, type: 'sample', host: hostOf(url), path, url: abs, method: method || 'GET', status: status || 0, reqHeaders: rh, kind: 'html', html, reqBody: body, fromHtml: true }, '*');
   }
   // Lightweight "we saw a request" ping (host only) — powers the record-mode diagnostic.
   function postSeen(url) { if (LEARN) try { window.postMessage({ __habeas: true, type: 'seen', host: hostOf(url) }, '*'); } catch (e) {} }
@@ -104,8 +115,9 @@
         p.then((res) => {
           try {
             const ct = (res.headers.get('content-type') || '').toLowerCase();
-            if (isPdfLike(ct, url)) postAsset(url, { method, reqType: headers && headers['content-type'], reqBody: (init && typeof init.body === 'string') ? init.body : '', status: res.status });
-            else res.clone().text().then((t) => postSample(url, method, res.status, headers, t));
+            const rb = (init && typeof init.body === 'string') ? init.body : '';
+            if (isPdfLike(ct, url)) postAsset(url, { method, reqType: headers && headers['content-type'], reqBody: rb, status: res.status });
+            else res.clone().text().then((t) => postSample(url, method, res.status, headers, t, ct, rb));
           } catch (e) {}
         }).catch(() => {});
       } catch (e) {}
@@ -123,7 +135,7 @@
           if (!LEARN) return;
           const ct = ((this.getResponseHeader && this.getResponseHeader('content-type')) || '').toLowerCase();
           if (isPdfLike(ct, this.__u)) postAsset(this.__u, { method: this.__m, reqType: this.__h['content-type'], reqBody: this.__body, status: this.status });
-          else postSample(this.__u, this.__m, this.status, this.__h, this.responseText);
+          else postSample(this.__u, this.__m, this.status, this.__h, this.responseText, ct, this.__body);
         } catch (e) {}
       });
     } catch (e) {}

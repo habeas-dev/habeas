@@ -21,6 +21,20 @@
       if (text) chrome.runtime.sendMessage({ type: 'habeas:dom', domain: PAGE_DOMAIN, url: location.href, text });
     } catch (e) {}
     captureEmbeddedJson();
+    captureMainHtml();
+  }
+
+  // Pure server-rendered (SSR) pages carry their data as HTML tables/rows in the document itself —
+  // no XHR to sample. Capture the rendered document HTML (capped) so the inference can draft a
+  // from:'html' source from it too. Only sent when the page actually contains repeated markup, and
+  // never includes cookies (outerHTML doesn't expose document.cookie).
+  function captureMainHtml() {
+    try {
+      const html = (document.documentElement && document.documentElement.outerHTML) || '';
+      if (html && /<(table|tbody|tr|li|article|section)\b/i.test(html)) {
+        chrome.runtime.sendMessage({ type: 'habeas:sample', domain: PAGE_DOMAIN, sample: { url: location.href, method: 'GET', status: 200, reqHeaders: {}, kind: 'html', html: html.length > 500000 ? html.slice(0, 500000) : html, fromHtml: true } });
+      }
+    } catch (e) {}
   }
 
   // SSR frameworks (Vike, Next, Nuxt, Inertia…) put the page's loaded data in a <script
@@ -53,7 +67,7 @@
     if (ev.source !== window || !d || !d.__habeas) return;
     if (d.type === 'hook-ready') syncLearn();               // (re)send arm state once the hook is live
     else if (d.type === 'auth') chrome.runtime.sendMessage({ type: 'habeas:auth', host: d.host, path: d.path, headers: d.headers });
-    else if (d.type === 'sample') chrome.runtime.sendMessage({ type: 'habeas:sample', domain: PAGE_DOMAIN, sample: { url: d.url, method: d.method, status: d.status, reqHeaders: d.reqHeaders, json: d.json } });
+    else if (d.type === 'sample') chrome.runtime.sendMessage({ type: 'habeas:sample', domain: PAGE_DOMAIN, sample: { url: d.url, method: d.method, status: d.status, reqHeaders: d.reqHeaders, json: d.json, kind: d.kind, html: d.html, reqBody: d.reqBody, fromHtml: d.fromHtml } });
     else if (d.type === 'asset') chrome.runtime.sendMessage({ type: 'habeas:asset', domain: PAGE_DOMAIN, asset: { url: d.url, method: d.method, reqType: d.reqType, reqBody: d.reqBody, referer: d.referer, status: d.status } });
     else if (d.type === 'seen') chrome.runtime.sendMessage({ type: 'habeas:seen', domain: PAGE_DOMAIN, host: d.host });
   });

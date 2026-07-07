@@ -5,6 +5,12 @@
 // hook. We pick the response that looks like a document list (the biggest array of objects),
 // locate it (itemsPath), guess pagination, and guess the field mapping. Everything is a guess the
 // user can override; nothing here is trusted blindly.
+//
+// Two families of samples are handled: JSON responses (the classic SPA-API case) and HTML samples
+// — an AJAX endpoint that returns an HTML table fragment, OR the whole server-rendered (SSR) page
+// captured as `kind:'html'`. For HTML we detect the repeated row structure and draft a `from:'html'`
+// list with a declarative `rows` config that the runtime's `parseHtmlItems` consumes AS-IS.
+import { parseHtmlItems } from './inventory.js';
 
 // Flatten an object's leaf + shallow-object keys to dotted paths with a sample value.
 export function flattenKeys(obj, prefix = '', depth = 2, out = []) {
@@ -40,9 +46,13 @@ function deepIncludes(node, needle, depth = 6) {
 export function matchCandidates(samples, query) {
   const q = String(query || '').trim().toLowerCase();
   if (!q) return [];
-  return collect(samples)
+  const json = collect(samples)
     .filter((c) => c.items.some((it) => deepIncludes(it, q)))
     .map((c) => ({ key: c.key, url: c.s.url, itemsPath: c.itemsPath, count: c.len, pages: c.pages }));
+  const html = collectHtml(samples)
+    .filter((c) => c.items.some((it) => Object.values(it).some((v) => String(v).toLowerCase().includes(q))))
+    .map((c) => ({ key: c.key, url: c.s.url, itemsPath: '', count: c.len, pages: 1 }));
+  return [...json, ...html];
 }
 
 // Depth-first search for the first path whose leaf key matches a regex (returns dotted path).
@@ -115,13 +125,234 @@ function collect(samples) {
     .sort((x, y) => y.len - x.len);
 }
 
-// Public: the candidate lists for the picker UI.
+// ---------------------------------------------------------------------------------------------
+// HTML inference (SSR pages / AJAX-that-returns-HTML). Heuristic and deliberately scoped to the
+// common "table of documents with a per-row PDF" shape (the Bip&Drive case). Exotic layouts are
+// left unhandled with a TODO rather than mis-drafted.
+// ---------------------------------------------------------------------------------------------
+const escRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const stripHtml = (s) => String(s || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+// A single capturing group each — reused verbatim inside the generated `each` regex string.
+const H_DATE = '([0-9]{1,2}/[0-9]{1,2}/[0-9]{2,4}|[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}\\s+(?:de\\s+)?[A-Za-zÁÉÍÓÚáéíóúñ]{3,}\\.?(?:\\s+(?:de\\s+)?[0-9]{4})?)';
+const H_MONEY = '([0-9][0-9.,]*\\s*(?:€|EUR|\\$|£))';
+const H_MONEY_NOCAP = '(?:[0-9][0-9.,]*\\s*(?:€|EUR|\\$|£))';
+const H_DATE_RE = /([0-9]{1,2}\/[0-9]{1,2}\/[0-9]{2,4}|[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}\s+(?:de\s+)?[A-Za-zÁÉÍÓÚáéíóúñ]{3,}\.?(?:\s+(?:de\s+)?[0-9]{4})?)/;
+const H_MONEY_RE = /[0-9][0-9.,]*\s*(?:€|EUR|\$|£)/i;
+const GAP = '[\\s\\S]{0,2500}?';
+const mode = (arr) => { const m = {}; let best = null, bn = 0; for (const x of arr) { m[x] = (m[x] || 0) + 1; if (m[x] > bn) { bn = m[x]; best = x; } } return best; };
+const htmlBody = (s) => (s && (s.kind === 'html' || typeof s.html === 'string') ? s.html : null);
+
+// The largest <table> (by row count) and its rows. Most services render "one document per <tr>".
+function largestTable(html) {
+  const tables = (String(html || '').match(/<table[\s\S]*?<\/table>/gi) || [])
+    .map((t) => ({ html: t, trs: t.match(/<tr[\s\S]*?<\/tr>/gi) || [] }))
+    .sort((a, b) => b.trs.length - a.trs.length);
+  return tables[0] || null;
+}
+function rowCells(tr) {
+  return [...String(tr).matchAll(/<(td|th)\b([^>]*)>([\s\S]*?)<\/\1>/gi)]
+    .map((m) => ({ tag: m[1].toLowerCase(), attrs: m[2] || '', inner: m[3] || '', text: stripHtml(m[3]), offset: m.index }));
+}
+// A class token shaped like `veh_mat_0` → its stable base `veh_mat` (the `_N` suffix varies per row).
+function suffixClassBase(attrs) {
+  const cm = /class=["']([^"']+)["']/i.exec(attrs || '');
+  if (!cm) return null;
+  for (const tok of cm[1].split(/\s+/)) { const t = /^([A-Za-z][\w-]*?)_(\d+)$/.exec(tok); if (t) return t[1]; }
+  return null;
+}
+// Class-anchored field extractor: `veh_mat_\d+ … > <capture>` — robust across rows (the digit varies).
+const classAnchor = (base, cap) => escRe(base) + '_\\d+\\b[^>]*>\\s*' + cap;
+
+// Infer a `rows` config + a PDF endpoint from one HTML body. Returns null when no table-of-rows is
+// found (caller logs & skips — see TODO for non-table repeated blocks).
+function inferHtmlRows(html) {
+  const H = String(html || '');
+  const tbl = largestTable(H);
+  if (!tbl || tbl.trs.length < 2) return null; // TODO: repeated non-<table> blocks (cards/list items)
+  const dataTrs = tbl.trs.filter((tr) => !/<th\b/i.test(tr) && (H_DATE_RE.test(stripHtml(tr)) || H_MONEY_RE.test(stripHtml(tr))));
+  if (!dataTrs.length) return null;
+  const rep = dataTrs.find((tr) => H_DATE_RE.test(stripHtml(tr))) || dataTrs[0];
+  const cells = rowCells(rep);
+
+  // Row anchor: prefer a shared numeric-suffix class on the <tr> (veh_0/veh_1…); else any <tr>.
+  const rowBases = dataTrs.map((tr) => suffixClassBase((/<tr\b([^>]*)>/i.exec(tr) || [])[1])).filter(Boolean);
+  const rowBase = rowBases.length ? mode(rowBases) : null;
+  const rowAnchor = rowBase ? '<tr\\b[^>]*\\b' + escRe(rowBase) + '_\\d+' : '<tr\\b[^>]*>';
+
+  const fields = []; // { name, offset, anchor } — anchor has exactly ONE capture group
+
+  // Date — required. Anchor on the cell's suffix-class when it has one, else capture the first date.
+  const dateCell = cells.find((c) => H_DATE_RE.test(c.text));
+  if (!dateCell) return null;
+  const dBase = suffixClassBase(dateCell.attrs);
+  fields.push({ name: 'date', offset: dateCell.offset, anchor: dBase ? classAnchor(dBase, H_DATE) : H_DATE });
+
+  // Total — the LAST money cell in the row (base/tax precede it). Anchor on its class when distinctive,
+  // else (one money cell) capture it directly, else skip the earlier money cells to reach the last.
+  const moneyCells = cells.filter((c) => H_MONEY_RE.test(c.text));
+  if (moneyCells.length) {
+    const totalCell = moneyCells[moneyCells.length - 1];
+    const tBase = suffixClassBase(totalCell.attrs);
+    let anchor;
+    if (tBase) anchor = classAnchor(tBase, H_MONEY);
+    else if (moneyCells.length === 1) anchor = H_MONEY;
+    else anchor = '(?:' + H_MONEY_NOCAP + '[\\s\\S]*?){' + (moneyCells.length - 1) + '}' + H_MONEY;
+    fields.push({ name: 'total', offset: totalCell.offset, anchor });
+  }
+
+  // Public number — a title="CI…" attribute (the human-facing invoice/ticket number). Prefix-anchored.
+  const titleCell = cells.find((c) => {
+    const tv = (/title=["']([^"']+)["']/i.exec(c.attrs) || [])[1] || '';
+    return /^[A-Za-z]{1,4}[\w-]*\d/.test(tv);
+  });
+  if (titleCell) {
+    const tv = (/title=["']([^"']+)["']/i.exec(titleCell.attrs) || [])[1] || '';
+    const prefix = (tv.match(/^[A-Za-z]+/) || [''])[0];
+    fields.push({ name: 'number', offset: titleCell.offset, anchor: 'title="(' + escRe(prefix) + '[^"]*)"' });
+  }
+
+  // PDF: a <form> whose submit downloads a PDF (hidden inputs → templated body), else a <a href="*.pdf">.
+  let pdf = null;
+  const formM = /<form\b[^>]*>[\s\S]*?<\/form>/i.exec(rep);
+  const linkM = /<a\b[^>]*href=["']([^"']*\.pdf[^"']*)["']/i.exec(rep);
+  if (formM) {
+    const form = formM[0];
+    const action = (/action=["']([^"']*)["']/i.exec(form) || [])[1] || '';
+    const bodyParts = [];
+    for (const m of form.matchAll(/<input\b([^>]*)>/gi)) {
+      const a = m[1];
+      const name = (/name=["']([^"']+)["']/i.exec(a) || [])[1];
+      const value = (/value=["']([^"']*)["']/i.exec(a) || [])[1];
+      if (!name || value == null) continue;
+      const nameFirst = a.search(/name=/i) < a.search(/value=/i);
+      const anchor = nameFirst
+        ? 'name="' + escRe(name) + '"[^>]*?value="([^"]+)"'
+        : 'value="([^"]+)"[^>]*?name="' + escRe(name) + '"';
+      // Offset within the representative row: form start + the input's position inside the form.
+      fields.push({ name, offset: formM.index + Math.max(0, form.search(new RegExp('name=["\']' + escRe(name))), form.indexOf(m[0])), anchor });
+      bodyParts.push(name + '={' + name + '}'); // captured per-row → templated into the POST body
+    }
+    // Submit button/input (e.g. name="tipo" value="PDF") → a constant in the body.
+    for (const bm of [...form.matchAll(/<button\b([^>]*)>/gi), ...form.matchAll(/<input\b([^>]*type=["']submit["'][^>]*)>/gi)]) {
+      const a = bm[1];
+      const name = (/name=["']([^"']+)["']/i.exec(a) || [])[1];
+      const value = (/value=["']([^"']*)["']/i.exec(a) || [])[1];
+      if (name && value != null) bodyParts.push(name + '=' + value);
+    }
+    pdf = { path: action && action !== '.' ? action : '/', method: 'POST', body: bodyParts.join('&'), ext: 'pdf' };
+  } else if (linkM) {
+    fields.push({ name: 'href', offset: rep.indexOf(linkM[0]), anchor: 'href=["\']([^"\']*\\.pdf[^"\']*)["\']' });
+    pdf = { path: '{internalId}', method: 'GET', ext: 'pdf' };
+  }
+
+  // Assemble the `each` regex in DOM order; each field owns the i-th capture group.
+  fields.sort((a, b) => a.offset - b.offset);
+  const each = rowAnchor + fields.map((f) => GAP + f.anchor).join('');
+  const rowsFields = {};
+  fields.forEach((f, i) => { rowsFields[f.name] = { group: i + 1 }; });
+  const rows = { each, fields: rowsFields };
+
+  // Validate the generated regex against the SAME html via the real runtime parser (no fork). If it
+  // yields nothing, the heuristic failed — bail so we never emit a broken source.
+  let items = [];
+  try { items = parseHtmlItems(H, rows); } catch (e) { return null; }
+  if (!items.length) return null;
+
+  const has = (n) => fields.some((f) => f.name === n);
+  const internalId = has('href') ? 'href' : has('number') ? 'number' : has('id_factura') ? 'id_factura' : 'date';
+  return { rows, pdf, items, internalId, hasNumber: has('number'), hasTotal: has('total') };
+}
+
+// Page/offset paging for an HTML list: from a `page`-like query param OR (AJAX POST) request body.
+function deduceHtmlPaging(u, reqBody, method) {
+  const PAGE_KEY = /^(page|pagina|pag|pageno|pagenumber|p)$/i;
+  const OFFSET_KEY = /^(offset|start|from)$/i;
+  for (const [k, v] of u.searchParams) {
+    if (PAGE_KEY.test(k) && /^\d+$/.test(v)) return { paging: 'page', list: { pageParam: k, pageStart: Number(v) || 1 } };
+    if (OFFSET_KEY.test(k) && /^\d+$/.test(v)) return { paging: 'offset', list: { offsetParam: k, offsetStart: 0 } };
+  }
+  if (reqBody && /=/.test(reqBody)) {
+    for (const [k, v] of new URLSearchParams(reqBody)) {
+      if (PAGE_KEY.test(k) && /^\d+$/.test(v)) {
+        const body = reqBody.replace(new RegExp('(^|&)(' + escRe(k) + ')=[^&]*'), (m, pre, key) => pre + key + '={' + key + '}');
+        return { paging: 'page', list: { pageParam: k, pageStart: Number(v) || 1 }, body };
+      }
+    }
+  }
+  return { paging: 'none', list: {} };
+}
+
+// Every HTML sample that yields a usable rows config, as a candidate (mirrors collect()'s shape).
+function collectHtml(samples) {
+  const out = [];
+  for (const s of samples || []) {
+    const html = htmlBody(s);
+    if (!html) continue;
+    let info; try { info = inferHtmlRows(html); } catch (e) { info = null; }
+    if (!info || !info.items.length) continue;
+    let host = '', path = '';
+    try { const u = new URL(s.url); host = u.host; path = u.pathname; } catch (e) {}
+    out.push({ isHtml: true, key: keyOf(s.url, '#html'), s, host, path, info, len: info.items.length, item: info.items[0], items: info.items });
+  }
+  return out.sort((a, b) => b.len - a.len);
+}
+
+// Build an adapter draft from a chosen HTML candidate. Same return shape as the JSON path.
+function draftHtml(best, ctx = {}) {
+  const s = best.s, info = best.info;
+  let u; try { u = new URL(s.url); } catch (e) { return { ok: false, reason: 'bad url' }; }
+  const host = u.host;
+  const domain = ctx.domain || host.split('.').slice(-2).join('.');
+  const pageHost = ctx.pageHost || domain;
+  const service = domain.split('.')[0];
+
+  // Cookie auth (HTML pages ride the browser session); replay any csrf/origin headers the SPA sent.
+  const reqHeaders = s.reqHeaders || {};
+  const captured = Object.keys(reqHeaders).filter((h) => HEADER_ALLOW.test(h) && h !== 'content-type' && h !== 'authorization');
+  const auth = { mode: 'cookie', replayHeaders: captured };
+
+  const method = (s.method || 'GET').toUpperCase();
+  const list = { from: 'html', path: u.pathname, paging: 'none', rows: info.rows };
+  if (method !== 'GET') list.method = method;
+  const pg = deduceHtmlPaging(u, s.reqBody, method);
+  Object.assign(list, pg.list);
+  list.paging = pg.paging;
+  if (pg.body != null) list.body = pg.body;
+  else if (method !== 'GET' && s.reqBody) list.body = s.reqBody;
+
+  const schema = /factura|invoice/i.test(s.html) ? 'invoice@1' : (/ticket|recibo|receipt/i.test(s.html) ? 'receipt@1' : 'invoice@1');
+  const fields = { internalId: info.internalId, date: 'date' };
+  if (info.hasNumber) fields.number = 'number';
+  if (info.hasTotal) fields.total = 'total';
+
+  const draft = {
+    id: domain.replace(/\./g, '-'),
+    name: service.charAt(0).toUpperCase() + service.slice(1) + ' — documents',
+    service,
+    trust: 'community',
+    domain,
+    categories: ['other'],
+    match: [u.protocol + '//' + pageHost + '/*'],
+    auth,
+    api: { host: u.protocol + '//' + host, list },
+    fields,
+    schema,
+  };
+  if (info.pdf) draft.api.pdf = info.pdf;
+
+  const fieldCandidates = Object.keys(best.item || {}).map((k) => ({ path: k, value: best.item[k] }));
+  return { ok: true, draft, fieldCandidates, itemsPath: 'HTML rows', host, count: best.len };
+}
+
+// Public: the candidate lists for the picker UI (JSON + HTML), biggest first.
 export function listCandidates(samples) {
-  return collect(samples).map((c) => {
+  const json = collect(samples).map((c) => {
     let host = '', path = '';
     try { const u = new URL(c.s.url); host = u.host; path = u.pathname; } catch (e) {}
     return { key: c.key, url: c.s.url, host, path, itemsPath: c.itemsPath, count: c.len, pages: c.pages, keys: Object.keys(c.item || {}) };
   });
+  const html = collectHtml(samples).map((c) => ({ key: c.key, url: c.s.url, host: c.host, path: c.path, itemsPath: '', count: c.len, pages: 1, keys: Object.keys(c.item || {}), html: true }));
+  return [...json, ...html].sort((a, b) => (b.count || 0) - (a.count || 0));
 }
 
 function getPath(obj, path) {
@@ -270,10 +501,11 @@ function deducePaging(best, s, u) {
 // Build an adapter draft. `ctx` = { domain, pageHost, assets }. `chosen` (optional) = { key }
 // picks a specific captured list; without it the biggest is used.
 export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
-  const cand = collect(samples);
+  const cand = [...collect(samples), ...collectHtml(samples)].sort((a, b) => b.len - a.len);
   if (!cand.length) return { ok: false, reason: 'no list-like response captured' };
   let best = cand[0];
   if (chosen) { const f = cand.find((c) => (chosen.key ? c.key === chosen.key : c.s.url === chosen.url && c.itemsPath === chosen.itemsPath)); if (f) best = f; }
+  if (best.isHtml) return draftHtml(best, ctx);
   const s = best.s;
   const u = new URL(s.url);
   const host = u.host;
