@@ -4,7 +4,8 @@ import { listGroups } from '../runtime/inventory.js';
 import { t } from '../lib/i18n.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const groupLabel = (g, i) => g.name || g.alias || g.cardMask || g.iban || (t('group_n', [String(i + 1)]) + (g.id ? ' · …' + String(g.id).slice(-4) : ''));
+const groupLabel = (g, i) => [g.name || g.alias, g.mask || g.cardMask || g.iban].filter(Boolean).join(' ').trim()
+  || (t('group_n', [String(i + 1)]) + (g.id ? ' · …' + String(g.id).slice(-4) : ''));
 
 export async function pickGroup(adapter, auth, net) {
   if (!(adapter.api && adapter.api.groups)) return undefined; // no groups → list everything (as before)

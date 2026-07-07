@@ -548,10 +548,13 @@ const escapeRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // `row` class marker to the next; a field is the first element carrying a class (sel) / a tag / an attribute / a regex group.
 export function parseHtmlItems(html, cfg) {
   if (!cfg) return [];
+  // Collapse whitespace so patterns are robust to the huge \r\n+indent runs in server-rendered (AEM)
+  // markup — otherwise a bounded gap in an `each` regex (link → label) never reaches its target.
+  html = String(html || '').replace(/\s+/g, ' ');
   // `each` regex mode: each match is a row; fields map to capture groups ({group:1}) or sub-extract from m[0].
   if (cfg.each) {
     const re = new RegExp(cfg.each, 'g'), out = []; let m;
-    while ((m = re.exec(html || ''))) {
+    while ((m = re.exec(html))) {
       const o = {}; for (const k of Object.keys(cfg.fields || {})) { const f = cfg.fields[k]; o[k] = f.group != null ? (m[f.group] || '') : extractField(m[0], f); }
       out.push(o);
     }
