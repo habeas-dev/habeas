@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const rootDir = path.resolve(__dirname, '../..');
 const docsDir = path.resolve(__dirname, '../../docs');
 const sectionMarkers = [
   'id="sources-preview"',
@@ -164,8 +165,9 @@ test('landing page i18n keys exist in both languages', async () => {
 });
 
 test('architecture page is public and renders the canonical ARCHITECTURE.md source', async () => {
-  const [architectureHtml, indexHtml, privacyHtml, sourcesHtml, termsHtml, whyHtml] = await Promise.all([
+  const [architectureHtml, architectureEsMarkdown, indexHtml, privacyHtml, sourcesHtml, termsHtml, whyHtml] = await Promise.all([
     fs.readFile(path.join(docsDir, 'architecture.html'), 'utf8'),
+    fs.readFile(path.join(rootDir, 'ARCHITECTURE.es.md'), 'utf8'),
     fs.readFile(path.join(docsDir, 'index.html'), 'utf8'),
     fs.readFile(path.join(docsDir, 'privacy.html'), 'utf8'),
     fs.readFile(path.join(docsDir, 'sources.html'), 'utf8'),
@@ -178,15 +180,47 @@ test('architecture page is public and renders the canonical ARCHITECTURE.md sour
   assert.match(architectureHtml, /<meta property="og:title" content="Habeas Architecture" \/>/);
   assert.match(architectureHtml, /<meta property="og:description" content="Technical architecture and design principles behind Habeas\." \/>/);
   assert.match(architectureHtml, /<link rel="canonical" href="https:\/\/habeas\.dev\/architecture\.html" \/>/);
-  assert.match(architectureHtml, /const ARCHITECTURE_MD_URL = 'https:\/\/raw\.githubusercontent\.com\/habeas-dev\/habeas\/main\/ARCHITECTURE\.md';/);
+  assert.match(architectureHtml, /const ARCHITECTURE_MD_URL_EN = 'https:\/\/raw\.githubusercontent\.com\/habeas-dev\/habeas\/main\/ARCHITECTURE\.md';/);
+  assert.match(architectureHtml, /const ARCHITECTURE_MD_URL_ES = 'https:\/\/raw\.githubusercontent\.com\/habeas-dev\/habeas\/main\/ARCHITECTURE\.es\.md';/);
   assert.match(architectureHtml, /const MARKDOWN_RENDER_URL = 'https:\/\/api\.github\.com\/markdown';/);
   assert.match(architectureHtml, /mode:\s*'gfm'/);
   assert.match(architectureHtml, /context:\s*'habeas-dev\/habeas'/);
   assert.match(architectureHtml, /id="architecture-content"/);
-  assert.match(architectureHtml, /Loading ARCHITECTURE\.md…/);
+  assert.match(architectureHtml, /Loading architecture…/);
+  assert.match(architectureHtml, /class="langswitch"/);
+  assert.match(architectureHtml, /data-lang="en"/);
+  assert.match(architectureHtml, /data-lang="es"/);
+  assert.match(architectureEsMarkdown, /^# Arquitectura de Habeas/m);
 
   for (const page of [indexHtml, privacyHtml, sourcesHtml, termsHtml, whyHtml]) {
     assert.match(page, /href="\/architecture\.html"/);
+  }
+});
+
+test('secondary pages share a coherent top navigation menu', async () => {
+  const [architectureHtml, privacyHtml, sourcesHtml, termsHtml, whyHtml] = await Promise.all([
+    fs.readFile(path.join(docsDir, 'architecture.html'), 'utf8'),
+    fs.readFile(path.join(docsDir, 'privacy.html'), 'utf8'),
+    fs.readFile(path.join(docsDir, 'sources.html'), 'utf8'),
+    fs.readFile(path.join(docsDir, 'terms.html'), 'utf8'),
+    fs.readFile(path.join(docsDir, 'why-habeas.html'), 'utf8'),
+  ]);
+  const pages = [architectureHtml, privacyHtml, sourcesHtml, termsHtml, whyHtml];
+  const navLinks = [
+    'href="/"',
+    'href="/why-habeas.html"',
+    'href="/sources.html"',
+    'href="/architecture.html"',
+    'href="/privacy.html"',
+    'href="/terms.html"',
+    'href="https://github.com/habeas-dev/habeas"',
+  ];
+
+  for (const html of pages) {
+    for (const link of navLinks) {
+      assert.ok(html.includes(link), `missing nav link ${link}`);
+    }
+    assert.match(html, /class="langswitch"/);
   }
 });
 
