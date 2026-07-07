@@ -1,103 +1,244 @@
 # Habeas
 
-> *Habeas data* — the right to your own data, made executable.
+> *Habeas data* — making your right to your own data executable.
 
-**Habeas** is an open-source browser extension that lets you extract **your own**
-personal data — receipts, invoices, card and investment transactions — from
-services that lock it behind non-automatable walls (Cloudflare, Akamai, …) and
-offer neither an API nor an email export.
+**Habeas** is an open-source, local-first runtime that lets you retrieve **your own data** from websites that offer no API, no bulk export, or intentionally make automation difficult.
 
-Unlike server-side aggregators, Habeas runs **inside your own browser session**:
+It runs **inside your own authenticated browser session**, where you already have access to your data, and delivers that data wherever **you** choose.
 
-- No anti-bot fight — it's your browser and your IP, already trusted.
-- No stored credentials — you log in yourself.
-- MFA/OTP handled by you, live.
-- **Local-first** — your data goes only where *you* decide.
+Unlike server-side aggregators, Habeas never asks for your credentials, never logs in on your behalf, and never receives your personal data.
 
-Per-service **adapters** are mostly declarative (data, not code), so they can be
-audited and contributed by the community. Output is **normalized per domain**
-(receipt, transaction, invoice, …) so any consumer can ingest it.
+---
 
-## Status
+## Why Habeas exists
 
-**Working alpha** — a real Manifest V3 extension (Chrome/Chromium **and** Firefox) with
-its first data source live end-to-end.
+Many websites already contain your personal data:
 
-**Data sources**
+- receipts
+- invoices
+- bank statements
+- investment reports
+- tax documents
+- transaction history
 
-- **Carrefour España** — in-store tickets (and online orders) from your logged-in account.
+In theory, that data belongs to you.
 
-**Destinations (sinks)**
+In practice, many providers make large-scale export difficult:
 
-- **Downloads** — a single ZIP of PDFs + a normalized `manifest.json`.
-- **Local folder** — via File System Access; point it at a Drive/Dropbox-synced folder for cloud with zero setup.
-- **Google Drive** — native upload (OAuth scope `drive.file`) into a `Habeas/<service>/<year>/` tree + a cumulative manifest.
-- **HTTP** — POST normalized records + PDFs to your own endpoint (e.g. another app).
+- no API;
+- no email export;
+- aggressive anti-bot protection;
+- short document retention periods.
 
-**Also:** an inventory that marks *new* vs *already-sent* with per-sink dedupe; an
-**automatic mode** that syncs new documents to Drive/HTTP when you log in; a desktop
-notification + activity log; and a fully **internationalized** UI (English / Spanish).
+Habeas exists to bridge that gap.
 
-Site: [habeas.dev](https://habeas.dev). This is early software — expect rough edges.
+It doesn't create new rights.
 
-## Install (developer / unpacked)
+It simply makes existing ones practical.
 
-**Chrome / Chromium** — `chrome://extensions` → enable *Developer mode* → **Load unpacked**
-→ pick the [`extension/`](./extension) folder.
+---
 
-**Firefox** — `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on** →
-pick `extension/manifest.json` (or the packaged `dist/habeas-<version>.zip`).
+# How it works
 
-Then open the toolbar icon → **Settings**, enable the **Carrefour** data source, and add a
-destination. See [`extension/README.md`](./extension/README.md) for details.
+Habeas runs entirely inside your browser.
 
-> Browser notes: the **local folder** sink needs the File System Access API (Chromium;
-> Firefox falls back to Downloads / Drive), and the **Google Drive** OAuth redirect URL
-> differs per browser, so the shipped client currently targets Chromium.
+You authenticate yourself exactly as you normally would.
 
-## License
+Once authenticated, Habeas can retrieve your own documents and structured data without ever sending your credentials to anyone else.
 
-[AGPL-3.0-or-later](./LICENSE).
+```
+Websites (Sources)
+        │
+        ▼
+      Habeas
+  (local runtime)
+        │
+        ▼
+Destinations (Sinks)
 
+Folder • Downloads • Google Drive • HTTP • Your applications
+```
 
-## Legal & Privacy
+Everything happens locally.
 
-> **Short version:** Habeas is a tool for exercising *your own* data rights. It runs entirely in your browser, under your own login, and never sends your data or credentials to us or anyone else. It is not a scraper-for-hire, and it is not legal advice.
+No remote login.
 
-### The premise: it's your data
+No credential vault.
 
-In the EU/EEA, the GDPR already grants you a right of access to your personal data (Article 15) and a right to data portability — to receive your data "in a structured, commonly used and machine-readable format" (Article 20). Many services technically comply on paper while making bulk export practically impossible: no API, no email export, and a web interface guarded by anti-automation walls (Cloudflare, Akamai, and friends).
+No cloud scraper.
 
-Habeas exists to close that gap. It doesn't grant you any right you don't already have; it just makes an existing right *executable*.
+---
 
-### Why the architecture matters legally
+# Sources and Sinks
 
-Habeas is deliberately designed to stay on the right side of the line that separates "a person accessing their own account" from "a third party accessing accounts on other people's behalf":
+Habeas separates **where data comes from** from **where data goes**.
 
-- **You log in yourself.** Habeas never sees, handles, or stores your credentials. There is no server-side login, no credential vault, no shared secret.
-- **It runs in your own authenticated session.** The extraction happens in your browser, on your IP, after *you* have signed in and cleared any MFA/OTP challenge. There is no impersonation and no authentication bypass.
-- **Local-first.** Extracted data goes only where you tell it to. The Habeas project operates no aggregation servers and never receives your data. You remain the sole controller of what you export.
-- **You access only your own data.** Habeas is not a mechanism for reaching anyone else's account or records.
+## Sources
 
-This is a materially different posture from server-side aggregators that store user credentials and log in remotely — the model that regulators and banks have spent years pushing the industry *away* from.
+A Source knows how to retrieve data from one specific website.
 
-### The honest caveats
+Examples include:
 
-We would rather be straight with you than oversell the safety of this:
+- supermarkets
+- banks
+- brokers
+- online services
 
-- **Terms of Service.** Many providers prohibit "automated access" to their services in their terms — sometimes even when it's your own account and your own session. Using Habeas may therefore breach a provider's terms. In the EU this is generally a *contractual* matter (in the worst case, a provider could restrict or close an account) rather than a criminal one, but the risk is real and it is yours to weigh. Habeas does not, and cannot, override a contract you agreed to.
-- **This is not legal advice.** Data-protection law, and the rules on automated access, vary by country and change over time. The GDPR framing above applies to the EU/EEA. Elsewhere — for example under the US Computer Fraud and Abuse Act — the analysis can be very different. If anything here matters to you materially, consult a qualified lawyer in your jurisdiction.
-- **You are responsible for what you extract.** Once data lands on your device, you are its controller. Storing financial or personal records securely — and deleting them when you no longer need them — is on you.
+Each Source produces its own native outputs.
 
-### What Habeas deliberately will not do
+Depending on the service, those outputs may include:
 
-To keep that line bright, Habeas by design does **not**:
+- PDFs
+- spreadsheets
+- structured JSON
+- images
+- other provider-specific formats
 
-- store, transmit, or ask for your credentials;
-- log in on your behalf from a server;
-- bypass, defeat, or automate away authentication or MFA;
-- access data belonging to anyone but the logged-in user;
-- send your extracted data anywhere you did not explicitly choose.
+Habeas deliberately does **not** convert or normalize these documents.
 
-If a proposed feature would cross any of these lines, it does not belong in Habeas.
+The provider's data remains exactly as produced.
 
+---
+
+## Sinks
+
+A Sink decides where retrieved data goes.
+
+Current sinks include:
+
+- Downloads
+- Local folders
+- Google Drive
+- HTTP endpoints
+
+Applications can also integrate with Habeas to receive user-authorized data without implementing provider-specific authentication and extraction logic.
+
+---
+
+# One interface, native data
+
+Habeas standardizes **access**, not **documents**.
+
+Every Source may expose different outputs.
+
+What remains consistent is the way Sources and Sinks communicate.
+
+Applications integrate once with Habeas instead of once per provider.
+
+---
+
+# Growing the ecosystem
+
+Sources are independent from the runtime.
+
+Adding support for a new website does not require changing Habeas itself.
+
+To make this scalable, Habeas includes a **session recorder** that helps infer new Source definitions from real browsing sessions.
+
+The typical workflow is:
+
+1. Perform the normal workflow on a website.
+2. Record the session.
+3. Review the inferred Source definition.
+4. Refine it if necessary.
+5. Optionally contribute it back to the community.
+
+The goal is to make supporting new websites increasingly community-driven.
+
+---
+
+# Why local-first matters
+
+The architecture is deliberate.
+
+Unlike traditional aggregators:
+
+- you log in yourself;
+- MFA remains unchanged;
+- credentials never leave your browser;
+- Habeas operates no aggregation servers;
+- your data goes only where you choose.
+
+The browser is already trusted by the website.
+
+Habeas simply runs there.
+
+---
+
+# Current status
+
+**Working alpha**
+
+The project already includes:
+
+- a Manifest V3 extension;
+- Chrome/Chromium support;
+- Firefox support;
+- multiple production-ready Sources;
+- multiple Sinks;
+- automatic synchronization;
+- duplicate detection;
+- multilingual interface.
+
+The architecture is stable, but the catalog of supported Sources continues to grow.
+
+---
+
+# Installation
+
+## Chrome / Chromium
+
+1. Open `chrome://extensions`
+2. Enable **Developer Mode**
+3. Select **Load unpacked**
+4. Choose the `extension/` directory
+
+## Firefox
+
+1. Open `about:debugging`
+2. Choose **This Firefox**
+3. Select **Load Temporary Add-on**
+4. Open `extension/manifest.json`
+
+See the extension documentation for browser-specific details.
+
+---
+
+# Contributing
+
+There are many ways to contribute:
+
+- create new Source definitions;
+- improve existing Sources;
+- develop new Sinks;
+- improve documentation;
+- report bugs;
+- improve translations.
+
+Contributions of all sizes are welcome.
+
+---
+
+# Legal
+
+Habeas is designed to help users exercise their own data rights.
+
+It operates entirely within the user's authenticated browser session.
+
+It never stores credentials.
+
+It never performs remote logins.
+
+It never attempts to bypass authentication or MFA.
+
+However, some websites may prohibit automated access in their Terms of Service, even when accessing your own account.
+
+Using Habeas remains your own responsibility.
+
+Nothing in this project constitutes legal advice.
+
+---
+
+# License
+
+AGPL-3.0-or-later
