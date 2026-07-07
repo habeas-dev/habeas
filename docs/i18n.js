@@ -23,7 +23,7 @@ const I18N = {
     tagline: 'your data, in your hands',
     hero_h1: 'Export your own receipts, invoices and transactions.',
     hero_sub: 'Habeas runs inside your authenticated browser session, so you log in yourself, keep normal MFA, and never hand your credentials to a third-party server.',
-    hero_note: 'Use supported sources such as Carrefour España, then export to ZIP, local folders, Google Drive or HTTP.',
+    hero_note: 'Use multiple supported sources, then export to ZIP, local folders, Google Drive or HTTP.',
     feature_label: 'Highlights',
     feature_1: 'Runs in your browser',
     feature_2: 'You log in yourself',
@@ -32,6 +32,10 @@ const I18N = {
     feature_5: 'Open source',
     cta_get: 'View on GitHub',
     cta_how: 'See how it works',
+    sources_h2: 'Supported sources',
+    sources_lead: 'Already works with multiple services.',
+    sources_cta: 'View all supported sources →',
+    sources_count: 'Currently supports {count} sources',
     problem_h2: 'The practical problem',
     problem_lead: 'Many sites let you view your history, but make real export slow or impractical.',
     problem1_h: 'No API or bulk export',
@@ -109,7 +113,7 @@ const I18N = {
     tagline: 'tus datos, en tus manos',
     hero_h1: 'Exporta tus propios tickets, facturas y movimientos.',
     hero_sub: 'Habeas se ejecuta dentro de tu sesión autenticada del navegador: tú haces login, mantienes la MFA normal y nunca entregas tus credenciales a un servidor de terceros.',
-    hero_note: 'Usa fuentes compatibles como Carrefour España y exporta a ZIP, carpetas locales, Google Drive o HTTP.',
+    hero_note: 'Usa múltiples fuentes compatibles y exporta a ZIP, carpetas locales, Google Drive o HTTP.',
     feature_label: 'Puntos clave',
     feature_1: 'Corre en tu navegador',
     feature_2: 'Tú haces login',
@@ -118,6 +122,10 @@ const I18N = {
     feature_5: 'Código abierto',
     cta_get: 'Ver en GitHub',
     cta_how: 'Ver cómo funciona',
+    sources_h2: 'Fuentes disponibles',
+    sources_lead: 'Ya funciona con múltiples servicios.',
+    sources_cta: 'Ver todas las fuentes disponibles →',
+    sources_count: 'Actualmente soporta {count} fuentes',
     problem_h2: 'El problema práctico',
     problem_lead: 'Muchos sitios te dejan ver tu historial, pero hacen que exportarlo de verdad sea lento o poco práctico.',
     problem1_h: 'Sin API ni exportación masiva',
@@ -176,10 +184,24 @@ const I18N = {
   },
 };
 
+const SOURCES_INDEX = 'https://habeas-dev.github.io/sources/index.json';
+const SOURCE_PREVIEW_LIMIT = 8;
+const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+let LANG = 'en';
+let SOURCE_PREVIEW = [];
+let SOURCE_COUNT = 0;
+
 function detectLang() {
   const saved = localStorage.getItem('habeas-lang');
   if (saved && I18N[saved]) return saved;
   return (navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en';
+}
+
+function translate(lang, key, params = {}) {
+  const dict = I18N[lang] || I18N.en;
+  const value = dict[key];
+  if (value == null) return '';
+  return String(value).replace(/\{(\w+)\}/g, (_, token) => params[token] ?? '');
 }
 
 function safeUpdateMetaTag(selector, attr, value) {
@@ -188,7 +210,68 @@ function safeUpdateMetaTag(selector, attr, value) {
   el.setAttribute(attr, value);
 }
 
+function esc(value) {
+  return String(value == null ? '' : value).replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
+}
+
+function flag(code) {
+  if (!code) return '';
+  if (code === 'global') return '🌐';
+  if (!/^[a-z]{2}$/i.test(code)) return '';
+  return code.toUpperCase().replace(/./g, (char) => String.fromCodePoint(0x1F1E6 + char.charCodeAt(0) - 'A'.charCodeAt(0)));
+}
+
+function shuffleArray(sources) {
+  const pool = sources.slice();
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool;
+}
+
+function pickRandomSources(sources, count) {
+  return shuffleArray(sources).slice(0, count);
+}
+
+function previewCard(source) {
+  const country = typeof source.country === 'string' ? source.country : '';
+  return `<div class="src"><div class="top"><span class="name">${esc(source.name)}</span></div><div class="meta">${country ? `${flag(country)} ` : ''}${esc(source.service)}</div></div>`;
+}
+
+function isValidSource(source) {
+  return !!(source && typeof source.name === 'string' && typeof source.service === 'string');
+}
+
+function renderSourcePreview() {
+  const section = document.getElementById('sources-preview');
+  if (!section || !SOURCE_PREVIEW.length) return;
+  const count = document.getElementById('sources-preview-count');
+  const list = document.getElementById('sources-preview-list');
+  if (count) count.textContent = translate(LANG, 'sources_count', { count: SOURCE_COUNT });
+  if (list) list.innerHTML = SOURCE_PREVIEW.map(previewCard).join('');
+  section.hidden = false;
+}
+
+async function initSourcePreview() {
+  const section = document.getElementById('sources-preview');
+  if (!section) return;
+  try {
+    const response = await fetch(SOURCES_INDEX);
+    if (!response.ok) throw new Error('catalog fetch failed');
+    const data = await response.json();
+    const sources = Array.isArray(data?.sources) ? data.sources.filter(isValidSource) : [];
+    if (!sources.length) return;
+    SOURCE_COUNT = sources.length;
+    SOURCE_PREVIEW = pickRandomSources(sources, Math.min(SOURCE_PREVIEW_LIMIT, sources.length));
+    renderSourcePreview();
+  } catch (error) {
+    console.debug('Source catalog unavailable:', error);
+  }
+}
+
 function apply(lang) {
+  LANG = lang;
   const dict = I18N[lang] || I18N.en;
   document.documentElement.lang = lang;
   document.title = dict.title;
@@ -202,6 +285,7 @@ function apply(lang) {
   document.querySelectorAll('.langswitch button').forEach((b) => {
     b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
   });
+  renderSourcePreview();
 }
 
 function setLang(lang) {
@@ -214,4 +298,5 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.langswitch button').forEach((b) => {
     b.addEventListener('click', () => setLang(b.dataset.lang));
   });
+  initSourcePreview();
 });
