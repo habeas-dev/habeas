@@ -182,6 +182,9 @@ test('why habeas page is public, discoverable, and has concise philosophy conten
   assert.match(html, /Data sovereignty/);
   assert.match(html, /Privacy by design/);
   assert.match(html, /trust is earned through architecture, not requested through a password prompt/i);
+  assert.match(html, /<a href="\/">Home<\/a>/);
+  assert.match(html, /<a href="\/sources\.html">Sources<\/a>/);
+  assert.match(html, /<a href="\/privacy\.html">Privacy<\/a>/);
 
   for (const page of [indexHtml, privacyHtml, sourcesHtml, termsHtml]) {
     assert.match(page, /href="\/why-habeas\.html"/);
