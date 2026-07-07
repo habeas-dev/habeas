@@ -198,12 +198,13 @@ test('architecture page is public and renders the canonical ARCHITECTURE.md sour
 });
 
 test('secondary pages share a coherent top navigation menu', async () => {
-  const [architectureHtml, privacyHtml, sourcesHtml, termsHtml, whyHtml] = await Promise.all([
+  const [architectureHtml, privacyHtml, sourcesHtml, termsHtml, whyHtml, navI18n] = await Promise.all([
     fs.readFile(path.join(docsDir, 'architecture.html'), 'utf8'),
     fs.readFile(path.join(docsDir, 'privacy.html'), 'utf8'),
     fs.readFile(path.join(docsDir, 'sources.html'), 'utf8'),
     fs.readFile(path.join(docsDir, 'terms.html'), 'utf8'),
     fs.readFile(path.join(docsDir, 'why-habeas.html'), 'utf8'),
+    fs.readFile(path.join(docsDir, 'nav-i18n.js'), 'utf8'),
   ]);
   const pages = [architectureHtml, privacyHtml, sourcesHtml, termsHtml, whyHtml];
   const navLinks = [
@@ -221,7 +222,11 @@ test('secondary pages share a coherent top navigation menu', async () => {
       assert.ok(html.includes(link), `missing nav link ${link}`);
     }
     assert.match(html, /class="langswitch"/);
+    assert.match(html, /<script src="nav-i18n\.js"><\/script>/);
+    assert.match(html, /habeasApplyTopNavLanguage\?\.\(/);
   }
+  assert.match(navI18n, /'\/': 'Inicio'/);
+  assert.match(navI18n, /langswitch: 'Idioma'/);
 });
 
 test('sitemap includes all public website pages', async () => {
