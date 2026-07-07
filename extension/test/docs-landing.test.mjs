@@ -36,8 +36,9 @@ test('landing page keeps the new information hierarchy', async () => {
     'oss_h2',
   ].map((marker) => html.indexOf(marker));
 
-  positions.forEach((position, index) => {
-    assert.notEqual(position, -1, `missing section marker at index ${index}`);
+  ['problem_h2', 'how_h2', 'why_h2', 'dest_h2', 'id="install"', 'oss_h2'].forEach((marker, index) => {
+    const position = positions[index];
+    assert.notEqual(position, -1, `missing section marker '${marker}' at index ${index}`);
   });
   for (let i = 1; i < positions.length; i += 1) {
     assert.ok(positions[i - 1] < positions[i], 'sections should appear in the expected order');
