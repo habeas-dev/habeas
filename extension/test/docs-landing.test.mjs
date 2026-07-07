@@ -7,6 +7,14 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const docsDir = path.resolve(__dirname, '../../docs');
+const sectionMarkers = [
+  'problem_h2',
+  'how_h2',
+  'why_h2',
+  'dest_h2',
+  'id="install"',
+  'oss_h2',
+];
 
 async function loadLanding() {
   const [html, script] = await Promise.all([
@@ -27,16 +35,9 @@ async function loadLanding() {
 
 test('landing page keeps the new information hierarchy', async () => {
   const { html } = await loadLanding();
-  const positions = [
-    'problem_h2',
-    'how_h2',
-    'why_h2',
-    'dest_h2',
-    'id="install"',
-    'oss_h2',
-  ].map((marker) => html.indexOf(marker));
+  const positions = sectionMarkers.map((marker) => html.indexOf(marker));
 
-  ['problem_h2', 'how_h2', 'why_h2', 'dest_h2', 'id="install"', 'oss_h2'].forEach((marker, index) => {
+  sectionMarkers.forEach((marker, index) => {
     const position = positions[index];
     assert.notEqual(position, -1, `missing section marker '${marker}' at index ${index}`);
   });
