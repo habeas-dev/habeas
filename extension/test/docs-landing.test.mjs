@@ -39,7 +39,7 @@ test('landing page keeps the new information hierarchy', async () => {
 
   sectionMarkers.forEach((marker, index) => {
     const position = positions[index];
-    assert.notEqual(position, -1, `missing section marker '${marker}' at index ${index}`);
+    assert.notEqual(position, -1, `missing section marker '${marker}'`);
   });
   for (let i = 1; i < positions.length; i += 1) {
     assert.ok(positions[i - 1] < positions[i], 'sections should appear in the expected order');
