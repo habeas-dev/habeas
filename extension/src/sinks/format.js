@@ -3,8 +3,8 @@ import { renderPath } from '../lib/naming.js';
 
 export function pathFor(sink, d, opts, ext) {
   ext = ext || (opts && opts.ext) || 'pdf';
-  const group = groupDir(d); // grouped source (bank account/card) → its own top-level folder
-  const tpl = sink.pathTemplate || ((group ? '{group}/' : '') + '{service}/{yyyy}/{date}-{internalId}.{ext}');
+  const group = groupDir(d); // grouped source (bank account/card) → a subfolder under the service
+  const tpl = sink.pathTemplate || ('{service}/' + (group ? '{group}/' : '') + '{yyyy}/{date}-{internalId}.{ext}');
   return renderPath(tpl, {
     service: (opts && opts.service) || 'documents',
     date: (d.date || '').slice(0, 10),

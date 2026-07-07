@@ -5,7 +5,7 @@ import { sinkAcceptsArtifact, sourceFormats, pathFor } from '../src/sinks/format
 test('pathFor puts a grouped doc under a top-level group folder (name + last4)', () => {
   const doc = { internalId: 'ACC1|2026-06-23', date: '2026-06-23', _group: { name: 'WiZink Oro', mask: '**** **** **** 8765' } };
   const p = pathFor({}, doc, { service: 'wizink' }, 'xls');
-  assert.match(p, /^WiZink Oro 8765\/wizink\/2026\/2026-06-23-/); // group folder = name + last4
+  assert.match(p, /^wizink\/WiZink Oro 8765\/2026\/2026-06-23-/); // service first, then group folder (name + last4)
   assert.ok(p.endsWith('.xls'));
   const flat = pathFor({}, { internalId: 'x', date: '2026-01-01' }, { service: 's' }, 'pdf'); // no group → no group folder
   assert.equal(flat, 's/2026/2026-01-01-x.pdf');
