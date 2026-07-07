@@ -145,8 +145,12 @@
     (function () {
       const KEY = 'habeas-lang';
       const saved = localStorage.getItem(KEY);
-      const lang = (saved === 'en' || saved === 'es') ? saved
-        : ((navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en');
+      let lang = 'en';
+      if (saved === 'en' || saved === 'es') {
+        lang = saved;
+      } else if ((navigator.language || 'en').toLowerCase().startsWith('es')) {
+        lang = 'es';
+      }
       const btns = document.querySelectorAll('.langswitch button[data-lang]');
       function apply(l) {
         document.documentElement.lang = l;
