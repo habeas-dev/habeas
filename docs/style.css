@@ -52,8 +52,24 @@ header nav a { color: var(--ink); }
 .btn.dark:hover { background: var(--green-600); text-decoration: none; }
 
 /* Hero */
-.hero { background: radial-gradient(1200px 500px at 50% -10%, var(--green-600), var(--green-900)); color: #fff; text-align: center; padding: 84px 0 96px; }
-.hero .logo { width: 76px; height: 76px; margin-bottom: 20px; }
+.hero {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(1200px 500px at 50% -10%, var(--green-600), var(--green-900));
+  color: #fff;
+  text-align: center;
+  padding: 84px 0 96px;
+}
+.hero .wrap { position: relative; z-index: 1; }
+.hero .hero-bg-logo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(80vw, 560px);
+  transform: translate(-50%, -50%);
+  opacity: .08;
+  pointer-events: none;
+}
 .hero .tagline { color: #ffffffc0; font-size: 15px; margin: 0 0 20px; }
 .hero h1 { max-width: 640px; margin: 0 auto; font-size: clamp(34px, 6vw, 56px); font-weight: 700; }
 .hero p.sub { max-width: 700px; margin: 24px auto 0; font-size: 18px; color: #ffffffd8; }
