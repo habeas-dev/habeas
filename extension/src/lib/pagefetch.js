@@ -85,10 +85,29 @@ export function siteBaseUrl(adapter) {
 export async function ensureSiteFetch(adapter, { open = false } = {}) {
   const existing = await resolveSiteFetch(adapter);
   if (existing || !open) return existing;
+  // Opening a fresh tab = the user isn't already on the site. If the source opts in (auth.resetCookies —
+  // WiZink corrupts its own cookies and then 500s the login), wipe the site's cookies for a clean login.
+  if (adapter.auth && adapter.auth.resetCookies) { try { await clearSiteCookies(cookieDomain(adapter)); } catch (e) {} }
   let tab; try { tab = await chrome.tabs.create({ url: siteBaseUrl(adapter), active: true }); } catch (e) { return null; }
   if (!tab || tab.id == null) return null;
   await waitTabComplete(tab.id);
   return makePageFetch(tab.id);
+}
+
+const cookieDomain = (adapter) => (adapter.domain || ((adapter.api && adapter.api.host) || '').replace(/^https?:\/\//, '').replace(/[:/].*$/, ''));
+
+// Remove every cookie for a registrable domain (and its subdomains). Needs the `cookies` permission +
+// host access for the domain. Used to recover from a site whose corrupted cookies block a fresh login.
+export async function clearSiteCookies(domain) {
+  if (!(chrome.cookies && domain)) return 0;
+  let all = [];
+  try { all = await chrome.cookies.getAll({ domain }); } catch (e) { return 0; }
+  let n = 0;
+  for (const c of all) {
+    const url = (c.secure ? 'https://' : 'http://') + c.domain.replace(/^\./, '') + c.path;
+    try { await chrome.cookies.remove({ url, name: c.name, storeId: c.storeId }); n++; } catch (e) {}
+  }
+  return n;
 }
 async function waitTabComplete(tabId, timeoutMs = 15000) {
   const start = Date.now();

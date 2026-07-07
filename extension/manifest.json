@@ -1,14 +1,14 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extName__",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "__MSG_extDesc__",
   "default_locale": "en",
   "action": { "default_title": "Habeas", "default_icon": { "16": "icon-16.png", "48": "icon-48.png", "128": "icon-128.png" } },
   "icons": { "16": "icon-16.png", "48": "icon-48.png", "128": "icon-128.png" },
   "options_page": "src/ui/options.html",
   "background": { "service_worker": "src/background.js", "scripts": ["src/background.js"], "type": "module" },
-  "permissions": ["storage", "downloads", "identity", "notifications", "scripting", "declarativeNetRequestWithHostAccess"],
+  "permissions": ["storage", "downloads", "identity", "notifications", "scripting", "declarativeNetRequestWithHostAccess", "cookies"],
   "host_permissions": [
     "https://www.carrefour.es/*",
     "https://pro.api.carrefour.es/*",

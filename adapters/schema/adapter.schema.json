@@ -48,6 +48,7 @@
       "properties": {
         "mode": { "enum": ["bearer", "cookie"], "description": "bearer = replay the captured JWT; cookie = rely on the browser's cookies (credentials:include). Endpoints may mix (e.g. cookie list + bearer PDF)." },
         "tokenMatch": { "type": "string", "description": "Substring the captured Authorization must contain to be a real user token (e.g. eyJ)." },
+        "resetCookies": { "type": "boolean", "description": "When a tab is opened for a logged-out session, wipe the site's cookies first — recovers from a site that corrupts its own cookies and 500s the login (e.g. WiZink). Needs the `cookies` permission." },
         "replayHeaders": {
           "type": "array",
           "items": { "type": "string" },
