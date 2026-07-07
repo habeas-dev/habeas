@@ -23,7 +23,7 @@ const I18N = {
     tagline: 'your data, in your hands',
     hero_h1: 'Export your own receipts, invoices and transactions.',
     hero_sub: 'Habeas runs inside your authenticated browser session, so you log in yourself, keep normal MFA, and never hand your credentials to a third-party server.',
-    hero_note: 'Use supported sources such as Carrefour España, then export to ZIP, local folders, Google Drive or HTTP.',
+    hero_note: 'Use multiple supported sources, then export to ZIP, local folders, Google Drive or HTTP.',
     feature_label: 'Highlights',
     feature_1: 'Runs in your browser',
     feature_2: 'You log in yourself',
@@ -113,7 +113,7 @@ const I18N = {
     tagline: 'tus datos, en tus manos',
     hero_h1: 'Exporta tus propios tickets, facturas y movimientos.',
     hero_sub: 'Habeas se ejecuta dentro de tu sesión autenticada del navegador: tú haces login, mantienes la MFA normal y nunca entregas tus credenciales a un servidor de terceros.',
-    hero_note: 'Usa fuentes compatibles como Carrefour España y exporta a ZIP, carpetas locales, Google Drive o HTTP.',
+    hero_note: 'Usa múltiples fuentes compatibles y exporta a ZIP, carpetas locales, Google Drive o HTTP.',
     feature_label: 'Puntos clave',
     feature_1: 'Corre en tu navegador',
     feature_2: 'Tú haces login',
@@ -210,7 +210,7 @@ function safeUpdateMetaTag(selector, attr, value) {
 }
 
 function esc(value) {
-  return String(value == null ? '' : value).replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
+  return String(value == null ? '' : value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 }
 
 function flag(code) {
@@ -220,18 +220,26 @@ function flag(code) {
   return code.toUpperCase().replace(/./g, (char) => String.fromCodePoint(0x1F1E6 + char.charCodeAt(0) - 'A'.charCodeAt(0)));
 }
 
-function pickRandomSources(sources, count) {
+function shuffle(sources) {
   const pool = sources.slice();
   for (let i = pool.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
-  return pool.slice(0, count);
+  return pool;
+}
+
+function pickRandomSources(sources, count) {
+  return shuffle(sources).slice(0, count);
 }
 
 function previewCard(source) {
   const country = typeof source.country === 'string' ? source.country : '';
   return `<div class="src"><div class="top"><span class="name">${esc(source.name)}</span></div><div class="meta">${country ? `${flag(country)} ` : ''}${esc(source.service)}</div></div>`;
+}
+
+function isValidSource(source) {
+  return !!(source && typeof source.name === 'string' && typeof source.service === 'string');
 }
 
 function renderSourcePreview() {
@@ -251,7 +259,7 @@ function initSourcePreview() {
     if (!response.ok) throw new Error('catalog fetch failed');
     return response.json();
   }).then((data) => {
-    const sources = Array.isArray(data?.sources) ? data.sources.filter((source) => source && typeof source.name === 'string' && typeof source.service === 'string') : [];
+    const sources = Array.isArray(data?.sources) ? data.sources.filter(isValidSource) : [];
     if (!sources.length) return;
     SOURCE_COUNT = sources.length;
     SOURCE_PREVIEW = pickRandomSources(sources, Math.min(SOURCE_PREVIEW_LIMIT, sources.length));

@@ -93,6 +93,15 @@ async function flushAsyncWork() {
   await new Promise((resolve) => setImmediate(resolve));
 }
 
+function createMockSources(count) {
+  return Array.from({ length: count }, (_, index) => ({
+    id: `source-${index + 1}`,
+    name: `Source ${index + 1}`,
+    service: `Service ${index + 1}`,
+    country: index % 2 === 0 ? 'es' : 'global',
+  }));
+}
+
 test('landing page keeps the new information hierarchy', async () => {
   const { html } = await loadLanding();
   const positions = sectionMarkers.map((marker) => html.indexOf(marker));
@@ -123,17 +132,14 @@ test('landing page i18n keys exist in both languages', async () => {
   }
 
   assert.equal(i18n.en.title, 'Habeas — export your own data from your own session');
+  assert.equal(i18n.en.hero_note, 'Use multiple supported sources, then export to ZIP, local folders, Google Drive or HTTP.');
   assert.equal(i18n.es.why_h2, 'Por qué Habeas es diferente');
+  assert.equal(i18n.es.hero_note, 'Usa múltiples fuentes compatibles y exporta a ZIP, carpetas locales, Google Drive o HTTP.');
 });
 
 test('landing page loads a compact localized source preview from the catalog index only', async () => {
   const fetchCalls = [];
-  const sources = Array.from({ length: 9 }, (_, index) => ({
-    id: `source-${index + 1}`,
-    name: `Source ${index + 1}`,
-    service: `Service ${index + 1}`,
-    country: index % 2 === 0 ? 'es' : 'global',
-  }));
+  const sources = createMockSources(9);
   const { context, document } = await loadLanding({
     fetchImpl: (url) => {
       fetchCalls.push(url);
