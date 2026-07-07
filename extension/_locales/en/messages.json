@@ -28,6 +28,7 @@
 
   "no_datasources": { "message": "Activate a data source in Settings." },
   "capture_hint": { "message": "Open the site and your purchases page to capture your session, then retry." },
+  "login_in_tab": { "message": "Log in to the site in the tab we just opened, then try again." },
   "listing": { "message": "Listing…" },
   "n_documents": { "message": "$COUNT$ documents", "placeholders": { "count": { "content": "$1" } } },
   "fetching": { "message": "Fetching $COUNT$ documents…", "placeholders": { "count": { "content": "$1" } } },

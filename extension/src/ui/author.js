@@ -3,7 +3,7 @@ import { applyI18n, t } from '../lib/i18n.js';
 import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen, getAssets, getDomTexts } from '../lib/learn.js';
 import { draftAdapterFromSamples, listCandidates, matchCandidates } from '../runtime/infer.js';
 import { listInventory, artifactKinds, fetchArtifact } from '../runtime/inventory.js';
-import { resolveSiteFetch } from '../lib/pagefetch.js';
+import { ensureSiteFetch } from '../lib/pagefetch.js';
 import { editJson } from './jsoneditor.js';
 import { renderPage } from '../lib/render.js';
 import { validateAdapter } from '../adapters/validate.js';
@@ -202,7 +202,7 @@ async function onTest() {
   // Pass the whole captured store so list/detail/PDF each resolve their own auth (mixed cookie+
   // bearer). Proceed even with nothing captured — cookies (credentials:'include') may carry it.
   const authStore = (await getAuthFor(host)) || { byPath: {}, merged: {} };
-  const net = await resolveSiteFetch(adapter); // fetch from the site's tab → passes Cloudflare
+  const net = await ensureSiteFetch(adapter, { open: true }); // open the site tab if none → session available
   $('#status').textContent = t('author_testing');
   try {
     const docs = await listInventory(adapter, authStore, net);

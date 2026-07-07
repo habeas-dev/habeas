@@ -69,3 +69,33 @@ export async function resolveSiteFetch(adapter) {
   const tab = tabs.find((t) => t && t.id != null && /^https?:/.test(t.url || ''));
   return tab ? makePageFetch(tab.id) : null;
 }
+
+// The site's base URL (from the source's match / api host) — where a tab is opened to establish the
+// in-session context the page-context fetch needs.
+export function siteBaseUrl(adapter) {
+  const host = ((adapter.api && adapter.api.host) || '').replace(/^https?:\/\//, '');
+  const m = (adapter.match && adapter.match[0]) || ('https://' + host + '/*');
+  const base = m.replace(/^([a-z]+:\/\/[^/]+).*/i, '$1');
+  return (base || 'https://' + host) + '/';
+}
+
+// A page-bound fetch for the source's site. Reuses an open tab; with { open:true }, LAUNCHES one when
+// none exists (so the session is available — the user may need to log in there) and waits for it to load.
+// This is what makes a source recover from "no tab → CSRF/auth failure" instead of silently failing.
+export async function ensureSiteFetch(adapter, { open = false } = {}) {
+  const existing = await resolveSiteFetch(adapter);
+  if (existing || !open) return existing;
+  let tab; try { tab = await chrome.tabs.create({ url: siteBaseUrl(adapter), active: true }); } catch (e) { return null; }
+  if (!tab || tab.id == null) return null;
+  await waitTabComplete(tab.id);
+  return makePageFetch(tab.id);
+}
+async function waitTabComplete(tabId, timeoutMs = 15000) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    let tab; try { tab = await chrome.tabs.get(tabId); } catch (e) { return; }
+    if (!tab) return;
+    if (tab.status === 'complete') return;
+    await new Promise((r) => setTimeout(r, 300));
+  }
+}

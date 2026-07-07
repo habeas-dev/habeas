@@ -1,7 +1,7 @@
 import { chrome } from '../lib/ext.js';
 import { getConfig } from '../lib/config.js';
 import { listInventory, artifactKinds, fetchArtifact, documentExt } from '../runtime/inventory.js';
-import { resolveSiteFetch } from '../lib/pagefetch.js';
+import { ensureSiteFetch } from '../lib/pagefetch.js';
 import { pickGroup } from './grouppicker.js';
 import { renderPage } from '../lib/render.js';
 import { writeToSink } from '../sinks/sinks.js';
@@ -81,7 +81,7 @@ async function onList() {
   if (!auth) { $('#status').textContent = t('capture_hint'); return; }
   $('#status').textContent = t('listing');
   try {
-    const net = await resolveSiteFetch(adapter);
+    const net = await ensureSiteFetch(adapter, { open: true }); // no tab → open the site (session must exist)
     const groupId = await pickGroup(adapter, auth, net); // grouped source → pick which account/card first
     inventory = await listInventory(adapter, auth, net, { groupId });
     await render();
@@ -90,7 +90,11 @@ async function onList() {
     $('#sendbar').hidden = inventory.length === 0;
     $('#selbar').hidden = inventory.length === 0;
   } catch (e) {
-    $('#status').textContent = t('generic_error', [e.message]);
+    // CSRF / not-logged-in → make sure the site tab is open so the user can authenticate, then retry.
+    if (/csrf|40[13]|forbidden|unauthor|sign ?in|log ?in|session/i.test(e.message || '')) {
+      await ensureSiteFetch(adapter, { open: true });
+      $('#status').textContent = t('login_in_tab');
+    } else $('#status').textContent = t('generic_error', [e.message]);
   }
 }
 
@@ -140,7 +144,7 @@ async function onSend() {
 
   $('#status').textContent = t('fetching', [String(eligible.length)]);
   await badgeWorking();
-  const net = await resolveSiteFetch(adapter);
+  const net = await ensureSiteFetch(adapter, { open: true });
   const kinds = artifactKinds(adapter).filter((k) => sinkAcceptsArtifact(sink, k));
   const files = new Map();
   const noPdf = [];

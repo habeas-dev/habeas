@@ -2,7 +2,7 @@ import { chrome } from '../lib/ext.js';
 import { t } from '../lib/i18n.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { listInventory, artifactKinds, fetchArtifact } from '../runtime/inventory.js';
-import { resolveSiteFetch } from '../lib/pagefetch.js';
+import { ensureSiteFetch } from '../lib/pagefetch.js';
 import { pickGroup } from './grouppicker.js';
 import { renderPage } from '../lib/render.js';
 
@@ -95,7 +95,7 @@ export function editJson(adapter) {
         await ensureHostPermission(ad.api.host);
         const host = ad.api.host.replace(/^https?:\/\//, '');
         const auth = (await getAuthFor(host)) || { byPath: {}, merged: {} };
-        const net = await resolveSiteFetch(ad);
+        const net = await ensureSiteFetch(ad, { open: true });
         const groupId = await pickGroup(ad, auth, net); // grouped source (bank accounts/cards) → let the user choose
         const docs = await listInventory(ad, auth, net, { groupId });
         renderDocs(ad, auth, net, docs);
