@@ -114,8 +114,9 @@ test('landing page keeps the new information hierarchy', async () => {
     previousPosition = position;
   });
 
-  assert.match(html, /data-i18n="hero_note"/);
+  assert.doesNotMatch(html, /data-i18n="hero_note"/);
   assert.match(html, /class="feature-strip"/);
+  assert.equal((html.match(/class="feature-pill"/g) || []).length, 4);
   assert.match(html, /data-i18n="flow_h"/);
   assert.match(html, /class="compare-table"/);
   assert.match(html, /<a href="\/sources\.html" data-i18n="sources_cta"><\/a>/);
@@ -132,9 +133,9 @@ test('landing page i18n keys exist in both languages', async () => {
   }
 
   assert.equal(i18n.en.title, 'Habeas — export your own data from your own session');
-  assert.equal(i18n.en.hero_note, 'Use multiple supported sources, then export to ZIP, local folders, Google Drive or HTTP.');
+  assert.equal(i18n.en.hero_h1, 'Export your own data.');
   assert.equal(i18n.es.why_h2, 'Por qué Habeas es diferente');
-  assert.equal(i18n.es.hero_note, 'Usa múltiples fuentes compatibles y exporta a ZIP, carpetas locales, Google Drive o HTTP.');
+  assert.equal(i18n.es.hero_h1, 'Exporta tus propios datos.');
 });
 
 test('landing page loads a compact localized source preview from the catalog index only', async () => {
