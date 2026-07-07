@@ -75,8 +75,8 @@ header nav a { color: var(--ink); }
 .hero p.sub { max-width: 700px; margin: 24px auto 0; font-size: 18px; color: #ffffffd8; }
 .hero .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
 .hero .cta .btn.primary { box-shadow: 0 10px 24px rgba(0, 0, 0, .18); }
-.hero .cta .btn.ghost { border-color: transparent; color: #ffffffcc; background: transparent; }
-.hero .cta .btn.ghost:hover { background: rgba(255,255,255,.08); color: #fff; }
+.hero .cta .btn.ghost { border-color: rgba(255,255,255,.38); color: #fff; background: rgba(255,255,255,.08); }
+.hero .cta .btn.ghost:hover { border-color: rgba(255,255,255,.5); background: rgba(255,255,255,.14); color: #fff; }
 .feature-strip { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 34px 0 0; padding: 0; list-style: none; }
 .feature-pill { border: 1px solid rgba(255,255,255,.2); border-radius: 999px; padding: 8px 12px; font-size: 13px; color: #fff; background: rgba(255,255,255,.08); }
 .feature-pill:empty { display: none; }

@@ -126,6 +126,7 @@ test('landing page keeps the new information hierarchy', async () => {
   assert.equal((html.match(/class="feature-pill"/g) || []).length, 4);
   assert.match(css, /\.feature-pill:empty\s*\{[^}]*display\s*:\s*none/);
   assert.match(css, /\.hero \.hero-bg-logo\s*\{[^}]*opacity\s*:\s*\.08/);
+  assert.match(css, /\.hero \.cta \.btn\.ghost\s*\{[^}]*border-color\s*:\s*rgba\(255,255,255,\s*\.38\)[^}]*background\s*:\s*rgba\(255,255,255,\s*\.08\)/);
   assert.match(html, /data-i18n="flow_h"/);
   assert.match(html, /data-i18n="flow_step_source"/);
   assert.match(html, /data-i18n="flow_step_runtime"/);
