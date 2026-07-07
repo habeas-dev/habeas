@@ -71,6 +71,14 @@ section .lead { color: var(--muted); font-size: 17px; max-width: 640px; margin-b
 .card h3 { font-size: 18px; margin-bottom: 8px; }
 .card p { color: var(--muted); margin: 0; font-size: 15px; }
 .card .ic { font-size: 22px; margin-bottom: 10px; }
+.section-badge { display: inline-flex; margin: 0 0 14px; padding: 6px 12px; border: 1px solid color-mix(in srgb, var(--green-500) 28%, var(--line)); border-radius: 999px; color: var(--green-700); background: color-mix(in srgb, var(--green-500) 10%, var(--surface)); font-size: 13px; font-weight: 600; }
+.srcgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.src { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 8px; }
+.src .top { display: flex; align-items: flex-start; gap: 8px; }
+.src .name { font-family: var(--font-head); font-size: 18px; font-weight: 700; }
+.src .meta { color: var(--muted); font-size: 14px; }
+.sources-preview-cta { margin: 20px 0 0; }
+.sources-preview-cta a { font-weight: 600; }
 .alt { background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .flow-card, .compare-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 24px; margin-top: 24px; }
 .flow-card h3 { font-size: 20px; margin-bottom: 18px; }
@@ -102,4 +110,5 @@ footer a { color: var(--ink); }
   header .wrap { height: auto; padding-top: 14px; padding-bottom: 14px; align-items: flex-start; }
   header nav { width: 100%; margin-left: 0; flex-wrap: wrap; gap: 12px; }
   .compare-table { display: block; overflow-x: auto; }
+  .section-badge { display: inline-flex; max-width: 100%; }
 }
