@@ -67,6 +67,19 @@
       "additionalProperties": false,
       "properties": {
         "host": { "type": "string", "pattern": "^https://", "description": "API origin, https only." },
+        "csrf": {
+          "type": "object",
+          "required": ["path", "match"],
+          "additionalProperties": false,
+          "description": "CSRF prelude: GET a page and regex-extract a single-use token, injected as {csrf} into list/groups/pdf bodies & paths. Refetched before each document download (tokens are often single-use).",
+          "properties": {
+            "path": { "type": "string", "description": "Page whose HTML carries the token." },
+            "host": { "type": "string", "description": "Host if different from api.host (same-domain guard applies)." },
+            "method": { "enum": ["GET", "POST"] },
+            "match": { "type": "string", "description": "Regex whose capture group 1 is the token." },
+            "headers": { "type": "object", "additionalProperties": { "type": "string" } }
+          }
+        },
         "groups": {
           "type": "object",
           "required": ["path", "fields"],
@@ -78,9 +91,13 @@
             "itemsPath": { "type": "string", "description": "Dotted path to the groups array in the JSON response (or embedded state when from:html)." },
             "from": { "enum": ["html"], "description": "'html' → read the groups out of the page's embedded SSR state at itemsPath." },
             "params": { "type": "object", "additionalProperties": { "type": "string" } },
+            "method": { "enum": ["GET", "POST"] },
+            "body": { "type": "string", "description": "[POST] Body template; {csrf} and any static params are substituted." },
+            "contentType": { "type": "string", "description": "[POST] Body Content-Type (default application/x-www-form-urlencoded)." },
+            "rows": { "$ref": "#/$defs/rows" },
             "headers": { "type": "object", "additionalProperties": { "type": "string" } },
             "referer": { "type": "string" },
-            "fields": { "type": "object", "description": "Map group fields (id/name/iban/currency…) from dotted paths; referenced as {group.<name>} in list/fields and returned by the listGroups hook.", "additionalProperties": { "type": "string" } },
+            "fields": { "type": "object", "description": "Map group fields (id/name/iban/mask/currency…) from dotted paths, {group.*} templates, or (with rows) captured row fields; referenced as {group.<name>} and returned by the listGroups hook.", "additionalProperties": { "type": "string" } },
             "mask": { "type": "array", "items": { "type": "string" }, "description": "Group field names to mask before exposing to a consumer (e.g. ['iban'] → ES12 **** 3456)." }
           }
         },
@@ -115,7 +132,11 @@
             "maxPages": { "type": "number", "description": "Safety cap on pages fetched (default 100)." },
             "params": { "type": "object", "description": "Static query params. `count` also drives the page-paging stop condition." },
             "headers": { "type": "object", "description": "Static headers the SPA sends for the list (e.g. dkt-ecom-origin).", "additionalProperties": { "type": "string" } },
-            "referer": { "type": "string", "description": "Referer to send per request (templated with {page}/{from}/{offset}) — for endpoints that only honour the offset when the Referer reflects the page. Set via declarativeNetRequest." }
+            "referer": { "type": "string", "description": "Referer to send per request (templated with {page}/{from}/{offset}) — for endpoints that only honour the offset when the Referer reflects the page. Set via declarativeNetRequest." },
+            "method": { "enum": ["GET", "POST"] },
+            "body": { "type": "string", "description": "[POST] Body template; {group.*}, {csrf}, the paging param ({page}/{pagina}) and static params are substituted." },
+            "contentType": { "type": "string", "description": "[POST] Body Content-Type (default application/x-www-form-urlencoded)." },
+            "rows": { "$ref": "#/$defs/rows" }
           }
         },
         "pdf": {
@@ -124,7 +145,8 @@
           "additionalProperties": false,
           "description": "Per-document PDF. GET by default; some services generate it via POST with the invoice data as the body.",
           "properties": {
-            "path": { "type": "string", "description": "PDF path templated with {internalId} and any {field.path} from the list item (e.g. {ticket_unique_code}, {invoices.0})." },
+            "path": { "type": "string", "description": "Document path templated with {internalId}, {csrf}, {group.*} and any {field.path} from the list item (e.g. {docId}, {fileName})." },
+            "ext": { "type": "string", "description": "File extension of the downloaded document when not a PDF (e.g. xls, csv). Default pdf." },
             "method": { "enum": ["GET", "POST"] },
             "host": { "type": "string", "description": "PDF host if different from api.host (still bound by the same-domain guard / crossDomainHosts)." },
             "body": { "type": "string", "description": "[POST] Request body template; {internalId} / {field.path} are substituted." },
@@ -173,5 +195,22 @@
       "description": "Map of normalized field name -> source field (dotted path). Recognized keys depend on `schema`: receipt (total, storeName, storeAddress, type, source), invoice (total, issuer, issuerAddress, number, type, source), transaction (amount, description, counterparty, direction, type, source), investment (instrument, isin, units, price, amount, operation, type)."
     },
     "schema": { "type": "string", "pattern": "^[a-z_]+@\\d+$", "description": "Target normalized schema: receipt@1 | invoice@1 | transaction@1 | investment@1." }
+  },
+  "$defs": {
+    "rows": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Parse items out of HTML (for from:html lists/groups). Either `each` (a global regex, one match per item) or `row` (a container-class marker splitting per-item blocks).",
+      "properties": {
+        "each": { "type": "string", "description": "Global regex; each match is one item. fields.<k> = {group:N} takes capture group N." },
+        "row": { "type": "string", "description": "Class marker splitting the HTML into per-item blocks; fields extract from each block." },
+        "fields": {
+          "type": "object",
+          "description": "Per-field extraction. each mode: {group:N}. row mode: {re} (regex, group 1) | {attr} | {tag} | {sel} (text of an element with that class).",
+          "additionalProperties": { "type": "object" }
+        },
+        "require": { "type": "array", "items": { "type": "string" }, "description": "Field names that must be non-empty; incomplete rows are dropped." }
+      }
+    }
   }
 }
