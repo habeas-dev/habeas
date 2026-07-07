@@ -120,7 +120,7 @@ test('landing page keeps the new information hierarchy', async () => {
   assert.doesNotMatch(html, /data-i18n="hero_note"/);
   assert.match(html, /class="feature-strip"/);
   assert.equal((html.match(/class="feature-pill"/g) || []).length, 4);
-  assert.match(css, /\.feature-pill:empty\s*\{\s*display:\s*none;\s*\}/);
+  assert.match(css, /\.feature-pill:empty\s*\{[^}]*display\s*:\s*none/);
   assert.match(html, /data-i18n="flow_h"/);
   assert.match(html, /class="compare-table"/);
   assert.match(html, /<a href="\/sources\.html" data-i18n="sources_cta"><\/a>/);
