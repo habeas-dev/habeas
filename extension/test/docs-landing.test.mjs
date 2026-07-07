@@ -25,8 +25,14 @@ async function loadLanding() {
   const context = {
     localStorage: { getItem: () => null, setItem: () => {} },
     navigator: { language: 'en' },
-    document: { addEventListener: () => {} },
+    document: {
+      _listeners: {},
+      addEventListener(type, listener) {
+        this._listeners[type] = listener;
+      },
+    },
     globalThis: {},
+    console,
   };
   context.globalThis = context;
   vm.runInNewContext(`${script}\nglobalThis.__I18N = I18N;`, context);
