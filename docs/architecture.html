@@ -57,6 +57,7 @@
     </article>
   </main>
 
+  <script src="nav-i18n.js"></script>
   <script>
     const ARCHITECTURE_MD_URL_EN = 'https://raw.githubusercontent.com/habeas-dev/habeas/main/ARCHITECTURE.md';
     const ARCHITECTURE_MD_URL_ES = 'https://raw.githubusercontent.com/habeas-dev/habeas/main/ARCHITECTURE.es.md';
@@ -89,6 +90,7 @@
     function setLanguage(next) {
       lang = next === 'es' ? 'es' : 'en';
       document.documentElement.lang = lang;
+      globalThis.habeasApplyTopNavLanguage?.(lang);
       document.querySelectorAll('.langswitch button[data-lang]').forEach((button) => {
         button.setAttribute('aria-pressed', String(button.getAttribute('data-lang') === lang));
       });
