@@ -140,6 +140,7 @@ test('landing page keeps the new information hierarchy', async () => {
   assert.match(html, /class="compare-table"/);
   assert.match(html, /<a href="\/sources\.html" data-i18n="sources_cta"><\/a>/);
   assert.match(html, /<a href="\/why-habeas\.html" data-i18n="nav_why">Why Habeas\?<\/a>/);
+  assert.match(html, /<a href="\/architecture" data-i18n="nav_architecture">Architecture<\/a>/);
 });
 
 test('landing page i18n keys exist in both languages', async () => {
@@ -155,9 +156,38 @@ test('landing page i18n keys exist in both languages', async () => {
   assert.equal(i18n.en.title, 'Habeas — export your own data from your own session');
   assert.equal(i18n.en.hero_h1, 'Export your own data.');
   assert.equal(i18n.en.nav_why, 'Why Habeas?');
+  assert.equal(i18n.en.nav_architecture, 'Architecture');
   assert.equal(i18n.es.why_h2, 'Por qué Habeas es diferente');
   assert.equal(i18n.es.nav_why, 'Por qué Habeas');
+  assert.equal(i18n.es.nav_architecture, 'Arquitectura');
   assert.equal(i18n.es.hero_h1, 'Exporta tus propios datos.');
+});
+
+test('architecture page is public and renders the canonical ARCHITECTURE.md source', async () => {
+  const [html, indexHtml, privacyHtml, sourcesHtml, termsHtml, whyHtml] = await Promise.all([
+    fs.readFile(path.join(docsDir, 'architecture/index.html'), 'utf8'),
+    fs.readFile(path.join(docsDir, 'index.html'), 'utf8'),
+    fs.readFile(path.join(docsDir, 'privacy.html'), 'utf8'),
+    fs.readFile(path.join(docsDir, 'sources.html'), 'utf8'),
+    fs.readFile(path.join(docsDir, 'terms.html'), 'utf8'),
+    fs.readFile(path.join(docsDir, 'why-habeas.html'), 'utf8'),
+  ]);
+
+  assert.match(html, /<title>Habeas Architecture<\/title>/);
+  assert.match(html, /<meta name="description" content="Technical architecture and design principles behind Habeas\." \/>/);
+  assert.match(html, /<meta property="og:title" content="Habeas Architecture" \/>/);
+  assert.match(html, /<meta property="og:description" content="Technical architecture and design principles behind Habeas\." \/>/);
+  assert.match(html, /<link rel="canonical" href="https:\/\/habeas\.dev\/architecture" \/>/);
+  assert.match(html, /const ARCHITECTURE_MD_URL = 'https:\/\/raw\.githubusercontent\.com\/habeas-dev\/habeas\/main\/ARCHITECTURE\.md';/);
+  assert.match(html, /const MARKDOWN_RENDER_URL = 'https:\/\/api\.github\.com\/markdown';/);
+  assert.match(html, /mode:\s*'gfm'/);
+  assert.match(html, /context:\s*'habeas-dev\/habeas'/);
+  assert.match(html, /id="architecture-content"/);
+  assert.match(html, /Loading ARCHITECTURE\.md…/);
+
+  for (const page of [indexHtml, privacyHtml, sourcesHtml, termsHtml, whyHtml]) {
+    assert.match(page, /href="\/architecture"/);
+  }
 });
 
 test('why habeas page is public, discoverable, and has concise philosophy content', async () => {
