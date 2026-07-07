@@ -335,7 +335,10 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
   const pdf = adapter.api.pdf;
   if (!pdf) throw new Error('no PDF for this source');
   const host = pdf.host ? absHost(pdf.host) : adapter.api.host;
-  const csrf = auth && auth.__csrf;
+  // WiZink's securityToken is single-use/short-lived — the prelude token is stale by download time.
+  // Refresh it right before each document fetch so the download carries a valid {csrf}.
+  let csrf = auth && auth.__csrf;
+  if (adapter.api.csrf) { try { csrf = await fetchCsrf(adapter, auth, net); } catch (e) {} }
   const path = fillDocTmpl(pdf.path, doc, internalId, csrf); // {internalId} + {field.path} + {group.*} + {csrf}
   // A leftover {field} means this doc can't fill the template (e.g. a ticket with no invoice) — no
   // document for it. Bail cleanly (callers treat it as "artifact unavailable") instead of a bad request.
