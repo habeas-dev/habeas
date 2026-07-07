@@ -80,8 +80,7 @@ section .lead { color: var(--muted); font-size: 17px; max-width: 640px; margin-b
   padding: 14px 18px;
   border-radius: 14px;
   border: 1px solid var(--line);
-  background: var(--bg);
-  background: color-mix(in srgb, var(--bg) 55%, var(--surface));
+  background: var(--surface);
   font-weight: 600;
   text-align: center;
 }

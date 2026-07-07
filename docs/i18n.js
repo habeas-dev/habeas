@@ -184,16 +184,18 @@ function detectLang() {
   return (navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en';
 }
 
+function updateMetaTag(selector, attr, value) {
+  const el = document.querySelector(selector);
+  if (el) el.setAttribute(attr, value);
+}
+
 function apply(lang) {
   const dict = I18N[lang] || I18N.en;
   document.documentElement.lang = lang;
   document.title = dict.title;
-  const md = document.querySelector('meta[name="description"]');
-  if (md) md.setAttribute('content', dict.desc);
-  const ogTitle = document.querySelector('meta[property="og:title"]');
-  if (ogTitle) ogTitle.setAttribute('content', dict.title);
-  const ogDesc = document.querySelector('meta[property="og:description"]');
-  if (ogDesc) ogDesc.setAttribute('content', dict.desc);
+  updateMetaTag('meta[name="description"]', 'content', dict.desc);
+  updateMetaTag('meta[property="og:title"]', 'content', dict.title);
+  updateMetaTag('meta[property="og:description"]', 'content', dict.desc);
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const v = dict[el.dataset.i18n];
     if (v != null) el.textContent = v;
