@@ -32,6 +32,10 @@ const I18N = {
     feature_5: 'Open source',
     cta_get: 'View on GitHub',
     cta_how: 'See how it works',
+    sources_h2: 'Supported sources',
+    sources_lead: 'Already works with multiple services.',
+    sources_cta: 'View all supported sources →',
+    sources_count: 'Currently supports {count} sources',
     problem_h2: 'The practical problem',
     problem_lead: 'Many sites let you view your history, but make real export slow or impractical.',
     problem1_h: 'No API or bulk export',
@@ -118,6 +122,10 @@ const I18N = {
     feature_5: 'Código abierto',
     cta_get: 'Ver en GitHub',
     cta_how: 'Ver cómo funciona',
+    sources_h2: 'Fuentes disponibles',
+    sources_lead: 'Ya funciona con múltiples servicios.',
+    sources_cta: 'Ver todas las fuentes disponibles →',
+    sources_count: 'Actualmente soporta {count} fuentes',
     problem_h2: 'El problema práctico',
     problem_lead: 'Muchos sitios te dejan ver tu historial, pero hacen que exportarlo de verdad sea lento o poco práctico.',
     problem1_h: 'Sin API ni exportación masiva',
@@ -176,10 +184,23 @@ const I18N = {
   },
 };
 
+const SOURCES_INDEX = 'https://habeas-dev.github.io/sources/index.json';
+const SOURCE_PREVIEW_LIMIT = 8;
+let LANG = 'en';
+let SOURCE_PREVIEW = [];
+let SOURCE_COUNT = 0;
+
 function detectLang() {
   const saved = localStorage.getItem('habeas-lang');
   if (saved && I18N[saved]) return saved;
   return (navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en';
+}
+
+function translate(lang, key, params = {}) {
+  const dict = I18N[lang] || I18N.en;
+  const value = dict[key];
+  if (value == null) return '';
+  return String(value).replace(/\{(\w+)\}/g, (_, token) => params[token] ?? '');
 }
 
 function safeUpdateMetaTag(selector, attr, value) {
@@ -188,7 +209,57 @@ function safeUpdateMetaTag(selector, attr, value) {
   el.setAttribute(attr, value);
 }
 
+function esc(value) {
+  return String(value == null ? '' : value).replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
+}
+
+function flag(code) {
+  if (!code) return '';
+  if (code === 'global') return '🌐';
+  if (!/^[A-Za-z]{2}$/.test(code)) return '';
+  return code.toUpperCase().replace(/./g, (char) => String.fromCodePoint(0x1F1E6 + char.charCodeAt(0) - 65));
+}
+
+function pickRandomSources(sources, count) {
+  const pool = sources.slice();
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, count);
+}
+
+function previewCard(source) {
+  return `<div class="src"><div class="top"><span class="name">${esc(source.name)}</span></div><div class="meta">${source.country ? `${flag(source.country)} ` : ''}${esc(source.service)}</div></div>`;
+}
+
+function renderSourcePreview() {
+  const section = document.getElementById('sources-preview');
+  if (!section || !SOURCE_PREVIEW.length) return;
+  const count = document.getElementById('sources-preview-count');
+  const list = document.getElementById('sources-preview-list');
+  if (count) count.textContent = translate(LANG, 'sources_count', { count: SOURCE_COUNT });
+  if (list) list.innerHTML = SOURCE_PREVIEW.map(previewCard).join('');
+  section.hidden = false;
+}
+
+function initSourcePreview() {
+  const section = document.getElementById('sources-preview');
+  if (!section) return;
+  fetch(SOURCES_INDEX).then((response) => {
+    if (!response.ok) throw new Error('catalog fetch failed');
+    return response.json();
+  }).then((data) => {
+    const sources = Array.isArray(data?.sources) ? data.sources.filter((source) => source && source.name && source.service) : [];
+    if (!sources.length) return;
+    SOURCE_COUNT = sources.length;
+    SOURCE_PREVIEW = pickRandomSources(sources, Math.min(SOURCE_PREVIEW_LIMIT, sources.length));
+    renderSourcePreview();
+  }).catch(() => {});
+}
+
 function apply(lang) {
+  LANG = lang;
   const dict = I18N[lang] || I18N.en;
   document.documentElement.lang = lang;
   document.title = dict.title;
@@ -202,6 +273,7 @@ function apply(lang) {
   document.querySelectorAll('.langswitch button').forEach((b) => {
     b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
   });
+  renderSourcePreview();
 }
 
 function setLang(lang) {
@@ -214,4 +286,5 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.langswitch button').forEach((b) => {
     b.addEventListener('click', () => setLang(b.dataset.lang));
   });
+  initSourcePreview();
 });

@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const docsDir = path.resolve(__dirname, '../../docs');
 const sectionMarkers = [
+  'id="sources-preview"',
   'problem_h2',
   'how_h2',
   'why_h2',
@@ -16,34 +17,80 @@ const sectionMarkers = [
   'oss_h2',
 ];
 
-async function loadLanding() {
+function createElement({ dataset = {}, hidden = false } = {}) {
+  return {
+    dataset,
+    hidden,
+    textContent: '',
+    innerHTML: '',
+    attributes: {},
+    setAttribute(name, value) {
+      this.attributes[name] = value;
+    },
+    addEventListener() {},
+  };
+}
+
+function createDocument() {
+  const sourceSection = createElement({ hidden: true });
+  const sourceCount = createElement();
+  const sourceList = createElement();
+  const i18nElements = [
+    createElement({ dataset: { i18n: 'sources_h2' } }),
+    createElement({ dataset: { i18n: 'sources_lead' } }),
+    createElement({ dataset: { i18n: 'sources_cta' } }),
+  ];
+  const elements = {
+    'sources-preview': sourceSection,
+    'sources-preview-count': sourceCount,
+    'sources-preview-list': sourceList,
+  };
+
+  return {
+    documentElement: {},
+    _listeners: {},
+    addEventListener(type, listener) {
+      this._listeners[type] = listener;
+    },
+    getElementById(id) {
+      return elements[id] || null;
+    },
+    querySelector() {
+      return null;
+    },
+    querySelectorAll(selector) {
+      if (selector === '[data-i18n]') return i18nElements;
+      return [];
+    },
+    __i18nElements: i18nElements,
+    __sourceSection: sourceSection,
+    __sourceCount: sourceCount,
+    __sourceList: sourceList,
+  };
+}
+
+async function loadLanding({ fetchImpl } = {}) {
   const [html, script] = await Promise.all([
     fs.readFile(path.join(docsDir, 'index.html'), 'utf8'),
     fs.readFile(path.join(docsDir, 'i18n.js'), 'utf8'),
   ]);
 
+  const document = createDocument();
   const context = {
     localStorage: { getItem: () => null, setItem: () => {} },
     navigator: { language: 'en' },
-    document: {
-      documentElement: {},
-      _listeners: {},
-      addEventListener(type, listener) {
-        this._listeners[type] = listener;
-      },
-      querySelector() {
-        return null;
-      },
-      querySelectorAll() {
-        return [];
-      },
-    },
+    document,
+    fetch: fetchImpl || (() => Promise.reject(new Error('unexpected fetch'))),
     globalThis: {},
     console,
   };
   context.globalThis = context;
   vm.runInNewContext(`${script}\nglobalThis.__I18N = I18N;`, context);
-  return { html, i18n: context.__I18N };
+  return { html, i18n: context.__I18N, context, document };
+}
+
+async function flushAsyncWork() {
+  await new Promise((resolve) => setImmediate(resolve));
 }
 
 test('landing page keeps the new information hierarchy', async () => {
@@ -62,6 +109,7 @@ test('landing page keeps the new information hierarchy', async () => {
   assert.match(html, /class="feature-strip"/);
   assert.match(html, /data-i18n="flow_h"/);
   assert.match(html, /class="compare-table"/);
+  assert.match(html, /<a href="\/sources\.html" data-i18n="sources_cta"><\/a>/);
 });
 
 test('landing page i18n keys exist in both languages', async () => {
@@ -76,4 +124,49 @@ test('landing page i18n keys exist in both languages', async () => {
 
   assert.equal(i18n.en.title, 'Habeas — export your own data from your own session');
   assert.equal(i18n.es.why_h2, 'Por qué Habeas es diferente');
+});
+
+test('landing page loads a compact localized source preview from the catalog index only', async () => {
+  const fetchCalls = [];
+  const sources = Array.from({ length: 9 }, (_, index) => ({
+    id: `source-${index + 1}`,
+    name: `Source ${index + 1}`,
+    service: `Service ${index + 1}`,
+    country: index % 2 === 0 ? 'es' : 'global',
+  }));
+  const { context, document } = await loadLanding({
+    fetchImpl: (url) => {
+      fetchCalls.push(url);
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ sources }),
+      });
+    },
+  });
+
+  document._listeners.DOMContentLoaded();
+  await flushAsyncWork();
+
+  assert.deepEqual(fetchCalls, ['https://habeas-dev.github.io/sources/index.json']);
+  assert.equal(document.__sourceSection.hidden, false);
+  assert.equal(document.__sourceCount.textContent, 'Currently supports 9 sources');
+  assert.equal((document.__sourceList.innerHTML.match(/class="src"/g) || []).length, 8);
+  assert.match(document.__sourceList.innerHTML, /Source \d+/);
+  assert.match(document.__sourceList.innerHTML, /Service \d+/);
+
+  context.setLang('es');
+  assert.equal(document.__sourceCount.textContent, 'Actualmente soporta 9 fuentes');
+});
+
+test('landing page omits the source preview when the catalog cannot be loaded', async () => {
+  const { document } = await loadLanding({
+    fetchImpl: () => Promise.reject(new Error('offline')),
+  });
+
+  document._listeners.DOMContentLoaded();
+  await flushAsyncWork();
+
+  assert.equal(document.__sourceSection.hidden, true);
+  assert.equal(document.__sourceCount.textContent, '');
+  assert.equal(document.__sourceList.innerHTML, '');
 });
