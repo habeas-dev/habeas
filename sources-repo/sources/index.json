@@ -1,6 +1,24 @@
 {
-  "generated": "2026-07-07T13:28:41.012Z",
+  "generated": "2026-07-07T21:16:45.578Z",
   "sources": [
+    {
+      "id": "bipdrive-es",
+      "name": "Bip&Drive — facturas",
+      "service": "bipdrive",
+      "categories": [
+        "tolls"
+      ],
+      "trust": "first-party",
+      "domain": "bipdrive.com",
+      "country": "ES",
+      "formats": [
+        "pdf"
+      ],
+      "crossDomain": [],
+      "version": "2026-07-07",
+      "url": "https://habeas-dev.github.io/sources/bipdrive-es.json",
+      "updated": "2026-07-07T21:16:45.578Z"
+    },
     {
       "id": "carrefour-es",
       "name": "Carrefour España — tickets",
@@ -19,7 +37,7 @@
       "crossDomain": [],
       "version": "2026-07-07",
       "url": "https://habeas-dev.github.io/sources/carrefour-es.json",
-      "updated": "2026-07-07T13:28:41.012Z"
+      "updated": "2026-07-07T21:16:45.578Z"
     },
     {
       "id": "decathlon-es",
@@ -37,7 +55,7 @@
       "crossDomain": [],
       "version": "2026-07-06",
       "url": "https://habeas-dev.github.io/sources/decathlon-es.json",
-      "updated": "2026-07-07T13:28:41.012Z"
+      "updated": "2026-07-07T21:16:45.578Z"
     },
     {
       "id": "dia-es",
@@ -56,7 +74,7 @@
       "crossDomain": [],
       "version": "2026-07-06",
       "url": "https://habeas-dev.github.io/sources/dia-es.json",
-      "updated": "2026-07-07T13:28:41.012Z"
+      "updated": "2026-07-07T21:16:45.578Z"
     },
     {
       "id": "hover-com",
@@ -75,7 +93,7 @@
       "crossDomain": [],
       "version": "2026-07-06",
       "url": "https://habeas-dev.github.io/sources/hover-com.json",
-      "updated": "2026-07-07T13:28:41.012Z"
+      "updated": "2026-07-07T21:16:45.578Z"
     },
     {
       "id": "wizink-extractos-excel-es",
@@ -93,7 +111,7 @@
       "crossDomain": [],
       "version": "2026-07-07",
       "url": "https://habeas-dev.github.io/sources/wizink-extractos-excel-es.json",
-      "updated": "2026-07-07T13:28:41.012Z"
+      "updated": "2026-07-07T21:16:45.578Z"
     },
     {
       "id": "wizink-extractos-pdf-es",
@@ -111,7 +129,7 @@
       "crossDomain": [],
       "version": "2026-07-07",
       "url": "https://habeas-dev.github.io/sources/wizink-extractos-pdf-es.json",
-      "updated": "2026-07-07T13:28:41.012Z"
+      "updated": "2026-07-07T21:16:45.578Z"
     }
   ]
 }

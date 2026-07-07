@@ -1,0 +1,63 @@
+{
+  "id": "bipdrive-es",
+  "name": "Bip&Drive — facturas",
+  "service": "bipdrive",
+  "trust": "first-party",
+  "domain": "bipdrive.com",
+  "country": "ES",
+  "currency": "EUR",
+  "categories": [
+    "tolls"
+  ],
+  "match": [
+    "https://areaprivada.bipdrive.com/*"
+  ],
+  "auth": {
+    "mode": "cookie",
+    "replayHeaders": []
+  },
+  "api": {
+    "host": "https://areaprivada.bipdrive.com",
+    "list": {
+      "from": "html",
+      "path": "/ajax-mis-facturas",
+      "method": "POST",
+      "body": "pagina={pagina}",
+      "paging": "page",
+      "pageParam": "pagina",
+      "rows": {
+        "each": "<tr class=\"veh_\\d+\">[\\s\\S]{0,1500}?veh_mat_\\d+\">\\s*([0-9/]+)[\\s\\S]{0,700}?veh_tip_\\d+\">\\s*([0-9.,]+\\s*€)[\\s\\S]{0,900}?name=\"token_csrf\" value=\"([^\"]+)\"[\\s\\S]{0,300}?name=\"id_factura\" value=\"([^\"]+)\"[\\s\\S]{0,600}?title=\"(CI[^\"]*)\"",
+        "fields": {
+          "date": {
+            "group": 1
+          },
+          "total": {
+            "group": 2
+          },
+          "token_csrf": {
+            "group": 3
+          },
+          "id_factura": {
+            "group": 4
+          },
+          "number": {
+            "group": 5
+          }
+        }
+      }
+    },
+    "pdf": {
+      "path": "/",
+      "method": "POST",
+      "body": "token_csrf={token_csrf}&id_factura={id_factura}&tipo=PDF",
+      "ext": "pdf"
+    }
+  },
+  "fields": {
+    "internalId": "number",
+    "number": "number",
+    "date": "date",
+    "total": "total"
+  },
+  "schema": "invoice@1"
+}
