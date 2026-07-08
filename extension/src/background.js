@@ -30,7 +30,74 @@ chrome.action.onClicked.addListener(() => {
     const adapters = await getAdapters();
     for (const d of (cfg.datasources || []).filter((x) => x.enabled)) { const a = adapters[d.adapter]; if (a) await registerCapture(a); }
   } catch (e) {}
+  syncWebRequestCapture();
 })();
+// Re-sync the webRequest capture filter when the enabled sources change.
+chrome.storage.onChanged.addListener((ch, area) => {
+  if (area === 'local' && (ch['habeas:config'] || ch['habeas:sources'])) syncWebRequestCapture();
+});
+
+// ---- auth/context capture (shared by the page hook messages AND the webRequest observer) ----------
+async function saveAuth(host, path, headers) {
+  const key = 'auth:' + host;
+  const o = await chrome.storage.session.get(key);
+  const cur = o[key] || { merged: {}, byPath: {}, ctx: {} };
+  cur.merged = { ...cur.merged, ...headers };
+  if (path) cur.byPath[path] = { ...(cur.byPath[path] || {}), ...headers };
+  await chrome.storage.session.set({ [key]: cur });
+}
+async function saveContext(host, name, value) {
+  const key = 'auth:' + host;
+  const o = await chrome.storage.session.get(key);
+  const cur = o[key] || { merged: {}, byPath: {}, ctx: {} };
+  cur.ctx = { ...(cur.ctx || {}), [name]: value };
+  await chrome.storage.session.set({ [key]: cur });
+}
+
+// webRequest-based capture: observe request headers (Authorization) + URLs (context values, e.g. a DNI)
+// for enabled BEARER sources. Unlike the page fetch/XHR hook this is race-free (always listening in the
+// background, before the SPA runs) and can't be seen by the page — needed for SPAs that fetch their
+// token/ids before the injected hook is ready. Only headers/URLs are read; never response bodies/cookies.
+let WR_MAP = {};
+function onWebRequestHeaders(details) {
+  try {
+    const u = new URL(details.url);
+    const adapters = WR_MAP[u.host];
+    if (!adapters || !adapters.length) return;
+    const authz = (details.requestHeaders || []).find((h) => h.name.toLowerCase() === 'authorization');
+    for (const a of adapters) {
+      if (authz && authz.value) {
+        const tm = (a.auth && a.auth.tokenMatch) || 'eyJ';
+        let ok; try { ok = new RegExp(tm).test(authz.value); } catch (e) { ok = authz.value.indexOf(tm) >= 0; }
+        if (ok) saveAuth(u.host, u.pathname, { authorization: authz.value }).then(() => { maybeAutoRun(u.host); runPendingExternalCollects(u.host); });
+      }
+      for (const c of (a.auth && a.auth.context) || []) {
+        let m; try { m = new RegExp(c.match).exec(details.url); } catch (e) { continue; }
+        if (m && m[1]) saveContext(u.host, c.name, m[1]);
+      }
+    }
+  } catch (e) {}
+}
+async function syncWebRequestCapture() {
+  if (!(chrome.webRequest && chrome.webRequest.onSendHeaders)) return;
+  const cfg = await getConfig();
+  const adapters = await getAdapters();
+  const map = {};
+  const add = (h, a) => { const host = bareHost(h); if (host) (map[host] = map[host] || []).push(a); };
+  for (const d of (cfg.datasources || []).filter((x) => x.enabled)) {
+    const a = adapters[d.adapter];
+    if (!a || !(a.auth && a.auth.mode === 'bearer')) continue; // cookie sources carry the session in cookies
+    if (a.api && a.api.host) add(a.api.host, a);
+    for (const ch of a.crossDomainHosts || []) add(ch, a);
+    for (const m of a.match || []) add(m, a);
+  }
+  WR_MAP = map;
+  try { chrome.webRequest.onSendHeaders.removeListener(onWebRequestHeaders); } catch (e) {}
+  const urls = Object.keys(map).map((h) => `*://${h}/*`);
+  if (!urls.length) return;
+  try { chrome.webRequest.onSendHeaders.addListener(onWebRequestHeaders, { urls }, ['requestHeaders', 'extraHeaders']); }
+  catch (e) { try { chrome.webRequest.onSendHeaders.addListener(onWebRequestHeaders, { urls }, ['requestHeaders']); } catch (e2) {} }
+}
 
 // Auto-sync trigger for cookie sources (and any source): when the user lands on the source's own
 // site (tab finished loading in their session), try the auto routes. `tab.url` is only visible for
@@ -52,22 +119,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true; // async response
   }
   if (msg.type === 'habeas:auth' && msg.host) {
-    const key = 'auth:' + msg.host;
-    chrome.storage.session.get(key).then((o) => {
-      const cur = o[key] || { merged: {}, byPath: {} };
-      cur.merged = { ...cur.merged, ...msg.headers };
-      if (msg.path) cur.byPath[msg.path] = { ...(cur.byPath[msg.path] || {}), ...msg.headers };
-      chrome.storage.session.set({ [key]: cur }).then(() => { maybeAutoRun(msg.host); runPendingExternalCollects(msg.host); });
-    });
+    saveAuth(msg.host, msg.path, msg.headers).then(() => { maybeAutoRun(msg.host); runPendingExternalCollects(msg.host); });
   } else if (msg.type === 'habeas:context' && msg.host && msg.name) {
     // A captured CONTEXT value (e.g. a DNI seen in a request URL), stored alongside auth in
     // storage.session (never on disk) and later templated as {ctx.<name>} by the runtime.
-    const key = 'auth:' + msg.host;
-    chrome.storage.session.get(key).then((o) => {
-      const cur = o[key] || { merged: {}, byPath: {}, ctx: {} };
-      cur.ctx = { ...(cur.ctx || {}), [msg.name]: msg.value };
-      chrome.storage.session.set({ [key]: cur });
-    });
+    saveContext(msg.host, msg.name, msg.value);
   } else if (msg.type === 'habeas:sample' && msg.domain && msg.sample) {
     // Record-mode: keep a rolling, de-duplicated (by path) buffer of observed responses.
     const key = 'samples:' + msg.domain;
