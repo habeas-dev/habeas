@@ -92,28 +92,25 @@
         }
       },
       "rows": {
-        "row": "movement-item",
-        "require": [
-          "date"
-        ],
+        "each": "movItem_\\d+_[A-Z]+\"[\\s\\S]{0,1500}?class=\"movement-amount[^\"]*\"[^>]*>[^<]*<",
         "fields": {
-          "date": {
-            "sel": "movement-date"
+          "type": {
+            "re": "movement-item ([a-zA-Z]+)"
           },
           "description": {
             "tag": "h4"
+          },
+          "card": {
+            "sel": "card-number-masked"
+          },
+          "date": {
+            "sel": "movement-date"
           },
           "location": {
             "sel": "movement-location"
           },
           "amount": {
             "sel": "movement-amount"
-          },
-          "type": {
-            "re": "movement-item ([a-zA-Z]+)"
-          },
-          "card": {
-            "sel": "card-number-masked"
           }
         }
       },
@@ -134,7 +131,7 @@
   "changelog": [
     {
       "version": "2026-07-08",
-      "changes": "Exporta todos los datos del movimiento (comercio, localidad, categoría, tarjeta, importe, fecha); descripción = el comercio; manifest propio por fuente; cap de 90 días."
+      "changes": "Sin duplicados (ancla en el id movItem, ignora copias responsive/por-categoría); exporta comercio+localidad+categoría+tarjeta+importe+fecha; manifest propio; cap 90 días."
     }
   ]
 }

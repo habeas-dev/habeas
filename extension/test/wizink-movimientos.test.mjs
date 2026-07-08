@@ -23,17 +23,20 @@ const GROUPS = "<a onclick=\"goToCardDetail('ACC1', 'CARD1', 'today');\" class=\
   + "<span class=\"card-product-name\"><span class=\"sr-only\">Nombre: </span>Test Card</span>"
   + "<span class=\"card-security-code\"><span class=\"sr-only\">N: </span> **** **** **** 1234 </span></div></a>";
 
-// Real block: <h4> = merchant/concept, movement-item CLASS = WiZink category, movement-location = city,
-// card-number-masked = which card. `merchant` empty → a charge with no concept (empty description).
+// Real block: each movement has a unique id="movItem_<n>_<CATEGORY>" (the canonical row — WiZink renders
+// each movement TWICE, once per-category and once responsive; anchoring on the id de-duplicates). <h4> =
+// merchant, movement-item CLASS = category, movement-location = city, card-number-masked = which card.
+let MOV_N = 0;
 function movRow(cat, merchant, date, loc, amount, responsive) {
   const amt = responsive
     ? `<span class="movement-amount hidden-xs hidden-sm hidden-md">${amount}</span><span class="movement-amount hidden-lg">${amount}</span>`
-    : `<span class="movement-amount">${amount}</span>`;
+    : `<span class="movement-amount" style="text-align:right">${amount}</span>`;
   const location = loc ? `<span class="movement-location">${loc} </span>` : '';
-  return `<li><div class="movement-item ${cat}"><div class="layout--left"><div class="layout--group">`
+  const dup = `<div class="movement-item ${cat}"><h4>${merchant}</h4><span class="movement-date">${date}</span><span class="movement-amount">${amount}</span></div>`; // the responsive duplicate (no movItem id) must be ignored
+  return `<li><div id="movItem_${MOV_N++}_${cat.toUpperCase()}" class="movement-item ${cat}"><div class="layout--left"><div class="layout--group">`
     + `<h4>${merchant}</h4><span class="card-number-masked">*4321</span></div>`
     + `<div class="layout--group-2"><span class="movement-date">${date}</span>${location}</div></div>`
-    + `<div class="layout--right">${amt}</div></div></li>`;
+    + `<div class="layout--right">${amt}</div></div>${dup}</li>`;
 }
 const wrap = (rows) => `<div class="card-movements"><ul>${rows.join('')}</ul></div>`;
 
