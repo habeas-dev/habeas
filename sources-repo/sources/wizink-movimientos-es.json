@@ -92,7 +92,7 @@
         }
       },
       "rows": {
-        "each": "movItem_\\d+_[A-Z]+\"[\\s\\S]{0,1500}?class=\"movement-amount[^\"]*\"[^>]*>[^<]*<",
+        "each": "movItem(?:_\\d+_[A-Z]+|R_\\d+)\"[\\s\\S]{0,1500}?class=\"movement-amount[^\"]*\"[^>]*>[^<]*<",
         "fields": {
           "type": {
             "re": "movement-item ([a-zA-Z]+)"
@@ -131,7 +131,7 @@
   "changelog": [
     {
       "version": "2026-07-08",
-      "changes": "Sin duplicados (ancla en el id movItem, ignora copias responsive/por-categoría); exporta comercio+localidad+categoría+tarjeta+importe+fecha; manifest propio; cap 90 días."
+      "changes": "Incluye pagos (movItemR, receiptAndPaymentsTable) con importe negativo, además de los gastos; sin duplicados; todos los campos; manifest propio; cap 90 días."
     }
   ]
 }

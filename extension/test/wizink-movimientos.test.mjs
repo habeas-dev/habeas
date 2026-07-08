@@ -38,6 +38,15 @@ function movRow(cat, merchant, date, loc, amount, responsive) {
     + `<div class="layout--group-2"><span class="movement-date">${date}</span>${location}</div></div>`
     + `<div class="layout--right">${amt}</div></div>${dup}</li>`;
 }
+// A payment (settling the previous statement) lives in a SEPARATE list with id="movItemR_<n>" (no
+// category suffix) and a NEGATIVE amount — must be captured too (gastos + pagos combined).
+let PAY_N = 0;
+function payRow(concept, date, amount) {
+  return `<li><div id="movItemR_${PAY_N++}" class="movement-item cargos"><div class="layout--left"><div class="layout--group">`
+    + `<h4>${concept}</h4><span class="card-number-masked"></span></div>`
+    + `<div class="layout--group-2"><span class="movement-date">${date}</span><span class="movement-location"></span></div></div>`
+    + `<div class="layout--right"><span class="movement-amount" style="text-align:right">${amount}</span></div></div></li>`;
+}
 const wrap = (rows) => `<div class="card-movements"><ul>${rows.join('')}</ul></div>`;
 
 // Current (unbilled) month: 3 movements, with responsive duplicate amount spans.
@@ -51,6 +60,7 @@ const PAST = {
   [D30]: wrap([
     movRow('alimentacion', 'MERCADONA', '18 may', 'MADRID', '21,00 €', false),
     movRow('cargos', '', '15 may', 'MADRID', '3,50 €', false), // a charge → no merchant → empty description
+    payRow('PAGO RECIBO MES ANTERIOR', '11 may', '-2.884,03&euro;'), // a payment (movItemR, negative)
   ]),
   [D60]: wrap([
     movRow('compras', 'AMAZON EU', '10 abr', 'Luxembourg', '1.234,56 €', false),
@@ -98,7 +108,7 @@ test('multi-period pipeline: current + reachable past statements; >90-day statem
   const docs = await listInventory(SRC, { byPath: {}, merged: {} }, net, { log: (m) => logs.push(m) });
 
   // current(3) + D30(2) + D60(3) = 8; D120 is filtered BEFORE fetching (no SMS trigger).
-  assert.equal(docs.length, 8, 'expected 3 current + 2 + 3 past = 8 movements');
+  assert.equal(docs.length, 9, 'expected 3 current + 3 (2 gastos + 1 pago) + 3 past = 9 movements');
 
   for (const d of docs) {
     assert.match(d.date, /^\d{4}-\d{2}-\d{2}$/, 'date normalized: ' + d.date);
@@ -120,6 +130,12 @@ test('multi-period pipeline: current + reachable past statements; >90-day statem
   assert.equal(amazon.record.location, 'Luxembourg', 'location = the movement city');
   assert.equal(amazon.record.card, '*4321', 'card mask carried');
   assert.equal(amazon.record.type, 'compras', 'WiZink spending category carried');
+
+  // Payments (movItemR, in the receiptAndPaymentsTable) are captured too — gastos + pagos combined —
+  // with their NEGATIVE amount preserved.
+  const pago = docs.find((d) => d.record.description === 'PAGO RECIBO MES ANTERIOR');
+  assert.ok(pago, 'the payment (movItemR) is captured, not just the category gastos');
+  assert.equal(pago.record.amount, -2884.03, 'negative payment amount preserved');
 
   // The KEY guarantee: the >90-day statement was never requested (that request is what fires the SMS).
   assert.ok(!net.requested.includes(D120), `>90-day statement ${D120} must not be requested; got ${JSON.stringify(net.requested)}`);
@@ -149,7 +165,7 @@ test('runtime synthesizes an internalId even when the source omits fields.intern
   const bare = JSON.parse(JSON.stringify(SRC));
   delete bare.fields.internalId;
   const docs = await listInventory(bare, { byPath: {}, merged: {} }, mockNet());
-  assert.equal(docs.length, 8);
+  assert.equal(docs.length, 9);
   assert.ok(docs.every((d) => d.internalId && d.internalId.startsWith('ACC1|')), 'fallback id built');
-  assert.equal(new Set(docs.map((d) => d.internalId)).size, 8, 'fallback ids unique');
+  assert.equal(new Set(docs.map((d) => d.internalId)).size, 9, 'fallback ids unique');
 });
