@@ -11,6 +11,7 @@
     "name": { "type": "string", "description": "Human-readable source name." },
     "service": { "type": "string", "description": "Short service slug used for sink folder/service naming." },
     "version": { "type": "string", "description": "Source definition version — a date YYYY-MM-DD (or semver). Shown in the catalog; the extension offers an update when the catalog version is newer than the installed one." },
+    "minVersion": { "type": "string", "description": "Minimum Habeas extension version required to run this source (e.g. it uses a newer runtime feature). The catalog gates install and the extension skips it if too old. Absent = any version." },
     "changelog": { "type": "array", "description": "Per-version change notes (newest first), shown in the catalog details and as 'what's new' on update.", "items": { "type": "object", "required": ["version", "changes"], "additionalProperties": false, "properties": { "version": { "type": "string" }, "changes": { "type": "string" } } } },
     "trust": { "enum": ["first-party", "community"], "description": "first-party = project-maintained & audited; community = user/contributed." },
     "domain": { "type": "string", "description": "Registrable domain (eTLD+1) all hosts share, e.g. carrefour.es. If omitted it is derived from api.host." },

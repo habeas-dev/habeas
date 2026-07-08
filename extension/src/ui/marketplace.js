@@ -2,6 +2,7 @@ import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { fetchIndex, installFromEntry, getRatings, postRating, getComments, postComment } from '../registry/client.js';
 import { getAdapters } from '../adapters/index.js';
+import { meetsMinVersion } from '../lib/version.js';
 
 const $ = (s) => document.querySelector(s);
 // Registry entries come from the network → escape every interpolated value (a reviewed PR is
@@ -49,7 +50,7 @@ function render() {
   const q = $('#q').value.trim();
   const list = ENTRIES.filter((e) => matches(e, q));
   if (!list.length) { $('#list').innerHTML = `<p class="muted">${t('market_empty')}</p>`; return; }
-  const outdated = list.filter(isOutdated);
+  const outdated = list.filter((e) => isOutdated(e) && meetsMinVersion(e.minVersion)); // don't offer to update into a version this extension can't run
   const banner = outdated.length
     ? `<div class="row" style="margin-bottom:10px;align-items:center;gap:8px"><span class="muted">${t('market_updates_available', [String(outdated.length)])}</span><button id="update-all" class="primary">${t('market_update_all')}</button></div>`
     : '';
@@ -57,20 +58,22 @@ function render() {
     const inst = INSTALLED[e.id];
     const installed = !!inst;
     const up = isOutdated(e);
+    const compatible = meetsMinVersion(e.minVersion); // running extension new enough for this source?
     const trust = e.trust === 'first-party' ? t('trust_first_party') : t('trust_community');
     const offsite = (e.crossDomain && e.crossDomain.length) ? `<span class="warn" title="${esc(e.crossDomain.join(', '))}">${t('market_offsite')}</span>` : '';
     const ver = e.version ? ` · v${esc(e.version)}` : '';
-    const label = !installed ? t('market_install') : up ? t('market_update', [esc(inst.version || '?'), esc(e.version)]) : t('market_installed');
+    const needs = !compatible ? ` <span class="pill" style="border-color:#c77;color:#c77" title="${esc(t('market_needs_version', [e.minVersion]))}">${t('market_needs_pill', [esc(e.minVersion)])}</span>` : '';
+    const label = !compatible ? t('market_needs_version', [esc(e.minVersion)]) : !installed ? t('market_install') : up ? t('market_update', [esc(inst.version || '?'), esc(e.version)]) : t('market_installed');
     return `<div class="card" data-id="${esc(e.id)}">
       <div class="row">
         <div style="flex:1">
           <b>${esc(e.name || e.id)}</b> <code>${esc(e.id)}</code><br>
           <span class="muted">${e.country ? flag(e.country) + ' ' : ''}${esc((e.categories || []).join(', '))} · ${esc(e.domain || '')}${(e.formats || []).length ? ' · ' + esc((e.formats || []).join('/').toUpperCase()) : ''}${ver}</span>
-          <span class="pill type">${trust}</span> ${offsite}${up ? ` <span class="pill" style="border-color:#c77;color:#c77">${t('market_update_pill')}</span>` : ''}
+          <span class="pill type">${trust}</span> ${offsite}${up ? ` <span class="pill" style="border-color:#c77;color:#c77">${t('market_update_pill')}</span>` : ''}${needs}
           <span class="rating muted" data-rate="${esc(e.id)}"></span>
         </div>
         <button data-more="${esc(e.id)}">${t('market_details')}</button>
-        <button data-install="${esc(e.id)}" ${installed && !up ? 'disabled' : ''}>${label}</button>
+        <button data-install="${esc(e.id)}" ${(!compatible || (installed && !up)) ? 'disabled' : ''}>${label}</button>
       </div>
       <div class="panel" data-panel="${esc(e.id)}" hidden style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px"></div>
     </div>`;

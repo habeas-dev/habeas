@@ -133,5 +133,6 @@
       "version": "2026-07-08",
       "changes": "Incluye pagos (movItemR, receiptAndPaymentsTable) con importe negativo, además de los gastos; sin duplicados; todos los campos; manifest propio; cap 90 días."
     }
-  ]
+  ],
+  "minVersion": "0.1.23"
 }

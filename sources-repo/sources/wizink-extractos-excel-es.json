@@ -94,5 +94,6 @@
       "version": "2026-07-08",
       "changes": "Extractos en Excel por tarjeta; selector de tarjeta; abre /login sin sesión; recupera cookies corruptas; cap de 90 días para evitar el SMS."
     }
-  ]
+  ],
+  "minVersion": "0.1.23"
 }

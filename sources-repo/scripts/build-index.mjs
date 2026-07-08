@@ -30,6 +30,7 @@ const entries = readdirSync(dir)
       categories: a.categories || [], trust: a.trust || 'community',
       domain: a.domain, country: a.country || null, formats: formatsOf(a), crossDomain: a.crossDomainHosts || [],
       version: (a.version || now.slice(0, 10)),
+      minVersion: a.minVersion || null,
       changelog: a.changelog || [],
       url: `${BASE}/${f}`, updated: now,
     };
