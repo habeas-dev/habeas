@@ -105,10 +105,8 @@
     if (ch['habeas:sources'] || ch['habeas:config']) syncCapture();
   });
 
-  const s = document.createElement('script');
-  s.src = chrome.runtime.getURL('src/content/hook.js');
-  (document.head || document.documentElement).appendChild(s);
-  s.remove();
-
-  syncLearn(); syncCapture(); // covers the case where the hook is already listening
+  // hook.js is NOT injected here anymore — it's registered as a MAIN-world content script (manifest /
+  // registerCapture / executeScript), which a strict page CSP can't block (a chrome-extension: <script>
+  // tag can be). This bridge (ISOLATED world) talks to it via window.postMessage.
+  syncLearn(); syncCapture(); // (re)send arm state + capture config (hook also re-requests on 'hook-ready')
 })();

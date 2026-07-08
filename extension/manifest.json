@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extName__",
-  "version": "0.1.31",
+  "version": "0.1.32",
   "description": "__MSG_extDesc__",
   "default_locale": "en",
   "action": { "default_title": "Habeas", "default_icon": { "16": "icon-16.png", "48": "icon-48.png", "128": "icon-128.png" } },
@@ -16,6 +16,12 @@
   ],
   "optional_host_permissions": ["https://*/*"],
   "content_scripts": [
+    {
+      "matches": ["https://www.carrefour.es/*"],
+      "js": ["src/content/hook.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
     {
       "matches": ["https://www.carrefour.es/*"],
       "js": ["src/content/bridge.js"],

@@ -21,16 +21,23 @@ export async function requestCapturePermissions(adapter) {
   try { return await chrome.permissions.request({ origins: originsFor(adapter) }); } catch (e) { return false; }
 }
 
-// Register (or update) the capture bridge on the source's login site(s). Idempotent; needs the host
-// permission already granted for the match patterns.
+// Register (or update) the capture scripts on the source's login site(s): the hook runs in the page's
+// MAIN world (so a strict page CSP can't block it — banks often refuse a chrome-extension: <script>),
+// and bridge runs in the ISOLATED world (for chrome.runtime/storage). They talk via window.postMessage.
+// Idempotent; needs the host permission already granted for the match patterns.
 export async function registerCapture(adapter) {
   const matches = (adapter.match || []).filter(Boolean);
   if (!matches.length || !(chrome.scripting && chrome.scripting.registerContentScripts)) return;
-  const spec = { id: 'cap-' + adapter.id, matches, js: ['src/content/bridge.js'], runAt: 'document_start' };
-  try { await chrome.scripting.registerContentScripts([spec]); }
-  catch (e) { try { await chrome.scripting.updateContentScripts([spec]); } catch (e2) {} }
+  const specs = [
+    { id: 'caph-' + adapter.id, matches, js: ['src/content/hook.js'], runAt: 'document_start', world: 'MAIN' },
+    { id: 'cap-' + adapter.id, matches, js: ['src/content/bridge.js'], runAt: 'document_start' },
+  ];
+  for (const spec of specs) {
+    try { await chrome.scripting.registerContentScripts([spec]); }
+    catch (e) { try { await chrome.scripting.updateContentScripts([spec]); } catch (e2) {} }
+  }
 }
 
 export async function unregisterCapture(id) {
-  try { await chrome.scripting.unregisterContentScripts({ ids: ['cap-' + id] }); } catch (e) {}
+  try { await chrome.scripting.unregisterContentScripts({ ids: ['cap-' + id, 'caph-' + id] }); } catch (e) {}
 }

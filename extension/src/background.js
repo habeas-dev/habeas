@@ -321,7 +321,11 @@ async function hasLiveSession(adapter) {
 
 function injectCapture(tabId) {
   if (!tabId || !chrome.scripting) return;
-  try { chrome.scripting.executeScript({ target: { tabId }, files: ['src/content/bridge.js'] }).catch(() => {}); } catch (e) {}
+  try {
+    // hook in the MAIN world (CSP-proof), bridge in the ISOLATED world.
+    chrome.scripting.executeScript({ target: { tabId }, files: ['src/content/hook.js'], world: 'MAIN' }).catch(() => {});
+    chrome.scripting.executeScript({ target: { tabId }, files: ['src/content/bridge.js'] }).catch(() => {});
+  } catch (e) {}
 }
 
 async function runExternalCollect(grant, ds, adapter, sink, tabId, groupId) {

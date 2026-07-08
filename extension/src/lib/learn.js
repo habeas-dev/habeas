@@ -5,12 +5,14 @@ import { chrome } from './ext.js';
 import { registrableDomain } from '../adapters/validate.js';
 
 async function registerBridge(id, matches) {
-  const spec = { id, matches, js: ['src/content/bridge.js'], runAt: 'document_start' };
-  try {
-    await chrome.scripting.registerContentScripts([spec]);
-  } catch (e) {
-    // Already registered from a previous run — update to be safe.
-    try { await chrome.scripting.updateContentScripts([spec]); } catch (e2) {}
+  // hook in the MAIN world (CSP-proof) + bridge in the ISOLATED world; they talk via postMessage.
+  const specs = [
+    { id: id + '-hook', matches, js: ['src/content/hook.js'], runAt: 'document_start', world: 'MAIN' },
+    { id, matches, js: ['src/content/bridge.js'], runAt: 'document_start' },
+  ];
+  for (const spec of specs) {
+    try { await chrome.scripting.registerContentScripts([spec]); }
+    catch (e) { try { await chrome.scripting.updateContentScripts([spec]); } catch (e2) {} }
   }
 }
 
