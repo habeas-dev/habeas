@@ -78,7 +78,13 @@ async function onList() {
   if (!adapter) { $('#status').textContent = t('no_datasources'); return; }
   if (!(await hasConsent(adapter))) { $('#status').textContent = t('needs_consent'); return; }
   const auth = await getAuth(adapter);
-  if (!auth) { $('#status').textContent = t('capture_hint'); return; }
+  if (!auth) {
+    // Bearer source with no captured token yet (no logged-in tab running the capture bridge). Open/reload
+    // the site tab so the in-session hook grabs the token as the page loads / the user logs in, then retry.
+    await recoverSession(adapter);
+    $('#status').textContent = t('login_in_tab');
+    return;
+  }
   $('#status').textContent = t('listing');
   try {
     const net = await ensureSiteFetch(adapter, { open: true }); // no tab → open the site (session must exist)
