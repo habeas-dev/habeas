@@ -5,6 +5,7 @@
 import { chrome } from './lib/ext.js';
 import { getConfig } from './lib/config.js';
 import { registerCapture } from './lib/capture.js';
+import { loadAuth, hasAuth } from './lib/authstore.js';
 import { deliveredSet, markDelivered, appendLog } from './lib/state.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
 import { resolveSiteFetch } from './lib/pagefetch.js';
@@ -202,15 +203,9 @@ function siteMatches(adapter, host) {
   return hostOf(adapter) === host;
 }
 
-async function authFor(adapter) {
-  const cookie = adapter.auth && adapter.auth.mode === 'cookie';
-  const o = await chrome.storage.session.get('auth:' + hostOf(adapter));
-  const store = o['auth:' + hostOf(adapter)];
-  // Whole store → each endpoint resolves its own auth (mixed cookie+bearer). Cookie sources proceed
-  // with an empty store (cookies carry the session).
-  if (!store) return cookie ? { byPath: {}, merged: {}, ctx: {} } : null;
-  return { byPath: store.byPath || {}, merged: store.merged || {}, ctx: store.ctx || {} };
-}
+// Whole store → each endpoint resolves its own auth (mixed cookie+bearer), merged across sibling hosts
+// sharing the source's registrable domain. Cookie sources proceed with an empty store (cookies carry it).
+const authFor = (adapter) => loadAuth(adapter);
 
 async function runRoute(ds, adapter, sink, opts = {}) {
   const kind = opts.kind || 'auto';
@@ -367,13 +362,7 @@ async function collectForGrant(origin, payload) {
   return { ok: true, status: 'needs-login' };
 }
 
-async function hasLiveSession(adapter) {
-  const cookie = adapter.auth && adapter.auth.mode === 'cookie';
-  const o = await chrome.storage.session.get('auth:' + hostOf(adapter));
-  const store = o['auth:' + hostOf(adapter)];
-  if (cookie) return !!store;
-  return !!(store && store.merged && Object.keys(store.merged).length);
-}
+const hasLiveSession = (adapter) => hasAuth(adapter);
 
 function injectCapture(tabId) {
   if (!tabId || !chrome.scripting) return;

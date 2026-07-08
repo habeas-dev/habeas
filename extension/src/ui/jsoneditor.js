@@ -5,6 +5,7 @@ import { listInventory, artifactKinds, fetchArtifact } from '../runtime/inventor
 import { ensureSiteFetch, recoverSession } from '../lib/pagefetch.js';
 import { pickGroup } from './grouppicker.js';
 import { renderPage } from '../lib/render.js';
+import { loadAuth } from '../lib/authstore.js';
 
 const escf = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmt = (n) => (n == null || n === '' ? '' : String(n));
@@ -40,11 +41,6 @@ function renderHtmlDoc(el, html) {
   el.append(iframe, document.createElement('br'), toggle, pre);
 }
 
-async function getAuthFor(host) {
-  const o = await chrome.storage.session.get('auth:' + host);
-  const s = o['auth:' + host];
-  return s ? { byPath: s.byPath || {}, merged: s.merged || {}, ctx: s.ctx || {} } : null;
-}
 async function ensureHostPermission(hostUrl) {
   try {
     const origin = new URL(hostUrl).origin + '/*';
@@ -93,8 +89,7 @@ export function editJson(adapter) {
       status.textContent = t('author_testing');
       try {
         await ensureHostPermission(ad.api.host);
-        const host = ad.api.host.replace(/^https?:\/\//, '');
-        const auth = (await getAuthFor(host)) || { byPath: {}, merged: {}, ctx: {} };
+        const auth = (await loadAuth(ad)) || { byPath: {}, merged: {}, ctx: {} };
         const net = await ensureSiteFetch(ad, { open: true });
         const groupId = await pickGroup(ad, auth, net); // grouped source (bank accounts/cards) → let the user choose
         const docs = await listInventory(ad, auth, net, { groupId });

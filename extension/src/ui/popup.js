@@ -13,6 +13,7 @@ import { watchThemeIcon } from '../lib/theme-icon.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { getAdapters } from '../adapters/index.js';
 import { hasConsent } from '../lib/consent.js';
+import { loadAuth } from '../lib/authstore.js';
 
 let ADAPTERS = {};
 const $ = (s) => document.querySelector(s);
@@ -60,16 +61,9 @@ function populateSinks(cfg) {
   const list = cfg.sinks.filter((s) => !adapter || sinkAcceptsSource(s, adapter));
   $('#sink').innerHTML = list.map((s) => `<option value="${s.id}">${s.id} · ${s.type}</option>`).join('') || '<option value="">—</option>';
 }
-async function getAuth(adapter) {
-  const cookie = adapter.auth && adapter.auth.mode === 'cookie';
-  const host = adapter.api.host.replace(/^https?:\/\//, '');
-  const o = await chrome.storage.session.get('auth:' + host);
-  const store = o['auth:' + host];
-  // Return the whole store so each endpoint (list / detail / PDF) resolves its own auth (mixed
-  // cookie+bearer is supported). Cookie sources proceed with an empty store (cookies carry it).
-  if (!store) return cookie ? { byPath: {}, merged: {}, ctx: {} } : null;
-  return { byPath: store.byPath || {}, merged: store.merged || {}, ctx: store.ctx || {} };
-}
+// Resolve the captured session for this source — merged across sibling hosts sharing its registrable
+// domain (a single account JWT often rides several API hosts). Cookie sources get an empty store.
+const getAuth = (adapter) => loadAuth(adapter);
 
 async function onList() {
   clearLog();
