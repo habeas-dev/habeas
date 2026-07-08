@@ -222,6 +222,8 @@
   "market_update_all": { "message": "Actualizar todo" },
   "market_updating": { "message": "Actualizando $N$ fuente(s)…", "placeholders": { "n": { "content": "$1" } } },
   "market_updated": { "message": "Actualizadas $OK$; $FAIL$ con error.", "placeholders": { "ok": { "content": "$1" }, "fail": { "content": "$2" } } },
+  "market_changelog": { "message": "Cambios" },
+  "market_new": { "message": "nuevo" },
   "market_installing": { "message": "Instalando…" },
   "market_install_ok": { "message": "Instalada «$ID$». Actívala en Ajustes.", "placeholders": { "id": { "content": "$1" } } },
   "market_install_err": { "message": "Falló la instalación: $MSG$", "placeholders": { "msg": { "content": "$1" } } },

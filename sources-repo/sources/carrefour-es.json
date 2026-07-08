@@ -70,5 +70,11 @@
     "source": "orderSource"
   },
   "schema": "receipt@1",
-  "version": "2026-07-08"
+  "version": "2026-07-08",
+  "changelog": [
+    {
+      "version": "2026-07-08",
+      "changes": "Tickets y pedidos online (offset pagination); PDF cuando existe."
+    }
+  ]
 }

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-08T04:48:16.088Z",
+  "generated": "2026-07-08T04:52:07.633Z",
   "sources": [
     {
       "id": "bipdrive-es",
@@ -16,8 +16,14 @@
       ],
       "crossDomain": [],
       "version": "2026-07-08",
+      "changelog": [
+        {
+          "version": "2026-07-08",
+          "changes": "Facturas vía tabla AJAX (from:html); PDF por POST de formulario."
+        }
+      ],
       "url": "https://habeas-dev.github.io/sources/bipdrive-es.json",
-      "updated": "2026-07-08T04:48:16.088Z"
+      "updated": "2026-07-08T04:52:07.633Z"
     },
     {
       "id": "carrefour-es",
@@ -36,8 +42,14 @@
       ],
       "crossDomain": [],
       "version": "2026-07-08",
+      "changelog": [
+        {
+          "version": "2026-07-08",
+          "changes": "Tickets y pedidos online (offset pagination); PDF cuando existe."
+        }
+      ],
       "url": "https://habeas-dev.github.io/sources/carrefour-es.json",
-      "updated": "2026-07-08T04:48:16.088Z"
+      "updated": "2026-07-08T04:52:07.633Z"
     },
     {
       "id": "decathlon-es",
@@ -54,8 +66,14 @@
       ],
       "crossDomain": [],
       "version": "2026-07-08",
+      "changelog": [
+        {
+          "version": "2026-07-08",
+          "changes": "Pedidos/recibos con detalle JSON."
+        }
+      ],
       "url": "https://habeas-dev.github.io/sources/decathlon-es.json",
-      "updated": "2026-07-08T04:48:16.088Z"
+      "updated": "2026-07-08T04:52:07.633Z"
     },
     {
       "id": "dia-es",
@@ -73,8 +91,14 @@
       ],
       "crossDomain": [],
       "version": "2026-07-08",
+      "changelog": [
+        {
+          "version": "2026-07-08",
+          "changes": "Tickets desde el SSR (Vike); factura en PDF por artículo."
+        }
+      ],
       "url": "https://habeas-dev.github.io/sources/dia-es.json",
-      "updated": "2026-07-08T04:48:16.088Z"
+      "updated": "2026-07-08T04:52:07.633Z"
     },
     {
       "id": "hover-com",
@@ -92,8 +116,14 @@
       ],
       "crossDomain": [],
       "version": "2026-07-08",
+      "changelog": [
+        {
+          "version": "2026-07-08",
+          "changes": "Facturas de dominios (JSON + recibo HTML)."
+        }
+      ],
       "url": "https://habeas-dev.github.io/sources/hover-com.json",
-      "updated": "2026-07-08T04:48:16.088Z"
+      "updated": "2026-07-08T04:52:07.633Z"
     },
     {
       "id": "leroymerlin-es",
@@ -110,8 +140,14 @@
       ],
       "crossDomain": [],
       "version": "2026-07-08",
+      "changelog": [
+        {
+          "version": "2026-07-08",
+          "changes": "Recibos vía API JSON (cookie)."
+        }
+      ],
       "url": "https://habeas-dev.github.io/sources/leroymerlin-es.json",
-      "updated": "2026-07-08T04:48:16.088Z"
+      "updated": "2026-07-08T04:52:07.633Z"
     },
     {
       "id": "wizink-extractos-excel-es",
@@ -128,8 +164,14 @@
       ],
       "crossDomain": [],
       "version": "2026-07-08",
+      "changelog": [
+        {
+          "version": "2026-07-08",
+          "changes": "Extractos en Excel por tarjeta; selector de tarjeta; abre /login sin sesión; recupera cookies corruptas; cap de 90 días para evitar el SMS."
+        }
+      ],
       "url": "https://habeas-dev.github.io/sources/wizink-extractos-excel-es.json",
-      "updated": "2026-07-08T04:48:16.088Z"
+      "updated": "2026-07-08T04:52:07.633Z"
     },
     {
       "id": "wizink-extractos-pdf-es",
@@ -146,8 +188,14 @@
       ],
       "crossDomain": [],
       "version": "2026-07-08",
+      "changelog": [
+        {
+          "version": "2026-07-08",
+          "changes": "Extractos en PDF por tarjeta (DownloadIC2File); mismas protecciones + cap de 90 días."
+        }
+      ],
       "url": "https://habeas-dev.github.io/sources/wizink-extractos-pdf-es.json",
-      "updated": "2026-07-08T04:48:16.088Z"
+      "updated": "2026-07-08T04:52:07.633Z"
     },
     {
       "id": "wizink-movimientos-es",
@@ -162,8 +210,14 @@
       "formats": [],
       "crossDomain": [],
       "version": "2026-07-08",
+      "changelog": [
+        {
+          "version": "2026-07-08",
+          "changes": "Movimientos combinados (mes actual + extractos pasados) como transacciones; cap de 90 días para evitar el SMS."
+        }
+      ],
       "url": "https://habeas-dev.github.io/sources/wizink-movimientos-es.json",
-      "updated": "2026-07-08T04:48:16.088Z"
+      "updated": "2026-07-08T04:52:07.633Z"
     }
   ]
 }

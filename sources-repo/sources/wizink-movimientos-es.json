@@ -118,5 +118,11 @@
     "description": "description",
     "account": "{group.accountNumber}"
   },
-  "schema": "transaction@1"
+  "schema": "transaction@1",
+  "changelog": [
+    {
+      "version": "2026-07-08",
+      "changes": "Movimientos combinados (mes actual + extractos pasados) como transacciones; cap de 90 días para evitar el SMS."
+    }
+  ]
 }

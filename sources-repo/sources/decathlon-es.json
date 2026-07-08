@@ -53,5 +53,11 @@
     "total": "orderTotalPrice",
     "storeName": "orderOrigin"
   },
-  "schema": "receipt@1"
+  "schema": "receipt@1",
+  "changelog": [
+    {
+      "version": "2026-07-08",
+      "changes": "Pedidos/recibos con detalle JSON."
+    }
+  ]
 }

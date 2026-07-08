@@ -222,6 +222,8 @@
   "market_update_all": { "message": "Update all" },
   "market_updating": { "message": "Updating $N$ source(s)…", "placeholders": { "n": { "content": "$1" } } },
   "market_updated": { "message": "Updated $OK$; $FAIL$ failed.", "placeholders": { "ok": { "content": "$1" }, "fail": { "content": "$2" } } },
+  "market_changelog": { "message": "Changelog" },
+  "market_new": { "message": "new" },
   "market_installing": { "message": "Installing…" },
   "market_install_ok": { "message": "Installed “$ID$”. Enable it in Settings.", "placeholders": { "id": { "content": "$1" } } },
   "market_install_err": { "message": "Install failed: $MSG$", "placeholders": { "msg": { "content": "$1" } } },

@@ -60,5 +60,11 @@
     "total": "total"
   },
   "schema": "invoice@1",
-  "version": "2026-07-08"
+  "version": "2026-07-08",
+  "changelog": [
+    {
+      "version": "2026-07-08",
+      "changes": "Facturas vía tabla AJAX (from:html); PDF por POST de formulario."
+    }
+  ]
 }

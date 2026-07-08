@@ -94,5 +94,11 @@
     "date": "statementDate",
     "account": "{group.accountNumber}"
   },
-  "schema": "invoice@1"
+  "schema": "invoice@1",
+  "changelog": [
+    {
+      "version": "2026-07-08",
+      "changes": "Extractos en PDF por tarjeta (DownloadIC2File); mismas protecciones + cap de 90 días."
+    }
+  ]
 }

@@ -40,5 +40,11 @@
     "total": "total",
     "storeName": "text"
   },
-  "schema": "receipt@1"
+  "schema": "receipt@1",
+  "changelog": [
+    {
+      "version": "2026-07-08",
+      "changes": "Facturas de dominios (JSON + recibo HTML)."
+    }
+  ]
 }

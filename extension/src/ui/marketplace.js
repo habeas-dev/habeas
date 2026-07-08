@@ -94,11 +94,20 @@ async function toggleDetails(id) {
 async function renderDetails(id, panel) {
   const [rating, comments] = await Promise.all([getRatings(id), getComments(id)]);
   const stars = [1, 2, 3, 4, 5].map((n) => `<button class="starbtn" data-star="${n}" title="${n}" style="background:none;border:none;cursor:pointer;font-size:18px;padding:0 1px;color:#e0a400">${star(rating && rating.avg >= n)}</button>`).join('');
+  // Changelog (from the catalog entry). Entries newer than the installed version are flagged "new".
+  const e = ENTRIES.find((x) => x.id === id) || {};
+  const inst = INSTALLED[id];
+  const cl = Array.isArray(e.changelog) ? e.changelog : [];
+  const changelog = cl.length ? `<div class="section-title"><h3>${t('market_changelog')}</h3></div>` + cl.map((c) => {
+    const isNew = inst && inst.version && c.version && String(c.version) > String(inst.version);
+    return `<div style="margin:4px 0${isNew ? ';font-weight:600' : ''}"><code>v${esc(c.version || '')}</code>${isNew ? ` <span class="pill" style="border-color:#c77;color:#c77">${t('market_new')}</span>` : ''} — ${esc(c.changes || '')}</div>`;
+  }).join('') : '';
   const clist = comments.length
     ? comments.map((c) => `<div style="margin:6px 0"><span class="muted">${esc(c.author || 'anon')} · ${esc((c.at || '').slice(0, 10))}</span><br>${esc(c.text || '')}</div>`).join('')
     : `<p class="muted">${t('market_no_comments')}</p>`;
   panel.innerHTML = `
-    <div class="row"><span>${t('market_rate')}</span> <span data-stars>${stars}</span></div>
+    ${changelog}
+    <div class="row" style="margin-top:8px"><span>${t('market_rate')}</span> <span data-stars>${stars}</span></div>
     <div class="section-title" style="margin-top:8px"><h3>${t('market_comments')}</h3></div>
     <div data-clist>${clist}</div>
     <div class="row" style="margin-top:8px">
