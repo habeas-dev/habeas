@@ -10,6 +10,7 @@
     "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "description": "Unique id, <service>-<country>, e.g. carrefour-es." },
     "name": { "type": "string", "description": "Human-readable source name." },
     "service": { "type": "string", "description": "Short service slug used for sink folder/service naming." },
+    "version": { "type": "string", "description": "Source definition version — a date YYYY-MM-DD (or semver). Shown in the catalog; the extension offers an update when the catalog version is newer than the installed one." },
     "trust": { "enum": ["first-party", "community"], "description": "first-party = project-maintained & audited; community = user/contributed." },
     "domain": { "type": "string", "description": "Registrable domain (eTLD+1) all hosts share, e.g. carrefour.es. If omitted it is derived from api.host." },
     "country": { "type": "string", "pattern": "^([A-Z]{2}|global)$", "description": "ISO 3166-1 alpha-2 country code of the service (e.g. ES, FR, US) or 'global'. Used to filter the catalog." },

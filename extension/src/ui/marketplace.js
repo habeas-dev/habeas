@@ -38,30 +38,46 @@ function matches(e, q) {
 }
 const flag = (code) => !code ? '' : code === 'global' ? '🌐' : (/^[A-Za-z]{2}$/.test(code) ? code.toUpperCase().replace(/./g, (c) => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)) : '');
 
+// A catalog entry is newer than what's installed when its version string is greater (dates YYYY-MM-DD
+// sort chronologically; a source with no stored version is treated as outdated so it gets a version).
+function isOutdated(e) {
+  const inst = INSTALLED[e.id];
+  return !!inst && !!e.version && (!inst.version || String(e.version) > String(inst.version));
+}
+
 function render() {
   const q = $('#q').value.trim();
   const list = ENTRIES.filter((e) => matches(e, q));
   if (!list.length) { $('#list').innerHTML = `<p class="muted">${t('market_empty')}</p>`; return; }
-  $('#list').innerHTML = list.map((e) => {
-    const installed = !!INSTALLED[e.id];
+  const outdated = list.filter(isOutdated);
+  const banner = outdated.length
+    ? `<div class="row" style="margin-bottom:10px;align-items:center;gap:8px"><span class="muted">${t('market_updates_available', [String(outdated.length)])}</span><button id="update-all" class="primary">${t('market_update_all')}</button></div>`
+    : '';
+  $('#list').innerHTML = banner + list.map((e) => {
+    const inst = INSTALLED[e.id];
+    const installed = !!inst;
+    const up = isOutdated(e);
     const trust = e.trust === 'first-party' ? t('trust_first_party') : t('trust_community');
     const offsite = (e.crossDomain && e.crossDomain.length) ? `<span class="warn" title="${esc(e.crossDomain.join(', '))}">${t('market_offsite')}</span>` : '';
+    const ver = e.version ? ` · v${esc(e.version)}` : '';
+    const label = !installed ? t('market_install') : up ? t('market_update', [esc(inst.version || '?'), esc(e.version)]) : t('market_installed');
     return `<div class="card" data-id="${esc(e.id)}">
       <div class="row">
         <div style="flex:1">
           <b>${esc(e.name || e.id)}</b> <code>${esc(e.id)}</code><br>
-          <span class="muted">${e.country ? flag(e.country) + ' ' : ''}${esc((e.categories || []).join(', '))} · ${esc(e.domain || '')}${(e.formats || []).length ? ' · ' + esc((e.formats || []).join('/').toUpperCase()) : ''}</span>
-          <span class="pill type">${trust}</span> ${offsite}
+          <span class="muted">${e.country ? flag(e.country) + ' ' : ''}${esc((e.categories || []).join(', '))} · ${esc(e.domain || '')}${(e.formats || []).length ? ' · ' + esc((e.formats || []).join('/').toUpperCase()) : ''}${ver}</span>
+          <span class="pill type">${trust}</span> ${offsite}${up ? ` <span class="pill" style="border-color:#c77;color:#c77">${t('market_update_pill')}</span>` : ''}
           <span class="rating muted" data-rate="${esc(e.id)}"></span>
         </div>
         <button data-more="${esc(e.id)}">${t('market_details')}</button>
-        <button data-install="${esc(e.id)}" ${installed ? 'disabled' : ''}>${installed ? t('market_installed') : t('market_install')}</button>
+        <button data-install="${esc(e.id)}" ${installed && !up ? 'disabled' : ''}>${label}</button>
       </div>
       <div class="panel" data-panel="${esc(e.id)}" hidden style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px"></div>
     </div>`;
   }).join('');
   $('#list').querySelectorAll('[data-install]').forEach((b) => b.onclick = () => onInstall(b.dataset.install));
   $('#list').querySelectorAll('[data-more]').forEach((b) => b.onclick = () => toggleDetails(b.dataset.more));
+  const ua = $('#update-all'); if (ua) ua.onclick = () => onUpdateAll(outdated.map((e) => e.id));
   list.forEach(fillRating);
 }
 
@@ -120,12 +136,26 @@ async function onInstall(id) {
   try {
     await installFromEntry(entry);
     INSTALLED = await getAdapters();
-    btn.textContent = t('market_installed');
     $('#status').textContent = t('market_install_ok', [id]);
+    render(); // recompute installed / up-to-date state
   } catch (e) {
     btn.disabled = false; btn.textContent = t('market_install');
     $('#status').textContent = t('market_install_err', [e.message]);
   }
+}
+
+// Re-fetch + replace every outdated source in one go.
+async function onUpdateAll(ids) {
+  $('#status').textContent = t('market_updating', [String(ids.length)]);
+  let ok = 0, fail = 0;
+  for (const id of ids) {
+    const entry = ENTRIES.find((e) => e.id === id);
+    if (!entry) continue;
+    try { await installFromEntry(entry); ok++; } catch (e) { fail++; }
+  }
+  INSTALLED = await getAdapters();
+  $('#status').textContent = t('market_updated', [String(ok), String(fail)]);
+  render();
 }
 
 init();

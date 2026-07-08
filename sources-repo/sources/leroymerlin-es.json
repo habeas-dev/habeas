@@ -47,5 +47,6 @@
   "schema": "receipt@1",
   "service": "leroymerlin",
   "trust": "community",
-  "country": "ES"
+  "country": "ES",
+  "version": "2026-07-08"
 }

@@ -69,5 +69,6 @@
     "type": "purchaseType",
     "source": "orderSource"
   },
-  "schema": "receipt@1"
+  "schema": "receipt@1",
+  "version": "2026-07-08"
 }

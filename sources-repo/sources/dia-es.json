@@ -5,9 +5,13 @@
   "trust": "community",
   "domain": "dia.es",
   "country": "ES",
-  "version": "2026-07-06",
-  "categories": ["grocery"],
-  "match": ["https://www.dia.es/*"],
+  "version": "2026-07-08",
+  "categories": [
+    "grocery"
+  ],
+  "match": [
+    "https://www.dia.es/*"
+  ],
   "auth": {
     "mode": "cookie",
     "replayHeaders": []

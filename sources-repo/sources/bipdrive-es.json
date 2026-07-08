@@ -59,5 +59,6 @@
     "date": "date",
     "total": "total"
   },
-  "schema": "invoice@1"
+  "schema": "invoice@1",
+  "version": "2026-07-08"
 }
