@@ -67,5 +67,5 @@ export async function getAuthFor(host) {
   const o = await chrome.storage.session.get('auth:' + host);
   const st = o['auth:' + host];
   if (!st) return null;
-  return { byPath: st.byPath || {}, merged: st.merged || {} };
+  return { byPath: st.byPath || {}, merged: st.merged || {}, ctx: st.ctx || {} };
 }

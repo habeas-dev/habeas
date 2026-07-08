@@ -50,7 +50,21 @@
       "additionalProperties": false,
       "properties": {
         "mode": { "enum": ["bearer", "cookie"], "description": "bearer = replay the captured JWT; cookie = rely on the browser's cookies (credentials:include). Endpoints may mix (e.g. cookie list + bearer PDF)." },
-        "tokenMatch": { "type": "string", "description": "Substring the captured Authorization must contain to be a real user token (e.g. eyJ)." },
+        "tokenMatch": { "type": "string", "description": "Regex the captured Authorization must match to be kept as a real user token. Default eyJ (a JWT); set a different pattern for an opaque bearer token, e.g. \"^Bearer [0-9a-f-]{20,}$\". Applied only to the source's own (incl. crossDomainHosts) API hosts." },
+        "context": {
+          "type": "array",
+          "description": "Values to capture from a request URL in the live session (e.g. a DNI in /posicionGlobal/es/{DNI}) and store like auth (storage.session, never disk), then reference in api templates as {ctx.<name>} (groups.path, list.body, pdf). Never a hardcoded value — captured per user.",
+          "items": {
+            "type": "object",
+            "required": ["name", "match"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string", "description": "Template name, referenced as {ctx.<name>}." },
+              "from": { "enum": ["url"], "description": "Where to read the value from (currently only 'url', the default)." },
+              "match": { "type": "string", "description": "Regex with exactly ONE capture group; group 1 is stored as the value." }
+            }
+          }
+        },
         "resetCookies": { "type": "boolean", "description": "When a tab is opened for a logged-out session, wipe the site's cookies first — recovers from a site that corrupts its own cookies and 500s the login (e.g. WiZink). Needs the `cookies` permission." },
         "loginUrl": { "type": "string", "pattern": "^https://", "description": "Sign-in page to open when no session is available (e.g. https://www.wizink.es/login). Defaults to the site root derived from match/api.host." },
         "replayHeaders": {
@@ -157,11 +171,11 @@
         },
         "pdf": {
           "type": "object",
-          "required": ["path"],
           "additionalProperties": false,
-          "description": "Per-document PDF. GET by default; some services generate it via POST with the invoice data as the body.",
+          "description": "Per-document PDF. Either a `path` (relative to api.host, GET by default; some services POST the invoice data as the body) OR a `urlField` naming a list-item field that already holds the FULL absolute https:// URL of the file.",
           "properties": {
-            "path": { "type": "string", "description": "Document path templated with {internalId}, {csrf}, {group.*} and any {field.path} from the list item (e.g. {docId}, {fileName})." },
+            "path": { "type": "string", "description": "Document path templated with {internalId}, {csrf}, {ctx.*}, {group.*} and any {field.path} from the list item (e.g. {docId}, {fileName}). Omit when using urlField." },
+            "urlField": { "type": "string", "description": "Dotted path to a list-item field holding the FULL absolute https:// document URL (e.g. CaixaBank's statement `Url`). Fetched verbatim; its host must be api.host/domain or a crossDomainHosts entry (asserted at fetch time)." },
             "ext": { "type": "string", "description": "File extension of the downloaded document when not a PDF (e.g. xls, csv). Default pdf." },
             "method": { "enum": ["GET", "POST"] },
             "host": { "type": "string", "description": "PDF host if different from api.host (still bound by the same-domain guard / crossDomainHosts)." },

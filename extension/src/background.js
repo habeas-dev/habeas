@@ -48,6 +48,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       if (msg.path) cur.byPath[msg.path] = { ...(cur.byPath[msg.path] || {}), ...msg.headers };
       chrome.storage.session.set({ [key]: cur }).then(() => { maybeAutoRun(msg.host); runPendingExternalCollects(msg.host); });
     });
+  } else if (msg.type === 'habeas:context' && msg.host && msg.name) {
+    // A captured CONTEXT value (e.g. a DNI seen in a request URL), stored alongside auth in
+    // storage.session (never on disk) and later templated as {ctx.<name>} by the runtime.
+    const key = 'auth:' + msg.host;
+    chrome.storage.session.get(key).then((o) => {
+      const cur = o[key] || { merged: {}, byPath: {}, ctx: {} };
+      cur.ctx = { ...(cur.ctx || {}), [msg.name]: msg.value };
+      chrome.storage.session.set({ [key]: cur });
+    });
   } else if (msg.type === 'habeas:sample' && msg.domain && msg.sample) {
     // Record-mode: keep a rolling, de-duplicated (by path) buffer of observed responses.
     const key = 'samples:' + msg.domain;
@@ -132,8 +141,8 @@ async function authFor(adapter) {
   const store = o['auth:' + hostOf(adapter)];
   // Whole store → each endpoint resolves its own auth (mixed cookie+bearer). Cookie sources proceed
   // with an empty store (cookies carry the session).
-  if (!store) return cookie ? { byPath: {}, merged: {} } : null;
-  return { byPath: store.byPath || {}, merged: store.merged || {} };
+  if (!store) return cookie ? { byPath: {}, merged: {}, ctx: {} } : null;
+  return { byPath: store.byPath || {}, merged: store.merged || {}, ctx: store.ctx || {} };
 }
 
 async function runRoute(ds, adapter, sink, opts = {}) {

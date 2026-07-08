@@ -1,0 +1,76 @@
+{
+  "id": "caixabank-consumer-es",
+  "name": "CaixaBank Consumer — extractos",
+  "service": "caixabank-consumer",
+  "trust": "first-party",
+  "domain": "caixabankconsumer.com",
+  "country": "ES",
+  "currency": "EUR",
+  "categories": [
+    "card"
+  ],
+  "crossDomainHosts": [
+    "api.caixabankpc.com"
+  ],
+  "match": [
+    "https://clientes.caixabankconsumer.com/*"
+  ],
+  "auth": {
+    "mode": "bearer",
+    "tokenMatch": "^Bearer [0-9a-f-]{20,}$",
+    "replayHeaders": [
+      "authorization"
+    ],
+    "context": [
+      {
+        "name": "dni",
+        "from": "url",
+        "match": "/posicionGlobal/es/([0-9A-Za-z]+)"
+      }
+    ]
+  },
+  "api": {
+    "host": "https://api.caixabankpc.com",
+    "groups": {
+      "path": "/cpc/v1.0/portalCliente/posicionGlobal/es/{ctx.dni}",
+      "itemsPath": "listaProductos",
+      "fields": {
+        "id": "numeroContrato",
+        "numeroContrato": "numeroContrato",
+        "marca": "marca",
+        "name": "marcaDescripcion",
+        "card": "numeroTarjeta"
+      },
+      "mask": [
+        "card"
+      ]
+    },
+    "list": {
+      "path": "/cpc/v1.0/crm365/contratos/tarjetas/extractos/consultaonline",
+      "method": "POST",
+      "contentType": "application/json",
+      "paging": "none",
+      "itemsPath": "Extractos",
+      "window": "5y",
+      "body": "{\"Contrato\":\"{group.numeroContrato}\",\"DNI\":\"{ctx.dni}\",\"Marca\":\"{group.marca}\",\"FechaDesde\":\"{fromDate}\",\"FechaHasta\":\"{toDate}\",\"Idioma\":\"es\"}"
+    },
+    "pdf": {
+      "urlField": "Url"
+    }
+  },
+  "fields": {
+    "internalId": "Codigo",
+    "date": "FechaHasta",
+    "number": "Codigo",
+    "issuer": "Marca"
+  },
+  "schema": "invoice@1",
+  "minVersion": "0.1.29",
+  "version": "2026-07-08",
+  "changelog": [
+    {
+      "version": "2026-07-08",
+      "changes": "Versión inicial: extractos (cross-domain api.caixabankpc.com), captura de DNI, PDF por URL absoluta."
+    }
+  ]
+}

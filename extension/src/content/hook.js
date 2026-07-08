@@ -19,14 +19,31 @@
   }
   const PAGE_DOMAIN = regDomain(location.hostname);
   let LEARN = false;
+  // Per-source capture config for THIS page, supplied by bridge.js from the enabled sources:
+  //   hosts: extra (cross-domain) API hosts whose auth/context we may capture (a source's
+  //          crossDomainHosts). context: [{name, from:'url', match}] values to capture from a request
+  //          URL (e.g. a DNI). tokenMatch: regex the Authorization must match for those hosts (a
+  //          non-JWT opaque bearer token won't match the default 'eyJ').
+  let CAP = { hosts: [], context: [], tokenMatch: '' };
 
-  // Arm/disarm learn mode (bridge relays a chrome.storage signal into the page).
+  // Arm/disarm learn mode + receive the capture config (bridge relays chrome.storage signals in).
   window.addEventListener('message', (ev) => {
-    if (ev.source === window && ev.data && ev.data.__habeas && ev.data.type === 'arm') LEARN = !!ev.data.on;
+    if (ev.source !== window || !ev.data || !ev.data.__habeas) return;
+    if (ev.data.type === 'arm') LEARN = !!ev.data.on;
+    else if (ev.data.type === 'config') CAP = { hosts: ev.data.hosts || [], context: ev.data.context || [], tokenMatch: ev.data.tokenMatch || '' };
   });
 
   function hostOf(url) { try { return new URL(url, location.href).host; } catch (e) { return ''; } }
   function sameDomain(url) { const h = hostOf(url); return h && regDomain(h) === PAGE_DOMAIN; }
+  // Is this request host one of the source's declared (cross-domain) API hosts?
+  function hostAllowed(url) { const h = hostOf(url); if (!h) return false; return CAP.hosts.some((x) => h === x || regDomain(h) === regDomain(x)); }
+  // Whether an Authorization value is a real user token worth keeping. Default is a JWT (eyJ…); a source
+  // with an opaque bearer token declares auth.tokenMatch, applied only to its own declared API hosts.
+  function tokenOk(url, authz) {
+    if (!authz) return false;
+    const tm = (hostAllowed(url) && CAP.tokenMatch) ? CAP.tokenMatch : 'eyJ';
+    try { return new RegExp(tm).test(authz); } catch (e) { return authz.indexOf(tm) >= 0; }
+  }
   function normalize(h) {
     const o = {};
     try {
@@ -40,12 +57,23 @@
   function postAuth(url, h) {
     const out = {};
     KEYS.forEach((k) => { if (h[k]) out[k] = h[k]; });
-    // Outside learn mode only keep a real user JWT. During authoring we also capture the headers that
-    // ride alongside COOKIE auth (csrf / origin), so cookie-based sites work without a bearer token.
-    if (!LEARN && !(out.authorization && /eyJ/.test(out.authorization))) return;
+    // Outside learn mode only keep a real user token (JWT by default, or a source-declared pattern for
+    // its own hosts). During authoring we also capture the headers that ride alongside COOKIE auth.
+    if (!LEARN && !tokenOk(url, out.authorization)) return;
     if (!Object.keys(out).length) return;
     let path = ''; try { path = new URL(url, location.href).pathname; } catch (e) {}
     window.postMessage({ __habeas: true, type: 'auth', host: hostOf(url), path, headers: out }, '*');
+  }
+  // Capture a declared CONTEXT value from a request URL (e.g. a DNI in /posicionGlobal/es/{DNI}) and
+  // relay it like auth. Gated by CAP.context (only populated for enabled cross-domain sources).
+  function postContext(url) {
+    if (!CAP.context.length) return;
+    let abs = String(url); try { abs = new URL(url, location.href).href; } catch (e) {}
+    for (const c of CAP.context) {
+      if (c.from && c.from !== 'url') continue;
+      let m; try { m = new RegExp(c.match).exec(abs); } catch (e) { continue; }
+      if (m && m[1]) window.postMessage({ __habeas: true, type: 'context', host: hostOf(url), name: c.name, value: m[1] }, '*');
+    }
   }
   // A response sample. JSON responses power the classic SPA-API inference; HTML responses (an AJAX
   // endpoint that returns a table fragment) are kept too — tagged `kind:'html'` — so the inference
@@ -97,7 +125,7 @@
   // Capture scope: normally only the page's own registrable domain (auth). In LEARN mode we also
   // capture from ANY host the page fetches — the service's API may be on another domain (the final
   // adapter then declares it via crossDomainHosts + off-site consent).
-  const cap = (url) => sameDomain(url) || LEARN;
+  const cap = (url) => sameDomain(url) || LEARN || hostAllowed(url);
 
   const of = window.fetch;
   window.fetch = function (input, init) {
@@ -106,7 +134,7 @@
       url = typeof input === 'string' ? input : input && input.url;
       headers = normalize((init && init.headers) || (input && input.headers));
       method = (init && init.method) || (input && input.method) || 'GET';
-      if (url && cap(url)) postAuth(url, headers);
+      if (url && cap(url)) { postAuth(url, headers); postContext(url); }
       if (url) postSeen(url);
     } catch (e) {}
     const p = of.apply(this, arguments);
@@ -143,7 +171,7 @@
   };
   XP.setRequestHeader = function (n, v) {
     try {
-      if (this.__u && cap(this.__u)) { this.__h[n.toLowerCase()] = v; postAuth(this.__u, this.__h); }
+      if (this.__u && cap(this.__u)) { this.__h[n.toLowerCase()] = v; postAuth(this.__u, this.__h); postContext(this.__u); }
     } catch (e) {}
     return os.apply(this, arguments);
   };

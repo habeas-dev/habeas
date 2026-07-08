@@ -67,8 +67,8 @@ async function getAuth(adapter) {
   const store = o['auth:' + host];
   // Return the whole store so each endpoint (list / detail / PDF) resolves its own auth (mixed
   // cookie+bearer is supported). Cookie sources proceed with an empty store (cookies carry it).
-  if (!store) return cookie ? { byPath: {}, merged: {} } : null;
-  return { byPath: store.byPath || {}, merged: store.merged || {} };
+  if (!store) return cookie ? { byPath: {}, merged: {}, ctx: {} } : null;
+  return { byPath: store.byPath || {}, merged: store.merged || {}, ctx: store.ctx || {} };
 }
 
 async function onList() {

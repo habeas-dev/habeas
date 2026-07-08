@@ -7,6 +7,7 @@
 // `page` / `cursor` / `none`.
 import { buildRecord } from '../sinks/format.js';
 import { chrome } from '../lib/ext.js';
+import { registrableDomain, hostOf } from '../adapters/validate.js';
 
 // Some services gate the PDF behind a Referer that must be the document's detail page. A page/
 // extension fetch cannot set Referer (forbidden header) — declarativeNetRequest is the MV3 way.
@@ -103,13 +104,14 @@ async function fetchGroupItems(adapter, auth, net) {
   const NET = net || ((u, i) => fetch(u, i));
   const g = adapter.api.groups;
   const host = g.host ? absHost(g.host) : adapter.api.host;
+  const path = fillCtx(g.path, auth); // {ctx.*} — e.g. a captured DNI in /posicionGlobal/es/{ctx.dni}
   const qs = g.params ? new URLSearchParams(g.params).toString() : '';
-  const url = host + g.path + (qs ? '?' + qs : '');
+  const url = host + path + (qs ? '?' + qs : '');
   const isHtml = g.from === 'html';
   const cookie = adapter.auth && adapter.auth.mode === 'cookie';
   const accept = isHtml ? 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' : 'application/json';
   const method = (g.method || 'GET').toUpperCase();
-  const init = { method, headers: { accept, ...(g.headers || {}), ...headersFor(auth, g.path, !cookie) }, credentials: 'include' };
+  const init = { method, headers: { accept, ...(g.headers || {}), ...headersFor(auth, path, !cookie) }, credentials: 'include' };
   if (method === 'POST' && g.body != null) { init.body = fillTmpl(g.body, null, auth, g.params || {}); init.headers['content-type'] = g.contentType || 'application/x-www-form-urlencoded'; }
   if (g.referer) init.referrer = g.referer;
   const res = await withReferer(url, g.referer || null, () => NET(url, init));
@@ -260,6 +262,15 @@ async function fetchPeriodHtml(adapter, auth, net, group, periodCfg, extra) {
 }
 
 const absHost = (h) => (/^https?:\/\//.test(h) ? h : 'https://' + h);
+// The registrable domains a source may fetch a document from: its own domain plus any declared
+// crossDomainHosts. Guards absolute-URL documents (pdf.urlField) so an item's `Url` can only point
+// back at the same service the session was captured from — the runtime mirror of validate#checkHosts.
+function assertAllowedDocHost(adapter, absUrl) {
+  let h; try { h = new URL(absUrl).host; } catch (e) { throw new Error('document URL invalid'); }
+  const base = registrableDomain(adapter.domain || (adapter.api && adapter.api.host) || '');
+  const allowed = new Set([base, ...(adapter.crossDomainHosts || []).map(registrableDomain)].filter(Boolean));
+  if (!allowed.has(registrableDomain(h))) throw new Error('document URL host not allowed: ' + hostOf(h));
+}
 // Template an id into a path. Don't percent-encode a path/URL-like id (e.g. a row's href
 // "/…/receipts/123.pdf") — that would break its slashes; encode only opaque ids.
 const tid = (id) => (/[/:]/.test(String(id)) ? String(id) : encodeURIComponent(id));
@@ -271,19 +282,28 @@ const applyTmpl = (str, doc, id) => String(str).replace(/\{([^}]+)\}/g, (m, k) =
 });
 // {group.field} → the current group's (e.g. bank account's) value. Templates the per-group list URL.
 const tmplGroup = (str, group) => (group ? String(str).replace(/\{group\.([^}]+)\}/g, (m, k) => { const v = get(group, k); return v == null ? m : tid(v); }) : String(str));
-// Fill a POST-body/URL template: {group.*} + {csrf} (the CSRF token from the prelude, on auth.__csrf) +
-// any {paramName} from the request params (paging/range). Values are URL-encoded (form-urlencoded body).
+// A CAPTURED CONTEXT value (e.g. a DNI observed in a request URL), stored alongside auth in
+// storage.session and exposed to templates as {ctx.<name>}. Mirrors {csrf}/{group.*}. Never on disk.
+const ctxOf = (auth) => (auth && (auth.__ctx || auth.ctx)) || {};
+const fillCtx = (str, auth) => { const ctx = ctxOf(auth); return String(str).replace(/\{ctx\.([^}]+)\}/g, (m, k) => (ctx[k] == null ? m : tid(ctx[k]))); };
+// Fill a POST-body/URL template: {group.*} + {ctx.*} (captured context, e.g. the DNI) + {csrf} (the
+// CSRF token from the prelude, on auth.__csrf) + any {paramName} from the request params (paging/range/
+// date window). Values are URL-encoded (form-urlencoded body); for JSON bodies the values are alnum ids.
 function fillTmpl(str, group, auth, params) {
+  const ctx = ctxOf(auth);
   let s = tmplGroup(str, group).split('{csrf}').join((auth && auth.__csrf) || '');
+  s = s.replace(/\{ctx\.([^}]+)\}/g, (m, k) => (ctx[k] == null ? m : String(ctx[k])));
   for (const k of Object.keys(params || {})) s = s.split('{' + k + '}').join(params[k] == null ? '' : String(params[k]));
   return s;
 }
 // Unified document-URL/body templater for a doc: {internalId} + {csrf} + {group.*} (doc._group, e.g. the
 // card) + {field.path} (doc._raw, e.g. the statement's statementDate). Values are URL-encoded.
-function fillDocTmpl(str, doc, id, csrf) {
+function fillDocTmpl(str, doc, id, csrf, auth) {
+  const ctx = ctxOf(auth);
   return String(str).replace(/\{([^}]+)\}/g, (m, k) => {
     if (k === 'internalId') return tid(id);
     if (k === 'csrf') return csrf == null ? '' : String(csrf);
+    if (k.indexOf('ctx.') === 0) { const v = ctx[k.slice(4)]; return v == null ? m : tid(v); }
     const v = k.indexOf('group.') === 0 ? (doc && doc._group ? get(doc._group, k.slice(6)) : undefined) : (doc && doc._raw ? get(doc._raw, k) : undefined);
     return v == null ? m : tid(v);
   });
@@ -381,7 +401,13 @@ export function artifactKinds(adapter, doc) {
   if (api.detail && !api.detail.as) out.push({ kind: 'data', ext: 'json' });
   const dc = documentCfg(api);
   if (dc) { if (!doc || tmplResolvable(dc.path, doc)) out.push({ kind: 'document', ext: docExtOf(dc) }); }
-  else if (api.pdf) { if (!doc || tmplResolvable(api.pdf.path, doc)) out.push({ kind: 'document', ext: api.pdf.ext || 'pdf' }); }
+  else if (api.pdf) {
+    // urlField: the document is an absolute URL on the list item — available iff that field is present.
+    const ok = api.pdf.urlField
+      ? (!doc || (doc._raw && get(doc._raw, api.pdf.urlField) != null && get(doc._raw, api.pdf.urlField) !== ''))
+      : (!doc || tmplResolvable(api.pdf.path, doc));
+    if (ok) out.push({ kind: 'document', ext: api.pdf.ext || 'pdf' });
+  }
   return out;
 }
 // Fetch one artifact. Reuses fetchDocument by PROJECTING the adapter so the requested artifact sits
@@ -441,19 +467,31 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
   // Refresh it right before each document fetch so the download carries a valid {csrf}.
   let csrf = auth && auth.__csrf;
   if (adapter.api.csrf) { try { csrf = await fetchCsrf(adapter, auth, net); } catch (e) {} }
-  const path = fillDocTmpl(pdf.path, doc, internalId, csrf); // {internalId} + {field.path} + {group.*} + {csrf}
-  // A leftover {field} means this doc can't fill the template (e.g. a ticket with no invoice) — no
-  // document for it. Bail cleanly (callers treat it as "artifact unavailable") instead of a bad request.
-  if (/\{[^}]+\}/.test(path)) throw new Error('no document for this item');
-  const url = host + path;
+  let url, path;
+  if (pdf.urlField) {
+    // ABSOLUTE-URL document: the list item already carries the full https:// link to the file (e.g.
+    // CaixaBank's statement `Url`). Fetch it verbatim — but keep the same-domain guard honest: the
+    // URL's host MUST be the source's own domain or a declared crossDomainHosts entry.
+    const abs = doc && doc._raw ? get(doc._raw, pdf.urlField) : undefined;
+    if (!abs || !/^https:\/\//i.test(String(abs))) throw new Error('no document for this item');
+    assertAllowedDocHost(adapter, String(abs));
+    url = String(abs);
+    try { path = new URL(url).pathname; } catch (e) { path = url.split('?')[0]; }
+  } else {
+    path = fillDocTmpl(pdf.path, doc, internalId, csrf, auth); // {internalId} + {field.path} + {group.*} + {ctx.*} + {csrf}
+    // A leftover {field} means this doc can't fill the template (e.g. a ticket with no invoice) — no
+    // document for it. Bail cleanly (callers treat it as "artifact unavailable") instead of a bad request.
+    if (/\{[^}]+\}/.test(path)) throw new Error('no document for this item');
+    url = host + path;
+  }
   // accept:*/* not application/pdf — some servers (Dia's invoice endpoint) return 204 No Content for a
   // bare application/pdf Accept but serve the real PDF for the browser-default */*.
   const init = { method: pdf.method || 'GET', headers: { accept: '*/*', ...(pdf.headers || {}), ...headersFor(auth, path.split('?')[0]) }, credentials: 'include', wantBlob: true };
   if (init.method !== 'GET' && pdf.body != null) {
-    init.body = fillDocTmpl(pdf.body, doc, internalId, csrf);
+    init.body = fillDocTmpl(pdf.body, doc, internalId, csrf, auth);
     init.headers['content-type'] = pdf.contentType || 'application/json';
   }
-  const referer = pdf.referer ? fillDocTmpl(pdf.referer, doc, internalId, csrf) : null;
+  const referer = pdf.referer ? fillDocTmpl(pdf.referer, doc, internalId, csrf, auth) : null;
   const res = await withReferer(url, referer, () => NET(url, init));
   if (!res.ok) {
     const hint = res.status === 406 ? ' (sin PDF disponible — típico en tickets antiguos)' : '';
@@ -604,9 +642,10 @@ async function fetchList(adapter, auth, params, net, group) {
   const htmlAccept = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
   const method = (list.method || 'GET').toUpperCase();
   const init = { method, headers: { accept: html ? htmlAccept : 'application/json', ...(list.headers || {}), ...headersFor(auth, path.split('?')[0], !cookie) }, credentials: 'include' };
-  // POST list (AEM/WiZink send params in the body): fill {group.*} + {csrf} (from the prelude) + {paramName}.
+  // POST list (AEM/WiZink send params in the body; CaixaBank posts a JSON body with a date window):
+  // fill {group.*} + {ctx.*} + {csrf} + {paramName} + the {fromDate}/{toDate} window (from list.window).
   if (method === 'POST' && list.body != null) {
-    init.body = fillTmpl(list.body, group, auth, gparams);
+    init.body = fillTmpl(list.body, group, auth, { ...gparams, ...bodyDates(list) });
     init.headers['content-type'] = list.contentType || 'application/x-www-form-urlencoded';
   }
   // list.referer: some endpoints only honour the offset/page when the Referer reflects the page the
@@ -797,6 +836,14 @@ function categorize(adapter, p) {
   const c = adapter.categorize;
   if (!c) return (adapter.categories && adapter.categories[0]) || 'other';
   return (c.map && c.map[get(p, c.field)]) || c.default || 'other';
+}
+// Date window for a POST body (as opposed to rangeParams, which puts the window in the QUERY string).
+// Exposes {fromDate}=now-window and {toDate}=now as YYYY-MM-DD, driven by list.window (e.g. "5y").
+function bodyDates(list) {
+  if (!list || !list.window) return {};
+  const now = new Date();
+  const from = new Date(Date.now() - windowMs(list.window));
+  return { fromDate: from.toISOString().slice(0, 10), toDate: now.toISOString().slice(0, 10) };
 }
 function rangeParams(list) {
   if (!list.range) return {};

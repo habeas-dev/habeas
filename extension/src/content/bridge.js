@@ -12,6 +12,33 @@
   }
   const PAGE_DOMAIN = regDomain(location.hostname);
   const arm = (on) => window.postMessage({ __habeas: true, type: 'arm', on: !!on }, '*');
+  const bareHost = (m) => String(m).replace(/^[a-z]+:\/\//i, '').replace(/[:/*].*$/, '').replace(/^\*\./, '');
+
+  // Per-source capture config for the hook: for each ENABLED source whose login domain is THIS page's
+  // registrable domain, pass its cross-domain API hosts, captured-context patterns and token-match
+  // pattern — what lets the hook capture a cross-domain (e.g. bank) bearer token + a context value
+  // (e.g. a DNI) the same-domain-only default would ignore. Enabling a source already required consent.
+  function syncCapture() {
+    chrome.storage.local.get(['habeas:sources', 'habeas:config']).then((o) => {
+      const sources = o['habeas:sources'] || [];
+      const cfg = o['habeas:config'] || {};
+      const enabled = new Set((cfg.datasources || []).filter((d) => d.enabled).map((d) => d.id));
+      const hosts = [], context = []; let tokenMatch = '';
+      for (const a of sources) {
+        if (!enabled.has(a.id)) continue;
+        const matchesPage = regDomain(a.domain || '') === PAGE_DOMAIN
+          || (a.match || []).some((m) => regDomain(bareHost(m)) === PAGE_DOMAIN);
+        if (!matchesPage) continue;
+        for (const ch of a.crossDomainHosts || []) hosts.push(bareHost(ch));
+        const au = a.auth || {};
+        if (Array.isArray(au.context)) for (const c of au.context) context.push(c);
+        if (au.tokenMatch) tokenMatch = au.tokenMatch;
+      }
+      if (hosts.length || context.length || tokenMatch) {
+        window.postMessage({ __habeas: true, type: 'config', hosts, context, tokenMatch }, '*');
+      }
+    }).catch(() => {});
+  }
 
   // Capture the RENDERED page text (what the user actually sees) — used to tell a public
   // receipt/invoice number (visible) from an internal id (only in URLs/traffic).
@@ -65,18 +92,23 @@
   window.addEventListener('message', (ev) => {
     const d = ev.data;
     if (ev.source !== window || !d || !d.__habeas) return;
-    if (d.type === 'hook-ready') syncLearn();               // (re)send arm state once the hook is live
+    if (d.type === 'hook-ready') { syncLearn(); syncCapture(); } // (re)send arm state + capture config
     else if (d.type === 'auth') chrome.runtime.sendMessage({ type: 'habeas:auth', host: d.host, path: d.path, headers: d.headers });
+    else if (d.type === 'context') chrome.runtime.sendMessage({ type: 'habeas:context', host: d.host, name: d.name, value: d.value });
     else if (d.type === 'sample') chrome.runtime.sendMessage({ type: 'habeas:sample', domain: PAGE_DOMAIN, sample: { url: d.url, method: d.method, status: d.status, reqHeaders: d.reqHeaders, json: d.json, kind: d.kind, html: d.html, reqBody: d.reqBody, fromHtml: d.fromHtml } });
     else if (d.type === 'asset') chrome.runtime.sendMessage({ type: 'habeas:asset', domain: PAGE_DOMAIN, asset: { url: d.url, method: d.method, reqType: d.reqType, reqBody: d.reqBody, referer: d.referer, status: d.status } });
     else if (d.type === 'seen') chrome.runtime.sendMessage({ type: 'habeas:seen', domain: PAGE_DOMAIN, host: d.host });
   });
-  chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch['habeas:learn']) syncLearn(); });
+  chrome.storage.onChanged.addListener((ch, area) => {
+    if (area !== 'local') return;
+    if (ch['habeas:learn']) syncLearn();
+    if (ch['habeas:sources'] || ch['habeas:config']) syncCapture();
+  });
 
   const s = document.createElement('script');
   s.src = chrome.runtime.getURL('src/content/hook.js');
   (document.head || document.documentElement).appendChild(s);
   s.remove();
 
-  syncLearn(); // covers the case where the hook is already listening
+  syncLearn(); syncCapture(); // covers the case where the hook is already listening
 })();

@@ -43,7 +43,7 @@ function renderHtmlDoc(el, html) {
 async function getAuthFor(host) {
   const o = await chrome.storage.session.get('auth:' + host);
   const s = o['auth:' + host];
-  return s ? { byPath: s.byPath || {}, merged: s.merged || {} } : null;
+  return s ? { byPath: s.byPath || {}, merged: s.merged || {}, ctx: s.ctx || {} } : null;
 }
 async function ensureHostPermission(hostUrl) {
   try {
@@ -94,7 +94,7 @@ export function editJson(adapter) {
       try {
         await ensureHostPermission(ad.api.host);
         const host = ad.api.host.replace(/^https?:\/\//, '');
-        const auth = (await getAuthFor(host)) || { byPath: {}, merged: {} };
+        const auth = (await getAuthFor(host)) || { byPath: {}, merged: {}, ctx: {} };
         const net = await ensureSiteFetch(ad, { open: true });
         const groupId = await pickGroup(ad, auth, net); // grouped source (bank accounts/cards) → let the user choose
         const docs = await listInventory(ad, auth, net, { groupId });
