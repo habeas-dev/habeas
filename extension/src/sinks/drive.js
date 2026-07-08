@@ -58,11 +58,13 @@ export async function driveWrite(sink, docs, files, opts) {
       n++;
     }
   }
-  // Cumulative per-service manifest: Habeas/<service>/manifest.json (read → merge → write).
+  // Cumulative per-SOURCE manifest: Habeas/<service>/<source>.json (read → merge → write) so sources
+  // sharing a service (e.g. WiZink movements vs statements) don't merge into one mixed file.
   const svcId = await ensureFolderPath(token, [root, service], cache);
-  const existing = await readJson(token, 'manifest.json', svcId);
+  const mf = opts.source ? `${opts.source}.json` : 'manifest.json';
+  const existing = await readJson(token, mf, svcId);
   const merged = mergeRecords(existing, toRecords(docs, files));
-  await putJson(token, 'manifest.json', svcId, JSON.stringify(merged, null, 2));
+  await putJson(token, mf, svcId, JSON.stringify(merged, null, 2));
   return { written: n, total: docs.length };
 }
 

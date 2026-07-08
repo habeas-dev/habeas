@@ -101,10 +101,19 @@
             "sel": "movement-date"
           },
           "description": {
+            "tag": "h4"
+          },
+          "location": {
             "sel": "movement-location"
           },
           "amount": {
             "sel": "movement-amount"
+          },
+          "type": {
+            "re": "movement-item ([a-zA-Z]+)"
+          },
+          "card": {
+            "sel": "card-number-masked"
           }
         }
       },
@@ -116,13 +125,16 @@
     "date": "date",
     "amount": "amount",
     "description": "description",
+    "type": "type",
+    "location": "location",
+    "card": "card",
     "account": "{group.accountNumber}"
   },
   "schema": "transaction@1",
   "changelog": [
     {
       "version": "2026-07-08",
-      "changes": "Movimientos combinados (mes actual + extractos pasados); fromPrincipalAccount/inStatementRepository fijados para que carguen los meses pasados; cap de 90 días."
+      "changes": "Exporta todos los datos del movimiento (comercio, localidad, categoría, tarjeta, importe, fecha); descripción = el comercio; manifest propio por fuente; cap de 90 días."
     }
   ]
 }

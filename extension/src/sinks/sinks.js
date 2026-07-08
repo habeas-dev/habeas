@@ -15,6 +15,10 @@ export async function writeToSink(sink, docs, files, opts = {}) {
   return impl(sink, docs, files, opts);
 }
 
+// One manifest PER SOURCE (not per service) so different sources under the same service — e.g. WiZink
+// card movements (transactions) vs monthly statements (invoices) — don't merge into one mixed file.
+const manifestName = (opts) => (opts && opts.source ? `${opts.source}.json` : 'manifest.json');
+
 const IMPL = {
   // Available PDFs + a <service>/manifest.json snapshot, bundled into one ZIP (the ZIP
   // only exists to dodge Chrome's multi-download block; other sinks write files directly).
@@ -23,7 +27,7 @@ const IMPL = {
     const entries = [];
     for (const d of docs) for (const art of files.get(d.internalId) || []) entries.push({ name: pathFor(sink, d, opts, art.ext), blob: art.blob });
     const written = entries.length;
-    entries.push({ name: `${service}/manifest.json`, blob: jsonBlob(buildManifest(docs, files)) });
+    entries.push({ name: `${service}/${manifestName(opts)}`, blob: jsonBlob(buildManifest(docs, files)) });
     const zip = await makeZip(entries);
     triggerDownload(zip, `habeas-${service}-${today()}.zip`);
     return { written, total: docs.length };
@@ -43,9 +47,10 @@ const IMPL = {
       }
     }
     const svcDir = await ensureDir(root, [service]);
-    const existing = await readJsonFile(svcDir, 'manifest.json');
+    const mf = manifestName(opts);
+    const existing = await readJsonFile(svcDir, mf);
     const merged = mergeRecords(existing, toRecords(docs, files));
-    await writeFile(svcDir, 'manifest.json', jsonBlob(JSON.stringify(merged, null, 2)));
+    await writeFile(svcDir, mf, jsonBlob(JSON.stringify(merged, null, 2)));
     return { written: n, total: docs.length };
   },
 

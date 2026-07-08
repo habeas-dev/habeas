@@ -36,7 +36,11 @@ export function buildRecord(d, adapter) {
   // internalId). Added only when mapped, so receipt@1 stays byte-identical when absent.
   const withNumber = (r) => (d.number != null ? { ...r, number: d.number } : r);
   if (kind === 'transaction') {
-    return withNumber({ internalId: d.internalId, date: d.date, amount: num(d.amount ?? d.total), currency, category: d.category, description: d.description ?? d.label ?? '', counterparty: d.counterparty ?? d.party ?? '', direction: d.direction ?? dirOf(d.amount ?? d.total), source: d.source, type: d.type });
+    const r = { internalId: d.internalId, date: d.date, amount: num(d.amount ?? d.total), currency, category: d.category, description: d.description ?? d.label ?? '', counterparty: d.counterparty ?? d.party ?? '', direction: d.direction ?? dirOf(d.amount ?? d.total), source: d.source, type: d.type };
+    // Carry any extra per-movement data a card source captures (merchant city, card mask…) so nothing is lost.
+    if (d.location != null && d.location !== '') r.location = d.location;
+    if (d.card != null && d.card !== '') r.card = d.card;
+    return withNumber(r);
   }
   if (kind === 'investment') {
     return withNumber({ internalId: d.internalId, date: d.date, instrument: d.instrument ?? d.label ?? '', isin: d.isin ?? '', units: num(d.units), price: num(d.price), amount: num(d.amount ?? d.total), currency, category: d.category, operation: d.operation ?? d.type, source: d.source });

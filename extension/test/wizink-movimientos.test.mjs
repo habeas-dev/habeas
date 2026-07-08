@@ -23,13 +23,15 @@ const GROUPS = "<a onclick=\"goToCardDetail('ACC1', 'CARD1', 'today');\" class=\
   + "<span class=\"card-product-name\"><span class=\"sr-only\">Nombre: </span>Test Card</span>"
   + "<span class=\"card-security-code\"><span class=\"sr-only\">N: </span> **** **** **** 1234 </span></div></a>";
 
-function movRow(cat, date, loc, amount, responsive) {
+// Real block: <h4> = merchant/concept, movement-item CLASS = WiZink category, movement-location = city,
+// card-number-masked = which card. `merchant` empty → a charge with no concept (empty description).
+function movRow(cat, merchant, date, loc, amount, responsive) {
   const amt = responsive
     ? `<span class="movement-amount hidden-xs hidden-sm hidden-md">${amount}</span><span class="movement-amount hidden-lg">${amount}</span>`
     : `<span class="movement-amount">${amount}</span>`;
   const location = loc ? `<span class="movement-location">${loc} </span>` : '';
   return `<li><div class="movement-item ${cat}"><div class="layout--left"><div class="layout--group">`
-    + `<h4>${cat}</h4><span class="card-number-masked">*1234</span></div>`
+    + `<h4>${merchant}</h4><span class="card-number-masked">*4321</span></div>`
     + `<div class="layout--group-2"><span class="movement-date">${date}</span>${location}</div></div>`
     + `<div class="layout--right">${amt}</div></div></li>`;
 }
@@ -37,20 +39,20 @@ const wrap = (rows) => `<div class="card-movements"><ul>${rows.join('')}</ul></d
 
 // Current (unbilled) month: 3 movements, with responsive duplicate amount spans.
 const CURRENT = wrap([
-  movRow('alimentacion', '06 JUL', 'Test Shop A', '14,34 €', true),
-  movRow('restaurante', '02 JUL', 'Test Rest B', '9,90 €', true),
-  movRow('coche', '20 jun', 'Test Fuel C', '55,00 €', true),
+  movRow('alimentacion', 'ALIEXPRESS.COM', '06 JUL', 'Luxembourg', '14,34 €', true),
+  movRow('restaurante', 'MC DONALD\'S ALGETE', '02 JUL', 'SAN SEBASTIAN', '9,90 €', true),
+  movRow('coche', 'REPSOL E.S.', '20 jun', 'MADRID', '55,00 €', true),
 ]);
 const DATES = `<script>callOperations('${D30}'); callOperations('${D60}'); callOperations('${D120}');</script>`;
 const PAST = {
   [D30]: wrap([
-    movRow('alimentacion', '18 may', 'Past Shop D', '21,00 €', false),
-    movRow('cargos', '15 may', '', '3,50 €', false), // a charge → no location → empty description
+    movRow('alimentacion', 'MERCADONA', '18 may', 'MADRID', '21,00 €', false),
+    movRow('cargos', '', '15 may', 'MADRID', '3,50 €', false), // a charge → no merchant → empty description
   ]),
   [D60]: wrap([
-    movRow('compras', '10 abr', 'Past Shop E', '1.234,56 €', false),
-    movRow('servicios', '05 abr', 'Past Serv F', '12,00 €', false),
-    movRow('otros', '02 abr', 'Past Shop G', '7,77 €', false),
+    movRow('compras', 'AMAZON EU', '10 abr', 'Luxembourg', '1.234,56 €', false),
+    movRow('servicios', 'NETFLIX', '05 abr', 'AMSTERDAM', '12,00 €', false),
+    movRow('otros', 'PAYPAL *STEAM', '02 abr', 'LONDON', '7,77 €', false),
   ]),
   // D120 is intentionally absent — but with maxAgeDays it must never be requested in the first place.
 };
@@ -103,11 +105,18 @@ test('multi-period pipeline: current + reachable past statements; >90-day statem
     assert.equal(d.record.currency, 'EUR');
   }
 
-  // First amount captured despite the responsive duplicate spans; Spanish thousands; empty-location charge.
+  // First amount captured despite the responsive duplicate spans; Spanish thousands; empty-merchant charge.
   assert.ok(docs.some((d) => d.record.amount === 14.34), 'first responsive amount captured');
   assert.ok(docs.some((d) => d.record.amount === 1234.56), 'parsed 1.234,56 €');
   const charge = docs.find((d) => d.record.amount === 3.5);
-  assert.equal(charge.record.description, '', 'a charge with no movement-location → empty description');
+  assert.equal(charge.record.description, '', 'a charge with no <h4> → empty description');
+
+  // ALL available movement data is exported: merchant (description), city (location), card, and category.
+  const amazon = docs.find((d) => d.record.amount === 1234.56);
+  assert.equal(amazon.record.description, 'AMAZON EU', 'description = the merchant/concept (the <h4>), not the city');
+  assert.equal(amazon.record.location, 'Luxembourg', 'location = the movement city');
+  assert.equal(amazon.record.card, '*4321', 'card mask carried');
+  assert.equal(amazon.record.type, 'compras', 'WiZink spending category carried');
 
   // The KEY guarantee: the >90-day statement was never requested (that request is what fires the SMS).
   assert.ok(!net.requested.includes(D120), `>90-day statement ${D120} must not be requested; got ${JSON.stringify(net.requested)}`);
