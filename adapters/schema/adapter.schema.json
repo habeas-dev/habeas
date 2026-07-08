@@ -180,6 +180,8 @@
             "method": { "enum": ["GET", "POST"] },
             "host": { "type": "string", "description": "PDF host if different from api.host (still bound by the same-domain guard / crossDomainHosts)." },
             "body": { "type": "string", "description": "[POST] Request body template; {internalId} / {field.path} are substituted." },
+            "base64Field": { "type": "string", "description": "Dotted path to a field in the JSON response holding the document BASE64-encoded (e.g. IKEA's GraphQL `data.receipt.receiptPdf`) — decoded to a blob instead of reading the response as raw binary. A null/empty value means no document for that item (metadata-only fallback)." },
+            "mime": { "type": "string", "description": "MIME type for a base64Field document (default application/pdf)." },
             "contentType": { "type": "string", "description": "[POST] Content-Type of the body (default application/json)." },
             "headers": { "type": "object", "description": "Static request headers; overrides the runtime defaults (e.g. set a specific Accept). The default Accept for a PDF is */*.", "additionalProperties": { "type": "string" } },
             "referer": { "type": "string", "description": "Referer header to send (templated with {internalId}/{field.path}) — for services that gate the PDF behind its detail page. Set via declarativeNetRequest." }

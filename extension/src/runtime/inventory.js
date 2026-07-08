@@ -300,7 +300,9 @@ function fillTmpl(str, group, auth, params) {
 // card) + {field.path} (doc._raw, e.g. the statement's statementDate). Values are URL-encoded.
 function fillDocTmpl(str, doc, id, csrf, auth) {
   const ctx = ctxOf(auth);
-  return String(str).replace(/\{([^}]+)\}/g, (m, k) => {
+  // Only {word.word} tokens (internalId, csrf, ctx.*, group.*, field paths) — NOT arbitrary braces, so a
+  // GraphQL POST body (`{ receipt(x) { receiptPdf } }`) keeps its own braces and only {internalId} fills.
+  return String(str).replace(/\{([\w.]+)\}/g, (m, k) => {
     if (k === 'internalId') return tid(id);
     if (k === 'csrf') return csrf == null ? '' : String(csrf);
     if (k.indexOf('ctx.') === 0) { const v = ctx[k.slice(4)]; return v == null ? m : tid(v); }
@@ -456,6 +458,16 @@ export async function fetchDocument(adapter, auth, docOrId, net, render) {
   throw new Error('no document for this source');
 }
 
+// Decode a (possibly data-URI-prefixed) base64 string into a Blob — for documents delivered inside a
+// JSON field rather than as a raw binary response (see api.pdf.base64Field).
+function base64ToBlob(b64, mime) {
+  const clean = String(b64).replace(/^data:[^,]*,/, '').replace(/\s+/g, '');
+  const bin = atob(clean);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
 export async function fetchPdf(adapter, auth, docOrId, net) {
   const NET = net || ((u, i) => fetch(u, i));
   const doc = docOrId && typeof docOrId === 'object' ? docOrId : null;
@@ -486,7 +498,10 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
   }
   // accept:*/* not application/pdf — some servers (Dia's invoice endpoint) return 204 No Content for a
   // bare application/pdf Accept but serve the real PDF for the browser-default */*.
-  const init = { method: pdf.method || 'GET', headers: { accept: '*/*', ...(pdf.headers || {}), ...headersFor(auth, path.split('?')[0]) }, credentials: 'include', wantBlob: true };
+  // base64Field: the document comes back INSIDE a JSON response (e.g. IKEA's GraphQL
+  // `data.receipt.receiptPdf` holds the PDF base64-encoded) — read JSON, not a blob.
+  const wantBlob = !pdf.base64Field;
+  const init = { method: pdf.method || 'GET', headers: { accept: wantBlob ? '*/*' : 'application/json', ...(pdf.headers || {}), ...headersFor(auth, path.split('?')[0]) }, credentials: 'include', wantBlob };
   if (init.method !== 'GET' && pdf.body != null) {
     init.body = fillDocTmpl(pdf.body, doc, internalId, csrf, auth);
     init.headers['content-type'] = pdf.contentType || 'application/json';
@@ -496,6 +511,12 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
   if (!res.ok) {
     const hint = res.status === 406 ? ' (sin PDF disponible — típico en tickets antiguos)' : '';
     throw new Error('pdf ' + res.status + hint + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
+  }
+  if (pdf.base64Field) {
+    const j = JSON.parse(await res.text());
+    const b64 = get(j, pdf.base64Field);
+    if (b64 == null || b64 === '') throw new Error('no document for this item'); // e.g. an online order with no receipt
+    return base64ToBlob(String(b64), pdf.mime || 'application/pdf');
   }
   return await res.blob();
 }

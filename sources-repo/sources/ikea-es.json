@@ -1,0 +1,54 @@
+{
+  "id": "ikea-es",
+  "name": "IKEA España — compras y tiquets",
+  "service": "ikea",
+  "trust": "first-party",
+  "domain": "ikea.com",
+  "country": "ES",
+  "currency": "EUR",
+  "categories": [
+    "home"
+  ],
+  "version": "2026-07-08",
+  "crossDomainHosts": [
+    "cssom-prod.ingka.com"
+  ],
+  "match": [
+    "https://www.ikea.com/*"
+  ],
+  "auth": {
+    "mode": "bearer",
+    "replayHeaders": [
+      "authorization"
+    ]
+  },
+  "api": {
+    "host": "https://cssom-prod.ingka.com",
+    "list": {
+      "path": "/purchase-history/graphql",
+      "method": "POST",
+      "contentType": "application/json",
+      "body": "{\"operationName\":\"FullHistory\",\"variables\":{\"skip\":0,\"take\":-1},\"query\":\"query FullHistory($skip: Int!, $take: Int!) {\\n  historyData(skip: $skip, take: $take) {\\n    totalPurchases\\n    historicalPurchases {\\n      id\\n      relatedSacNumber\\n      siblings\\n      dateAndTime {\\n        ...DateAndTime\\n        __typename\\n      }\\n      status\\n      eventStatus\\n      storeName\\n      totalCost {\\n        code\\n        value\\n        formatted\\n        __typename\\n      }\\n      type\\n      articles {\\n        any(skip: 0, take: -1) {\\n          id\\n          name\\n          image {\\n            optimized\\n            __typename\\n          }\\n          quantity\\n          description\\n          itemType\\n          __typename\\n        }\\n        quantity\\n        __typename\\n      }\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n\\nfragment DateAndTime on DateAndTime {\\n  time\\n  date\\n  formattedShortDate\\n  formattedLongDate\\n  formattedShortDateTime\\n  formattedLongDateTime\\n  formattedWeekDay\\n  __typename\\n}\"}",
+      "itemsPath": "data.historyData.historicalPurchases",
+      "paging": "none"
+    },
+    "pdf": {
+      "path": "/purchase-history/graphql",
+      "method": "POST",
+      "contentType": "application/json",
+      "body": "{\"operationName\":\"GetReceipt\",\"variables\":{\"receiptNumber\":\"{internalId}\"},\"query\":\"query GetReceipt($receiptNumber: String!) { receipt(receiptNumber: $receiptNumber) { id print receiptPdf __typename } }\"}",
+      "base64Field": "data.receipt.receiptPdf",
+      "ext": "pdf"
+    }
+  },
+  "fields": {
+    "internalId": "id",
+    "date": "dateAndTime.date",
+    "total": "totalCost.value",
+    "storeName": "storeName",
+    "number": "id",
+    "type": "type"
+  },
+  "schema": "receipt@1",
+  "minVersion": "0.1.36"
+}
