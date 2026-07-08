@@ -1,0 +1,51 @@
+{
+  "api": {
+    "detail": {
+      "headers": {
+        "content-type": "application/json"
+      },
+      "method": "GET",
+      "path": "/customer-space-module/services/customer-after-sales-backend/me/receipts/{internalId}"
+    },
+    "host": "https://www.leroymerlin.es",
+    "list": {
+      "headers": {
+        "content-type": "application/json"
+      },
+      "itemsPath": "receipts",
+      "pageParam": "yearOffset",
+      "pageStart": 2,
+      "paging": "page",
+      "params": {
+        "page": "0",
+        "size": "10"
+      },
+      "path": "/customer-space-module/services/customer-after-sales-backend/me/receipts"
+    }
+  },
+  "auth": {
+    "mode": "cookie",
+    "replayHeaders": [],
+    "loginUrl": "https://www.leroymerlin.es/login.html"
+  },
+  "categories": [
+    "diy"
+  ],
+  "domain": "leroymerlin.es",
+  "fields": {
+    "date": "date",
+    "internalId": "id",
+    "number": "number",
+    "storeName": "store.storeName",
+    "total": "totalPriceIncludingVAT.amount"
+  },
+  "id": "leroymerlin-es",
+  "match": [
+    "https://www.leroymerlin.es/*"
+  ],
+  "name": "Leroy Merlin España — receipts",
+  "schema": "receipt@1",
+  "service": "leroymerlin",
+  "trust": "community",
+  "country": "ES"
+}
