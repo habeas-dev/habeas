@@ -8,6 +8,7 @@ import { watchThemeIcon } from '../lib/theme-icon.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { getAdapters, removeSource, isBuiltinSource } from '../adapters/index.js';
 import { needsConsent, hasConsent, grantConsent, consentDescriptor } from '../lib/consent.js';
+import { requestCapturePermissions, registerCapture, unregisterCapture } from '../lib/capture.js';
 import { exportSource, buildShareUrl, importFromFile } from '../registry/share.js';
 import { saveSource } from '../adapters/index.js';
 import { editJson } from './jsoneditor.js';
@@ -81,12 +82,15 @@ async function render() {
     render();
   });
   $('#ds').querySelectorAll('[data-ds]').forEach((b) => b.onclick = async () => {
-    if (b.dataset.on === '1') { await remove('datasources', b.dataset.ds); return render(); }
+    if (b.dataset.on === '1') { await unregisterCapture(b.dataset.ds); await remove('datasources', b.dataset.ds); return render(); }
     const adapter = CATALOG[b.dataset.ds];
     if (adapter && needsConsent(adapter) && !(await hasConsent(adapter))) {
       if (!(await confirmConsent(consentDescriptor(adapter)))) return; // declined → do not enable
       await grantConsent(adapter);
     }
+    // Grant host permissions + register the in-session capture bridge so the token/DNI is captured on
+    // the login site (must be in this user gesture). Non-fatal if declined — cookie sources still work.
+    if (adapter) { await requestCapturePermissions(adapter); await registerCapture(adapter); }
     await upsert('datasources', { id: b.dataset.ds, adapter: b.dataset.ds, enabled: true, options: {} });
     render();
   });

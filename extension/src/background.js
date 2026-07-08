@@ -4,6 +4,7 @@
 // login, not a background job while they're away.
 import { chrome } from './lib/ext.js';
 import { getConfig } from './lib/config.js';
+import { registerCapture } from './lib/capture.js';
 import { deliveredSet, markDelivered, appendLog } from './lib/state.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
 import { resolveSiteFetch } from './lib/pagefetch.js';
@@ -20,6 +21,16 @@ import { getGrant, grantsForOrigin, grantUsableBy, touchGrant } from './lib/gran
 chrome.action.onClicked.addListener(() => {
   chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/popup.html') });
 });
+
+// On startup, (re)register the in-session capture bridge for every enabled source (dynamic content
+// scripts can be dropped on an extension update). Idempotent; needs the host permission already granted.
+(async () => {
+  try {
+    const cfg = await getConfig();
+    const adapters = await getAdapters();
+    for (const d of (cfg.datasources || []).filter((x) => x.enabled)) { const a = adapters[d.adapter]; if (a) await registerCapture(a); }
+  } catch (e) {}
+})();
 
 // Auto-sync trigger for cookie sources (and any source): when the user lands on the source's own
 // site (tab finished loading in their session), try the auto routes. `tab.url` is only visible for
