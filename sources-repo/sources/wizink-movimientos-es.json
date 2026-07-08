@@ -88,7 +88,7 @@
           "params": {
             "pagename": "ECOM_SiteEntry/WZPRI/CardDetail/ExtractOnScreenDetail"
           },
-          "body": "securityToken={csrf}&ic2Error=false&accountNumber={group.accountNumber}&cardNumber={group.cardNumber}&cardLogo=505&cahsback=null&statementDate={period}&calculatePaymentInfo=false&fromPrincipalAccount=&inStatementRepository=&verMas=false&flagStatementsHistory="
+          "body": "securityToken={csrf}&ic2Error=false&accountNumber={group.accountNumber}&cardNumber={group.cardNumber}&cardLogo=505&cahsback=null&statementDate={period}&calculatePaymentInfo=false&fromPrincipalAccount=true&inStatementRepository=true&verMas=false&flagStatementsHistory=null"
         }
       },
       "rows": {
@@ -122,7 +122,7 @@
   "changelog": [
     {
       "version": "2026-07-08",
-      "changes": "Movimientos combinados (mes actual + extractos pasados) como transacciones; cap de 90 días para evitar el SMS."
+      "changes": "Movimientos combinados (mes actual + extractos pasados); fromPrincipalAccount/inStatementRepository fijados para que carguen los meses pasados; cap de 90 días."
     }
   ]
 }
