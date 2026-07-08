@@ -27,7 +27,8 @@
         "from": "url",
         "match": "/posicionGlobal/es/([0-9A-Za-z]+)"
       }
-    ]
+    ],
+    "loginUrl": "https://clientes.caixabankconsumer.com/cpc/login"
   },
   "api": {
     "host": "https://api.caixabankpc.com",
