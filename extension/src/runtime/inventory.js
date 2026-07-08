@@ -31,8 +31,22 @@ async function withReferer(targetUrl, referer, fn) {
 // Enumerate a source's documents. A source with `api.groups` (e.g. a bank: many accounts) enumerates
 // the groups first, then lists each group's items with {group.*} templated into the list request; each
 // record carries its group (doc._group). Without groups, it's a single flat listing.
+// True if an ISO/parseable date is no older than `days` days from now. Unparseable → kept (don't drop
+// on a formatting quirk). Used by maxAgeDays to avoid a bank's older-than-N-days extra-auth wall.
+function withinAgeDays(dateStr, days) {
+  const t = Date.parse(dateStr);
+  if (isNaN(t)) return true;
+  return (Date.now() - t) <= days * 86400000;
+}
+
 export async function listInventory(adapter, auth, net, opts) {
+  const list = (adapter.api && adapter.api.list) || {};
   const byDate = (x, y) => (x.date < y.date ? 1 : -1);
+  // maxAgeDays: never surface documents older than N days — keeps a source from requesting statements
+  // past a bank's extra-auth wall (WiZink asks for an SMS beyond ~90 days). For a periods source the
+  // cut is applied at the statement-date level BEFORE fetching (see pageListPeriods); here it drops
+  // finished statement documents (XLS/PDF) so they're never downloaded.
+  const capAge = (docs) => (list.maxAgeDays && !list.periods) ? docs.filter((d) => withinAgeDays(d.date, list.maxAgeDays)) : docs;
   // CSRF prelude (AEM/WiZink): fetch a page, extract the securityToken, expose it as {csrf} in every
   // subsequent list/group/pdf template via auth.__csrf.
   const a = adapter.api.csrf ? { ...(auth || {}), __csrf: await fetchCsrf(adapter, auth, net) } : auth;
@@ -43,11 +57,11 @@ export async function listInventory(adapter, auth, net, opts) {
     const all = [];
     for (const g of groups) all.push(...await pageList(adapter, a, net, g, opts));
     all.sort(byDate);
-    return all;
+    return capAge(all);
   }
   const all = await pageList(adapter, a, net, null, opts);
   all.sort(byDate);
-  return all;
+  return capAge(all);
 }
 
 // CSRF prelude: GET a page and extract a token (e.g. WiZink's securityToken hidden input / JS var) with
@@ -199,6 +213,11 @@ async function pageListPeriods(adapter, auth, net, group, opts) {
     catch (e) { log(`${adapter.service || 'source'} ${gname}: statement-date list failed — ${e.message}`); }
   }
   dates = [...new Set(dates)].slice(0, maxPeriods); // newest-first as the site returns them; cap fan-out
+  if (list.maxAgeDays) { // proactively drop statements past the extra-auth wall — requesting them is what triggers the SMS
+    const before = dates.length;
+    dates = dates.filter((d) => withinAgeDays(d, list.maxAgeDays));
+    if (dates.length < before) log(`${adapter.service || 'source'} ${gname}: skipping ${before - dates.length} statement(s) older than ${list.maxAgeDays}d (avoids extra-auth SMS)`);
+  }
   // 3. one fetch per past statement. Stop after 2 consecutive empty/failed fetches — the ~90-day
   //    extra-auth wall makes older statements unreachable; skip gracefully rather than abort the list.
   let misses = 0;

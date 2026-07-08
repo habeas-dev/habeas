@@ -131,6 +131,7 @@
             },
             "window": { "type": "string", "pattern": "^\\d+y$", "description": "Lookback window for the range, e.g. 3y." },
             "maxPages": { "type": "number", "description": "Safety cap on pages fetched (default 100)." },
+            "maxAgeDays": { "type": "number", "description": "Drop documents/periods older than N days — keeps a source from requesting statements past a bank extra-auth wall (e.g. WiZink SMS beyond ~90 days). For periods sources the cut is applied before fetching each statement." },
             "params": { "type": "object", "description": "Static query params. `count` also drives the page-paging stop condition." },
             "headers": { "type": "object", "description": "Static headers the SPA sends for the list (e.g. dkt-ecom-origin).", "additionalProperties": { "type": "string" } },
             "referer": { "type": "string", "description": "Referer to send per request (templated with {page}/{from}/{offset}) — for endpoints that only honour the offset when the Referer reflects the page. Set via declarativeNetRequest." },

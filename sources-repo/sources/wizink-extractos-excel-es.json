@@ -74,7 +74,8 @@
             "group": 1
           }
         }
-      }
+      },
+      "maxAgeDays": 90
     },
     "pdf": {
       "path": "/cs/Satellite/movimientosExtracto.xls?pagename=ECOM_SiteEntry/WZPRI/General/DownloadXLSFileExtract&d=Touch&fileName=movimientosExtracto.xls&accountNumber={group.accountNumber}&date={statementDate}&isPrincipalAccount=true&securityToken={csrf}",

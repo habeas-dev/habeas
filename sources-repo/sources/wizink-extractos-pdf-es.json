@@ -80,7 +80,8 @@
             "group": 3
           }
         }
-      }
+      },
+      "maxAgeDays": 90
     },
     "pdf": {
       "path": "/cs/Satellite/{fileName}?pagename=ECOM_SiteEntry/WZPRI/DownloadIC2File&d=Touch&documentId={docId}&fileName={fileName}&statementDate={statementDate}&accountNumber={group.accountNumber}&customerNumber=null&securityToken={csrf}",

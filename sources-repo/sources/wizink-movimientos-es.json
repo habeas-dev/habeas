@@ -107,7 +107,8 @@
             "sel": "movement-amount"
           }
         }
-      }
+      },
+      "maxAgeDays": 90
     }
   },
   "fields": {
