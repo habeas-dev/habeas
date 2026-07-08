@@ -79,9 +79,9 @@ async function onList() {
   if (!(await hasConsent(adapter))) { $('#status').textContent = t('needs_consent'); return; }
   const auth = await getAuth(adapter);
   if (!auth) {
-    // Bearer source with no captured token yet (no logged-in tab running the capture bridge). Open/reload
-    // the site tab so the in-session hook grabs the token as the page loads / the user logs in, then retry.
-    await recoverSession(adapter);
+    // Bearer source with no captured token yet. Open the site tab ONLY if none is open (don't reload an
+    // existing one on every click) so the in-session hook grabs the token as you load/log in, then retry.
+    await ensureSiteFetch(adapter, { open: true });
     $('#status').textContent = t('login_in_tab');
     return;
   }
