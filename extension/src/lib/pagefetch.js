@@ -107,11 +107,14 @@ const cookieDomain = (adapter) => (adapter.domain || ((adapter.api && adapter.ap
 export async function recoverSession(adapter) {
   let cleared = 0;
   if (adapter.auth && adapter.auth.resetCookies) { try { cleared = await clearSiteCookies(cookieDomain(adapter)); } catch (e) {} }
-  // Reload the open site tab (now cookieless → clean login) or open one; focus it so the user logs in.
+  // Point the site tab at the sign-in page (auth.loginUrl, else the site root) so the user re-logs in —
+  // that fresh login is what re-triggers the SPA's auth/context requests (token + e.g. a DNI). Navigating
+  // an already-open tab there beats reloading its current URL (which may be a stale/errored data page).
+  const url = siteBaseUrl(adapter);
   const tab = await findSiteTab(adapter);
   try {
-    if (tab) { await chrome.tabs.update(tab.id, { active: true }); await chrome.tabs.reload(tab.id); }
-    else await chrome.tabs.create({ url: siteBaseUrl(adapter), active: true });
+    if (tab) await chrome.tabs.update(tab.id, { active: true, url });
+    else await chrome.tabs.create({ url, active: true });
   } catch (e) {}
   return cleared;
 }
