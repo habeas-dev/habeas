@@ -77,6 +77,10 @@ async function findSiteTab(adapter) {
 // The site's base URL (from the source's match / api host) — where a tab is opened to establish the
 // in-session context the page-context fetch needs.
 export function siteBaseUrl(adapter) {
+  // A source can point the login tab at its actual sign-in page (e.g. WiZink's /login) instead of the
+  // site root, so a logged-out user lands where they can authenticate.
+  const login = adapter.auth && adapter.auth.loginUrl;
+  if (login && /^https:\/\//.test(login)) return login;
   const host = ((adapter.api && adapter.api.host) || '').replace(/^https?:\/\//, '');
   const m = (adapter.match && adapter.match[0]) || ('https://' + host + '/*');
   const base = m.replace(/^([a-z]+:\/\/[^/]+).*/i, '$1');

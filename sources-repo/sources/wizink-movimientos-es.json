@@ -16,7 +16,8 @@
   "auth": {
     "mode": "cookie",
     "replayHeaders": [],
-    "resetCookies": true
+    "resetCookies": true,
+    "loginUrl": "https://www.wizink.es/login"
   },
   "api": {
     "host": "https://www.wizink.es",
