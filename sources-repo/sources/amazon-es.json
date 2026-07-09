@@ -65,6 +65,12 @@
         },
         "refundTotal": {
           "re": "Reembolso de art[ií]culos[\\s\\S]{0,400}?([\\d.,]+\\s*€)"
+        },
+        "paymentMethod": {
+          "re": "paymentMethodHeader[\\\\\":]+([^\\\\\"]+)(?:(?!paymentMethodHeader)[\\s\\S]){0,300}?lastDigits"
+        },
+        "paymentLast4": {
+          "re": "lastDigits[\\\\\":]+(\\d{4})"
         }
       },
       "items": {

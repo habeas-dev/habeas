@@ -119,6 +119,16 @@ test('Amazon detail: flags a returned/refunded order from its shipmentStatus (pa
   assert.ok(!extractDetailFields(normal, cfg).refundTotal);
 });
 
+test('Amazon detail: extracts payment method name + last4 from the escaped Next.js JSON, picking the card over a gift card', () => {
+  const cfg = AMAZON.api.detail; // real paymentMethod/paymentLast4 extractors from the source
+  // Escaped JSON as it appears in the order-details HTML: a gift card (no lastDigits) THEN the card.
+  const pm = '\\"paymentMethodHeader\\":\\"Cheque regalo de Amazon\\",\\"paymentMethodCardArtInfo\\":{\\"url\\":\\"g\\"},'
+    + '\\"paymentMethodHeader\\":\\"WiZink Classic Plus\\",\\"paymentMethodCardArtInfo\\":{\\"url\\":\\"w\\"},\\"paymentMethodNumber\\":{\\"prefix\\":\\"****\\",\\"lastDigits\\":\\"4321\\"}';
+  const rec = extractDetailFields(`<script>self.__next_f.push([1,"x${pm}y"])</script>`, cfg);
+  assert.equal(rec.paymentMethod, 'WiZink Classic Plus'); // the card, NOT "Cheque regalo de Amazon"
+  assert.equal(rec.paymentLast4, '4321');
+});
+
 test('Amazon PDF: 2-step popover → invoice.pdf resolves to a real PDF blob', async () => {
   const doc = { internalId: '111-2222222-3333333' };
   const blob = await fetchPdf(AMAZON, AUTH, doc, amazonNet(POPOVER_WITH));
