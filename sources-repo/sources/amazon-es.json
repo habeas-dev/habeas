@@ -6,7 +6,7 @@
   "domain": "amazon.es",
   "country": "ES",
   "currency": "EUR",
-  "version": "2026-07-09",
+  "version": "2026-07-10",
   "minVersion": "0.1.38",
   "categories": [
     "marketplace"
@@ -84,6 +84,14 @@
           },
           "price": {
             "group": 3
+          }
+        },
+        "section": {
+          "each": "data-component=\"shipmentStatus\"",
+          "fields": {
+            "returned": {
+              "re": "od-status-message[\\s\\S]{0,80}?(Reembolsado|Devolución completada)"
+            }
           }
         }
       }

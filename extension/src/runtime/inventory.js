@@ -824,6 +824,25 @@ export function parseHtmlItems(html, cfg) {
   // Collapse whitespace so patterns are robust to the huge \r\n+indent runs in server-rendered (AEM)
   // markup — otherwise a bounded gap in an `each` regex (link → label) never reaches its target.
   html = String(html || '').replace(/\s+/g, ' ');
+  // Sectioned items: split by a section marker (e.g. each shipment header), read section-level fields from
+  // the section, and merge them into every item found within it (item fields win on conflict). Lets each
+  // item inherit a property of its container — e.g. an order's items each carry their shipment's return
+  // status, whether the shipment holds one item or many (1:N). Item fields still win on any key clash.
+  if (cfg.section) {
+    const secRe = new RegExp(cfg.section.each, 'g');
+    const idx = []; let sm; while ((sm = secRe.exec(html))) idx.push(sm.index);
+    const inner = { ...cfg, section: undefined };
+    if (!idx.length) return parseHtmlItems(html, inner); // no sections found → flat
+    if (idx[0] > 0) idx.unshift(0); // capture any items before the first section marker
+    idx.push(html.length);
+    const out = [];
+    for (let i = 0; i < idx.length - 1; i++) {
+      const sec = html.slice(idx[i], idx[i + 1]);
+      const sf = {}; for (const k of Object.keys(cfg.section.fields || {})) sf[k] = extractField(sec, cfg.section.fields[k]);
+      for (const it of parseHtmlItems(sec, inner)) out.push({ ...sf, ...it });
+    }
+    return out;
+  }
   // `each` regex mode: each match is a row; fields map to capture groups ({group:1}) or sub-extract from m[0].
   if (cfg.each) {
     const re = new RegExp(cfg.each, 'g'), out = []; let m;

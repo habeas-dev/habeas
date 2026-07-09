@@ -34,6 +34,7 @@ const DETAIL_HTML = `<!DOCTYPE html><html><body>
   <div data-component="orderIdLabel"><span>Pedido n.&ordm;</span></div>
   <div data-component="orderId"><span>111-2222222-3333333</span></div>
   <div data-component="purchasedItems">
+    <div data-component="shipmentStatus"><span class="od-status-message"><span>Entregado</span> el 16 de marzo</span></div>
     <div data-component="itemTitle"><div class="a-row"><a class="a-link-normal"
       href="/dp/B01ABCDEFG?ref_=ppx_hzod_title">Widget de Prueba Uno</a></div></div>
     <div data-component="unitPrice"><span class="a-price"><span class="a-offscreen">9,99&nbsp;€</span><span aria-hidden="true">9,99&nbsp;€</span></span></div>
@@ -102,8 +103,8 @@ test('Amazon detail: parses the order-details HTML into a structured record (ISO
   assert.equal(rec.currency, 'EUR');         // detail.const
   assert.ok(!rec.returnStatus);              // a normal (non-returned) order → empty
   assert.deepEqual(rec.items, [
-    { asin: 'B01ABCDEFG', title: 'Widget de Prueba Uno', price: 9.99 },
-    { asin: 'B09ZZ12345', title: 'Cosa de Prueba Dos', price: 15 },
+    { returned: '', asin: 'B01ABCDEFG', title: 'Widget de Prueba Uno', price: 9.99 },
+    { returned: '', asin: 'B09ZZ12345', title: 'Cosa de Prueba Dos', price: 15 },
   ]);
 });
 
@@ -129,6 +130,19 @@ test('Amazon detail: extracts payment method name + last4 from the escaped Next.
   const rec = extractDetailFields(`<script>self.__next_f.push([1,"x${pm}y"])</script>`, cfg);
   assert.equal(rec.paymentMethod, 'WiZink Classic Plus'); // the card, NOT "Cheque regalo de Amazon"
   assert.equal(rec.paymentLast4, '4321');
+});
+
+test('Amazon detail: per-item return status — each item inherits its shipment status (1 shipment→N items, partial returns)', () => {
+  const cfg = AMAZON.api.detail;
+  const item = (asin, title, price) => `<div data-component="itemTitle"><a class="a-link-normal" href="/dp/${asin}?x">${title}</a></div><div data-component="unitPrice"><span class="a-offscreen">${price}</span></div>`;
+  const ship = (status, ...items) => `<div data-component="shipmentStatus"><span class="od-status-message"><span>${status}</span></span></div>${items.join('')}`;
+  // shipment 1 delivered with TWO items; shipment 2 a completed return with one item
+  const html = `<div data-component="purchasedItems">${ship('Entregado', item('B000000001', 'A', '10,00 €'), item('B000000002', 'B', '5,00 €'))}${ship('Devolución completada', item('B000000003', 'C', '7,00 €'))}</div>`;
+  const items = extractDetailFields(html, cfg).items;
+  assert.equal(items.length, 3); // no item lost when a shipment holds several
+  assert.equal(items[0].returned, ''); assert.equal(items[0].asin, 'B000000001');
+  assert.equal(items[1].returned, ''); // second item in the SAME delivered shipment
+  assert.equal(items[2].returned, 'Devolución completada'); assert.equal(items[2].asin, 'B000000003');
 });
 
 test('Amazon PDF: 2-step popover → invoice.pdf resolves to a real PDF blob', async () => {

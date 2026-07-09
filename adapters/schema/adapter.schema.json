@@ -252,6 +252,7 @@
       "properties": {
         "each": { "type": "string", "description": "Global regex; each match is one item. fields.<k> = {group:N} takes capture group N." },
         "row": { "type": "string", "description": "Class marker splitting the HTML into per-item blocks; fields extract from each block." },
+        "section": { "type": "object", "additionalProperties": false, "description": "Optional: split the HTML into sections by a marker (section.each) and merge section-level fields into every item found within each section — so items inherit a property of their container (e.g. each order item carries its shipment's return status, whether the shipment holds one item or many).", "properties": { "each": { "type": "string", "description": "Regex marking each section boundary (e.g. a shipment header)." }, "fields": { "type": "object", "additionalProperties": true, "description": "Field name -> {re|attr|tag|sel} extractor, read from the section and merged into its items (item fields win on conflict)." } } },
         "fields": {
           "type": "object",
           "description": "Per-field extraction. each mode: {group:N}. row mode: {re} (regex, group 1) | {attr} | {tag} | {sel} (text of an element with that class).",
