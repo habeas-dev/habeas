@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.48 → 0.1.52 (in progress)
+## 0.1.48 → 0.1.52
 
 > As above: source definitions are **data**, not bundled in the extension. These are **extension** changes —
 > new capabilities that installable community sources can use.
