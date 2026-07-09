@@ -111,6 +111,16 @@ scaffolding kept as design notes (safe to consolidate later).
   it they accept everything. Two-layer filter: the UI only offers compatible sinks, and
   send/auto only deliver docs whose category the sink accepts (`format.js#sinkAcceptsSource`
   / `#acceptsDoc`). Lets a Tiquetera sink take only `grocery`.
+- **Source outputs — streams × formats** (`lib/outputs.js`): a source may declare `streams[]` — each a
+  distinct data set with its own `api.list`/`schema`/`fields` — and, per stream, `formats[]` (artifacts
+  sharing the stream's items, overriding only `api.pdf`; e.g. a statement as PDF **or** Excel). A selectable
+  **output** is a `(stream, format)` pair, id `"stream/format"`; `resolveOutput(adapter, id)` yields the
+  effective adapter (base⊕stream⊕format), `outputsOf` lists them. The store/ledger key is per **stream**
+  (`storeKeyOf(id, stream)` = `id:stream`) since formats share items. Manual mode defaults to **all** outputs
+  (checkbox per output in the popup); a typed sink auto-selects via `outputsForSink`. A source with no
+  `streams` is a single implicit output (fully backward-compatible). WiZink is the reference multi-output
+  source (one source = movimientos + extractos-PDF + extractos-Excel). Validation is **per output**
+  (`validate.js#checkExtraction`).
 - **Config** (`lib/config.js`, storage.local): `{datasources[], sinks[], routes[]}`. **Secrets**
   (`lib/secrets.js`, separate store, `secret://` refs). **Delivery ledger + activity log**
   (`lib/state.js`). Directory handles for local-folder in IndexedDB (`lib/fs.js`).
