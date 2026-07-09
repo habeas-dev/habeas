@@ -11,6 +11,8 @@
   "documents": { "message": "Documentos" },
   "list_docs": { "message": "Listar documentos" },
   "load_store": { "message": "Cargar del almacén" },
+  "n_listed": { "message": "$T$ documentos ($N$ nuevos)", "placeholders": { "t": { "content": "$1" }, "n": { "content": "$2" } } },
+  "full_history": { "message": "Todo el historial" },
   "n_from_store": { "message": "$N$ del almacén (sin extraer)", "placeholders": { "n": { "content": "$1" } } },
   "send_to": { "message": "Enviar a" },
   "send_selected": { "message": "Enviar seleccionados" },

@@ -11,6 +11,8 @@
   "documents": { "message": "Documents" },
   "list_docs": { "message": "List documents" },
   "load_store": { "message": "Load from store" },
+  "n_listed": { "message": "$T$ documents ($N$ new)", "placeholders": { "t": { "content": "$1" }, "n": { "content": "$2" } } },
+  "full_history": { "message": "Full history" },
   "n_from_store": { "message": "$N$ from store (no extraction)", "placeholders": { "n": { "content": "$1" } } },
   "send_to": { "message": "Send to" },
   "send_selected": { "message": "Send selected" },

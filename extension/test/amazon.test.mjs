@@ -132,6 +132,18 @@ test('Amazon detail: extracts payment method name + last4 from the escaped Next.
   assert.equal(rec.paymentLast4, '4321');
 });
 
+test('incremental: knownIds seed returns only NEW items, and a fully-known year stops the year scan', async () => {
+  const card = (id) => `<div data-csa-c-slot-id="amzn1.yourorders.order-card.${id}"></div>`;
+  const byYear = { 2026: [card('406-0000001-0000001'), card('406-0000002-0000002')], 2025: [card('406-0000003-0000003')] };
+  globalThis.fetch = async (u) => {
+    const url = String(u); const yr = (url.match(/year-(\d+)/) || [])[1]; const start = /startIndex=/.test(url);
+    return { ok: true, status: 200, text: async () => (!start && byYear[yr] ? byYear[yr].join('') : '<html></html>') };
+  };
+  const known = new Set(['406-0000002-0000002', '406-0000003-0000003']); // one 2026 item + all of 2025 already stored
+  const docs = await listInventory(AMAZON, AUTH, undefined, { knownIds: known });
+  assert.deepEqual(docs.map((d) => d.internalId), ['406-0000001-0000001']); // only the new one; 2025 (all known) stopped the scan
+});
+
 test('Amazon detail: per-item return status — each item inherits its shipment status (1 shipment→N items, partial returns)', () => {
   const cfg = AMAZON.api.detail;
   const item = (asin, title, price) => `<div data-component="itemTitle"><a class="a-link-normal" href="/dp/${asin}?x">${title}</a></div><div data-component="unitPrice"><span class="a-offscreen">${price}</span></div>`;

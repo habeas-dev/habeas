@@ -14,7 +14,7 @@ import { applyI18n, t } from '../lib/i18n.js';
 import { getAdapters } from '../adapters/index.js';
 import { hasConsent } from '../lib/consent.js';
 import { loadAuth } from '../lib/authstore.js';
-import { recordDelivered, getRecords, countLive } from '../lib/store.js';
+import { recordDelivered, getRecords, countLive, putItems } from '../lib/store.js';
 
 let ADAPTERS = {};
 const $ = (s) => document.querySelector(s);
@@ -48,7 +48,8 @@ async function init() {
   $('#ds').innerHTML = enabled.map((d) => `<option value="${d.id}">${d.id}</option>`).join('') || '<option value="">—</option>';
   populateSinks(cfg);
   if (!enabled.length) $('#status').textContent = t('no_datasources');
-  $('#list').onclick = onList;
+  $('#list').onclick = () => onList();
+  $('#full-history').onclick = () => onList('full');
   $('#load-store').onclick = onLoadStore;
   $('#send').onclick = onSend;
   $('#sink').onchange = () => render();
@@ -92,7 +93,10 @@ const docsFromStore = (records) => records.map((r) => ({
 async function refreshStoreButton() {
   const cfg = await getConfig(); const { adapter } = adapterFor($('#ds').value, cfg);
   const n = adapter ? await countLive(adapter.id).catch(() => 0) : 0;
-  const b = $('#load-store'); if (b) b.hidden = !n;
+  // Both the offline "Load from store" and the "Full history" (re-scan vs the incremental default) only
+  // make sense once the store has items for this source; otherwise List already does a full extraction.
+  if ($('#load-store')) $('#load-store').hidden = !n;
+  if ($('#full-history')) $('#full-history').hidden = !n;
 }
 
 async function onLoadStore() {
@@ -116,7 +120,16 @@ const enrichMeta = (docs, known) => {
   }
 };
 
-async function onList() {
+// Merge freshly-enumerated docs into the store base, deduped by internalId (fresh wins), newest first.
+const mergeInv = (base, fresh) => {
+  const m = new Map(base.map((d) => [d.internalId, d]));
+  for (const d of fresh) if (d && d.internalId != null) m.set(d.internalId, d);
+  return [...m.values()].sort((a, b) => ((a.date || '') < (b.date || '') ? 1 : -1));
+};
+
+// List = the canonical store shown INSTANTLY + an extraction that fetches only the DELTA (incremental
+// early-stop against what we already have). mode 'full' re-enumerates the whole history (reconcile).
+async function onList(mode) {
   clearLog();
   const cfg = await getConfig();
   const { adapter } = adapterFor($('#ds').value, cfg);
@@ -130,34 +143,37 @@ async function onList() {
     $('#status').textContent = t('login_in_tab');
     return;
   }
-  $('#status').textContent = t('listing');
-  aborter = new AbortController();
-  busy(true);
   const sinkId = $('#sink').value;
   const delivered = sinkId ? await deliveredSet($('#ds').value, sinkId) : {}; // once, reused by incremental renders
   const known = await getDocMeta(adapter.id); // dates learned on past downloads
+  // Base = what the store already holds → shown at once; the extraction only adds new items on top.
+  const base = docsFromStore(await getRecords(adapter.id)); enrichMeta(base, known);
+  inventory = base.slice(); await render(delivered);
+  $('#sendbar').hidden = !inventory.length; $('#selbar').hidden = !inventory.length;
+  const knownIds = mode === 'full' ? null : new Set(base.map((d) => d.internalId)); // incremental unless full
+  $('#status').textContent = t('listing');
+  aborter = new AbortController();
+  busy(true);
   try {
     const net = await ensureSiteFetch(adapter, { open: true }); // no tab → open the site (session must exist)
     const groupId = await pickGroup(adapter, auth, net); // grouped source → pick which account/card first
-    // Live progress + incremental table: the pager reports each page (with the year for year-partitioned
-    // sources) and the partial results as it goes, so a long listing shows what it's doing + fills in rows.
-    inventory = await listInventory(adapter, auth, net, {
-      groupId, signal: aborter.signal,
+    const fresh = await listInventory(adapter, auth, net, {
+      groupId, signal: aborter.signal, knownIds,
       onProgress: ({ year, page, docs }) => {
         $('#status').textContent = year != null ? t('listing_year_page', [String(year), String(page), String(docs.length)]) : t('listing_page', [String(page), String(docs.length)]);
-        enrichMeta(docs, known);
-        inventory = docs;
-        $('#sendbar').hidden = inventory.length === 0;
-        $('#selbar').hidden = inventory.length === 0;
+        inventory = mergeInv(base, docs); enrichMeta(inventory, known);
+        $('#sendbar').hidden = !inventory.length; $('#selbar').hidden = !inventory.length;
         render(delivered);
       },
     });
-    enrichMeta(inventory, known);
+    inventory = mergeInv(base, fresh); enrichMeta(inventory, known);
     await render(delivered);
-    $('#status').textContent = t(aborted() ? 'stopped_n' : 'n_documents', [String(inventory.length)]);
-    log(t('n_documents', [String(inventory.length)]));
-    $('#sendbar').hidden = inventory.length === 0;
-    $('#selbar').hidden = inventory.length === 0;
+    // Persist the newly-enumerated items into the store (the index) so they count as known next time.
+    try { await putItems(adapter.id, fresh.filter((d) => d.internalId != null).map((d) => ({ internalId: d.internalId, record: d.record })), { source: adapter.id, schema: adapter.schema }); } catch (e) { /* store best-effort */ }
+    $('#status').textContent = aborted() ? t('stopped_n', [String(inventory.length)]) : t('n_listed', [String(inventory.length), String(fresh.length)]);
+    log(t('n_listed', [String(inventory.length), String(fresh.length)]));
+    $('#sendbar').hidden = !inventory.length;
+    $('#selbar').hidden = !inventory.length;
   } catch (e) {
     // CSRF / not-logged-in / bad-request (corrupted cookies) → clear cookies if the source opts in and
     // open a clean tab so the user can log in fresh, then retry.

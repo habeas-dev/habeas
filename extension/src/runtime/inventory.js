@@ -138,7 +138,7 @@ async function pageList(adapter, auth, net, group, opts) {
   const range = rangeParams(list);
   const count = list.params && list.params.count;
   const maxPages = list.maxPages || 100;
-  const seen = new Set(), all = [];
+  const seen = new Set(opts && opts.knownIds ? opts.knownIds : []), all = []; // incremental: seed with store ids → known items dedup out + paging stops early
   const call = (params) => fetchList(adapter, auth, params, net, group);
 
   if (paging === 'offsets') {
@@ -213,7 +213,7 @@ async function pageListYears(adapter, auth, net, group, opts) {
   const maxPages = list.maxPages || 100;
   const baseParams = { ...(list.params || {}) };
   const now = new Date().getFullYear();
-  const seen = new Set(), all = [];
+  const seen = new Set(opts && opts.knownIds ? opts.knownIds : []), all = []; // incremental: seed with store ids → known items dedup out + paging stops early
   let pages = 0, emptyRun = 0;
   // Walk years back until N consecutive years are empty (adapts to each account's real history — a fixed
   // `back` would truncate older orders) or the safety cap / page cap / Stop is hit. stopAfterEmpty>1
@@ -221,7 +221,7 @@ async function pageListYears(adapter, auth, net, group, opts) {
   for (let yr = now; yr >= now - back && pages < maxPages && emptyRun < stopEmpty; yr--) {
     if (stop()) break;
     const yv = format.split('{y}').join(String(yr));
-    let yearItems = 0;
+    let yearItems = 0, yearAdded = 0;
     for (let idx = 0; pages < maxPages; idx += startStep) {
       if (stop()) break;
       const params = { ...baseParams, [param]: yv };
@@ -233,10 +233,12 @@ async function pageListYears(adapter, auth, net, group, opts) {
       for (const it of items) if (it && typeof it === 'object' && it._year == null) it._year = String(yr);
       const added = collect(adapter, data, seen, all, group);
       pages++;
-      yearItems += items.length;
+      yearItems += items.length; yearAdded += added;
       if (opts && opts.onProgress) { try { opts.onProgress({ year: yr, page: (idx / startStep) + 1, docs: all }); } catch (e) {} } // live: "listing 2026, page 3"
       if (!startParam || !items.length || !added) break; // no sub-paging, or empty / nothing new → next year
     }
+    // Incremental: a year already fully in the store (0 new) means everything older is known too → stop.
+    if (opts && opts.knownIds && yearItems > 0 && yearAdded === 0) break;
     emptyRun = yearItems === 0 ? emptyRun + 1 : 0;
   }
   return all;
@@ -294,7 +296,7 @@ async function pageListPeriods(adapter, auth, net, group, opts) {
     tag(items, d);
   }
   // Map + dedup exactly like the paged path (collect builds each doc's record + internalId).
-  const seen = new Set(), all = [];
+  const seen = new Set(opts && opts.knownIds ? opts.knownIds : []), all = []; // incremental: seed with store ids → known items dedup out + paging stops early
   collect(adapter, { __items: raw }, seen, all, group);
   return all;
 }
