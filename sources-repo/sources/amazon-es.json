@@ -62,6 +62,9 @@
         },
         "returnStatus": {
           "re": "od-status-message[\\s\\S]{0,80}?(Reembolsado|Devolución completada)"
+        },
+        "refundTotal": {
+          "re": "Reembolso de art[ií]culos[\\s\\S]{0,400}?([\\d.,]+\\s*€)"
         }
       },
       "items": {

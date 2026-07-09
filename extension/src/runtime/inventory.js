@@ -730,7 +730,7 @@ export function extractDetailFields(html, cfg) {
   }
   if (cfg.items) rec.items = parseHtmlItems(html || '', cfg.items);
   if (rec.date != null && rec.date !== '') rec.date = normalizeDate(rec.date);
-  for (const k of ['total', 'amount']) if (typeof rec[k] === 'string' && rec[k] !== '') rec[k] = normalizeAmount(rec[k]);
+  for (const k of ['total', 'amount', 'refundTotal']) if (typeof rec[k] === 'string' && rec[k] !== '') rec[k] = normalizeAmount(rec[k]);
   return rec;
 }
 
