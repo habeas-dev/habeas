@@ -82,6 +82,7 @@ const enrichMeta = (docs, known) => {
     const k = known[d.internalId]; if (!k) continue;
     if (k.date && !/^\d{4}-\d{2}-\d{2}/.test(d.date || '')) d.date = k.date;
     if (typeof k.total === 'number' && d.total == null) d.total = k.total;
+    if (k.returnStatus && !d.returnStatus) d.returnStatus = k.returnStatus;
   }
 };
 
@@ -147,7 +148,7 @@ async function render(deliveredArg) {
     return `<tr data-sent="${sent ? '1' : ''}">
        <td><input type="checkbox" data-i="${i}" ${sent ? '' : 'checked'}></td>
        <td>${(d.date || '').slice(0, 10)}</td>
-       <td><span class="pill type">${d.type || ''}</span></td>
+       <td><span class="pill type">${d.type || ''}</span>${d.returnStatus ? ` <span class="pill returned" title="${d.returnStatus}">↩ ${d.returnStatus}</span>` : ''}</td>
        <td>${d.storeName || d.label || d.internalId || ''}</td>
        <td class="r">${fmt(d.total ?? d.amount)}</td>
        <td>${sent ? `<span class="pill sent">${t('pill_sent')}</span>` : `<span class="pill new">${t('pill_new')}</span>`}</td>
@@ -205,6 +206,7 @@ async function onSend() {
         const r = JSON.parse(await a.blob.text());
         if (/^\d{4}-\d{2}-\d{2}/.test(r.date || '') && !/^\d{4}-\d{2}-\d{2}/.test(d.date || '')) { d.date = r.date; if (d.record) d.record.date = r.date; }
         if (typeof r.total === 'number' && d.total == null) { d.total = r.total; if (d.record) d.record.total = r.total; }
+        if (r.returnStatus) { d.returnStatus = r.returnStatus; if (d.record) d.record.returnStatus = r.returnStatus; } // an item was returned/refunded
       } catch (e) { /* not JSON */ }
       break; // the first JSON detail
     }
@@ -243,7 +245,7 @@ async function onSend() {
       await markDelivered($('#ds').value, sink.id, eligible.map((c) => c.internalId));
     }
     // Persist the real dates + amounts we learned from the details (source-level) so future listings show them.
-    await rememberDocMeta(adapter.id, eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined })));
+    await rememberDocMeta(adapter.id, eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, returnStatus: d.returnStatus || undefined })));
     const m = (aborted() ? t('stopped') + ' · ' : '') + t('sent_result', [sink.id, String(written), String(eligible.length), String(noPdf.length)]) + (failed.length ? ' · ' + t('n_failed', [String(failed.length)]) : '') + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : '');
     $('#status').textContent = m; log(m);
     await appendLog({ kind: 'manual', datasource: $('#ds').value, sink: sink.id, status: aborted() ? 'stopped' : (failed.length ? 'partial' : 'ok'), count: written });

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { listInventory, fetchDetail, fetchPdf } from '../src/runtime/inventory.js';
+import { listInventory, fetchDetail, fetchPdf, extractDetailFields } from '../src/runtime/inventory.js';
 
 // The REAL shipped adapter (sources-repo/sources/amazon-es.json) is exercised here against SYNTHETIC
 // HTML fixtures (small, invented — they mirror the real Amazon structures but carry NO real user data).
@@ -98,10 +98,22 @@ test('Amazon detail: parses the order-details HTML into a structured record (ISO
   assert.equal(rec.date, '2025-03-15');      // "15 de marzo de 2025" → ISO
   assert.equal(rec.total, 24.99);            // "24,99 €" (bold Importe total) → number
   assert.equal(rec.currency, 'EUR');         // detail.const
+  assert.ok(!rec.returnStatus);              // a normal (non-returned) order → empty
   assert.deepEqual(rec.items, [
     { asin: 'B01ABCDEFG', title: 'Widget de Prueba Uno' },
     { asin: 'B09ZZ12345', title: 'Cosa de Prueba Dos' },
   ]);
+});
+
+test('Amazon detail: flags a returned/refunded order from its shipmentStatus (partial returns too)', () => {
+  const cfg = AMAZON.api.detail; // uses the real returnStatus extractor from the source
+  const refunded = '<div data-component="shipmentStatus"><span class="a-size-base od-status-message"><span>Reembolsado</span> No necesitas devolver tu producto.</span></div>';
+  const partial = '<div data-component="shipmentStatus"><span class="od-status-message"><span>Entregado</span></span></div>'
+    + '<div data-component="shipmentStatus"><span class="od-status-message"><span>Devolución completada</span></span></div>';
+  const normal = '<div data-component="shipmentStatus"><span class="od-status-message"><span>Entregado</span> el 3 de julio</span></div>';
+  assert.equal(extractDetailFields(refunded, cfg).returnStatus, 'Reembolsado');
+  assert.equal(extractDetailFields(partial, cfg).returnStatus, 'Devolución completada'); // one item returned still flags the order
+  assert.ok(!extractDetailFields(normal, cfg).returnStatus);
 });
 
 test('Amazon PDF: 2-step popover → invoice.pdf resolves to a real PDF blob', async () => {

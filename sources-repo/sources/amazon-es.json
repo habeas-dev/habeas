@@ -59,6 +59,9 @@
         "total": {
           "region": "chargeSummary",
           "re": "[^a-zA-Zá-ú]Total:[\\s\\S]{0,500}?([\\d.,]+\\s*€)"
+        },
+        "returnStatus": {
+          "re": "od-status-message[\\s\\S]{0,80}?(Reembolsado|Devolución completada)"
         }
       },
       "items": {

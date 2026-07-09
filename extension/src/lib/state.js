@@ -44,7 +44,7 @@ export async function rememberDocMeta(sourceId, entries) { // entries: [{ intern
   const o = await chrome.storage.local.get(META_KEY);
   const all = o[META_KEY] || {};
   const m = all[sourceId] || {};
-  for (const e of entries) if (e && e.internalId != null) m[e.internalId] = { ...(m[e.internalId] || {}), ...(e.date ? { date: e.date } : {}), ...(typeof e.total === 'number' ? { total: e.total } : {}) };
+  for (const e of entries) if (e && e.internalId != null) m[e.internalId] = { ...(m[e.internalId] || {}), ...(e.date ? { date: e.date } : {}), ...(typeof e.total === 'number' ? { total: e.total } : {}), ...(e.returnStatus ? { returnStatus: e.returnStatus } : {}) };
   all[sourceId] = m;
   await chrome.storage.local.set({ [META_KEY]: all });
 }
