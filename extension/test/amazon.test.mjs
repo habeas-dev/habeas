@@ -39,11 +39,15 @@ const DETAIL_HTML = `<!DOCTYPE html><html><body>
     <div data-component="itemTitle"><div class="a-row"><a class="a-link-normal"
       href="/dp/B09ZZ12345?ref_=ppx_hzod_title">Cosa de Prueba Dos</a></div></div>
   </div>
-  <div data-component="orderSummary">
+  <div data-component="briefOrderInfoInvoice"><span>Importe total: 0,00 €</span></div>
+  <div data-component="chargeSummary">
     <span>Resumen del pedido</span>
     <span>Subtotal de producto(s):</span> <span>24,99 €</span>
     <span>Env&iacute;o:</span> <span>0,00 €</span>
-    <div><span>Importe total:</span></div><div><span class="a-text-bold">24,99 €</span></div>
+    <span>Total antes de impuestos:</span> <span>24,99 €</span>
+    <span>Impuestos:</span> <span>0,00 €</span>
+    <div><span>Total:</span></div><div><span class="a-text-bold">24,99 €</span></div>
+    <div><span>Importe del cheque regalo:</span></div>
   </div>
 </body></html>`;
 

@@ -57,7 +57,8 @@
           "tag": "span"
         },
         "total": {
-          "re": "[Ii]mporte total:?[\\s\\S]{0,400}?([\\d.,]+\\s*€)"
+          "region": "chargeSummary",
+          "re": "[^a-zA-Zá-ú]Total:[\\s\\S]{0,500}?([\\d.,]+\\s*€)"
         }
       },
       "items": {
