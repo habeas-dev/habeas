@@ -94,6 +94,7 @@ code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; 
 .search { flex: 1 1 240px; min-width: 160px; padding: 9px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: inherit; font: inherit; }
 .search:focus { outline: none; border-color: var(--brand-600); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-600) 20%, transparent); }
 .src-list { display: flex; flex-direction: column; gap: 8px; }
+.src-list > .card { margin: 0; }
 .src-card { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid transparent; border-radius: var(--radius); padding: 10px 14px; }
 .src-card.on { border-left-color: var(--brand-600); background: color-mix(in srgb, var(--brand-600) 7%, var(--surface)); }
 .src-info { flex: 1; min-width: 0; }

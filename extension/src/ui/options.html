@@ -63,7 +63,9 @@
 
     <section class="tab" data-tab="auto" role="tabpanel" hidden>
       <p class="muted" data-i18n="auto_help" style="margin:2px 0 12px"></p>
-      <div id="routes"></div>
+      <div class="toolbar"><input id="auto-search" type="search" class="search" data-i18n-ph="search_sources" autocomplete="off" /></div>
+      <div id="routes" class="src-list"></div>
+      <p id="auto-empty" class="muted" hidden data-i18n="no_sources_match"></p>
     </section>
 
     <section class="tab" data-tab="integrations" role="tabpanel" hidden>

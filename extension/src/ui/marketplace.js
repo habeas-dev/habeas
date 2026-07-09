@@ -46,9 +46,20 @@ function isOutdated(e) {
   return !!inst && !!e.version && (!inst.version || String(e.version) > String(inst.version));
 }
 
+// Rank for ordering: updatable installed → installable → installed & current → incompatible last;
+// alphabetical by name within each group. So the actionable ones surface and the list is scannable.
+function rank(e) {
+  const compatible = meetsMinVersion(e.minVersion);
+  if (!compatible) return 3;
+  const inst = INSTALLED[e.id];
+  if (inst && isOutdated(e)) return 0; // has an update
+  if (!inst) return 1;                 // installable
+  return 2;                            // installed & current
+}
 function render() {
   const q = $('#q').value.trim();
-  const list = ENTRIES.filter((e) => matches(e, q));
+  const list = ENTRIES.filter((e) => matches(e, q))
+    .sort((a, b) => (rank(a) - rank(b)) || (a.name || a.id).localeCompare(b.name || b.id));
   if (!list.length) { $('#list').innerHTML = `<p class="muted">${t('market_empty')}</p>`; return; }
   const outdated = list.filter((e) => isOutdated(e) && meetsMinVersion(e.minVersion)); // don't offer to update into a version this extension can't run
   const banner = outdated.length

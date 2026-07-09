@@ -64,6 +64,7 @@
   "no_sinks": { "message": "Aún no hay destinos." },
   "enable_auto": { "message": "Activar auto" },
   "disable_auto": { "message": "Desactivar auto" },
+  "auto_on_pill": { "message": "auto activo" },
   "no_sw_sinks": { "message": "(sin destinos Drive/HTTP)" },
   "enable_ds_first": { "message": "Activa un datasource para configurar auto." },
   "add_sink_first": { "message": "Añade un destino Drive o HTTP primero." },

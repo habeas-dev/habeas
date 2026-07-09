@@ -17,15 +17,13 @@
   </div>
 
   <div class="app">
-    <div class="card">
-      <p class="muted" data-i18n="market_intro"></p>
-      <div class="row" style="margin-top:8px">
-        <input id="q" size="28" data-i18n-ph="market_search" />
-        <button id="reload" data-i18n="market_reload"></button>
-        <span id="status" class="muted"></span>
-      </div>
+    <p class="muted" data-i18n="market_intro" style="margin:2px 0 12px"></p>
+    <div class="toolbar">
+      <input id="q" type="search" class="search" data-i18n-ph="market_search" autocomplete="off" />
+      <button id="reload" data-i18n="market_reload"></button>
+      <span id="status" class="muted"></span>
     </div>
-    <div id="list"></div>
+    <div id="list" class="src-list"></div>
   </div>
 
   <script type="module" src="marketplace.js"></script>

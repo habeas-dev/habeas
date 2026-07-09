@@ -19,13 +19,15 @@ const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const flag = (code) => !code ? '' : code === 'global' ? '🌐' : (/^[A-Za-z]{2}$/.test(code) ? code.toUpperCase().replace(/./g, (c) => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)) : '');
 
-// Live client-side filter of the source list by the search box (name/id/service/domain/category).
-function filterSources() {
-  const q = (($('#ds-search') && $('#ds-search').value) || '').trim().toLowerCase();
+// Live client-side filter of a .src-card list by its search box (matches each card's data-hay).
+function filterList(listSel, inputSel, emptySel) {
+  const inp = $(inputSel); const q = ((inp && inp.value) || '').trim().toLowerCase();
   let shown = 0;
-  document.querySelectorAll('#ds .src-card').forEach((c) => { const vis = !q || c.dataset.hay.includes(q); c.hidden = !vis; if (vis) shown++; });
-  const empty = $('#ds-empty'); if (empty) empty.hidden = shown > 0;
+  document.querySelectorAll(listSel + ' .src-card').forEach((c) => { const vis = !q || c.dataset.hay.includes(q); c.hidden = !vis; if (vis) shown++; });
+  const empty = $(emptySel); if (empty) empty.hidden = shown > 0;
 }
+const filterSources = () => filterList('#ds', '#ds-search', '#ds-empty');
+const filterRoutes = () => filterList('#routes', '#auto-search', '#auto-empty');
 
 // Starting point for "Paste JSON" — a minimal, valid-shaped source to edit or paste over.
 const PASTE_TEMPLATE = {
@@ -146,15 +148,29 @@ async function render() {
   });
 
   const swSinks = cfg.sinks.filter((s) => s.type === 'drive' || s.type === 'http');
-  $('#routes').innerHTML = cfg.datasources.filter((d) => d.enabled).map((d) => {
-    const route = (cfg.routes || []).find((r) => r.datasource === d.id && r.mode === 'auto');
+  const enabledDs = cfg.datasources.filter((d) => d.enabled);
+  const routeOf = (d) => (cfg.routes || []).find((r) => r.datasource === d.id && r.mode === 'auto');
+  const nameOf = (d) => (CATALOG[d.adapter] && CATALOG[d.adapter].name) || d.id;
+  // Order: sources with auto enabled first, then alphabetical — same as the Sources tab.
+  const ordered = enabledDs.slice().sort((a, b) => ((!!routeOf(b)) - (!!routeOf(a))) || nameOf(a).localeCompare(nameOf(b)));
+  $('#routes').innerHTML = ordered.map((d) => {
+    const route = routeOf(d);
     const dsAdapter = CATALOG[d.adapter];
     const sinks = swSinks.filter((s) => !dsAdapter || sinkAcceptsSource(s, dsAdapter));
-    const opts = sinks.map((s) => `<option value="${s.id}" ${route && route.sink === s.id ? 'selected' : ''}>${s.id} (${s.type})</option>`).join('');
-    return `<div class="card row"><b style="flex:1">${d.id}</b><span class="muted">→ auto</span>
-      <select data-rsel="${d.id}" ${sinks.length ? '' : 'disabled'}>${opts || `<option value="">${t('no_sw_sinks')}</option>`}</select>
-      <button data-rtoggle="${d.id}" data-on="${route ? 1 : 0}" class="${route ? '' : 'primary'}">${route ? t('disable_auto') : t('enable_auto')}</button></div>`;
+    const opts = sinks.map((s) => `<option value="${s.id}" ${route && route.sink === s.id ? 'selected' : ''}>${esc(s.id)} (${esc(s.type)})</option>`).join('');
+    const hay = [nameOf(d), d.id].join(' ').toLowerCase();
+    return `<div class="src-card${route ? ' on' : ''}" data-hay="${esc(hay)}">
+      <div class="src-info">
+        <div class="src-title"><b>${esc(nameOf(d))}</b> ${route ? `<span class="pill sent">${t('auto_on_pill')}</span>` : ''}</div>
+        <div class="src-meta muted">${route ? '→ ' + esc(route.sink) : `<code>${esc(d.id)}</code>`}</div>
+      </div>
+      <div class="src-actions">
+        <select data-rsel="${esc(d.id)}" ${sinks.length ? '' : 'disabled'}>${opts || `<option value="">${t('no_sw_sinks')}</option>`}</select>
+        <button data-rtoggle="${esc(d.id)}" data-on="${route ? 1 : 0}" class="${route ? '' : 'primary'}">${route ? t('disable_auto') : t('enable_auto')}</button>
+      </div>
+    </div>`;
   }).join('') || `<p class="muted">${t('enable_ds_first')}</p>`;
+  filterRoutes();
   $('#routes').querySelectorAll('[data-rtoggle]').forEach((b) => b.onclick = async () => {
     const dsId = b.dataset.rtoggle;
     const existing = ((await getConfig()).routes || []).find((r) => r.datasource === dsId && r.mode === 'auto');
@@ -227,6 +243,7 @@ $('#addsink').onclick = addSink;
 $('#create').onclick = () => { location.href = 'author.html'; };
 $('#browse').onclick = () => { location.href = 'marketplace.html'; };
 $('#ds-search').oninput = filterSources;
+$('#auto-search').oninput = filterRoutes;
 $('#paste').onclick = async () => {
   const adapter = await editJson(PASTE_TEMPLATE);
   if (adapter) { await saveSource(adapter); render(); }
