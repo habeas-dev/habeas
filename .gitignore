@@ -36,3 +36,6 @@ coverage/
 scratch/
 tmp/
 tools/store-screenshots/out/
+
+# Claude Code local worktrees + config
+.claude/
