@@ -1,29 +1,45 @@
 // Canonical store — public API. Extraction/delivery write records here (write-through); sinks and
-// consumers are PROJECTIONS of it (docs/canonical-store.md). Backend-pluggable: defaults to the local
-// IndexedDB host; a later phase lets the user host it on a folder/Drive/HTTP backend and MOVE it between
-// them. All record shaping lives in the pure format module; this layer just stamps time + does I/O.
+// consumers are PROJECTIONS of it (docs/canonical-store.md). Backend-pluggable + MOVABLE: the user chooses
+// where the store is hosted (local by default, or a folder / Drive / HTTP backend for multi-device) and can
+// move it between backends (a union-merge, never clobbering). Record shaping lives in the pure format module.
+import { chrome } from './ext.js';
 import * as local from './store/local.js';
 import { emptySource, mergeItems, mergeSources, project, views } from './store/format.js';
 
-let backend = local; // canonical backend; Phase 3 resolves this from config + adds a per-instance cache
-export function setBackend(b) { backend = b || local; }
+const CFG_KEY = 'habeas:store';
+export async function getStoreConfig() { const o = await chrome.storage.local.get(CFG_KEY); return o[CFG_KEY] || { backend: 'local' }; }
+export async function setStoreConfig(cfg) { await chrome.storage.local.set({ [CFG_KEY]: cfg }); }
+
+let override = null;               // tests inject an in-memory backend
+export function setBackend(b) { override = b; }
+
+// A backend implements { loadSource(id)->data|null, saveSource(id,data), listSources()->[id] }. local is a
+// static module; folder/drive/http are factories bound to their config (dir handle / Drive folder / URL).
+async function makeBackend(cfg) {
+  cfg = cfg || (await getStoreConfig());
+  switch (cfg && cfg.backend) {
+    case 'folder': return (await import('./store/folder.js')).make(cfg);
+    case 'http': return (await import('./store/http.js')).make(cfg);
+    case 'drive': return (await import('./store/drive.js')).make(cfg);
+    default: return local;
+  }
+}
+async function backendFor() { return override || makeBackend(); }
 const now = () => new Date().toISOString();
 
-// Write-through: merge captured items into a source's store. entries: [{ internalId, record,
-// docAvailable? }] (or tombstones { internalId, gone, goneReason }). Each is stamped `at` now unless given.
+// Write-through: merge captured items into a source's store. entries: [{ internalId, record, docAvailable? }]
+// (or tombstones { internalId, gone, goneReason }). Each is stamped `at` now unless given.
 export async function putItems(sourceId, entries, meta) {
   if (!entries || !entries.length) return;
   const stamped = entries.map((e) => ({ ...e, at: e.at || now(), ...(e.gone ? { goneAt: e.goneAt || now() } : {}) }));
+  const backend = await backendFor();
   const cur = (await backend.loadSource(sourceId)) || emptySource(meta);
   await backend.saveSource(sourceId, mergeItems(cur, stamped, meta));
 }
 
-// Record delivered docs into the store from a send: pass the docs (each with .record) that were sent.
 export async function recordDelivered(sourceId, docs, meta) {
   await putItems(sourceId, (docs || []).filter((d) => d && d.internalId != null).map((d) => ({
-    internalId: d.internalId,
-    record: d.record || d,
-    docAvailable: d.docAvailable,
+    internalId: d.internalId, record: d.record || d, docAvailable: d.docAvailable,
   })), meta);
 }
 
@@ -31,14 +47,29 @@ export async function markGone(sourceId, ids, reason) {
   await putItems(sourceId, (ids || []).map((id) => ({ internalId: id, gone: true, goneReason: reason || 'rescan' })));
 }
 
-export async function getSource(sourceId) { return (await backend.loadSource(sourceId)) || null; }
-export async function getRecords(sourceId, opts) { return project(await backend.loadSource(sourceId), opts); }
-export async function getViews(sourceId, delivered) { return views(await backend.loadSource(sourceId), delivered); }
-export async function countLive(sourceId) { const s = await backend.loadSource(sourceId); return s ? Object.values(s.items).filter((e) => !e.gone).length : 0; }
+export async function getSource(sourceId) { return (await (await backendFor()).loadSource(sourceId)) || null; }
+export async function getRecords(sourceId, opts) { return project(await (await backendFor()).loadSource(sourceId), opts); }
+export async function getViews(sourceId, delivered) { return views(await (await backendFor()).loadSource(sourceId), delivered); }
+export async function countLive(sourceId) { const s = await (await backendFor()).loadSource(sourceId); return s ? Object.values(s.items).filter((e) => !e.gone).length : 0; }
 
-// Move/rehydrate: union this source's data from another backend into the current one (never clobbers).
-export async function mergeFrom(sourceId, otherBackend) {
-  const from = await otherBackend.loadSource(sourceId); if (!from) return;
-  const cur = (await backend.loadSource(sourceId)) || emptySource(from.meta);
-  await backend.saveSource(sourceId, mergeSources(cur, from));
+// Union every source from one backend into another (never clobbers; keyed by id). Idempotent → safe to
+// re-run an interrupted move. Returns how many sources were copied.
+export async function migrate(from, to) {
+  const ids = await from.listSources().catch(() => []);
+  for (const id of ids) {
+    const data = await from.loadSource(id); if (!data) continue;
+    const cur = (await to.loadSource(id)) || emptySource(data.meta);
+    await to.saveSource(id, mergeSources(cur, data));
+  }
+  return ids.length;
+}
+
+// Move the canonical store to a new backend: migrate current → target, then repoint the config. The old
+// backend keeps its copy (a safe fallback / rehydration source) unless the caller clears it.
+export async function moveStoreTo(cfg) {
+  const from = await backendFor();
+  const to = await makeBackend(cfg);
+  const n = await migrate(from, to);
+  await setStoreConfig(cfg);
+  return n;
 }

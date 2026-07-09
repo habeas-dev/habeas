@@ -1,7 +1,7 @@
 // Canonical store — public API over an injected in-memory backend (IndexedDB isn't available in node).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { setBackend, putItems, recordDelivered, markGone, getRecords, getViews, countLive, mergeFrom } from '../src/lib/store.js';
+import { setBackend, putItems, recordDelivered, markGone, getRecords, getViews, countLive, migrate } from '../src/lib/store.js';
 
 function mem() {
   const db = {};
@@ -41,12 +41,15 @@ test('markGone tombstones items; they drop out of projections but views count th
   assert.equal(v.live, 1); assert.equal(v.gone, 1); assert.deepEqual(v.missed, ['y']);
 });
 
-test('mergeFrom: rehydrate/union a source from another backend (moving the store)', async () => {
-  const target = mem(); const other = mem();
-  setBackend(other);
+test('migrate: union every source from one backend into another (moving the store between backends)', async () => {
+  const a = mem(); const b = mem();
+  setBackend(a);
   await putItems('s', [{ internalId: '1', record: rec('1', '2026-01-01', 5) }]);
-  setBackend(target);
-  await putItems('s', [{ internalId: '2', record: rec('2', '2026-02-01', 9) }]);
-  await mergeFrom('s', other); // union other's data into the current (target)
+  await putItems('t', [{ internalId: 'x', record: rec('x', '2026-02-01', 9) }]);
+  setBackend(b);
+  await putItems('s', [{ internalId: '2', record: rec('2', '2026-03-01', 7) }]); // target already has some 's' data
+  await migrate(a, b); // union a → b, never clobbering
+  setBackend(b);
   assert.deepEqual((await getRecords('s')).map((r) => r.internalId).sort(), ['1', '2']);
+  assert.deepEqual((await getRecords('t')).map((r) => r.internalId), ['x']); // whole source moved too
 });

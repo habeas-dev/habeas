@@ -13,6 +13,7 @@ import { exportSource, buildShareUrl, importFromFile } from '../registry/share.j
 import { saveSource } from '../adapters/index.js';
 import { editJson } from './jsoneditor.js';
 import { getGrants, revokeGrant } from '../lib/grants.js';
+import { getStoreConfig, moveStoreTo } from '../lib/store.js';
 
 let CATALOG = {};
 const $ = (s) => document.querySelector(s);
@@ -233,10 +234,32 @@ async function addSink() {
   render();
 }
 
+// --- Canonical store: where the store lives + moving it between backends (canonical-store.md) -----------
+function renderStoreFields() {
+  const b = $('#store-backend').value; const f = $('#store-fields'); f.innerHTML = '';
+  if (b === 'http') { const i = document.createElement('input'); i.id = 'store-url'; i.type = 'url'; i.placeholder = 'https://…'; i.size = 24; f.append(i); getStoreConfig().then((c) => { if (c.backend === 'http') i.value = c.url || ''; }); }
+  else if (b === 'folder') { const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = t('store_pick_folder'); btn.onclick = pickStoreFolder; f.append(btn); }
+}
+async function pickStoreFolder() {
+  try { const h = await window.showDirectoryPicker(); await putHandle('store-dir:canon', h); $('#store-status').textContent = t('store_folder_ok'); }
+  catch (e) { /* cancelled */ }
+}
+async function moveStore() {
+  const b = $('#store-backend').value; const cfg = { backend: b };
+  if (b === 'http') { cfg.url = ($('#store-url') && $('#store-url').value || '').trim(); if (!cfg.url) { $('#store-status').textContent = t('store_need_url'); return; } }
+  if (b === 'folder') cfg.id = 'canon';
+  $('#store-status').textContent = t('store_moving');
+  try { const n = await moveStoreTo(cfg); $('#store-status').textContent = t('store_moved', [String(n)]); }
+  catch (e) { $('#store-status').textContent = t('store_move_err', [(e && e.message) || String(e)]); }
+}
+async function renderStore() { $('#store-backend').value = (await getStoreConfig()).backend || 'local'; renderStoreFields(); }
+
 applyI18n();
 if (!window.showDirectoryPicker) {
   const opt = document.querySelector('#stype option[value="local-folder"]');
   if (opt) opt.remove(); // Firefox: no File System Access, hide the local-folder sink
+  const sopt = document.querySelector('#store-backend option[value="folder"]');
+  if (sopt) sopt.remove(); // …and the folder store backend
 }
 $('#stype').onchange = renderFields;
 $('#addsink').onclick = addSink;
@@ -244,6 +267,9 @@ $('#create').onclick = () => { location.href = 'author.html'; };
 $('#browse').onclick = () => { location.href = 'marketplace.html'; };
 $('#ds-search').oninput = filterSources;
 $('#auto-search').oninput = filterRoutes;
+$('#store-backend').onchange = renderStoreFields;
+$('#store-move').onclick = moveStore;
+renderStore();
 $('#paste').onclick = async () => {
   const adapter = await editJson(PASTE_TEMPLATE);
   if (adapter) { await saveSource(adapter); render(); }

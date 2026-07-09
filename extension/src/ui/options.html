@@ -45,6 +45,21 @@
     </section>
 
     <section class="tab" data-tab="dests" role="tabpanel" hidden>
+      <div class="card">
+        <b data-i18n="store_title"></b>
+        <p class="muted" data-i18n="store_help" style="margin:4px 0 10px"></p>
+        <div class="row">
+          <span class="muted" data-i18n="store_where"></span>
+          <select id="store-backend">
+            <option value="local" data-i18n="store_local"></option>
+            <option value="folder" data-i18n="store_folder"></option>
+            <option value="http" data-i18n="store_http"></option>
+          </select>
+          <span id="store-fields" class="row"></span>
+          <button id="store-move" data-i18n="store_move"></button>
+          <span id="store-status" class="muted"></span>
+        </div>
+      </div>
       <div id="sinks"></div>
       <div class="card">
         <b data-i18n="add_destination"></b>
