@@ -14,6 +14,10 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # secrets can't be read in a step-level `if`; surface a boolean here so the CWS step self-skips
+      # when credentials aren't configured (tagging then still builds + releases, just no store upload).
+      HAS_CWS: ${{ secrets.CWS_REFRESH_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -44,3 +48,23 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*.zip
+
+      # --- Chrome Web Store upload (milestone v* tags only) -----------------------------------------
+      # Uploads the built zip to the store listing. DRAFT by default (publish:false) — it lands as a
+      # pending draft you approve/publish by hand in the dashboard. Set publish:true to auto-submit for
+      # review. Skips cleanly if the secrets aren't set, so tagging never fails for lack of credentials.
+      - name: Locate zip
+        if: startsWith(github.ref, 'refs/tags/')
+        id: zip
+        run: echo "path=$(ls dist/*.zip | head -1)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload to Chrome Web Store (draft)
+        if: startsWith(github.ref, 'refs/tags/') && env.HAS_CWS == 'true'
+        uses: mnao305/chrome-extension-upload@v5.0.0
+        with:
+          file-path: ${{ steps.zip.outputs.path }}
+          extension-id: ${{ secrets.CWS_EXTENSION_ID }}
+          client-id: ${{ secrets.CWS_CLIENT_ID }}
+          client-secret: ${{ secrets.CWS_CLIENT_SECRET }}
+          refresh-token: ${{ secrets.CWS_REFRESH_TOKEN }}
+          publish: false # DRAFT: review + publish manually in the dashboard. Flip to true to auto-submit.
