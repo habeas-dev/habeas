@@ -54,12 +54,12 @@ jobs:
       # pending draft you approve/publish by hand in the dashboard. Set publish:true to auto-submit for
       # review. Skips cleanly if the secrets aren't set, so tagging never fails for lack of credentials.
       - name: Locate zip
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         id: zip
         run: echo "path=$(ls dist/*.zip | head -1)" >> "$GITHUB_OUTPUT"
 
-      - name: Upload to Chrome Web Store (draft)
-        if: startsWith(github.ref, 'refs/tags/') && env.HAS_CWS == 'true'
+      - name: Upload to Chrome Web Store (publish)
+        if: (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch') && env.HAS_CWS == 'true'
         uses: mnao305/chrome-extension-upload@v5.0.0
         with:
           file-path: ${{ steps.zip.outputs.path }}
@@ -67,4 +67,4 @@ jobs:
           client-id: ${{ secrets.CWS_CLIENT_ID }}
           client-secret: ${{ secrets.CWS_CLIENT_SECRET }}
           refresh-token: ${{ secrets.CWS_REFRESH_TOKEN }}
-          publish: false # DRAFT: review + publish manually in the dashboard. Flip to true to auto-submit.
+          publish: true # auto-submit for Google review (goes live after approval). Set false to only stage a draft.
