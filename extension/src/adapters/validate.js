@@ -5,6 +5,7 @@
 //      replays the captured session to) must share ONE registrable domain (eTLD+1) — unless the
 //      adapter declares an explicit `crossDomainHosts` allowlist, which is permitted but surfaced
 //      to the user as an off-site-consent decision. This makes silent JWT exfiltration impossible.
+import { outputsOf, resolveOutput } from '../lib/outputs.js';
 
 // Compact public-suffix handling. Full PSL is huge; we bundle the common multi-label suffixes
 // (ccSLDs) and default to "last two labels" otherwise. Conservative and good enough for the
@@ -78,6 +79,19 @@ const ID_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const SCHEMA_RE = /^[a-z_]+@\d+$/;
 const PAGING = new Set(['offsets', 'offset', 'page', 'cursor', 'none', 'years']);
 
+// Validate one extraction (a base source, or a resolved stream/format output): its list, schema, fields.
+function checkExtraction(a, req, label) {
+  const p = label ? `[${label}] ` : '';
+  req(typeof a.schema === 'string' && SCHEMA_RE.test(a.schema), p + 'schema like "receipt@1" required');
+  const list = (a.api && a.api.list) || {};
+  req(typeof list.path === 'string' && list.path.startsWith('/'), p + 'api.list.path required');
+  req(list.from === 'html' || (typeof list.itemsPath === 'string' && list.itemsPath.length > 0), p + 'api.list.itemsPath required (unless list.from is "html")');
+  req(!list.paging || PAGING.has(list.paging), p + 'api.list.paging must be offsets|offset|page|cursor|none|years');
+  const fields = a.fields || {};
+  req(typeof fields.internalId === 'string', p + 'fields.internalId required');
+  req(typeof fields.date === 'string', p + 'fields.date required');
+}
+
 // Canonical category catalog — the ONLY values a source may emit (used for sink compatibility).
 // One source of truth; keep in sync with the schema enum and docs/categories.md. Extend here.
 export const CATEGORIES = [
@@ -105,7 +119,6 @@ export function validateAdapter(adapter) {
     req(typeof adapter.name === 'string' && adapter.name.length > 0, 'name required');
     req(typeof adapter.service === 'string' && adapter.service.length > 0, 'service required');
     req(Array.isArray(adapter.match) && adapter.match.length > 0, 'match[] required');
-    req(typeof adapter.schema === 'string' && SCHEMA_RE.test(adapter.schema), 'schema like "receipt@1" required');
     req(Array.isArray(adapter.categories) && adapter.categories.length > 0, 'categories[] required');
     const badCats = (adapter.categories || []).filter((c) => !CATSET.has(c));
     req(!badCats.length, `unknown categor${badCats.length > 1 ? 'ies' : 'y'}: ${badCats.join(', ')} — use the allowed catalog (see docs/categories.md)`);
@@ -118,13 +131,10 @@ export function validateAdapter(adapter) {
     // https everywhere; http only for loopback (local dev/testing sources — can't be MITM'd off-box).
     const okScheme = typeof api.host === 'string' && (/^https:\/\//.test(api.host) || /^http:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/.test(api.host));
     req(okScheme, 'api.host must be https (http allowed only for loopback)');
-    const list = api.list || {};
-    req(typeof list.path === 'string' && list.path.startsWith('/'), 'api.list.path required');
-    req(list.from === 'html' || (typeof list.itemsPath === 'string' && list.itemsPath.length > 0), 'api.list.itemsPath required (unless list.from is "html")');
-    req(!list.paging || PAGING.has(list.paging), 'api.list.paging must be offsets|page|cursor|none');
-    const fields = adapter.fields || {};
-    req(typeof fields.internalId === 'string', 'fields.internalId required');
-    req(typeof fields.date === 'string', 'fields.date required');
+    // Extraction (list + schema + fields) is per OUTPUT when the source declares streams×formats — each
+    // resolved output must be a valid extraction; otherwise the source itself is the single output.
+    if (adapter.streams && adapter.streams.length) { for (const o of outputsOf(adapter)) checkExtraction(resolveOutput(adapter, o.id), req, o.id); }
+    else checkExtraction(adapter, req);
     const auth = adapter.auth || {};
     req(Array.isArray(auth.replayHeaders), 'auth.replayHeaders must be an array (may be empty for cookie auth)');
 

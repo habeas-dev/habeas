@@ -4,7 +4,7 @@
   "title": "Habeas adapter",
   "description": "Declarative definition of how to extract a user's own data from one service, in the user's live session. DATA, not code — no functions, no eval, no remote JS. This schema mirrors the runtime shape consumed by extension/src/runtime/inventory.js and enforced by extension/src/adapters/validate.js.",
   "type": "object",
-  "required": ["id", "name", "service", "match", "auth", "api", "fields", "schema", "categories"],
+  "required": ["id", "name", "service", "match", "auth", "api", "categories"],
   "additionalProperties": true,
   "properties": {
     "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "description": "Unique id, <service>-<country>, e.g. carrefour-es." },
@@ -27,6 +27,24 @@
       "items": { "enum": ["grocery", "fuel", "sports", "fashion", "electronics", "home", "diy", "pharmacy", "restaurant", "marketplace", "travel", "entertainment", "retail", "energy", "water", "telecom", "utility", "tolls", "transport", "insurance", "subscription", "domains", "education", "healthcare", "government", "card", "cash", "banking", "investment", "pension", "crypto", "loan", "other"] },
       "minItems": 1,
       "description": "The categories this source can emit (used for sink compatibility). Must be from the canonical catalog — see docs/categories.md."
+    },
+    "streams": {
+      "type": "array",
+      "description": "A source can expose several STREAMS (data sets) and, per stream, several FORMATS (artifact representations sharing the stream's list). A selectable output is a (stream, format) pair; each merges over the base (auth/api.host/match/domain), overriding list/schema/fields/categories (stream) and the artifact (format). When present, the base needs no list/schema/fields — each resolved output is validated instead.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "schema": { "type": "string" },
+          "categories": { "type": "array", "items": { "type": "string" } },
+          "api": { "type": "object" },
+          "fields": { "type": "object" },
+          "formats": { "type": "array", "items": { "type": "object", "additionalProperties": true, "required": ["id"], "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "schema": { "type": "string" }, "api": { "type": "object" }, "fields": { "type": "object" } } } }
+        }
+      }
     },
     "categorize": {
       "type": "object",
@@ -81,7 +99,7 @@
     },
     "api": {
       "type": "object",
-      "required": ["host", "list"],
+      "required": ["host"],
       "additionalProperties": false,
       "properties": {
         "host": { "type": "string", "pattern": "^https://", "description": "API origin, https only." },
