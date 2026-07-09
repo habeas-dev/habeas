@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.52 → 0.1.53 (in progress)
+## 0.1.52 → 0.1.53
 
 ### Fixes
 - **Multi-output delivery** — a source's per-stream store key (e.g. `wizink-es:movimientos`) is used as the
