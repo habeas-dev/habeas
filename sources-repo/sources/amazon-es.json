@@ -84,5 +84,6 @@
     "internalId": "orderId",
     "date": "_year"
   },
-  "schema": "receipt@1"
+  "schema": "receipt@1",
+  "itemLabel": "Pedido {internalId}"
 }

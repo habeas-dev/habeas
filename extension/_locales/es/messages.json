@@ -77,6 +77,10 @@
   "sending_progress": { "message": "Guardando $I$/$N$…", "placeholders": { "i": { "content": "$1" }, "n": { "content": "$2" } } },
   "doc_failed": { "message": "$ID$ falló: $ERR$", "placeholders": { "id": { "content": "$1" }, "err": { "content": "$2" } } },
   "n_failed": { "message": "$N$ fallidos", "placeholders": { "n": { "content": "$1" } } },
+  "stop": { "message": "Detener" },
+  "stopping": { "message": "Deteniendo…" },
+  "stopped": { "message": "Detenido" },
+  "stopped_n": { "message": "Detenido — $N$ documentos hasta ahora", "placeholders": { "n": { "content": "$1" } } },
 
   "st_ok": { "message": "$N$ doc(s) → $SINK$", "placeholders": { "n": { "content": "$1" }, "sink": { "content": "$2" } } },
   "st_none": { "message": "sin novedades" },

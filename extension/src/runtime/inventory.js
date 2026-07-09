@@ -127,11 +127,12 @@ async function pageList(adapter, auth, net, group, opts) {
   if (list.periods) return pageListPeriods(adapter, auth, net, group, opts);
   // Year-partitioned listing (e.g. Amazon's /your-orders, which filters by year and has no global
   // list): scan a bounded window of years, each with optional startIndex sub-paging.
-  if (list.paging === 'years' || list.years) return pageListYears(adapter, auth, net, group);
+  if (list.paging === 'years' || list.years) return pageListYears(adapter, auth, net, group, opts);
   // Resolve the strategy from an explicit `paging`, else from whichever paging field is present
   // (robust to a blank `paging` — e.g. an editor/UI that didn't offer the right option).
   const paging = list.paging
     || (list.offsetsPath ? 'offsets' : list.offsetParam ? 'offset' : list.pageParam ? 'page' : list.nextPath ? 'cursor' : 'none');
+  const stop = () => !!(opts && opts.signal && opts.signal.aborted); // Stop pressed → end paging, keep what's collected
   const baseParams = { ...(list.params || {}) };
   const range = rangeParams(list);
   const count = list.params && list.params.count;
@@ -142,6 +143,7 @@ async function pageList(adapter, auth, net, group, opts) {
   if (paging === 'offsets') {
     let offs = { ...(list.initialOffsets || {}) };
     for (let g = 0; g < maxPages; g++) {
+      if (stop()) break;
       const data = await call({ ...range, ...baseParams, ...offs });
       if (!collect(adapter, data, seen, all, group)) break;
       offs = Object.assign(offs, get(data, list.offsetsPath) || {});
@@ -150,6 +152,7 @@ async function pageList(adapter, auth, net, group, opts) {
     const pageParam = list.pageParam || 'page';
     let page = list.pageStart ?? 1;
     for (let g = 0; g < maxPages; g++) {
+      if (stop()) break;
       const data = await call({ ...range, ...baseParams, [pageParam]: page });
       const items = get(data, itemsPathOf(list)) || [];
       const added = collect(adapter, data, seen, all, group);
@@ -161,6 +164,7 @@ async function pageList(adapter, auth, net, group, opts) {
     const step = list.offsetStep || count || 20;
     let offset = list.offsetStart ?? 0;
     for (let g = 0; g < maxPages; g++) {
+      if (stop()) break;
       const data = await call({ ...range, ...baseParams, [offsetParam]: offset });
       const items = get(data, itemsPathOf(list)) || [];
       const added = collect(adapter, data, seen, all, group);
@@ -171,6 +175,7 @@ async function pageList(adapter, auth, net, group, opts) {
     const cursorParam = list.cursorParam || 'cursor';
     let cursor = null;
     for (let g = 0; g < maxPages; g++) {
+      if (stop()) break;
       const params = { ...range, ...baseParams };
       if (cursor) params[cursorParam] = cursor;
       const data = await call(params);
@@ -189,8 +194,9 @@ async function pageList(adapter, auth, net, group, opts) {
 //   { param:"timeFilter", format:"year-{y}", back:6, startParam?:"startIndex", startStep?:10 }
 // Scans from the current year back `back` years (bounded); dedupes across years by internalId; caps
 // total fetched pages at list.maxPages. Sub-paging within a year stops on an empty / all-seen page.
-async function pageListYears(adapter, auth, net, group) {
+async function pageListYears(adapter, auth, net, group, opts) {
   const list = adapter.api.list;
+  const stop = () => !!(opts && opts.signal && opts.signal.aborted);
   const y = list.years || {};
   const param = y.param || 'timeFilter';
   const format = y.format || 'year-{y}';
@@ -203,8 +209,10 @@ async function pageListYears(adapter, auth, net, group) {
   const seen = new Set(), all = [];
   let pages = 0;
   for (let yr = now; yr >= now - back && pages < maxPages; yr--) {
+    if (stop()) break;
     const yv = format.split('{y}').join(String(yr));
     for (let idx = 0; pages < maxPages; idx += startStep) {
+      if (stop()) break;
       const params = { ...baseParams, [param]: yv };
       if (startParam && idx > 0) params[startParam] = idx; // first page carries no startIndex (matches the site)
       const data = await fetchList(adapter, auth, params, net, group);
@@ -941,8 +949,11 @@ function mapDoc(adapter, p, group) {
   if (doc.date != null && doc.date !== '') doc.date = normalizeDate(doc.date); // textual/locale → ISO
   for (const k of ['total', 'amount']) if (typeof doc[k] === 'string' && doc[k] !== '') doc[k] = normalizeAmount(doc[k]); // "21,00 €" → 21
   doc.category = categorize(adapter, p);
-  // A generic display label across schemas (store / issuer / counterparty / instrument / …).
-  doc.label = doc.storeName || doc.issuer || doc.counterparty || doc.instrument || doc.description || doc.party || '';
+  // A generic display label across schemas (store / issuer / counterparty / instrument / …). When none
+  // resolve (e.g. a source whose list encrypts everything but the id, like Amazon), fall back to the
+  // adapter's `itemLabel` template (e.g. "Pedido {internalId}") so every row is still identifiable.
+  doc.label = doc.storeName || doc.issuer || doc.counterparty || doc.instrument || doc.description || doc.party
+    || (adapter.itemLabel ? applyTmpl(adapter.itemLabel, doc, doc.internalId) : '');
   doc.record = buildRecord(doc, adapter);
   return doc;
 }

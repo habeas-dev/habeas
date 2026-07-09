@@ -28,6 +28,15 @@ const localWhen = (iso) => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 };
 
+// A single in-flight operation (list / send). The spinner + Stop button reflect it; Stop aborts via a
+// shared AbortController that the pager and the per-doc send loop poll.
+let aborter = null;
+function busy(on) {
+  const sp = $('#spin'), stop = $('#stop'); if (sp) sp.hidden = !on; if (stop) stop.hidden = !on;
+  const l = $('#list'), s = $('#send'); if (l) l.disabled = on; if (s) s.disabled = on;
+}
+const aborted = () => !!(aborter && aborter.signal.aborted);
+
 async function init() {
   applyI18n();
   try { const v = $('#version'); if (v) v.textContent = 'v' + chrome.runtime.getManifest().version; } catch (e) {}
@@ -45,6 +54,7 @@ async function init() {
   $('#sel-new').onclick = () => setSelection('new');
   $('#sel-all').onclick = () => setSelection('all');
   $('#sel-none').onclick = () => setSelection('none');
+  $('#stop').onclick = () => { if (aborter) { aborter.abort(); $('#status').textContent = t('stopping'); } };
   await badgeClear();
   watchThemeIcon();
   await renderActivity();
@@ -80,12 +90,14 @@ async function onList() {
     return;
   }
   $('#status').textContent = t('listing');
+  aborter = new AbortController();
+  busy(true);
   try {
     const net = await ensureSiteFetch(adapter, { open: true }); // no tab → open the site (session must exist)
     const groupId = await pickGroup(adapter, auth, net); // grouped source → pick which account/card first
-    inventory = await listInventory(adapter, auth, net, { groupId });
+    inventory = await listInventory(adapter, auth, net, { groupId, signal: aborter.signal });
     await render();
-    $('#status').textContent = t('n_documents', [String(inventory.length)]);
+    $('#status').textContent = t(aborted() ? 'stopped_n' : 'n_documents', [String(inventory.length)]);
     log(t('n_documents', [String(inventory.length)]));
     $('#sendbar').hidden = inventory.length === 0;
     $('#selbar').hidden = inventory.length === 0;
@@ -97,7 +109,7 @@ async function onList() {
       if (cleared) log(t('cookies_cleared', [String(cleared)]));
       $('#status').textContent = t('login_in_tab');
     } else $('#status').textContent = t('generic_error', [e.message]);
-  }
+  } finally { busy(false); aborter = null; }
 }
 
 async function render() {
@@ -109,7 +121,7 @@ async function render() {
        <td><input type="checkbox" data-i="${i}" ${sent ? '' : 'checked'}></td>
        <td>${(d.date || '').slice(0, 10)}</td>
        <td><span class="pill type">${d.type || ''}</span></td>
-       <td>${d.storeName || d.label || ''}</td>
+       <td>${d.storeName || d.label || d.internalId || ''}</td>
        <td class="r">${fmt(d.total ?? d.amount)}</td>
        <td>${sent ? `<span class="pill sent">${t('pill_sent')}</span>` : `<span class="pill new">${t('pill_new')}</span>`}</td>
      </tr>`;
@@ -145,6 +157,8 @@ async function onSend() {
   }
 
   $('#status').textContent = t('fetching', [String(eligible.length)]);
+  aborter = new AbortController();
+  busy(true);
   await badgeWorking();
   const net = await ensureSiteFetch(adapter, { open: true });
   const kinds = artifactKinds(adapter).filter((k) => sinkAcceptsArtifact(sink, k));
@@ -167,6 +181,7 @@ async function onSend() {
     if (streaming) {
       let i = 0;
       for (const d of eligible) {
+        if (aborted()) break; // Stop pressed → keep everything saved so far, stop before the next doc
         try {
           const arts = await fetchArts(d);
           if (!arts.length) noPdf.push(d.internalId);
@@ -184,16 +199,15 @@ async function onSend() {
       written = r.written;
       await markDelivered($('#ds').value, sink.id, eligible.map((c) => c.internalId));
     }
-    const m = t('sent_result', [sink.id, String(written), String(eligible.length), String(noPdf.length)]) + (failed.length ? ' · ' + t('n_failed', [String(failed.length)]) : '') + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : '');
+    const m = (aborted() ? t('stopped') + ' · ' : '') + t('sent_result', [sink.id, String(written), String(eligible.length), String(noPdf.length)]) + (failed.length ? ' · ' + t('n_failed', [String(failed.length)]) : '') + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : '');
     $('#status').textContent = m; log(m);
-    await appendLog({ kind: 'manual', datasource: $('#ds').value, sink: sink.id, status: failed.length ? 'partial' : 'ok', count: eligible.length - failed.length });
+    await appendLog({ kind: 'manual', datasource: $('#ds').value, sink: sink.id, status: aborted() ? 'stopped' : (failed.length ? 'partial' : 'ok'), count: written });
     await render();
     await renderActivity();
   } catch (e) {
     const m = t('sink_error', [(e && e.message) || String(e)]);
     $('#status').textContent = m; log(m);
-  }
-  await badgeClear();
+  } finally { await badgeClear(); busy(false); aborter = null; }
 }
 
 async function renderActivity() {

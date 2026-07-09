@@ -89,6 +89,9 @@ code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; 
 .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .section-title { display: flex; align-items: center; gap: 8px; margin: 26px 0 6px; }
 .muted { color: var(--muted); }
+.spinner { width: 15px; height: 15px; border: 2px solid var(--muted); border-top-color: transparent; border-radius: 50%; display: inline-block; animation: habeas-spin 0.7s linear infinite; flex: none; }
+.spinner[hidden] { display: none; }
+@keyframes habeas-spin { to { transform: rotate(360deg); } }
 
 /* Buttons */
 button, .btn {
