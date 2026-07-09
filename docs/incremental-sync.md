@@ -1,3 +1,5 @@
+> SUPERSEDED by [canonical-store.md](canonical-store.md) — the index/tombstone/retention model here is folded into the canonical-store design (extraction decoupled from delivery; portable store; projections).
+
 # Incremental sync — design (NOT YET IMPLEMENTED)
 
 > Status: **design only**, agreed 2026-07-09. Do not implement until scheduled. Captures the model for
