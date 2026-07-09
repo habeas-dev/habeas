@@ -14,6 +14,7 @@ import { applyI18n, t } from '../lib/i18n.js';
 import { getAdapters } from '../adapters/index.js';
 import { hasConsent } from '../lib/consent.js';
 import { loadAuth } from '../lib/authstore.js';
+import { recordDelivered } from '../lib/store.js';
 
 let ADAPTERS = {};
 const $ = (s) => document.querySelector(s);
@@ -246,6 +247,9 @@ async function onSend() {
     }
     // Persist the real dates + amounts we learned from the details (source-level) so future listings show them.
     await rememberDocMeta(adapter.id, eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, returnStatus: d.returnStatus || undefined })));
+    // Write-through to the canonical store: every delivered item's normalized record is recorded once, so a
+    // second sink / consumer / device can be served from the store instead of re-extracting (canonical-store.md).
+    try { await recordDelivered(adapter.id, eligible, { source: adapter.id, schema: adapter.schema }); } catch (e) { /* store is best-effort */ }
     const m = (aborted() ? t('stopped') + ' · ' : '') + t('sent_result', [sink.id, String(written), String(eligible.length), String(noPdf.length)]) + (failed.length ? ' · ' + t('n_failed', [String(failed.length)]) : '') + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : '');
     $('#status').textContent = m; log(m);
     await appendLog({ kind: 'manual', datasource: $('#ds').value, sink: sink.id, status: aborted() ? 'stopped' : (failed.length ? 'partial' : 'ok'), count: written });
