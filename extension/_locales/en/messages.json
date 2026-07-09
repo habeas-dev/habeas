@@ -209,6 +209,8 @@
   "import_source": { "message": "Import (JSON)" },
   "paste_source": { "message": "Write/paste JSON" },
   "browse_sources": { "message": "Browse community" },
+  "search_sources": { "message": "Search sources by name, service, category…" },
+  "no_sources_match": { "message": "No sources match your search." },
   "export_source": { "message": "Export" },
   "share_source": { "message": "Share" },
   "import_ok": { "message": "Imported “$ID$”.", "placeholders": { "id": { "content": "$1" } } },

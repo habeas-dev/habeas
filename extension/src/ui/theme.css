@@ -87,6 +87,25 @@ code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; 
   margin: 12px 0;
 }
 .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* Setup: toolbar (search + actions) and the source list */
+.toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 10px 0 14px; }
+.toolbar .spacer { flex: 1 1 0; min-width: 8px; }
+.search { flex: 1 1 240px; min-width: 160px; padding: 9px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: inherit; font: inherit; }
+.search:focus { outline: none; border-color: var(--brand-600); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-600) 20%, transparent); }
+.src-list { display: flex; flex-direction: column; gap: 8px; }
+.src-card { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid transparent; border-radius: var(--radius); padding: 10px 14px; }
+.src-card.on { border-left-color: var(--brand-600); background: color-mix(in srgb, var(--brand-600) 7%, var(--surface)); }
+.src-info { flex: 1; min-width: 0; }
+.src-title { display: flex; align-items: center; gap: 8px; }
+.src-title b { font-weight: 650; }
+.src-meta { font-size: 12px; margin-top: 3px; }
+.src-meta code { font-size: 11px; }
+.src-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.src-manage { display: flex; gap: 2px; }
+button.link { background: none; border: none; box-shadow: none; padding: 4px 8px; color: var(--muted); font-size: 12px; font-weight: 500; cursor: pointer; border-radius: 6px; }
+button.link:hover { background: var(--line); color: inherit; }
+button.link.danger:hover { background: color-mix(in srgb, #d33 22%, var(--surface)); color: #d33; }
 .section-title { display: flex; align-items: center; gap: 8px; margin: 26px 0 6px; }
 .muted { color: var(--muted); }
 .spinner { width: 15px; height: 15px; border: 2px solid var(--muted); border-top-color: transparent; border-radius: 50%; display: inline-block; animation: habeas-spin 0.7s linear infinite; flex: none; }

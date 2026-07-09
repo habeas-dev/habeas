@@ -17,6 +17,15 @@ import { getGrants, revokeGrant } from '../lib/grants.js';
 let CATALOG = {};
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const flag = (code) => !code ? '' : code === 'global' ? '🌐' : (/^[A-Za-z]{2}$/.test(code) ? code.toUpperCase().replace(/./g, (c) => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)) : '');
+
+// Live client-side filter of the source list by the search box (name/id/service/domain/category).
+function filterSources() {
+  const q = (($('#ds-search') && $('#ds-search').value) || '').trim().toLowerCase();
+  let shown = 0;
+  document.querySelectorAll('#ds .src-card').forEach((c) => { const vis = !q || c.dataset.hay.includes(q); c.hidden = !vis; if (vis) shown++; });
+  const empty = $('#ds-empty'); if (empty) empty.hidden = shown > 0;
+}
 
 // Starting point for "Paste JSON" — a minimal, valid-shaped source to edit or paste over.
 const PASTE_TEMPLATE = {
@@ -57,19 +66,34 @@ async function render() {
   const cfg = await getConfig();
   CATALOG = await getAdapters();
 
-  $('#ds').innerHTML = Object.values(CATALOG).map((a) => {
-    const on = cfg.datasources.some((d) => d.id === a.id && d.enabled);
+  const isOn = (a) => cfg.datasources.some((d) => d.id === a.id && d.enabled);
+  // Order: enabled sources first, then alphabetically by name — so the list is scannable, not random.
+  const sources = Object.values(CATALOG).sort((a, b) => (isOn(b) - isOn(a)) || (a.name || a.id).localeCompare(b.name || b.id));
+  $('#ds').innerHTML = sources.map((a) => {
+    const on = isOn(a);
     // Only BUILT-IN sources can carry the audited "first-party" label; a user-imported source is always
     // shown as community and is fully editable/removable (a self-declared trust in its JSON is ignored).
     const builtin = isBuiltinSource(a.id);
     const trust = builtin && a.trust === 'first-party' ? t('trust_first_party') : t('trust_community');
-    const editable = !builtin;
-    const extra = editable
-      ? `<button data-edit="${esc(a.id)}">${t('edit_json')}</button><button data-exp="${a.id}">${t('export_source')}</button><button data-share="${a.id}">${t('share_source')}</button><button data-delsrc="${a.id}">${t('remove')}</button>`
-      : '';
-    return `<div class="card row"><b style="flex:1">${esc(a.name)}</b><span class="pill type">${trust}</span><code>${esc(a.id)}</code>
-      <button data-ds="${esc(a.id)}" data-on="${on ? 1 : 0}" class="${on ? '' : 'primary'}">${on ? t('deactivate') : t('activate')}</button>${extra}</div>`;
+    const cats = (a.categories || []).join(', ');
+    const hay = [a.name, a.id, a.service, a.domain, cats].join(' ').toLowerCase();
+    const manage = builtin ? '' : `<div class="src-manage">`
+      + `<button class="link" data-edit="${esc(a.id)}">${t('edit_json')}</button>`
+      + `<button class="link" data-exp="${a.id}">${t('export_source')}</button>`
+      + `<button class="link" data-share="${a.id}">${t('share_source')}</button>`
+      + `<button class="link danger" data-delsrc="${a.id}">${t('remove')}</button></div>`;
+    return `<div class="src-card${on ? ' on' : ''}" data-hay="${esc(hay)}">
+      <div class="src-info">
+        <div class="src-title"><b>${esc(a.name)}</b> <span class="pill type">${trust}</span></div>
+        <div class="src-meta muted">${a.country ? flag(a.country) + ' ' : ''}${cats ? esc(cats) + ' · ' : ''}<code>${esc(a.id)}</code></div>
+      </div>
+      <div class="src-actions">
+        <button data-ds="${esc(a.id)}" data-on="${on ? 1 : 0}" class="${on ? '' : 'primary'}">${on ? t('deactivate') : t('activate')}</button>
+        ${manage}
+      </div>
+    </div>`;
   }).join('');
+  filterSources();
   $('#ds').querySelectorAll('[data-edit]').forEach((b) => b.onclick = async () => {
     const edited = await editJson(CATALOG[b.dataset.edit]);
     if (edited) { await saveSource(edited); render(); }
@@ -202,6 +226,7 @@ $('#stype').onchange = renderFields;
 $('#addsink').onclick = addSink;
 $('#create').onclick = () => { location.href = 'author.html'; };
 $('#browse').onclick = () => { location.href = 'marketplace.html'; };
+$('#ds-search').oninput = filterSources;
 $('#paste').onclick = async () => {
   const adapter = await editJson(PASTE_TEMPLATE);
   if (adapter) { await saveSource(adapter); render(); }

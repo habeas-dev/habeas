@@ -31,14 +31,17 @@
     </div>
 
     <section class="tab" data-tab="sources" role="tabpanel">
-      <div id="ds"></div>
-      <div class="card row">
-        <button id="create" class="primary" data-i18n="create_source"></button>
-        <button id="paste" data-i18n="paste_source"></button>
+      <div class="toolbar">
+        <input id="ds-search" type="search" class="search" data-i18n-ph="search_sources" autocomplete="off" />
+        <span class="spacer"></span>
+        <button id="browse" class="primary" data-i18n="browse_sources"></button>
+        <button id="create" data-i18n="create_source"></button>
         <button id="import" data-i18n="import_source"></button>
-        <button id="browse" data-i18n="browse_sources"></button>
+        <button id="paste" data-i18n="paste_source"></button>
         <input id="importfile" type="file" accept="application/json" hidden />
       </div>
+      <div id="ds" class="src-list"></div>
+      <p id="ds-empty" class="muted" hidden data-i18n="no_sources_match"></p>
     </section>
 
     <section class="tab" data-tab="dests" role="tabpanel" hidden>
