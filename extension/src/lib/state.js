@@ -31,6 +31,24 @@ export async function forgetDelivered(datasourceId, sinkId) {
   await chrome.storage.local.set({ [KEY]: st });
 }
 
+// Learned per-document metadata (SOURCE level, not per sink): facts we discovered by fetching a
+// document's detail — currently its real date. Lets a later listing show the true date for items whose
+// list only exposes a year (Amazon). A minimal precursor to the incremental-sync index (docs/incremental-sync.md).
+const META_KEY = 'habeas:docmeta';
+export async function getDocMeta(sourceId) {
+  const o = await chrome.storage.local.get(META_KEY);
+  return (o[META_KEY] || {})[sourceId] || {};
+}
+export async function rememberDocMeta(sourceId, entries) { // entries: [{ internalId, date }]
+  if (!entries || !entries.length) return;
+  const o = await chrome.storage.local.get(META_KEY);
+  const all = o[META_KEY] || {};
+  const m = all[sourceId] || {};
+  for (const e of entries) if (e && e.internalId != null) m[e.internalId] = { ...(m[e.internalId] || {}), ...(e.date ? { date: e.date } : {}) };
+  all[sourceId] = m;
+  await chrome.storage.local.set({ [META_KEY]: all });
+}
+
 // Activity log — a rolling record of runs (auto + manual) so the user can see whether a
 // sync happened without opening Drive. Kept in storage.local (last 100 entries).
 const LOG_KEY = 'habeas:log';

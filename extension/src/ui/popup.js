@@ -6,7 +6,7 @@ import { pickGroup } from './grouppicker.js';
 import { renderPage } from '../lib/render.js';
 import { writeToSink } from '../sinks/sinks.js';
 import { sinkAcceptsSource, acceptsDoc, sinkAcceptsArtifact } from '../sinks/format.js';
-import { deliveredSet, markDelivered, getLog, appendLog } from '../lib/state.js';
+import { deliveredSet, markDelivered, getLog, appendLog, getDocMeta, rememberDocMeta } from '../lib/state.js';
 import { badgeWorking, badgeClear } from '../lib/badge.js';
 import { getHandle, verifyPermission } from '../lib/fs.js';
 import { watchThemeIcon } from '../lib/theme-icon.js';
@@ -74,6 +74,9 @@ function populateSinks(cfg) {
 // Resolve the captured session for this source — merged across sibling hosts sharing its registrable
 // domain (a single account JWT often rides several API hosts). Cookie sources get an empty store.
 const getAuth = (adapter) => loadAuth(adapter);
+// Fill in real dates we learned on a past download (source-level meta) for rows whose list only exposes a
+// year (e.g. Amazon). Only overrides a non-full date, so a source with a real list date is untouched.
+const enrichDates = (docs, known) => { for (const d of docs) { const k = known[d.internalId]; if (k && k.date && !/^\d{4}-\d{2}-\d{2}/.test(d.date || '')) d.date = k.date; } };
 
 async function onList() {
   clearLog();
@@ -94,6 +97,7 @@ async function onList() {
   busy(true);
   const sinkId = $('#sink').value;
   const delivered = sinkId ? await deliveredSet($('#ds').value, sinkId) : {}; // once, reused by incremental renders
+  const known = await getDocMeta(adapter.id); // dates learned on past downloads
   try {
     const net = await ensureSiteFetch(adapter, { open: true }); // no tab → open the site (session must exist)
     const groupId = await pickGroup(adapter, auth, net); // grouped source → pick which account/card first
@@ -103,12 +107,14 @@ async function onList() {
       groupId, signal: aborter.signal,
       onProgress: ({ year, page, docs }) => {
         $('#status').textContent = year != null ? t('listing_year_page', [String(year), String(page), String(docs.length)]) : t('listing_page', [String(page), String(docs.length)]);
+        enrichDates(docs, known);
         inventory = docs;
         $('#sendbar').hidden = inventory.length === 0;
         $('#selbar').hidden = inventory.length === 0;
         render(delivered);
       },
     });
+    enrichDates(inventory, known);
     await render(delivered);
     $('#status').textContent = t(aborted() ? 'stopped_n' : 'n_documents', [String(inventory.length)]);
     log(t('n_documents', [String(inventory.length)]));
@@ -221,6 +227,8 @@ async function onSend() {
       written = r.written;
       await markDelivered($('#ds').value, sink.id, eligible.map((c) => c.internalId));
     }
+    // Persist the real dates we learned from the details (source-level) so future listings show them.
+    await rememberDocMeta(adapter.id, eligible.filter((d) => /^\d{4}-\d{2}-\d{2}/.test(d.date || '')).map((d) => ({ internalId: d.internalId, date: d.date })));
     const m = (aborted() ? t('stopped') + ' · ' : '') + t('sent_result', [sink.id, String(written), String(eligible.length), String(noPdf.length)]) + (failed.length ? ' · ' + t('n_failed', [String(failed.length)]) : '') + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : '');
     $('#status').textContent = m; log(m);
     await appendLog({ kind: 'manual', datasource: $('#ds').value, sink: sink.id, status: aborted() ? 'stopped' : (failed.length ? 'partial' : 'ok'), count: written });
