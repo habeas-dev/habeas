@@ -126,7 +126,8 @@
           "properties": {
             "path": { "type": "string", "pattern": "^/" },
             "from": { "enum": ["html"], "description": "'html' → the list is server-rendered: fetch the page and parse items from embedded JSON (at itemsPath) or the largest HTML table (rows → objects keyed by column header, plus `href`)." },
-            "paging": { "enum": ["offsets", "offset", "page", "cursor", "none"], "description": "Pagination strategy. Defaults to offsets if offsetsPath present, else cursor if nextPath present, else none." },
+            "paging": { "enum": ["offsets", "offset", "page", "cursor", "none", "years"], "description": "Pagination strategy. Defaults to offsets if offsetsPath present, else cursor if nextPath present, else none. 'years' partitions the listing by year (see years)." },
+            "years": { "type": "object", "additionalProperties": false, "description": "[years] Year-partitioned listing (e.g. Amazon /your-orders): scan a bounded window of years, each with optional startIndex sub-paging. Dedupes across years by internalId.", "properties": { "param": { "type": "string", "description": "Year query param (default timeFilter)." }, "format": { "type": "string", "description": "Year value template; {y} → the year (default year-{y})." }, "back": { "type": "number", "description": "Years back from the current year to scan (default 6)." }, "startParam": { "type": "string", "description": "Optional within-year offset param for sub-paging (e.g. startIndex)." }, "startStep": { "type": "number", "description": "Increment (page size) for startParam (default 10)." } } },
             "itemsPath": { "type": "string", "description": "Dotted path to the array of items in the response (e.g. data.items). For from:html, the path into embedded page JSON (omit to parse an HTML table)." },
             "offsetsPath": { "type": "string", "description": "[offsets] Dotted path to the offsets object merged into the next query." },
             "initialOffsets": { "type": "object", "description": "[offsets] Seed offsets object." },
@@ -174,7 +175,8 @@
           "additionalProperties": false,
           "description": "Per-document PDF. Either a `path` (relative to api.host, GET by default; some services POST the invoice data as the body) OR a `urlField` naming a list-item field that already holds the FULL absolute https:// URL of the file.",
           "properties": {
-            "path": { "type": "string", "description": "Document path templated with {internalId}, {csrf}, {ctx.*}, {group.*} and any {field.path} from the list item (e.g. {docId}, {fileName}). Omit when using urlField." },
+            "path": { "type": "string", "description": "Document path templated with {internalId}, {csrf}, {ctx.*}, {group.*} and any {field.path} from the list item (e.g. {docId}, {fileName}). Omit when using urlField or resolve." },
+            "resolve": { "type": "object", "additionalProperties": false, "required": ["path", "linkMatch"], "description": "Two-step document lookup: a resolver page (e.g. Amazon's invoice popover) carries the real, opaque document URL. Fetch path, regex linkMatch (capture group 1) out of the response TEXT for the URL (relative → prefixed with api.host), enforce the same-domain guard, then GET it. A non-match = no document (metadata-only).", "properties": { "path": { "type": "string", "description": "Resolver-page path, templated with {internalId}/{field.path}/{csrf}." }, "method": { "enum": ["GET", "POST"] }, "linkMatch": { "type": "string", "description": "Regex whose capture group 1 is the document URL in the resolver page." }, "headers": { "type": "object", "additionalProperties": { "type": "string" } } } },
             "urlField": { "type": "string", "description": "Dotted path to a list-item field holding the FULL absolute https:// document URL (e.g. CaixaBank's statement `Url`). Fetched verbatim; its host must be api.host/domain or a crossDomainHosts entry (asserted at fetch time)." },
             "ext": { "type": "string", "description": "File extension of the downloaded document when not a PDF (e.g. xls, csv). Default pdf." },
             "method": { "enum": ["GET", "POST"] },
@@ -193,6 +195,9 @@
           "description": "Per-document JSON detail (e.g. a full order). Saved as <id>.json. Preferred over a POST-generated PDF. Use `from:'list'` when the list endpoint already returns each item's full data (no extra request).",
           "properties": {
             "from": { "enum": ["list"], "description": "'list' → the document IS the already-listed item's JSON (no path/request needed)." },
+            "fields": { "type": "object", "additionalProperties": true, "description": "Declarative HTML → JSON: build the structured detail record from the page HTML (pages with no embedded JSON, e.g. Amazon order-details). Each key → an {re|attr|tag|sel} extractor (list-row vocabulary), optionally scoped with {region:\"data-component-name\"}. date/total/amount are normalized." },
+            "items": { "$ref": "#/$defs/rows" },
+            "const": { "type": "object", "additionalProperties": true, "description": "Constant fields merged into every detail record (e.g. currency)." },
             "as": { "enum": ["html", "invoice", "render"], "description": "'render' → open the path in a background tab, let the SPA render + fetch its data in the user's session, then capture the FINAL DOM self-contained (cross-browser; the faithful document for client-rendered pages). 'html' → fetch the path as a page and store it self-contained (server-rendered). 'invoice' → render a clean printable invoice from the detail JSON. All save a printable .html." },
             "waitFor": { "type": "string", "description": "[render] CSS selector to wait for before capturing (robust). If absent, waits waitMs." },
             "waitMs": { "type": "number", "description": "[render] Fixed wait in ms before capturing (default 3500) when waitFor is not set." },

@@ -125,6 +125,9 @@ async function pageList(adapter, auth, net, group, opts) {
   // Multi-period sources (WiZink card movements) assemble a group's list from several period fetches
   // (current month + one per past statement) instead of a single paged endpoint — handled apart.
   if (list.periods) return pageListPeriods(adapter, auth, net, group, opts);
+  // Year-partitioned listing (e.g. Amazon's /your-orders, which filters by year and has no global
+  // list): scan a bounded window of years, each with optional startIndex sub-paging.
+  if (list.paging === 'years' || list.years) return pageListYears(adapter, auth, net, group);
   // Resolve the strategy from an explicit `paging`, else from whichever paging field is present
   // (robust to a blank `paging` — e.g. an editor/UI that didn't offer the right option).
   const paging = list.paging
@@ -179,6 +182,39 @@ async function pageList(adapter, auth, net, group, opts) {
     collect(adapter, await call({ ...range, ...baseParams }), seen, all, group);
   }
   return all; // sorted by the caller (listInventory) across all groups
+}
+
+// Year-partitioned pager. Some services (Amazon /your-orders) only expose orders one year at a time
+// via a `timeFilter=year-YYYY` param, with `startIndex` sub-paging inside each year. `list.years`:
+//   { param:"timeFilter", format:"year-{y}", back:6, startParam?:"startIndex", startStep?:10 }
+// Scans from the current year back `back` years (bounded); dedupes across years by internalId; caps
+// total fetched pages at list.maxPages. Sub-paging within a year stops on an empty / all-seen page.
+async function pageListYears(adapter, auth, net, group) {
+  const list = adapter.api.list;
+  const y = list.years || {};
+  const param = y.param || 'timeFilter';
+  const format = y.format || 'year-{y}';
+  const back = y.back != null ? y.back : 6;
+  const startParam = y.startParam;          // optional within-year offset param (e.g. startIndex)
+  const startStep = y.startStep || 10;      // its increment (page size)
+  const maxPages = list.maxPages || 100;
+  const baseParams = { ...(list.params || {}) };
+  const now = new Date().getFullYear();
+  const seen = new Set(), all = [];
+  let pages = 0;
+  for (let yr = now; yr >= now - back && pages < maxPages; yr--) {
+    const yv = format.split('{y}').join(String(yr));
+    for (let idx = 0; pages < maxPages; idx += startStep) {
+      const params = { ...baseParams, [param]: yv };
+      if (startParam && idx > 0) params[startParam] = idx; // first page carries no startIndex (matches the site)
+      const data = await fetchList(adapter, auth, params, net, group);
+      const items = get(data, itemsPathOf(list)) || [];
+      const added = collect(adapter, data, seen, all, group);
+      pages++;
+      if (!startParam || !items.length || !added) break; // no sub-paging, or empty / nothing new → next year
+    }
+  }
+  return all;
 }
 
 // Multi-period list assembly (e.g. WiZink card movements): a group's movements aren't one paged list
@@ -479,6 +515,27 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
   // Refresh it right before each document fetch so the download carries a valid {csrf}.
   let csrf = auth && auth.__csrf;
   if (adapter.api.csrf) { try { csrf = await fetchCsrf(adapter, auth, net); } catch (e) {} }
+  // Two-step document resolution: some services don't expose a stable PDF URL — the detail/list only
+  // links a small resolver page (e.g. Amazon's invoice popover) that in turn carries the real, opaque
+  // document URL. Fetch the resolver, regex its TEXT for the link (capture group 1), guard the host,
+  // then GET the document. A non-match = no document for this order (callers fall back to metadata-only).
+  if (pdf.resolve) {
+    const r = pdf.resolve;
+    const rPath = fillDocTmpl(r.path, doc, internalId, csrf, auth);
+    if (/\{[^}]+\}/.test(rPath)) throw new Error('no document for this item'); // unfillable → skip cleanly
+    const rInit = { method: r.method || 'GET', headers: { accept: 'text/html,*/*', ...(r.headers || {}), ...headersFor(auth, rPath.split('?')[0]) }, credentials: 'include' };
+    const rRes = await NET(host + rPath, rInit);
+    if (!rRes.ok) throw new Error('resolve ' + rRes.status + ' ' + (await rRes.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
+    const m = new RegExp(r.linkMatch, 'i').exec(await rRes.text());
+    if (!m || m[1] == null) throw new Error('no document for this item'); // no invoice link → metadata-only
+    let docUrl = m[1].replace(/&amp;/g, '&');
+    if (!/^https?:\/\//i.test(docUrl)) docUrl = adapter.api.host + (docUrl[0] === '/' ? docUrl : '/' + docUrl); // relative → same origin
+    assertAllowedDocHost(adapter, docUrl); // the URL came from HTML — enforce it stays on the source's domain
+    let dPath; try { dPath = new URL(docUrl).pathname; } catch (e) { dPath = docUrl; }
+    const dRes = await NET(docUrl, { method: 'GET', headers: { accept: '*/*', ...headersFor(auth, dPath) }, credentials: 'include', wantBlob: true });
+    if (!dRes.ok) throw new Error('pdf ' + dRes.status + ' ' + (await dRes.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
+    return await dRes.blob();
+  }
   let url, path;
   if (pdf.urlField) {
     // ABSOLUTE-URL document: the list item already carries the full https:// link to the file (e.g.
@@ -624,6 +681,34 @@ async function fetchHtmlDoc(adapter, auth, internalId, net) {
   return { blob: new Blob([html], { type: 'text/html' }), ext: 'html', via: 'page' };
 }
 
+// Content of a page region marked `data-component="NAME"` (Amazon order-details), from just after the
+// marker to the next data-component boundary. A coarse, non-nesting slice — fine for the leaf regions we
+// read (orderDate/orderId/…); scope a field to a region via {region:"NAME"} to avoid cross-matching.
+function componentRegion(html, name) {
+  const m = new RegExp('data-component=["\']' + escapeRe(name) + '["\']').exec(html || '');
+  if (!m) return '';
+  const rest = String(html).slice(m.index + m[0].length);
+  const nxt = rest.search(/data-component=["']/);
+  return nxt < 0 ? rest : rest.slice(0, nxt);
+}
+// Build a structured JSON record from an order-details HTML page using declarative field extractors —
+// the SAME re/attr/tag/sel vocabulary as list rows (extractField). A field may set `region:"NAME"` to
+// scope extraction to a data-component block first. `detail.items` (each+fields) captures the repeated
+// line-items; `detail.const` merges constant fields (e.g. currency). date/total/amount are normalized
+// like a mapped doc (ISO date, numeric amount). Used when api.detail declares `fields`; else the
+// auto-detecting extractDetail path is used (full back-compat).
+export function extractDetailFields(html, cfg) {
+  const rec = { ...(cfg.const || {}) };
+  for (const k of Object.keys(cfg.fields || {})) {
+    const f = cfg.fields[k];
+    rec[k] = extractField(f.region ? componentRegion(html, f.region) : (html || ''), f);
+  }
+  if (cfg.items) rec.items = parseHtmlItems(html || '', cfg.items);
+  if (rec.date != null && rec.date !== '') rec.date = normalizeDate(rec.date);
+  for (const k of ['total', 'amount']) if (typeof rec[k] === 'string' && rec[k] !== '') rec[k] = normalizeAmount(rec[k]);
+  return rec;
+}
+
 export async function fetchDetail(adapter, auth, docOrId, net) {
   const NET = net || ((u, i) => fetch(u, i));
   const doc = docOrId && typeof docOrId === 'object' ? docOrId : null;
@@ -642,7 +727,11 @@ export async function fetchDetail(adapter, auth, docOrId, net) {
   if (referer) init.referrer = referer; // page-context fetch sets it same-origin (reliable); DNR is the fallback
   const res = await withReferer(url, referer, () => NET(url, init));
   if (!res.ok) throw new Error('detail ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
-  const { json, via } = extractDetail(await res.text(), url, internalId);
+  const text = await res.text();
+  // Declarative HTML → JSON: when the detail declares field extractors, parse the record from the page
+  // HTML (Amazon order-details has no embedded JSON to narrow). Otherwise auto-detect (JSON/embedded/table).
+  if (d.fields) return { blob: new Blob([JSON.stringify(extractDetailFields(text, d))], { type: 'application/json' }), via: 'html-fields' };
+  const { json, via } = extractDetail(text, url, internalId);
   return { blob: new Blob([json], { type: 'application/json' }), via };
 }
 

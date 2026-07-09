@@ -76,7 +76,7 @@ function hasNoCode(v, seen = new Set()) {
 
 const ID_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const SCHEMA_RE = /^[a-z_]+@\d+$/;
-const PAGING = new Set(['offsets', 'offset', 'page', 'cursor', 'none']);
+const PAGING = new Set(['offsets', 'offset', 'page', 'cursor', 'none', 'years']);
 
 // Canonical category catalog — the ONLY values a source may emit (used for sink compatibility).
 // One source of truth; keep in sync with the schema enum and docs/categories.md. Extend here.
