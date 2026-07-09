@@ -133,6 +133,7 @@ async function pageList(adapter, auth, net, group, opts) {
   const paging = list.paging
     || (list.offsetsPath ? 'offsets' : list.offsetParam ? 'offset' : list.pageParam ? 'page' : list.nextPath ? 'cursor' : 'none');
   const stop = () => !!(opts && opts.signal && opts.signal.aborted); // Stop pressed → end paging, keep what's collected
+  const report = (info) => { if (opts && opts.onProgress) { try { opts.onProgress({ ...info, docs: all }); } catch (e) {} } }; // live progress + partial results
   const baseParams = { ...(list.params || {}) };
   const range = rangeParams(list);
   const count = list.params && list.params.count;
@@ -145,7 +146,9 @@ async function pageList(adapter, auth, net, group, opts) {
     for (let g = 0; g < maxPages; g++) {
       if (stop()) break;
       const data = await call({ ...range, ...baseParams, ...offs });
-      if (!collect(adapter, data, seen, all, group)) break;
+      const added = collect(adapter, data, seen, all, group);
+      report({ page: g + 1 });
+      if (!added) break;
       offs = Object.assign(offs, get(data, list.offsetsPath) || {});
     }
   } else if (paging === 'page') {
@@ -156,6 +159,7 @@ async function pageList(adapter, auth, net, group, opts) {
       const data = await call({ ...range, ...baseParams, [pageParam]: page });
       const items = get(data, itemsPathOf(list)) || [];
       const added = collect(adapter, data, seen, all, group);
+      report({ page: g + 1 });
       if (!items.length || !added) break; // empty page or nothing new → done (don't stop on a short page)
       page++;
     }
@@ -168,6 +172,7 @@ async function pageList(adapter, auth, net, group, opts) {
       const data = await call({ ...range, ...baseParams, [offsetParam]: offset });
       const items = get(data, itemsPathOf(list)) || [];
       const added = collect(adapter, data, seen, all, group);
+      report({ page: g + 1 });
       if (!items.length || !added) break;
       offset += step;
     }
@@ -180,6 +185,7 @@ async function pageList(adapter, auth, net, group, opts) {
       if (cursor) params[cursorParam] = cursor;
       const data = await call(params);
       const added = collect(adapter, data, seen, all, group);
+      report({ page: g + 1 });
       cursor = get(data, list.nextPath);
       if (!added || !cursor) break;
     }
@@ -228,6 +234,7 @@ async function pageListYears(adapter, auth, net, group, opts) {
       const added = collect(adapter, data, seen, all, group);
       pages++;
       yearItems += items.length;
+      if (opts && opts.onProgress) { try { opts.onProgress({ year: yr, page: (idx / startStep) + 1, docs: all }); } catch (e) {} } // live: "listing 2026, page 3"
       if (!startParam || !items.length || !added) break; // no sub-paging, or empty / nothing new → next year
     }
     emptyRun = yearItems === 0 ? emptyRun + 1 : 0;

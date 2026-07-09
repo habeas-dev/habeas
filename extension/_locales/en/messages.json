@@ -32,6 +32,8 @@
   "cookies_cleared": { "message": "Cleared $N$ site cookies for a clean login.", "placeholders": { "n": { "content": "$1" } } },
   "cookies_cleared_login": { "message": "Cleared $N$ site cookies — log in in the new tab, then test again.", "placeholders": { "n": { "content": "$1" } } },
   "listing": { "message": "Listing…" },
+  "listing_page": { "message": "Listing documents… page $P$ ($N$ so far)", "placeholders": { "p": { "content": "$1" }, "n": { "content": "$2" } } },
+  "listing_year_page": { "message": "Listing documents from $Y$, page $P$ ($N$ so far)", "placeholders": { "y": { "content": "$1" }, "p": { "content": "$2" }, "n": { "content": "$3" } } },
   "n_documents": { "message": "$COUNT$ documents", "placeholders": { "count": { "content": "$1" } } },
   "fetching": { "message": "Fetching $COUNT$ documents…", "placeholders": { "count": { "content": "$1" } } },
   "with_without_pdf": { "message": "With PDF: $A$ · without PDF (not retained): $B$", "placeholders": { "a": { "content": "$1" }, "b": { "content": "$2" } } },

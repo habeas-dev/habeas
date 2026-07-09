@@ -92,11 +92,24 @@ async function onList() {
   $('#status').textContent = t('listing');
   aborter = new AbortController();
   busy(true);
+  const sinkId = $('#sink').value;
+  const delivered = sinkId ? await deliveredSet($('#ds').value, sinkId) : {}; // once, reused by incremental renders
   try {
     const net = await ensureSiteFetch(adapter, { open: true }); // no tab → open the site (session must exist)
     const groupId = await pickGroup(adapter, auth, net); // grouped source → pick which account/card first
-    inventory = await listInventory(adapter, auth, net, { groupId, signal: aborter.signal });
-    await render();
+    // Live progress + incremental table: the pager reports each page (with the year for year-partitioned
+    // sources) and the partial results as it goes, so a long listing shows what it's doing + fills in rows.
+    inventory = await listInventory(adapter, auth, net, {
+      groupId, signal: aborter.signal,
+      onProgress: ({ year, page, docs }) => {
+        $('#status').textContent = year != null ? t('listing_year_page', [String(year), String(page), String(docs.length)]) : t('listing_page', [String(page), String(docs.length)]);
+        inventory = docs;
+        $('#sendbar').hidden = inventory.length === 0;
+        $('#selbar').hidden = inventory.length === 0;
+        render(delivered);
+      },
+    });
+    await render(delivered);
     $('#status').textContent = t(aborted() ? 'stopped_n' : 'n_documents', [String(inventory.length)]);
     log(t('n_documents', [String(inventory.length)]));
     $('#sendbar').hidden = inventory.length === 0;
@@ -112,9 +125,10 @@ async function onList() {
   } finally { busy(false); aborter = null; }
 }
 
-async function render() {
+async function render(deliveredArg) {
   const dsId = $('#ds').value, sinkId = $('#sink').value;
-  const delivered = sinkId ? await deliveredSet(dsId, sinkId) : {};
+  // Accept a precomputed delivered-map so incremental (per-page) renders during listing stay synchronous.
+  const delivered = deliveredArg || (sinkId ? await deliveredSet(dsId, sinkId) : {});
   $('#tbl tbody').innerHTML = inventory.map((d, i) => {
     const sent = !!delivered[d.internalId];
     return `<tr data-sent="${sent ? '1' : ''}">
@@ -169,6 +183,14 @@ async function onSend() {
     for (const k of kinds) {
       if (!avail.some((a) => a.kind === k.kind)) continue;
       try { arts.push(await fetchArtifact(adapter, auth, d, net, renderPage, k.kind)); } catch (e) { /* artifact unavailable */ }
+    }
+    // If a JSON detail carries a fuller date than the (possibly year-only) list date, adopt it — so file
+    // NAMES and the manifest record get the real date (Amazon's list encrypts the day/month; the detail has it).
+    if (!/^\d{4}-\d{2}-\d{2}/.test(d.date || '')) {
+      for (const a of arts) {
+        if (a.ext !== 'json') continue;
+        try { const r = JSON.parse(await a.blob.text()); if (/^\d{4}-\d{2}-\d{2}/.test(r.date || '')) { d.date = r.date; if (d.record) d.record.date = r.date; break; } } catch (e) { /* not JSON / no date */ }
+      }
     }
     return arts;
   };
