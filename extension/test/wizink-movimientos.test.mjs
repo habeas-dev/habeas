@@ -5,9 +5,13 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { listInventory } from '../src/runtime/inventory.js';
 import { validateAdapter } from '../src/adapters/validate.js';
+import { resolveOutput } from '../src/lib/outputs.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const SRC = JSON.parse(readFileSync(join(here, '../../sources-repo/sources/wizink-movimientos-es.json'), 'utf8'));
+// WiZink is now ONE source with several outputs (streams×formats); the movements come from the
+// `movimientos` stream. Validate the whole source, but list against the resolved stream adapter.
+const FULL = JSON.parse(readFileSync(join(here, '../../sources-repo/sources/wizink-es.json'), 'utf8'));
+const SRC = resolveOutput(FULL, 'movimientos');
 
 // Statement dates are computed RELATIVE TO NOW so the maxAgeDays (90) cut is exercised deterministically
 // regardless of when the suite runs: two within the window, one well beyond it.
@@ -95,7 +99,7 @@ function mockNet() {
 }
 
 test('wizink-movimientos source is valid (validateAdapter + JSON-schema-shaped)', () => {
-  const v = validateAdapter(SRC);
+  const v = validateAdapter(FULL); // the whole multi-output source validates
   assert.ok(v.ok, 'validateAdapter errors: ' + v.errors.join('; '));
   assert.equal(SRC.schema, 'transaction@1');
   assert.deepEqual(SRC.categories, ['card']);

@@ -15,6 +15,7 @@ import { getAdapters } from '../adapters/index.js';
 import { hasConsent } from '../lib/consent.js';
 import { loadAuth } from '../lib/authstore.js';
 import { recordDelivered, getRecords, countLive, putItems } from '../lib/store.js';
+import { outputsOf, resolveOutput, storeKeyOf } from '../lib/outputs.js';
 
 let ADAPTERS = {};
 const $ = (s) => document.querySelector(s);
@@ -47,13 +48,14 @@ async function init() {
   const enabled = cfg.datasources.filter((d) => d.enabled);
   $('#ds').innerHTML = enabled.map((d) => `<option value="${d.id}">${d.id}</option>`).join('') || '<option value="">—</option>';
   populateSinks(cfg);
+  renderOutputs(adapterFor($('#ds').value, cfg).adapter);
   if (!enabled.length) $('#status').textContent = t('no_datasources');
   $('#list').onclick = () => onList();
   $('#full-history').onclick = () => onList('full');
   $('#load-store').onclick = onLoadStore;
   $('#send').onclick = onSend;
   $('#sink').onchange = () => render();
-  $('#ds').onchange = async () => { populateSinks(await getConfig()); render(); refreshStoreButton(); };
+  $('#ds').onchange = async () => { const c = await getConfig(); populateSinks(c); renderOutputs(adapterFor($('#ds').value, c).adapter); render(); refreshStoreButton(); };
   refreshStoreButton();
   $('#sel-new').onclick = () => setSelection('new');
   $('#sel-all').onclick = () => setSelection('all');
@@ -81,6 +83,26 @@ const getAuth = (adapter) => loadAuth(adapter);
 // Fill in real date + amount we learned on a past download (source-level meta) for rows whose list only
 // exposes a year (e.g. Amazon). Only overrides a missing/year-only value, so a source with real list data
 // is untouched.
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// A source with several outputs (streams×formats) shows a checkbox per output (default ALL checked) so the
+// user picks which to obtain; hidden for single-output sources.
+function renderOutputs(adapter) {
+  const box = $('#outputs'); if (!box) return;
+  const outs = adapter ? outputsOf(adapter) : [];
+  if (outs.length <= 1) { box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  box.innerHTML = `<span class="muted">${t('outputs_label')}</span>` + outs.map((o) =>
+    `<label style="display:inline-flex;align-items:center;gap:5px"><input type="checkbox" data-out="${esc(o.id)}" checked>${esc(o.name)}</label>`).join('');
+}
+function selectedOutputs(adapter) {
+  const outs = outputsOf(adapter);
+  if (outs.length <= 1) return outs;
+  const checked = [...document.querySelectorAll('#outputs input[data-out]:checked')].map((c) => c.dataset.out);
+  const picked = outs.filter((o) => checked.includes(o.id));
+  return picked.length ? picked : outs;
+}
+
 // Build inventory rows from the canonical store's normalized records — no extraction, no session needed.
 // Marked _fromStore so send delivers them WITHOUT fetching documents (a projection of what we already have).
 const docsFromStore = (records) => records.map((r) => ({
@@ -92,7 +114,9 @@ const docsFromStore = (records) => records.map((r) => ({
 // Show/hide the "Load from store" button for the selected source (only when the store has records for it).
 async function refreshStoreButton() {
   const cfg = await getConfig(); const { adapter } = adapterFor($('#ds').value, cfg);
-  const n = adapter ? await countLive(adapter.id).catch(() => 0) : 0;
+  // Items live per stream store key → sum across the source's streams.
+  const streamIds = adapter ? [...new Set(outputsOf(adapter).map((o) => o.stream))] : [];
+  let n = 0; for (const sid of streamIds) n += await countLive(storeKeyOf(adapter.id, sid)).catch(() => 0);
   // Both the offline "Load from store" and the "Full history" (re-scan vs the incremental default) only
   // make sense once the store has items for this source; otherwise List already does a full extraction.
   if ($('#load-store')) $('#load-store').hidden = !n;
@@ -103,7 +127,15 @@ async function onLoadStore() {
   const cfg = await getConfig(); const { adapter } = adapterFor($('#ds').value, cfg);
   if (!adapter) return;
   const known = await getDocMeta(adapter.id);
-  inventory = docsFromStore(await getRecords(adapter.id));
+  const outs = selectedOutputs(adapter);
+  const streamIds = [...new Set(outs.map((o) => o.stream))];
+  const fmtsFor = (sid) => outs.filter((o) => o.stream === sid).map((o) => o.format);
+  const rows = [];
+  for (const sid of streamIds) {
+    const sk = storeKeyOf(adapter.id, sid); const fmts = fmtsFor(sid);
+    for (const d of docsFromStore(await getRecords(sk))) { d._stream = sid; d._storeKey = sk; d._formats = fmts; rows.push(d); }
+  }
+  inventory = rows.sort((a, b) => ((a.date || '') < (b.date || '') ? 1 : -1));
   enrichMeta(inventory, known);
   await render();
   $('#status').textContent = t('n_from_store', [String(inventory.length)]);
@@ -144,36 +176,46 @@ async function onList(mode) {
     return;
   }
   const sinkId = $('#sink').value;
-  const delivered = sinkId ? await deliveredSet($('#ds').value, sinkId) : {}; // once, reused by incremental renders
-  const known = await getDocMeta(adapter.id); // dates learned on past downloads
-  // Base = what the store already holds → shown at once; the extraction only adds new items on top.
-  const base = docsFromStore(await getRecords(adapter.id)); enrichMeta(base, known);
-  inventory = base.slice(); await render(delivered);
-  $('#sendbar').hidden = !inventory.length; $('#selbar').hidden = !inventory.length;
-  const knownIds = mode === 'full' ? null : new Set(base.map((d) => d.internalId)); // incremental unless full
+  const delivered = sinkId ? await deliveredSet($('#ds').value, sinkId) : {};
+  const known = await getDocMeta(adapter.id);
+  // A source can expose several outputs (streams×formats). List ONCE per stream (formats share the items);
+  // the store keys per stream. Each row is tagged with its stream + the selected formats (used on send).
+  const outs = selectedOutputs(adapter);
+  const streamIds = [...new Set(outs.map((o) => o.stream))];
+  const fmtsFor = (sid) => outs.filter((o) => o.stream === sid).map((o) => o.format);
+  const key = (d) => (d._stream || '') + '|' + d.internalId;
+  const tag = (d, sid, sk) => { d._stream = sid; d._storeKey = sk; d._formats = fmtsFor(sid); return d; };
+  const acc = new Map();
+  for (const sid of streamIds) { const sk = storeKeyOf(adapter.id, sid); for (const d of docsFromStore(await getRecords(sk))) acc.set(key(tag(d, sid, sk)), d); }
+  const rebuild = () => { inventory = [...acc.values()].sort((a, b) => ((a.date || '') < (b.date || '') ? 1 : -1)); enrichMeta(inventory, known); };
+  const bars = () => { $('#sendbar').hidden = !inventory.length; $('#selbar').hidden = !inventory.length; };
+  rebuild(); await render(delivered); bars();
   $('#status').textContent = t('listing');
   aborter = new AbortController();
   busy(true);
+  let newTotal = 0;
   try {
-    const net = await ensureSiteFetch(adapter, { open: true }); // no tab → open the site (session must exist)
-    const groupId = await pickGroup(adapter, auth, net); // grouped source → pick which account/card first
-    const fresh = await listInventory(adapter, auth, net, {
-      groupId, signal: aborter.signal, knownIds,
-      onProgress: ({ year, page, docs }) => {
-        $('#status').textContent = year != null ? t('listing_year_page', [String(year), String(page), String(docs.length)]) : t('listing_page', [String(page), String(docs.length)]);
-        inventory = mergeInv(base, docs); enrichMeta(inventory, known);
-        $('#sendbar').hidden = !inventory.length; $('#selbar').hidden = !inventory.length;
-        render(delivered);
-      },
-    });
-    inventory = mergeInv(base, fresh); enrichMeta(inventory, known);
-    await render(delivered);
-    // Persist the newly-enumerated items into the store (the index) so they count as known next time.
-    try { await putItems(adapter.id, fresh.filter((d) => d.internalId != null).map((d) => ({ internalId: d.internalId, record: d.record })), { source: adapter.id, schema: adapter.schema }); } catch (e) { /* store best-effort */ }
-    $('#status').textContent = aborted() ? t('stopped_n', [String(inventory.length)]) : t('n_listed', [String(inventory.length), String(fresh.length)]);
-    log(t('n_listed', [String(inventory.length), String(fresh.length)]));
-    $('#sendbar').hidden = !inventory.length;
-    $('#selbar').hidden = !inventory.length;
+    const net = await ensureSiteFetch(adapter, { open: true });
+    for (const sid of streamIds) {
+      if (aborted()) break;
+      const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(adapter.id, sid);
+      const groupId = await pickGroup(eff, auth, net);
+      const baseIds = new Set([...acc.values()].filter((d) => d._stream === sid).map((d) => d.internalId));
+      const fresh = await listInventory(eff, auth, net, {
+        groupId, signal: aborter.signal, knownIds: mode === 'full' ? null : baseIds,
+        onProgress: ({ year, page, docs }) => {
+          $('#status').textContent = year != null ? t('listing_year_page', [String(year), String(page), String(docs.length)]) : t('listing_page', [String(page), String(docs.length)]);
+          for (const d of docs) acc.set(key(tag(d, sid, sk)), d);
+          rebuild(); bars(); render(delivered);
+        },
+      });
+      for (const d of fresh) acc.set(key(tag(d, sid, sk)), d);
+      newTotal += fresh.length;
+      try { await putItems(sk, fresh.filter((d) => d.internalId != null).map((d) => ({ internalId: d.internalId, record: d.record })), { source: adapter.id, schema: eff.schema }); } catch (e) { /* store best-effort */ }
+    }
+    rebuild(); await render(delivered); bars();
+    $('#status').textContent = aborted() ? t('stopped_n', [String(inventory.length)]) : t('n_listed', [String(inventory.length), String(newTotal)]);
+    log(t('n_listed', [String(inventory.length), String(newTotal)]));
   } catch (e) {
     // CSRF / not-logged-in / bad-request (corrupted cookies) → clear cookies if the source opts in and
     // open a clean tab so the user can log in fresh, then retry.
@@ -235,15 +277,20 @@ async function onSend() {
   busy(true);
   await badgeWorking();
   const net = await ensureSiteFetch(adapter, { open: true });
-  const kinds = artifactKinds(adapter).filter((k) => sinkAcceptsArtifact(sink, k));
-  // Fetch a single doc's artifacts (skip a document kind this doc lacks, e.g. no invoice).
-  const fetchArts = async (d) => {
+  // A doc belongs to one stream and carries the formats the user selected (`_formats`). Each format
+  // resolves to its own effective adapter (its own api.pdf/artifact) — a statement's PDF and Excel are
+  // two artifacts of the SAME item. `outFor(d, fmt)` gives the effective adapter for one (stream, format).
+  const outFor = (d, fmt) => resolveOutput(adapter, (d._stream || '') + (fmt ? '/' + fmt : ''));
+  const formatsOf = (d) => (d._formats && d._formats.length ? d._formats : ['']);
+  // Fetch a single doc's artifacts for ONE output (skip a document kind this doc lacks, e.g. no invoice).
+  const fetchArts = async (d, eff) => {
     if (d._fromStore) return []; // projection from the store: deliver the record only, no document fetch
     const arts = [];
-    const avail = artifactKinds(adapter, d);
+    const kinds = artifactKinds(eff).filter((k) => sinkAcceptsArtifact(sink, k));
+    const avail = artifactKinds(eff, d);
     for (const k of kinds) {
       if (!avail.some((a) => a.kind === k.kind)) continue;
-      try { arts.push(await fetchArtifact(adapter, auth, d, net, renderPage, k.kind)); } catch (e) { /* artifact unavailable */ }
+      try { arts.push(await fetchArtifact(eff, auth, d, net, renderPage, k.kind)); } catch (e) { /* artifact unavailable */ }
     }
     // A JSON detail carries the real date + amount that the list may encrypt (Amazon). Adopt them (only
     // over a missing/year-only value) — so file NAMES, the manifest record, and the live table are right.
@@ -259,6 +306,8 @@ async function onSend() {
     }
     return arts;
   };
+  // All artifacts of a doc across its selected formats (a statement's PDF + Excel are both fetched here).
+  const allArts = async (d) => { const out = []; for (const fmt of formatsOf(d)) out.push(...await fetchArts(d, outFor(d, fmt))); return out; };
   // File-writing sinks persist each document as its own file → save per doc (write + mark delivered as we
   // go) so a long/interrupted run keeps what finished and never re-downloads it. Batch sinks (download =
   // one ZIP, http = one POST) are a single operation → accumulate then write once.
@@ -273,11 +322,11 @@ async function onSend() {
       for (const d of eligible) {
         if (aborted()) break; // Stop pressed → keep everything saved so far, stop before the next doc
         try {
-          const arts = await fetchArts(d); // refines d.date / d.total from the detail
+          const arts = await allArts(d); // every selected format; refines d.date / d.total from the detail
           render(liveDelivered); // show the newly-learned date + amount immediately
           if (!arts.length) noPdf.push(d.internalId);
           const one = new Map(arts.length ? [[d.internalId, arts]] : []);
-          const r = await writeToSink(sink, [d], one, opts); // writes this doc's files + merges its record into the manifest
+          const r = await writeToSink(sink, [d], one, { ...opts, source: d._storeKey || adapter.id }); // writes this doc's files + merges its record into the manifest
           written += r.written;
           await markDelivered($('#ds').value, sink.id, [d.internalId]); // durable per doc
           liveDelivered[d.internalId] = 1; render(liveDelivered); // flip the row to "sent"
@@ -286,7 +335,7 @@ async function onSend() {
       }
     } else {
       const files = new Map();
-      for (const d of eligible) { const arts = await fetchArts(d); if (arts.length) files.set(d.internalId, arts); else noPdf.push(d.internalId); render(liveDelivered); } // dates/amounts fill in as they download
+      for (const d of eligible) { const arts = await allArts(d); if (arts.length) files.set(d.internalId, arts); else noPdf.push(d.internalId); render(liveDelivered); } // dates/amounts fill in as they download
       const r = await writeToSink(sink, eligible, files, opts);
       written = r.written;
       await markDelivered($('#ds').value, sink.id, eligible.map((c) => c.internalId));
@@ -295,7 +344,12 @@ async function onSend() {
     await rememberDocMeta(adapter.id, eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, returnStatus: d.returnStatus || undefined })));
     // Write-through to the canonical store: every delivered item's normalized record is recorded once, so a
     // second sink / consumer / device can be served from the store instead of re-extracting (canonical-store.md).
-    try { await recordDelivered(adapter.id, eligible, { source: adapter.id, schema: adapter.schema }); } catch (e) { /* store is best-effort */ }
+    // Items live per STREAM store key (formats share items) → group and record under each stream's key.
+    try {
+      const byStore = new Map();
+      for (const d of eligible) { const sk = d._storeKey || adapter.id; (byStore.get(sk) || byStore.set(sk, []).get(sk)).push(d); }
+      for (const [sk, docs] of byStore) await recordDelivered(sk, docs, { source: adapter.id, schema: outFor(docs[0], '').schema });
+    } catch (e) { /* store is best-effort */ }
     const m = (aborted() ? t('stopped') + ' · ' : '') + t('sent_result', [sink.id, String(written), String(eligible.length), String(noPdf.length)]) + (failed.length ? ' · ' + t('n_failed', [String(failed.length)]) : '') + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : '');
     $('#status').textContent = m; log(m);
     await appendLog({ kind: 'manual', datasource: $('#ds').value, sink: sink.id, status: aborted() ? 'stopped' : (failed.length ? 'partial' : 'ok'), count: written });

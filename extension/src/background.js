@@ -12,7 +12,8 @@ import { resolveSiteFetch } from './lib/pagefetch.js';
 import { renderPage, isChallenged } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
 import { recordDelivered } from './lib/store.js';
-import { acceptsDoc, sinkAcceptsArtifact } from './sinks/format.js';
+import { acceptsDoc, sinkAcceptsArtifact, sinkAcceptsSource } from './sinks/format.js';
+import { outputsForSink, resolveOutput, storeKeyOf } from './lib/outputs.js';
 import { getAdapters } from './adapters/index.js';
 import { hasConsent } from './lib/consent.js';
 import { badgeWorking, badgeCount, badgeError, badgeClear, setStatus } from './lib/badge.js';
@@ -218,33 +219,48 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     const auth = await authFor(adapter);
     if (!auth) { await appendLog({ ...base, status: 'nosession' }); await badgeClear(); setStatus(t('status_nosession', [name])); return { status: 'nosession' }; }
     const net = opts.net || await resolveSiteFetch(adapter); // fetch from the user's tab → inherits the session
-    const all = await listInventory(adapter, auth, net, { groupId: opts.groupId }); // opts.groupId → one account only (ext collect{group})
     const delivered = await deliveredSet(ds.id, sink.id);
-    const fresh = all.filter((d) => !delivered[d.internalId]);
-    const eligible = fresh.filter((d) => acceptsDoc(sink, d));
-    if (!eligible.length) { await appendLog({ ...base, status: 'none', new: 0 }); await badgeClear(); setStatus(t('status_none', [name])); return { status: 'done', new: 0 }; }
-    setStatus(t('status_fetching', [String(eligible.length), name]));
-    const kinds = artifactKinds(adapter).filter((k) => sinkAcceptsArtifact(sink, k));
-    const files = new Map();
-    for (const d of eligible) {
-      const arts = [];
-      const avail = artifactKinds(adapter, d); // per-doc: drops the document (e.g. invoice PDF) if this doc lacks it
-      for (const k of kinds) {
-        if (!avail.some((a) => a.kind === k.kind)) continue; // this ticket has no such artifact (no invoice) → skip cleanly
-        try { arts.push(await fetchArtifact(adapter, auth, d, net, renderPage, k.kind)); } catch (e) { /* artifact unavailable */ }
+    // A source may expose several outputs (streams×formats). Auto-mode delivers the outputs THIS sink accepts
+    // (a typed consumer that wants only `transaction` gets just that stream). List once per stream (formats
+    // share the items); fetch each doc's selected-format artifacts; record per stream store key.
+    const outs = outputsForSink(adapter, sink, sinkAcceptsSource);
+    const streamIds = [...new Set(outs.map((o) => o.stream))];
+    const fmtsFor = (sid) => outs.filter((o) => o.stream === sid).map((o) => o.format);
+    let totalNew = 0;
+    for (const sid of streamIds) {
+      const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(adapter.id, sid); const fmts = fmtsFor(sid);
+      const all = await listInventory(eff, auth, net, { groupId: opts.groupId }); // opts.groupId → one account only (ext collect{group})
+      const fresh = all.filter((d) => !delivered[d.internalId]);
+      const eligible = fresh.filter((d) => acceptsDoc(sink, d));
+      if (!eligible.length) continue;
+      setStatus(t('status_fetching', [String(eligible.length), name]));
+      const files = new Map();
+      for (const d of eligible) {
+        const arts = [];
+        for (const fmt of (fmts.length ? fmts : [''])) {
+          const oeff = resolveOutput(adapter, sid + (fmt ? '/' + fmt : ''));
+          const kinds = artifactKinds(oeff).filter((k) => sinkAcceptsArtifact(sink, k));
+          const avail = artifactKinds(oeff, d); // per-doc: drops the document (e.g. invoice PDF) if this doc lacks it
+          for (const k of kinds) {
+            if (!avail.some((a) => a.kind === k.kind)) continue; // this ticket has no such artifact (no invoice) → skip cleanly
+            try { arts.push(await fetchArtifact(oeff, auth, d, net, renderPage, k.kind)); } catch (e) { /* artifact unavailable */ }
+          }
+        }
+        if (arts.length) files.set(d.internalId, arts);
       }
-      if (arts.length) files.set(d.internalId, arts);
+      setStatus(t('status_sending', [String(eligible.length), sink.id]));
+      await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, source: sk, ext: documentExt(eff) || 'pdf', interactive: !!opts.interactive });
+      await markDelivered(ds.id, sink.id, eligible.map((d) => d.internalId));
+      try { await recordDelivered(sk, eligible, { source: adapter.id, schema: eff.schema }); } catch (e) { /* store is best-effort */ } // write-through to the canonical store
+      totalNew += eligible.length;
     }
-    setStatus(t('status_sending', [String(eligible.length), sink.id]));
-    await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, source: adapter.id, ext: documentExt(adapter) || 'pdf', interactive: !!opts.interactive });
-    await markDelivered(ds.id, sink.id, eligible.map((d) => d.internalId));
-    try { await recordDelivered(adapter.id, eligible, { source: adapter.id, schema: adapter.schema }); } catch (e) { /* store is best-effort */ } // write-through to the canonical store
+    if (!totalNew) { await appendLog({ ...base, status: 'none', new: 0 }); await badgeClear(); setStatus(t('status_none', [name])); return { status: 'done', new: 0 }; }
 
-    await appendLog({ ...base, status: 'ok', new: eligible.length });
-    if (kind === 'auto') notify(t('notify_new', [String(eligible.length), sink.id])); // external collect: the tab + activity log are the surface (no extra notification)
-    await badgeCount(eligible.length);
-    setStatus(t('status_done', [String(eligible.length), name]));
-    return { status: 'done', new: eligible.length };
+    await appendLog({ ...base, status: 'ok', new: totalNew });
+    if (kind === 'auto') notify(t('notify_new', [String(totalNew), sink.id])); // external collect: the tab + activity log are the surface (no extra notification)
+    await badgeCount(totalNew);
+    setStatus(t('status_done', [String(totalNew), name]));
+    return { status: 'done', new: totalNew };
   } catch (e) {
     const msg = (e && e.message) || String(e);
     await appendLog({ ...base, status: 'error', error: msg });

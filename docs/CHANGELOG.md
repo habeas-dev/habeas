@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.1.48 → 0.1.52 (in progress)
+
+> As above: source definitions are **data**, not bundled in the extension. These are **extension** changes —
+> new capabilities that installable community sources can use.
+
+### Canonical store (reuse extracted data across sinks & devices)
+- A configured sink can act as the **canonical store** for a source: extract once, and a second sink /
+  consumer / device is served the normalized records from the store instead of re-extracting. The store is
+  a **role**, not a fixed place — it can live in local IndexedDB, a synced folder, HTTP, or Drive, and be
+  **moved between backends** at will. Typed consumers receive a **records-only projection**. See
+  `docs/canonical-store.md`.
+- **Rehydration** — rebuild the store's state by importing the records a sink already holds, so switching
+  device / backend doesn't force a full re-extraction. Manual mode defaults to bringing **everything**.
+
+### Source outputs — streams × formats
+- A single source can now expose **several selectable outputs**: one or more **streams** (distinct data
+  sets, each with its own list/schema/fields) and, per stream, one or more **formats** (artifacts sharing
+  the stream's items — e.g. a statement as **PDF or Excel**). The user picks which outputs to obtain
+  (default: **all**, in manual mode); a typed sink **auto-selects** only the outputs it accepts. This
+  collapses what used to be several near-duplicate sources (e.g. the three WiZink sources → one) into one.
+  See the extension's `lib/outputs.js`.
+
 ## 0.1.6 → 0.1.48
 
 > Note: source definitions are **data**, not code, and are **not bundled in the extension** (only a single

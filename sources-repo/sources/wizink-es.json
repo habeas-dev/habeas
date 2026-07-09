@@ -1,0 +1,214 @@
+{
+  "id": "wizink-es",
+  "name": "WiZink España",
+  "service": "wizink",
+  "trust": "first-party",
+  "domain": "wizink.es",
+  "country": "ES",
+  "version": "2026-07-09",
+  "currency": "EUR",
+  "categories": [
+    "card",
+    "banking"
+  ],
+  "match": [
+    "https://www.wizink.es/*"
+  ],
+  "auth": {
+    "mode": "cookie",
+    "replayHeaders": [],
+    "resetCookies": true,
+    "loginUrl": "https://www.wizink.es/login"
+  },
+  "api": {
+    "host": "https://www.wizink.es",
+    "csrf": {
+      "path": "/clientes/posicion-global",
+      "match": "securityToken['\"]?\\s*(?:value=|:)\\s*['\"]([A-Za-z0-9]{12,})"
+    },
+    "groups": {
+      "from": "html",
+      "path": "/cs/Satellite",
+      "method": "POST",
+      "params": {
+        "pagename": "ECOM_SiteEntry/WZPRI/NewGlobalPosition"
+      },
+      "body": "ECOM_Page_Category=New Global Position&ECOM_Page_Sub_Category=New Global Position&securityToken={csrf}",
+      "rows": {
+        "each": "goToCardDetail\\('([^']+)',\\s*'([^']+)'[\\s\\S]{0,180}?c-card__summary[\\s\\S]{0,150}?card-product-name[^>]*>(?:<span[^>]*>[^<]*</span>)?\\s*([^<]+?)\\s*</span>[\\s\\S]{0,200}?card-security-code[^>]*>(?:<span[^>]*>[^<]*</span>)?\\s*([^<]*\\d{4})",
+        "fields": {
+          "accountNumber": {
+            "group": 1
+          },
+          "cardNumber": {
+            "group": 2
+          },
+          "name": {
+            "group": 3
+          },
+          "mask": {
+            "group": 4
+          }
+        }
+      },
+      "fields": {
+        "id": "accountNumber",
+        "accountNumber": "accountNumber",
+        "cardNumber": "cardNumber",
+        "name": "name",
+        "mask": "mask"
+      }
+    }
+  },
+  "streams": [
+    {
+      "id": "movimientos",
+      "name": "Movimientos de tarjeta",
+      "schema": "transaction@1",
+      "categories": [
+        "card"
+      ],
+      "api": {
+        "list": {
+          "from": "html",
+          "path": "/cs/Satellite",
+          "method": "POST",
+          "maxPeriods": 24,
+          "periods": {
+            "current": {
+              "params": {
+                "pagename": "ECOM_SiteEntry/WZPRI/CardDetail/NewToday"
+              },
+              "body": "accountNumber={group.accountNumber}&cardNumber={group.cardNumber}&option=today&securityToken={csrf}"
+            },
+            "dates": {
+              "params": {
+                "pagename": "ECOM_SiteEntry/WZPRI/CardDetail/Today/ListExtracts"
+              },
+              "body": "cardNumber={group.cardNumber}&accountNumber={group.accountNumber}&securityToken={csrf}",
+              "rows": {
+                "each": "callOperations\\('([0-9-]+)'\\)",
+                "fields": {
+                  "statementDate": {
+                    "group": 1
+                  }
+                }
+              }
+            },
+            "past": {
+              "params": {
+                "pagename": "ECOM_SiteEntry/WZPRI/CardDetail/ExtractOnScreenDetail"
+              },
+              "body": "securityToken={csrf}&ic2Error=false&accountNumber={group.accountNumber}&cardNumber={group.cardNumber}&cardLogo=505&cahsback=null&statementDate={period}&calculatePaymentInfo=false&fromPrincipalAccount=true&inStatementRepository=true&verMas=false&flagStatementsHistory=null"
+            }
+          },
+          "rows": {
+            "each": "movItem(?:_\\d+_[A-Z]+|R_\\d+)\"[\\s\\S]{0,1500}?class=\"movement-amount[^\"]*\"[^>]*>[^<]*<",
+            "fields": {
+              "type": {
+                "re": "movement-item ([a-zA-Z]+)"
+              },
+              "description": {
+                "tag": "h4"
+              },
+              "card": {
+                "sel": "card-number-masked"
+              },
+              "date": {
+                "sel": "movement-date"
+              },
+              "location": {
+                "sel": "movement-location"
+              },
+              "amount": {
+                "sel": "movement-amount"
+              }
+            }
+          },
+          "maxAgeDays": 90
+        }
+      },
+      "fields": {
+        "internalId": "{group.accountNumber}|{_period}|{_idx}|{date}|{amount}",
+        "date": "date",
+        "amount": "amount",
+        "description": "description",
+        "type": "type",
+        "location": "location",
+        "card": "card",
+        "account": "{group.accountNumber}"
+      }
+    },
+    {
+      "id": "extractos",
+      "name": "Extractos",
+      "schema": "invoice@1",
+      "categories": [
+        "banking"
+      ],
+      "api": {
+        "list": {
+          "from": "html",
+          "path": "/cs/Satellite",
+          "method": "POST",
+          "paging": "none",
+          "params": {
+            "pagename": "ECOM_SiteEntry/WZPRI/CardDetail/ExtractOnScreen"
+          },
+          "body": "cardNumber={group.cardNumber}&accountNumber={group.accountNumber}&securityToken={csrf}",
+          "rows": {
+            "each": "<option[^>]*data-statementDate=\"([^\"]+)\"[^>]*data-inRepository=\"true\"[^>]*data-docId=\"([^\"]+)\"[^>]*data-fileName=\"([^\"]+)\"",
+            "fields": {
+              "statementDate": {
+                "group": 1
+              },
+              "docId": {
+                "group": 2
+              },
+              "fileName": {
+                "group": 3
+              }
+            }
+          },
+          "maxAgeDays": 90
+        }
+      },
+      "fields": {
+        "internalId": "{group.accountNumber}|{statementDate}",
+        "date": "statementDate",
+        "account": "{group.accountNumber}"
+      },
+      "formats": [
+        {
+          "id": "pdf",
+          "name": "PDF",
+          "api": {
+            "pdf": {
+              "path": "/cs/Satellite/{fileName}?pagename=ECOM_SiteEntry/WZPRI/DownloadIC2File&d=Touch&documentId={docId}&fileName={fileName}&statementDate={statementDate}&accountNumber={group.accountNumber}&customerNumber=null&securityToken={csrf}",
+              "method": "GET",
+              "ext": "pdf"
+            }
+          }
+        },
+        {
+          "id": "excel",
+          "name": "Excel",
+          "api": {
+            "pdf": {
+              "path": "/cs/Satellite/movimientosExtracto.xls?pagename=ECOM_SiteEntry/WZPRI/General/DownloadXLSFileExtract&d=Touch&fileName=movimientosExtracto.xls&accountNumber={group.accountNumber}&date={statementDate}&isPrincipalAccount=true&securityToken={csrf}",
+              "method": "GET",
+              "ext": "xls"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "changelog": [
+    {
+      "version": "2026-07-09",
+      "changes": "Fuente unificada: reemplaza las tres fuentes WiZink (movimientos, extractos-PDF, extractos-Excel) por un único source con salidas seleccionables (stream × formato). El stream «Movimientos» captura las transacciones de tarjeta; el stream «Extractos» ofrece cada extracto en PDF o Excel compartiendo el mismo listado. Requiere la extensión 0.1.52+ (soporte de salidas)."
+    }
+  ],
+  "minVersion": "0.1.52"
+}
