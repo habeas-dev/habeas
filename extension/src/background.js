@@ -11,6 +11,7 @@ import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } 
 import { resolveSiteFetch } from './lib/pagefetch.js';
 import { renderPage, isChallenged } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
+import { recordDelivered } from './lib/store.js';
 import { acceptsDoc, sinkAcceptsArtifact } from './sinks/format.js';
 import { getAdapters } from './adapters/index.js';
 import { hasConsent } from './lib/consent.js';
@@ -237,6 +238,8 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     setStatus(t('status_sending', [String(eligible.length), sink.id]));
     await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, source: adapter.id, ext: documentExt(adapter) || 'pdf', interactive: !!opts.interactive });
     await markDelivered(ds.id, sink.id, eligible.map((d) => d.internalId));
+    try { await recordDelivered(adapter.id, eligible, { source: adapter.id, schema: adapter.schema }); } catch (e) { /* store is best-effort */ } // write-through to the canonical store
+
     await appendLog({ ...base, status: 'ok', new: eligible.length });
     if (kind === 'auto') notify(t('notify_new', [String(eligible.length), sink.id])); // external collect: the tab + activity log are the surface (no extra notification)
     await badgeCount(eligible.length);
