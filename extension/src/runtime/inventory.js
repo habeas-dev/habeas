@@ -731,6 +731,7 @@ export function extractDetailFields(html, cfg) {
   if (cfg.items) rec.items = parseHtmlItems(html || '', cfg.items);
   if (rec.date != null && rec.date !== '') rec.date = normalizeDate(rec.date);
   for (const k of ['total', 'amount', 'refundTotal']) if (typeof rec[k] === 'string' && rec[k] !== '') rec[k] = normalizeAmount(rec[k]);
+  if (Array.isArray(rec.items)) for (const it of rec.items) for (const k of ['price', 'amount', 'total']) if (typeof it[k] === 'string' && it[k] !== '') it[k] = normalizeAmount(it[k]);
   return rec;
 }
 

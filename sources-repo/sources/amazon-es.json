@@ -74,13 +74,16 @@
         }
       },
       "items": {
-        "each": "data-component=\"itemTitle\"[\\s\\S]*?href=\"/dp/([A-Z0-9]{10})[^\"]*\"[^>]*>([^<]+)</a>",
+        "each": "data-component=\"itemTitle\"[\\s\\S]*?href=\"/dp/([A-Z0-9]{10})[^\"]*\"[^>]*>([^<]+)</a>[\\s\\S]{0,5000}?data-component=\"unitPrice\">[\\s\\S]{0,400}?a-offscreen\">([^<]+)<",
         "fields": {
           "asin": {
             "group": 1
           },
           "title": {
             "group": 2
+          },
+          "price": {
+            "group": 3
           }
         }
       }

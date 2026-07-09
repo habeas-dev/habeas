@@ -36,8 +36,10 @@ const DETAIL_HTML = `<!DOCTYPE html><html><body>
   <div data-component="purchasedItems">
     <div data-component="itemTitle"><div class="a-row"><a class="a-link-normal"
       href="/dp/B01ABCDEFG?ref_=ppx_hzod_title">Widget de Prueba Uno</a></div></div>
+    <div data-component="unitPrice"><span class="a-price"><span class="a-offscreen">9,99&nbsp;€</span><span aria-hidden="true">9,99&nbsp;€</span></span></div>
     <div data-component="itemTitle"><div class="a-row"><a class="a-link-normal"
       href="/dp/B09ZZ12345?ref_=ppx_hzod_title">Cosa de Prueba Dos</a></div></div>
+    <div data-component="unitPrice"><span class="a-price"><span class="a-offscreen">15,00&nbsp;€</span><span aria-hidden="true">15,00&nbsp;€</span></span></div>
   </div>
   <div data-component="briefOrderInfoInvoice"><span>Importe total: 0,00 €</span></div>
   <div data-component="chargeSummary">
@@ -100,8 +102,8 @@ test('Amazon detail: parses the order-details HTML into a structured record (ISO
   assert.equal(rec.currency, 'EUR');         // detail.const
   assert.ok(!rec.returnStatus);              // a normal (non-returned) order → empty
   assert.deepEqual(rec.items, [
-    { asin: 'B01ABCDEFG', title: 'Widget de Prueba Uno' },
-    { asin: 'B09ZZ12345', title: 'Cosa de Prueba Dos' },
+    { asin: 'B01ABCDEFG', title: 'Widget de Prueba Uno', price: 9.99 },
+    { asin: 'B09ZZ12345', title: 'Cosa de Prueba Dos', price: 15 },
   ]);
 });
 
