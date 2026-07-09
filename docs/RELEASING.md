@@ -64,3 +64,22 @@ The Drive sink uses `chrome.identity.launchWebAuthFlow`, whose redirect is
 URI on the Drive OAuth client (`246972215385-…apps.googleusercontent.com` in `sinks/drive.js`) or Drive
 sign-in fails in the store build. Pin the manifest `key` if you want a locally-loaded unpacked build to
 share the same id (and therefore the same redirect).
+
+## Firefox Add-ons (AMO) automation — one-time setup
+The AMO submit step self-skips until these repo **Actions secrets** exist:
+
+| Secret | Value |
+| --- | --- |
+| `AMO_JWT_ISSUER` | AMO API key **issuer** (below) |
+| `AMO_JWT_SECRET` | AMO API key **secret** (below) |
+
+1. Sign in at [addons.mozilla.org](https://addons.mozilla.org/developers/) → **Manage API Keys**
+   (https://addons.mozilla.org/developers/addon/api/key/).
+2. Generate a credential → copy the **JWT issuer** (`user:...`) and the **JWT secret** (shown once).
+3. Add them as the two secrets above.
+
+On the next `v*` tag (or manual dispatch), CI runs `web-ext sign --channel=listed`, which submits the new
+version to AMO **for review** (it goes live after Mozilla approves). The add-on's manifest `version` must
+increase each submission (already the case). Habeas ships plain, unminified source, so AMO's
+source-reproducibility requirement is trivially met; if AMO still asks for a source upload, the repo tarball
+is the source.
