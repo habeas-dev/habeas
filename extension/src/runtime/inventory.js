@@ -209,6 +209,9 @@ async function pageListYears(adapter, auth, net, group) {
       if (startParam && idx > 0) params[startParam] = idx; // first page carries no startIndex (matches the site)
       const data = await fetchList(adapter, auth, params, net, group);
       const items = get(data, itemsPathOf(list)) || [];
+      // Stamp the page's year onto each item so the listing carries at least year precision (the full date
+      // is encrypted in the list; it's recovered from the per-order detail). Map it via fields.date:"_year".
+      for (const it of items) if (it && typeof it === 'object' && it._year == null) it._year = String(yr);
       const added = collect(adapter, data, seen, all, group);
       pages++;
       if (!startParam || !items.length || !added) break; // no sub-paging, or empty / nothing new → next year
@@ -876,6 +879,7 @@ const pad2 = (n) => String(n).padStart(2, '0');
 export function normalizeDate(v) {
   if (v == null || v === '') return v;
   const s = String(v).trim();
+  if (/^\d{4}$/.test(s)) return s; // a bare year is year-precision (e.g. Amazon's per-year list) — keep it, don't fake 01-01
   let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); if (m) return `${m[1]}-${m[2]}-${m[3]}`;
   if (/^\d{10,13}$/.test(s)) { const n = Number(s); const d = new Date(n < 1e12 ? n * 1000 : n); if (!isNaN(+d)) return d.toISOString().slice(0, 10); }
   const low = s.toLowerCase();

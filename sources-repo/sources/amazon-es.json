@@ -82,7 +82,7 @@
   },
   "fields": {
     "internalId": "orderId",
-    "date": "date"
+    "date": "_year"
   },
   "schema": "receipt@1"
 }

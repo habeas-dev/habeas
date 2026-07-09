@@ -148,24 +148,45 @@ async function onSend() {
   await badgeWorking();
   const net = await ensureSiteFetch(adapter, { open: true });
   const kinds = artifactKinds(adapter).filter((k) => sinkAcceptsArtifact(sink, k));
-  const files = new Map();
-  const noPdf = [];
-  for (const d of eligible) {
+  // Fetch a single doc's artifacts (skip a document kind this doc lacks, e.g. no invoice).
+  const fetchArts = async (d) => {
     const arts = [];
-    const avail = artifactKinds(adapter, d); // per-doc: skip a document artifact this doc lacks (e.g. no invoice)
+    const avail = artifactKinds(adapter, d);
     for (const k of kinds) {
       if (!avail.some((a) => a.kind === k.kind)) continue;
       try { arts.push(await fetchArtifact(adapter, auth, d, net, renderPage, k.kind)); } catch (e) { /* artifact unavailable */ }
     }
-    if (arts.length) files.set(d.internalId, arts); else noPdf.push(d.internalId);
-  }
-  log(t('with_without_pdf', [String(files.size), String(noPdf.length)]) + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : ''));
+    return arts;
+  };
+  // File-writing sinks persist each document as its own file → save per doc (write + mark delivered as we
+  // go) so a long/interrupted run keeps what finished and never re-downloads it. Batch sinks (download =
+  // one ZIP, http = one POST) are a single operation → accumulate then write once.
+  const streaming = sink.type === 'local-folder' || sink.type === 'drive';
+  let written = 0; const noPdf = []; const failed = [];
   try {
-    const r = await writeToSink(sink, eligible, files, opts);
-    const m = t('sent_result', [sink.id, String(r.written), String(eligible.length), String(noPdf.length)]);
+    if (streaming) {
+      let i = 0;
+      for (const d of eligible) {
+        try {
+          const arts = await fetchArts(d);
+          if (!arts.length) noPdf.push(d.internalId);
+          const one = new Map(arts.length ? [[d.internalId, arts]] : []);
+          const r = await writeToSink(sink, [d], one, opts); // writes this doc's files + merges its record into the manifest
+          written += r.written;
+          await markDelivered($('#ds').value, sink.id, [d.internalId]); // durable per doc
+        } catch (e) { failed.push(d.internalId); log(t('doc_failed', [String(d.internalId), (e && e.message) || String(e)])); }
+        $('#status').textContent = t('sending_progress', [String(++i), String(eligible.length)]);
+      }
+    } else {
+      const files = new Map();
+      for (const d of eligible) { const arts = await fetchArts(d); if (arts.length) files.set(d.internalId, arts); else noPdf.push(d.internalId); }
+      const r = await writeToSink(sink, eligible, files, opts);
+      written = r.written;
+      await markDelivered($('#ds').value, sink.id, eligible.map((c) => c.internalId));
+    }
+    const m = t('sent_result', [sink.id, String(written), String(eligible.length), String(noPdf.length)]) + (failed.length ? ' · ' + t('n_failed', [String(failed.length)]) : '') + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : '');
     $('#status').textContent = m; log(m);
-    await markDelivered($('#ds').value, sink.id, eligible.map((c) => c.internalId));
-    await appendLog({ kind: 'manual', datasource: $('#ds').value, sink: sink.id, status: 'ok', count: eligible.length });
+    await appendLog({ kind: 'manual', datasource: $('#ds').value, sink: sink.id, status: failed.length ? 'partial' : 'ok', count: eligible.length - failed.length });
     await render();
     await renderActivity();
   } catch (e) {
