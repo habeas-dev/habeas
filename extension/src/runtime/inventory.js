@@ -200,17 +200,22 @@ async function pageListYears(adapter, auth, net, group, opts) {
   const y = list.years || {};
   const param = y.param || 'timeFilter';
   const format = y.format || 'year-{y}';
-  const back = y.back != null ? y.back : 6;
+  const back = y.back != null ? y.back : 25;               // safety cap on how far back to look
+  const stopEmpty = y.stopAfterEmpty != null ? y.stopAfterEmpty : 2; // stop after N consecutive empty years
   const startParam = y.startParam;          // optional within-year offset param (e.g. startIndex)
   const startStep = y.startStep || 10;      // its increment (page size)
   const maxPages = list.maxPages || 100;
   const baseParams = { ...(list.params || {}) };
   const now = new Date().getFullYear();
   const seen = new Set(), all = [];
-  let pages = 0;
-  for (let yr = now; yr >= now - back && pages < maxPages; yr--) {
+  let pages = 0, emptyRun = 0;
+  // Walk years back until N consecutive years are empty (adapts to each account's real history — a fixed
+  // `back` would truncate older orders) or the safety cap / page cap / Stop is hit. stopAfterEmpty>1
+  // tolerates a year with no purchases in the middle.
+  for (let yr = now; yr >= now - back && pages < maxPages && emptyRun < stopEmpty; yr--) {
     if (stop()) break;
     const yv = format.split('{y}').join(String(yr));
+    let yearItems = 0;
     for (let idx = 0; pages < maxPages; idx += startStep) {
       if (stop()) break;
       const params = { ...baseParams, [param]: yv };
@@ -222,8 +227,10 @@ async function pageListYears(adapter, auth, net, group, opts) {
       for (const it of items) if (it && typeof it === 'object' && it._year == null) it._year = String(yr);
       const added = collect(adapter, data, seen, all, group);
       pages++;
+      yearItems += items.length;
       if (!startParam || !items.length || !added) break; // no sub-paging, or empty / nothing new → next year
     }
+    emptyRun = yearItems === 0 ? emptyRun + 1 : 0;
   }
   return all;
 }

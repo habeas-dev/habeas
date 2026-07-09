@@ -27,11 +27,11 @@
       "years": {
         "param": "timeFilter",
         "format": "year-{y}",
-        "back": 6,
         "startParam": "startIndex",
-        "startStep": 10
+        "startStep": 10,
+        "stopAfterEmpty": 2
       },
-      "maxPages": 120,
+      "maxPages": 200,
       "rows": {
         "each": "amzn1\\.yourorders\\.order-card\\.([0-9]{3}-[0-9]{7}-[0-9]{7})",
         "fields": {
