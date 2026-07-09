@@ -74,9 +74,16 @@ function populateSinks(cfg) {
 // Resolve the captured session for this source — merged across sibling hosts sharing its registrable
 // domain (a single account JWT often rides several API hosts). Cookie sources get an empty store.
 const getAuth = (adapter) => loadAuth(adapter);
-// Fill in real dates we learned on a past download (source-level meta) for rows whose list only exposes a
-// year (e.g. Amazon). Only overrides a non-full date, so a source with a real list date is untouched.
-const enrichDates = (docs, known) => { for (const d of docs) { const k = known[d.internalId]; if (k && k.date && !/^\d{4}-\d{2}-\d{2}/.test(d.date || '')) d.date = k.date; } };
+// Fill in real date + amount we learned on a past download (source-level meta) for rows whose list only
+// exposes a year (e.g. Amazon). Only overrides a missing/year-only value, so a source with real list data
+// is untouched.
+const enrichMeta = (docs, known) => {
+  for (const d of docs) {
+    const k = known[d.internalId]; if (!k) continue;
+    if (k.date && !/^\d{4}-\d{2}-\d{2}/.test(d.date || '')) d.date = k.date;
+    if (typeof k.total === 'number' && d.total == null) d.total = k.total;
+  }
+};
 
 async function onList() {
   clearLog();
@@ -107,14 +114,14 @@ async function onList() {
       groupId, signal: aborter.signal,
       onProgress: ({ year, page, docs }) => {
         $('#status').textContent = year != null ? t('listing_year_page', [String(year), String(page), String(docs.length)]) : t('listing_page', [String(page), String(docs.length)]);
-        enrichDates(docs, known);
+        enrichMeta(docs, known);
         inventory = docs;
         $('#sendbar').hidden = inventory.length === 0;
         $('#selbar').hidden = inventory.length === 0;
         render(delivered);
       },
     });
-    enrichDates(inventory, known);
+    enrichMeta(inventory, known);
     await render(delivered);
     $('#status').textContent = t(aborted() ? 'stopped_n' : 'n_documents', [String(inventory.length)]);
     log(t('n_documents', [String(inventory.length)]));
@@ -190,13 +197,16 @@ async function onSend() {
       if (!avail.some((a) => a.kind === k.kind)) continue;
       try { arts.push(await fetchArtifact(adapter, auth, d, net, renderPage, k.kind)); } catch (e) { /* artifact unavailable */ }
     }
-    // If a JSON detail carries a fuller date than the (possibly year-only) list date, adopt it — so file
-    // NAMES and the manifest record get the real date (Amazon's list encrypts the day/month; the detail has it).
-    if (!/^\d{4}-\d{2}-\d{2}/.test(d.date || '')) {
-      for (const a of arts) {
-        if (a.ext !== 'json') continue;
-        try { const r = JSON.parse(await a.blob.text()); if (/^\d{4}-\d{2}-\d{2}/.test(r.date || '')) { d.date = r.date; if (d.record) d.record.date = r.date; break; } } catch (e) { /* not JSON / no date */ }
-      }
+    // A JSON detail carries the real date + amount that the list may encrypt (Amazon). Adopt them (only
+    // over a missing/year-only value) — so file NAMES, the manifest record, and the live table are right.
+    for (const a of arts) {
+      if (a.ext !== 'json') continue;
+      try {
+        const r = JSON.parse(await a.blob.text());
+        if (/^\d{4}-\d{2}-\d{2}/.test(r.date || '') && !/^\d{4}-\d{2}-\d{2}/.test(d.date || '')) { d.date = r.date; if (d.record) d.record.date = r.date; }
+        if (typeof r.total === 'number' && d.total == null) { d.total = r.total; if (d.record) d.record.total = r.total; }
+      } catch (e) { /* not JSON */ }
+      break; // the first JSON detail
     }
     return arts;
   };
@@ -205,30 +215,35 @@ async function onSend() {
   // one ZIP, http = one POST) are a single operation → accumulate then write once.
   const streaming = sink.type === 'local-folder' || sink.type === 'drive';
   let written = 0; const noPdf = []; const failed = [];
+  // Live table: fetching a doc's detail reveals its real date + amount (encrypted in Amazon's list) — reflect
+  // that in the row AS it downloads, and flip the row to "sent". liveDelivered starts from this sink's ledger.
+  const liveDelivered = await deliveredSet($('#ds').value, sink.id);
   try {
     if (streaming) {
       let i = 0;
       for (const d of eligible) {
         if (aborted()) break; // Stop pressed → keep everything saved so far, stop before the next doc
         try {
-          const arts = await fetchArts(d);
+          const arts = await fetchArts(d); // refines d.date / d.total from the detail
+          render(liveDelivered); // show the newly-learned date + amount immediately
           if (!arts.length) noPdf.push(d.internalId);
           const one = new Map(arts.length ? [[d.internalId, arts]] : []);
           const r = await writeToSink(sink, [d], one, opts); // writes this doc's files + merges its record into the manifest
           written += r.written;
           await markDelivered($('#ds').value, sink.id, [d.internalId]); // durable per doc
+          liveDelivered[d.internalId] = 1; render(liveDelivered); // flip the row to "sent"
         } catch (e) { failed.push(d.internalId); log(t('doc_failed', [String(d.internalId), (e && e.message) || String(e)])); }
         $('#status').textContent = t('sending_progress', [String(++i), String(eligible.length)]);
       }
     } else {
       const files = new Map();
-      for (const d of eligible) { const arts = await fetchArts(d); if (arts.length) files.set(d.internalId, arts); else noPdf.push(d.internalId); }
+      for (const d of eligible) { const arts = await fetchArts(d); if (arts.length) files.set(d.internalId, arts); else noPdf.push(d.internalId); render(liveDelivered); } // dates/amounts fill in as they download
       const r = await writeToSink(sink, eligible, files, opts);
       written = r.written;
       await markDelivered($('#ds').value, sink.id, eligible.map((c) => c.internalId));
     }
-    // Persist the real dates we learned from the details (source-level) so future listings show them.
-    await rememberDocMeta(adapter.id, eligible.filter((d) => /^\d{4}-\d{2}-\d{2}/.test(d.date || '')).map((d) => ({ internalId: d.internalId, date: d.date })));
+    // Persist the real dates + amounts we learned from the details (source-level) so future listings show them.
+    await rememberDocMeta(adapter.id, eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined })));
     const m = (aborted() ? t('stopped') + ' · ' : '') + t('sent_result', [sink.id, String(written), String(eligible.length), String(noPdf.length)]) + (failed.length ? ' · ' + t('n_failed', [String(failed.length)]) : '') + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : '');
     $('#status').textContent = m; log(m);
     await appendLog({ kind: 'manual', datasource: $('#ds').value, sink: sink.id, status: aborted() ? 'stopped' : (failed.length ? 'partial' : 'ok'), count: written });

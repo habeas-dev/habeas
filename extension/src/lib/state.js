@@ -32,7 +32,7 @@ export async function forgetDelivered(datasourceId, sinkId) {
 }
 
 // Learned per-document metadata (SOURCE level, not per sink): facts we discovered by fetching a
-// document's detail — currently its real date. Lets a later listing show the true date for items whose
+// document's detail — its real date + amount. Lets a later listing show the true date for items whose
 // list only exposes a year (Amazon). A minimal precursor to the incremental-sync index (docs/incremental-sync.md).
 const META_KEY = 'habeas:docmeta';
 export async function getDocMeta(sourceId) {
@@ -44,7 +44,7 @@ export async function rememberDocMeta(sourceId, entries) { // entries: [{ intern
   const o = await chrome.storage.local.get(META_KEY);
   const all = o[META_KEY] || {};
   const m = all[sourceId] || {};
-  for (const e of entries) if (e && e.internalId != null) m[e.internalId] = { ...(m[e.internalId] || {}), ...(e.date ? { date: e.date } : {}) };
+  for (const e of entries) if (e && e.internalId != null) m[e.internalId] = { ...(m[e.internalId] || {}), ...(e.date ? { date: e.date } : {}), ...(typeof e.total === 'number' ? { total: e.total } : {}) };
   all[sourceId] = m;
   await chrome.storage.local.set({ [META_KEY]: all });
 }
