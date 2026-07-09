@@ -17,7 +17,10 @@ export async function writeToSink(sink, docs, files, opts = {}) {
 
 // One manifest PER SOURCE (not per service) so different sources under the same service — e.g. WiZink
 // card movements (transactions) vs monthly statements (invoices) — don't merge into one mixed file.
-const manifestName = (opts) => (opts && opts.source ? `${opts.source}.json` : 'manifest.json');
+// The source id becomes a FILENAME, so strip characters the File System Access API rejects on every OS
+// (a multi-output source's store key like "wizink-es:movimientos" carries a ":").
+const safeName = (s) => String(s).replace(/[\\/:*?"<>|]+/g, '-');
+const manifestName = (opts) => (opts && opts.source ? `${safeName(opts.source)}.json` : 'manifest.json');
 
 const IMPL = {
   // Available PDFs + a <service>/manifest.json snapshot, bundled into one ZIP (the ZIP

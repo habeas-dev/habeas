@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.52 → 0.1.53 (in progress)
+
+### Fixes
+- **Multi-output delivery** — a source's per-stream store key (e.g. `wizink-es:movimientos`) is used as the
+  per-source manifest filename; the `:` is rejected by the File System Access API (and unsafe on Drive), so
+  every no-document row (e.g. card movements, delivered as manifest records only) failed to save. The
+  manifest filename is now sanitized. Statements (PDF/Excel) were unaffected.
+
 ## 0.1.48 → 0.1.52
 
 > As above: source definitions are **data**, not bundled in the extension. These are **extension** changes —

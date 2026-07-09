@@ -9,6 +9,8 @@ const SCOPE = 'https://www.googleapis.com/auth/drive.file';
 // may override with its own Client ID. Client IDs are public, not secrets.
 const DEFAULT_CLIENT_ID = '246972215385-rd4fbb1s7dmogjuqmmfhajcfe17hbubj.apps.googleusercontent.com';
 const cid = (clientId) => clientId || DEFAULT_CLIENT_ID;
+// Per-source manifest filename; strip characters Drive/paths reject (a multi-output store key carries a ":").
+const mfName = (opts) => (opts && opts.source ? `${String(opts.source).replace(/[\\/:*?"<>|]+/g, '-')}.json` : 'manifest.json');
 
 export function redirectUri() { return chrome.identity.getRedirectURL(); }
 
@@ -52,7 +54,7 @@ export async function driveRead(sink, opts = {}) {
   const service = opts.service || 'documents';
   const rootId = await findFile(token, root, 'root', true); if (!rootId) return [];
   const svcId = await findFile(token, service, rootId, true); if (!svcId) return [];
-  const mf = opts.source ? `${opts.source}.json` : 'manifest.json';
+  const mf = mfName(opts);
   const recs = await readJson(token, mf, svcId);
   return Array.isArray(recs) ? recs : [];
 }
@@ -74,7 +76,7 @@ export async function driveWrite(sink, docs, files, opts) {
   // Cumulative per-SOURCE manifest: Habeas/<service>/<source>.json (read → merge → write) so sources
   // sharing a service (e.g. WiZink movements vs statements) don't merge into one mixed file.
   const svcId = await ensureFolderPath(token, [root, service], cache);
-  const mf = opts.source ? `${opts.source}.json` : 'manifest.json';
+  const mf = mfName(opts);
   const existing = await readJson(token, mf, svcId);
   const merged = mergeRecords(existing, toRecords(docs, files));
   await putJson(token, mf, svcId, JSON.stringify(merged, null, 2));
