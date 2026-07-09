@@ -204,8 +204,8 @@ async function onSend() {
       if (a.ext !== 'json') continue;
       try {
         const r = JSON.parse(await a.blob.text());
-        if (/^\d{4}-\d{2}-\d{2}/.test(r.date || '') && !/^\d{4}-\d{2}-\d{2}/.test(d.date || '')) { d.date = r.date; if (d.record) d.record.date = r.date; }
-        if (typeof r.total === 'number' && d.total == null) { d.total = r.total; if (d.record) d.record.total = r.total; }
+        if (/^\d{4}-\d{2}-\d{2}/.test(r.date || '')) { d.date = r.date; if (d.record) d.record.date = r.date; } // detail is authoritative
+        if (typeof r.total === 'number') { d.total = r.total; if (d.record) d.record.total = r.total; } // detail wins — the list may hide/encrypt the total, and a stale learned value must not stick (0€ charged ≠ order total)
         if (r.returnStatus) { d.returnStatus = r.returnStatus; if (d.record) d.record.returnStatus = r.returnStatus; } // an item was returned/refunded
       } catch (e) { /* not JSON */ }
       break; // the first JSON detail
