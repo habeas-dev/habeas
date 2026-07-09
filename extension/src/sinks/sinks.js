@@ -5,7 +5,7 @@
 import { getSecret } from '../lib/secrets.js';
 import { makeZip } from '../lib/zip.js';
 import { pathFor, buildManifest, toRecords, mergeRecords, jsonBlob, today } from './format.js';
-import { driveWrite } from './drive.js';
+import { driveWrite, driveRead } from './drive.js';
 
 export function listSinkTypes() { return ['download', 'local-folder', 'drive', 'http']; }
 
@@ -84,6 +84,26 @@ async function ensureDir(root, parts) {
   let dir = root;
   for (const p of parts.filter(Boolean)) dir = await dir.getDirectoryHandle(p, { create: true });
   return dir;
+}
+async function openDir(root, parts) { // navigate WITHOUT creating (read path)
+  let dir = root;
+  for (const p of parts.filter(Boolean)) { try { dir = await dir.getDirectoryHandle(p); } catch (e) { return null; } }
+  return dir;
+}
+
+// Read back the normalized records a generic, readable sink already holds for a source (its per-source
+// manifest) — so the canonical store can be REHYDRATED from what was delivered, without re-extracting.
+// Only store-capable sinks support this; a typed consumer / ephemeral download returns [].
+export async function readSinkRecords(sink, opts = {}) {
+  const service = opts.service || 'documents';
+  if (sink.type === 'local-folder') {
+    const root = opts.dirHandle; if (!root) return [];
+    const svc = await openDir(root, [service]); if (!svc) return [];
+    const recs = await readJsonFile(svc, manifestName(opts));
+    return Array.isArray(recs) ? recs : [];
+  }
+  if (sink.type === 'drive') { const recs = await driveRead(sink, opts).catch(() => []); return Array.isArray(recs) ? recs : []; }
+  return [];
 }
 async function writeFile(dir, name, blob) {
   const fh = await dir.getFileHandle(name, { create: true });

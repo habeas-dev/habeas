@@ -44,6 +44,19 @@ async function getToken(clientId, interactive) {
   catch (e) { if (!interactive) throw e; return (await connectDrive(clientId, true)).token; }
 }
 
+// Read back a source's per-source manifest (records) already in Drive — to rehydrate the canonical store
+// without re-extracting. Returns [] if the folder/file isn't there yet.
+export async function driveRead(sink, opts = {}) {
+  const token = await getToken(sink.clientId, opts.interactive !== false);
+  const root = sink.rootFolderName || 'Habeas';
+  const service = opts.service || 'documents';
+  const rootId = await findFile(token, root, 'root', true); if (!rootId) return [];
+  const svcId = await findFile(token, service, rootId, true); if (!svcId) return [];
+  const mf = opts.source ? `${opts.source}.json` : 'manifest.json';
+  const recs = await readJson(token, mf, svcId);
+  return Array.isArray(recs) ? recs : [];
+}
+
 export async function driveWrite(sink, docs, files, opts) {
   const token = await getToken(sink.clientId, opts.interactive !== false);
   const root = sink.rootFolderName || 'Habeas';

@@ -2,7 +2,7 @@ import { chrome } from '../lib/ext.js';
 import { getConfig, upsert, remove } from '../lib/config.js';
 import { setSecret } from '../lib/secrets.js';
 import { connectDrive, redirectUri } from '../sinks/drive.js';
-import { putHandle } from '../lib/fs.js';
+import { putHandle, getHandle, verifyPermission } from '../lib/fs.js';
 import { sinkAcceptsSource } from '../sinks/format.js';
 import { watchThemeIcon } from '../lib/theme-icon.js';
 import { applyI18n, t } from '../lib/i18n.js';
@@ -13,7 +13,8 @@ import { exportSource, buildShareUrl, importFromFile } from '../registry/share.j
 import { saveSource } from '../adapters/index.js';
 import { editJson } from './jsoneditor.js';
 import { getGrants, revokeGrant } from '../lib/grants.js';
-import { getStoreConfig, moveStoreTo } from '../lib/store.js';
+import { getStoreConfig, moveStoreTo, putItems } from '../lib/store.js';
+import { readSinkRecords } from '../sinks/sinks.js';
 
 let CATALOG = {};
 const $ = (s) => document.querySelector(s);
@@ -252,7 +253,33 @@ async function moveStore() {
   try { const n = await moveStoreTo(cfg); $('#store-status').textContent = t('store_moved', [String(n)]); }
   catch (e) { $('#store-status').textContent = t('store_move_err', [(e && e.message) || String(e)]); }
 }
-async function renderStore() { $('#store-backend').value = (await getStoreConfig()).backend || 'local'; renderStoreFields(); }
+async function renderStore() {
+  $('#store-backend').value = (await getStoreConfig()).backend || 'local'; renderStoreFields();
+  // Populate the "import from" list with store-capable, readable sinks (folder/Drive hold delivered records).
+  const readable = (await getConfig()).sinks.filter((s) => s.type === 'local-folder' || s.type === 'drive');
+  const sel = $('#store-import-sink');
+  if (sel) { sel.innerHTML = readable.map((s) => `<option value="${esc(s.id)}">${esc(s.id)} (${esc(s.type)})</option>`).join('') || `<option value="">—</option>`; $('#store-import').disabled = !readable.length; }
+}
+
+// Rehydrate the canonical store from a sink's already-delivered records — so existing data lands in the
+// store WITHOUT re-extracting from the service (the "read a sink back" recovery path).
+async function importFromSink() {
+  const cfg = await getConfig();
+  const sink = cfg.sinks.find((s) => s.id === $('#store-import-sink').value); if (!sink) return;
+  const opts0 = {};
+  if (sink.type === 'local-folder') { const h = await getHandle('dir:' + sink.id); if (!h || !(await verifyPermission(h))) { $('#store-import-status').textContent = t('folder_denied'); return; } opts0.dirHandle = h; }
+  $('#store-import-status').textContent = t('store_importing');
+  let total = 0;
+  try {
+    for (const ds of cfg.datasources) {
+      const adapter = CATALOG[ds.adapter]; if (!adapter) continue;
+      let recs; try { recs = await readSinkRecords(sink, { ...opts0, service: adapter.service || ds.adapter, source: adapter.id }); } catch (e) { continue; }
+      const items = (recs || []).filter((r) => r && r.internalId != null).map((r) => ({ internalId: r.internalId, record: r }));
+      if (items.length) { await putItems(adapter.id, items, { source: adapter.id, schema: adapter.schema }); total += items.length; }
+    }
+    $('#store-import-status').textContent = t('store_imported', [String(total)]);
+  } catch (e) { $('#store-import-status').textContent = t('store_move_err', [(e && e.message) || String(e)]); }
+}
 
 applyI18n();
 if (!window.showDirectoryPicker) {
@@ -269,6 +296,7 @@ $('#ds-search').oninput = filterSources;
 $('#auto-search').oninput = filterRoutes;
 $('#store-backend').onchange = renderStoreFields;
 $('#store-move').onclick = moveStore;
+$('#store-import').onclick = importFromSink;
 renderStore();
 $('#paste').onclick = async () => {
   const adapter = await editJson(PASTE_TEMPLATE);
