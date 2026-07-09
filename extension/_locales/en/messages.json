@@ -10,6 +10,8 @@
 
   "documents": { "message": "Documents" },
   "list_docs": { "message": "List documents" },
+  "load_store": { "message": "Load from store" },
+  "n_from_store": { "message": "$N$ from store (no extraction)", "placeholders": { "n": { "content": "$1" } } },
   "send_to": { "message": "Send to" },
   "send_selected": { "message": "Send selected" },
   "th_date": { "message": "Date" },

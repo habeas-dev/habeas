@@ -14,7 +14,7 @@ import { applyI18n, t } from '../lib/i18n.js';
 import { getAdapters } from '../adapters/index.js';
 import { hasConsent } from '../lib/consent.js';
 import { loadAuth } from '../lib/authstore.js';
-import { recordDelivered } from '../lib/store.js';
+import { recordDelivered, getRecords, countLive } from '../lib/store.js';
 
 let ADAPTERS = {};
 const $ = (s) => document.querySelector(s);
@@ -49,9 +49,11 @@ async function init() {
   populateSinks(cfg);
   if (!enabled.length) $('#status').textContent = t('no_datasources');
   $('#list').onclick = onList;
+  $('#load-store').onclick = onLoadStore;
   $('#send').onclick = onSend;
   $('#sink').onchange = () => render();
-  $('#ds').onchange = async () => { populateSinks(await getConfig()); render(); };
+  $('#ds').onchange = async () => { populateSinks(await getConfig()); render(); refreshStoreButton(); };
+  refreshStoreButton();
   $('#sel-new').onclick = () => setSelection('new');
   $('#sel-all').onclick = () => setSelection('all');
   $('#sel-none').onclick = () => setSelection('none');
@@ -78,6 +80,33 @@ const getAuth = (adapter) => loadAuth(adapter);
 // Fill in real date + amount we learned on a past download (source-level meta) for rows whose list only
 // exposes a year (e.g. Amazon). Only overrides a missing/year-only value, so a source with real list data
 // is untouched.
+// Build inventory rows from the canonical store's normalized records — no extraction, no session needed.
+// Marked _fromStore so send delivers them WITHOUT fetching documents (a projection of what we already have).
+const docsFromStore = (records) => records.map((r) => ({
+  internalId: r.internalId, record: r, _fromStore: true,
+  date: r.date, total: r.total ?? r.amount, type: r.type, returnStatus: r.returnStatus,
+  storeName: (r.store && r.store.name) || r.storeName, label: (r.store && r.store.name) || r.issuer || r.counterparty || r.description || '',
+}));
+
+// Show/hide the "Load from store" button for the selected source (only when the store has records for it).
+async function refreshStoreButton() {
+  const cfg = await getConfig(); const { adapter } = adapterFor($('#ds').value, cfg);
+  const n = adapter ? await countLive(adapter.id).catch(() => 0) : 0;
+  const b = $('#load-store'); if (b) b.hidden = !n;
+}
+
+async function onLoadStore() {
+  const cfg = await getConfig(); const { adapter } = adapterFor($('#ds').value, cfg);
+  if (!adapter) return;
+  const known = await getDocMeta(adapter.id);
+  inventory = docsFromStore(await getRecords(adapter.id));
+  enrichMeta(inventory, known);
+  await render();
+  $('#status').textContent = t('n_from_store', [String(inventory.length)]);
+  $('#sendbar').hidden = inventory.length === 0;
+  $('#selbar').hidden = inventory.length === 0;
+}
+
 const enrichMeta = (docs, known) => {
   for (const d of docs) {
     const k = known[d.internalId]; if (!k) continue;
@@ -193,6 +222,7 @@ async function onSend() {
   const kinds = artifactKinds(adapter).filter((k) => sinkAcceptsArtifact(sink, k));
   // Fetch a single doc's artifacts (skip a document kind this doc lacks, e.g. no invoice).
   const fetchArts = async (d) => {
+    if (d._fromStore) return []; // projection from the store: deliver the record only, no document fetch
     const arts = [];
     const avail = artifactKinds(adapter, d);
     for (const k of kinds) {
