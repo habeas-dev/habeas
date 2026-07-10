@@ -9,7 +9,7 @@ import { loadAuth, hasAuth } from './lib/authstore.js';
 import { deliveredSet, markDelivered, appendLog } from './lib/state.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
 import { resolveSiteFetch } from './lib/pagefetch.js';
-import { renderPage, isChallenged } from './lib/render.js';
+import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
 import { recordDelivered } from './lib/store.js';
 import { acceptsDoc, sinkAcceptsArtifact, sinkAcceptsSource } from './sinks/format.js';
@@ -263,6 +263,20 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     return { status: 'done', new: totalNew };
   } catch (e) {
     const msg = (e && e.message) || String(e);
+    // An anti-bot challenge (DataDome/Cloudflare/Akamai) on the API isn't a real failure — the site needs an
+    // interactive check the background can't solve. Log it softly and DON'T fire an error notification; it
+    // retries when the user is on the site with a solved challenge (or runs it manually).
+    if (/captcha-delivery|datadome|geo\.captcha|interstitial|challenge-platform|__cf_chl|cf-browser-verification|just a moment|akam[ai]/i.test(msg)) {
+      // Show the CAPTCHA to the user (core thesis: they resolve challenges live). Open the interstitial URL
+      // from the response, else the source site; solving it sets the anti-bot cookie so the next run passes.
+      const curl = challengeUrlOf(msg);
+      try { await chrome.tabs.create({ url: curl || siteBaseUrl(adapter), active: true }); } catch (e2) {}
+      await appendLog({ ...base, status: 'challenged' });
+      notify(t('notify_challenge', [name]));
+      await badgeClear();
+      setStatus(t('status_challenged', [name]));
+      return { status: 'challenged' };
+    }
     await appendLog({ ...base, status: 'error', error: msg });
     if (kind === 'auto') notify(t('notify_autoerr', [msg]));
     await badgeError();

@@ -2,6 +2,12 @@
 
 ## 0.1.53 → 0.1.54 (in progress)
 
+### Reliability & session capture
+- **Anti-bot CAPTCHA is shown to the user** — when a source's API returns a DataDome/Cloudflare/Akamai
+  challenge (e.g. Leroy Merlin's order API), the extension now opens the interstitial for you to solve live
+  (from the 403 body's URL, or the site) instead of failing. Auto-sync logs it as a soft "anti-bot check"
+  (no error alarm) and retries after you solve it; a manual List opens the check and asks you to retry.
+
 ### Site-capture capabilities (runtime)
 - **Top-level array lists** — a source can set `itemsPath: "$"` when the list response *is* the array (no
   wrapper object).

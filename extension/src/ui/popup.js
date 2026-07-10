@@ -1,9 +1,9 @@
 import { chrome } from '../lib/ext.js';
 import { getConfig } from '../lib/config.js';
 import { listInventory, artifactKinds, fetchArtifact, documentExt } from '../runtime/inventory.js';
-import { ensureSiteFetch, recoverSession } from '../lib/pagefetch.js';
+import { ensureSiteFetch, recoverSession, siteBaseUrl } from '../lib/pagefetch.js';
 import { pickGroup } from './grouppicker.js';
-import { renderPage } from '../lib/render.js';
+import { renderPage, challengeUrlOf } from '../lib/render.js';
 import { writeToSink } from '../sinks/sinks.js';
 import { sinkAcceptsSource, acceptsDoc, sinkAcceptsArtifact } from '../sinks/format.js';
 import { deliveredSet, markDelivered, getLog, appendLog, getDocMeta, rememberDocMeta } from '../lib/state.js';
@@ -274,9 +274,14 @@ async function onList(mode, opts = {}) {
     $('#status').textContent = aborted() ? t('stopped_n', [String(inventory.length)]) : t('n_listed', [String(inventory.length), String(newTotal)]);
     log(t('n_listed', [String(inventory.length), String(newTotal)]));
   } catch (e) {
-    // CSRF / not-logged-in / bad-request (corrupted cookies) → clear cookies if the source opts in and
-    // open a clean tab so the user can log in fresh, then retry.
-    if (/csrf|4\d\d|5\d\d|forbidden|unauthor|sign ?in|log ?in|session|not logged/i.test(e.message || '')) {
+    // Anti-bot CAPTCHA (DataDome/Cloudflare/Akamai) on the API → SHOW it to the user so they solve it live
+    // (the interstitial URL comes back in the response body). Solving it sets the anti-bot cookie; then List
+    // again. Checked first, before the generic 4xx/login branch (a challenge is a 403 too).
+    const cUrl = challengeUrlOf(e.message || '');
+    if (cUrl || /captcha-delivery|datadome|geo\.captcha|challenge-platform|__cf_chl|cf-browser-verification|just a moment|akam[ai]/i.test(e.message || '')) {
+      try { await chrome.tabs.create({ url: cUrl || siteBaseUrl(adapter), active: true }); } catch (e2) {}
+      $('#status').textContent = t('challenge_solve'); log(t('challenge_solve'));
+    } else if (/csrf|4\d\d|5\d\d|forbidden|unauthor|sign ?in|log ?in|session|not logged/i.test(e.message || '')) {
       // A fresh attempt opens/repairs the login tab; a resumed one (auto-retry on popup reopen) must NOT
       // touch the tab — that would reset a half-entered login.
       if (!opts.resumed) { const cleared = await recoverSession(adapter); if (cleared) log(t('cookies_cleared', [String(cleared)])); }
@@ -439,6 +444,7 @@ async function renderActivity() {
     const detail = e.status === 'error' ? t('st_error', [e.error || ''])
       : e.status === 'none' ? t('st_none')
       : e.status === 'nosession' ? t('st_nosession')
+      : e.status === 'challenged' ? t('st_challenged')
       : t('st_ok', [String(n ?? ''), e.sink || '']);
     return `<div class="activity-item"><span class="when">${when}</span><span class="kind">${e.kind || ''}</span><span>${e.datasource || ''} · ${detail}</span></div>`;
   }).join('') || `<p class="muted">${t('no_activity')}</p>`;
