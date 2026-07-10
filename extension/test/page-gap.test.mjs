@@ -29,3 +29,10 @@ test('default (no stopAfterEmpty) stops at the first empty page — old behaviou
   const docs = await listInventory(mk(undefined), { byPath: {}, merged: {} }, net, {});
   assert.deepEqual(docs.map((d) => d.internalId), ['a'], 'stops at the empty 2025, missing older years');
 });
+
+test('incremental: a KNOWN current year (added 0) does not stop the year scan — older new years still reached', async () => {
+  // The 2026 receipt "a" is already in the store (knownIds). Without gap-tolerance the pager would stop at
+  // yearOffset 0 (nothing new). With stopAfterEmpty it tolerates the known year + the 2025 gap and finds b/c.
+  const docs = await listInventory(mk(3), { byPath: {}, merged: {} }, net, { knownIds: new Set(['a']) });
+  assert.deepEqual(docs.map((d) => d.internalId).sort(), ['b', 'c'], 'reached 2024/2023 despite 2026 known + 2025 empty');
+});

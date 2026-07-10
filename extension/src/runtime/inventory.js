@@ -172,18 +172,19 @@ async function pageList(adapter, auth, net, group, opts) {
   } else if (paging === 'page') {
     const pageParam = list.pageParam || 'page';
     let page = list.pageStart ?? 1;
-    const tolerate = list.stopAfterEmpty || 0; // page pages that are EMPTY to skip before stopping (bridge gaps)
-    let emptyStreak = 0;
+    const tolerate = list.stopAfterEmpty || 0; // consecutive pages contributing NOTHING to skip before stopping
+    let dryStreak = 0;
     for (let g = 0; g < maxPages; g++) {
       if (stop()) break;
       const data = await call({ ...range, ...baseParams, [pageParam]: page });
-      const items = get(data, itemsPathOf(list)) || [];
       const added = collect(adapter, data, seen, all, group);
       report({ page: g + 1 });
-      // Empty page → the end, UNLESS we tolerate a gap (e.g. a year with no purchases, like 2025) and keep
-      // going. A non-empty page with nothing NEW means incremental has caught up → stop.
-      if (!items.length) { if (++emptyStreak > tolerate) break; }
-      else { emptyStreak = 0; if (!added) break; }
+      // A page that adds NOTHING NEW (empty, OR — incrementally — all-known) is a candidate stop. For a
+      // year-partitioned list (pageParam yearOffset) an empty/known year in the MIDDLE (e.g. 2025 with no
+      // purchases, or the current year already in the store) doesn't mean older years are done, so tolerate
+      // `stopAfterEmpty` such pages before stopping. Default 0 → stop at the first dry page (unchanged).
+      if (!added) { if (++dryStreak > tolerate) break; }
+      else dryStreak = 0;
       page++;
     }
   } else if (paging === 'offset') {
