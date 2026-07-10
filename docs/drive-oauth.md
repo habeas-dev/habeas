@@ -16,12 +16,13 @@ refresh token off-device (breaks local-first). So Path A is Chrome-only; Firefox
 
 ## One-time setup to enable Path A
 
-1. **Pin the extension ID** so the unpacked dev build matches the published item (one OAuth client for both):
-   add the Web-Store item's public key as `"key": "<base64…>"` in `manifest.json` (from the CWS dashboard /
-   the packed `.crx`). Published ID: `pbpehhngeidokhaokgloaneiibhceiog`.
+1. **Pin the extension ID** — ✅ DONE. `manifest.json` now carries the `"key"` extracted from the published
+   `.crx`'s identity RSA proof, so the **unpacked dev build loads as `pbpehhngeidokhaokgloaneiibhceiog`**
+   (same as the Web Store item → one OAuth client covers both). CWS ignores `key` on upload.
 2. **Google Cloud console → APIs & Services → Credentials → Create OAuth client ID → type "Chrome
-   Extension"**, Application/Item ID = the extension ID. Scope: `https://www.googleapis.com/auth/drive.file`
-   (non-sensitive → no CASA). Set the app to **In production** so tokens/grants don't expire after 7 days.
+   Extension"**, Application/Item ID = `pbpehhngeidokhaokgloaneiibhceiog`. Scope:
+   `https://www.googleapis.com/auth/drive.file` (non-sensitive → no CASA). Set the app to **In production**
+   so tokens/grants don't expire after 7 days.
 3. Add to `manifest.json`:
    ```json
    "oauth2": { "client_id": "<the new Chrome-Extension client id>", "scopes": ["https://www.googleapis.com/auth/drive.file"] }
