@@ -90,7 +90,7 @@ function watchAuthResume(adapter, mode) {
   if (__authWatch) { try { chrome.storage.onChanged.removeListener(__authWatch); } catch (e) {} __authWatch = null; }
   __authWatch = async (ch, area) => {
     if (area !== 'session') return; // token captures live in storage.session
-    if (await getAuth(adapter)) { try { chrome.storage.onChanged.removeListener(__authWatch); } catch (e) {} __authWatch = null; await clearPendingList($('#ds').value); onList(mode); }
+    if (await getAuth(adapter)) { try { chrome.storage.onChanged.removeListener(__authWatch); } catch (e) {} __authWatch = null; await clearPendingList($('#ds').value); onList(mode, { resumed: true }); }
   };
   chrome.storage.onChanged.addListener(__authWatch);
 }
@@ -100,10 +100,13 @@ async function resumePendingList() {
   if (!p || !p.ds) return;
   const cfg = await getConfig(); const { adapter } = adapterFor(p.ds, cfg);
   if (!adapter) { await clearPendingList(); return; }
-  if (await getAuth(adapter)) { // logged in since → resume automatically
+  // Bearer: resume only once the token is captured (getAuth truthy). Cookie: no token to detect → just
+  // retry; the list itself reveals whether the login took, and a still-failing retry re-arms silently.
+  const cookie = adapter.auth && adapter.auth.mode === 'cookie';
+  if (cookie || await getAuth(adapter)) {
     await clearPendingList();
     $('#ds').value = p.ds; await populateSinks(cfg); renderOutputs(adapter); refreshStoreButton();
-    onList(p.mode || undefined);
+    onList(p.mode || undefined, { resumed: true });
   }
 }
 
@@ -210,7 +213,7 @@ const mergeInv = (base, fresh) => {
 
 // List = the canonical store shown INSTANTLY + an extraction that fetches only the DELTA (incremental
 // early-stop against what we already have). mode 'full' re-enumerates the whole history (reconcile).
-async function onList(mode) {
+async function onList(mode, opts = {}) {
   clearLog();
   const cfg = await getConfig();
   const { adapter } = adapterFor($('#ds').value, cfg);
@@ -274,9 +277,13 @@ async function onList(mode) {
     // CSRF / not-logged-in / bad-request (corrupted cookies) → clear cookies if the source opts in and
     // open a clean tab so the user can log in fresh, then retry.
     if (/csrf|4\d\d|5\d\d|forbidden|unauthor|sign ?in|log ?in|session|not logged/i.test(e.message || '')) {
-      const cleared = await recoverSession(adapter);
-      if (cleared) log(t('cookies_cleared', [String(cleared)]));
-      $('#status').textContent = t('login_in_tab');
+      // A fresh attempt opens/repairs the login tab; a resumed one (auto-retry on popup reopen) must NOT
+      // touch the tab — that would reset a half-entered login.
+      if (!opts.resumed) { const cleared = await recoverSession(adapter); if (cleared) log(t('cookies_cleared', [String(cleared)])); }
+      // Cookie sources capture no token, so there is no storage.session signal to watch — instead ARM the
+      // pending marker and retry the list on the next popup open (a still-failing retry re-arms silently).
+      if (adapter.auth && adapter.auth.mode === 'cookie') { await setPendingList($('#ds').value, mode); $('#status').textContent = t('login_wait'); }
+      else $('#status').textContent = t('login_in_tab');
     } else $('#status').textContent = t('generic_error', [e.message]);
   } finally { busy(false); aborter = null; }
 }

@@ -14,10 +14,9 @@
   test** (OAuth can't run in node) before relying on it.
 * Leroymerlin: no aparecen las compras online. **Needs a capture** of the online-orders endpoint — the
   current `leroymerlin-es` source only lists in-store receipts; the online-orders API/shape is unknown.
-* [DONE v0.1.53.6] ~~No se autodetecta el login.~~ Fixed for BEARER sources: List with no session opens the
-  login tab and auto-resumes listing when the token is captured (live listener + pending marker on reopen).
-  **Still pending for COOKIE sources** (WiZink): their session can't be detected via token capture — needs a
-  different signal (watch the tab reaching a logged-in URL, or a post-login retry).
+* [DONE v0.1.53.6 bearer / v0.1.53.8 cookie] ~~No se autodetecta el login.~~ Bearer sources resume when the
+  token is captured; cookie sources (WiZink) retry the list on the next popup open (arm-on-login-failure +
+  pending marker), without disturbing a half-entered login on retry.
 
 ## External hooks — manual / e2e validation (pending)
 
