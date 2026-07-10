@@ -55,7 +55,13 @@ async function init() {
   $('#load-store').onclick = onLoadStore;
   $('#send').onclick = onSend;
   $('#sink').onchange = () => render();
-  $('#ds').onchange = async () => { const c = await getConfig(); populateSinks(c); renderOutputs(adapterFor($('#ds').value, c).adapter); render(); refreshStoreButton(); };
+  $('#ds').onchange = async () => {
+    // Switching source → the previous source's rows are no longer relevant: clear the inventory + surfaces.
+    inventory = []; clearLog(); $('#status').textContent = '';
+    $('#sendbar').hidden = true; $('#selbar').hidden = true;
+    const c = await getConfig(); populateSinks(c); renderOutputs(adapterFor($('#ds').value, c).adapter);
+    await render(); refreshStoreButton();
+  };
   refreshStoreButton();
   $('#sel-new').onclick = () => setSelection('new');
   $('#sel-all').onclick = () => setSelection('all');

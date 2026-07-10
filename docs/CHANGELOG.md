@@ -3,6 +3,9 @@
 ## 0.1.53 → 0.1.54 (in progress)
 
 ### Interface
+- **Switching source clears the list** — changing the source selector now resets the document table,
+  status and buttons, so you no longer see the previous source's rows (e.g. WiZink movements lingering
+  after switching to Carrefour).
 - **Clearer send result** — a records-only stream (e.g. card movements, which have no document by design)
   no longer reports "0 PDF … N without PDF", which read like a failure. It now says
   "Saved to «sink»: manifest with N records". Sources that *can* produce documents still report how many
