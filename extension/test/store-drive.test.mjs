@@ -6,8 +6,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 // ext.js captures globalThis.chrome at import time → stub it BEFORE importing the module (dynamic import).
+// The Drive token is now cached in storage.local (survives browser restart → no re-prompt every open).
 const now = Date.now();
-globalThis.chrome = { storage: { session: { get: async (k) => ({ [k]: { token: 'T', expiresAt: now + 1e6 } }) } } };
+globalThis.chrome = { storage: { local: { get: async (k) => ({ [k]: { token: 'T', expiresAt: now + 1e6 } }) } } };
 const { make } = await import('../src/lib/store/drive.js');
 
 test('drive store backend exposes the { loadSource, saveSource, listSources } interface', () => {

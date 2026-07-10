@@ -33,30 +33,33 @@ export async function connectDrive(clientId, interactive = true) {
   const token = p.get('access_token');
   if (!token) throw new Error('sin token (' + (p.get('error') || 'desconocido') + ')');
   const rec = { token, expiresAt: Date.now() + (Number(p.get('expires_in') || 3600) - 60) * 1000 };
-  await chrome.storage.session.set({ ['gdrive:' + clientId]: rec });
+  // Persist in storage.local (survives browser restart) so the user isn't re-prompted on every Chrome open.
+  // This is the delivery-sink OAuth token (scope drive.file), NOT a scraped site session — those still live
+  // only in storage.session (rule #3). It's short-lived (~1h); a silent prompt=none refresh renews it.
+  await chrome.storage.local.set({ ['gdrive:' + clientId]: rec });
   return rec;
 }
 
 async function getToken(clientId, interactive) {
   clientId = cid(clientId);
   const key = 'gdrive:' + clientId;
-  const o = await chrome.storage.session.get(key);
-  if (o[key] && o[key].expiresAt > Date.now()) return o[key].token;
-  try { return (await connectDrive(clientId, false)).token; }
-  catch (e) { if (!interactive) throw e; return (await connectDrive(clientId, true)).token; }
+  const o = await chrome.storage.local.get(key);
+  if (o[key] && o[key].expiresAt > Date.now()) return o[key].token; // valid cached token → no network, no prompt
+  try { return (await connectDrive(clientId, false)).token; }        // silent refresh (prompt=none)
+  catch (e) { if (!interactive) throw e; return (await connectDrive(clientId, true)).token; } // only NOW a UI prompt
 }
 
-// A valid (non-expired) Drive token is cached this browser session → treat as "connected". Tokens live in
-// storage.session, so this resets on browser restart (a silent re-connect re-establishes it).
+// A valid (non-expired) Drive token is cached → treat as "connected". Persisted in storage.local, so this
+// survives a browser restart (unlike before, when it reset every session and forced a re-auth).
 export async function driveConnected(clientId) {
   const key = 'gdrive:' + cid(clientId);
-  const o = await chrome.storage.session.get(key);
+  const o = await chrome.storage.local.get(key);
   return !!(o[key] && o[key].token && o[key].expiresAt > Date.now());
 }
 // Forget the cached token (the "disconnect" affordance). We don't revoke server-side — dropping the token
 // is enough to stop using Drive; the user can revoke access from their Google account if they wish.
 export async function disconnectDrive(clientId) {
-  try { await chrome.storage.session.remove('gdrive:' + cid(clientId)); } catch (e) {}
+  try { await chrome.storage.local.remove('gdrive:' + cid(clientId)); } catch (e) {}
 }
 
 // Read back a source's per-source manifest (records) already in Drive — to rehydrate the canonical store
@@ -104,11 +107,16 @@ export function driveStore(cfg = {}) {
   const clientId = cfg.clientId;
   const root = cfg.rootFolderName || 'Habeas';
   const sub = cfg.storeFolder || '_store';
+  // A store on Drive DOES need to authorize — so a real op (List / deliver) prompts when no token can be
+  // obtained silently. But a PASSIVE read (the popup's count hint) passes {interactive:false} so it never
+  // pops the window just to show a number; it silently no-ops instead. The token persists in storage.local,
+  // so after the one grant a valid token is reused across restarts (no prompt every Chrome open).
   const interactive = cfg.interactive !== false;
+  const ia = (opts) => (opts && opts.interactive === false ? false : interactive);
   const dirId = async (token) => ensureFolderPath(token, [root, sub], {});
   return {
-    async loadSource(id) {
-      const token = await getToken(clientId, interactive);
+    async loadSource(id, opts) {
+      const token = await getToken(clientId, ia(opts));
       const j = await readJson(token, id + '.json', await dirId(token));
       return j && typeof j === 'object' && !Array.isArray(j) && j.items ? j : null; // a store source object, not the [] readJson miss
     },

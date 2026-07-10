@@ -10,6 +10,12 @@
   (new `Pedidos online` output) alongside the existing in-store tickets.
 
 ### Canonical store
+- **No more Drive re-prompt on every Chrome open** — the Drive OAuth token is now cached in `storage.local`
+  (survives browser restart) instead of `storage.session` (wiped each restart, which forced a re-auth every
+  open). After one grant it's reused silently, with a `prompt=none` refresh on expiry. A store on Drive
+  still prompts once when a token genuinely can't be obtained silently — but the passive popup count hint
+  never pops the window. (This is the delivery token, scope `drive.file`; scraped site sessions still live
+  only in memory.)
 - **Drive store button reflects connection** — once you've connected Google Drive for the store, the button
   shows *Disconnect Drive* (and disconnects) instead of always offering *Connect Drive*.
 - **Google Drive as a store backend** — you can now host the canonical store on Google Drive (Settings →

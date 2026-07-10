@@ -50,7 +50,9 @@ export async function markGone(sourceId, ids, reason) {
 export async function getSource(sourceId) { return (await (await backendFor()).loadSource(sourceId)) || null; }
 export async function getRecords(sourceId, opts) { return project(await (await backendFor()).loadSource(sourceId), opts); }
 export async function getViews(sourceId, delivered) { return views(await (await backendFor()).loadSource(sourceId), delivered); }
-export async function countLive(sourceId) { const s = await (await backendFor()).loadSource(sourceId); return s ? Object.values(s.items).filter((e) => !e.gone).length : 0; }
+// Passive UI hint (the "Load from store" button badge) → never pop an OAuth window just to count; a Drive
+// backend reads this silently (interactive:false) and returns null if no token is available yet.
+export async function countLive(sourceId) { const s = await (await backendFor()).loadSource(sourceId, { interactive: false }); return s ? Object.values(s.items).filter((e) => !e.gone).length : 0; }
 
 // Union every source from one backend into another (never clobbers; keyed by id). Idempotent → safe to
 // re-run an interrupted move. Returns how many sources were copied.
