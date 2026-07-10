@@ -11,7 +11,16 @@ globalThis.chrome = {
     remove: async (o) => { removed.push(o); },
   },
 };
-const { clearSiteCookies } = await import('../src/lib/pagefetch.js');
+const { clearSiteCookies, siteBaseUrl } = await import('../src/lib/pagefetch.js');
+
+test('siteBaseUrl prefers openUrl (the account/purchases page), then loginUrl, then the site root', () => {
+  // openUrl wins — the tab lands on the user's data + loads the SPA whose CSP allows the API host.
+  assert.equal(siteBaseUrl({ openUrl: 'https://www.carrefour.es/myaccount/#/area-privada/mis-compras', auth: { loginUrl: 'https://www.carrefour.es/login' }, api: { host: 'https://pro.api.carrefour.es' } }), 'https://www.carrefour.es/myaccount/#/area-privada/mis-compras');
+  // no openUrl → falls back to loginUrl (WiZink lands the logged-out user on /login)
+  assert.equal(siteBaseUrl({ auth: { loginUrl: 'https://www.wizink.es/login' }, api: { host: 'https://www.wizink.es' } }), 'https://www.wizink.es/login');
+  // neither → derive the site root from match/host
+  assert.equal(siteBaseUrl({ match: ['https://www.example.com/*'], api: { host: 'https://api.example.com' } }), 'https://www.example.com/');
+});
 
 test('clearSiteCookies removes every cookie for the domain (subdomains + http/https)', async () => {
   const n = await clearSiteCookies('wizink.es');

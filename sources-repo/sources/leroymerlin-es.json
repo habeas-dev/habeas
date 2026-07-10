@@ -43,6 +43,7 @@
   "match": [
     "https://www.leroymerlin.es/*"
   ],
+  "openUrl": "https://www.leroymerlin.es/mi-cuenta/mis-compras/historial",
   "name": "Leroy Merlin España — receipts",
   "schema": "receipt@1",
   "service": "leroymerlin",

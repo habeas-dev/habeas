@@ -12,6 +12,7 @@
   "match": [
     "https://www.hover.com/*"
   ],
+  "openUrl": "https://www.hover.com/control_panel/settings/receipts",
   "auth": {
     "mode": "cookie",
     "replayHeaders": []

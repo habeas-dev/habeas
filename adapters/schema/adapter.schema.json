@@ -15,6 +15,7 @@
     "changelog": { "type": "array", "description": "Per-version change notes (newest first), shown in the catalog details and as 'what's new' on update.", "items": { "type": "object", "required": ["version", "changes"], "additionalProperties": false, "properties": { "version": { "type": "string" }, "changes": { "type": "string" } } } },
     "trust": { "enum": ["first-party", "community"], "description": "first-party = project-maintained & audited; community = user/contributed." },
     "domain": { "type": "string", "description": "Registrable domain (eTLD+1) all hosts share, e.g. carrefour.es. If omitted it is derived from api.host." },
+    "openUrl": { "type": "string", "description": "Exact https page to open in the tab to establish the in-session context — ideally the user's 'my purchases/account' page (loads the SPA whose CSP allows the API host). Must stay within the source's registrable domain (enforced). Falls back to auth.loginUrl, then the site root." },
     "country": { "type": "string", "pattern": "^([A-Z]{2}|global)$", "description": "ISO 3166-1 alpha-2 country code of the service (e.g. ES, FR, US) or 'global'. Used to filter the catalog." },
     "crossDomainHosts": {
       "type": "array",

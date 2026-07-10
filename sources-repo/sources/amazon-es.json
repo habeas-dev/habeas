@@ -14,6 +14,7 @@
   "match": [
     "https://www.amazon.es/*"
   ],
+  "openUrl": "https://www.amazon.es/gp/css/order-history?ref_=nav_orders_first",
   "auth": {
     "mode": "cookie",
     "replayHeaders": []

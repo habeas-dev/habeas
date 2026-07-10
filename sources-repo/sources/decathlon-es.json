@@ -12,6 +12,7 @@
   "match": [
     "https://www.decathlon.es/*"
   ],
+  "openUrl": "https://www.decathlon.es/es/account/myPurchase",
   "auth": {
     "mode": "cookie",
     "replayHeaders": []

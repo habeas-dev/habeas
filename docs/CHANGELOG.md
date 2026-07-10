@@ -2,6 +2,12 @@
 
 ## 0.1.53 → 0.1.54 (in progress)
 
+### Interface
+- **Sources open on your "my purchases" page** — a source can declare `openUrl`, the exact account/purchases
+  page to open in the tab (loads the SPA whose CSP allows the API host, and lands you on your data). Set for
+  Carrefour, Decathlon, Hover, Dia, bip&drive, Leroy Merlin, CaixaBank Consumer, IKEA and Amazon. The URL is
+  enforced to stay within the source's own registrable domain.
+
 ### Fixes
 - **`Failed to fetch` on listing (e.g. Carrefour)** — the in-session request runs inside the site's tab and
   is bound by that page's CSP (`connect-src`). If the tab sat on a page that doesn't allow the API host

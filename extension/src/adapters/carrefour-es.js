@@ -18,6 +18,8 @@ export default {
     default: 'retail',
   },
   match: ['https://www.carrefour.es/*'],
+  // Open the tab straight on the user's purchases page (loads the account SPA whose CSP allows the API host).
+  openUrl: 'https://www.carrefour.es/myaccount/#/area-privada/mis-compras',
   auth: {
     tokenMatch: 'eyJ',
     replayHeaders: ['authorization', 'x-xsrf-token', 'x-csrf-token', 'requestorigin', 'sessionid'],

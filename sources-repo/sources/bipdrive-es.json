@@ -12,6 +12,7 @@
   "match": [
     "https://areaprivada.bipdrive.com/*"
   ],
+  "openUrl": "https://areaprivada.bipdrive.com/#mis-facturas",
   "auth": {
     "mode": "cookie",
     "replayHeaders": []

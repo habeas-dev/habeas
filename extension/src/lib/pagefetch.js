@@ -77,7 +77,12 @@ async function findSiteTab(adapter) {
 // The site's base URL (from the source's match / api host) — where a tab is opened to establish the
 // in-session context the page-context fetch needs.
 export function siteBaseUrl(adapter) {
-  // A source can point the login tab at its actual sign-in page (e.g. WiZink's /login) instead of the
+  // A source can name the exact page to open (openUrl) — its "my purchases / account" page — so the tab
+  // lands the user on their data AND loads the SPA whose CSP allows the API host. Guarded to the source's
+  // own registrable domain by validate.js (collectHosts), like every other host it touches.
+  const open = adapter.openUrl;
+  if (open && /^https:\/\//.test(open)) return open;
+  // Else a source can point the login tab at its actual sign-in page (e.g. WiZink's /login) instead of the
   // site root, so a logged-out user lands where they can authenticate.
   const login = adapter.auth && adapter.auth.loginUrl;
   if (login && /^https:\/\//.test(login)) return login;

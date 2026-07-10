@@ -12,6 +12,7 @@
   "match": [
     "https://www.dia.es/*"
   ],
+  "openUrl": "https://www.dia.es/my-account/tickets",
   "auth": {
     "mode": "cookie",
     "replayHeaders": []

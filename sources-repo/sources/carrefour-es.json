@@ -22,6 +22,7 @@
   "match": [
     "https://www.carrefour.es/*"
   ],
+  "openUrl": "https://www.carrefour.es/myaccount/#/area-privada/mis-compras",
   "auth": {
     "tokenMatch": "eyJ",
     "replayHeaders": [

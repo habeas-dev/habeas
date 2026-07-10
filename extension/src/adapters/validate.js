@@ -44,6 +44,7 @@ export function collectHosts(adapter) {
   if (api.document && api.document.host) hosts.add(hostOf(api.document.host));
   for (const m of adapter.match || []) hosts.add(hostOf(m));
   for (const h of adapter.captureHosts || []) hosts.add(hostOf(h));
+  if (adapter.openUrl) hosts.add(hostOf(adapter.openUrl)); // the tab we open must stay within the source's domain
   return [...hosts].filter(Boolean);
 }
 

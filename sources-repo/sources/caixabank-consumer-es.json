@@ -15,6 +15,7 @@
   "match": [
     "https://clientes.caixabankconsumer.com/*"
   ],
+  "openUrl": "https://clientes.caixabankconsumer.com/cpc/tarjetas",
   "auth": {
     "mode": "bearer",
     "tokenMatch": "^Bearer [0-9a-f-]{20,}$",

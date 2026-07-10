@@ -16,6 +16,7 @@
   "match": [
     "https://www.ikea.com/*"
   ],
+  "openUrl": "https://www.ikea.com/es/es/purchases/",
   "auth": {
     "mode": "bearer",
     "replayHeaders": [
