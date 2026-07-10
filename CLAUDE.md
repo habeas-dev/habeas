@@ -196,51 +196,37 @@ access — documented, user's responsibility. Full write-up in `README.md` (Lega
 - Keep the runtime small and auditable; push service-specific behavior into declarative
   adapters. Validate JS (`node --check`) and locale key parity (en/es) before committing.
 
-## Session playbook — the routines every Claude session should follow
+## Maintainer playbook — versioning, commits, publishing
 
-> How work actually gets committed/versioned/published here. Detailed release + registry steps live in
-> `docs/RELEASING.md`; Drive OAuth setup in `docs/drive-oauth.md`.
+> Project conventions for anyone maintaining Habeas. Detailed release + registry steps: `docs/RELEASING.md`;
+> Drive OAuth setup: `docs/drive-oauth.md`.
 
-**Version cadence (`extension/manifest.json` `version`).** Two parts: a 3-part **milestone** (`0.1.53`) +
-an optional 4th **dev suffix** (`0.1.53.N`).
-- **Bump the dev suffix on EVERY change** (`0.1.53.14` → `.15`), commit it, push it — but **never tag it**.
-  The version shows in the popup + `chrome://extensions`, so the user can verify a reload picked up the change.
-- **Bump the milestone (drop the suffix → `0.1.54`) ONLY when cutting a release**: it groups many dev
-  iterations under one milestone. Then `git tag v0.1.54` + push the tag → CI builds the MV3 zip, attaches it
-  to a GitHub Release, and uploads to CWS (and AMO, once approved). Never reuse a published version (CWS
-  rejects it). Cut a milestone when the user asks to "publish/release/tag", not on every fix.
+**Version cadence (`extension/manifest.json` `version`).** A 3-part **milestone** (`0.1.53`) + an optional
+4th **dev suffix** (`0.1.53.N`).
+- **Bump the dev suffix on every change** (`0.1.53.14 → .15`) so a reload is verifiable (the version shows in
+  the popup + `chrome://extensions`). Dev suffixes are committed but **never tagged**.
+- **Bump the milestone (drop the suffix → `0.1.54`) only at release time** — it groups many dev iterations.
+  Then `git tag v0.1.54` + push the tag → CI builds the MV3 zip, attaches it to a GitHub Release, and uploads
+  to CWS (and AMO, once approved). Never reuse a published version (CWS rejects it).
 
-**Commits & push.** Conventional-commits, English, no `Co-Authored-By`/`Claude-Session` trailers, manifest
-version bumped in the same commit. **Every commit is pushed** (standing directive) via SSH:
-`git push git@github.com:habeas-dev/habeas.git main`. Multi-line messages: write them via a heredoc
-(`git commit -F -`), not `-m` with embedded newlines.
+**Commits.** Conventional-commits, English, **no `Co-Authored-By` / `Claude-Session` trailers**, manifest
+version bumped in the same commit. Commits are pushed to `main` as they land.
 
-**Before every commit (verify, don't assume):** `npm test` green (node:test, ~150+); `node --check` each
-touched JS; en/es locale-key **parity** (both files same key count/set); `npm run lint` (web-ext) → **0
-errors** — the only expected warnings are the `innerHTML` UNSAFE_VAR_ASSIGNMENT ones and
-`identity.getAuthToken/removeCachedAuthToken not supported by Firefox` (guarded, fine). And **guard captures**:
-`git status` must never stage a `*-capture.jsonl` / proxy dump.
+**Before every commit:** `npm test` green (node:test); `node --check` each touched JS; en/es locale-key
+**parity** (both files same key set); `npm run lint` (web-ext) → **0 errors** (expected warnings: `innerHTML`
+UNSAFE_VAR_ASSIGNMENT; and `identity.getAuthToken/removeCachedAuthToken not supported by Firefox` — guarded).
+Author new/updated sources from a real API capture kept **outside the repo**, and never commit capture files
+(they hold real user data) — validate with `validateAdapter` and run the runtime against the captured
+response (mock `net` into `listInventory`) before publishing; only real, API-verified sources ship.
 
-**Community-sources registry (a SEPARATE repo).** `sources-repo/` is a directory tracked in THIS repo
-(staging only). The LIVE catalog is a separate GitHub repo `git@github.com:habeas-dev/sources.git` served at
-`habeas-dev.github.io/sources`, with its **own independent history** — **never subtree-split / force-push it**.
-To publish: keep a clone in the scratchpad (`sources-check`), `git pull --ff-only`, copy the changed files
-from `sources-repo/`, `node scripts/build-index.mjs`, `node scripts/ci-validate.mjs` (must be N/N valid),
-commit `sources: …`, `git push git@github.com:habeas-dev/sources.git HEAD:main` (**non-force, fast-forward**),
-then `gh run watch` the "Sources CI" run to confirm the Pages deploy. Bump the source's `version` (string-
-compared lexicographically → the marketplace offers the update; use `YYYY-MM-DD` or `YYYY-MM-DD.N` same day).
-`minVersion` gates by extension version (`lib/version.js#cmpVersion`); if a source needs a runtime feature
-only in a dev build, set `minVersion` to that exact dev build (e.g. `0.1.53.10`) so the dev build can test
-while published users stay gated. **Verify a source end-to-end against a REAL captured response** (mock `net`
-into `listInventory`) before publishing — only real, API-verified sources ship.
-
-**Captures = the user's real data.** `*-capture.jsonl` / mitmproxy dumps hold real financial data + live
-tokens → keep them ONLY in the scratchpad, **never commit**, and **delete them** once the adapter is built.
-mitmproxy runs on **:8082** (CA already trusted in `~/.pki/nssdb`); addon → scratchpad JSONL. See the
-`mitmproxy-capture` + `chrome-capture-setup` memories.
-
-**Bash safety.** Never generate `cd X && <write_op>` compound commands — use `-C`/`--source-dir` flags or a
-separate `cd` call first (harness path-safety check).
+**Community-sources registry (a SEPARATE repo).** `sources-repo/` is a staging copy tracked in THIS repo.
+The LIVE catalog is a separate repo `git@github.com:habeas-dev/sources.git` (served at
+`habeas-dev.github.io/sources`) with its **own independent history** — **never subtree-split / force-push it**;
+publish by applying the changes in a clone and pushing **non-force (fast-forward)** (full steps in
+`docs/RELEASING.md`). Bump the source's `version` (compared lexicographically → the marketplace offers the
+update; `YYYY-MM-DD`, or `YYYY-MM-DD.N` same day). `minVersion` gates by extension version
+(`lib/version.js#cmpVersion`); if a source needs a runtime feature only present in a newer build, set
+`minVersion` to that build so older installs stay gated.
 
 ## Consumers (decoupled — separate projects)
 

@@ -114,7 +114,8 @@ cp sources-repo/sources/<changed>.json  "$SC/sources/"     # + schema/, scripts/
 (cd "$SC" && node scripts/build-index.mjs)          # rebuild index.json
 (cd "$SC" && node scripts/ci-validate.mjs)          # MUST be N/N valid
 git -C "$SC" add -A
-git -C "$SC" -c user.name="David Marín" -c user.email="you@example.com" commit -F - <<'MSG'
+# the clone doesn't inherit this repo's git config — set your own identity (or configure the clone once)
+git -C "$SC" -c user.name="$(git config user.name)" -c user.email="$(git config user.email)" commit -F - <<'MSG'
 sources: <what changed>
 MSG
 git -C "$SC" push git@github.com:habeas-dev/sources.git HEAD:main
