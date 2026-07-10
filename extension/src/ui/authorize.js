@@ -5,6 +5,7 @@ import { getAdapters } from '../adapters/index.js';
 import { addGrant } from '../lib/grants.js';
 import { appendLog } from '../lib/state.js';
 import { sinkIdForOrigin, originHost } from '../lib/exthooks.js';
+import { secureSinkHeaders } from '../lib/sinkheaders.js';
 
 const $ = (s) => document.querySelector(s);
 const reqId = new URLSearchParams(location.search).get('req');
@@ -37,7 +38,8 @@ async function resolve(allow, req, adapter) {
   const sink = { id: sinkId, type: 'http', url: req.sink.url };
   if (req.sink.headers) sink.headers = req.sink.headers;
   if (req.filter && req.filter.categories && req.filter.categories.length) sink.accepts = { categories: req.filter.categories };
-  await upsert('sinks', sink);
+  // Pairing-token headers go to the encrypted secrets store (headersRef), never plaintext config.
+  await upsert('sinks', await secureSinkHeaders(sink));
   await upsert('datasources', { id: req.source, adapter: req.source, enabled: true, options: {} });
   await upsert('routes', { id: req.source + '->' + sinkId, datasource: req.source, sink: sinkId, mode: 'external' });
   const grant = { id: 'g_' + crypto.randomUUID(), origin: req.origin, datasourceId: req.source, sinkId, filter: req.filter || null, createdAt: new Date().toISOString(), lastUsedAt: null };

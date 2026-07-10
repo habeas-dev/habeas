@@ -3,6 +3,7 @@
 // manifest (<service>/manifest.json) so repeated syncs merge instead of clobbering, and
 // different providers never collide. The ephemeral download ZIP carries a snapshot.
 import { getSecret } from '../lib/secrets.js';
+import { resolveSinkExtraHeaders } from '../lib/sinkheaders.js';
 import { makeZip } from '../lib/zip.js';
 import { pathFor, buildManifest, toRecords, mergeRecords, jsonBlob, today } from './format.js';
 import { driveWrite, driveRead } from './drive.js';
@@ -69,8 +70,9 @@ const IMPL = {
     if (opts.service) form.append('service', opts.service);
     form.append('records', buildManifest(docs, files));
     for (const d of docs) for (const art of files.get(d.internalId) || []) form.append('files[]', art.blob, d.internalId + '.' + art.ext);
-    // sink.headers: caller-supplied (e.g. an externally-proposed sink's pairing token). tokenRef wins.
-    const headers = { ...(sink.headers || {}), ...(token ? { Authorization: 'Bearer ' + token } : {}) };
+    // Caller-supplied headers (e.g. an externally-proposed sink's pairing token) — resolved from the
+    // encrypted headersRef, falling back to any legacy inline sink.headers. tokenRef wins on conflict.
+    const headers = { ...(await resolveSinkExtraHeaders(sink)), ...(token ? { Authorization: 'Bearer ' + token } : {}) };
     const res = await fetch(sink.url, { method: 'POST', headers, body: form });
     if (!res.ok) throw new Error('http sink ' + res.status);
     return await res.json().catch(() => ({ written: docs.length, total: docs.length }));

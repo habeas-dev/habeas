@@ -20,6 +20,7 @@ import { badgeWorking, badgeCount, badgeError, badgeClear, setStatus } from './l
 import { t } from './lib/i18n.js';
 import { validateProposal, originHost } from './lib/exthooks.js';
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant } from './lib/grants.js';
+import { migrateSinkHeaders } from './lib/sinkheaders.js';
 
 chrome.action.onClicked.addListener(() => {
   chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/popup.html') });
@@ -33,6 +34,8 @@ chrome.action.onClicked.addListener(() => {
     const adapters = await getAdapters();
     for (const d of (cfg.datasources || []).filter((x) => x.enabled)) { const a = adapters[d.adapter]; if (a) await registerCapture(a); }
   } catch (e) {}
+  // One-time: encrypt any pairing-token headers left plaintext in config by older versions.
+  migrateSinkHeaders().catch(() => {});
   syncWebRequestCapture();
 })();
 // Re-sync the webRequest capture filter when the enabled sources change.

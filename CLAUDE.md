@@ -213,7 +213,14 @@ access — documented, user's responsibility. Full write-up in `README.md` (Lega
   then publish to the registry (the fictional test fixtures must never be published or shipped).
 - **HTTP → Tiquetera** ingest endpoint (POST normalized records + PDFs; pairing token) — the
   category model already supports it.
-- Encrypt secrets at rest; harden dynamic HTML (web-ext/AMO flags `innerHTML`; new UI escapes
-  network/source-derived values but the base pattern remains).
+- ~~Encrypt secrets at rest~~ DONE: `lib/secrets.js` stores AES-GCM envelopes (`lib/crypto.js`)
+  keyed by a non-extractable IndexedDB CryptoKey (`lib/keystore.js`); legacy plaintext migrates on
+  read. Keeps credentials out of plaintext `storage.local` — not a defense against a stolen profile
+  (no stable user secret in MV3). Externally-proposed sinks' pairing-token headers now also go to the
+  secrets store via `sink.headersRef` (`lib/sinkheaders.js`; legacy plaintext `sink.headers` migrated
+  on background startup + still honored at send). Still plaintext: the `gdrive:*` cached token (short-lived).
+- ~~Harden dynamic HTML~~ DONE: all network/source/OS-derived values in `ui/popup.js` + `ui/options.js`
+  now escaped via a single shared `lib/esc.js` (was 7 duplicated inline helpers). web-ext/AMO still
+  flags `innerHTML` structurally, but no unescaped dynamic sink remains.
 - AMO + Chrome Web Store submission; Firefox Drive OAuth redirect. Note MV3 review: `scripting` +
   `optional_host_permissions: https://*/*` (record mode) will need justification at store review.
