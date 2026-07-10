@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-10T04:43:36.589Z",
+  "generated": "2026-07-10T06:32:56.489Z",
   "sources": [
     {
       "id": "amazon-es",
@@ -20,7 +20,7 @@
       "minVersion": "0.1.38",
       "changelog": [],
       "url": "https://habeas-dev.github.io/sources/amazon-es.json",
-      "updated": "2026-07-10T04:43:36.589Z"
+      "updated": "2026-07-10T06:32:56.489Z"
     },
     {
       "id": "bipdrive-es",
@@ -45,7 +45,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/bipdrive-es.json",
-      "updated": "2026-07-10T04:43:36.589Z"
+      "updated": "2026-07-10T06:32:56.489Z"
     },
     {
       "id": "caixabank-consumer-es",
@@ -72,7 +72,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/caixabank-consumer-es.json",
-      "updated": "2026-07-10T04:43:36.589Z"
+      "updated": "2026-07-10T06:32:56.489Z"
     },
     {
       "id": "carrefour-es",
@@ -99,7 +99,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/carrefour-es.json",
-      "updated": "2026-07-10T04:43:36.589Z"
+      "updated": "2026-07-10T06:32:56.489Z"
     },
     {
       "id": "decathlon-es",
@@ -124,7 +124,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/decathlon-es.json",
-      "updated": "2026-07-10T04:43:36.589Z"
+      "updated": "2026-07-10T06:32:56.489Z"
     },
     {
       "id": "dia-es",
@@ -150,7 +150,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/dia-es.json",
-      "updated": "2026-07-10T04:43:36.589Z"
+      "updated": "2026-07-10T06:32:56.489Z"
     },
     {
       "id": "hover-com",
@@ -176,7 +176,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/hover-com.json",
-      "updated": "2026-07-10T04:43:36.589Z"
+      "updated": "2026-07-10T06:32:56.489Z"
     },
     {
       "id": "ikea-es",
@@ -198,11 +198,11 @@
       "minVersion": "0.1.36",
       "changelog": [],
       "url": "https://habeas-dev.github.io/sources/ikea-es.json",
-      "updated": "2026-07-10T04:43:36.589Z"
+      "updated": "2026-07-10T06:32:56.489Z"
     },
     {
       "id": "leroymerlin-es",
-      "name": "Leroy Merlin España — receipts",
+      "name": "Leroy Merlin España",
       "service": "leroymerlin",
       "categories": [
         "diy"
@@ -210,20 +210,22 @@
       "trust": "community",
       "domain": "leroymerlin.es",
       "country": "ES",
-      "formats": [
-        "json"
-      ],
+      "formats": [],
       "crossDomain": [],
-      "version": "2026-07-08",
-      "minVersion": null,
+      "version": "2026-07-10",
+      "minVersion": "0.1.54",
       "changelog": [
+        {
+          "version": "2026-07-10",
+          "changes": "Añade compras online (stream «Pedidos online» vía /order-followup/backend/v2/orders, filtradas a ONLINE) junto a los tickets de tienda existentes; fuente multi-salida (streams)."
+        },
         {
           "version": "2026-07-08",
           "changes": "Recibos vía API JSON (cookie)."
         }
       ],
       "url": "https://habeas-dev.github.io/sources/leroymerlin-es.json",
-      "updated": "2026-07-10T04:43:36.589Z"
+      "updated": "2026-07-10T06:32:56.489Z"
     },
     {
       "id": "wizink-es",
@@ -247,7 +249,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/wizink-es.json",
-      "updated": "2026-07-10T04:43:36.589Z"
+      "updated": "2026-07-10T06:32:56.489Z"
     }
   ]
 }

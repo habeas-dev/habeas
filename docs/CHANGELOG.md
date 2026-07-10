@@ -2,6 +2,13 @@
 
 ## 0.1.53 → 0.1.54 (in progress)
 
+### Site-capture capabilities (runtime)
+- **Top-level array lists** — a source can set `itemsPath: "$"` when the list response *is* the array (no
+  wrapper object).
+- **Item filter** — `list.keep: {field, values}` keeps only items whose field is in the set (e.g. keep
+  `ONLINE` orders from a list that mixes online and in-store). Enables **Leroy Merlin online purchases**
+  (new `Pedidos online` output) alongside the existing in-store tickets.
+
 ### Canonical store
 - **Drive store button reflects connection** — once you've connected Google Drive for the store, the button
   shows *Disconnect Drive* (and disconnects) instead of always offering *Connect Drive*.

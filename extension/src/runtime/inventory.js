@@ -979,7 +979,14 @@ export function normalizeAmount(v) {
 
 // Map fresh items onto the shared docs array; returns how many were newly added.
 function collect(adapter, data, seen, all, group) {
-  const items = get(data, itemsPathOf(adapter.api.list)) || [];
+  const list = adapter.api.list;
+  let items = get(data, itemsPathOf(list)) || [];
+  // Optional item filter: keep only items whose `field` value is in `values` (e.g. a list that mixes ONLINE
+  // and IN_STORE orders → keep the online ones). dotted field path supported.
+  if (list.keep && list.keep.field && Array.isArray(list.keep.values)) {
+    const vals = new Set(list.keep.values.map(String));
+    items = items.filter((p) => vals.has(String(get(p, list.keep.field))));
+  }
   let added = 0;
   for (const p of items) {
     const doc = mapDoc(adapter, p, group); // carries doc.internalId (templated {group.*}, or synthesized for periods)
@@ -1039,6 +1046,7 @@ function rangeParams(list) {
 // Safe dotted-path getter: get(obj, 'a.b.c'); falls back to a plain key when there's no dot.
 function get(obj, path) {
   if (obj == null || path == null) return undefined;
+  if (path === '$' || path === '') return obj; // the response itself (e.g. a top-level array — no wrapper object)
   if (String(path).indexOf('.') < 0) return obj[path];
   return String(path).split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
 }

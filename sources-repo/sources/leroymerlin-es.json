@@ -1,56 +1,103 @@
 {
-  "api": {
-    "detail": {
-      "headers": {
-        "content-type": "application/json"
-      },
-      "method": "GET",
-      "path": "/customer-space-module/services/customer-after-sales-backend/me/receipts/{internalId}"
-    },
-    "host": "https://www.leroymerlin.es",
-    "list": {
-      "headers": {
-        "content-type": "application/json"
-      },
-      "itemsPath": "receipts",
-      "pageParam": "yearOffset",
-      "pageStart": 2,
-      "paging": "page",
-      "params": {
-        "page": "0",
-        "size": "10"
-      },
-      "path": "/customer-space-module/services/customer-after-sales-backend/me/receipts"
-    }
-  },
+  "id": "leroymerlin-es",
+  "name": "Leroy Merlin España",
+  "service": "leroymerlin",
+  "trust": "community",
+  "domain": "leroymerlin.es",
+  "country": "ES",
+  "categories": [
+    "diy"
+  ],
+  "match": [
+    "https://www.leroymerlin.es/*"
+  ],
+  "openUrl": "https://www.leroymerlin.es/mi-cuenta/mis-compras/historial",
   "auth": {
     "mode": "cookie",
     "replayHeaders": [],
     "loginUrl": "https://www.leroymerlin.es/login.html"
   },
-  "categories": [
-    "diy"
-  ],
-  "domain": "leroymerlin.es",
-  "fields": {
-    "date": "date",
-    "internalId": "id",
-    "number": "number",
-    "storeName": "store.storeName",
-    "total": "totalPriceIncludingVAT.amount"
+  "itemLabel": "Pedido {internalId}",
+  "api": {
+    "host": "https://www.leroymerlin.es"
   },
-  "id": "leroymerlin-es",
-  "match": [
-    "https://www.leroymerlin.es/*"
+  "streams": [
+    {
+      "id": "tickets",
+      "name": "Tickets de tienda",
+      "schema": "receipt@1",
+      "categories": [
+        "diy"
+      ],
+      "api": {
+        "list": {
+          "headers": {
+            "content-type": "application/json"
+          },
+          "itemsPath": "receipts",
+          "pageParam": "yearOffset",
+          "pageStart": 2,
+          "paging": "page",
+          "params": {
+            "page": "0",
+            "size": "10"
+          },
+          "path": "/customer-space-module/services/customer-after-sales-backend/me/receipts"
+        },
+        "detail": {
+          "headers": {
+            "content-type": "application/json"
+          },
+          "method": "GET",
+          "path": "/customer-space-module/services/customer-after-sales-backend/me/receipts/{internalId}"
+        }
+      },
+      "fields": {
+        "date": "date",
+        "internalId": "id",
+        "number": "number",
+        "storeName": "store.storeName",
+        "total": "totalPriceIncludingVAT.amount"
+      }
+    },
+    {
+      "id": "pedidos",
+      "name": "Pedidos online",
+      "schema": "receipt@1",
+      "categories": [
+        "diy"
+      ],
+      "api": {
+        "list": {
+          "headers": {
+            "content-type": "application/json"
+          },
+          "path": "/order-followup/backend/v2/orders",
+          "paging": "none",
+          "itemsPath": "$",
+          "keep": {
+            "field": "orderPlaceType",
+            "values": [
+              "ONLINE"
+            ]
+          }
+        }
+      },
+      "fields": {
+        "internalId": "orderPartNumber",
+        "date": "parentOrder.createdAt",
+        "total": "price.totalAmount",
+        "storeName": "vendors.0.name"
+      }
+    }
   ],
-  "openUrl": "https://www.leroymerlin.es/mi-cuenta/mis-compras/historial",
-  "name": "Leroy Merlin España — receipts",
-  "schema": "receipt@1",
-  "service": "leroymerlin",
-  "trust": "community",
-  "country": "ES",
-  "version": "2026-07-08",
+  "version": "2026-07-10",
+  "minVersion": "0.1.54",
   "changelog": [
+    {
+      "version": "2026-07-10",
+      "changes": "Añade compras online (stream «Pedidos online» vía /order-followup/backend/v2/orders, filtradas a ONLINE) junto a los tickets de tienda existentes; fuente multi-salida (streams)."
+    },
     {
       "version": "2026-07-08",
       "changes": "Recibos vía API JSON (cookie)."

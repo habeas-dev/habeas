@@ -2,18 +2,22 @@
 
 * [DONE v0.1.53.5] ~~Caixabankconsumer: aparece "[object Object]" en el campo Tienda.~~ Fixed: nested
   `{name}` (invoice issuer / receipt store) now resolves to a display string, live + from store.
-* Caixabankconsumer: "descargar todo de nuevo" no trae PDF. **Needs a fresh capture to confirm.** Two
-  likely causes: (a) listing incrementally shows STORE rows (records-only projection → no PDF re-fetch);
-  use **Full history** to re-enumerate + re-fetch PDFs. (b) the `api.pdf.urlField:"Url"` may not match the
-  real field — verify against a capture.
+* Caixabankconsumer: "descargar todo de nuevo" no trae PDF. **Capture confirmed the adapter is CORRECT**
+  (list `…/extractos/consultaonline` → `itemsPath:"Extractos"`; each item's `Url` IS the absolute PDF URL;
+  the PDF GET just needs the `authorization` bearer, which is replayed). So it's not a mapping bug — it's
+  the store-projection (incremental List shows records-only rows with no URL → **use Full history** to
+  re-fetch PDFs) and/or the already-shipped `[object Object]` + direct-fetch (CSP) fixes. Re-test on 0.1.54.
+  (Optional future: persist the PDF URL in the store record so records-only rows can still fetch it.)
 * [DONE v0.1.53.5] ~~Al seleccionar un nuevo source se pone el primer sink. Sink favorito.~~ Fixed: the sink
   chosen for a source is remembered (storage.local `habeas:favsink`) and pre-selected next time.
 * [DONE v0.1.53.7] ~~Echo de menos Google drive como almacén canónico.~~ Added a `drive` store backend
   (`lib/store/drive.js` → `sinks/drive.js#driveStore`), selectable in Settings; per-source JSON at
   `Habeas/_store/<source>.json`. Unit-tested against a faked Drive REST layer. **Needs a live-Drive smoke
   test** (OAuth can't run in node) before relying on it.
-* Leroymerlin: no aparecen las compras online. **Needs a capture** of the online-orders endpoint — the
-  current `leroymerlin-es` source only lists in-store receipts; the online-orders API/shape is unknown.
+* [DONE v0.1.53.10] ~~Leroymerlin: no aparecen las compras online.~~ Capture found online orders at
+  `GET /order-followup/backend/v2/orders` (bare array, mixes ONLINE/IN_STORE). `leroymerlin-es` is now
+  multi-stream: `tickets` (in-store receipts, existing) + `pedidos` (online orders, `itemsPath:"$"` +
+  `keep:{orderPlaceType:[ONLINE]}`). Verified against the real captured response.
 * [DONE v0.1.53.6 bearer / v0.1.53.8 cookie] ~~No se autodetecta el login.~~ Bearer sources resume when the
   token is captured; cookie sources (WiZink) retry the list on the next popup open (arm-on-login-failure +
   pending marker), without disturbing a half-entered login on retry.
