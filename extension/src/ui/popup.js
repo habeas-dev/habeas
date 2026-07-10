@@ -5,7 +5,7 @@ import { ensureSiteFetch, recoverSession, siteBaseUrl } from '../lib/pagefetch.j
 import { pickGroup } from './grouppicker.js';
 import { renderPage, challengeUrlOf } from '../lib/render.js';
 import { writeToSink } from '../sinks/sinks.js';
-import { sinkAcceptsSource, acceptsDoc, sinkAcceptsArtifact } from '../sinks/format.js';
+import { sinkAcceptsSource, acceptsDoc, sinkAcceptsArtifact, groupLabelOf } from '../sinks/format.js';
 import { deliveredSet, markDelivered, getLog, appendLog, getDocMeta, rememberDocMeta } from '../lib/state.js';
 import { badgeWorking, badgeClear } from '../lib/badge.js';
 import { getHandle, verifyPermission } from '../lib/fs.js';
@@ -189,12 +189,12 @@ function renderFiles(d) {
   const files = d._files || [];
   return files.map((f) => `<span class="pill file${f.ok ? '' : ' faint'}"${f.ok ? '' : ` title="${esc(t('file_unavailable'))}"`}>${FILE_ICON[f.ext] || '📄'} ${esc(f.ext.toUpperCase())}</span>`).join(' ');
 }
-// Friendly label for the account/card a row belongs to (grouped sources: banks with several cards). Present
-// on freshly-listed docs (mapDoc attaches _group); empty for rows loaded purely from the store.
+// Friendly label for the account/card a row belongs to (grouped sources: banks with several cards).
+// Freshly-listed docs carry the full _group object; rows loaded from the store carry the persisted
+// `group` label on their record (see buildRecord) — surfaced as d.group by docsFromStore.
 function groupLabel(d) {
-  const g = d && d._group; if (!g) return '';
-  const last4 = String(g.mask || g.iban || g.id || '').match(/(\d{4})\s*$/);
-  return [g.name || g.alias, last4 ? last4[1] : ''].filter(Boolean).join(' ').trim() || String(g.id || g.accountNumber || '').slice(-8);
+  if (d && d._group) return groupLabelOf(d._group);
+  return (d && d.group) || '';
 }
 
 // A record field may be a string OR a nested object ({name,address} for an invoice issuer / receipt store).
@@ -204,7 +204,7 @@ const nameOf = (v) => (v && typeof v === 'object') ? (v.name || v.nombre || v.de
 // Marked _fromStore so send delivers them WITHOUT fetching documents (a projection of what we already have).
 const docsFromStore = (records) => records.map((r) => ({
   internalId: r.internalId, record: r, _fromStore: true,
-  date: r.date, total: r.total ?? r.amount, type: r.type, returnStatus: r.returnStatus,
+  date: r.date, total: r.total ?? r.amount, type: r.type, returnStatus: r.returnStatus, group: r.group || '',
   storeName: nameOf(r.store && r.store.name) || nameOf(r.storeName), label: nameOf(r.store && r.store.name) || nameOf(r.issuer) || nameOf(r.counterparty) || nameOf(r.description) || '',
 }));
 

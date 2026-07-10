@@ -11,13 +11,14 @@ export function pathFor(sink, d, opts, ext) {
     internalId: d.internalId, ext, group,
   });
 }
-// A friendly, filesystem-safe folder name for the doc's group: product name + last 4 (e.g. "WiZink Oro 8765").
-function groupDir(d) {
-  const g = d && d._group;
+// A friendly label for a group (bank account / card): product name + last 4 (e.g. "WiZink Oro 8765").
+// One source of truth, reused by the folder name, the normalized record, and the popup's Group column.
+export function groupLabelOf(g) {
   if (!g) return '';
   const last4 = String(g.mask || g.iban || g.id || '').match(/(\d{4})\s*$/);
-  return [g.name || g.alias, last4 ? last4[1] : ''].filter(Boolean).join(' ').trim() || String(g.id || '').slice(-8);
+  return [g.name || g.alias, last4 ? last4[1] : ''].filter(Boolean).join(' ').trim() || String(g.id || g.accountNumber || '').slice(-8);
 }
+const groupDir = (d) => groupLabelOf(d && d._group);
 // A mapped doc already carries its normalized record (built at inventory time, where the
 // adapter is known). toRecord returns it; the legacy fallback keeps receipt shape for callers
 // that pass a bare doc.
@@ -35,15 +36,21 @@ export function buildRecord(d, adapter) {
   // `number` = the public receipt/invoice number the user sees (distinct from the internal
   // internalId). Added only when mapped, so receipt@1 stays byte-identical when absent.
   const withNumber = (r) => (d.number != null ? { ...r, number: d.number } : r);
+  // `group` = the account/card a grouped source's row belongs to (e.g. "WiZink Oro 8765"). Persisted so a
+  // row loaded from the store still shows its group (the transient _group enrichment is lost on round-trip).
+  // Omitted when the source isn't grouped, so ungrouped records stay byte-identical.
+  const gl = d._group ? groupLabelOf(d._group) : '';
+  const withGroup = (r) => (gl ? { ...r, group: gl } : r);
+  const done = (r) => withGroup(withNumber(r));
   if (kind === 'transaction') {
     const r = { internalId: d.internalId, date: d.date, amount: num(d.amount ?? d.total), currency, category: d.category, description: d.description ?? d.label ?? '', counterparty: d.counterparty ?? d.party ?? '', direction: d.direction ?? dirOf(d.amount ?? d.total), source: d.source, type: d.type };
     // Carry any extra per-movement data a card source captures (merchant city, card mask…) so nothing is lost.
     if (d.location != null && d.location !== '') r.location = d.location;
     if (d.card != null && d.card !== '') r.card = d.card;
-    return withNumber(r);
+    return done(r);
   }
   if (kind === 'investment') {
-    return withNumber({ internalId: d.internalId, date: d.date, instrument: d.instrument ?? d.label ?? '', isin: d.isin ?? '', units: num(d.units), price: num(d.price), amount: num(d.amount ?? d.total), currency, category: d.category, operation: d.operation ?? d.type, source: d.source });
+    return done({ internalId: d.internalId, date: d.date, instrument: d.instrument ?? d.label ?? '', isin: d.isin ?? '', units: num(d.units), price: num(d.price), amount: num(d.amount ?? d.total), currency, category: d.category, operation: d.operation ?? d.type, source: d.source });
   }
   if (kind === 'invoice') {
     const r = { internalId: d.internalId, date: d.date, total: num(d.total), currency, category: d.category, issuer: { name: d.issuer ?? d.storeName ?? d.party ?? '', address: d.issuerAddress ?? d.storeAddress ?? '' }, number: d.number ?? d.internalId, source: d.source, type: d.type };
@@ -51,10 +58,10 @@ export function buildRecord(d, adapter) {
     // row loaded from the store shows it instead of the opaque internalId. Omitted when absent so
     // existing invoice records stay byte-identical.
     if (d.description != null && d.description !== '') r.description = d.description;
-    return r;
+    return withGroup(r);
   }
   // receipt@1 (default) — unchanged shape (number appended only when present).
-  return withNumber({ internalId: d.internalId, date: d.date, total: d.total, currency, category: d.category, store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type });
+  return done({ internalId: d.internalId, date: d.date, total: d.total, currency, category: d.category, store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type });
 }
 function num(v) { if (v == null || v === '') return v; const n = Number(v); return Number.isFinite(n) ? n : v; }
 function dirOf(v) { const n = Number(v); return Number.isFinite(n) ? (n < 0 ? 'debit' : 'credit') : undefined; }
