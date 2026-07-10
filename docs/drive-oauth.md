@@ -31,3 +31,27 @@ refresh token off-device (breaks local-first). So Path A is Chrome-only; Firefox
 401 handling: `getToken` uses Path A automatically; `withToken()` wraps every Drive op and on a 401 calls
 `removeCachedToken(token)` + re-mints once (the throwing helpers surface `401`). Ensure the OAuth app is set
 to **In production** so grants don't expire after 7 days.
+
+## Multi-device sync — use native Drive, NOT a third-party folder syncer
+
+The scope is `drive.file`: **per-file access to files this app created** (or the user opened via the Google
+Picker). This is deliberate — it needs no CASA security assessment (see rule in `CLAUDE.md`). The consequence
+is a hard boundary that trips people up:
+
+- **Files another app put in Drive are invisible to Habeas.** A folder synced up by **Google Drive for
+  Desktop**, **grive2**, **rclone**, Insync, or a manual upload was created by *that* app, not by Habeas's
+  OAuth client → `drive.file` cannot see it. Verified empirically: even picking such a folder via the Google
+  Picker does **not** grant access to the foreign files already inside it (the grant is per creating-app, not
+  per folder). So the native Drive sink can't dedup against them and creates a **second same-named folder**
+  (Drive allows duplicate folder names).
+- **Native Drive IS the multi-device mechanism.** The Drive sink + `backend: drive` canonical store
+  (`Habeas/_store/`) are written by Habeas itself. Because every device runs the **same OAuth client**, each
+  device sees the same app-created store → cross-device dedup works with no external syncer. The extension
+  merges records itself (by `internalId`), so no sync-conflict files.
+- **The local-folder sink** is fine for a single machine (it dedups against its own local `manifest.json`, no
+  Drive API involved) and can sit inside a synced/mounted folder (e.g. Drive Desktop's virtual drive) — but
+  then cross-device dedup depends on that `manifest.json` syncing cleanly, which conflicts if two machines
+  write concurrently.
+
+**Recommendation:** for multi-device, use the **native Google Drive** store + sink and do **not** route Habeas
+data through a third-party folder syncer. Surfaced in the UI as `dest_multidevice_hint` (Settings → Destinos).

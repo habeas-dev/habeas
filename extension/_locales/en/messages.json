@@ -233,6 +233,7 @@
   "search_sources": { "message": "Search sources by name, service, category…" },
   "store_title": { "message": "Canonical store" },
   "store_help": { "message": "Where your extracted data is kept. Sinks and consumers are served from it — so a second sink, device or record-only consumer reuses it instead of re-extracting. Choose local, a synced folder, or your own HTTP endpoint, and move it freely." },
+  "dest_multidevice_hint": { "message": "Syncing across devices? Use the native Google Drive option (store and sink). A folder synced by an external tool (Google Drive Desktop, grive2, rclone…) is invisible to the extension — those files are created by another app, so the drive.file scope can't see them, which duplicates folders and breaks dedup. Native Drive is the same app on every device, so it dedups across them." },
   "store_where": { "message": "Store lives in:" },
   "store_local": { "message": "This device (local)" },
   "store_folder": { "message": "Synced folder" },

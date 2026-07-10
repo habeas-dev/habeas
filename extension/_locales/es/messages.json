@@ -233,6 +233,7 @@
   "search_sources": { "message": "Buscar fuentes por nombre, servicio, categoría…" },
   "store_title": { "message": "Almacén canónico" },
   "store_help": { "message": "Dónde se guardan tus datos extraídos. Los destinos y consumidores se sirven de él — así un segundo destino, dispositivo o consumidor de solo-datos lo reutiliza en vez de re-extraer. Elige local, una carpeta sincronizada o tu propio endpoint HTTP, y muévelo cuando quieras." },
+  "dest_multidevice_hint": { "message": "¿Sincronizas entre dispositivos? Usa la opción Google Drive nativa (almacén y destino). Una carpeta sincronizada por una herramienta externa (Google Drive Desktop, grive2, rclone…) es invisible para la extensión — esos ficheros los crea otra app, y el scope drive.file no puede verlos, lo que duplica carpetas y rompe el dedup. Drive nativo es la misma app en cada equipo, así que deduplica entre ellos." },
   "store_where": { "message": "El almacén vive en:" },
   "store_local": { "message": "Este dispositivo (local)" },
   "store_folder": { "message": "Carpeta sincronizada" },
