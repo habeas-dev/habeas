@@ -45,6 +45,9 @@
   `Habeas/_store/<source>.json`, separate from delivered files. Uses the shipped `drive.file` OAuth client.
 
 ### Interface
+- **Account/group column** — for a source that spans several accounts or cards (e.g. a bank with multiple
+  cards), the list shows which account/card each row belongs to. The column appears only when there are ≥2
+  distinct groups, so single-account sources aren't cluttered.
 - **Formats column** — the document list now shows a badge per attachable format (📄 PDF, 📊 XLS, 🧾 JSON…)
   on each row, so you can see at a glance which items have files and which are records-only (a records-only
   stream like card movements shows none; a statement shows PDF + Excel). A faint badge = the format exists

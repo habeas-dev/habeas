@@ -18,6 +18,7 @@
   "send_to": { "message": "Send to" },
   "send_selected": { "message": "Send selected" },
   "th_date": { "message": "Date" },
+  "th_group": { "message": "Account" },
   "th_type": { "message": "Type" },
   "th_store": { "message": "Store" },
   "th_files": { "message": "Files" },

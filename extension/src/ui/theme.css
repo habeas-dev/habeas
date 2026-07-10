@@ -147,6 +147,9 @@ label { font-size: 12.5px; color: var(--muted); }
 .pill.file.faint { opacity: .38; } /* format exists but not attached to this item */
 td.files { white-space: nowrap; }
 td.files .pill.file { margin-right: 3px; }
+/* Group/account column: hidden unless the source spans ≥2 groups (render() toggles #tbl.has-groups). */
+.col-group { display: none; }
+#tbl.has-groups .col-group { display: table-cell; white-space: nowrap; }
 
 /* Table */
 table { width: 100%; border-collapse: collapse; }

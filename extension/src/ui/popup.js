@@ -177,6 +177,13 @@ function renderFiles(d) {
   const files = d._files || [];
   return files.map((f) => `<span class="pill file${f.ok ? '' : ' faint'}"${f.ok ? '' : ` title="${esc(t('file_unavailable'))}"`}>${FILE_ICON[f.ext] || '📄'} ${esc(f.ext.toUpperCase())}</span>`).join(' ');
 }
+// Friendly label for the account/card a row belongs to (grouped sources: banks with several cards). Present
+// on freshly-listed docs (mapDoc attaches _group); empty for rows loaded purely from the store.
+function groupLabel(d) {
+  const g = d && d._group; if (!g) return '';
+  const last4 = String(g.mask || g.iban || g.id || '').match(/(\d{4})\s*$/);
+  return [g.name || g.alias, last4 ? last4[1] : ''].filter(Boolean).join(' ').trim() || String(g.id || g.accountNumber || '').slice(-8);
+}
 
 // A record field may be a string OR a nested object ({name,address} for an invoice issuer / receipt store).
 // Pull a display string so the table never shows "[object Object]".
@@ -323,11 +330,15 @@ async function render(deliveredArg) {
   const dsId = $('#ds').value, sinkId = $('#sink').value;
   // Accept a precomputed delivered-map so incremental (per-page) renders during listing stay synchronous.
   const delivered = deliveredArg || (sinkId ? await deliveredSet(dsId, sinkId) : {});
+  // Grouped source (a bank with several cards/accounts): show the Group column only when ≥2 distinct groups.
+  const showGroup = new Set(inventory.map(groupLabel).filter(Boolean)).size >= 2;
+  const tbl = $('#tbl'); if (tbl) tbl.classList.toggle('has-groups', showGroup);
   $('#tbl tbody').innerHTML = inventory.map((d, i) => {
     const sent = !!delivered[d.internalId];
     return `<tr data-sent="${sent ? '1' : ''}">
        <td><input type="checkbox" data-i="${i}" ${sent ? '' : 'checked'}></td>
        <td>${(d.date || '').slice(0, 10)}</td>
+       <td class="col-group">${esc(groupLabel(d))}</td>
        <td><span class="pill type">${d.type || ''}</span>${d.returnStatus ? ` <span class="pill returned" title="${d.returnStatus}">↩ ${d.returnStatus}</span>` : ''}</td>
        <td>${d.storeName || d.label || d.internalId || ''}</td>
        <td class="files">${renderFiles(d)}</td>
