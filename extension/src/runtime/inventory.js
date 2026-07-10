@@ -8,6 +8,7 @@
 import { buildRecord } from '../sinks/format.js';
 import { chrome } from '../lib/ext.js';
 import { registrableDomain, hostOf } from '../adapters/validate.js';
+import { esc as escH } from '../lib/esc.js';
 
 // Every fetcher goes through the site's tab (in-session: cookies + cf_clearance + fingerprint, so anti-bot
 // lets it through). But a page-context fetch is bound by THAT page's CSP (connect-src) and can throw a
@@ -435,7 +436,6 @@ export function documentExt(adapter) {
 
 // A clean, self-contained, printable HTML invoice generated from the receipt's detail JSON + record.
 // Cross-browser (no external assets, no tab render); the user prints it to PDF. All values escaped.
-const escH = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function flattenRows(obj, prefix, depth, rows) {
   rows = rows || []; depth = depth || 0;
   if (obj == null || typeof obj !== 'object' || depth > 4) return rows;

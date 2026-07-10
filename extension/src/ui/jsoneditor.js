@@ -6,8 +6,7 @@ import { ensureSiteFetch, recoverSession } from '../lib/pagefetch.js';
 import { pickGroup } from './grouppicker.js';
 import { renderPage } from '../lib/render.js';
 import { loadAuth } from '../lib/authstore.js';
-
-const escf = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+import { esc as escf } from '../lib/esc.js';
 const fmt = (n) => (n == null || n === '' ? '' : String(n));
 
 // Self-contained collapsible JSON tree (inline styles so it renders in any host page).

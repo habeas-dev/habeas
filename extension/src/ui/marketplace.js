@@ -3,11 +3,11 @@ import { applyI18n, t } from '../lib/i18n.js';
 import { fetchIndex, installFromEntry, getRatings, postRating, getComments, postComment } from '../registry/client.js';
 import { getAdapters } from '../adapters/index.js';
 import { meetsMinVersion } from '../lib/version.js';
+import { esc } from '../lib/esc.js';
 
 const $ = (s) => document.querySelector(s);
 // Registry entries come from the network → escape every interpolated value (a reviewed PR is
 // the primary gate, but a hostile-but-valid entry must not be able to inject markup here).
-const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let ENTRIES = [];
 let INSTALLED = {};
 

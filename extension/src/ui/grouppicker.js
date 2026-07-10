@@ -2,8 +2,8 @@
 // user picks WHICH group — or all. Returns the chosen groupId, or undefined for "all" / no groups.
 import { listGroups } from '../runtime/inventory.js';
 import { t } from '../lib/i18n.js';
+import { esc } from '../lib/esc.js';
 
-const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const groupLabel = (g, i) => [g.name || g.alias, g.mask || g.cardMask || g.iban].filter(Boolean).join(' ').trim()
   || (t('group_n', [String(i + 1)]) + (g.id ? ' · …' + String(g.id).slice(-4) : ''));
 

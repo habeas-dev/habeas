@@ -9,9 +9,9 @@ import { renderPage } from '../lib/render.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { saveSource } from '../adapters/index.js';
 import { grantConsent } from '../lib/consent.js';
+import { esc } from '../lib/esc.js';
 
 const $ = (s) => document.querySelector(s);
-const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmt = (n) => (typeof n === 'number' ? n.toFixed(2) : n ?? '');
 let LEARN = null;         // { domain, origin }
 let candidates = [];      // detected source field paths

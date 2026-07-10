@@ -16,6 +16,7 @@ import { hasConsent } from '../lib/consent.js';
 import { loadAuth } from '../lib/authstore.js';
 import { recordDelivered, getRecords, countLive, putItems } from '../lib/store.js';
 import { outputsOf, resolveOutput, storeKeyOf } from '../lib/outputs.js';
+import { esc } from '../lib/esc.js';
 
 let ADAPTERS = {};
 const $ = (s) => document.querySelector(s);
@@ -46,7 +47,7 @@ async function init() {
   ADAPTERS = await getAdapters();
   const cfg = await getConfig();
   const enabled = cfg.datasources.filter((d) => d.enabled);
-  $('#ds').innerHTML = enabled.map((d) => `<option value="${d.id}">${d.id}</option>`).join('') || '<option value="">—</option>';
+  $('#ds').innerHTML = enabled.map((d) => `<option value="${esc(d.id)}">${esc(d.id)}</option>`).join('') || '<option value="">—</option>';
   await populateSinks(cfg);
   renderOutputs(adapterFor($('#ds').value, cfg).adapter);
   if (!enabled.length) $('#status').textContent = t('no_datasources');
@@ -122,7 +123,7 @@ async function populateSinks(cfg) {
   const dsId = $('#ds').value;
   const { adapter } = adapterFor(dsId, cfg);
   const list = cfg.sinks.filter((s) => !adapter || sinkAcceptsSource(s, adapter));
-  $('#sink').innerHTML = list.map((s) => `<option value="${s.id}">${s.id} · ${s.type}</option>`).join('') || '<option value="">—</option>';
+  $('#sink').innerHTML = list.map((s) => `<option value="${esc(s.id)}">${esc(s.id)} · ${esc(s.type)}</option>`).join('') || '<option value="">—</option>';
   const fav = (await getFavSinks())[dsId];
   if (fav && list.some((s) => s.id === fav)) $('#sink').value = fav; // else the first compatible sink stays selected
 }
@@ -132,7 +133,6 @@ const getAuth = (adapter) => loadAuth(adapter);
 // Fill in real date + amount we learned on a past download (source-level meta) for rows whose list only
 // exposes a year (e.g. Amazon). Only overrides a missing/year-only value, so a source with real list data
 // is untouched.
-const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 // A source with several outputs (streams×formats) shows a checkbox per output (default ALL checked) so the
 // user picks which to obtain; hidden for single-output sources.
@@ -337,10 +337,10 @@ async function render(deliveredArg) {
     const sent = !!delivered[d.internalId];
     return `<tr data-sent="${sent ? '1' : ''}">
        <td><input type="checkbox" data-i="${i}" ${sent ? '' : 'checked'}></td>
-       <td>${(d.date || '').slice(0, 10)}</td>
+       <td>${esc((d.date || '').slice(0, 10))}</td>
        <td class="col-group">${esc(groupLabel(d))}</td>
-       <td><span class="pill type">${d.type || ''}</span>${d.returnStatus ? ` <span class="pill returned" title="${d.returnStatus}">↩ ${d.returnStatus}</span>` : ''}</td>
-       <td>${d.storeName || d.label || d.internalId || ''}</td>
+       <td><span class="pill type">${esc(d.type || '')}</span>${d.returnStatus ? ` <span class="pill returned" title="${esc(d.returnStatus)}">↩ ${esc(d.returnStatus)}</span>` : ''}</td>
+       <td>${esc(d.storeName || d.label || d.internalId || '')}</td>
        <td class="files">${renderFiles(d)}</td>
        <td class="r">${fmt(d.total ?? d.amount)}</td>
        <td>${sent ? `<span class="pill sent">${t('pill_sent')}</span>` : `<span class="pill new">${t('pill_new')}</span>`}</td>
@@ -484,7 +484,7 @@ async function renderActivity() {
       : e.status === 'nosession' ? t('st_nosession')
       : e.status === 'challenged' ? t('st_challenged')
       : t('st_ok', [String(n ?? ''), e.sink || '']);
-    return `<div class="activity-item"><span class="when">${when}</span><span class="kind">${e.kind || ''}</span><span>${e.datasource || ''} · ${detail}</span></div>`;
+    return `<div class="activity-item"><span class="when">${esc(when)}</span><span class="kind">${esc(e.kind || '')}</span><span>${esc(e.datasource || '')} · ${esc(detail)}</span></div>`;
   }).join('') || `<p class="muted">${t('no_activity')}</p>`;
 }
 

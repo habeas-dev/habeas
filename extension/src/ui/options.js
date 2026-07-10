@@ -15,10 +15,10 @@ import { editJson } from './jsoneditor.js';
 import { getGrants, revokeGrant } from '../lib/grants.js';
 import { getStoreConfig, moveStoreTo, putItems } from '../lib/store.js';
 import { readSinkRecords } from '../sinks/sinks.js';
+import { esc } from '../lib/esc.js';
 
 let CATALOG = {};
 const $ = (s) => document.querySelector(s);
-const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const flag = (code) => !code ? '' : code === 'global' ? '🌐' : (/^[A-Za-z]{2}$/.test(code) ? code.toUpperCase().replace(/./g, (c) => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)) : '');
 
 // Live client-side filter of a .src-card list by its search box (matches each card's data-hay).
@@ -83,9 +83,9 @@ async function render() {
     const hay = [a.name, a.id, a.service, a.domain, cats].join(' ').toLowerCase();
     const manage = builtin ? '' : `<div class="src-manage">`
       + `<button class="link" data-edit="${esc(a.id)}">${t('edit_json')}</button>`
-      + `<button class="link" data-exp="${a.id}">${t('export_source')}</button>`
-      + `<button class="link" data-share="${a.id}">${t('share_source')}</button>`
-      + `<button class="link danger" data-delsrc="${a.id}">${t('remove')}</button></div>`;
+      + `<button class="link" data-exp="${esc(a.id)}">${t('export_source')}</button>`
+      + `<button class="link" data-share="${esc(a.id)}">${t('share_source')}</button>`
+      + `<button class="link danger" data-delsrc="${esc(a.id)}">${t('remove')}</button></div>`;
     return `<div class="src-card${on ? ' on' : ''}" data-hay="${esc(hay)}">
       <div class="src-info">
         <div class="src-title"><b>${esc(a.name)}</b> <span class="pill type">${trust}</span></div>
@@ -124,11 +124,11 @@ async function render() {
   });
 
   $('#sinks').innerHTML = cfg.sinks.map((s) =>
-    `<div class="card row"><b style="flex:1">${s.id}</b><code>${s.type}</code>
-      ${s.type === 'drive' ? `<button data-conn="${s.id}">${t('connect_drive')}</button>` : ''}
-      ${s.type === 'local-folder' ? `<code>${s.folderName || '—'}</code><button data-folder="${s.id}">${t('change_folder')}</button>` : ''}
-      ${s.url ? `<small>${s.url}</small>` : ''}
-      <button data-del="${s.id}">${t('remove')}</button></div>`).join('')
+    `<div class="card row"><b style="flex:1">${esc(s.id)}</b><code>${esc(s.type)}</code>
+      ${s.type === 'drive' ? `<button data-conn="${esc(s.id)}">${t('connect_drive')}</button>` : ''}
+      ${s.type === 'local-folder' ? `<code>${esc(s.folderName || '—')}</code><button data-folder="${esc(s.id)}">${t('change_folder')}</button>` : ''}
+      ${s.url ? `<small>${esc(s.url)}</small>` : ''}
+      <button data-del="${esc(s.id)}">${t('remove')}</button></div>`).join('')
     || `<p class="muted">${t('no_sinks')}</p>`;
   $('#sinks').querySelectorAll('[data-del]').forEach((b) => b.onclick = async () => { await remove('sinks', b.dataset.del); render(); });
   $('#sinks').querySelectorAll('[data-folder]').forEach((b) => b.onclick = async () => {
@@ -159,7 +159,7 @@ async function render() {
     const route = routeOf(d);
     const dsAdapter = CATALOG[d.adapter];
     const sinks = swSinks.filter((s) => !dsAdapter || sinkAcceptsSource(s, dsAdapter));
-    const opts = sinks.map((s) => `<option value="${s.id}" ${route && route.sink === s.id ? 'selected' : ''}>${esc(s.id)} (${esc(s.type)})</option>`).join('');
+    const opts = sinks.map((s) => `<option value="${esc(s.id)}" ${route && route.sink === s.id ? 'selected' : ''}>${esc(s.id)} (${esc(s.type)})</option>`).join('');
     const hay = [nameOf(d), d.id].join(' ').toLowerCase();
     return `<div class="src-card${route ? ' on' : ''}" data-hay="${esc(hay)}">
       <div class="src-info">
