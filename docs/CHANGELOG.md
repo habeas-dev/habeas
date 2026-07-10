@@ -45,6 +45,10 @@
   `Habeas/_store/<source>.json`, separate from delivered files. Uses the shipped `drive.file` OAuth client.
 
 ### Interface
+- **Formats column** — the document list now shows a badge per attachable format (📄 PDF, 📊 XLS, 🧾 JSON…)
+  on each row, so you can see at a glance which items have files and which are records-only (a records-only
+  stream like card movements shows none; a statement shows PDF + Excel). A faint badge = the format exists
+  for that stream but isn't attached to that particular item.
 - **Auto-resume listing after login** — clicking *List* on a source with no captured session opens the login
   tab and now lists **automatically** the moment your session is detected — no second click. Works whether
   the popup stays open (live) or you reopen it after logging in (a pending marker resumes it). Covers both

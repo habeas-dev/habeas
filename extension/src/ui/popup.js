@@ -152,6 +152,32 @@ function selectedOutputs(adapter) {
   return picked.length ? picked : outs;
 }
 
+// Attachable files for a row: one entry per artifact format the doc's stream can produce (PDF/XLS/JSON…),
+// with `ok` = whether THIS item actually has it (records-only streams → none; a retention-limited PDF may be
+// absent). Precomputed per doc (see tag()/onLoadStore) so render() stays cheap.
+const FILE_ICON = { pdf: '📄', xls: '📊', xlsx: '📊', csv: '📊', json: '🧾', xml: '🧾', html: '🌐', zip: '🗜️' };
+function fileInfo(adapter, d) {
+  const stream = d._stream || '';
+  const outs = outputsOf(adapter).filter((o) => o.stream === stream);
+  const seen = new Set(); const out = [];
+  for (const o of outs) {
+    const eff = resolveOutput(adapter, o.id);
+    const can = artifactKinds(eff);      // artifacts this output CAN produce (source-level)
+    const has = artifactKinds(eff, d);   // artifacts THIS doc can produce (fields present)
+    for (const k of can) {
+      const ext = String(k.ext || 'file').toLowerCase();
+      if (seen.has(ext)) continue; seen.add(ext);
+      out.push({ ext, ok: has.some((a) => a.kind === k.kind) });
+    }
+  }
+  return out;
+}
+// Badges "📄 PDF · 📊 XLS…" for the Formats column; a faint badge = the format exists but not for this item.
+function renderFiles(d) {
+  const files = d._files || [];
+  return files.map((f) => `<span class="pill file${f.ok ? '' : ' faint'}"${f.ok ? '' : ` title="${esc(t('file_unavailable'))}"`}>${FILE_ICON[f.ext] || '📄'} ${esc(f.ext.toUpperCase())}</span>`).join(' ');
+}
+
 // A record field may be a string OR a nested object ({name,address} for an invoice issuer / receipt store).
 // Pull a display string so the table never shows "[object Object]".
 const nameOf = (v) => (v && typeof v === 'object') ? (v.name || v.nombre || v.descripcion || '') : (v == null ? '' : String(v));
@@ -185,7 +211,7 @@ async function onLoadStore() {
   const rows = [];
   for (const sid of streamIds) {
     const sk = storeKeyOf(adapter.id, sid); const fmts = fmtsFor(sid);
-    for (const d of docsFromStore(await getRecords(sk))) { d._stream = sid; d._storeKey = sk; d._formats = fmts; rows.push(d); }
+    for (const d of docsFromStore(await getRecords(sk))) { d._stream = sid; d._storeKey = sk; d._formats = fmts; d._files = fileInfo(adapter, d); rows.push(d); }
   }
   inventory = rows.sort((a, b) => ((a.date || '') < (b.date || '') ? 1 : -1));
   enrichMeta(inventory, known);
@@ -241,7 +267,7 @@ async function onList(mode, opts = {}) {
   const streamIds = [...new Set(outs.map((o) => o.stream))];
   const fmtsFor = (sid) => outs.filter((o) => o.stream === sid).map((o) => o.format);
   const key = (d) => (d._stream || '') + '|' + d.internalId;
-  const tag = (d, sid, sk) => { d._stream = sid; d._storeKey = sk; d._formats = fmtsFor(sid); return d; };
+  const tag = (d, sid, sk) => { d._stream = sid; d._storeKey = sk; d._formats = fmtsFor(sid); d._files = fileInfo(adapter, d); return d; };
   const acc = new Map();
   for (const sid of streamIds) { const sk = storeKeyOf(adapter.id, sid); for (const d of docsFromStore(await getRecords(sk))) acc.set(key(tag(d, sid, sk)), d); }
   const rebuild = () => { inventory = [...acc.values()].sort((a, b) => ((a.date || '') < (b.date || '') ? 1 : -1)); enrichMeta(inventory, known); };
@@ -304,6 +330,7 @@ async function render(deliveredArg) {
        <td>${(d.date || '').slice(0, 10)}</td>
        <td><span class="pill type">${d.type || ''}</span>${d.returnStatus ? ` <span class="pill returned" title="${d.returnStatus}">↩ ${d.returnStatus}</span>` : ''}</td>
        <td>${d.storeName || d.label || d.internalId || ''}</td>
+       <td class="files">${renderFiles(d)}</td>
        <td class="r">${fmt(d.total ?? d.amount)}</td>
        <td>${sent ? `<span class="pill sent">${t('pill_sent')}</span>` : `<span class="pill new">${t('pill_new')}</span>`}</td>
      </tr>`;

@@ -143,6 +143,10 @@ label { font-size: 12.5px; color: var(--muted); }
 .pill.sent { background: var(--brand-50); color: var(--brand-600); }
 .pill.type { background: var(--line); color: var(--muted); }
 .pill.returned { background: #fbe9d0; color: #a6531a; }
+.pill.file { background: var(--brand-50); color: var(--brand-600); font-weight: 600; }
+.pill.file.faint { opacity: .38; } /* format exists but not attached to this item */
+td.files { white-space: nowrap; }
+td.files .pill.file { margin-right: 3px; }
 
 /* Table */
 table { width: 100%; border-collapse: collapse; }
@@ -163,5 +167,6 @@ tbody tr[data-sent="1"] td { color: var(--muted); }
   .pill.sent { background: rgba(42,125,109,.22); color: #8fd3c2; }
   .pill.type { background: #1e2b26; color: #9fb0aa; }
   .pill.returned { background: rgba(166,83,26,.28); color: #e9b483; }
+  .pill.file { background: rgba(42,125,109,.22); color: #8fd3c2; }
   code { background: #17231f; }
 }

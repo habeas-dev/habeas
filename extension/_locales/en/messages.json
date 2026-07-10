@@ -20,6 +20,8 @@
   "th_date": { "message": "Date" },
   "th_type": { "message": "Type" },
   "th_store": { "message": "Store" },
+  "th_files": { "message": "Files" },
+  "file_unavailable": { "message": "not available for this item" },
   "th_amount": { "message": "Amount" },
   "th_status": { "message": "Status" },
   "activity": { "message": "Recent activity" },
