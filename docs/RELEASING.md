@@ -7,8 +7,8 @@
 - **Dev suffix — bump on EVERY change.** `0.1.53.14 → .15`, committed + pushed, **never tagged**. It shows
   in the popup + `chrome://extensions` so the user can confirm a reload picked up the change. Many dev
   iterations accumulate under one milestone.
-- **Milestone — bump ONLY at release.** Drop the suffix (`0.1.53.x → 0.1.54`) when the user asks to
-  publish/release/tag, then tag `vX.Y.Z` (below). Don't cut a milestone on every fix.
+- **Milestone — bump ONLY at release.** Drop the suffix (`0.1.53.x → 0.1.54`) when you're ready to publish,
+  then tag `vX.Y.Z` (below). Don't cut a milestone on every fix.
 
 ## Pre-commit checklist (run every time)
 ```bash
