@@ -1,11 +1,27 @@
 # Releasing Habeas
 
 ## Cadence
-- **Every commit is pushed** to `main`.
-- **Tag by milestone** (`vX.Y.Z`), not per patch bump. A tag triggers CI to build the MV3 zip, attach it
-  to a GitHub **Release**, and (if configured) upload it to the **Chrome Web Store** as a draft.
-- `extension/manifest.json` `version` must increase for every store submission (the CWS rejects a
-  reused version). Bump it with each change (see the extension version convention).
+- **Every commit is pushed** to `main` (`git push git@github.com:habeas-dev/habeas.git main`).
+- `extension/manifest.json` `version` = a 3-part **milestone** (`0.1.53`) + an optional 4th **dev suffix**
+  (`0.1.53.N`). It must increase for every store submission (the CWS rejects a reused version).
+- **Dev suffix — bump on EVERY change.** `0.1.53.14 → .15`, committed + pushed, **never tagged**. It shows
+  in the popup + `chrome://extensions` so the user can confirm a reload picked up the change. Many dev
+  iterations accumulate under one milestone.
+- **Milestone — bump ONLY at release.** Drop the suffix (`0.1.53.x → 0.1.54`) when the user asks to
+  publish/release/tag, then tag `vX.Y.Z` (below). Don't cut a milestone on every fix.
+
+## Pre-commit checklist (run every time)
+```bash
+npm test                       # node:test suite — must be green
+node --check <each touched .js> # syntax
+# en/es locale-key parity — same keys in both files:
+node -e "const a=require('./extension/_locales/en/messages.json'),b=require('./extension/_locales/es/messages.json');const A=Object.keys(a),B=Object.keys(b);console.log(A.length,B.length,A.filter(k=>!B.includes(k)).concat(B.filter(k=>!A.includes(k))))"
+npm run lint                   # web-ext → 0 ERRORS (warnings OK: innerHTML UNSAFE_VAR_ASSIGNMENT; Firefox
+                               # not-supported for identity.getAuthToken/removeCachedAuthToken — guarded)
+git status --short | grep -i "capture\|\.jsonl"   # MUST be empty — never commit a capture
+```
+Commit with a heredoc (multi-line body), conventional-commits, no `Co-Authored-By`/`Claude-Session` trailers,
+bump the manifest version in the same commit. Then push.
 
 ## Cutting a milestone release
 ```bash
@@ -83,3 +99,38 @@ version to AMO **for review** (it goes live after Mozilla approves). The add-on'
 increase each submission (already the case). Habeas ships plain, unminified source, so AMO's
 source-reproducibility requirement is trivially met; if AMO still asks for a source upload, the repo tarball
 is the source.
+
+## Publishing to the community-sources registry (a SEPARATE repo)
+
+`sources-repo/` is a directory tracked in THIS repo (staging/authoring copy). The **live** catalog is a
+separate GitHub repo — **`git@github.com:habeas-dev/sources.git`**, served at `habeas-dev.github.io/sources`
+— with its **own independent history**. **Never** `git subtree split` / force-push it (that would erase that
+history). Publish by applying the same file changes in a clone and pushing **non-force (fast-forward)**:
+
+```bash
+SC=<scratchpad>/sources-check                       # keep a clone here
+git -C "$SC" pull --ff-only
+cp sources-repo/sources/<changed>.json  "$SC/sources/"     # + schema/, scripts/ if they changed
+(cd "$SC" && node scripts/build-index.mjs)          # rebuild index.json
+(cd "$SC" && node scripts/ci-validate.mjs)          # MUST be N/N valid
+git -C "$SC" add -A
+git -C "$SC" -c user.name="David Marín" -c user.email="you@example.com" commit -F - <<'MSG'
+sources: <what changed>
+MSG
+git -C "$SC" push git@github.com:habeas-dev/sources.git HEAD:main
+gh run watch "$(gh run list --repo habeas-dev/sources --limit 1 --json databaseId -q '.[0].databaseId')" \
+  --repo habeas-dev/sources --exit-status   # confirms "Sources CI" built the index + deployed Pages
+```
+
+Per-source fields that matter:
+- **`version`** — a date string (`YYYY-MM-DD`, or `YYYY-MM-DD.N` for a same-day re-publish). Compared
+  **lexicographically** (`marketplace.js#isOutdated` uses `String(a) > String(b)`), so bump it or the
+  marketplace won't offer the update.
+- **`minVersion`** — gates by the running extension version (`lib/version.js#cmpVersion`, numeric dotted).
+  If the source needs a runtime feature that currently only exists in a **dev build**, set `minVersion` to
+  that exact build (e.g. `0.1.53.10`) so the dev build can install/test while published users stay gated
+  (they'll get it once the milestone that includes the feature ships).
+
+**Verify before publishing:** validate with the extension's own `validateAdapter`, and run the runtime
+against a **real captured response** (mock `net` into `listInventory`) — only real, API-verified sources
+ship. Capture files hold the user's real data + live tokens → scratchpad only, never committed, deleted after.

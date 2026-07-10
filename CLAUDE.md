@@ -196,6 +196,52 @@ access — documented, user's responsibility. Full write-up in `README.md` (Lega
 - Keep the runtime small and auditable; push service-specific behavior into declarative
   adapters. Validate JS (`node --check`) and locale key parity (en/es) before committing.
 
+## Session playbook — the routines every Claude session should follow
+
+> How work actually gets committed/versioned/published here. Detailed release + registry steps live in
+> `docs/RELEASING.md`; Drive OAuth setup in `docs/drive-oauth.md`.
+
+**Version cadence (`extension/manifest.json` `version`).** Two parts: a 3-part **milestone** (`0.1.53`) +
+an optional 4th **dev suffix** (`0.1.53.N`).
+- **Bump the dev suffix on EVERY change** (`0.1.53.14` → `.15`), commit it, push it — but **never tag it**.
+  The version shows in the popup + `chrome://extensions`, so the user can verify a reload picked up the change.
+- **Bump the milestone (drop the suffix → `0.1.54`) ONLY when cutting a release**: it groups many dev
+  iterations under one milestone. Then `git tag v0.1.54` + push the tag → CI builds the MV3 zip, attaches it
+  to a GitHub Release, and uploads to CWS (and AMO, once approved). Never reuse a published version (CWS
+  rejects it). Cut a milestone when the user asks to "publish/release/tag", not on every fix.
+
+**Commits & push.** Conventional-commits, English, no `Co-Authored-By`/`Claude-Session` trailers, manifest
+version bumped in the same commit. **Every commit is pushed** (standing directive) via SSH:
+`git push git@github.com:habeas-dev/habeas.git main`. Multi-line messages: write them via a heredoc
+(`git commit -F -`), not `-m` with embedded newlines.
+
+**Before every commit (verify, don't assume):** `npm test` green (node:test, ~150+); `node --check` each
+touched JS; en/es locale-key **parity** (both files same key count/set); `npm run lint` (web-ext) → **0
+errors** — the only expected warnings are the `innerHTML` UNSAFE_VAR_ASSIGNMENT ones and
+`identity.getAuthToken/removeCachedAuthToken not supported by Firefox` (guarded, fine). And **guard captures**:
+`git status` must never stage a `*-capture.jsonl` / proxy dump.
+
+**Community-sources registry (a SEPARATE repo).** `sources-repo/` is a directory tracked in THIS repo
+(staging only). The LIVE catalog is a separate GitHub repo `git@github.com:habeas-dev/sources.git` served at
+`habeas-dev.github.io/sources`, with its **own independent history** — **never subtree-split / force-push it**.
+To publish: keep a clone in the scratchpad (`sources-check`), `git pull --ff-only`, copy the changed files
+from `sources-repo/`, `node scripts/build-index.mjs`, `node scripts/ci-validate.mjs` (must be N/N valid),
+commit `sources: …`, `git push git@github.com:habeas-dev/sources.git HEAD:main` (**non-force, fast-forward**),
+then `gh run watch` the "Sources CI" run to confirm the Pages deploy. Bump the source's `version` (string-
+compared lexicographically → the marketplace offers the update; use `YYYY-MM-DD` or `YYYY-MM-DD.N` same day).
+`minVersion` gates by extension version (`lib/version.js#cmpVersion`); if a source needs a runtime feature
+only in a dev build, set `minVersion` to that exact dev build (e.g. `0.1.53.10`) so the dev build can test
+while published users stay gated. **Verify a source end-to-end against a REAL captured response** (mock `net`
+into `listInventory`) before publishing — only real, API-verified sources ship.
+
+**Captures = the user's real data.** `*-capture.jsonl` / mitmproxy dumps hold real financial data + live
+tokens → keep them ONLY in the scratchpad, **never commit**, and **delete them** once the adapter is built.
+mitmproxy runs on **:8082** (CA already trusted in `~/.pki/nssdb`); addon → scratchpad JSONL. See the
+`mitmproxy-capture` + `chrome-capture-setup` memories.
+
+**Bash safety.** Never generate `cd X && <write_op>` compound commands — use `-C`/`--source-dir` flags or a
+separate `cd` call first (harness path-safety check).
+
 ## Consumers (decoupled — separate projects)
 
 - **Tiquetera** (Spanish grocery-receipt app) — accepts `grocery` via an HTTP sink
