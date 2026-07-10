@@ -2,6 +2,14 @@
 
 ## 0.1.53 → 0.1.54 (in progress)
 
+### Fixes
+- **`Failed to fetch` on listing (e.g. Carrefour)** — the in-session request runs inside the site's tab and
+  is bound by that page's CSP (`connect-src`). If the tab sat on a page that doesn't allow the API host
+  (home/login vs the account SPA), the fetch failed at the network level. The runtime now retries **directly
+  from the extension** on such a failure — for a CORS-open API host granted in `host_permissions` this
+  succeeds and bypasses the page CSP. A real HTTP error (e.g. an anti-bot 403) is *not* retried, so
+  Cloudflare-gated sources still rely on the tab; an expired token now surfaces a clean `4xx` instead.
+
 ### Interface
 - **Switching source clears the list** — changing the source selector now resets the document table,
   status and buttons, so you no longer see the previous source's rows (e.g. WiZink movements lingering

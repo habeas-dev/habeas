@@ -9,6 +9,24 @@ import { buildRecord } from '../sinks/format.js';
 import { chrome } from '../lib/ext.js';
 import { registrableDomain, hostOf } from '../adapters/validate.js';
 
+// Every fetcher goes through the site's tab (in-session: cookies + cf_clearance + fingerprint, so anti-bot
+// lets it through). But a page-context fetch is bound by THAT page's CSP (connect-src) and can throw a
+// network-level error (status 0 — "Failed to fetch") when the tab sits on a page that doesn't allow the API
+// host (e.g. Carrefour's home/login page vs its account SPA). On such a failure, retry DIRECTLY from the
+// extension: for a CORS-open API host granted in host_permissions (Carrefour's pro.api.carrefour.es, not
+// behind anti-bot) the direct fetch succeeds and bypasses the page CSP; if the token is merely expired it
+// returns a clean 4xx instead of an opaque network error. A 4xx/5xx from the tab is a real HTTP response
+// (anti-bot 403 included) → NOT retried, so Cloudflare-gated sources still rely on the tab. No tab → the
+// direct fetch is the only path anyway.
+export function netFetch(net) {
+  if (!net) return (u, i) => fetch(u, i);
+  return async (u, i) => {
+    let r; try { r = await net(u, i); } catch (e) { r = null; }
+    if (!r || r.status === 0) { try { return await fetch(u, i); } catch (e) { if (r) return r; throw e; } }
+    return r;
+  };
+}
+
 // Some services gate the PDF behind a Referer that must be the document's detail page. A page/
 // extension fetch cannot set Referer (forbidden header) — declarativeNetRequest is the MV3 way.
 let __ruleSeq = 1;
@@ -68,7 +86,7 @@ export async function listInventory(adapter, auth, net, opts) {
 // CSRF prelude: GET a page and extract a token (e.g. WiZink's securityToken hidden input / JS var) with
 // a regex (adapter.api.csrf.match, capture group 1). Reused as {csrf} in POST bodies and PDF URLs.
 async function fetchCsrf(adapter, auth, net) {
-  const NET = net || ((u, i) => fetch(u, i));
+  const NET = netFetch(net);
   const c = adapter.api.csrf;
   const host = c.host ? absHost(c.host) : adapter.api.host;
   const url = host + c.path;
@@ -101,7 +119,7 @@ export async function listGroups(adapter, auth, net) {
   return out;
 }
 async function fetchGroupItems(adapter, auth, net) {
-  const NET = net || ((u, i) => fetch(u, i));
+  const NET = netFetch(net);
   const g = adapter.api.groups;
   const host = g.host ? absHost(g.host) : adapter.api.host;
   const path = fillCtx(g.path, auth); // {ctx.*} — e.g. a captured DNI in /posicionGlobal/es/{ctx.dni}
@@ -304,7 +322,7 @@ async function pageListPeriods(adapter, auth, net, group, opts) {
 // POST one period page (current / dates / past) and return its raw HTML. Mirrors fetchList's request
 // shape: query string = periodCfg.params, form body = periodCfg.body with {group.*}/{csrf}/{period} filled.
 async function fetchPeriodHtml(adapter, auth, net, group, periodCfg, extra) {
-  const NET = net || ((u, i) => fetch(u, i));
+  const NET = netFetch(net);
   const list = adapter.api.list;
   const path = tmplGroup(list.path, group);
   const params = periodCfg.params || {};
@@ -532,7 +550,7 @@ function base64ToBlob(b64, mime) {
 }
 
 export async function fetchPdf(adapter, auth, docOrId, net) {
-  const NET = net || ((u, i) => fetch(u, i));
+  const NET = netFetch(net);
   const doc = docOrId && typeof docOrId === 'object' ? docOrId : null;
   const internalId = doc ? doc.internalId : docOrId;
   const pdf = adapter.api.pdf;
@@ -694,7 +712,7 @@ async function inlineAssets(html, baseUrl, NET) {
   return html;
 }
 async function fetchHtmlDoc(adapter, auth, internalId, net) {
-  const NET = net || ((u, i) => fetch(u, i));
+  const NET = netFetch(net);
   const d = adapter.api.detail;
   const host = d.host ? absHost(d.host) : adapter.api.host;
   const path = d.path.split('{internalId}').join(tid(internalId));
@@ -738,7 +756,7 @@ export function extractDetailFields(html, cfg) {
 }
 
 export async function fetchDetail(adapter, auth, docOrId, net) {
-  const NET = net || ((u, i) => fetch(u, i));
+  const NET = netFetch(net);
   const doc = docOrId && typeof docOrId === 'object' ? docOrId : null;
   const internalId = doc ? doc.internalId : docOrId;
   const d = adapter.api.detail;
@@ -764,7 +782,7 @@ export async function fetchDetail(adapter, auth, docOrId, net) {
 }
 
 async function fetchList(adapter, auth, params, net, group) {
-  const NET = net || ((u, i) => fetch(u, i));
+  const NET = netFetch(net);
   const list = adapter.api.list;
   const html = list.from === 'html';
   // {group.*} in the list path / param values / referer → the account (group) currently being listed.
