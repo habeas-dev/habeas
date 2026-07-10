@@ -24,6 +24,16 @@ export async function setSecret(name, value) {
   await chrome.storage.local.set({ [KEY]: s });
 }
 
+// Low-level helpers for other modules that keep their own encrypted-at-rest values in storage.local
+// (e.g. the Drive token cache) using the SAME key as the secrets store. encryptString returns an
+// envelope to persist; decryptString returns the plaintext, or null on any failure (never throws).
+export async function encryptString(plaintext) {
+  return encryptValue(await getKey(), plaintext);
+}
+export async function decryptString(payload) {
+  try { return await decryptValue(await getKey(), payload); } catch { return null; }
+}
+
 export async function getSecret(ref) {
   if (!ref) return null;
   const name = String(ref).replace(/^secret:\/\//, '');

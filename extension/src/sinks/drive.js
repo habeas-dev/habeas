@@ -2,6 +2,7 @@
 // public client, implicit token flow — no client secret) with scope drive.file, which
 // grants access ONLY to files this app creates and needs no Google CASA assessment.
 import { chrome } from '../lib/ext.js';
+import { encryptString, decryptString } from '../lib/secrets.js';
 import { pathFor, toRecords, mergeRecords } from './format.js';
 
 const SCOPE = 'https://www.googleapis.com/auth/drive.file';
@@ -32,12 +33,21 @@ export async function connectDrive(clientId, interactive = true) {
   const p = new URLSearchParams(new URL(redir).hash.slice(1));
   const token = p.get('access_token');
   if (!token) throw new Error('sin token (' + (p.get('error') || 'desconocido') + ')');
-  const rec = { token, expiresAt: Date.now() + (Number(p.get('expires_in') || 3600) - 60) * 1000 };
+  const expiresAt = Date.now() + (Number(p.get('expires_in') || 3600) - 60) * 1000;
   // Persist in storage.local (survives browser restart) so the user isn't re-prompted on every Chrome open.
   // This is the delivery-sink OAuth token (scope drive.file), NOT a scraped site session — those still live
   // only in storage.session (rule #3). It's short-lived (~1h); a silent prompt=none refresh renews it.
-  await chrome.storage.local.set({ ['gdrive:' + clientId]: rec });
-  return rec;
+  // The token is encrypted at rest (only expiresAt stays plaintext, so freshness checks need no decrypt).
+  await chrome.storage.local.set({ ['gdrive:' + clientId]: { tokenEnc: await encryptString(token), expiresAt } });
+  return { token, expiresAt };
+}
+
+// Read a token out of a cached gdrive entry: decrypt the envelope, or accept a legacy plaintext `token`
+// (installs from before at-rest encryption — self-heals within ~1h when the next refresh rewrites it).
+async function readCachedToken(cached) {
+  if (!cached) return null;
+  if (cached.tokenEnc) return await decryptString(cached.tokenEnc);
+  return cached.token || null;
 }
 
 // PATH A (Chrome, preferred): chrome.identity.getAuthToken. Chrome holds a long-lived grant tied to the
@@ -70,7 +80,10 @@ async function getToken(clientId, interactive) {
   clientId = cid(clientId);
   const key = 'gdrive:' + clientId;
   const o = await chrome.storage.local.get(key);
-  if (o[key] && o[key].expiresAt > Date.now()) return o[key].token; // valid cached token → no network, no prompt
+  if (o[key] && o[key].expiresAt > Date.now()) { // valid cached token → no network, no prompt
+    const tok = await readCachedToken(o[key]);
+    if (tok) return tok;
+  }
   try { return (await connectDrive(clientId, false)).token; }        // silent refresh (prompt=none)
   catch (e) { if (!interactive) throw e; return (await connectDrive(clientId, true)).token; } // only NOW a UI prompt
 }
@@ -99,7 +112,8 @@ export async function driveConnected(clientId) {
   if (hasChromeAuth()) { try { await chromeGetToken(false); return true; } catch (e) { return false; } }
   const key = 'gdrive:' + cid(clientId);
   const o = await chrome.storage.local.get(key);
-  return !!(o[key] && o[key].token && o[key].expiresAt > Date.now());
+  const c = o[key];
+  return !!(c && (c.tokenEnc || c.token) && c.expiresAt > Date.now()); // presence + freshness; no decrypt needed
 }
 // Disconnect: Path A → drop Chrome's cached token; Path B → drop the stored token. (We don't revoke the grant
 // server-side; the user can do that from their Google account.)

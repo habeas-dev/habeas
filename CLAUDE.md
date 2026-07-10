@@ -218,7 +218,10 @@ access — documented, user's responsibility. Full write-up in `README.md` (Lega
   read. Keeps credentials out of plaintext `storage.local` — not a defense against a stolen profile
   (no stable user secret in MV3). Externally-proposed sinks' pairing-token headers now also go to the
   secrets store via `sink.headersRef` (`lib/sinkheaders.js`; legacy plaintext `sink.headers` migrated
-  on background startup + still honored at send). Still plaintext: the `gdrive:*` cached token (short-lived).
+  on background startup + still honored at send). The Path-B `gdrive:*` OAuth token is also encrypted
+  (`sinks/drive.js` via `secrets.js#encryptString`; only `expiresAt` stays plaintext, legacy plaintext
+  self-heals on the next ~1h refresh). Only non-encrypted at-rest state left is non-sensitive (config,
+  ledger, grants) and the memory-only `storage.session` scraped auth (rule #3, never disk).
 - ~~Harden dynamic HTML~~ DONE: all network/source/OS-derived values in `ui/popup.js` + `ui/options.js`
   now escaped via a single shared `lib/esc.js` (was 7 duplicated inline helpers). web-ext/AMO still
   flags `innerHTML` structurally, but no unescaped dynamic sink remains.

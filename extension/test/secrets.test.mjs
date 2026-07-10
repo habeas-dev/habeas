@@ -11,7 +11,7 @@ globalThis.chrome = { storage: { local: {
   set: async (obj) => { Object.assign(LOCAL, obj); },
 } } };
 
-const { setSecret, getSecret, _setKeyProvider } = await import('../src/lib/secrets.js');
+const { setSecret, getSecret, encryptString, decryptString, _setKeyProvider } = await import('../src/lib/secrets.js');
 const KEY = await generateSecretKey();
 _setKeyProvider(async () => KEY);
 
@@ -55,4 +55,14 @@ test('an envelope encrypted under a different key decrypts to null (no throw)', 
   _setKeyProvider(async () => await generateSecretKey());
   assert.equal(await getSecret('http-1'), null);
   _setKeyProvider(async () => KEY); // restore
+});
+
+test('encryptString/decryptString round-trip on the same store key', async () => {
+  const p = await encryptString('drive-access-token');
+  assert.ok(p.v === 1 && p.iv && p.ct);
+  assert.equal(await decryptString(p), 'drive-access-token');
+});
+
+test('decryptString returns null on a bad/tampered payload (never throws)', async () => {
+  assert.equal(await decryptString({ v: 1, iv: 'AAAAAAAAAAAAAAAA', ct: 'BBBBBBBB' }), null);
 });
