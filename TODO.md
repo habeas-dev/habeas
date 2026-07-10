@@ -1,10 +1,23 @@
 # Habeas — TODO
 
-* Caixabankconsumer: le digo que descargue todo de nuevo y no me trae ningún PDF. Aparece "[object Object]" en el campo Tienda.
-* Al seleccionar un nuevo source se me pone, por defecto, el primer sink configurado. Deberíamos poder seleccionar un sink favorito
-* Echo de menos Google drive como lugar para establecer el almacén canónico
-* Leroymerlin: no aparecen las compras online
-* En general: no se autodetecta cuando he hecho login. Si le doy a "Listar documentos" y se me abre una ventana y hago login, esperaría que Habeas detectara el momento en el que he hecho login y listara los documentos según lo esperado.
+* [DONE v0.1.53.5] ~~Caixabankconsumer: aparece "[object Object]" en el campo Tienda.~~ Fixed: nested
+  `{name}` (invoice issuer / receipt store) now resolves to a display string, live + from store.
+* Caixabankconsumer: "descargar todo de nuevo" no trae PDF. **Needs a fresh capture to confirm.** Two
+  likely causes: (a) listing incrementally shows STORE rows (records-only projection → no PDF re-fetch);
+  use **Full history** to re-enumerate + re-fetch PDFs. (b) the `api.pdf.urlField:"Url"` may not match the
+  real field — verify against a capture.
+* [DONE v0.1.53.5] ~~Al seleccionar un nuevo source se pone el primer sink. Sink favorito.~~ Fixed: the sink
+  chosen for a source is remembered (storage.local `habeas:favsink`) and pre-selected next time.
+* Echo de menos Google drive como lugar para establecer el almacén canónico. **Pending:** add a `drive`
+  canonical-store backend (`lib/store/drive.js`) alongside local/folder/http; the store role already reads
+  back from a Drive sink for rehydration, but Drive isn't yet a selectable store BACKEND. Folder-synced-to-
+  Drive currently covers it.
+* Leroymerlin: no aparecen las compras online. **Needs a capture** of the online-orders endpoint — the
+  current `leroymerlin-es` source only lists in-store receipts; the online-orders API/shape is unknown.
+* [DONE v0.1.53.6] ~~No se autodetecta el login.~~ Fixed for BEARER sources: List with no session opens the
+  login tab and auto-resumes listing when the token is captured (live listener + pending marker on reopen).
+  **Still pending for COOKIE sources** (WiZink): their session can't be detected via token capture — needs a
+  different signal (watch the tab reaching a logged-in URL, or a post-login retry).
 
 ## External hooks — manual / e2e validation (pending)
 

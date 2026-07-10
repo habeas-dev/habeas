@@ -34,6 +34,7 @@
   "no_datasources": { "message": "Activate a data source in Settings." },
   "capture_hint": { "message": "Open the site and your purchases page to capture your session, then retry." },
   "login_in_tab": { "message": "Log in to the site in the tab we just opened, then try again." },
+  "login_wait": { "message": "Log in to the site in the tab we opened — listing resumes automatically once your session is detected." },
   "cookies_cleared": { "message": "Cleared $N$ site cookies for a clean login.", "placeholders": { "n": { "content": "$1" } } },
   "cookies_cleared_login": { "message": "Cleared $N$ site cookies — log in in the new tab, then test again.", "placeholders": { "n": { "content": "$1" } } },
   "listing": { "message": "Listing…" },

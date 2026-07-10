@@ -71,12 +71,42 @@ async function init() {
   watchThemeIcon();
   await renderActivity();
   chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch['habeas:log']) renderActivity(); });
+  await resumePendingList(); // a list left pending on login resumes automatically once the session is captured
 }
 
 function adapterFor(dsId, cfg) {
   const ds = cfg.datasources.find((d) => d.id === dsId);
   return { ds, adapter: ds && ADAPTERS[ds.adapter] };
 }
+// Auto-resume listing after login: when List is clicked with no captured session, we open the login tab
+// and want to list AUTOMATICALLY once the token is captured. The popup closes when you focus the login tab,
+// so we persist a pending marker (re-checked on the NEXT popup open) AND, if the popup stays open, watch
+// storage.session live. Bearer sources only (a cookie source's session can't be detected this way).
+const PEND_KEY = 'habeas:pendinglist';
+async function setPendingList(ds, mode) { try { await chrome.storage.local.set({ [PEND_KEY]: { ds, mode: mode || '' } }); } catch (e) {} }
+async function clearPendingList(ds) { try { const o = await chrome.storage.local.get(PEND_KEY); if (o[PEND_KEY] && (!ds || o[PEND_KEY].ds === ds)) await chrome.storage.local.remove(PEND_KEY); } catch (e) {} }
+let __authWatch = null;
+function watchAuthResume(adapter, mode) {
+  if (__authWatch) { try { chrome.storage.onChanged.removeListener(__authWatch); } catch (e) {} __authWatch = null; }
+  __authWatch = async (ch, area) => {
+    if (area !== 'session') return; // token captures live in storage.session
+    if (await getAuth(adapter)) { try { chrome.storage.onChanged.removeListener(__authWatch); } catch (e) {} __authWatch = null; await clearPendingList($('#ds').value); onList(mode); }
+  };
+  chrome.storage.onChanged.addListener(__authWatch);
+}
+// On popup open: if a list was left pending (user went to log in) and the session is now captured, resume it.
+async function resumePendingList() {
+  let p; try { p = (await chrome.storage.local.get(PEND_KEY))[PEND_KEY]; } catch (e) {}
+  if (!p || !p.ds) return;
+  const cfg = await getConfig(); const { adapter } = adapterFor(p.ds, cfg);
+  if (!adapter) { await clearPendingList(); return; }
+  if (await getAuth(adapter)) { // logged in since → resume automatically
+    await clearPendingList();
+    $('#ds').value = p.ds; await populateSinks(cfg); renderOutputs(adapter); refreshStoreButton();
+    onList(p.mode || undefined);
+  }
+}
+
 // Per-source preferred sink: remember the sink last chosen for a source and default to it next time
 // (instead of always the first). Stored in storage.local, keyed by datasource id.
 const FAV_KEY = 'habeas:favsink';
@@ -188,12 +218,17 @@ async function onList(mode) {
   if (!(await hasConsent(adapter))) { $('#status').textContent = t('needs_consent'); return; }
   const auth = await getAuth(adapter);
   if (!auth) {
-    // Bearer source with no captured token yet. Open the site tab ONLY if none is open (don't reload an
-    // existing one on every click) so the in-session hook grabs the token as you load/log in, then retry.
+    // Bearer source with no captured token yet. Open the site tab so the in-session hook grabs the token as
+    // you log in, and AUTO-RESUME listing the moment it's captured — no second click. Two paths because the
+    // popup closes when you click into the login tab: a live listener (popup still open) + a pending marker
+    // re-checked when you reopen the popup (popup closed).
     await ensureSiteFetch(adapter, { open: true });
-    $('#status').textContent = t('login_in_tab');
+    $('#status').textContent = t('login_wait');
+    await setPendingList($('#ds').value, mode);
+    watchAuthResume(adapter, mode);
     return;
   }
+  await clearPendingList($('#ds').value); // have a session now → drop any stale "resume after login" marker
   const sinkId = $('#sink').value;
   const delivered = sinkId ? await deliveredSet($('#ds').value, sinkId) : {};
   const known = await getDocMeta(adapter.id);

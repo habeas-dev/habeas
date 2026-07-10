@@ -3,6 +3,10 @@
 ## 0.1.53 → 0.1.54 (in progress)
 
 ### Interface
+- **Auto-resume listing after login** — clicking *List* on a source with no captured session opens the login
+  tab and now lists **automatically** the moment your session is detected — no second click. Works whether
+  the popup stays open (live) or you reopen it after logging in (a pending marker resumes it). Bearer-token
+  sources (e.g. Carrefour, CaixaBank); cookie sources still need a manual retry.
 - **Preferred sink per source** — the sink you pick for a source is remembered and pre-selected next time,
   instead of always defaulting to the first configured sink.
 - **No more `[object Object]` in the Store column** — an invoice's issuer (and any nested `{name}` field) is
