@@ -1,7 +1,7 @@
 import { chrome } from '../lib/ext.js';
 import { getConfig, upsert, remove } from '../lib/config.js';
 import { setSecret } from '../lib/secrets.js';
-import { connectDrive, redirectUri, driveConnected, disconnectDrive } from '../sinks/drive.js';
+import { driveSignIn, redirectUri, driveConnected, disconnectDrive } from '../sinks/drive.js';
 import { putHandle, getHandle, verifyPermission } from '../lib/fs.js';
 import { sinkAcceptsSource } from '../sinks/format.js';
 import { watchThemeIcon } from '../lib/theme-icon.js';
@@ -144,7 +144,7 @@ async function render() {
   $('#sinks').querySelectorAll('[data-conn]').forEach((b) => b.onclick = async () => {
     const s = (await getConfig()).sinks.find((x) => x.id === b.dataset.conn);
     b.disabled = true; b.textContent = t('connecting');
-    try { await connectDrive(s.clientId); b.textContent = '✓ ' + t('connected'); }
+    try { await driveSignIn(s.clientId); b.textContent = '✓ ' + t('connected'); }
     catch (e) { b.textContent = t('connect_drive'); alert('Drive: ' + e.message); }
     finally { b.disabled = false; }
   });
@@ -250,7 +250,7 @@ async function paintDriveBtn(btn) {
 }
 async function connectStoreDrive() {
   // Pre-authorize (drive.file scope) so Move doesn't have to trigger the OAuth popup mid-migration.
-  try { await connectDrive(undefined, true); $('#store-status').textContent = t('store_folder_ok'); }
+  try { await driveSignIn(); $('#store-status').textContent = t('store_folder_ok'); }
   catch (e) { $('#store-status').textContent = t('store_move_err', [(e && e.message) || String(e)]); }
   renderStoreFields(); // repaint → button becomes "Disconnect Drive"
 }
@@ -269,7 +269,7 @@ async function moveStore() {
   if (b === 'folder') cfg.id = 'canon';
   // Drive store ops are silent (never surprise-prompt). Move IS a deliberate user action, so ensure a token
   // interactively here (once) — after this the cached token is reused silently for all store writes.
-  if (b === 'drive' && !(await driveConnected())) { try { await connectDrive(undefined, true); } catch (e) { $('#store-status').textContent = t('store_move_err', [(e && e.message) || String(e)]); return; } }
+  if (b === 'drive' && !(await driveConnected())) { try { await driveSignIn(); } catch (e) { $('#store-status').textContent = t('store_move_err', [(e && e.message) || String(e)]); return; } }
   $('#store-status').textContent = t('store_moving');
   try { const n = await moveStoreTo(cfg); $('#store-status').textContent = t('store_moved', [String(n)]); }
   catch (e) { $('#store-status').textContent = t('store_move_err', [(e && e.message) || String(e)]); }

@@ -89,6 +89,11 @@ async function withToken(clientId, interactive, fn) {
   }
 }
 
+// User-initiated "Connect Drive": obtain a token INTERACTIVELY. On Chrome this is Path A (getAuthToken) —
+// Chrome-native consent, NO chromiumapp.org redirect URI (so no redirect_uri_mismatch); on Firefox it's the
+// Path B implicit flow. Use this for the Settings Connect buttons instead of connectDrive directly.
+export async function driveSignIn(clientId) { return getToken(clientId, true); }
+
 // "Connected" = a token can be obtained SILENTLY (Path A: Chrome has a grant; Path B: a valid cached token).
 export async function driveConnected(clientId) {
   if (hasChromeAuth()) { try { await chromeGetToken(false); return true; } catch (e) { return false; } }
