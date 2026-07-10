@@ -157,6 +157,9 @@ thead th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; co
 tbody td { padding: 9px 10px; border-bottom: 1px solid var(--line); }
 tbody tr:hover { background: var(--brand-50); }
 td.r, th.r { text-align: right; }
+thead th.sortable { cursor: pointer; user-select: none; }
+thead th.sortable:hover { color: var(--brand-600); }
+thead th.sortable .sort-ind { font-size: 10px; }
 td.r, tbody td:nth-child(2) { white-space: nowrap; }
 tbody tr[data-sent="1"] td { color: var(--muted); }
 

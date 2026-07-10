@@ -17,10 +17,15 @@ import { loadAuth } from '../lib/authstore.js';
 import { recordDelivered, getRecords, countLive, putItems } from '../lib/store.js';
 import { outputsOf, resolveOutput, storeKeyOf } from '../lib/outputs.js';
 import { esc } from '../lib/esc.js';
+import { inventoryView, distinctBy } from '../lib/inventoryview.js';
 
 let ADAPTERS = {};
 const $ = (s) => document.querySelector(s);
 let inventory = [];
+// Inventory view state: filter by group/type (''=all) and sort by a column. Grouped sources (banks with
+// several cards/accounts) can narrow to one account; entries can be narrowed/ordered by type too.
+let filterGroup = '', filterType = '', sortKey = 'date', sortDir = -1; // date defaults newest-first (dir -1)
+const resetView = () => { filterGroup = ''; filterType = ''; sortKey = 'date'; sortDir = -1; };
 const log = (m) => { const el = $('#log'); if (el) el.textContent += m + '\n'; console.debug('[Habeas]', m); };
 const clearLog = () => { const el = $('#log'); if (el) el.textContent = ''; };
 const fmt = (n) => (typeof n === 'number' ? n.toFixed(2) + ' €' : '');
@@ -58,8 +63,8 @@ async function init() {
   $('#sink').onchange = async () => { await setFavSink($('#ds').value, $('#sink').value); render(); }; // remember this source's preferred sink
   $('#ds').onchange = async () => {
     // Switching source → the previous source's rows are no longer relevant: clear the inventory + surfaces.
-    inventory = []; clearLog(); $('#status').textContent = '';
-    $('#sendbar').hidden = true; $('#selbar').hidden = true;
+    inventory = []; resetView(); clearLog(); $('#status').textContent = '';
+    $('#sendbar').hidden = true; $('#selbar').hidden = true; $('#filterbar').hidden = true;
     const c = await getConfig(); await populateSinks(c); renderOutputs(adapterFor($('#ds').value, c).adapter);
     await render(); refreshStoreButton();
   };
@@ -67,6 +72,13 @@ async function init() {
   $('#sel-new').onclick = () => setSelection('new');
   $('#sel-all').onclick = () => setSelection('all');
   $('#sel-none').onclick = () => setSelection('none');
+  $('#filter-group').onchange = () => { filterGroup = $('#filter-group').value; render(); };
+  $('#filter-type').onchange = () => { filterType = $('#filter-type').value; render(); };
+  document.querySelectorAll('#tbl th.sortable').forEach((th) => { th.onclick = () => {
+    const k = th.dataset.sort;
+    if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = k === 'date' ? -1 : 1; } // date newest-first, group/type A→Z
+    render();
+  }; });
   $('#stop').onclick = () => { if (aborter) { aborter.abort(); $('#status').textContent = t('stopping'); } };
   await badgeClear();
   watchThemeIcon();
@@ -326,26 +338,59 @@ async function onList(mode, opts = {}) {
   } finally { busy(false); aborter = null; }
 }
 
+const distinctGroups = () => distinctBy(inventory, groupLabel);
+const distinctTypes = () => distinctBy(inventory, (d) => d.type);
+
+// Populate + show/hide the group/type filter selects for the current inventory; drop any filter whose value
+// no longer exists (e.g. after re-listing a different source). Returns whether the Group column is shown.
+function syncFilterControls() {
+  const groups = distinctGroups(), types = distinctTypes();
+  const showGroup = groups.length >= 2, showType = types.length >= 2;
+  const fill = (sel, show, opts, cur, allLabel) => {
+    if (!sel) return '';
+    sel.hidden = !show;
+    sel.innerHTML = `<option value="">${esc(t(allLabel))}</option>` + opts.map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join('');
+    sel.value = show && opts.includes(cur) ? cur : '';
+    return sel.value;
+  };
+  filterGroup = fill($('#filter-group'), showGroup, groups, filterGroup, 'filter_all_groups');
+  filterType = fill($('#filter-type'), showType, types, filterType, 'filter_all_types');
+  const fb = $('#filterbar'); if (fb) fb.hidden = !(showGroup || showType);
+  return showGroup;
+}
+
+function syncSortIndicators() {
+  document.querySelectorAll('#tbl th.sortable').forEach((th) => {
+    const ind = th.querySelector('.sort-ind');
+    if (ind) ind.textContent = th.dataset.sort === sortKey ? (sortDir < 0 ? ' ▼' : ' ▲') : '';
+  });
+}
+
+const rowHtml = (d, i, delivered) => {
+  const sent = !!delivered[d.internalId];
+  return `<tr data-sent="${sent ? '1' : ''}">
+     <td><input type="checkbox" data-i="${i}" ${sent ? '' : 'checked'}></td>
+     <td>${esc((d.date || '').slice(0, 10))}</td>
+     <td class="col-group">${esc(groupLabel(d))}</td>
+     <td><span class="pill type">${esc(d.type || '')}</span>${d.returnStatus ? ` <span class="pill returned" title="${esc(d.returnStatus)}">↩ ${esc(d.returnStatus)}</span>` : ''}</td>
+     <td>${esc(d.storeName || d.label || d.internalId || '')}</td>
+     <td class="files">${renderFiles(d)}</td>
+     <td class="r">${fmt(d.total ?? d.amount)}</td>
+     <td>${sent ? `<span class="pill sent">${t('pill_sent')}</span>` : `<span class="pill new">${t('pill_new')}</span>`}</td>
+   </tr>`;
+};
+
 async function render(deliveredArg) {
   const dsId = $('#ds').value, sinkId = $('#sink').value;
   // Accept a precomputed delivered-map so incremental (per-page) renders during listing stay synchronous.
   const delivered = deliveredArg || (sinkId ? await deliveredSet(dsId, sinkId) : {});
   // Grouped source (a bank with several cards/accounts): show the Group column only when ≥2 distinct groups.
-  const showGroup = new Set(inventory.map(groupLabel).filter(Boolean)).size >= 2;
+  const showGroup = syncFilterControls();
   const tbl = $('#tbl'); if (tbl) tbl.classList.toggle('has-groups', showGroup);
-  $('#tbl tbody').innerHTML = inventory.map((d, i) => {
-    const sent = !!delivered[d.internalId];
-    return `<tr data-sent="${sent ? '1' : ''}">
-       <td><input type="checkbox" data-i="${i}" ${sent ? '' : 'checked'}></td>
-       <td>${esc((d.date || '').slice(0, 10))}</td>
-       <td class="col-group">${esc(groupLabel(d))}</td>
-       <td><span class="pill type">${esc(d.type || '')}</span>${d.returnStatus ? ` <span class="pill returned" title="${esc(d.returnStatus)}">↩ ${esc(d.returnStatus)}</span>` : ''}</td>
-       <td>${esc(d.storeName || d.label || d.internalId || '')}</td>
-       <td class="files">${renderFiles(d)}</td>
-       <td class="r">${fmt(d.total ?? d.amount)}</td>
-       <td>${sent ? `<span class="pill sent">${t('pill_sent')}</span>` : `<span class="pill new">${t('pill_new')}</span>`}</td>
-     </tr>`;
-  }).join('');
+  // View keeps each row's ORIGINAL inventory index (the checkbox data-i → onSend selection mapping).
+  const view = inventoryView(inventory, { filterGroup, filterType, sortKey, sortDir }, groupLabel);
+  $('#tbl tbody').innerHTML = view.map(({ d, i }) => rowHtml(d, i, delivered)).join('');
+  syncSortIndicators();
 }
 
 function setSelection(mode) {
