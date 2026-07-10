@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.53 → 0.1.54 (in progress)
+
+### Interface
+- **Clearer send result** — a records-only stream (e.g. card movements, which have no document by design)
+  no longer reports "0 PDF … N without PDF", which read like a failure. It now says
+  "Saved to «sink»: manifest with N records". Sources that *can* produce documents still report how many
+  had none ("K without a document"), and genuine failures still show "F failed".
+
 ## 0.1.52 → 0.1.53
 
 ### Fixes

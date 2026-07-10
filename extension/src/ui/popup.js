@@ -350,7 +350,15 @@ async function onSend() {
       for (const d of eligible) { const sk = d._storeKey || adapter.id; (byStore.get(sk) || byStore.set(sk, []).get(sk)).push(d); }
       for (const [sk, docs] of byStore) await recordDelivered(sk, docs, { source: adapter.id, schema: outFor(docs[0], '').schema });
     } catch (e) { /* store is best-effort */ }
-    const m = (aborted() ? t('stopped') + ' · ' : '') + t('sent_result', [sink.id, String(written), String(eligible.length), String(noPdf.length)]) + (failed.length ? ' · ' + t('n_failed', [String(failed.length)]) : '') + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : '');
+    // Does this delivery involve documents at all? A transactions/records-only stream has none BY DESIGN —
+    // so "0 PDF, N without PDF" would wrongly read as a failure. Only mention missing documents when the
+    // source can actually produce them (then "K without a document" is genuinely informative, e.g. old
+    // Amazon tickets with no PDF).
+    const expectsDocs = eligible.some((d) => formatsOf(d).some((fmt) => artifactKinds(outFor(d, fmt)).length));
+    const head = expectsDocs
+      ? t('sent_docs', [sink.id, String(written), String(eligible.length)]) + (noPdf.length ? ' · ' + t('n_nodoc', [String(noPdf.length)]) : '')
+      : t('sent_records', [sink.id, String(eligible.length)]);
+    const m = (aborted() ? t('stopped') + ' · ' : '') + head + (failed.length ? ' · ' + t('n_failed', [String(failed.length)]) : '') + (skipped ? ' · ' + t('skipped_incompat', [String(skipped)]) : '');
     $('#status').textContent = m; log(m);
     await appendLog({ kind: 'manual', datasource: $('#ds').value, sink: sink.id, status: aborted() ? 'stopped' : (failed.length ? 'partial' : 'ok'), count: written });
     await render();
