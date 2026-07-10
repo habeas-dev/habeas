@@ -196,6 +196,9 @@ function groupLabel(d) {
   if (d && d._group) return groupLabelOf(d._group);
   return (d && d.group) || '';
 }
+// The stream's display name (e.g. "Extractos"), used as a readable fallback label for rows whose records
+// carry no descriptive field — so a statement shows "Extractos" instead of its opaque internalId.
+const streamNameOf = (adapter, sid) => ((adapter && adapter.streams || []).find((s) => s.id === sid) || {}).name || '';
 
 // A record field may be a string OR a nested object ({name,address} for an invoice issuer / receipt store).
 // Pull a display string so the table never shows "[object Object]".
@@ -230,7 +233,7 @@ async function onLoadStore() {
   const rows = [];
   for (const sid of streamIds) {
     const sk = storeKeyOf(adapter.id, sid); const fmts = fmtsFor(sid);
-    for (const d of docsFromStore(await getRecords(sk))) { d._stream = sid; d._storeKey = sk; d._formats = fmts; d._files = fileInfo(adapter, d); rows.push(d); }
+    for (const d of docsFromStore(await getRecords(sk))) { d._stream = sid; d._streamName = streamNameOf(adapter, sid); d._storeKey = sk; d._formats = fmts; d._files = fileInfo(adapter, d); rows.push(d); }
   }
   inventory = rows.sort((a, b) => ((a.date || '') < (b.date || '') ? 1 : -1));
   enrichMeta(inventory, known);
@@ -286,7 +289,7 @@ async function onList(mode, opts = {}) {
   const streamIds = [...new Set(outs.map((o) => o.stream))];
   const fmtsFor = (sid) => outs.filter((o) => o.stream === sid).map((o) => o.format);
   const key = (d) => (d._stream || '') + '|' + d.internalId;
-  const tag = (d, sid, sk) => { d._stream = sid; d._storeKey = sk; d._formats = fmtsFor(sid); d._files = fileInfo(adapter, d); return d; };
+  const tag = (d, sid, sk) => { d._stream = sid; d._streamName = streamNameOf(adapter, sid); d._storeKey = sk; d._formats = fmtsFor(sid); d._files = fileInfo(adapter, d); return d; };
   const acc = new Map();
   for (const sid of streamIds) { const sk = storeKeyOf(adapter.id, sid); for (const d of docsFromStore(await getRecords(sk))) acc.set(key(tag(d, sid, sk)), d); }
   const rebuild = () => { inventory = [...acc.values()].sort((a, b) => ((a.date || '') < (b.date || '') ? 1 : -1)); enrichMeta(inventory, known); };
@@ -375,7 +378,7 @@ const rowHtml = (d, i, delivered) => {
      <td>${esc((d.date || '').slice(0, 10))}</td>
      <td class="col-group">${esc(groupLabel(d))}</td>
      <td><span class="pill type">${esc(d.type || '')}</span>${d.returnStatus ? ` <span class="pill returned" title="${esc(d.returnStatus)}">↩ ${esc(d.returnStatus)}</span>` : ''}</td>
-     <td>${esc(d.storeName || d.label || d.internalId || '')}</td>
+     <td>${esc(d.storeName || d.label || d._streamName || d.internalId || '')}</td>
      <td class="files">${renderFiles(d)}</td>
      <td class="r">${fmt(d.total ?? d.amount)}</td>
      <td>${sent ? `<span class="pill sent" title="${esc(t('pill_sent_hint'))}">${t('pill_sent')}</span>` : `<span class="pill new" title="${esc(t('pill_new_hint'))}">${t('pill_new')}</span>`}</td>
