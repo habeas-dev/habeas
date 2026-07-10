@@ -224,6 +224,7 @@
   "store_where": { "message": "Store lives in:" },
   "store_local": { "message": "This device (local)" },
   "store_folder": { "message": "Synced folder" },
+  "store_drive": { "message": "Google Drive" },
   "store_http": { "message": "HTTP endpoint" },
   "store_move": { "message": "Move store here" },
   "store_pick_folder": { "message": "Choose folder…" },

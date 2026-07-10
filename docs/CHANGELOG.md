@@ -2,6 +2,11 @@
 
 ## 0.1.53 → 0.1.54 (in progress)
 
+### Canonical store
+- **Google Drive as a store backend** — you can now host the canonical store on Google Drive (Settings →
+  where the store lives), alongside local / synced-folder / HTTP. Per-source store JSON lives under
+  `Habeas/_store/<source>.json`, separate from delivered files. Uses the shipped `drive.file` OAuth client.
+
 ### Interface
 - **Auto-resume listing after login** — clicking *List* on a source with no captured session opens the login
   tab and now lists **automatically** the moment your session is detected — no second click. Works whether

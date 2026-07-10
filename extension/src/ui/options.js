@@ -240,6 +240,12 @@ function renderStoreFields() {
   const b = $('#store-backend').value; const f = $('#store-fields'); f.innerHTML = '';
   if (b === 'http') { const i = document.createElement('input'); i.id = 'store-url'; i.type = 'url'; i.placeholder = 'https://…'; i.size = 24; f.append(i); getStoreConfig().then((c) => { if (c.backend === 'http') i.value = c.url || ''; }); }
   else if (b === 'folder') { const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = t('store_pick_folder'); btn.onclick = pickStoreFolder; f.append(btn); }
+  else if (b === 'drive') { const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = t('connect_drive'); btn.onclick = connectStoreDrive; f.append(btn); }
+}
+async function connectStoreDrive() {
+  // Pre-authorize (drive.file scope) so Move doesn't have to trigger the OAuth popup mid-migration.
+  try { await connectDrive(undefined, true); $('#store-status').textContent = t('store_folder_ok'); }
+  catch (e) { $('#store-status').textContent = t('store_move_err', [(e && e.message) || String(e)]); }
 }
 async function pickStoreFolder() {
   try { const h = await window.showDirectoryPicker(); await putHandle('store-dir:canon', h); $('#store-status').textContent = t('store_folder_ok'); }

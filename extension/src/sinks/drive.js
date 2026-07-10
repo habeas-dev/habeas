@@ -83,6 +83,42 @@ export async function driveWrite(sink, docs, files, opts) {
   return { written: n, total: docs.length };
 }
 
+// Canonical-store backend on Drive: each source's store JSON at Habeas/<storeFolder>/<sourceId>.json,
+// kept apart from the delivered-record manifests (Habeas/<service>/…) so the store never mixes with files.
+// Drive filenames allow ":" (unlike the File System Access API), so the sourceId — which may be a stream
+// key like "wizink-es:movimientos" — is used verbatim, keeping listSources() a faithful round-trip.
+export function driveStore(cfg = {}) {
+  const clientId = cfg.clientId;
+  const root = cfg.rootFolderName || 'Habeas';
+  const sub = cfg.storeFolder || '_store';
+  const interactive = cfg.interactive !== false;
+  const dirId = async (token) => ensureFolderPath(token, [root, sub], {});
+  return {
+    async loadSource(id) {
+      const token = await getToken(clientId, interactive);
+      const j = await readJson(token, id + '.json', await dirId(token));
+      return j && typeof j === 'object' && !Array.isArray(j) && j.items ? j : null; // a store source object, not the [] readJson miss
+    },
+    async saveSource(id, data) {
+      const token = await getToken(clientId, interactive);
+      await putJson(token, id + '.json', await dirId(token), JSON.stringify(data));
+    },
+    async listSources() {
+      const token = await getToken(clientId, interactive);
+      const rootId = await findFile(token, root, 'root', true); if (!rootId) return [];
+      const subId = await findFile(token, sub, rootId, true); if (!subId) return [];
+      return listFolderJson(token, subId);
+    },
+  };
+}
+async function listFolderJson(token, parentId) {
+  const q = `'${parentId}' in parents and trashed=false and mimeType!='application/vnd.google-apps.folder'`;
+  const r = await fetch('https://www.googleapis.com/drive/v3/files?fields=files(name)&q=' + encodeURIComponent(q), { headers: { Authorization: 'Bearer ' + token } });
+  if (!r.ok) return [];
+  const d = await r.json().catch(() => ({}));
+  return (d.files || []).map((f) => f.name).filter((n) => n.endsWith('.json')).map((n) => n.slice(0, -5));
+}
+
 async function ensureFolderPath(token, parts, cache) {
   let parentId = 'root', path = '';
   for (const name of parts) {

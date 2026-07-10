@@ -8,10 +8,10 @@
   real field — verify against a capture.
 * [DONE v0.1.53.5] ~~Al seleccionar un nuevo source se pone el primer sink. Sink favorito.~~ Fixed: the sink
   chosen for a source is remembered (storage.local `habeas:favsink`) and pre-selected next time.
-* Echo de menos Google drive como lugar para establecer el almacén canónico. **Pending:** add a `drive`
-  canonical-store backend (`lib/store/drive.js`) alongside local/folder/http; the store role already reads
-  back from a Drive sink for rehydration, but Drive isn't yet a selectable store BACKEND. Folder-synced-to-
-  Drive currently covers it.
+* [DONE v0.1.53.7] ~~Echo de menos Google drive como almacén canónico.~~ Added a `drive` store backend
+  (`lib/store/drive.js` → `sinks/drive.js#driveStore`), selectable in Settings; per-source JSON at
+  `Habeas/_store/<source>.json`. Unit-tested against a faked Drive REST layer. **Needs a live-Drive smoke
+  test** (OAuth can't run in node) before relying on it.
 * Leroymerlin: no aparecen las compras online. **Needs a capture** of the online-orders endpoint — the
   current `leroymerlin-es` source only lists in-store receipts; the online-orders API/shape is unknown.
 * [DONE v0.1.53.6] ~~No se autodetecta el login.~~ Fixed for BEARER sources: List with no session opens the
