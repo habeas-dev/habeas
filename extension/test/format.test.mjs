@@ -1,6 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sinkAcceptsArtifact, sourceFormats, pathFor } from '../src/sinks/format.js';
+import { sinkAcceptsArtifact, sourceFormats, pathFor, mergeRecords } from '../src/sinks/format.js';
+
+test('mergeRecords keeps the cumulative manifest oldest → newest', () => {
+  const merged = mergeRecords(
+    [{ internalId: 'a', date: '2026-01-05' }],
+    [{ internalId: 'b', date: '2026-03-01' }, { internalId: 'c', date: '2026-02-01' }],
+  );
+  assert.deepEqual(merged.map((r) => r.internalId), ['a', 'c', 'b']);
+});
 
 test('pathFor puts a grouped doc under a top-level group folder (name + last4)', () => {
   const doc = { internalId: 'ACC1|2026-06-23', date: '2026-06-23', _group: { name: 'WiZink Oro', mask: '**** **** **** 8765' } };

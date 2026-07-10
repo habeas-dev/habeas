@@ -106,7 +106,7 @@ export function mergeRecords(existing, incoming) {
   const map = new Map();
   for (const r of existing || []) if (r && r.internalId) map.set(r.internalId, r);
   for (const r of incoming) map.set(r.internalId, r);
-  return [...map.values()].sort((a, b) => ((a.date || '') < (b.date || '') ? 1 : -1));
+  return [...map.values()].sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : (a.date || '') > (b.date || '') ? 1 : 0)); // oldest → newest
 }
 export function buildManifest(docs, files) {
   return JSON.stringify(toRecords(docs, files), null, 2);

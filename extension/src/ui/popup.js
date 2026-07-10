@@ -411,7 +411,10 @@ async function onSend() {
   const auth = await getAuth(adapter);
   const chosen = [...document.querySelectorAll('#tbl input:checked')].map((c) => inventory[+c.dataset.i]);
   if (!chosen.length) { $('#status').textContent = t('nothing_selected'); return; }
-  const eligible = chosen.filter((d) => acceptsDoc(sink, d));
+  // Deliver oldest → newest regardless of the table's display order, so documents are saved (files written,
+  // manifest appended) chronologically rather than newest-first.
+  const eligible = chosen.filter((d) => acceptsDoc(sink, d))
+    .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : (a.date || '') > (b.date || '') ? 1 : 0));
   const skipped = chosen.length - eligible.length;
   if (!eligible.length) { $('#status').textContent = t('none_compatible'); return; }
 
