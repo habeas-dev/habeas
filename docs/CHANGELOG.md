@@ -9,6 +9,9 @@
   (no error alarm) and retries after you solve it; a manual List opens the check and asks you to retry.
 
 ### Site-capture capabilities (runtime)
+- **Bridge empty pages** — `list.stopAfterEmpty` lets the `page` pager skip N consecutive empty pages before
+  stopping, so a year-partitioned list isn't cut short by a gap year (e.g. Leroy Merlin tickets when there
+  were no purchases in 2025). Default 0 = stop at the first empty page (unchanged).
 - **Top-level array lists** — a source can set `itemsPath: "$"` when the list response *is* the array (no
   wrapper object).
 - **Item filter** — `list.keep: {field, values}` keeps only items whose field is in the set (e.g. keep

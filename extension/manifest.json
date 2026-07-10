@@ -1,47 +1,99 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extName__",
-  "version": "0.1.53.12",
+  "version": "0.1.53.13",
   "description": "__MSG_extDesc__",
   "default_locale": "en",
-  "action": { "default_title": "Habeas", "default_icon": { "16": "icon-16.png", "48": "icon-48.png", "128": "icon-128.png" } },
-  "icons": { "16": "icon-16.png", "48": "icon-48.png", "128": "icon-128.png" },
+  "action": {
+    "default_title": "Habeas",
+    "default_icon": {
+      "16": "icon-16.png",
+      "48": "icon-48.png",
+      "128": "icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icon-16.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
+  },
   "options_page": "src/ui/options.html",
-  "background": { "service_worker": "src/background.js", "scripts": ["src/background.js"], "type": "module" },
-  "permissions": ["storage", "downloads", "identity", "notifications", "scripting", "declarativeNetRequestWithHostAccess", "cookies", "webRequest"],
+  "background": {
+    "service_worker": "src/background.js",
+    "scripts": [
+      "src/background.js"
+    ],
+    "type": "module"
+  },
+  "permissions": [
+    "storage",
+    "downloads",
+    "identity",
+    "notifications",
+    "scripting",
+    "declarativeNetRequestWithHostAccess",
+    "cookies",
+    "webRequest"
+  ],
   "host_permissions": [
     "https://www.carrefour.es/*",
     "https://pro.api.carrefour.es/*",
     "https://www.googleapis.com/*"
   ],
-  "optional_host_permissions": ["https://*/*"],
+  "optional_host_permissions": [
+    "https://*/*"
+  ],
   "content_scripts": [
     {
-      "matches": ["https://www.carrefour.es/*"],
-      "js": ["src/content/hook.js"],
+      "matches": [
+        "https://www.carrefour.es/*"
+      ],
+      "js": [
+        "src/content/hook.js"
+      ],
       "run_at": "document_start",
       "world": "MAIN"
     },
     {
-      "matches": ["https://www.carrefour.es/*"],
-      "js": ["src/content/bridge.js"],
+      "matches": [
+        "https://www.carrefour.es/*"
+      ],
+      "js": [
+        "src/content/bridge.js"
+      ],
       "run_at": "document_start"
     },
     {
-      "matches": ["https://*/*"],
-      "js": ["src/content/extbridge.js"],
+      "matches": [
+        "https://*/*"
+      ],
+      "js": [
+        "src/content/extbridge.js"
+      ],
       "run_at": "document_idle",
       "all_frames": false
     }
   ],
   "web_accessible_resources": [
-    { "resources": ["src/content/hook.js"], "matches": ["https://www.carrefour.es/*", "https://*/*"] }
+    {
+      "resources": [
+        "src/content/hook.js"
+      ],
+      "matches": [
+        "https://www.carrefour.es/*",
+        "https://*/*"
+      ]
+    }
   ],
   "browser_specific_settings": {
     "gecko": {
       "id": "habeas@habeas.dev",
       "strict_min_version": "140.0",
-      "data_collection_permissions": { "required": ["none"] }
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
     },
     "gecko_android": {
       "strict_min_version": "142.0"

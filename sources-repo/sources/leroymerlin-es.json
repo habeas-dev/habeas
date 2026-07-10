@@ -37,6 +37,7 @@
           "itemsPath": "receipts",
           "pageParam": "yearOffset",
           "pageStart": 0,
+          "stopAfterEmpty": 3,
           "paging": "page",
           "params": {
             "page": "0",
@@ -85,9 +86,13 @@
       }
     }
   ],
-  "version": "2026-07-10.2",
-  "minVersion": "0.1.53.10",
+  "version": "2026-07-10.3",
+  "minVersion": "0.1.53.13",
   "changelog": [
+    {
+      "version": "2026-07-10.3",
+      "changes": "Tickets: no cortar al llegar a un año sin compras (stopAfterEmpty) — antes se paraba en 2025 (sin compras) y ocultaba los tickets más antiguos."
+    },
     {
       "version": "2026-07-10.2",
       "changes": "Stream «Pedidos»: mostrar TODOS los pedidos de «mis pedidos» (se quita el filtro que dejaba solo los ONLINE y ocultaba pedidos de tienda que también aparecen ahí)."
