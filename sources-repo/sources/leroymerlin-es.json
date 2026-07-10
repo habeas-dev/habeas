@@ -62,7 +62,7 @@
     },
     {
       "id": "pedidos",
-      "name": "Pedidos online",
+      "name": "Pedidos",
       "schema": "receipt@1",
       "categories": [
         "diy"
@@ -74,13 +74,7 @@
           },
           "path": "/order-followup/backend/v2/orders",
           "paging": "none",
-          "itemsPath": "$",
-          "keep": {
-            "field": "orderPlaceType",
-            "values": [
-              "ONLINE"
-            ]
-          }
+          "itemsPath": "$"
         }
       },
       "fields": {
@@ -91,9 +85,13 @@
       }
     }
   ],
-  "version": "2026-07-10.1",
+  "version": "2026-07-10.2",
   "minVersion": "0.1.53.10",
   "changelog": [
+    {
+      "version": "2026-07-10.2",
+      "changes": "Stream «Pedidos»: mostrar TODOS los pedidos de «mis pedidos» (se quita el filtro que dejaba solo los ONLINE y ocultaba pedidos de tienda que también aparecen ahí)."
+    },
     {
       "version": "2026-07-10.1",
       "changes": "Tickets de tienda: empezar en el año actual (yearOffset 0) — antes empezaba 2 años atrás y se saltaba las compras de este año y el anterior."
