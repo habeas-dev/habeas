@@ -267,6 +267,9 @@ async function moveStore() {
   const b = $('#store-backend').value; const cfg = { backend: b };
   if (b === 'http') { cfg.url = ($('#store-url') && $('#store-url').value || '').trim(); if (!cfg.url) { $('#store-status').textContent = t('store_need_url'); return; } }
   if (b === 'folder') cfg.id = 'canon';
+  // Drive store ops are silent (never surprise-prompt). Move IS a deliberate user action, so ensure a token
+  // interactively here (once) — after this the cached token is reused silently for all store writes.
+  if (b === 'drive' && !(await driveConnected())) { try { await connectDrive(undefined, true); } catch (e) { $('#store-status').textContent = t('store_move_err', [(e && e.message) || String(e)]); return; } }
   $('#store-status').textContent = t('store_moving');
   try { const n = await moveStoreTo(cfg); $('#store-status').textContent = t('store_moved', [String(n)]); }
   catch (e) { $('#store-status').textContent = t('store_move_err', [(e && e.message) || String(e)]); }

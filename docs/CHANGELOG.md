@@ -20,6 +20,13 @@
   (new `Pedidos online` output) alongside the existing in-store tickets.
 
 ### Canonical store
+- **The Drive store never surprise-prompts** — a store on Google Drive now does all its reads/writes
+  **silently** (background write-through, the popup count hint), so an expired-token refresh that can't
+  complete silently no longer pops the OAuth window "every now and then". You grant Drive **once** via
+  Settings → *Connect Drive* (also ensured when you *Move* the store to Drive); after that the persisted
+  token is reused/refreshed silently, and if it ever fully lapses the store just pauses until you reconnect
+  (shown in Settings) instead of interrupting you. Store ops are best-effort — a token/Drive hiccup never
+  breaks a List or a delivery.
 - **No more Drive re-prompt on every Chrome open** — the Drive OAuth token is now cached in `storage.local`
   (survives browser restart) instead of `storage.session` (wiped each restart, which forced a re-auth every
   open). After one grant it's reused silently, with a `prompt=none` refresh on expiry. A store on Drive

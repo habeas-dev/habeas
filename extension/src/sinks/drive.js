@@ -107,28 +107,37 @@ export function driveStore(cfg = {}) {
   const clientId = cfg.clientId;
   const root = cfg.rootFolderName || 'Habeas';
   const sub = cfg.storeFolder || '_store';
-  // A store on Drive DOES need to authorize — so a real op (List / deliver) prompts when no token can be
-  // obtained silently. But a PASSIVE read (the popup's count hint) passes {interactive:false} so it never
-  // pops the window just to show a number; it silently no-ops instead. The token persists in storage.local,
-  // so after the one grant a valid token is reused across restarts (no prompt every Chrome open).
-  const interactive = cfg.interactive !== false;
+  // The store NEVER pops the OAuth window on its own — its reads/writes run in the background (auto-sync
+  // write-through, the popup's count hint) where a surprise prompt is jarring, and an expired-token refresh
+  // that can't complete silently would otherwise pop "every now and then". So all store ops are SILENT
+  // (prompt=none): a valid/renewable token → they work; otherwise they no-op (best-effort). The user grants
+  // ONCE via Settings → "Connect Drive" (the only interactive path). Token persists in storage.local.
+  const interactive = cfg.interactive === true; // default false — opt in explicitly (Connect Drive button)
   const ia = (opts) => (opts && opts.interactive === false ? false : interactive);
   const dirId = async (token) => ensureFolderPath(token, [root, sub], {});
+  // Best-effort: a silent-token failure (or a transient Drive error) must NOT throw — it would break a List
+  // or a delivery. Reads → null (no store data), writes → skipped. The user reconnects via Settings.
   return {
     async loadSource(id, opts) {
-      const token = await getToken(clientId, ia(opts));
-      const j = await readJson(token, id + '.json', await dirId(token));
-      return j && typeof j === 'object' && !Array.isArray(j) && j.items ? j : null; // a store source object, not the [] readJson miss
+      try {
+        const token = await getToken(clientId, ia(opts));
+        const j = await readJson(token, id + '.json', await dirId(token));
+        return j && typeof j === 'object' && !Array.isArray(j) && j.items ? j : null; // a store source object, not the [] readJson miss
+      } catch (e) { return null; }
     },
     async saveSource(id, data) {
-      const token = await getToken(clientId, interactive);
-      await putJson(token, id + '.json', await dirId(token), JSON.stringify(data));
+      try {
+        const token = await getToken(clientId, interactive);
+        await putJson(token, id + '.json', await dirId(token), JSON.stringify(data));
+      } catch (e) { /* can't reach the Drive store right now → keep it best-effort */ }
     },
     async listSources() {
-      const token = await getToken(clientId, interactive);
-      const rootId = await findFile(token, root, 'root', true); if (!rootId) return [];
-      const subId = await findFile(token, sub, rootId, true); if (!subId) return [];
-      return listFolderJson(token, subId);
+      try {
+        const token = await getToken(clientId, interactive);
+        const rootId = await findFile(token, root, 'root', true); if (!rootId) return [];
+        const subId = await findFile(token, sub, rootId, true); if (!subId) return [];
+        return listFolderJson(token, subId);
+      } catch (e) { return []; }
     },
   };
 }
