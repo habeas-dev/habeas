@@ -20,6 +20,11 @@
   (new `Pedidos online` output) alongside the existing in-store tickets.
 
 ### Canonical store
+- **Drive "grant once, silent forever" on Chrome (opt-in)** — `getToken` now prefers
+  `chrome.identity.getAuthToken` when a `manifest.oauth2` client is configured: Chrome holds the long-lived
+  grant and silently refreshes the token forever after one consent, so the 1-hour expiry never triggers a
+  re-prompt. Falls back to the implicit flow on Firefox / when unconfigured. See `docs/drive-oauth.md` for
+  the one-time OAuth-client setup.
 - **The Drive store never surprise-prompts** — a store on Google Drive now does all its reads/writes
   **silently** (background write-through, the popup count hint), so an expired-token refresh that can't
   complete silently no longer pops the OAuth window "every now and then". You grant Drive **once** via

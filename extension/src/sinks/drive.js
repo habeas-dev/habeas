@@ -40,7 +40,30 @@ export async function connectDrive(clientId, interactive = true) {
   return rec;
 }
 
+// PATH A (Chrome, preferred): chrome.identity.getAuthToken. Chrome holds a long-lived grant tied to the
+// signed-in Google account and silently mints/refreshes access tokens FOREVER after one consent — no 1h
+// re-prompt, no refresh-token handling by us. Requires manifest.oauth2 (a "Chrome Extension"-type OAuth
+// client). When it isn't configured (or on Firefox, which has no getAuthToken), we fall back to PATH B.
+function hasChromeAuth() {
+  try { const m = chrome.runtime.getManifest(); return !!(chrome.identity && chrome.identity.getAuthToken && m.oauth2 && m.oauth2.client_id); } catch (e) { return false; }
+}
+function chromeGetToken(interactive) {
+  return new Promise((resolve, reject) => {
+    chrome.identity.getAuthToken({ interactive: !!interactive }, (r) => {
+      const err = chrome.runtime.lastError;
+      const token = r && (typeof r === 'string' ? r : r.token);
+      if (err || !token) reject(new Error(err ? err.message : 'no token')); else resolve(token);
+    });
+  });
+}
+export function removeCachedToken(token) { // call on a 401 so getAuthToken re-mints instead of returning a stale token
+  try { if (hasChromeAuth() && token) chrome.identity.removeCachedAuthToken({ token }, () => {}); } catch (e) {}
+}
+
+// PATH B (fallback, cross-browser): the implicit flow, token cached in storage.local (survives restart) with
+// a silent prompt=none refresh.
 async function getToken(clientId, interactive) {
+  if (hasChromeAuth()) return chromeGetToken(interactive); // Path A: silent-forever after one consent
   clientId = cid(clientId);
   const key = 'gdrive:' + clientId;
   const o = await chrome.storage.local.get(key);
@@ -49,16 +72,17 @@ async function getToken(clientId, interactive) {
   catch (e) { if (!interactive) throw e; return (await connectDrive(clientId, true)).token; } // only NOW a UI prompt
 }
 
-// A valid (non-expired) Drive token is cached → treat as "connected". Persisted in storage.local, so this
-// survives a browser restart (unlike before, when it reset every session and forced a re-auth).
+// "Connected" = a token can be obtained SILENTLY (Path A: Chrome has a grant; Path B: a valid cached token).
 export async function driveConnected(clientId) {
+  if (hasChromeAuth()) { try { await chromeGetToken(false); return true; } catch (e) { return false; } }
   const key = 'gdrive:' + cid(clientId);
   const o = await chrome.storage.local.get(key);
   return !!(o[key] && o[key].token && o[key].expiresAt > Date.now());
 }
-// Forget the cached token (the "disconnect" affordance). We don't revoke server-side — dropping the token
-// is enough to stop using Drive; the user can revoke access from their Google account if they wish.
+// Disconnect: Path A → drop Chrome's cached token; Path B → drop the stored token. (We don't revoke the grant
+// server-side; the user can do that from their Google account.)
 export async function disconnectDrive(clientId) {
+  if (hasChromeAuth()) { try { removeCachedToken(await chromeGetToken(false)); } catch (e) {} return; }
   try { await chrome.storage.local.remove('gdrive:' + cid(clientId)); } catch (e) {}
 }
 
