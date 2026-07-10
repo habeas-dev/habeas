@@ -32,6 +32,8 @@
   "no_activity": { "message": "Sin actividad todavía." },
   "pill_new": { "message": "pendiente" },
   "pill_sent": { "message": "enviado" },
+  "pill_new_hint": { "message": "Aún no entregado al destino seleccionado — se incluirá en el próximo envío." },
+  "pill_sent_hint": { "message": "Ya entregado al destino seleccionado." },
   "select_label": { "message": "Seleccionar:" },
   "sel_new": { "message": "Pendientes" },
   "sel_all": { "message": "Todos" },

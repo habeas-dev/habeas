@@ -9,7 +9,7 @@ import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:f
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const SRC = '/home/user/proyectos/habeas/extension';
+const SRC = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
 const results = [];
 const check = (n, c, d = '') => { results.push(!!c); console.log(`${c ? 'PASS' : 'FAIL'}  ${n}${d ? ' — ' + d : ''}`); };
 

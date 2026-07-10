@@ -345,7 +345,9 @@ const distinctTypes = () => distinctBy(inventory, (d) => d.type);
 // no longer exists (e.g. after re-listing a different source). Returns whether the Group column is shown.
 function syncFilterControls() {
   const groups = distinctGroups(), types = distinctTypes();
-  const showGroup = groups.length >= 2, showType = types.length >= 2;
+  // Show the Group column whenever the source is grouped at all (≥1 account) — a bank with a single card
+  // still benefits from seeing which account a row belongs to. The group *filter* only makes sense with ≥2.
+  const hasGroups = groups.length >= 1, showGroupFilter = groups.length >= 2, showType = types.length >= 2;
   const fill = (sel, show, opts, cur, allLabel) => {
     if (!sel) return '';
     sel.hidden = !show;
@@ -353,10 +355,10 @@ function syncFilterControls() {
     sel.value = show && opts.includes(cur) ? cur : '';
     return sel.value;
   };
-  filterGroup = fill($('#filter-group'), showGroup, groups, filterGroup, 'filter_all_groups');
+  filterGroup = fill($('#filter-group'), showGroupFilter, groups, filterGroup, 'filter_all_groups');
   filterType = fill($('#filter-type'), showType, types, filterType, 'filter_all_types');
-  const fb = $('#filterbar'); if (fb) fb.hidden = !(showGroup || showType);
-  return showGroup;
+  const fb = $('#filterbar'); if (fb) fb.hidden = !(showGroupFilter || showType);
+  return hasGroups;
 }
 
 function syncSortIndicators() {
@@ -376,7 +378,7 @@ const rowHtml = (d, i, delivered) => {
      <td>${esc(d.storeName || d.label || d.internalId || '')}</td>
      <td class="files">${renderFiles(d)}</td>
      <td class="r">${fmt(d.total ?? d.amount)}</td>
-     <td>${sent ? `<span class="pill sent">${t('pill_sent')}</span>` : `<span class="pill new">${t('pill_new')}</span>`}</td>
+     <td>${sent ? `<span class="pill sent" title="${esc(t('pill_sent_hint'))}">${t('pill_sent')}</span>` : `<span class="pill new" title="${esc(t('pill_new_hint'))}">${t('pill_new')}</span>`}</td>
    </tr>`;
 };
 

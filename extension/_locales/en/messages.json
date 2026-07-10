@@ -32,6 +32,8 @@
   "no_activity": { "message": "No activity yet." },
   "pill_new": { "message": "pending" },
   "pill_sent": { "message": "sent" },
+  "pill_new_hint": { "message": "Not yet delivered to the selected destination — it will be included in the next send." },
+  "pill_sent_hint": { "message": "Already delivered to the selected destination." },
   "select_label": { "message": "Select:" },
   "sel_new": { "message": "Pending" },
   "sel_all": { "message": "All" },

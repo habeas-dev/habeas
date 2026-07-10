@@ -5,7 +5,7 @@
   "trust": "first-party",
   "domain": "wizink.es",
   "country": "ES",
-  "version": "2026-07-09",
+  "version": "2026-07-10",
   "currency": "EUR",
   "categories": [
     "card",
@@ -176,7 +176,9 @@
       "fields": {
         "internalId": "{group.accountNumber}|{statementDate}",
         "date": "statementDate",
-        "account": "{group.accountNumber}"
+        "account": "{group.accountNumber}",
+        "type": "Extracto",
+        "description": "Extracto {statementDate}"
       },
       "formats": [
         {
@@ -205,6 +207,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-10",
+      "changes": "Los extractos ahora muestran una etiqueta legible («Extracto <fecha>») en lugar del identificador interno, y llevan el tipo «Extracto»."
+    },
     {
       "version": "2026-07-09",
       "changes": "Fuente unificada: reemplaza las tres fuentes WiZink (movimientos, extractos-PDF, extractos-Excel) por un único source con salidas seleccionables (stream × formato). El stream «Movimientos» captura las transacciones de tarjeta; el stream «Extractos» ofrece cada extracto en PDF o Excel compartiendo el mismo listado. Requiere la extensión 0.1.52+ (soporte de salidas)."

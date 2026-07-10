@@ -46,7 +46,12 @@ export function buildRecord(d, adapter) {
     return withNumber({ internalId: d.internalId, date: d.date, instrument: d.instrument ?? d.label ?? '', isin: d.isin ?? '', units: num(d.units), price: num(d.price), amount: num(d.amount ?? d.total), currency, category: d.category, operation: d.operation ?? d.type, source: d.source });
   }
   if (kind === 'invoice') {
-    return { internalId: d.internalId, date: d.date, total: num(d.total), currency, category: d.category, issuer: { name: d.issuer ?? d.storeName ?? d.party ?? '', address: d.issuerAddress ?? d.storeAddress ?? '' }, number: d.number ?? d.internalId, source: d.source, type: d.type };
+    const r = { internalId: d.internalId, date: d.date, total: num(d.total), currency, category: d.category, issuer: { name: d.issuer ?? d.storeName ?? d.party ?? '', address: d.issuerAddress ?? d.storeAddress ?? '' }, number: d.number ?? d.internalId, source: d.source, type: d.type };
+    // A human display label (e.g. "Extracto 2026-06-23") when the source provides one — carried so a
+    // row loaded from the store shows it instead of the opaque internalId. Omitted when absent so
+    // existing invoice records stay byte-identical.
+    if (d.description != null && d.description !== '') r.description = d.description;
+    return r;
   }
   // receipt@1 (default) — unchanged shape (number appended only when present).
   return withNumber({ internalId: d.internalId, date: d.date, total: d.total, currency, category: d.category, store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type });

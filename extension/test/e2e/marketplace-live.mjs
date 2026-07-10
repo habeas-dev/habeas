@@ -4,7 +4,7 @@
 // already installed — this proves fetchIndex + render + installed-detection against real Pages.)
 import { chromium } from 'playwright';
 
-const EXT = '/home/user/proyectos/habeas/extension';
+const EXT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
 const results = [];
 const check = (n, c, d = '') => { results.push(!!c); console.log(`${c ? 'PASS' : 'FAIL'}  ${n}${d ? ' — ' + d : ''}`); };
 
