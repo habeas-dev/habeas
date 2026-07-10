@@ -3,6 +3,8 @@
 ## 0.1.53 → 0.1.54 (in progress)
 
 ### Canonical store
+- **Drive store button reflects connection** — once you've connected Google Drive for the store, the button
+  shows *Disconnect Drive* (and disconnects) instead of always offering *Connect Drive*.
 - **Google Drive as a store backend** — you can now host the canonical store on Google Drive (Settings →
   where the store lives), alongside local / synced-folder / HTTP. Per-source store JSON lives under
   `Habeas/_store/<source>.json`, separate from delivered files. Uses the shipped `drive.file` OAuth client.

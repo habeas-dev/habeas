@@ -225,6 +225,8 @@
   "store_local": { "message": "Este dispositivo (local)" },
   "store_folder": { "message": "Carpeta sincronizada" },
   "store_drive": { "message": "Google Drive" },
+  "drive_disconnect": { "message": "Desconectar Drive" },
+  "drive_disconnected": { "message": "Drive desconectado." },
   "store_http": { "message": "Endpoint HTTP" },
   "store_move": { "message": "Mover almacén aquí" },
   "store_pick_folder": { "message": "Elegir carpeta…" },

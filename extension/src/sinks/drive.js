@@ -46,6 +46,19 @@ async function getToken(clientId, interactive) {
   catch (e) { if (!interactive) throw e; return (await connectDrive(clientId, true)).token; }
 }
 
+// A valid (non-expired) Drive token is cached this browser session → treat as "connected". Tokens live in
+// storage.session, so this resets on browser restart (a silent re-connect re-establishes it).
+export async function driveConnected(clientId) {
+  const key = 'gdrive:' + cid(clientId);
+  const o = await chrome.storage.session.get(key);
+  return !!(o[key] && o[key].token && o[key].expiresAt > Date.now());
+}
+// Forget the cached token (the "disconnect" affordance). We don't revoke server-side — dropping the token
+// is enough to stop using Drive; the user can revoke access from their Google account if they wish.
+export async function disconnectDrive(clientId) {
+  try { await chrome.storage.session.remove('gdrive:' + cid(clientId)); } catch (e) {}
+}
+
 // Read back a source's per-source manifest (records) already in Drive — to rehydrate the canonical store
 // without re-extracting. Returns [] if the folder/file isn't there yet.
 export async function driveRead(sink, opts = {}) {

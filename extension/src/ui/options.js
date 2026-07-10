@@ -1,7 +1,7 @@
 import { chrome } from '../lib/ext.js';
 import { getConfig, upsert, remove } from '../lib/config.js';
 import { setSecret } from '../lib/secrets.js';
-import { connectDrive, redirectUri } from '../sinks/drive.js';
+import { connectDrive, redirectUri, driveConnected, disconnectDrive } from '../sinks/drive.js';
 import { putHandle, getHandle, verifyPermission } from '../lib/fs.js';
 import { sinkAcceptsSource } from '../sinks/format.js';
 import { watchThemeIcon } from '../lib/theme-icon.js';
@@ -240,12 +240,24 @@ function renderStoreFields() {
   const b = $('#store-backend').value; const f = $('#store-fields'); f.innerHTML = '';
   if (b === 'http') { const i = document.createElement('input'); i.id = 'store-url'; i.type = 'url'; i.placeholder = 'https://…'; i.size = 24; f.append(i); getStoreConfig().then((c) => { if (c.backend === 'http') i.value = c.url || ''; }); }
   else if (b === 'folder') { const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = t('store_pick_folder'); btn.onclick = pickStoreFolder; f.append(btn); }
-  else if (b === 'drive') { const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = t('connect_drive'); btn.onclick = connectStoreDrive; f.append(btn); }
+  else if (b === 'drive') { const btn = document.createElement('button'); btn.type = 'button'; f.append(btn); paintDriveBtn(btn); }
+}
+// Reflect the current Drive connection: "Connect Drive" when not connected, "Disconnect Drive" when it is.
+async function paintDriveBtn(btn) {
+  const on = await driveConnected();
+  btn.textContent = on ? t('drive_disconnect') : t('connect_drive');
+  btn.onclick = on ? disconnectStoreDrive : connectStoreDrive;
 }
 async function connectStoreDrive() {
   // Pre-authorize (drive.file scope) so Move doesn't have to trigger the OAuth popup mid-migration.
   try { await connectDrive(undefined, true); $('#store-status').textContent = t('store_folder_ok'); }
   catch (e) { $('#store-status').textContent = t('store_move_err', [(e && e.message) || String(e)]); }
+  renderStoreFields(); // repaint → button becomes "Disconnect Drive"
+}
+async function disconnectStoreDrive() {
+  await disconnectDrive();
+  $('#store-status').textContent = t('drive_disconnected');
+  renderStoreFields();
 }
 async function pickStoreFolder() {
   try { const h = await window.showDirectoryPicker(); await putHandle('store-dir:canon', h); $('#store-status').textContent = t('store_folder_ok'); }
