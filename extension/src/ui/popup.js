@@ -476,20 +476,40 @@ async function onSend() {
   try {
     if (streaming) {
       let i = 0;
+      // Data-only docs (e.g. card movements — no document file) don't need a per-doc remote write: doing them
+      // one at a time re-reads+rewrites the WHOLE manifest once PER movement, which is why a Drive import
+      // crawls. Defer them and deliver each stream's records in ONE batched write. Docs WITH a file still go
+      // per-doc, so an interrupted long download keeps whatever already uploaded.
+      const batch = new Map(); // storeKey → deferred data-only docs
+      const flushBatch = async () => {
+        for (const [sk, docs] of batch) {
+          if (!docs.length) continue;
+          try {
+            const r = await writeToSink(sink, docs, new Map(), { ...opts, source: sk }); // one manifest merge/write for all records
+            written += r.written;
+            await markDelivered($('#ds').value, sink.id, docs.map((d) => d.internalId));
+            for (const d of docs) liveDelivered[d.internalId] = 1;
+          } catch (e) { for (const d of docs) failed.push(d.internalId); log(t('doc_failed', [sk, (e && e.message) || String(e)])); }
+        }
+        batch.clear();
+      };
       for (const d of eligible) {
         if (aborted()) break; // Stop pressed → keep everything saved so far, stop before the next doc
+        const sk = d._storeKey || adapter.id;
         try {
           const arts = await allArts(d); // every selected format; refines d.date / d.total from the detail
-          render(liveDelivered); // show the newly-learned date + amount immediately
-          if (!arts.length) noPdf.push(d.internalId);
-          const one = new Map(arts.length ? [[d.internalId, arts]] : []);
-          const r = await writeToSink(sink, [d], one, { ...opts, source: d._storeKey || adapter.id }); // writes this doc's files + merges its record into the manifest
-          written += r.written;
-          await markDelivered($('#ds').value, sink.id, [d.internalId]); // durable per doc
-          liveDelivered[d.internalId] = 1; render(liveDelivered); // flip the row to "sent"
+          if (arts.length) {
+            render(liveDelivered); // show the newly-learned date + amount immediately
+            const r = await writeToSink(sink, [d], new Map([[d.internalId, arts]]), { ...opts, source: sk }); // this doc's files + its record
+            written += r.written;
+            await markDelivered($('#ds').value, sink.id, [d.internalId]); // durable per doc
+            liveDelivered[d.internalId] = 1; render(liveDelivered); // flip the row to "sent"
+          } else { noPdf.push(d.internalId); (batch.get(sk) || batch.set(sk, []).get(sk)).push(d); } // no file → defer to the batched write
         } catch (e) { failed.push(d.internalId); log(t('doc_failed', [String(d.internalId), (e && e.message) || String(e)])); }
         $('#status').textContent = t('sending_progress', [String(++i), String(eligible.length)]);
       }
+      await flushBatch();
+      render(liveDelivered); // reflect the batched docs as sent
     } else {
       const files = new Map();
       for (const d of eligible) { const arts = await allArts(d); if (arts.length) files.set(d.internalId, arts); else noPdf.push(d.internalId); render(liveDelivered); } // dates/amounts fill in as they download
