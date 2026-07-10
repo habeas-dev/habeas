@@ -72,6 +72,20 @@ async function getToken(clientId, interactive) {
   catch (e) { if (!interactive) throw e; return (await connectDrive(clientId, true)).token; } // only NOW a UI prompt
 }
 
+// Run a Drive operation with a token, re-minting ONCE on a 401 (Path A: getAuthToken can hand back a token
+// Chrome believes valid but the server rejected — removeCachedToken forces a fresh mint). fn receives the token.
+async function withToken(clientId, interactive, fn) {
+  const token = await getToken(clientId, interactive);
+  try { return await fn(token); }
+  catch (e) {
+    if (hasChromeAuth() && /(^|\D)401(\D|$)/.test(String((e && e.message) || ''))) {
+      removeCachedToken(token);
+      return await fn(await getToken(clientId, interactive));
+    }
+    throw e;
+  }
+}
+
 // "Connected" = a token can be obtained SILENTLY (Path A: Chrome has a grant; Path B: a valid cached token).
 export async function driveConnected(clientId) {
   if (hasChromeAuth()) { try { await chromeGetToken(false); return true; } catch (e) { return false; } }
@@ -89,38 +103,39 @@ export async function disconnectDrive(clientId) {
 // Read back a source's per-source manifest (records) already in Drive — to rehydrate the canonical store
 // without re-extracting. Returns [] if the folder/file isn't there yet.
 export async function driveRead(sink, opts = {}) {
-  const token = await getToken(sink.clientId, opts.interactive !== false);
-  const root = sink.rootFolderName || 'Habeas';
-  const service = opts.service || 'documents';
-  const rootId = await findFile(token, root, 'root', true); if (!rootId) return [];
-  const svcId = await findFile(token, service, rootId, true); if (!svcId) return [];
-  const mf = mfName(opts);
-  const recs = await readJson(token, mf, svcId);
-  return Array.isArray(recs) ? recs : [];
+  return withToken(sink.clientId, opts.interactive !== false, async (token) => {
+    const root = sink.rootFolderName || 'Habeas';
+    const service = opts.service || 'documents';
+    const rootId = await findFile(token, root, 'root', true); if (!rootId) return [];
+    const svcId = await findFile(token, service, rootId, true); if (!svcId) return [];
+    const recs = await readJson(token, mfName(opts), svcId);
+    return Array.isArray(recs) ? recs : [];
+  });
 }
 
 export async function driveWrite(sink, docs, files, opts) {
-  const token = await getToken(sink.clientId, opts.interactive !== false);
-  const root = sink.rootFolderName || 'Habeas';
-  const service = opts.service || 'documents';
-  const cache = {};
-  let n = 0;
-  for (const d of docs) {
-    for (const art of files.get(d.internalId) || []) {
-      const rel = (root + '/' + pathFor(sink, d, opts, art.ext)).split('/').filter(Boolean);
-      const folderId = await ensureFolderPath(token, rel.slice(0, -1), cache);
-      await uploadFile(token, rel.at(-1), folderId, art.blob);
-      n++;
+  return withToken(sink.clientId, opts.interactive !== false, async (token) => {
+    const root = sink.rootFolderName || 'Habeas';
+    const service = opts.service || 'documents';
+    const cache = {};
+    let n = 0;
+    for (const d of docs) {
+      for (const art of files.get(d.internalId) || []) {
+        const rel = (root + '/' + pathFor(sink, d, opts, art.ext)).split('/').filter(Boolean);
+        const folderId = await ensureFolderPath(token, rel.slice(0, -1), cache);
+        await uploadFile(token, rel.at(-1), folderId, art.blob);
+        n++;
+      }
     }
-  }
-  // Cumulative per-SOURCE manifest: Habeas/<service>/<source>.json (read → merge → write) so sources
-  // sharing a service (e.g. WiZink movements vs statements) don't merge into one mixed file.
-  const svcId = await ensureFolderPath(token, [root, service], cache);
-  const mf = mfName(opts);
-  const existing = await readJson(token, mf, svcId);
-  const merged = mergeRecords(existing, toRecords(docs, files));
-  await putJson(token, mf, svcId, JSON.stringify(merged, null, 2));
-  return { written: n, total: docs.length };
+    // Cumulative per-SOURCE manifest: Habeas/<service>/<source>.json (read → merge → write) so sources
+    // sharing a service (e.g. WiZink movements vs statements) don't merge into one mixed file.
+    const svcId = await ensureFolderPath(token, [root, service], cache);
+    const mf = mfName(opts);
+    const existing = await readJson(token, mf, svcId);
+    const merged = mergeRecords(existing, toRecords(docs, files));
+    await putJson(token, mf, svcId, JSON.stringify(merged, null, 2));
+    return { written: n, total: docs.length };
+  });
 }
 
 // Canonical-store backend on Drive: each source's store JSON at Habeas/<storeFolder>/<sourceId>.json,
@@ -144,23 +159,24 @@ export function driveStore(cfg = {}) {
   return {
     async loadSource(id, opts) {
       try {
-        const token = await getToken(clientId, ia(opts));
-        const j = await readJson(token, id + '.json', await dirId(token));
-        return j && typeof j === 'object' && !Array.isArray(j) && j.items ? j : null; // a store source object, not the [] readJson miss
+        return await withToken(clientId, ia(opts), async (token) => {
+          const j = await readJson(token, id + '.json', await dirId(token));
+          return j && typeof j === 'object' && !Array.isArray(j) && j.items ? j : null; // a store source object, not the [] readJson miss
+        });
       } catch (e) { return null; }
     },
     async saveSource(id, data) {
       try {
-        const token = await getToken(clientId, interactive);
-        await putJson(token, id + '.json', await dirId(token), JSON.stringify(data));
+        await withToken(clientId, interactive, async (token) => putJson(token, id + '.json', await dirId(token), JSON.stringify(data)));
       } catch (e) { /* can't reach the Drive store right now → keep it best-effort */ }
     },
     async listSources() {
       try {
-        const token = await getToken(clientId, interactive);
-        const rootId = await findFile(token, root, 'root', true); if (!rootId) return [];
-        const subId = await findFile(token, sub, rootId, true); if (!subId) return [];
-        return listFolderJson(token, subId);
+        return await withToken(clientId, interactive, async (token) => {
+          const rootId = await findFile(token, root, 'root', true); if (!rootId) return [];
+          const subId = await findFile(token, sub, rootId, true); if (!subId) return [];
+          return listFolderJson(token, subId);
+        });
       } catch (e) { return []; }
     },
   };
@@ -168,6 +184,7 @@ export function driveStore(cfg = {}) {
 async function listFolderJson(token, parentId) {
   const q = `'${parentId}' in parents and trashed=false and mimeType!='application/vnd.google-apps.folder'`;
   const r = await fetch('https://www.googleapis.com/drive/v3/files?fields=files(name)&q=' + encodeURIComponent(q), { headers: { Authorization: 'Bearer ' + token } });
+  if (r.status === 401) throw new Error('drive 401'); // let withToken re-mint
   if (!r.ok) return [];
   const d = await r.json().catch(() => ({}));
   return (d.files || []).map((f) => f.name).filter((n) => n.endsWith('.json')).map((n) => n.slice(0, -5));
@@ -204,6 +221,7 @@ async function readJson(token, name, parentId) {
   const id = await findFile(token, name, parentId);
   if (!id) return [];
   const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, { headers: { Authorization: 'Bearer ' + token } });
+  if (r.status === 401) throw new Error('drive 401'); // let withToken re-mint
   if (!r.ok) return [];
   return r.json().catch(() => []);
 }

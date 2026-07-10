@@ -19,16 +19,15 @@ refresh token off-device (breaks local-first). So Path A is Chrome-only; Firefox
 1. **Pin the extension ID** — ✅ DONE. `manifest.json` now carries the `"key"` extracted from the published
    `.crx`'s identity RSA proof, so the **unpacked dev build loads as `pbpehhngeidokhaokgloaneiibhceiog`**
    (same as the Web Store item → one OAuth client covers both). CWS ignores `key` on upload.
-2. **Google Cloud console → APIs & Services → Credentials → Create OAuth client ID → type "Chrome
-   Extension"**, Application/Item ID = `pbpehhngeidokhaokgloaneiibhceiog`. Scope:
-   `https://www.googleapis.com/auth/drive.file` (non-sensitive → no CASA). Set the app to **In production**
-   so tokens/grants don't expire after 7 days.
-3. Add to `manifest.json`:
+2. **Chrome-Extension OAuth client** — ✅ DONE. Created in Google Cloud (Item ID
+   `pbpehhngeidokhaokgloaneiibhceiog`, scope `drive.file`). client id:
+   `246972215385-1vvdh4kraid8dvksoa6gm41ctub746f8`.
+3. **manifest `oauth2`** — ✅ DONE:
    ```json
-   "oauth2": { "client_id": "<the new Chrome-Extension client id>", "scopes": ["https://www.googleapis.com/auth/drive.file"] }
+   "oauth2": { "client_id": "246972215385-1vvdh4kraid8dvksoa6gm41ctub746f8.apps.googleusercontent.com", "scopes": ["https://www.googleapis.com/auth/drive.file"] }
    ```
-   `permissions` already includes `identity`.
+   `permissions` already includes `identity`. **Path A is now LIVE on Chrome.**
 
-Once `oauth2.client_id` is present, `getToken()` uses Path A automatically. On a 401 from Drive, call the
-exported `removeCachedToken(token)` and retry so Chrome re-mints instead of returning a stale token (wire
-this into the Drive fetch helpers when activating).
+401 handling: `getToken` uses Path A automatically; `withToken()` wraps every Drive op and on a 401 calls
+`removeCachedToken(token)` + re-mints once (the throwing helpers surface `401`). Ensure the OAuth app is set
+to **In production** so grants don't expire after 7 days.
