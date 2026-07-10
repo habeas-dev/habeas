@@ -1006,7 +1006,9 @@ function mapDoc(adapter, p, group) {
   // A generic display label across schemas (store / issuer / counterparty / instrument / …). When none
   // resolve (e.g. a source whose list encrypts everything but the id, like Amazon), fall back to the
   // adapter's `itemLabel` template (e.g. "Pedido {internalId}") so every row is still identifiable.
-  doc.label = doc.storeName || doc.issuer || doc.counterparty || doc.instrument || doc.description || doc.party
+  // A field may map to a nested object (e.g. an issuer/store {name,…}) — display its name, never "[object Object]".
+  const nameOf = (v) => (v && typeof v === 'object') ? (v.name || v.nombre || v.descripcion || '') : (v == null ? '' : String(v));
+  doc.label = nameOf(doc.storeName) || nameOf(doc.issuer) || nameOf(doc.counterparty) || nameOf(doc.instrument) || nameOf(doc.description) || nameOf(doc.party)
     || (adapter.itemLabel ? applyTmpl(adapter.itemLabel, doc, doc.internalId) : '');
   doc.record = buildRecord(doc, adapter);
   return doc;

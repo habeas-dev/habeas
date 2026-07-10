@@ -47,19 +47,19 @@ async function init() {
   const cfg = await getConfig();
   const enabled = cfg.datasources.filter((d) => d.enabled);
   $('#ds').innerHTML = enabled.map((d) => `<option value="${d.id}">${d.id}</option>`).join('') || '<option value="">—</option>';
-  populateSinks(cfg);
+  await populateSinks(cfg);
   renderOutputs(adapterFor($('#ds').value, cfg).adapter);
   if (!enabled.length) $('#status').textContent = t('no_datasources');
   $('#list').onclick = () => onList();
   $('#full-history').onclick = () => onList('full');
   $('#load-store').onclick = onLoadStore;
   $('#send').onclick = onSend;
-  $('#sink').onchange = () => render();
+  $('#sink').onchange = async () => { await setFavSink($('#ds').value, $('#sink').value); render(); }; // remember this source's preferred sink
   $('#ds').onchange = async () => {
     // Switching source → the previous source's rows are no longer relevant: clear the inventory + surfaces.
     inventory = []; clearLog(); $('#status').textContent = '';
     $('#sendbar').hidden = true; $('#selbar').hidden = true;
-    const c = await getConfig(); populateSinks(c); renderOutputs(adapterFor($('#ds').value, c).adapter);
+    const c = await getConfig(); await populateSinks(c); renderOutputs(adapterFor($('#ds').value, c).adapter);
     await render(); refreshStoreButton();
   };
   refreshStoreButton();
@@ -77,11 +77,21 @@ function adapterFor(dsId, cfg) {
   const ds = cfg.datasources.find((d) => d.id === dsId);
   return { ds, adapter: ds && ADAPTERS[ds.adapter] };
 }
-// Only offer sinks that accept this data source (by category / source allowlist).
-function populateSinks(cfg) {
-  const { adapter } = adapterFor($('#ds').value, cfg);
+// Per-source preferred sink: remember the sink last chosen for a source and default to it next time
+// (instead of always the first). Stored in storage.local, keyed by datasource id.
+const FAV_KEY = 'habeas:favsink';
+async function getFavSinks() { try { const o = await chrome.storage.local.get(FAV_KEY); return o[FAV_KEY] || {}; } catch (e) { return {}; } }
+async function setFavSink(dsId, sinkId) { if (!dsId || !sinkId) return; const f = await getFavSinks(); if (f[dsId] === sinkId) return; f[dsId] = sinkId; try { await chrome.storage.local.set({ [FAV_KEY]: f }); } catch (e) {} }
+
+// Only offer sinks that accept this data source (by category / source allowlist); default to the source's
+// remembered favorite when it is still offered.
+async function populateSinks(cfg) {
+  const dsId = $('#ds').value;
+  const { adapter } = adapterFor(dsId, cfg);
   const list = cfg.sinks.filter((s) => !adapter || sinkAcceptsSource(s, adapter));
   $('#sink').innerHTML = list.map((s) => `<option value="${s.id}">${s.id} · ${s.type}</option>`).join('') || '<option value="">—</option>';
+  const fav = (await getFavSinks())[dsId];
+  if (fav && list.some((s) => s.id === fav)) $('#sink').value = fav; // else the first compatible sink stays selected
 }
 // Resolve the captured session for this source — merged across sibling hosts sharing its registrable
 // domain (a single account JWT often rides several API hosts). Cookie sources get an empty store.
@@ -109,12 +119,15 @@ function selectedOutputs(adapter) {
   return picked.length ? picked : outs;
 }
 
+// A record field may be a string OR a nested object ({name,address} for an invoice issuer / receipt store).
+// Pull a display string so the table never shows "[object Object]".
+const nameOf = (v) => (v && typeof v === 'object') ? (v.name || v.nombre || v.descripcion || '') : (v == null ? '' : String(v));
 // Build inventory rows from the canonical store's normalized records — no extraction, no session needed.
 // Marked _fromStore so send delivers them WITHOUT fetching documents (a projection of what we already have).
 const docsFromStore = (records) => records.map((r) => ({
   internalId: r.internalId, record: r, _fromStore: true,
   date: r.date, total: r.total ?? r.amount, type: r.type, returnStatus: r.returnStatus,
-  storeName: (r.store && r.store.name) || r.storeName, label: (r.store && r.store.name) || r.issuer || r.counterparty || r.description || '',
+  storeName: nameOf(r.store && r.store.name) || nameOf(r.storeName), label: nameOf(r.store && r.store.name) || nameOf(r.issuer) || nameOf(r.counterparty) || nameOf(r.description) || '',
 }));
 
 // Show/hide the "Load from store" button for the selected source (only when the store has records for it).

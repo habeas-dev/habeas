@@ -1,5 +1,11 @@
 # Habeas — TODO
 
+* Caixabankconsumer: le digo que descargue todo de nuevo y no me trae ningún PDF. Aparece "[object Object]" en el campo Tienda.
+* Al seleccionar un nuevo source se me pone, por defecto, el primer sink configurado. Deberíamos poder seleccionar un sink favorito
+* Echo de menos Google drive como lugar para establecer el almacén canónico
+* Leroymerlin: no aparecen las compras online
+* En general: no se autodetecta cuando he hecho login. Si le doy a "Listar documentos" y se me abre una ventana y hago login, esperaría que Habeas detectara el momento en el que he hecho login y listara los documentos según lo esperado.
+
 ## External hooks — manual / e2e validation (pending)
 
 The security-critical logic is unit-tested (origin-bound rejection, `validateProposal`, grant→origin

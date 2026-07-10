@@ -3,6 +3,10 @@
 ## 0.1.53 → 0.1.54 (in progress)
 
 ### Interface
+- **Preferred sink per source** — the sink you pick for a source is remembered and pre-selected next time,
+  instead of always defaulting to the first configured sink.
+- **No more `[object Object]` in the Store column** — an invoice's issuer (and any nested `{name}` field) is
+  now shown by name in the list, both live and when loaded from the store.
 - **Sources open on your "my purchases" page** — a source can declare `openUrl`, the exact account/purchases
   page to open in the tab (loads the SPA whose CSP allows the API host, and lands you on your data). Set for
   Carrefour, Decathlon, Hover, Dia, bip&drive, Leroy Merlin, CaixaBank Consumer, IKEA and Amazon. The URL is
