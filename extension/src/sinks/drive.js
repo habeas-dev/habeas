@@ -63,7 +63,10 @@ export function removeCachedToken(token) { // call on a 401 so getAuthToken re-m
 // PATH B (fallback, cross-browser): the implicit flow, token cached in storage.local (survives restart) with
 // a silent prompt=none refresh.
 async function getToken(clientId, interactive) {
-  if (hasChromeAuth()) return chromeGetToken(interactive); // Path A: silent-forever after one consent
+  // Path A first (silent-forever after one consent). If it fails for ANY reason — OAuth client misconfig,
+  // the extension ID not matching the client, consent not yet granted on this build — fall through to Path B
+  // so Drive still works via the implicit flow instead of breaking outright.
+  if (hasChromeAuth()) { try { return await chromeGetToken(interactive); } catch (e) { /* → Path B */ } }
   clientId = cid(clientId);
   const key = 'gdrive:' + clientId;
   const o = await chrome.storage.local.get(key);
