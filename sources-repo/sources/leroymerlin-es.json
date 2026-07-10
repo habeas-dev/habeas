@@ -36,7 +36,7 @@
           },
           "itemsPath": "receipts",
           "pageParam": "yearOffset",
-          "pageStart": 2,
+          "pageStart": 0,
           "paging": "page",
           "params": {
             "page": "0",
@@ -91,9 +91,13 @@
       }
     }
   ],
-  "version": "2026-07-10",
+  "version": "2026-07-10.1",
   "minVersion": "0.1.53.10",
   "changelog": [
+    {
+      "version": "2026-07-10.1",
+      "changes": "Tickets de tienda: empezar en el año actual (yearOffset 0) — antes empezaba 2 años atrás y se saltaba las compras de este año y el anterior."
+    },
     {
       "version": "2026-07-10",
       "changes": "Añade compras online (stream «Pedidos online» vía /order-followup/backend/v2/orders, filtradas a ONLINE) junto a los tickets de tienda existentes; fuente multi-salida (streams)."
