@@ -19,6 +19,7 @@ jobs:
       # when credentials aren't configured (tagging then still builds + releases, just no store upload).
       HAS_CWS: ${{ secrets.CWS_REFRESH_TOKEN != '' }}
       HAS_AMO: ${{ secrets.AMO_JWT_SECRET != '' }}
+      HAS_DEVICE: ${{ secrets.DEVICE_CLIENT_SECRET != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -34,6 +35,19 @@ jobs:
       - name: Lint (web-ext)
         run: npm run lint
         continue-on-error: true
+
+      # Inject the Firefox device-flow OAuth client (Path C) into the build only — the GOCSPX secret is
+      # kept OUT of git (push protection) and substituted here from repo secrets. Non-confidential for this
+      # client type (RFC 8628), so it legitimately ships in the zip. Self-skips when the secret isn't set.
+      - name: Inject device-flow OAuth client
+        if: env.HAS_DEVICE == 'true'
+        env:
+          DEVICE_CLIENT_ID: ${{ secrets.DEVICE_CLIENT_ID }}
+          DEVICE_CLIENT_SECRET: ${{ secrets.DEVICE_CLIENT_SECRET }}
+        run: |
+          f=extension/src/sinks/drive.js
+          sed -i "s|__DEVICE_CLIENT_ID__|${DEVICE_CLIENT_ID}|; s|__DEVICE_CLIENT_SECRET__|${DEVICE_CLIENT_SECRET}|" "$f"
+          grep -q '__DEVICE_CLIENT_' "$f" && { echo 'placeholder not substituted'; exit 1; } || echo 'device client injected'
 
       - name: Build package (Chrome + Firefox MV3)
         run: npm run build

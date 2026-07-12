@@ -58,9 +58,15 @@ async function readCachedToken(cached) {
 // on Google's device-flow allowed-scopes list. The device client's secret is DISTRIBUTED WITH THE APP by
 // design for this client type (public/installed), so shipping it here is per Google's model — it grants
 // nothing without a user consenting in their own browser.
-const DEVICE_CLIENT_ID = ''; // '<n>-<...>.apps.googleusercontent.com' — a "TVs and limited-input devices" client
-const DEVICE_CLIENT_SECRET = ''; // non-confidential for this client type (RFC 8628); fill when the client is created
-export function hasDeviceClient() { return !!(DEVICE_CLIENT_ID && DEVICE_CLIENT_SECRET); }
+// Injected at BUILD time (CI substitutes the __…__ placeholders from repo secrets — see
+// .github/workflows/build.yml), so the client secret never lives in git (GitHub push protection). The
+// device client's secret is non-confidential for this client type (RFC 8628, distributed with the app),
+// so it ships in the built zip by design. Unsubstituted (local/dev build) → hasDeviceClient() is false
+// and Firefox stays on Path B. To test the device flow locally, replace the placeholders in your working
+// copy (do NOT commit real values).
+const DEVICE_CLIENT_ID = '__DEVICE_CLIENT_ID__'; // a "TVs and limited-input devices" OAuth client
+const DEVICE_CLIENT_SECRET = '__DEVICE_CLIENT_SECRET__';
+export function hasDeviceClient() { return !!(DEVICE_CLIENT_ID && DEVICE_CLIENT_SECRET) && !DEVICE_CLIENT_ID.startsWith('__'); }
 // Prefer the device flow for interactive connect when there's no getAuthToken (Firefox) and a device
 // client is configured — otherwise the Settings button stays on Path B (implicit flow).
 export function preferDeviceFlow() { return !(chrome.identity && chrome.identity.getAuthToken) && hasDeviceClient(); }
