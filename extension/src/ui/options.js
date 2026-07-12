@@ -283,6 +283,15 @@ function renderStoreFields() {
   if (b === 'http') { const i = document.createElement('input'); i.id = 'store-url'; i.type = 'url'; i.placeholder = 'https://…'; i.size = 24; f.append(i); getStoreConfig().then((c) => { if (c.backend === 'http') i.value = c.url || ''; }); }
   else if (b === 'folder') { const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = t('store_pick_folder'); btn.onclick = pickStoreFolder; f.append(btn); }
   else if (b === 'drive') { const btn = document.createElement('button'); btn.type = 'button'; f.append(btn); paintDriveBtn(btn); }
+  else if (b === 'dropbox' || b === 'webdav' || b === 's3') {
+    // Reuse a configured sink of the same type (its credentials) as the store backend.
+    const sel = document.createElement('select'); sel.id = 'store-sink'; f.append(sel);
+    getConfig().then(async (c) => {
+      const sinks = (c.sinks || []).filter((s) => s.type === b);
+      sel.innerHTML = sinks.length ? sinks.map((s) => `<option value="${esc(s.id)}">${esc(s.id)}</option>`).join('') : `<option value="">${t('store_no_sink')}</option>`;
+      const cur = await getStoreConfig(); if (cur.backend === b && cur.sinkId) sel.value = cur.sinkId;
+    });
+  }
 }
 // Reflect the current Drive connection: "Connect Drive" when not connected, "Disconnect Drive" when it is.
 async function paintDriveBtn(btn) {
@@ -309,6 +318,7 @@ async function moveStore() {
   const b = $('#store-backend').value; const cfg = { backend: b };
   if (b === 'http') { cfg.url = ($('#store-url') && $('#store-url').value || '').trim(); if (!cfg.url) { $('#store-status').textContent = t('store_need_url'); return; } }
   if (b === 'folder') cfg.id = 'canon';
+  if (b === 'dropbox' || b === 'webdav' || b === 's3') { cfg.sinkId = ($('#store-sink') && $('#store-sink').value) || ''; if (!cfg.sinkId) { $('#store-status').textContent = t('store_need_sink'); return; } }
   // Drive store ops are silent (never surprise-prompt). Move IS a deliberate user action, so ensure a token
   // interactively here (once) — after this the cached token is reused silently for all store writes.
   if (b === 'drive' && !(await driveConnected())) { try { await driveSignIn(); } catch (e) { $('#store-status').textContent = t('store_move_err', [(e && e.message) || String(e)]); return; } }

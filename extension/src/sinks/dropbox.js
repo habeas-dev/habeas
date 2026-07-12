@@ -145,3 +145,33 @@ export async function dropboxWrite(sink, docs, files, opts = {}) {
   await dbxUpload(token, mfPath, jsonBlob(JSON.stringify(merged, null, 2)));
   return { written: n, total: docs.length };
 }
+
+// Canonical-store backend on Dropbox: per-source JSON at <root>/<storeFolder>/<sourceId>.json, reusing the
+// sink's token. All ops are best-effort/silent — a store read/write must never break a List or delivery.
+export function dropboxStore(sink, cfg = {}) {
+  const folder = dbxPath(sink.rootFolderName || 'Habeas', (cfg && cfg.storeFolder) || '_store');
+  const filePath = (id) => folder + '/' + id + '.json';
+  return {
+    async loadSource(id) {
+      try {
+        const token = await dropboxToken(sink);
+        const r = await fetch(DOWNLOAD_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Dropbox-API-Arg': apiArg({ path: filePath(id) }) } });
+        if (!r.ok) return null; // 409 path/not_found → no store entry yet
+        const j = await r.json().catch(() => null);
+        return j && typeof j === 'object' && !Array.isArray(j) && j.items ? j : null;
+      } catch (e) { return null; }
+    },
+    async saveSource(id, data) {
+      try { await dbxUpload(await dropboxToken(sink), filePath(id), jsonBlob(JSON.stringify(data))); } catch (e) { /* best-effort */ }
+    },
+    async listSources() {
+      try {
+        const token = await dropboxToken(sink);
+        const r = await fetch('https://api.dropboxapi.com/2/files/list_folder', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ path: folder }) });
+        if (!r.ok) return [];
+        const j = await r.json().catch(() => ({}));
+        return (j.entries || []).filter((e) => e['.tag'] === 'file' && /\.json$/.test(e.name || '')).map((e) => e.name.replace(/\.json$/, ''));
+      } catch (e) { return []; }
+    },
+  };
+}

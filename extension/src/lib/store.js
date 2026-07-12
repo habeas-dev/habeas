@@ -21,6 +21,9 @@ async function makeBackend(cfg) {
     case 'folder': return (await import('./store/folder.js')).make(cfg);
     case 'http': return (await import('./store/http.js')).make(cfg);
     case 'drive': return (await import('./store/drive.js')).make(cfg);
+    case 'dropbox': return (await import('./store/dropbox.js')).make(cfg);
+    case 'webdav': return (await import('./store/webdav.js')).make(cfg);
+    case 's3': return (await import('./store/s3.js')).make(cfg);
     default: return local;
   }
 }

@@ -237,3 +237,54 @@ async function readJsonFile(dir, name) {
   try { const fh = await dir.getFileHandle(name); return JSON.parse(await (await fh.getFile()).text()); }
   catch (e) { return []; }
 }
+
+// --- Canonical-store backends (reuse the delivery sinks' primitives) --------------------------------
+// Per-source JSON at <storeFolder>/<sourceId>.json under the sink's target, reusing its credentials.
+// All ops best-effort/silent — a store read/write must never break a List or delivery.
+export function webdavStore(sink, cfg = {}) {
+  const base = String(sink.url || '').replace(/\/+$/, '');
+  const folder = (cfg && cfg.storeFolder) || '_store';
+  const rel = (id) => folder + '/' + id + '.json';
+  return {
+    async loadSource(id) {
+      try { const auth = await webdavAuthHeader(sink); const j = await webdavGetJson(base + '/' + encodePath(rel(id)), auth); return j && typeof j === 'object' && !Array.isArray(j) && j.items ? j : null; } catch (e) { return null; }
+    },
+    async saveSource(id, data) {
+      try { const auth = await webdavAuthHeader(sink); await webdavMkcols(base, rel(id), auth, new Set()); await webdavPut(base + '/' + encodePath(rel(id)), jsonBlob(JSON.stringify(data)), auth); } catch (e) { /* best-effort */ }
+    },
+    async listSources() {
+      try {
+        const auth = await webdavAuthHeader(sink);
+        const r = await fetch(base + '/' + encodePath(folder) + '/', { method: 'PROPFIND', headers: { ...(auth ? { Authorization: auth } : {}), Depth: '1' } });
+        if (!r.ok) return [];
+        const txt = await r.text();
+        return [...new Set([...txt.matchAll(/href\s*>\s*([^<]+?\.json)\s*<\/[a-z:]*href/gi)].map((m) => decodeURIComponent(m[1].split('/').filter(Boolean).pop()).replace(/\.json$/, '')))];
+      } catch (e) { return []; }
+    },
+  };
+}
+
+export function s3Store(sink, cfg = {}) {
+  const folder = (cfg && cfg.storeFolder) || '_store';
+  const keyOf = (id) => folder + '/' + id + '.json';
+  return {
+    async loadSource(id) {
+      try { const c = await s3Config(sink); const j = await s3GetJson(c, s3Key(c, keyOf(id))); return j && typeof j === 'object' && !Array.isArray(j) && j.items ? j : null; } catch (e) { return null; }
+    },
+    async saveSource(id, data) {
+      try { const c = await s3Config(sink); await s3Put(c, s3Key(c, keyOf(id)), jsonBlob(JSON.stringify(data))); } catch (e) { /* best-effort */ }
+    },
+    async listSources() {
+      try {
+        const c = await s3Config(sink);
+        const bucketRoot = c.endpoint ? (c.pathStyle ? `${c.endpoint}/${c.bucket}` : c.endpoint) : (c.pathStyle ? `https://s3.${c.region}.amazonaws.com/${c.bucket}` : `https://${c.bucket}.s3.${c.region}.amazonaws.com`);
+        const url = `${bucketRoot}/?list-type=2&prefix=${encodeURIComponent(s3Key(c, folder + '/'))}`;
+        const { headers } = await sigv4Sign({ method: 'GET', url, region: c.region, accessKeyId: c.accessKeyId, secretAccessKey: c.secretAccessKey, amzDate: amzNow(), payloadHash: S3_EMPTY_SHA });
+        const r = await fetch(url, { headers });
+        if (!r.ok) return [];
+        const txt = await r.text();
+        return [...new Set([...txt.matchAll(/<Key>\s*([^<]+?)\.json\s*<\/Key>/gi)].map((m) => m[1].split('/').filter(Boolean).pop()))];
+      } catch (e) { return []; }
+    },
+  };
+}
