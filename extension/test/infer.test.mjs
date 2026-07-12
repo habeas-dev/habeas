@@ -218,6 +218,28 @@ test('infers offset pagination inside a JSON POST body (GraphQL variables.skip)'
   assert.equal(JSON.parse(filled).variables.skip, 20);
 });
 
+// A year-partitioned list (Amazon /your-orders?timeFilter=year-YYYY): the URL filters by year with an
+// optional within-year startIndex → paging:'years' so the runtime scans years back.
+test('infers a year-partitioned pager (Amazon /your-orders)', () => {
+  const s = [{ url: 'https://www.amazon.es/your-orders/orders?timeFilter=year-2026&startIndex=0', method: 'GET', status: 200, reqHeaders: {}, fromHtml: true,
+    json: { orders: [{ orderId: '123-4567890-1234567', date: '2026-01-01' }] } }];
+  const r = draftAdapterFromSamples(s, { domain: 'amazon.es', pageHost: 'www.amazon.es' });
+  assert.equal(r.draft.api.list.paging, 'years');
+  assert.equal(r.draft.api.list.years.param, 'timeFilter');
+  assert.equal(r.draft.api.list.years.format, 'year-{y}');
+  assert.equal(r.draft.api.list.years.startParam, 'startIndex');
+  assert.ok(!(r.draft.api.list.params && 'timeFilter' in r.draft.api.list.params), 'year param not frozen into static params');
+  assert.ok(validateAdapter(r.draft).ok);
+});
+
+// A plain 4-digit value in an unrelated param is NOT a year pager (avoid false positives).
+test('does not treat an arbitrary 4-digit id as a year pager', () => {
+  const s = [{ url: 'https://api.shop.es/orders?storeId=2026', method: 'GET', status: 200, reqHeaders: { authorization: 'eyJ' },
+    json: { items: [{ orderId: 'O1', createdAt: '2026-01-01', totalEur: 9 }] } }];
+  const r = draftAdapterFromSamples(s, { domain: 'shop.es', pageHost: 'www.shop.es' });
+  assert.notEqual(r.draft.api.list.paging, 'years');
+});
+
 // TDD: page pagination is inferred when the request carries a `page` query param and the response
 // has neither a cursor nor an offsets object.
 test('detects page pagination from a `page` query param', () => {

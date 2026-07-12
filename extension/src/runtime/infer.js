@@ -464,7 +464,26 @@ function cursorSourcePath(pageSamples, param) {
 // Deduce pagination. If several pages were captured, LEARN it by seeing which query param changes and
 // how (1,2,3 → page · 0,N,2N → offset · a changing token → cursor). Otherwise fall back to single-page
 // signals (a cursor/offsets object in the response, or a `page`-like param).
+// Year-partitioned list (Amazon /your-orders?timeFilter=year-2026): a param whose value carries a year
+// (2000-2099) AND whose name/value reads like a time filter → scan years back, with an optional
+// within-year start index. Guarded so an arbitrary 4-digit id (storeId=2026) isn't taken for a pager.
+function deduceYearsPaging(u) {
+  for (const [k, v] of u.searchParams) {
+    const m = /^(.*?)((?:19|20)\d{2})(.*)$/.exec(v);
+    if (!m) continue;
+    if (!/^year-\d{4}$/i.test(v) && !/year|time|periodo|fecha|date|ejercicio|anio|a[nñ]o/i.test(k)) continue;
+    const years = { param: k, format: m[1] + '{y}' + m[3] };
+    for (const [k2, v2] of u.searchParams) {
+      if (k2 !== k && /^(startindex|start|offset|from|index)$/i.test(k2) && /^\d+$/.test(v2)) { years.startParam = k2; years.startStep = 10; break; }
+    }
+    return { paging: 'years', list: { years } };
+  }
+  return null;
+}
+
 function deducePaging(best, s, u) {
+  const yrs = deduceYearsPaging(u);
+  if (yrs) return yrs;
   const pages = (best.samples || []).map((p) => { let uu; try { uu = new URL(p.url); } catch (e) { return null; } return uu; }).filter(Boolean);
   if (pages.length >= 2) {
     const keys = new Set(); pages.forEach((pu) => { for (const k of pu.searchParams.keys()) keys.add(k); });
@@ -696,6 +715,7 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
   if (paging === 'page' && list.pageParam) stripKeys.add(list.pageParam.toLowerCase());
   if (paging === 'offset' && list.offsetParam) stripKeys.add(list.offsetParam.toLowerCase());
   if (paging === 'cursor' && list.cursorParam) stripKeys.add(list.cursorParam.toLowerCase());
+  if (paging === 'years' && list.years) { stripKeys.add(String(list.years.param).toLowerCase()); if (list.years.startParam) stripKeys.add(String(list.years.startParam).toLowerCase()); }
   for (const [k, v] of u.searchParams) {
     const kl = k.toLowerCase();
     if (stripKeys.has(kl)) continue;
