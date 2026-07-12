@@ -50,6 +50,76 @@ async function readCachedToken(cached) {
   return cached.token || null;
 }
 
+// ---------------------------------------------------------------------------------------------
+// PATH C (Firefox — device flow, no redirect, no server). Firefox's identity redirect is a per-install
+// random UUID that can't be pre-registered, so Path B needs each user to register their own redirect on
+// their own OAuth client. The OAuth 2.0 device flow (RFC 8628, "TVs & limited-input devices") avoids a
+// redirect entirely and returns a REFRESH token → silent renewal forever, all client-side. drive.file is
+// on Google's device-flow allowed-scopes list. The device client's secret is DISTRIBUTED WITH THE APP by
+// design for this client type (public/installed), so shipping it here is per Google's model — it grants
+// nothing without a user consenting in their own browser.
+const DEVICE_CLIENT_ID = ''; // '<n>-<...>.apps.googleusercontent.com' — a "TVs and limited-input devices" client
+const DEVICE_CLIENT_SECRET = ''; // non-confidential for this client type (RFC 8628); fill when the client is created
+export function hasDeviceClient() { return !!(DEVICE_CLIENT_ID && DEVICE_CLIENT_SECRET); }
+// Prefer the device flow for interactive connect when there's no getAuthToken (Firefox) and a device
+// client is configured — otherwise the Settings button stays on Path B (implicit flow).
+export function preferDeviceFlow() { return !(chrome.identity && chrome.identity.getAuthToken) && hasDeviceClient(); }
+
+let _sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+export function _setSleep(fn) { _sleep = fn; } // test seam — make polling instant
+
+const DEVICE_CODE_URL = 'https://oauth2.googleapis.com/device/code';
+const TOKEN_URL = 'https://oauth2.googleapis.com/token';
+const form = (obj) => new URLSearchParams(obj);
+
+// Persist a device-flow token response: the access token + (first time) the long-lived refresh token,
+// both encrypted, under the same gdrive:<clientId> cache Path B uses (only expiresAt stays plaintext).
+async function storeDeviceToken(clientId, d) {
+  const key = 'gdrive:' + cid(clientId);
+  const cur = (await chrome.storage.local.get(key))[key] || {};
+  const patch = { tokenEnc: await encryptString(d.access_token), expiresAt: Date.now() + (Number(d.expires_in || 3600) - 60) * 1000 };
+  if (d.refresh_token) patch.refreshEnc = await encryptString(d.refresh_token);
+  await chrome.storage.local.set({ [key]: { ...cur, ...patch } });
+}
+
+// Silent renewal via the stored refresh token (no user interaction). Used by getToken between connects.
+async function deviceRefresh(clientId, cached) {
+  const rt = cached.refreshEnc ? await decryptString(cached.refreshEnc) : null;
+  if (!rt) throw new Error('no refresh token');
+  const r = await fetch(TOKEN_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: form({ client_id: DEVICE_CLIENT_ID, client_secret: DEVICE_CLIENT_SECRET, refresh_token: rt, grant_type: 'refresh_token' }) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || !d.access_token) throw new Error('drive refresh ' + r.status + ' ' + (d.error || ''));
+  await storeDeviceToken(clientId, d); // refresh responses omit refresh_token → the stored one is kept
+  return d.access_token;
+}
+
+// Interactive connect via the device flow. Calls onUserCode({ user_code, verification_url,
+// verification_url_complete }) so the UI can show the code / open the verification page, then polls the
+// token endpoint until the user authorizes (or it's denied/expires). Stores the tokens and returns access.
+export async function driveDeviceConnect(clientId, onUserCode) {
+  const sr = await fetch(DEVICE_CODE_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: form({ client_id: DEVICE_CLIENT_ID, scope: SCOPE }) });
+  if (!sr.ok) throw new Error('device/code ' + sr.status);
+  const dc = await sr.json();
+  if (onUserCode) { try { onUserCode(dc); } catch (e) { /* UI best-effort */ } }
+  const deadline = Date.now() + (Number(dc.expires_in) || 1800) * 1000;
+  let interval = (Number(dc.interval) || 5) * 1000;
+  while (Date.now() < deadline) {
+    await _sleep(interval);
+    const r = await fetch(TOKEN_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: form({ client_id: DEVICE_CLIENT_ID, client_secret: DEVICE_CLIENT_SECRET, device_code: dc.device_code, grant_type: 'urn:ietf:params:oauth:grant-type:device_code' }) });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d.access_token) { await storeDeviceToken(clientId, d); return d.access_token; }
+    if (d.error === 'authorization_pending') continue;
+    if (d.error === 'slow_down') { interval += 5000; continue; }
+    if (d.error === 'access_denied') throw new Error('device flow denied');
+    if (d.error === 'expired_token') throw new Error('device code expired — try again');
+    throw new Error('device token ' + r.status + ' ' + (d.error || ''));
+  }
+  throw new Error('device flow timed out');
+}
+
 // PATH A (Chrome, preferred): chrome.identity.getAuthToken. Chrome holds a long-lived grant tied to the
 // signed-in Google account and silently mints/refreshes access tokens FOREVER after one consent — no 1h
 // re-prompt, no refresh-token handling by us. Requires manifest.oauth2 (a "Chrome Extension"-type OAuth
@@ -84,6 +154,8 @@ async function getToken(clientId, interactive) {
     const tok = await readCachedToken(o[key]);
     if (tok) return tok;
   }
+  // Path C: a device-flow refresh token renews silently (Firefox's forever-token, no prompt, no redirect).
+  if (o[key] && o[key].refreshEnc) { try { return await deviceRefresh(clientId, o[key]); } catch (e) { /* → Path B */ } }
   try { return (await connectDrive(clientId, false)).token; }        // silent refresh (prompt=none)
   catch (e) { if (!interactive) throw e; return (await connectDrive(clientId, true)).token; } // only NOW a UI prompt
 }
@@ -113,9 +185,10 @@ export async function driveConnected(clientId) {
   const key = 'gdrive:' + cid(clientId);
   const o = await chrome.storage.local.get(key);
   const c = o[key];
-  return !!(c && (c.tokenEnc || c.token) && c.expiresAt > Date.now()); // presence + freshness; no decrypt needed
+  // Fresh cached access token, OR a device-flow refresh token (can renew silently) → connected.
+  return !!(c && ((c.tokenEnc || c.token) && c.expiresAt > Date.now() || c.refreshEnc)); // presence + freshness; no decrypt needed
 }
-// Disconnect: Path A → drop Chrome's cached token; Path B → drop the stored token. (We don't revoke the grant
+// Disconnect: Path A → drop Chrome's cached token; Path B/C → drop the stored token (+ refresh). (We don't revoke the grant
 // server-side; the user can do that from their Google account.)
 export async function disconnectDrive(clientId) {
   if (hasChromeAuth()) { try { removeCachedToken(await chromeGetToken(false)); } catch (e) {} return; }

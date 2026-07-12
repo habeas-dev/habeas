@@ -5,14 +5,31 @@ Habeas gets Drive access two ways (`extension/src/sinks/drive.js`):
 - **Path A — `chrome.identity.getAuthToken` (Chrome, preferred).** Chrome holds a long-lived grant tied to
   the signed-in Google account and silently mints/refreshes access tokens **forever** after one consent —
   no 1-hour re-prompt. Active when `manifest.json` declares `oauth2` (a **"Chrome Extension"** OAuth client).
-- **Path B — implicit flow via `launchWebAuthFlow` (fallback: Firefox, or when `oauth2` is absent).** Returns
-  a 1 h access token (no refresh token); cached in `storage.local` with a silent `prompt=none` refresh.
-  Occasionally still needs a reconnect. This is the current default until Path A is configured.
+- **Path B — implicit flow via `launchWebAuthFlow` (fallback: when `oauth2` is absent, or a Firefox user who
+  registered their own redirect).** Returns a 1 h access token (no refresh token); cached in `storage.local`
+  with a silent `prompt=none` refresh. Occasionally still needs a reconnect.
+- **Path C — device flow (RFC 8628) for Firefox (preferred there).** `oauth2.googleapis.com/device/code` →
+  the user opens the shown verification page and enters a code → poll `.../token` → **access + refresh
+  token**, all client-side. No redirect URI (so no per-install Firefox UUID to register), no server, and the
+  refresh token renews silently forever. Uses a **"TVs and limited-input devices"** OAuth client; `drive.file`
+  is on Google's device-flow allowed-scopes list. Active once `DEVICE_CLIENT_ID`/`DEVICE_CLIENT_SECRET` are
+  set in `sinks/drive.js` (`preferDeviceFlow()` gates the Settings button); until then Firefox uses Path B.
 
-Why not a cross-browser refresh token without a server: the `chromiumapp.org` redirect forces a Google
-**"Web application"** client, whose token exchange **requires the client secret even with PKCE** — and a
-secret can't ship in a public extension, nor be proxied through habeas.dev without routing the user's Drive
-refresh token off-device (breaks local-first). So Path A is Chrome-only; Firefox stays on Path B.
+Why Path B alone wasn't enough on Firefox: the `chromiumapp.org` / `*.extensions.allizom.org` redirect forces
+a Google **"Web application"** client, whose token exchange **requires the client secret even with PKCE** — a
+secret can't ship in a public extension, nor be proxied through habeas.dev without routing the Drive token
+off-device (breaks local-first). The **device flow (Path C) sidesteps this**: its client type is
+public/installed, so Google **distributes the client secret with the app by design** (RFC 8628 — it grants
+nothing without a per-user in-browser consent), and it needs **no redirect at all**. So: Chrome → Path A;
+Firefox → Path C (device flow); Path B remains a fallback.
+
+### Path C setup (one-time)
+
+1. In Google Cloud → the Habeas project (`246972215385`) → Credentials → **Create OAuth client ID** →
+   application type **"TVs and Limited Input devices"**. Same consent screen / scope `drive.file`.
+2. Put its client id + secret in `extension/src/sinks/drive.js` (`DEVICE_CLIENT_ID` / `DEVICE_CLIENT_SECRET`).
+   The secret is **non-confidential for this client type** — committing it is per Google's model.
+3. Ensure the OAuth app is **In production** so refresh tokens don't expire after 7 days.
 
 ## One-time setup to enable Path A
 

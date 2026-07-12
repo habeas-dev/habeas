@@ -1,7 +1,7 @@
 import { chrome } from '../lib/ext.js';
 import { getConfig, upsert, remove } from '../lib/config.js';
 import { setSecret } from '../lib/secrets.js';
-import { driveSignIn, redirectUri, driveConnected, disconnectDrive } from '../sinks/drive.js';
+import { driveSignIn, redirectUri, driveConnected, disconnectDrive, preferDeviceFlow, driveDeviceConnect } from '../sinks/drive.js';
 import { putHandle, getHandle, verifyPermission } from '../lib/fs.js';
 import { sinkAcceptsSource } from '../sinks/format.js';
 import { watchThemeIcon } from '../lib/theme-icon.js';
@@ -144,8 +144,19 @@ async function render() {
   $('#sinks').querySelectorAll('[data-conn]').forEach((b) => b.onclick = async () => {
     const s = (await getConfig()).sinks.find((x) => x.id === b.dataset.conn);
     b.disabled = true; b.textContent = t('connecting');
-    try { await driveSignIn(s.clientId); b.textContent = '✓ ' + t('connected'); }
-    catch (e) { b.textContent = t('connect_drive'); alert('Drive: ' + e.message); }
+    try {
+      // Firefox with a device client → device flow (no redirect to register). Open the verification page
+      // and show the code; the call resolves once the user authorizes there. Else Path A/B via driveSignIn.
+      if (preferDeviceFlow()) {
+        await driveDeviceConnect(s.clientId, (dc) => {
+          try { chrome.tabs.create({ url: dc.verification_url_complete || dc.verification_url }); } catch (e) {}
+          b.textContent = t('device_enter_code', [dc.user_code]);
+        });
+      } else {
+        await driveSignIn(s.clientId);
+      }
+      b.textContent = '✓ ' + t('connected');
+    } catch (e) { b.textContent = t('connect_drive'); alert('Drive: ' + e.message); }
     finally { b.disabled = false; }
   });
 
