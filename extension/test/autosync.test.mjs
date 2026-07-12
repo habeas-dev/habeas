@@ -2,7 +2,26 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 // Pure scheduling policy for the background auto-sync runner — no chrome shim needed.
-const { autoDebounced, retainAutoDebounce, AUTO_DEBOUNCE_MS } = await import('../src/lib/autosync.js');
+const { autoDebounced, retainAutoDebounce, isLoginNavigation, AUTO_DEBOUNCE_MS } = await import('../src/lib/autosync.js');
+
+const wizink = { auth: { loginUrl: 'https://www.wizink.es/login' } };
+
+test('isLoginNavigation: the login page is a pre-auth navigation → skip the auto-run there', () => {
+  assert.equal(isLoginNavigation(wizink, 'https://www.wizink.es/login'), true);
+  assert.equal(isLoginNavigation(wizink, 'https://www.wizink.es/login?error=1'), true);
+  assert.equal(isLoginNavigation(wizink, 'https://www.wizink.es/login/otp'), true);
+});
+
+test('isLoginNavigation: the post-login data page is NOT the login page → run', () => {
+  assert.equal(isLoginNavigation(wizink, 'https://www.wizink.es/clientes/posicion-global'), false);
+  assert.equal(isLoginNavigation(wizink, 'https://www.wizink.es/loginx'), false); // not a path segment
+});
+
+test('isLoginNavigation: no loginUrl declared, or no url → never a login navigation', () => {
+  assert.equal(isLoginNavigation({ auth: {} }, 'https://www.wizink.es/login'), false);
+  assert.equal(isLoginNavigation(wizink, ''), false);
+  assert.equal(isLoginNavigation(wizink, undefined), false);
+});
 
 test('autoDebounced: a route that never ran (or whose debounce was cleared) may run', () => {
   assert.equal(autoDebounced(undefined, 1_000), false);

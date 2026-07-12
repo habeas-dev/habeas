@@ -21,7 +21,7 @@ import { t } from './lib/i18n.js';
 import { validateProposal, originHost } from './lib/exthooks.js';
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
-import { autoDebounced, retainAutoDebounce } from './lib/autosync.js';
+import { autoDebounced, retainAutoDebounce, isLoginNavigation } from './lib/autosync.js';
 
 chrome.action.onClicked.addListener(() => {
   chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/popup.html') });
@@ -112,7 +112,7 @@ async function syncWebRequestCapture() {
 chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
   if (info.status !== 'complete' || !tab || !tab.url || !/^https:\/\//.test(tab.url)) return;
   let host; try { host = new URL(tab.url).host; } catch (e) { return; }
-  maybeAutoRunForSite(host, tabId).catch(() => {});
+  maybeAutoRunForSite(host, tabId, tab.url).catch(() => {});
 });
 
 const SAMPLE_CAP = 60;
@@ -169,7 +169,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 const running = new Set();
 
-async function runAutoRoutes(matches, tabId) {
+async function runAutoRoutes(matches, tabId, triggerUrl) {
   const cfg = await getConfig();
   if (!(cfg.routes || []).some((r) => r.mode === 'auto')) return;
   const adapters = await getAdapters();
@@ -179,6 +179,9 @@ async function runAutoRoutes(matches, tabId) {
     const ds = cfg.datasources.find((d) => d.id === route.datasource && d.enabled);
     const adapter = ds && adapters[ds.adapter];
     if (!adapter || !matches(adapter)) continue;
+    // The navigation that triggered us is the source's own login page → the user isn't authenticated yet.
+    // Skip (a session-gated prelude would 400) and wait for the post-login navigation to fire us again.
+    if (triggerUrl && isLoginNavigation(adapter, triggerUrl)) continue;
     if (!(await hasConsent(adapter))) continue; // community/cross-domain source not yet consented
     const sink = cfg.sinks.find((s) => s.id === route.sink);
     if (!sink || sink.type === 'download' || sink.type === 'local-folder') continue; // need a page
@@ -202,7 +205,7 @@ async function runAutoRoutes(matches, tabId) {
 // Trigger A: captured auth (a bearer source's JWT was seen). host = the API host.
 const maybeAutoRun = (host) => runAutoRoutes((a) => hostOf(a) === host);
 // Trigger B: the user navigated to the source's site — works for cookie sources too (no JWT to capture).
-const maybeAutoRunForSite = (host, tabId) => runAutoRoutes((a) => siteMatches(a, host), tabId);
+const maybeAutoRunForSite = (host, tabId, url) => runAutoRoutes((a) => siteMatches(a, host), tabId, url);
 
 const hostOf = (adapter) => adapter.api.host.replace(/^https?:\/\//, '');
 const bareHost = (m) => String(m).replace(/^[a-z]+:\/\//i, '').replace(/[:/].*$/, '').replace(/^\*\./, '');

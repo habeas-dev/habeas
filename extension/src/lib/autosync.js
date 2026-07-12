@@ -12,6 +12,22 @@ export function autoDebounced(lastAt, now, debounceMs = AUTO_DEBOUNCE_MS) {
   return lastAt != null && now - lastAt < debounceMs;
 }
 
+// Is this completed navigation the source's own LOGIN page (so the user isn't authenticated yet)? A
+// cookie source has no JWT to key a "session ready" trigger on, so the auto-run fires on every completed
+// navigation — including the login page, where a session-gated prelude would 400. Skip that one and wait
+// for the post-login navigation (e.g. WiZink /login → /clientes/posicion-global). Compares by path
+// (segment-aware, ignoring query/hash) against adapter.auth.loginUrl; false when no loginUrl is declared.
+export function isLoginNavigation(adapter, url) {
+  const login = adapter && adapter.auth && adapter.auth.loginUrl;
+  if (!login || !url) return false;
+  try {
+    const a = new URL(url), b = new URL(login);
+    if (a.host !== b.host) return false;
+    const p = a.pathname.replace(/\/+$/, ''), q = b.pathname.replace(/\/+$/, '');
+    return p === q || p.startsWith(q + '/'); // /login and /login/otp, but not /loginx
+  } catch (e) { return false; }
+}
+
 // After a run, KEEP the debounce (true) or release it so the next trigger retries immediately (false)?
 // A transient/auth failure must release it: the auto-run can fire on the source's login page BEFORE the
 // user authenticates (the CSRF prelude then 400s), or hit an anti-bot challenge, or find no captured
