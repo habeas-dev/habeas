@@ -3,12 +3,13 @@
 // manifest (<service>/manifest.json) so repeated syncs merge instead of clobbering, and
 // different providers never collide. The ephemeral download ZIP carries a snapshot.
 import { getSecret } from '../lib/secrets.js';
+import { sigv4Sign, sha256Hex } from '../lib/sigv4.js';
 import { resolveSinkExtraHeaders } from '../lib/sinkheaders.js';
 import { makeZip } from '../lib/zip.js';
 import { pathFor, buildManifest, toRecords, mergeRecords, jsonBlob, today } from './format.js';
 import { driveWrite, driveRead } from './drive.js';
 
-export function listSinkTypes() { return ['download', 'local-folder', 'drive', 'http', 'webdav']; }
+export function listSinkTypes() { return ['download', 'local-folder', 'drive', 'http', 'webdav', 's3']; }
 
 export async function writeToSink(sink, docs, files, opts = {}) {
   const impl = IMPL[sink.type];
@@ -103,6 +104,26 @@ const IMPL = {
     await webdavPut(base + '/' + encodePath(mf), jsonBlob(JSON.stringify(merged, null, 2)), auth);
     return { written: n, total: docs.length };
   },
+
+  // S3 (and S3-compatible: MinIO, Cloudflare R2, Backblaze B2): PUT each object under an optional key
+  // prefix via SigV4, and keep a cumulative per-source manifest. Credentials (access key + secret) live
+  // in the encrypted secrets store (secretRef). Needs host permission for the endpoint (like the http sink).
+  async s3(sink, docs, files, opts = {}) {
+    const cfg = await s3Config(sink);
+    if (!cfg.bucket || !cfg.accessKeyId) throw new Error('s3: bucket + accessKeyId required');
+    const service = opts.service || 'documents';
+    let n = 0;
+    for (const d of docs) {
+      for (const art of files.get(d.internalId) || []) {
+        await s3Put(cfg, s3Key(cfg, pathFor(sink, d, opts, art.ext)), art.blob);
+        n++;
+      }
+    }
+    const mfKey = s3Key(cfg, service + '/' + manifestName(opts));
+    const merged = mergeRecords(await s3GetJson(cfg, mfKey), toRecords(docs, files));
+    await s3Put(cfg, mfKey, jsonBlob(JSON.stringify(merged, null, 2)));
+    return { written: n, total: docs.length };
+  },
 };
 
 // --- WebDAV helpers ---------------------------------------------------------------------------------
@@ -134,6 +155,43 @@ async function webdavMkcols(base, rel, auth, made) {
     made.add(path);
     try { await fetch(base + '/' + encodePath(path), { method: 'MKCOL', headers: auth ? { Authorization: auth } : {} }); } catch (e) { /* already exists / best-effort */ }
   }
+}
+
+// --- S3 helpers (AWS + S3-compatible: MinIO, Cloudflare R2, Backblaze B2) via SigV4 --------------------
+const S3_EMPTY_SHA = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+const amzNow = () => new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+async function s3Config(sink) {
+  return {
+    endpoint: sink.endpoint ? String(sink.endpoint).replace(/\/+$/, '') : '', // custom (MinIO/R2/B2); else AWS
+    region: sink.region || 'us-east-1',
+    bucket: sink.bucket,
+    accessKeyId: sink.accessKeyId,
+    secretAccessKey: sink.secretRef ? await getSecret(sink.secretRef) : '',
+    prefix: sink.prefix || '',
+    pathStyle: !!sink.pathStyle || !!sink.endpoint, // custom endpoints are usually path-style
+  };
+}
+const s3Key = (cfg, rel) => [cfg.prefix, rel].filter(Boolean).join('/').replace(/\/{2,}/g, '/').replace(/^\//, '');
+function s3Url(cfg, key) {
+  const enc = String(key).split('/').filter(Boolean).map(encodeURIComponent).join('/');
+  if (cfg.endpoint) return cfg.pathStyle ? `${cfg.endpoint}/${cfg.bucket}/${enc}` : `${cfg.endpoint}/${enc}`;
+  return cfg.pathStyle ? `https://s3.${cfg.region}.amazonaws.com/${cfg.bucket}/${enc}` : `https://${cfg.bucket}.s3.${cfg.region}.amazonaws.com/${enc}`;
+}
+async function s3Put(cfg, key, blob) {
+  const body = new Uint8Array(await blob.arrayBuffer());
+  const url = s3Url(cfg, key);
+  const { headers } = await sigv4Sign({ method: 'PUT', url, region: cfg.region, accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey, amzDate: amzNow(), payloadHash: await sha256Hex(body), extraHeaders: { 'content-type': blob.type || 'application/octet-stream' } });
+  const r = await fetch(url, { method: 'PUT', headers, body });
+  if (!r.ok) throw new Error('s3 put ' + r.status + ' ' + (await r.text().catch(() => '')).slice(0, 120));
+}
+async function s3GetJson(cfg, key) {
+  try {
+    const url = s3Url(cfg, key);
+    const { headers } = await sigv4Sign({ method: 'GET', url, region: cfg.region, accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey, amzDate: amzNow(), payloadHash: S3_EMPTY_SHA });
+    const r = await fetch(url, { headers });
+    if (!r.ok) return []; // 404 → no manifest yet
+    return await r.json().catch(() => []);
+  } catch (e) { return []; }
 }
 
 function triggerDownload(blob, name) {
