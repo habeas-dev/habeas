@@ -124,14 +124,21 @@ async function render() {
     render();
   });
 
+  const defSink = (await chrome.storage.local.get('habeas:defaultsink'))['habeas:defaultsink'] || '';
   $('#sinks').innerHTML = cfg.sinks.map((s) =>
-    `<div class="card row"><b style="flex:1">${esc(s.id)}</b><code>${esc(s.type)}</code>
+    `<div class="card row"><b style="flex:1">${esc(s.id)}${s.id === defSink ? ' <span class="pill sent">★ ' + t('default_sink') + '</span>' : ''}</b><code>${esc(s.type)}</code>
       ${s.type === 'drive' ? `<button data-conn="${esc(s.id)}">${t('connect_drive')}</button>` : ''}
       ${s.type === 'dropbox' ? `<button data-dbxconn="${esc(s.id)}">${t('connect_dropbox')}</button>` : ''}
       ${s.type === 'local-folder' ? `<code>${esc(s.folderName || '—')}</code><button data-folder="${esc(s.id)}">${t('change_folder')}</button>` : ''}
       ${s.url ? `<small>${esc(s.url)}</small>` : ''}
+      <button data-default="${esc(s.id)}" title="${t('set_default_hint')}">${s.id === defSink ? t('unset_default') : t('set_default')}</button>
       <button data-del="${esc(s.id)}">${t('remove')}</button></div>`).join('')
     || `<p class="muted">${t('no_sinks')}</p>`;
+  $('#sinks').querySelectorAll('[data-default]').forEach((b) => b.onclick = async () => {
+    const cur = (await chrome.storage.local.get('habeas:defaultsink'))['habeas:defaultsink'] || '';
+    await chrome.storage.local.set({ 'habeas:defaultsink': cur === b.dataset.default ? '' : b.dataset.default }); // toggle
+    render();
+  });
   $('#sinks').querySelectorAll('[data-del]').forEach((b) => b.onclick = async () => { await remove('sinks', b.dataset.del); render(); });
   $('#sinks').querySelectorAll('[data-folder]').forEach((b) => b.onclick = async () => {
     if (!window.showDirectoryPicker) { alert(t('fs_unsupported')); return; }

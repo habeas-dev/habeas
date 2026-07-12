@@ -49,3 +49,11 @@ export function needsTabEscalation(res) {
   if (res.status === 'challenged' || res.status === 'nosession') return true;
   return res.status === 'error' && AUTHISH.test(String(res.error || ''));
 }
+
+// Which sink a "Sync all" sweep delivers a source to, in priority order: its explicit auto-route sink,
+// else the source's remembered favorite, else the global default sink. '' when none resolves (the source
+// is then reported as having no destination rather than silently skipped). Lets the sweep cover EVERY
+// enabled source, not only ones with an auto route configured.
+export function sweepSinkId(dsId, autoBy = {}, favs = {}, defaultSink = '') {
+  return (autoBy && autoBy[dsId]) || (favs && favs[dsId]) || defaultSink || '';
+}

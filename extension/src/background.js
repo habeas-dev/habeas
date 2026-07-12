@@ -21,7 +21,7 @@ import { t } from './lib/i18n.js';
 import { validateProposal, originHost } from './lib/exthooks.js';
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
-import { autoDebounced, retainAutoDebounce, isLoginNavigation, needsTabEscalation } from './lib/autosync.js';
+import { autoDebounced, retainAutoDebounce, isLoginNavigation, needsTabEscalation, sweepSinkId } from './lib/autosync.js';
 
 chrome.action.onClicked.addListener(() => {
   chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/popup.html') });
@@ -223,15 +223,20 @@ async function sweepAllSources() {
   try {
     const cfg = await getConfig();
     const adapters = await getAdapters();
-    const routes = (cfg.routes || []).filter((r) => r.mode === 'auto');
+    // Every ENABLED source (not only ones with an auto route). Each resolves a destination: auto-route sink
+    // → the source's remembered favorite → the global default sink. Sources with no SW-runnable destination
+    // are reported (noSink), not silently skipped.
+    const autoBy = {}; (cfg.routes || []).filter((r) => r.mode === 'auto').forEach((r) => { autoBy[r.datasource] = r.sink; });
+    const favs = (await chrome.storage.local.get('habeas:favsink'))['habeas:favsink'] || {};
+    const def = (await chrome.storage.local.get('habeas:defaultsink'))['habeas:defaultsink'] || '';
+    const swRunnable = (s) => !!s && s.type !== 'download' && s.type !== 'local-folder';
     await badgeWorking();
-    let sources = 0, totalNew = 0, needLogin = 0, errors = 0;
-    for (const route of routes) {
-      const ds = cfg.datasources.find((d) => d.id === route.datasource && d.enabled);
-      const adapter = ds && adapters[ds.adapter];
-      const sink = cfg.sinks.find((s) => s.id === route.sink);
-      if (!adapter || !sink || sink.type === 'download' || sink.type === 'local-folder') continue; // SW-runnable sinks only
-      if (!(await hasConsent(adapter))) continue;
+    let sources = 0, totalNew = 0, needLogin = 0, errors = 0, noSink = 0;
+    for (const ds of (cfg.datasources || []).filter((d) => d.enabled)) {
+      const adapter = adapters[ds.adapter];
+      if (!adapter || !(await hasConsent(adapter))) continue;
+      const sink = cfg.sinks.find((s) => s.id === sweepSinkId(ds.id, autoBy, favs, def));
+      if (!swRunnable(sink)) { noSink++; continue; }
       sources++;
       setStatus(t('status_listing', [adapter.name || ds.adapter]));
       let res = await runRoute(ds, adapter, sink, { kind: 'sweep' }); // 1) unattended
@@ -243,10 +248,10 @@ async function sweepAllSources() {
       else if (res.status === 'nosession' || res.status === 'challenged') needLogin++;
       else if (res.status === 'error') errors++;
     }
-    await appendLog({ kind: 'sweep', status: 'ok', sources, new: totalNew, needLogin, errors });
+    await appendLog({ kind: 'sweep', status: 'ok', sources, new: totalNew, needLogin, errors, noSink });
     notify(t('notify_sweep', [String(totalNew), String(sources)]));
     if (totalNew) await badgeCount(totalNew); else await badgeClear();
-    return { status: 'done', sources, new: totalNew, needLogin, errors };
+    return { status: 'done', sources, new: totalNew, needLogin, errors, noSink };
   } finally { sweeping = false; }
 }
 

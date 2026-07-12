@@ -2,7 +2,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 // Pure scheduling policy for the background auto-sync runner — no chrome shim needed.
-const { autoDebounced, retainAutoDebounce, isLoginNavigation, needsTabEscalation, AUTO_DEBOUNCE_MS } = await import('../src/lib/autosync.js');
+const { autoDebounced, retainAutoDebounce, isLoginNavigation, needsTabEscalation, sweepSinkId, AUTO_DEBOUNCE_MS } = await import('../src/lib/autosync.js');
+
+test('sweepSinkId: auto-route sink wins, then the source favorite, then the global default', () => {
+  assert.equal(sweepSinkId('x', { x: 'auto' }, { x: 'fav' }, 'def'), 'auto');
+  assert.equal(sweepSinkId('x', {}, { x: 'fav' }, 'def'), 'fav');
+  assert.equal(sweepSinkId('x', {}, {}, 'def'), 'def');
+  assert.equal(sweepSinkId('x', {}, {}, ''), '');
+  assert.equal(sweepSinkId('x'), '');
+});
 
 test('needsTabEscalation: a session/challenge/auth failure escalates to a tab; success/hard-error do not', () => {
   assert.equal(needsTabEscalation({ status: 'done', new: 2 }), false);

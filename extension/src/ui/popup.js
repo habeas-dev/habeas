@@ -138,8 +138,11 @@ async function populateSinks(cfg) {
   const list = cfg.sinks.filter((s) => !adapter || sinkAcceptsSource(s, adapter));
   $('#sink').innerHTML = list.map((s) => `<option value="${esc(s.id)}">${esc(s.id)} · ${esc(s.type)}</option>`).join('') || '<option value="">—</option>';
   const fav = (await getFavSinks())[dsId];
-  if (fav && list.some((s) => s.id === fav)) $('#sink').value = fav; // else the first compatible sink stays selected
+  const def = await getDefaultSink();
+  const pick = (fav && list.some((s) => s.id === fav) && fav) || (def && list.some((s) => s.id === def) && def);
+  if (pick) $('#sink').value = pick; // this source's favorite → the global default → (else) first compatible
 }
+async function getDefaultSink() { try { return (await chrome.storage.local.get('habeas:defaultsink'))['habeas:defaultsink'] || ''; } catch (e) { return ''; } }
 // Resolve the captured session for this source — merged across sibling hosts sharing its registrable
 // domain (a single account JWT often rides several API hosts). Cookie sources get an empty store.
 const getAuth = (adapter) => loadAuth(adapter);
@@ -235,6 +238,7 @@ async function onSyncAll() {
     if (r && r.ok && r.status !== 'busy') {
       let msg = t('sync_all_done', [String(r.new || 0), String(r.sources || 0)]);
       if (r.needLogin) msg += ' · ' + t('sync_all_needlogin', [String(r.needLogin)]);
+      if (r.noSink) msg += ' · ' + t('sync_all_nosink', [String(r.noSink)]);
       $('#status').textContent = msg;
     } else if (r && r.status === 'busy') { $('#status').textContent = t('sync_all_running'); }
     else { $('#status').textContent = t('sync_all_err', [(r && r.error) || 'error']); }
