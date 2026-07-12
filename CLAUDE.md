@@ -21,7 +21,7 @@ user's valid Cloudflare/Akamai session), never stores credentials (the user logs
 themselves), and lets the user resolve MFA/OTP live. The opposite of how Plaid/Tink/TrueLayer
 operate. Every decision must preserve this.
 
-## Status — working alpha
+## Status — working beta (published on Chrome Web Store + Firefox AMO)
 
 First data source (Carrefour España) works **end-to-end** in Chrome and Firefox. Implemented:
 capture → inventory → sinks (download / local-folder / **native Google Drive** / http),
