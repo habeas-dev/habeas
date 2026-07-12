@@ -24,6 +24,9 @@
   the store-projection (incremental List shows records-only rows with no URL → **use Full history** to
   re-fetch PDFs) and/or the already-shipped `[object Object]` + direct-fetch (CSP) fixes. Re-test on 0.1.54.
   (Optional future: persist the PDF URL in the store record so records-only rows can still fetch it.)
+  * [DONE v0.1.60.1] ~~Persist the PDF URL in the store record~~ — `buildRecord` writes `record.pdfUrl`
+    for `pdf.urlField` sources; `artifactKinds`/`fetchArtifact` fall back to it for store rows (no `_raw`),
+    re-validating the host each fetch (`assertAllowedDocHost`). Unit-tested.
 * [DONE v0.1.53.5] ~~Al seleccionar un nuevo source se pone el primer sink. Sink favorito.~~ Fixed: the sink
   chosen for a source is remembered (storage.local `habeas:favsink`) and pre-selected next time.
 * [DONE v0.1.53.7] ~~Echo de menos Google drive como almacén canónico.~~ Added a `drive` store backend
