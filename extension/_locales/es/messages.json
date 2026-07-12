@@ -133,6 +133,7 @@
   "st_challenged": { "message": "verificación anti-bot — abre el sitio y resuélvela, luego reintenta" },
   "st_error": { "message": "error: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
   "status_listing": { "message": "Comprobando $NAME$…", "placeholders": { "name": { "content": "$1" } } },
+  "status_listing_page": { "message": "Listando $NAME$… página $P$ ($N$)", "placeholders": { "name": { "content": "$1" }, "p": { "content": "$2" }, "n": { "content": "$3" } } },
   "status_fetching": { "message": "Descargando $N$ nuevos de $NAME$…", "placeholders": { "n": { "content": "$1" }, "name": { "content": "$2" } } },
   "status_sending": { "message": "Enviando $N$ a $SINK$…", "placeholders": { "n": { "content": "$1" }, "sink": { "content": "$2" } } },
   "status_done": { "message": "$NAME$: $N$ nuevos sincronizados", "placeholders": { "name": { "content": "$1" }, "n": { "content": "$2" } } },

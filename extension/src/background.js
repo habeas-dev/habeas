@@ -290,7 +290,8 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     let totalNew = 0;
     for (const sid of streamIds) {
       const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(adapter.id, sid); const fmts = fmtsFor(sid);
-      const all = await listInventory(eff, auth, net, { groupId: opts.groupId }); // opts.groupId → one account only (ext collect{group})
+      // onProgress → live per-page status (visible in an open popup during a Sync-all sweep).
+      const all = await listInventory(eff, auth, net, { groupId: opts.groupId, onProgress: (p) => setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])) }); // opts.groupId → one account only
       const fresh = all.filter((d) => !delivered[d.internalId]);
       const eligible = fresh.filter((d) => acceptsDoc(sink, d));
       if (!eligible.length) continue;

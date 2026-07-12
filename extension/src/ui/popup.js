@@ -233,6 +233,9 @@ async function onSyncAll() {
   const b = $('#sync-all');
   b.disabled = true; b.textContent = t('syncing');
   $('#status').textContent = t('sync_all_running');
+  // Reflect the background's live per-source progress (Listing…/Fetching…/Sending…) while the sweep runs.
+  const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#status').textContent = v.msg; };
+  chrome.storage.onChanged.addListener(onStatus);
   try {
     const r = await chrome.runtime.sendMessage({ type: 'habeas:sync-all' });
     if (r && r.ok && r.status !== 'busy') {
@@ -243,7 +246,7 @@ async function onSyncAll() {
     } else if (r && r.status === 'busy') { $('#status').textContent = t('sync_all_running'); }
     else { $('#status').textContent = t('sync_all_err', [(r && r.error) || 'error']); }
   } catch (e) { $('#status').textContent = t('sync_all_err', [(e && e.message) || String(e)]); }
-  finally { b.disabled = false; b.textContent = t('sync_all'); }
+  finally { chrome.storage.onChanged.removeListener(onStatus); b.disabled = false; b.textContent = t('sync_all'); }
 }
 
 async function onLoadStore() {
