@@ -91,6 +91,41 @@ test('drafts a form-encoded POST list with the right content-type', () => {
   assert.equal(r.draft.api.list.contentType, 'application/x-www-form-urlencoded');
 });
 
+// A CSRF prelude: the POST list body carries a token that was scraped from a page the SPA loaded
+// first (WiZink's securityToken). The draft must emit api.csrf (so the runtime fetches a FRESH token
+// each run) and template the body value as {csrf} instead of freezing the captured one.
+test('infers a CSRF prelude from a body token found in a captured HTML page (WiZink-shape)', () => {
+  const tok = 'AB12cd34EF56gh78ZZ';
+  const html = `<!doctype html><html><body><form><input type="hidden" name="securityToken" value="${tok}"></form></body></html>`;
+  const body = `operation=list&securityToken=${tok}&from=2026-01-01`;
+  const samples = [
+    { url: 'https://www.wizink.es/clientes/posicion-global', method: 'GET', status: 200, reqHeaders: {}, kind: 'html', html, fromHtml: true },
+    { url: 'https://www.wizink.es/clientes/movimientos', method: 'POST', status: 200,
+      reqHeaders: { 'content-type': 'application/x-www-form-urlencoded' }, reqBody: body,
+      json: { movements: [{ id: 'M1', fecha: '2026-01-02', importe: 3 }] } },
+  ];
+  const r = draftAdapterFromSamples(samples, { domain: 'wizink.es', pageHost: 'www.wizink.es' });
+  assert.ok(r.ok);
+  assert.ok(r.draft.api.csrf, 'emits a csrf prelude');
+  assert.equal(r.draft.api.csrf.path, '/clientes/posicion-global');
+  const m = new RegExp(r.draft.api.csrf.match).exec(html); // the regex re-extracts the token
+  assert.equal(m && m[1], tok);
+  assert.ok(r.draft.api.list.body.includes('{csrf}'), 'body token templated as {csrf}');
+  assert.ok(!r.draft.api.list.body.includes(tok), 'the frozen token is gone');
+  assert.ok(validateAdapter(r.draft).ok);
+});
+
+// No csrf prelude when no captured HTML page contains the body token (don't invent one → avoids an
+// unnecessary, possibly-failing prelude fetch at runtime).
+test('does not invent a CSRF prelude when the token is not found in any HTML page', () => {
+  const body = 'operation=list&securityToken=AB12cd34EF56gh78ZZ&from=2026-01-01';
+  const samples = [{ url: 'https://www.wizink.es/clientes/movimientos', method: 'POST', status: 200,
+    reqHeaders: { 'content-type': 'application/x-www-form-urlencoded' }, reqBody: body,
+    json: { movements: [{ id: 'M1', fecha: '2026-01-02', importe: 3 }] } }];
+  const r = draftAdapterFromSamples(samples, { domain: 'wizink.es', pageHost: 'www.wizink.es' });
+  assert.ok(!r.draft.api.csrf);
+});
+
 // TDD: page pagination is inferred when the request carries a `page` query param and the response
 // has neither a cursor nor an offsets object.
 test('detects page pagination from a `page` query param', () => {

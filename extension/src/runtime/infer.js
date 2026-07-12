@@ -498,6 +498,59 @@ function deducePaging(best, s, u) {
   return { paging: 'none', list: {} };
 }
 
+// ---------------------------------------------------------------------------------------------
+// CSRF prelude inference. Some sites (AEM/WiZink) require a per-session securityToken scraped from a
+// page the SPA loaded first, then sent in the POST body of the data request. Detect a token in the
+// list body that ALSO appears verbatim in a captured HTML page → emit api.csrf so the runtime fetches
+// a FRESH token each run (the captured one is stale next session), and template the body as {csrf}.
+// The runtime only injects {csrf} into bodies/URLs (never replayed headers), so this targets the body.
+// ---------------------------------------------------------------------------------------------
+function walkStrings(node, add, depth = 6) {
+  if (node == null || depth < 0) return;
+  if (typeof node === 'string') return add(node);
+  if (typeof node === 'object') for (const k of Object.keys(node)) walkStrings(node[k], add, depth - 1);
+}
+// Token-shaped string values in a POST body (JSON leaves or form values): long, opaque, no spaces.
+function bodyTokens(body) {
+  const out = new Set();
+  const add = (v) => { const s = String(v); if (s.length >= 16 && /^[A-Za-z0-9._-]+$/.test(s)) out.add(s); };
+  let parsed = false;
+  try { walkStrings(JSON.parse(body), add); parsed = true; } catch (e) {}
+  if (!parsed) { try { for (const [, v] of new URLSearchParams(body)) add(v); } catch (e) {} }
+  return [...out];
+}
+const csrfCharClass = (tok) => '[A-Za-z0-9' + (tok.includes('_') ? '_' : '') + (tok.includes('-') ? '\\-' : '') + (tok.includes('.') ? '.' : '') + ']';
+// A regex that captures `tok` from `html`. Prefer a semantic anchor near the value (securityToken /
+// *_csrf / *_token); fall back to the literal bytes right before it. Only returned if it re-extracts
+// the exact token — so we never emit a broken prelude.
+function buildCsrfRegex(html, tok) {
+  const idx = html.indexOf(tok);
+  if (idx < 0) return null;
+  const cls = csrfCharClass(tok);
+  const before = html.slice(Math.max(0, idx - 60), idx);
+  const cands = [];
+  const names = [...before.matchAll(/([A-Za-z_][\w-]*(?:token|csrf|xsrf|nonce))/gi)].map((m) => m[1]);
+  if (names.length) cands.push(escRe(names[names.length - 1]) + '["\'\\s]*(?:value=|content=|:|=)?["\'\\s]*(' + cls + '{12,})');
+  cands.push(escRe(html.slice(Math.max(0, idx - 20), idx)) + '(' + cls + '{12,})'); // literal-context fallback
+  for (const rx of cands) { try { const m = new RegExp(rx).exec(html); if (m && m[1] === tok) return rx; } catch (e) {} }
+  return null;
+}
+function inferCsrf(body, samples) {
+  if (!body) return null;
+  const htmls = (samples || []).map((s) => ({ s, html: htmlBody(s) })).filter((x) => x.html);
+  if (!htmls.length) return null;
+  for (const tok of bodyTokens(body)) {
+    for (const { s, html } of htmls) {
+      if (!html.includes(tok)) continue;
+      const match = buildCsrfRegex(html, tok);
+      if (!match) continue;
+      let u; try { u = new URL(s.url); } catch (e) { continue; }
+      return { host: u.host, path: u.pathname, match, tok };
+    }
+  }
+  return null;
+}
+
 // Build an adapter draft. `ctx` = { domain, pageHost, assets }. `chosen` (optional) = { key }
 // picks a specific captured list; without it the biggest is used.
 export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
@@ -598,6 +651,13 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
     draft.api.list.contentType = ct;
     // content-type is carried via list.contentType now → don't duplicate it in list.headers.
     if (draft.api.list.headers) { delete draft.api.list.headers['content-type']; if (!Object.keys(draft.api.list.headers).length) delete draft.api.list.headers; }
+    // A per-session CSRF token baked into the body → fetch it fresh via a prelude and template {csrf}.
+    const csrf = inferCsrf(draft.api.list.body, samples);
+    if (csrf) {
+      draft.api.list.body = draft.api.list.body.split(csrf.tok).join('{csrf}');
+      draft.api.csrf = { path: csrf.path, match: csrf.match };
+      if (csrf.host && csrf.host !== host) draft.api.csrf.host = csrf.host;
+    }
   }
 
   // Per-document artifact: prefer the JSON detail (captured passively when the user opens an order);
