@@ -19,7 +19,7 @@ const apiArg = (obj) => JSON.stringify(obj).replace(/[\u0080-\uffff]/g, (c) => '
 // Habeas ships its own Dropbox app (public — PKCE needs NO client secret, so the app key is publishable,
 // unlike Google's device secret). A sink may override it. Empty until the project app is registered; the
 // per-sink appKey field then carries a user's own app.
-const DEFAULT_DROPBOX_APP_KEY = '';
+const DEFAULT_DROPBOX_APP_KEY = 'wv89vk62nf0qnad';
 const dbxAppKey = (sink) => (sink && sink.appKey) || DEFAULT_DROPBOX_APP_KEY;
 
 // PKCE helpers (S256) — Web Crypto only, so this runs in the service worker / an extension page.
