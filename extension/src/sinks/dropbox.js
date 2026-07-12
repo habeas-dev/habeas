@@ -136,7 +136,9 @@ async function dbxDownloadJson(token, path) {
 
 export async function dropboxWrite(sink, docs, files, opts = {}) {
   const token = await dropboxToken(sink);
-  const root = sink.rootFolderName || 'Habeas';
+  // Default root is EMPTY: the shipped app is a Dropbox "App folder" type, so Dropbox already scopes
+  // everything under Aplicaciones/<app>/ — adding our own 'Habeas' on top would nest a redundant Habeas/.
+  const root = sink.rootFolderName || '';
   const service = opts.service || 'documents';
   let n = 0;
   for (const d of docs) for (const art of files.get(d.internalId) || []) { await dbxUpload(token, dbxPath(root, pathFor(sink, d, opts, art.ext)), art.blob); n++; }
@@ -149,7 +151,7 @@ export async function dropboxWrite(sink, docs, files, opts = {}) {
 // Canonical-store backend on Dropbox: per-source JSON at <root>/<storeFolder>/<sourceId>.json, reusing the
 // sink's token. All ops are best-effort/silent — a store read/write must never break a List or delivery.
 export function dropboxStore(sink, cfg = {}) {
-  const folder = dbxPath(sink.rootFolderName || 'Habeas', (cfg && cfg.storeFolder) || '_store');
+  const folder = dbxPath(sink.rootFolderName || '', (cfg && cfg.storeFolder) || '_store');
   const filePath = (id) => folder + '/' + id + '.json';
   return {
     async loadSource(id) {

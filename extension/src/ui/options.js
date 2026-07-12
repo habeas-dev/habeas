@@ -226,7 +226,7 @@ function renderFields() {
   } else if (type === 's3') {
     $('#sfields').innerHTML = `id:<input id="sid" size="6"> <label>${t('s3_bucket')}</label><input id="s3bucket" size="10"> <label>${t('s3_region')}</label><input id="s3region" size="8" placeholder="us-east-1"> <label>${t('s3_key')}</label><input id="s3ak" size="10"> <label>${t('s3_secret')}</label><input id="s3sk" type="password" size="10"> <label>${t('s3_endpoint_opt')}</label><input id="s3ep" size="16" placeholder="MinIO/R2/B2"> <label>${t('s3_prefix_opt')}</label><input id="s3prefix" size="8">`;
   } else if (type === 'dropbox') {
-    $('#sfields').innerHTML = `id:<input id="sid" size="6"> <label>${t('dbx_folder_opt')}</label><input id="dbxfolder" size="10" placeholder="Habeas"> <label>${t('dbx_appkey_opt')}</label><input id="dbxkey" size="14"> <label>${t('dbx_refresh_opt')}</label><input id="dbxrefresh" type="password" size="16">`
+    $('#sfields').innerHTML = `id:<input id="sid" size="6"> <label>${t('dbx_folder_opt')}</label><input id="dbxfolder" size="12" placeholder="${t('dbx_folder_ph')}"> <label>${t('dbx_appkey_opt')}</label><input id="dbxkey" size="14"> <label>${t('dbx_refresh_opt')}</label><input id="dbxrefresh" type="password" size="16">`
       + `<div style="flex-basis:100%;margin-top:4px"><small>${t('dbx_hint')}</small><br><small>${t('redirect_hint')}</small> <code>${dropboxRedirectUri()}</code></div>`;
   } else if (type === 'drive') {
     $('#sfields').innerHTML = `id:<input id="sid" size="8"> <label>${t('client_id_optional')}</label><input id="sclient" size="26">`
@@ -258,8 +258,9 @@ async function addSink() {
     const prefix = ($('#s3prefix').value || '').trim(); if (prefix) sink.prefix = prefix;
     if ($('#s3sk').value) { sink.secretRef = 'secret://' + id; await setSecret(id, $('#s3sk').value); }
   } else if (type === 'dropbox') {
-    sink.appKey = ($('#dbxkey').value || '').trim();
-    sink.rootFolderName = ($('#dbxfolder').value || '').trim() || 'Habeas';
+    sink.appKey = ($('#dbxkey').value || '').trim() || undefined;
+    const folder = ($('#dbxfolder').value || '').trim(); // blank → the app folder root (App-folder app already scopes under Aplicaciones/<app>/)
+    if (folder) sink.rootFolderName = folder;
     if ($('#dbxrefresh').value) { sink.refreshRef = 'secret://' + id; await setSecret(id, $('#dbxrefresh').value.trim()); }
   } else if (type === 'drive') {
     sink.clientId = ($('#sclient').value || '').trim() || undefined;

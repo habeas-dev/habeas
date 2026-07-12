@@ -108,6 +108,7 @@
   "dbx_appkey_opt": { "message": "app key (optional)" },
   "dbx_refresh_opt": { "message": "refresh token (advanced)" },
   "dbx_folder_opt": { "message": "folder" },
+  "dbx_folder_ph": { "message": "blank = app folder" },
   "dbx_hint": { "message": "Add the sink, then click “Connect Dropbox” to authorize (one click). Advanced/Firefox fallback: paste your own app key + a refresh token." },
   "sink_accepts": { "message": "Accepts:" },
   "none_compatible": { "message": "No compatible documents for this destination." },
