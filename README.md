@@ -171,7 +171,7 @@ Habeas simply runs there.
 
 # Current status
 
-**Working alpha — published on both stores.**
+**Working beta — published on both stores.**
 
 Habeas is live on the [Chrome Web Store](https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog)
 and [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/habeas/).
