@@ -788,6 +788,36 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
   return { ok: true, draft, fieldCandidates: flat, itemsPath: best.itemsPath, host, count: best.len };
 }
 
+// The download formats for a set of items: each captured asset tied to an item id (by id in the path
+// or body), deduped by file extension. ≥2 distinct extensions → the items are available in several
+// formats (WiZink: a statement as PDF or Excel). Ties assets to items by id so unrelated downloads and
+// other streams' assets don't leak in. Returns [{ ext, pdf }] (pdf = a per-item {internalId} template).
+export function matchedArtifacts(items, assets) {
+  if (!assets || !assets.length) return [];
+  const vf = valueFields(items);
+  const vals = [...vf.keys()].sort((a, b) => b.length - a.length);
+  const extOf = (url, reqType) => {
+    const m = /\.([a-z0-9]{2,5})(?:[?#]|$)/i.exec(String(url).split('?')[0]);
+    if (m) return m[1].toLowerCase();
+    if (/sheet|excel|xls/i.test(reqType || '')) return 'xls';
+    if (/pdf/i.test(reqType || '')) return 'pdf';
+    return 'pdf';
+  };
+  const byExt = new Map();
+  for (const a of assets) {
+    let u; try { u = new URL(a.url); } catch (e) { continue; }
+    const id = vals.find((v) => u.pathname.includes(v) || String(a.reqBody || '').includes(v));
+    if (!id) continue; // asset not tied to any of these items → skip (belongs elsewhere)
+    const ext = extOf(a.url, a.reqType);
+    if (byExt.has(ext)) continue;
+    const pdf = { method: (a.method || 'GET').toUpperCase(), path: u.pathname, ext };
+    if (u.pathname.includes(id)) pdf.path = u.pathname.split(id).join('{internalId}');
+    if (pdf.method !== 'GET' && a.reqBody) { pdf.body = String(a.reqBody).split(id).join('{internalId}'); if (a.reqType) pdf.contentType = a.reqType; }
+    byExt.set(ext, pdf);
+  }
+  return [...byExt.entries()].map(([ext, pdf]) => ({ ext, pdf }));
+}
+
 // A stream id from a list path's last segment (…/services/receipts → "receipts"), else stream<N>.
 function streamIdFrom(path, i) {
   const seg = String(path || '').split('?')[0].split('/').filter(Boolean).pop() || '';
@@ -816,19 +846,23 @@ export function draftStreamsFromSamples(samples, ctx = {}, chosenKeys = null) {
   picks = picks.filter((c) => (seen.has(c.key) ? false : seen.add(c.key))); // unique, biggest-first order
   if (picks.length < 2) return draftAdapterFromSamples(samples, ctx, picks[0] ? { key: picks[0].key } : null);
 
-  const drafts = picks.map((c) => draftAdapterFromSamples(samples, ctx, { key: c.key })).filter((r) => r && r.ok);
-  if (drafts.length < 2) return drafts[0] || { ok: false, reason: 'could not draft streams' };
+  const pairs = picks.map((c) => ({ c, r: draftAdapterFromSamples(samples, ctx, { key: c.key }) })).filter((p) => p.r && p.r.ok);
+  if (pairs.length < 2) return (pairs[0] && pairs[0].r) || { ok: false, reason: 'could not draft streams' };
 
-  const base = drafts[0].draft;
+  const base = pairs[0].r.draft;
   const used = new Set();
-  const streams = drafts.map((r, i) => {
+  const streams = pairs.map(({ c, r }, i) => {
     const d = r.draft;
     let sid = streamIdFrom(d.api.list.path, i);
     while (used.has(sid)) sid += '-' + (i + 1);
     used.add(sid);
     const st = { id: sid, name: sid.charAt(0).toUpperCase() + sid.slice(1), schema: d.schema, categories: d.categories, api: { list: d.api.list }, fields: d.fields };
     if (d.api.detail) st.api.detail = d.api.detail;
-    if (d.api.pdf) st.api.pdf = d.api.pdf;
+    // Per-stream artifacts, tied to THIS stream's items by id (so streams don't cross-attribute assets).
+    // ≥2 formats → formats[]; exactly one → a single api.pdf; none → no artifact for this stream.
+    const arts = matchedArtifacts(c.items, ctx.assets);
+    if (arts.length >= 2) st.formats = arts.map((a) => ({ id: a.ext, name: a.ext.toUpperCase(), api: { pdf: a.pdf } }));
+    else if (arts.length === 1) st.api.pdf = arts[0].pdf;
     return st;
   });
 

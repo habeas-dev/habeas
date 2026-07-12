@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { draftAdapterFromSamples, draftStreamsFromSamples, draftWithGroups, listCandidates, matchCandidates } from '../src/runtime/infer.js';
+import { draftAdapterFromSamples, draftStreamsFromSamples, draftWithGroups, matchedArtifacts, listCandidates, matchCandidates } from '../src/runtime/infer.js';
 import { validateAdapter } from '../src/adapters/validate.js';
 
 const carrefourSamples = [
@@ -272,6 +272,40 @@ test('draftWithGroups without a groups key is a plain draft', () => {
   const r = draftWithGroups(s, { domain: 'x.es', pageHost: 'www.x.es' }, null, null);
   assert.ok(r.ok);
   assert.ok(!r.draft.api.groups);
+});
+
+// Formats: the same statements were downloaded as BOTH PDF and Excel → the extractos stream gets
+// formats[]; the movimientos stream (no matching assets) gets none, and isn't mis-attributed a PDF.
+test('detects multiple download formats (PDF + Excel) per stream (WiZink extractos-shape)', () => {
+  const samples = [
+    { url: 'https://www.wizink.es/movimientos', method: 'GET', status: 200, reqHeaders: {}, json: { movements: [{ id: 'M1', date: '2026-01-01', amount: 3 }] } },
+    { url: 'https://www.wizink.es/extractos', method: 'GET', status: 200, reqHeaders: {}, json: { statements: [{ docId: 'S1000', date: '2026-01-31' }] } },
+  ];
+  const assets = [
+    { url: 'https://www.wizink.es/dl/S1000.pdf', method: 'GET', reqType: 'application/pdf' },
+    { url: 'https://www.wizink.es/dl/S1000.xls', method: 'GET', reqType: 'application/vnd.ms-excel' },
+  ];
+  const keys = listCandidates(samples).map((c) => c.key);
+  const r = draftStreamsFromSamples(samples, { domain: 'wizink.es', pageHost: 'www.wizink.es', assets }, keys);
+  assert.ok(r.ok);
+  const ext = r.draft.streams.find((s) => s.id === 'extractos');
+  assert.ok(ext.formats && ext.formats.length === 2, 'extractos has 2 formats');
+  assert.deepEqual(ext.formats.map((f) => f.id).sort(), ['pdf', 'xls']);
+  const mov = r.draft.streams.find((s) => s.id === 'movimientos');
+  assert.ok(!mov.formats && !(mov.api && mov.api.pdf), 'movimientos not mis-attributed a PDF');
+  assert.ok(validateAdapter(r.draft).ok);
+});
+
+// matchedArtifacts ties assets to items by id and dedupes by extension; <2 exts → no formats.
+test('matchedArtifacts returns the distinct id-matched download formats', () => {
+  const items = [{ docId: 'S1000' }];
+  const arts = matchedArtifacts(items, [
+    { url: 'https://x.es/S1000.pdf', method: 'GET', reqType: 'application/pdf' },
+    { url: 'https://x.es/S1000.xlsx', method: 'GET' },
+    { url: 'https://x.es/UNRELATED.pdf', method: 'GET' },
+  ]);
+  assert.deepEqual(arts.map((a) => a.ext).sort(), ['pdf', 'xlsx']);
+  assert.ok(arts[0].pdf.path.includes('{internalId}'));
 });
 
 // TDD: page pagination is inferred when the request carries a `page` query param and the response
