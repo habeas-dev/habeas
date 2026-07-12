@@ -13,7 +13,7 @@ globalThis.chrome = { storage: { local: {
 } } };
 
 const { _setKeyProvider, setSecret } = await import('../src/lib/secrets.js');
-const { dropboxWrite } = await import('../src/sinks/dropbox.js');
+const { dropboxWrite, dropboxConnect, dropboxConnected } = await import('../src/sinks/dropbox.js');
 const KEY = await generateSecretKey();
 _setKeyProvider(async () => KEY);
 const reset = () => { for (const k of Object.keys(LOCAL)) delete LOCAL[k]; };
@@ -59,4 +59,33 @@ test('dropbox: refreshes the access token, uploads files + a merged manifest, re
 test('dropbox: not connected (no app key / refresh token) throws', async () => {
   reset();
   await assert.rejects(() => dropboxWrite({ id: 'x', type: 'dropbox' }, [], new Map(), {}), /not connected/);
+});
+
+test('dropbox: Connect (PKCE) exchanges the auth code and stores the refresh token — one click, nothing to paste', async () => {
+  reset();
+  globalThis.chrome.identity = {
+    getRedirectURL: () => 'https://ext.chromiumapp.org/',
+    launchWebAuthFlow: async ({ url }) => {
+      const p = new URL(url).searchParams; // the auth request carries PKCE + offline
+      assert.equal(p.get('code_challenge_method'), 'S256');
+      assert.ok(p.get('code_challenge'));
+      assert.equal(p.get('token_access_type'), 'offline');
+      assert.equal(p.get('client_id'), 'APPKEY');
+      return 'https://ext.chromiumapp.org/?code=AUTHCODE';
+    },
+  };
+  const calls = [];
+  globalThis.fetch = async (url, init) => {
+    calls.push({ url, body: String(init.body) });
+    if (url.includes('/oauth2/token')) return { ok: true, status: 200, json: async () => ({ access_token: 'ACC', refresh_token: 'RT', expires_in: 14400 }) };
+    throw new Error('unexpected ' + url);
+  };
+  const sink = { id: 'dbx', type: 'dropbox', appKey: 'APPKEY' };
+  assert.equal(await dropboxConnect(sink), true);
+  const ex = calls.find((c) => c.url.includes('/oauth2/token'));
+  assert.ok(ex.body.includes('grant_type=authorization_code'));
+  assert.ok(ex.body.includes('code=AUTHCODE') && ex.body.includes('code_verifier='), 'exchanged with PKCE verifier, no secret');
+  assert.equal(await dropboxConnected(sink), true); // refresh token now stored → connected
+  delete globalThis.fetch;
+  delete globalThis.chrome.identity;
 });

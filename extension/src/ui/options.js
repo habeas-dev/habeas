@@ -2,6 +2,7 @@ import { chrome } from '../lib/ext.js';
 import { getConfig, upsert, remove } from '../lib/config.js';
 import { setSecret } from '../lib/secrets.js';
 import { driveSignIn, redirectUri, driveConnected, disconnectDrive, preferDeviceFlow, driveDeviceConnect } from '../sinks/drive.js';
+import { dropboxConnect, dropboxRedirectUri } from '../sinks/dropbox.js';
 import { putHandle, getHandle, verifyPermission } from '../lib/fs.js';
 import { sinkAcceptsSource } from '../sinks/format.js';
 import { watchThemeIcon } from '../lib/theme-icon.js';
@@ -126,6 +127,7 @@ async function render() {
   $('#sinks').innerHTML = cfg.sinks.map((s) =>
     `<div class="card row"><b style="flex:1">${esc(s.id)}</b><code>${esc(s.type)}</code>
       ${s.type === 'drive' ? `<button data-conn="${esc(s.id)}">${t('connect_drive')}</button>` : ''}
+      ${s.type === 'dropbox' ? `<button data-dbxconn="${esc(s.id)}">${t('connect_dropbox')}</button>` : ''}
       ${s.type === 'local-folder' ? `<code>${esc(s.folderName || '—')}</code><button data-folder="${esc(s.id)}">${t('change_folder')}</button>` : ''}
       ${s.url ? `<small>${esc(s.url)}</small>` : ''}
       <button data-del="${esc(s.id)}">${t('remove')}</button></div>`).join('')
@@ -157,6 +159,13 @@ async function render() {
       }
       b.textContent = '✓ ' + t('connected');
     } catch (e) { b.textContent = t('connect_drive'); alert('Drive: ' + e.message); }
+    finally { b.disabled = false; }
+  });
+  $('#sinks').querySelectorAll('[data-dbxconn]').forEach((b) => b.onclick = async () => {
+    const s = (await getConfig()).sinks.find((x) => x.id === b.dataset.dbxconn);
+    b.disabled = true; b.textContent = t('connecting');
+    try { await dropboxConnect(s); b.textContent = '✓ ' + t('connected'); }
+    catch (e) { b.textContent = t('connect_dropbox'); alert('Dropbox: ' + e.message); }
     finally { b.disabled = false; }
   });
 
@@ -217,8 +226,8 @@ function renderFields() {
   } else if (type === 's3') {
     $('#sfields').innerHTML = `id:<input id="sid" size="6"> <label>${t('s3_bucket')}</label><input id="s3bucket" size="10"> <label>${t('s3_region')}</label><input id="s3region" size="8" placeholder="us-east-1"> <label>${t('s3_key')}</label><input id="s3ak" size="10"> <label>${t('s3_secret')}</label><input id="s3sk" type="password" size="10"> <label>${t('s3_endpoint_opt')}</label><input id="s3ep" size="16" placeholder="MinIO/R2/B2"> <label>${t('s3_prefix_opt')}</label><input id="s3prefix" size="8">`;
   } else if (type === 'dropbox') {
-    $('#sfields').innerHTML = `id:<input id="sid" size="6"> <label>${t('dbx_appkey')}</label><input id="dbxkey" size="14"> <label>${t('dbx_refresh')}</label><input id="dbxrefresh" type="password" size="18"> <label>${t('dbx_folder_opt')}</label><input id="dbxfolder" size="10" placeholder="Habeas">`
-      + `<div style="flex-basis:100%;margin-top:4px"><small>${t('dbx_hint')}</small></div>`;
+    $('#sfields').innerHTML = `id:<input id="sid" size="6"> <label>${t('dbx_folder_opt')}</label><input id="dbxfolder" size="10" placeholder="Habeas"> <label>${t('dbx_appkey_opt')}</label><input id="dbxkey" size="14"> <label>${t('dbx_refresh_opt')}</label><input id="dbxrefresh" type="password" size="16">`
+      + `<div style="flex-basis:100%;margin-top:4px"><small>${t('dbx_hint')}</small><br><small>${t('redirect_hint')}</small> <code>${dropboxRedirectUri()}</code></div>`;
   } else if (type === 'drive') {
     $('#sfields').innerHTML = `id:<input id="sid" size="8"> <label>${t('client_id_optional')}</label><input id="sclient" size="26">`
       + `<div style="flex-basis:100%;margin-top:6px"><small>${t('redirect_hint')}</small><br><code>${redirectUri()}</code></div>`;
