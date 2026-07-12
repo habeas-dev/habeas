@@ -13,28 +13,13 @@
 </head>
 <body>
   <h1>Connecting Dropbox…</h1>
-  <p class="muted" id="msg">Returning to Habeas.</p>
-  <script>
-    // Static OAuth "bounce" for the Habeas browser extension. Dropbox redirects here (a single, stable
-    // https redirect URI registered on the app) with the authorization ?code. Firefox/Chrome extension
-    // redirect URLs are per-install and can't be pre-registered, so the extension passes its own redirect
-    // URL in `state`; we forward the code there and launchWebAuthFlow picks it up. This page holds NO
-    // secret and never sees a token — the code is PKCE-bound (useless without the verifier in the
-    // extension). We only forward to a browser-extension redirect origin, so it can't be an open redirect.
-    (function () {
-      var q = new URLSearchParams(location.search);
-      var raw = q.get('state') || '';
-      var ret = '';
-      try {
-        var json = atob(raw.replace(/-/g, '+').replace(/_/g, '/'));
-        ret = (JSON.parse(json) || {}).ret || '';
-      } catch (e) { ret = ''; }
-      var OK = /^https:\/\/[a-z0-9-]+\.(chromiumapp\.org|extensions\.allizom\.org)\//i;
-      if (!ret || !OK.test(ret)) { document.getElementById('msg').textContent = 'Invalid or missing redirect target.'; return; }
-      var u = new URL(ret);
-      q.forEach(function (v, k) { u.searchParams.set(k, v); }); // forward code + state (+ error, if any)
-      location.replace(u.toString());
-    })();
-  </script>
+  <p class="muted">The Habeas extension is finishing the connection. You can close this tab.</p>
+  <!--
+    Static landing for the Habeas extension's Dropbox OAuth: a single, stable https redirect URI registered
+    on the Dropbox app (browser-extension redirect URLs are per-install and can't be pre-registered). The
+    extension opens the authorize flow in a tab and reads the ?code straight off this page's URL (via
+    tabs.onUpdated), then closes the tab. This page holds NO secret and never sees a token — the code is
+    PKCE-bound, useless without the verifier that stays in the extension. No script needed here.
+  -->
 </body>
 </html>

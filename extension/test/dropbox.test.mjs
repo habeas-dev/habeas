@@ -61,23 +61,22 @@ test('dropbox: not connected (no app key / refresh token) throws', async () => {
   await assert.rejects(() => dropboxWrite({ id: 'x', type: 'dropbox' }, [], new Map(), {}), /not connected/);
 });
 
-test('dropbox: Connect (PKCE) exchanges the auth code and stores the refresh token — one click, nothing to paste', async () => {
+test('dropbox: Connect (PKCE, tab flow) reads the code off the bounce redirect and stores the refresh token', async () => {
   reset();
-  globalThis.chrome.identity = {
-    getRedirectURL: () => 'https://ext.chromiumapp.org/',
-    launchWebAuthFlow: async ({ url }) => {
-      const p = new URL(url).searchParams; // the auth request carries PKCE + offline + the bounce redirect
-      assert.equal(p.get('code_challenge_method'), 'S256');
-      assert.ok(p.get('code_challenge'));
-      assert.equal(p.get('token_access_type'), 'offline');
-      assert.equal(p.get('client_id'), 'APPKEY');
-      assert.equal(p.get('redirect_uri'), 'https://habeas.dev/oauth/dropbox.html');
-      // simulate the static bounce: read `state.ret` and forward the code + state there (what the page does)
-      const state = p.get('state');
-      const ret = JSON.parse(atob(state.replace(/-/g, '+').replace(/_/g, '/'))).ret;
-      assert.equal(ret, 'https://ext.chromiumapp.org/');
-      return ret + '?code=AUTHCODE&state=' + encodeURIComponent(state);
+  let authUrl = '', updListeners = [];
+  globalThis.chrome.permissions = { request: async () => true };
+  globalThis.chrome.tabs = {
+    create: async ({ url }) => {
+      authUrl = url;
+      const state = new URL(url).searchParams.get('state');
+      // simulate: after the user consents, the tab lands on the REGISTERED bounce with ?code (+ our state).
+      // launchWebAuthFlow is NOT used (Firefox rejects a non-getRedirectURL redirect since FF75).
+      setTimeout(() => updListeners.forEach((fn) => fn(7, { status: 'complete' }, { id: 7, url: 'https://habeas.dev/oauth/dropbox.html?code=AUTHCODE&state=' + state })), 0);
+      return { id: 7 };
     },
+    remove: async () => {},
+    onUpdated: { addListener: (fn) => updListeners.push(fn), removeListener: (fn) => { updListeners = updListeners.filter((x) => x !== fn); } },
+    onRemoved: { addListener: () => {}, removeListener: () => {} },
   };
   const calls = [];
   globalThis.fetch = async (url, init) => {
@@ -87,11 +86,15 @@ test('dropbox: Connect (PKCE) exchanges the auth code and stores the refresh tok
   };
   const sink = { id: 'dbx', type: 'dropbox', appKey: 'APPKEY' };
   assert.equal(await dropboxConnect(sink), true);
+  const p = new URL(authUrl).searchParams; // the opened authorize URL carries PKCE + offline + the bounce
+  assert.equal(p.get('code_challenge_method'), 'S256');
+  assert.ok(p.get('code_challenge'));
+  assert.equal(p.get('token_access_type'), 'offline');
+  assert.equal(p.get('client_id'), 'APPKEY');
+  assert.equal(p.get('redirect_uri'), 'https://habeas.dev/oauth/dropbox.html');
   const ex = calls.find((c) => c.url.includes('/oauth2/token'));
-  assert.ok(ex.body.includes('grant_type=authorization_code'));
-  assert.ok(ex.body.includes('code=AUTHCODE') && ex.body.includes('code_verifier='), 'exchanged with PKCE verifier, no secret');
+  assert.ok(ex.body.includes('grant_type=authorization_code') && ex.body.includes('code=AUTHCODE') && ex.body.includes('code_verifier='), 'exchanged with the PKCE verifier, no secret');
   assert.ok(ex.body.includes('redirect_uri=https%3A%2F%2Fhabeas.dev%2Foauth%2Fdropbox.html'), 'token exchange uses the bounce redirect');
   assert.equal(await dropboxConnected(sink), true); // refresh token now stored → connected
-  delete globalThis.fetch;
-  delete globalThis.chrome.identity;
+  delete globalThis.fetch; delete globalThis.chrome.tabs; delete globalThis.chrome.permissions;
 });

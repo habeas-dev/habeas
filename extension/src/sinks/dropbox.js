@@ -22,17 +22,16 @@ const apiArg = (obj) => JSON.stringify(obj).replace(/[\u0080-\uffff]/g, (c) => '
 const DEFAULT_DROPBOX_APP_KEY = 'wv89vk62nf0qnad';
 const dbxAppKey = (sink) => (sink && sink.appKey) || DEFAULT_DROPBOX_APP_KEY;
 
-// A single, STABLE redirect registered on the Dropbox app: a static "bounce" page on habeas.dev. Browser
-// extension redirect URLs are per-install (Firefox especially) and can't be pre-registered, so we pass
-// this install's redirect in `state`; the bounce forwards the code there and launchWebAuthFlow catches it.
-// The page holds no secret and never sees a token (the code is PKCE-bound). Makes Connect work uniformly
-// on Chrome AND Firefox with nothing to register per user. Overridable per sink for self-hosters.
+// A single, STABLE redirect registered once on the Dropbox app: a static landing page on habeas.dev.
+// Browser-extension redirect URLs are per-install (and Firefox rejects a custom one in launchWebAuthFlow),
+// so instead the extension opens the flow in a tab and reads the ?code off THIS url (authViaTab). The page
+// holds no secret and never sees a token (the code is PKCE-bound). Works uniformly on Chrome AND Firefox
+// with nothing to register per user. Overridable per sink for self-hosters.
 const DBX_BOUNCE = 'https://habeas.dev/oauth/dropbox.html';
 const dbxBounce = (sink) => (sink && sink.oauthRedirect) || DBX_BOUNCE;
 
 // PKCE helpers (S256) — Web Crypto only, so this runs in the service worker / an extension page.
 const b64url = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-const b64urlStr = (s) => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 function pkceVerifier() { const a = new Uint8Array(64); crypto.getRandomValues(a); return b64url(a); }
 async function pkceChallenge(verifier) { return b64url(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)))); }
 
@@ -64,27 +63,51 @@ async function dropboxToken(sink) {
   return d.access_token;
 }
 
-// User-initiated "Connect Dropbox": PKCE authorization-code flow via launchWebAuthFlow (no client secret,
-// token_access_type=offline → a refresh token for silent-forever renewal). One click; nothing to paste.
-// (Firefox: the redirect is a per-install UUID, same caveat as Drive Path B — register it on the app, or
-// use the advanced refresh-token field.)
+// Cross-browser OAuth WITHOUT launchWebAuthFlow: open the authorize URL in a tab and read the code off the
+// redirect to the (single, stable, registered) habeas.dev bounce. This is required for Firefox — since FF75
+// launchWebAuthFlow refuses any redirect_uri other than the per-install getRedirectURL(), which can't be
+// pre-registered. Reading tab.url needs host permission for the bounce origin; the optional https://*/*
+// grant covers it (requested here in the Connect click gesture if not already granted).
+function authViaTab(authUrl, bounce, nonce) {
+  return new Promise((resolve, reject) => {
+    let tabId = null, done = false;
+    const timer = setTimeout(() => finish(() => reject(new Error('dropbox: timed out'))), 180000);
+    function finish(cb) {
+      if (done) return; done = true;
+      clearTimeout(timer);
+      try { chrome.tabs.onUpdated.removeListener(onUpd); } catch (e) {}
+      try { chrome.tabs.onRemoved.removeListener(onRem); } catch (e) {}
+      if (tabId != null) { try { chrome.tabs.remove(tabId); } catch (e) {} }
+      cb();
+    }
+    const onUpd = (id, info, tab) => {
+      if (id !== tabId || !tab || !tab.url || tab.url.indexOf(bounce) !== 0) return; // wait for the bounce redirect
+      let u; try { u = new URL(tab.url); } catch (e) { return; }
+      const err = u.searchParams.get('error_description') || u.searchParams.get('error');
+      if (err) return finish(() => reject(new Error('dropbox: ' + err)));
+      if (u.searchParams.get('state') !== nonce) return; // not our redirect (CSRF guard)
+      const code = u.searchParams.get('code');
+      if (code) finish(() => resolve(code));
+    };
+    const onRem = (id) => { if (id === tabId) finish(() => reject(new Error('dropbox: window closed'))); };
+    chrome.tabs.onUpdated.addListener(onUpd);
+    chrome.tabs.onRemoved.addListener(onRem);
+    chrome.tabs.create({ url: authUrl, active: true }).then((t) => { tabId = t.id; }, (e) => finish(() => reject(e)));
+  });
+}
+
 export async function dropboxConnect(sink) {
   const appKey = dbxAppKey(sink);
   if (!appKey) throw new Error('dropbox: no app key configured');
-  const verifier = pkceVerifier();
   const bounce = dbxBounce(sink);
-  // This install's extension redirect (per-install) goes in `state`; the bounce page forwards the code
-  // there, and launchWebAuthFlow — which watches getRedirectURL() — resolves on that final navigation.
-  const state = b64urlStr(JSON.stringify({ ret: chrome.identity.getRedirectURL(), n: pkceVerifier().slice(0, 16) }));
+  try { await chrome.permissions.request({ origins: [new URL(bounce).origin + '/*'] }); } catch (e) {} // to read tab.url
+  const verifier = pkceVerifier();
+  const nonce = pkceVerifier().slice(0, 24);
   const authUrl = 'https://www.dropbox.com/oauth2/authorize?' + new URLSearchParams({
     client_id: appKey, response_type: 'code', token_access_type: 'offline',
-    code_challenge: await pkceChallenge(verifier), code_challenge_method: 'S256', redirect_uri: bounce, state,
+    code_challenge: await pkceChallenge(verifier), code_challenge_method: 'S256', redirect_uri: bounce, state: nonce,
   });
-  const redir = await chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: true });
-  const rq = new URL(redir).searchParams;
-  const code = rq.get('code');
-  if (!code) throw new Error('dropbox: ' + (rq.get('error_description') || rq.get('error') || 'no authorization code'));
-  if (rq.get('state') !== state) throw new Error('dropbox: state mismatch');
+  const code = await authViaTab(authUrl, bounce, nonce);
   const r = await fetch(TOKEN_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({ grant_type: 'authorization_code', code, client_id: appKey, code_verifier: verifier, redirect_uri: bounce }) });
   const d = await r.json().catch(() => ({}));
@@ -98,7 +121,7 @@ export async function dropboxConnected(sink) {
   return !!((cached && cached.refreshEnc) || sink.refreshRef);
 }
 export async function dropboxDisconnect(sink) { try { await chrome.storage.local.remove('dbx:' + sink.id); } catch (e) {} }
-export function dropboxRedirectUri() { try { return chrome.identity.getRedirectURL(); } catch (e) { return ''; } }
+export function dropboxRedirectUri() { return DBX_BOUNCE; } // the single stable redirect to register on the app
 async function dbxUpload(token, path, blob) {
   const r = await fetch(UPLOAD_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Dropbox-API-Arg': apiArg({ path, mode: 'overwrite', mute: true }), 'Content-Type': 'application/octet-stream' }, body: blob });
   if (!r.ok) throw new Error('dropbox upload ' + r.status + ' ' + (await r.text().catch(() => '')).slice(0, 120));
