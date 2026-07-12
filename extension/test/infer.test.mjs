@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { draftAdapterFromSamples, listCandidates, matchCandidates } from '../src/runtime/infer.js';
+import { draftAdapterFromSamples, draftStreamsFromSamples, listCandidates, matchCandidates } from '../src/runtime/infer.js';
 import { validateAdapter } from '../src/adapters/validate.js';
 
 const carrefourSamples = [
@@ -124,6 +124,40 @@ test('does not invent a CSRF prelude when the token is not found in any HTML pag
     json: { movements: [{ id: 'M1', fecha: '2026-01-02', importe: 3 }] } }];
   const r = draftAdapterFromSamples(samples, { domain: 'wizink.es', pageHost: 'www.wizink.es' });
   assert.ok(!r.draft.api.csrf);
+});
+
+// Multi-stream: the user browsed TWO distinct lists on the same domain (Leroy Merlin: tickets +
+// orders). Draft them as one source with streams[] — a shared base (auth/host) and a per-stream
+// api.list + fields — instead of forcing two separate sources.
+test('drafts multiple same-domain lists as streams[] (Leroy Merlin-shape)', () => {
+  const samples = [
+    { url: 'https://www.leroymerlin.es/services/receipts?page=0&size=10', method: 'GET', status: 200, reqHeaders: {},
+      json: { receipts: [{ id: 'R1', date: '2026-01-01', totalPrice: 5, store: { storeName: 'LM Aldaia' } }] } },
+    { url: 'https://www.leroymerlin.es/backend/v2/orders', method: 'GET', status: 200, reqHeaders: {},
+      json: { orders: [{ orderPartNumber: 'O1', createdAt: '2026-02-01', totalAmount: 9 }] } },
+  ];
+  const keys = listCandidates(samples).map((c) => c.key);
+  const r = draftStreamsFromSamples(samples, { domain: 'leroymerlin.es', pageHost: 'www.leroymerlin.es' }, keys);
+  assert.ok(r.ok);
+  assert.equal(r.draft.streams.length, 2);
+  assert.ok(!r.draft.api.list, 'the base carries no top-level list (each stream has its own)');
+  assert.equal(r.draft.api.host, 'https://www.leroymerlin.es');
+  const byId = Object.fromEntries(r.draft.streams.map((s) => [s.id, s]));
+  assert.ok(byId['receipts'] && byId['orders'], 'stream ids derived from the list paths');
+  assert.equal(byId['receipts'].api.list.itemsPath, 'receipts');
+  assert.equal(byId['orders'].api.list.itemsPath, 'orders');
+  assert.equal(byId['receipts'].fields.internalId, 'id');
+  assert.ok(validateAdapter(r.draft).ok);
+});
+
+// With a single list, it degrades to the normal single-stream draft (no streams[]).
+test('draftStreamsFromSamples falls back to a single-stream draft for one list', () => {
+  const s = [{ url: 'https://api.x.es/orders', method: 'GET', status: 200, reqHeaders: { authorization: 'eyJ' },
+    json: { items: [{ orderId: 'O1', createdAt: '2026-01-01', totalEur: 9 }] } }];
+  const r = draftStreamsFromSamples(s, { domain: 'x.es', pageHost: 'www.x.es' });
+  assert.ok(r.ok);
+  assert.ok(!r.draft.streams, 'no streams[] for a single list');
+  assert.ok(r.draft.api.list);
 });
 
 // TDD: page pagination is inferred when the request carries a `page` query param and the response

@@ -677,3 +677,63 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
   // The list array's field candidates power the visual mapper dropdowns.
   return { ok: true, draft, fieldCandidates: flat, itemsPath: best.itemsPath, host, count: best.len };
 }
+
+// A stream id from a list path's last segment (…/services/receipts → "receipts"), else stream<N>.
+function streamIdFrom(path, i) {
+  const seg = String(path || '').split('?')[0].split('/').filter(Boolean).pop() || '';
+  const clean = seg.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase();
+  return clean || 'stream' + (i + 1);
+}
+
+// Draft a MULTI-STREAM source: several distinct lists on the same registrable domain (Leroy Merlin's
+// tickets + orders; WiZink's movimientos + extractos) become one source with a shared base
+// (id/domain/auth/api.host) and a `streams[]`, each stream owning its api.list (+detail/pdf) + fields
+// + schema. `chosenKeys` (from the picker) selects which candidate lists to include; without it, every
+// candidate on the primary list's registrable domain is used. Degrades to a single-stream draft when
+// fewer than two lists qualify. Each stream is drafted by the same single-list logic, so it inherits
+// pagination/POST/CSRF/detail inference per stream.
+export function draftStreamsFromSamples(samples, ctx = {}, chosenKeys = null) {
+  const all = [...collect(samples), ...collectHtml(samples)].sort((a, b) => b.len - a.len);
+  if (!all.length) return { ok: false, reason: 'no list-like response captured' };
+  const regOf = (h) => String(h || '').split('.').slice(-2).join('.');
+  const hostOfCand = (c) => { try { return new URL(c.s.url).host; } catch (e) { return ''; } };
+  const dom = ctx.domain || regOf(hostOfCand(all[0]));
+
+  let picks = (chosenKeys && chosenKeys.length)
+    ? all.filter((c) => chosenKeys.includes(c.key))
+    : all.filter((c) => regOf(hostOfCand(c)) === dom);
+  const seen = new Set();
+  picks = picks.filter((c) => (seen.has(c.key) ? false : seen.add(c.key))); // unique, biggest-first order
+  if (picks.length < 2) return draftAdapterFromSamples(samples, ctx, picks[0] ? { key: picks[0].key } : null);
+
+  const drafts = picks.map((c) => draftAdapterFromSamples(samples, ctx, { key: c.key })).filter((r) => r && r.ok);
+  if (drafts.length < 2) return drafts[0] || { ok: false, reason: 'could not draft streams' };
+
+  const base = drafts[0].draft;
+  const used = new Set();
+  const streams = drafts.map((r, i) => {
+    const d = r.draft;
+    let sid = streamIdFrom(d.api.list.path, i);
+    while (used.has(sid)) sid += '-' + (i + 1);
+    used.add(sid);
+    const st = { id: sid, name: sid.charAt(0).toUpperCase() + sid.slice(1), schema: d.schema, categories: d.categories, api: { list: d.api.list }, fields: d.fields };
+    if (d.api.detail) st.api.detail = d.api.detail;
+    if (d.api.pdf) st.api.pdf = d.api.pdf;
+    return st;
+  });
+
+  const draft = {
+    id: base.id,
+    name: (base.service ? base.service.charAt(0).toUpperCase() + base.service.slice(1) : base.id) + ' — documents',
+    service: base.service,
+    trust: 'community',
+    domain: base.domain,
+    categories: base.categories,
+    match: base.match,
+    auth: base.auth,
+    api: { host: base.api.host },
+    streams,
+  };
+  if (base.api.csrf) draft.api.csrf = base.api.csrf; // a shared prelude lives at the base
+  return { ok: true, draft, streams, host: hostOfCand(all[0]), count: picks.reduce((n, c) => n + c.len, 0) };
+}

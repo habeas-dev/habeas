@@ -1,7 +1,7 @@
 import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen, getAssets, getDomTexts } from '../lib/learn.js';
-import { draftAdapterFromSamples, listCandidates, matchCandidates } from '../runtime/infer.js';
+import { draftAdapterFromSamples, draftStreamsFromSamples, listCandidates, matchCandidates } from '../runtime/infer.js';
 import { listInventory, artifactKinds, fetchArtifact } from '../runtime/inventory.js';
 import { ensureSiteFetch } from '../lib/pagefetch.js';
 import { editJson } from './jsoneditor.js';
@@ -99,7 +99,31 @@ async function onAnalyze() {
   $('#listhint').hidden = CANDS.length <= 1;
   $('#findstatus').textContent = '';
   $('#mapper').hidden = false;
+  // Multi-stream: if ≥2 captured lists share one registrable domain (Leroy Merlin tickets+orders,
+  // WiZink movimientos+extractos), offer to author them together as a streams[] source. Refined in
+  // the JSON editor (per-stream field mapping) rather than the single-list form mapper.
+  const reg = (h) => String(h || '').split('.').slice(-2).join('.');
+  const groups = {};
+  CANDS.forEach((c) => { const k = reg(c.host); (groups[k] = groups[k] || []).push(c.key); });
+  const msGroup = Object.values(groups).find((g) => g.length >= 2);
+  $('#multistream').hidden = !msGroup;
+  if (msGroup) $('#multistream').onclick = () => onMultiStream(msGroup);
   drawDraft(CANDS[0]);
+}
+
+// Draft every captured list on the domain as a multi-stream source and open it in the JSON editor to
+// refine (each stream's field mapping) and save.
+async function onMultiStream(keys) {
+  const r = draftStreamsFromSamples(SAMPLES, { domain: LEARN.domain, pageHost: hostFromOrigin(LEARN.origin), assets: ASSETS, domTexts: DOMTEXTS }, keys);
+  if (!r.ok || !r.draft) { $('#status').textContent = t('author_no_list'); return; }
+  const edited = await editJson(r.draft);
+  if (!edited) return;
+  try {
+    await saveSource(edited);
+    await grantConsent(edited);
+    await stopLearning();
+    $('#status').textContent = t('author_saved', [edited.id]);
+  } catch (e) { $('#status').textContent = t('author_invalid', [e.message]); }
 }
 
 // Search: the user types a value they recognise (ticket no., amount…) → jump to the list that has it.

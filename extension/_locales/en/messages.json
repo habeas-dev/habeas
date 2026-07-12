@@ -302,6 +302,7 @@
   "author_find_ok": { "message": "Found in a list of $N$ items — mapping below.", "placeholders": { "n": { "content": "$1" } } },
   "author_find_multi": { "message": "Found in $N$ lists — pick the right one below.", "placeholders": { "n": { "content": "$1" } } },
   "author_which_list": { "message": "Which list is your data?" },
+  "author_multistream": { "message": "Author all lists as one multi-stream source…" },
   "author_items": { "message": "items" },
   "author_pages": { "message": "page(s)" },
   "author_list_hint": { "message": "Totals across the pages you browsed (items · pages captured). When you use the source it paginates to fetch them all — you pick the right list here, not pages." },

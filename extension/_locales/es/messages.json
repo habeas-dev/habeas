@@ -302,6 +302,7 @@
   "author_find_ok": { "message": "Encontrado en una lista de $N$ elementos — mapeo abajo.", "placeholders": { "n": { "content": "$1" } } },
   "author_find_multi": { "message": "Encontrado en $N$ listas — elige la correcta abajo.", "placeholders": { "n": { "content": "$1" } } },
   "author_which_list": { "message": "¿Cuál de las listas son tus datos?" },
+  "author_multistream": { "message": "Crear todas las listas como un source multi-stream…" },
   "author_items": { "message": "elementos" },
   "author_pages": { "message": "página(s)" },
   "author_list_hint": { "message": "Totales de las páginas que navegaste (elementos · páginas capturadas). Al usar la fuente se pagina para traerlos todos — aquí eliges la lista correcta, no páginas." },
