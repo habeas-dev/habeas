@@ -160,6 +160,38 @@ test('draftStreamsFromSamples falls back to a single-stream draft for one list',
   assert.ok(r.draft.api.list);
 });
 
+// auth.context: a stable personal id (a DNI) appears in the path of several requests. Capture it as
+// {ctx.*} from another request and template the list path with it, instead of freezing one user's id.
+test('infers auth.context from a stable id shared across request URLs (Caixabank-shape)', () => {
+  const dni = '12345678Z';
+  const samples = [
+    { url: `https://clientes.caixabankconsumer.com/cpc/v1.0/portalCliente/posicionGlobal/es/${dni}`, method: 'GET', status: 200,
+      reqHeaders: { authorization: 'Bearer eyJp' }, json: { accounts: [{ id: 'A1' }] } },
+    { url: `https://clientes.caixabankconsumer.com/cpc/v1.0/crm365/${dni}/movimientos`, method: 'GET', status: 200,
+      reqHeaders: { authorization: 'Bearer eyJp' }, json: { movements: [{ id: 'M1', fecha: '2026-01-01', importe: 3 }] } },
+  ];
+  const listKey = listCandidates(samples).find((c) => c.url.includes('movimientos')).key;
+  const r = draftAdapterFromSamples(samples, { domain: 'caixabankconsumer.com', pageHost: 'clientes.caixabankconsumer.com' }, { key: listKey });
+  assert.ok(r.ok);
+  assert.ok(r.draft.auth.context && r.draft.auth.context.length, 'emits auth.context');
+  const c = r.draft.auth.context[0];
+  assert.equal(c.name, 'dni'); // DNI-shaped
+  assert.equal(c.from, 'url');
+  const m = new RegExp(c.match).exec(`/cpc/v1.0/portalCliente/posicionGlobal/es/${dni}`);
+  assert.equal(m && m[1], dni); // the regex re-extracts the id
+  assert.ok(r.draft.api.list.path.includes('{ctx.dni}'), 'list path templated with {ctx.dni}');
+  assert.ok(!r.draft.api.list.path.includes(dni), 'the frozen id is gone from the list path');
+});
+
+// Don't invent auth.context for a value that appears in only ONE request (e.g. a per-document id) —
+// there'd be no separate request to capture it from.
+test('does not infer auth.context from a one-off id', () => {
+  const s = [{ url: 'https://api.shop.es/v1/orders/ORD12345678', method: 'GET', status: 200, reqHeaders: { authorization: 'eyJ' },
+    json: { items: [{ orderId: 'O1', createdAt: '2026-01-01', totalEur: 9 }] } }];
+  const r = draftAdapterFromSamples(s, { domain: 'shop.es', pageHost: 'www.shop.es' });
+  assert.ok(!r.draft.auth.context);
+});
+
 // TDD: page pagination is inferred when the request carries a `page` query param and the response
 // has neither a cursor nor an offsets object.
 test('detects page pagination from a `page` query param', () => {

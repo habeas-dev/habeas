@@ -551,6 +551,30 @@ function inferCsrf(body, samples) {
   return null;
 }
 
+// auth.context inference: a STABLE personal identifier (a DNI/NIF, a customer number) that the SPA
+// puts in the URL of several requests — captured once as {ctx.<name>} and reused, instead of freezing
+// one user's id into the source. Conservative: the value must (a) look like an id (alnum, ≥8, has a
+// digit), (b) NOT be one of the list items' own field values (so a per-document id isn't mistaken for
+// it), and (c) appear in the path of ANOTHER request (a separate capture source the runtime can read).
+function inferAuthContext(listUrl, samples, items) {
+  let lu; try { lu = new URL(listUrl); } catch (e) { return null; }
+  const idLike = (v) => /^[0-9A-Za-z]{8,20}$/.test(v) && /\d/.test(v);
+  const itemVals = new Set([...valueFields(items).keys()]);
+  const segs = [...lu.pathname.split('/').filter(Boolean), ...lu.searchParams.values()];
+  for (const v of segs) {
+    if (!idLike(v) || itemVals.has(v)) continue;
+    for (const s of samples || []) {
+      let su; try { su = new URL(s.url); } catch (e) { continue; }
+      if (su.host !== lu.host || su.pathname === lu.pathname) continue; // need a DIFFERENT request
+      if (!su.pathname.split('/').filter(Boolean).includes(v)) continue;
+      const match = escRe(su.pathname.slice(0, su.pathname.indexOf(v))) + '([0-9A-Za-z]+)';
+      try { const m = new RegExp(match).exec(su.pathname); if (!m || m[1] !== v) continue; } catch (e) { continue; }
+      return { name: /^\d{7,8}[A-Za-z]$/.test(v) ? 'dni' : 'accountId', match, value: v };
+    }
+  }
+  return null;
+}
+
 // Build an adapter draft. `ctx` = { domain, pageHost, assets }. `chosen` (optional) = { key }
 // picks a specific captured list; without it the biggest is used.
 export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
@@ -672,6 +696,17 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
   } else if (ctx.assets) {
     const p = inferPdf(ctx.assets, best.items);
     if (p) { draft.api.pdf = p.pdf; if (p.host && p.host !== host) draft.api.pdf.host = p.host; if (p.idField) fields.internalId = p.idField; }
+  }
+
+  // A stable personal id the SPA puts in URLs → capture it as {ctx.*} and template the list/detail
+  // path with it, so the source works for any user (not just the one whose id was captured).
+  const actx = inferAuthContext(s.url, samples, best.items);
+  if (actx) {
+    draft.auth.context = [{ name: actx.name, from: 'url', match: actx.match }];
+    const tok = '{ctx.' + actx.name + '}';
+    draft.api.list.path = draft.api.list.path.split(actx.value).join(tok);
+    if (draft.api.list.params) for (const k of Object.keys(draft.api.list.params)) draft.api.list.params[k] = String(draft.api.list.params[k]).split(actx.value).join(tok);
+    if (draft.api.detail && draft.api.detail.path) draft.api.detail.path = draft.api.detail.path.split(actx.value).join(tok);
   }
 
   // The list array's field candidates power the visual mapper dropdowns.
