@@ -60,6 +60,37 @@ test('detects cursor pagination via a nextCursor field', () => {
   assert.equal(r.draft.api.list.nextPath, 'paging.nextCursor');
 });
 
+// A POST/GraphQL list: the SPA sends the query in the request BODY (Ikea's purchase-history GraphQL).
+// The draft must reproduce it faithfully — method + body + content-type — not silently draft a GET.
+test('drafts a POST/GraphQL list preserving method, body and content-type (Ikea-shape)', () => {
+  const body = JSON.stringify({ operationName: 'FullHistory', variables: { skip: 0, take: -1 }, query: 'query FullHistory($skip: Int!, $take: Int!) { historyData(skip: $skip, take: $take) { historicalPurchases { id } } }' });
+  const s = [{ url: 'https://order.ikea.com/purchase-history/graphql', method: 'POST', status: 200,
+    reqHeaders: { authorization: 'bearer eyJz' }, reqBody: body,
+    json: { data: { historyData: { historicalPurchases: [
+      { id: 'X1', dateAndTime: { date: '2026-01-02' }, storeName: 'IKEA', totalCost: { value: '12.34' } },
+      { id: 'X2', dateAndTime: { date: '2026-02-02' }, storeName: 'IKEA', totalCost: { value: '5' } },
+    ] } } } }];
+  const r = draftAdapterFromSamples(s, { domain: 'ikea.com', pageHost: 'www.ikea.com' });
+  assert.ok(r.ok);
+  assert.equal(r.draft.api.list.method, 'POST');
+  assert.equal(r.draft.api.list.body, body);
+  assert.equal(r.draft.api.list.contentType, 'application/json'); // body-shape detected (no content-type header captured)
+  assert.equal(r.draft.api.list.itemsPath, 'data.historyData.historicalPurchases');
+  assert.equal(r.draft.fields.internalId, 'id');
+  assert.ok(validateAdapter(r.draft).ok);
+});
+
+// A form-urlencoded POST list (no JSON body) → content-type falls back to form encoding.
+test('drafts a form-encoded POST list with the right content-type', () => {
+  const s = [{ url: 'https://www.bank.es/movimientos', method: 'POST', status: 200,
+    reqHeaders: { 'content-type': 'application/x-www-form-urlencoded' }, reqBody: 'from=2026-01-01&to=2026-06-01',
+    json: { movements: [{ id: 'M1', fecha: '2026-01-02', importe: 3 }] } }];
+  const r = draftAdapterFromSamples(s, { domain: 'bank.es', pageHost: 'www.bank.es' });
+  assert.equal(r.draft.api.list.method, 'POST');
+  assert.equal(r.draft.api.list.body, 'from=2026-01-01&to=2026-06-01');
+  assert.equal(r.draft.api.list.contentType, 'application/x-www-form-urlencoded');
+});
+
 // TDD: page pagination is inferred when the request carries a `page` query param and the response
 // has neither a cursor nor an offsets object.
 test('detects page pagination from a `page` query param', () => {

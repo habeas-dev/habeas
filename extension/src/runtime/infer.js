@@ -585,6 +585,21 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
   const pageRef = (ctx.domTexts || []).find((d) => { try { const uu = new URL(d.url); return uu.host === host && /[?&]page=\d+/.test(uu.search); } catch (e) { return false; } });
   if (pageRef) draft.api.list.referer = String(pageRef.url).replace(/([?&]page=)\d+/, '$1{page}');
 
+  // POST/GraphQL list: the SPA sends the query/filter in the request BODY (Ikea's purchase-history
+  // GraphQL; some REST APIs POST a JSON/form body). Reproduce it faithfully — method + body + the
+  // content-type — so the runtime replays the SAME request (fetchList honours list.method/body, and
+  // fillTmpl leaves a GraphQL body's own braces intact, only filling {token} placeholders).
+  const method = (s.method || 'GET').toUpperCase();
+  if (method !== 'GET' && s.reqBody) {
+    draft.api.list.method = method;
+    draft.api.list.body = s.reqBody;
+    let ct = (reqHeaders['content-type'] || reqHeaders['Content-Type'] || '').split(';')[0].trim();
+    if (!ct) { try { JSON.parse(s.reqBody); ct = 'application/json'; } catch (e) { ct = 'application/x-www-form-urlencoded'; } }
+    draft.api.list.contentType = ct;
+    // content-type is carried via list.contentType now → don't duplicate it in list.headers.
+    if (draft.api.list.headers) { delete draft.api.list.headers['content-type']; if (!Object.keys(draft.api.list.headers).length) delete draft.api.list.headers; }
+  }
+
   // Per-document artifact: prefer the JSON detail (captured passively when the user opens an order);
   // fall back to a captured PDF request. Auto-carry the detail's app headers + detail-page Referer.
   const detail = inferDetail(samples, best.items, ctx.domTexts);
