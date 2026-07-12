@@ -2,6 +2,10 @@
 
 > *Habeas data* — making your right to your own data executable.
 
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/pbpehhngeidokhaokgloaneiibhceiog?label=Chrome%20Web%20Store&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog)
+[![Firefox Add-ons](https://img.shields.io/amo/v/habeas?label=Firefox%20Add-ons&logo=firefoxbrowser&logoColor=white)](https://addons.mozilla.org/firefox/addon/habeas/)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
+
 **Habeas** is an open-source, local-first runtime that lets you retrieve **your own data** from websites that offer no API, no bulk export, or intentionally make automation difficult.
 
 It runs **inside your own authenticated browser session**, where you already have access to your data, and delivers that data wherever **you** choose.
@@ -167,7 +171,10 @@ Habeas simply runs there.
 
 # Current status
 
-**Working alpha**
+**Working alpha — published on both stores.**
+
+Habeas is live on the [Chrome Web Store](https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog)
+and [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/habeas/).
 
 The project already includes:
 
@@ -175,10 +182,11 @@ The project already includes:
 - Chrome/Chromium support;
 - Firefox support;
 - multiple production-ready Sources;
-- multiple Sinks;
-- automatic synchronization;
+- multiple Sinks (download / local folder / native Google Drive / HTTP);
+- automatic synchronization on login;
 - duplicate detection;
-- multilingual interface.
+- a community Sources catalog with in-extension record mode, authoring, and sharing;
+- multilingual interface (English + Spanish).
 
 The architecture is stable, but the catalog of supported Sources continues to grow.
 
@@ -186,21 +194,32 @@ The architecture is stable, but the catalog of supported Sources continues to gr
 
 # Installation
 
-## Chrome / Chromium
+## From your browser's store (recommended)
+
+- **Chrome / Chromium** (Chrome, Edge, Brave, Opera…): [Chrome Web Store](https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog)
+- **Firefox** (128 or newer): [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/habeas/)
+
+Prebuilt MV3 zips for each release are also attached to the [GitHub Releases](https://github.com/habeas-dev/habeas/releases).
+
+## Development / unpacked build
+
+Load the extension straight from the source tree while hacking on it:
+
+**Chrome / Chromium**
 
 1. Open `chrome://extensions`
 2. Enable **Developer Mode**
 3. Select **Load unpacked**
 4. Choose the `extension/` directory
 
-## Firefox
+**Firefox**
 
 1. Open `about:debugging`
 2. Choose **This Firefox**
 3. Select **Load Temporary Add-on**
 4. Open `extension/manifest.json`
 
-See the extension documentation for browser-specific details.
+Or build the packaged zip yourself with `npm install && npm run package` (output in `dist/`).
 
 ---
 
