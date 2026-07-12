@@ -160,7 +160,7 @@ async function render() {
     finally { b.disabled = false; }
   });
 
-  const swSinks = cfg.sinks.filter((s) => s.type === 'drive' || s.type === 'http' || s.type === 'webdav' || s.type === 's3');
+  const swSinks = cfg.sinks.filter((s) => ['drive', 'http', 'webdav', 's3', 'dropbox'].includes(s.type));
   const enabledDs = cfg.datasources.filter((d) => d.enabled);
   const routeOf = (d) => (cfg.routes || []).find((r) => r.datasource === d.id && r.mode === 'auto');
   const nameOf = (d) => (CATALOG[d.adapter] && CATALOG[d.adapter].name) || d.id;
@@ -216,6 +216,9 @@ function renderFields() {
     $('#sfields').innerHTML = `id:<input id="sid" size="8"> <label>${t('webdav_url')}</label><input id="surl" size="24" placeholder="https://host/remote.php/dav/files/me/Habeas"> <label>${t('webdav_user')}</label><input id="swuser" size="10"> <label>${t('webdav_pass')}</label><input id="swpass" type="password" size="10">`;
   } else if (type === 's3') {
     $('#sfields').innerHTML = `id:<input id="sid" size="6"> <label>${t('s3_bucket')}</label><input id="s3bucket" size="10"> <label>${t('s3_region')}</label><input id="s3region" size="8" placeholder="us-east-1"> <label>${t('s3_key')}</label><input id="s3ak" size="10"> <label>${t('s3_secret')}</label><input id="s3sk" type="password" size="10"> <label>${t('s3_endpoint_opt')}</label><input id="s3ep" size="16" placeholder="MinIO/R2/B2"> <label>${t('s3_prefix_opt')}</label><input id="s3prefix" size="8">`;
+  } else if (type === 'dropbox') {
+    $('#sfields').innerHTML = `id:<input id="sid" size="6"> <label>${t('dbx_appkey')}</label><input id="dbxkey" size="14"> <label>${t('dbx_refresh')}</label><input id="dbxrefresh" type="password" size="18"> <label>${t('dbx_folder_opt')}</label><input id="dbxfolder" size="10" placeholder="Habeas">`
+      + `<div style="flex-basis:100%;margin-top:4px"><small>${t('dbx_hint')}</small></div>`;
   } else if (type === 'drive') {
     $('#sfields').innerHTML = `id:<input id="sid" size="8"> <label>${t('client_id_optional')}</label><input id="sclient" size="26">`
       + `<div style="flex-basis:100%;margin-top:6px"><small>${t('redirect_hint')}</small><br><code>${redirectUri()}</code></div>`;
@@ -245,6 +248,10 @@ async function addSink() {
     const ep = ($('#s3ep').value || '').trim(); if (ep) { sink.endpoint = ep; sink.pathStyle = true; }
     const prefix = ($('#s3prefix').value || '').trim(); if (prefix) sink.prefix = prefix;
     if ($('#s3sk').value) { sink.secretRef = 'secret://' + id; await setSecret(id, $('#s3sk').value); }
+  } else if (type === 'dropbox') {
+    sink.appKey = ($('#dbxkey').value || '').trim();
+    sink.rootFolderName = ($('#dbxfolder').value || '').trim() || 'Habeas';
+    if ($('#dbxrefresh').value) { sink.refreshRef = 'secret://' + id; await setSecret(id, $('#dbxrefresh').value.trim()); }
   } else if (type === 'drive') {
     sink.clientId = ($('#sclient').value || '').trim() || undefined;
     sink.rootFolderName = 'Habeas';

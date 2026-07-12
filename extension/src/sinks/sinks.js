@@ -8,8 +8,9 @@ import { resolveSinkExtraHeaders } from '../lib/sinkheaders.js';
 import { makeZip } from '../lib/zip.js';
 import { pathFor, buildManifest, toRecords, mergeRecords, jsonBlob, today } from './format.js';
 import { driveWrite, driveRead } from './drive.js';
+import { dropboxWrite } from './dropbox.js';
 
-export function listSinkTypes() { return ['download', 'local-folder', 'drive', 'http', 'webdav', 's3']; }
+export function listSinkTypes() { return ['download', 'local-folder', 'drive', 'http', 'webdav', 's3', 'dropbox']; }
 
 export async function writeToSink(sink, docs, files, opts = {}) {
   const impl = IMPL[sink.type];
@@ -61,6 +62,9 @@ const IMPL = {
 
   // Native Google Drive — individual uploads + cumulative manifest (see drive.js).
   drive: (sink, docs, files, opts) => driveWrite(sink, docs, files, opts),
+
+  // Dropbox — content-API uploads + cumulative manifest (see dropbox.js).
+  dropbox: (sink, docs, files, opts) => dropboxWrite(sink, docs, files, opts),
 
   // HTTP consumer (Tiquetera / Cuéntamo): POST normalized records + available PDFs.
   async http(sink, docs, files, opts = {}) {

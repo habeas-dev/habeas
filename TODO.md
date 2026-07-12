@@ -8,13 +8,13 @@
   source tab and retries in-session (`needsTabEscalation` in `lib/autosync.js`, unit-tested). Bypasses the
   per-route debounce; one summary notification + activity-log entry.
 
-* Crear varios sink más: Dropbox, WebDAV y S3.
-  * [DONE v0.1.58.2] ~~WebDAV~~ — `sinks/sinks.js#webdav`: PUT each file (MKCOL parents) + a cumulative
-    per-source manifest, Basic auth (username inline, password in the encrypted secrets store as
-    `passwordRef`). Configurable in Settings (URL/user/password) and selectable for auto routes. Unit-tested
-    with a mocked WebDAV server. Needs a live smoke test against a real server (Nextcloud/Apache).
-  * [ ] Dropbox — OAuth (app + token), upload via `/2/files/upload`.
-  * [ ] S3 — bucket + SigV4 signing (or a pre-signed-URL / STS model); decide the credential story.
+* [DONE v0.1.58.2/.3/.4] ~~Crear varios sink más: Dropbox, WebDAV y S3.~~ All three added, each with the
+  cumulative per-source manifest and selectable for auto routes / Sync all. Need live smoke tests.
+  * [DONE v0.1.58.2] WebDAV — `sinks.js#webdav`: PUT (MKCOL parents) + Basic auth (password in secrets).
+  * [DONE v0.1.58.3] S3 — `sinks.js#s3` + pure `lib/sigv4.js` (verified vs AWS's vector); AWS + compatible
+    (MinIO/R2/B2) via custom endpoint; access key inline + secret in the secrets store.
+  * [DONE v0.1.58.4] Dropbox — `sinks/dropbox.js`: public app (PKCE) refresh-token model → silent access-
+    token renewal, upload via the content API. No redirect URI (sidesteps Firefox's per-install UUID).
 
 * [DONE v0.1.53.5] ~~Caixabankconsumer: aparece "[object Object]" en el campo Tienda.~~ Fixed: nested
   `{name}` (invoice issuer / receipt store) now resolves to a display string, live + from store.
