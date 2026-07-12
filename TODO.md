@@ -1,5 +1,15 @@
 # Habeas — TODO
 
+* [DONE v0.1.58.1] ~~Falta la opción o acción de la extensión para ejecutar un barrido secuencial por todas
+  las sources configuradas para extraer todos los documentos nuevos en modo automático (primero desatendido
+  sin pestaña, y solo acudir a una pestaña si falla o requiere atención).~~ Added a **"Sync all"** button in
+  the popup topbar → `background.js#sweepAllSources`: sweeps every `mode:auto` route sequentially, tries each
+  UNATTENDED first (existing tab if any, else direct fetch), and only on a session/anti-bot failure opens the
+  source tab and retries in-session (`needsTabEscalation` in `lib/autosync.js`, unit-tested). Bypasses the
+  per-route debounce; one summary notification + activity-log entry.
+
+* Crear varios sink más: Dropbox, WebDAV y S3.
+
 * [DONE v0.1.53.5] ~~Caixabankconsumer: aparece "[object Object]" en el campo Tienda.~~ Fixed: nested
   `{name}` (invoice issuer / receipt store) now resolves to a display string, live + from store.
 * Caixabankconsumer: "descargar todo de nuevo" no trae PDF. **Capture confirmed the adapter is CORRECT**

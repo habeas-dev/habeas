@@ -122,6 +122,13 @@
   "group_continue": { "message": "Continue" },
   "group_n": { "message": "Account $N$", "placeholders": { "n": { "content": "$1" } } },
   "notify_new": { "message": "$N$ new document(s) → $SINK$", "placeholders": { "n": { "content": "$1" }, "sink": { "content": "$2" } } },
+  "notify_sweep": { "message": "$NEW$ new document(s) across $SOURCES$ source(s)", "placeholders": { "new": { "content": "$1" }, "sources": { "content": "$2" } } },
+  "sync_all": { "message": "Sync all" },
+  "syncing": { "message": "Syncing…" },
+  "sync_all_running": { "message": "Syncing all sources…" },
+  "sync_all_done": { "message": "$NEW$ new across $SOURCES$ source(s)", "placeholders": { "new": { "content": "$1" }, "sources": { "content": "$2" } } },
+  "sync_all_needlogin": { "message": "$N$ need sign-in", "placeholders": { "n": { "content": "$1" } } },
+  "sync_all_err": { "message": "Sync failed: $E$", "placeholders": { "e": { "content": "$1" } } },
   "notify_autoerr": { "message": "Auto-sync error: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
   "notify_challenge": { "message": "$NAME$: solve the anti-bot check we just opened, then it will sync.", "placeholders": { "name": { "content": "$1" } } },
 

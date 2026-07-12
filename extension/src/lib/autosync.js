@@ -37,3 +37,15 @@ export function isLoginNavigation(adapter, url) {
 export function retainAutoDebounce(status) {
   return status === 'done';
 }
+
+// In a "sync all" sweep each source is first tried UNATTENDED (no tab — an existing tab if any, else a
+// direct extension fetch). Should we then open the source's tab and retry in-session? A session/anti-bot
+// failure means the direct fetch lacked the live session; opening the tab often succeeds when the session
+// is still valid (and lets the user log in when it isn't). A completed run, or a hard config error that a
+// tab won't fix, does not escalate.
+const AUTHISH = /csrf|(^|\D)40[13](\D|$)|challenge|captcha|datadome|akam|token|sesi|session|login|forbidden|unauthor/i;
+export function needsTabEscalation(res) {
+  if (!res) return false;
+  if (res.status === 'challenged' || res.status === 'nosession') return true;
+  return res.status === 'error' && AUTHISH.test(String(res.error || ''));
+}

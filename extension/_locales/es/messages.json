@@ -122,6 +122,13 @@
   "group_continue": { "message": "Continuar" },
   "group_n": { "message": "Cuenta $N$", "placeholders": { "n": { "content": "$1" } } },
   "notify_new": { "message": "$N$ documento(s) nuevo(s) → $SINK$", "placeholders": { "n": { "content": "$1" }, "sink": { "content": "$2" } } },
+  "notify_sweep": { "message": "$NEW$ documento(s) nuevo(s) en $SOURCES$ fuente(s)", "placeholders": { "new": { "content": "$1" }, "sources": { "content": "$2" } } },
+  "sync_all": { "message": "Sincronizar todo" },
+  "syncing": { "message": "Sincronizando…" },
+  "sync_all_running": { "message": "Sincronizando todas las fuentes…" },
+  "sync_all_done": { "message": "$NEW$ nuevo(s) en $SOURCES$ fuente(s)", "placeholders": { "new": { "content": "$1" }, "sources": { "content": "$2" } } },
+  "sync_all_needlogin": { "message": "$N$ requieren iniciar sesión", "placeholders": { "n": { "content": "$1" } } },
+  "sync_all_err": { "message": "Fallo al sincronizar: $E$", "placeholders": { "e": { "content": "$1" } } },
   "notify_autoerr": { "message": "Error de auto-sync: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
   "notify_challenge": { "message": "$NAME$: resuelve la verificación anti-bot que acabamos de abrir y se sincronizará.", "placeholders": { "name": { "content": "$1" } } },
 

@@ -2,7 +2,17 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 // Pure scheduling policy for the background auto-sync runner — no chrome shim needed.
-const { autoDebounced, retainAutoDebounce, isLoginNavigation, AUTO_DEBOUNCE_MS } = await import('../src/lib/autosync.js');
+const { autoDebounced, retainAutoDebounce, isLoginNavigation, needsTabEscalation, AUTO_DEBOUNCE_MS } = await import('../src/lib/autosync.js');
+
+test('needsTabEscalation: a session/challenge/auth failure escalates to a tab; success/hard-error do not', () => {
+  assert.equal(needsTabEscalation({ status: 'done', new: 2 }), false);
+  assert.equal(needsTabEscalation({ status: 'nosession' }), true);
+  assert.equal(needsTabEscalation({ status: 'challenged' }), true);
+  assert.equal(needsTabEscalation({ status: 'error', error: 'list 403 forbidden' }), true);
+  assert.equal(needsTabEscalation({ status: 'error', error: 'csrf 400' }), true);
+  assert.equal(needsTabEscalation({ status: 'error', error: 'no matching adapter' }), false);
+  assert.equal(needsTabEscalation(null), false);
+});
 
 const wizink = { auth: { loginUrl: 'https://www.wizink.es/login' } };
 

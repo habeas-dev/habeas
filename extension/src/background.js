@@ -8,7 +8,7 @@ import { registerCapture } from './lib/capture.js';
 import { loadAuth, hasAuth } from './lib/authstore.js';
 import { deliveredSet, markDelivered, appendLog } from './lib/state.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
-import { resolveSiteFetch } from './lib/pagefetch.js';
+import { resolveSiteFetch, ensureSiteFetch } from './lib/pagefetch.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
 import { recordDelivered } from './lib/store.js';
@@ -21,7 +21,7 @@ import { t } from './lib/i18n.js';
 import { validateProposal, originHost } from './lib/exthooks.js';
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
-import { autoDebounced, retainAutoDebounce, isLoginNavigation } from './lib/autosync.js';
+import { autoDebounced, retainAutoDebounce, isLoginNavigation, needsTabEscalation } from './lib/autosync.js';
 
 chrome.action.onClicked.addListener(() => {
   chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/popup.html') });
@@ -125,6 +125,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     handleExt(msg.api, msg.payload || {}, senderOrigin(sender)).then(sendResponse, (e) => sendResponse({ ok: false, status: 'error', error: (e && e.message) || String(e) }));
     return true; // async response
   }
+  if (msg.type === 'habeas:sync-all') { // user-initiated sweep of every auto route (from the popup)
+    sweepAllSources().then((r) => sendResponse({ ok: true, ...r }), (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
+    return true; // async response
+  }
   if (msg.type === 'habeas:auth' && msg.host) {
     saveAuth(msg.host, msg.path, msg.headers).then(() => { maybeAutoRun(msg.host); runPendingExternalCollects(msg.host); });
   } else if (msg.type === 'habeas:context' && msg.host && msg.name) {
@@ -206,6 +210,45 @@ async function runAutoRoutes(matches, tabId, triggerUrl) {
 const maybeAutoRun = (host) => runAutoRoutes((a) => hostOf(a) === host);
 // Trigger B: the user navigated to the source's site — works for cookie sources too (no JWT to capture).
 const maybeAutoRunForSite = (host, tabId, url) => runAutoRoutes((a) => siteMatches(a, host), tabId, url);
+
+// User-initiated "Sync all now": sweep EVERY configured auto route sequentially, extracting new docs.
+// Each source is tried UNATTENDED first (no tab opened — an existing tab if any, else a direct fetch);
+// only on a session/anti-bot failure do we open its tab and retry in-session (which succeeds when the
+// session is still valid, and lets the user log in when it isn't). Bypasses the per-route debounce (this
+// is an explicit request) and emits one summary notification instead of one per source.
+let sweeping = false;
+async function sweepAllSources() {
+  if (sweeping) return { status: 'busy' };
+  sweeping = true;
+  try {
+    const cfg = await getConfig();
+    const adapters = await getAdapters();
+    const routes = (cfg.routes || []).filter((r) => r.mode === 'auto');
+    await badgeWorking();
+    let sources = 0, totalNew = 0, needLogin = 0, errors = 0;
+    for (const route of routes) {
+      const ds = cfg.datasources.find((d) => d.id === route.datasource && d.enabled);
+      const adapter = ds && adapters[ds.adapter];
+      const sink = cfg.sinks.find((s) => s.id === route.sink);
+      if (!adapter || !sink || sink.type === 'download' || sink.type === 'local-folder') continue; // SW-runnable sinks only
+      if (!(await hasConsent(adapter))) continue;
+      sources++;
+      setStatus(t('status_listing', [adapter.name || ds.adapter]));
+      let res = await runRoute(ds, adapter, sink, { kind: 'sweep' }); // 1) unattended
+      if (needsTabEscalation(res)) {                                   // 2) escalate to a tab, retry in-session
+        const net = await ensureSiteFetch(adapter, { open: true }).catch(() => null);
+        if (net) res = await runRoute(ds, adapter, sink, { kind: 'sweep', net, interactive: true });
+      }
+      if (res.status === 'done') totalNew += res.new || 0;
+      else if (res.status === 'nosession' || res.status === 'challenged') needLogin++;
+      else if (res.status === 'error') errors++;
+    }
+    await appendLog({ kind: 'sweep', status: 'ok', sources, new: totalNew, needLogin, errors });
+    notify(t('notify_sweep', [String(totalNew), String(sources)]));
+    if (totalNew) await badgeCount(totalNew); else await badgeClear();
+    return { status: 'done', sources, new: totalNew, needLogin, errors };
+  } finally { sweeping = false; }
+}
 
 const hostOf = (adapter) => adapter.api.host.replace(/^https?:\/\//, '');
 const bareHost = (m) => String(m).replace(/^[a-z]+:\/\//i, '').replace(/[:/].*$/, '').replace(/^\*\./, '');

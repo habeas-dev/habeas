@@ -49,6 +49,7 @@ async function init() {
   applyI18n();
   try { const v = $('#version'); if (v) v.textContent = 'v' + chrome.runtime.getManifest().version; } catch (e) {}
   $('#opts').onclick = () => chrome.runtime.openOptionsPage();
+  $('#sync-all').onclick = onSyncAll;
   ADAPTERS = await getAdapters();
   const cfg = await getConfig();
   const enabled = cfg.datasources.filter((d) => d.enabled);
@@ -221,6 +222,24 @@ async function refreshStoreButton() {
   // make sense once the store has items for this source; otherwise List already does a full extraction.
   if ($('#load-store')) $('#load-store').hidden = !n;
   if ($('#full-history')) $('#full-history').hidden = !n;
+}
+
+// "Sync all now": ask the background to sweep every auto route (unattended first, tab only if a source
+// needs its session). One button for "pull whatever's new across all my sources".
+async function onSyncAll() {
+  const b = $('#sync-all');
+  b.disabled = true; b.textContent = t('syncing');
+  $('#status').textContent = t('sync_all_running');
+  try {
+    const r = await chrome.runtime.sendMessage({ type: 'habeas:sync-all' });
+    if (r && r.ok && r.status !== 'busy') {
+      let msg = t('sync_all_done', [String(r.new || 0), String(r.sources || 0)]);
+      if (r.needLogin) msg += ' · ' + t('sync_all_needlogin', [String(r.needLogin)]);
+      $('#status').textContent = msg;
+    } else if (r && r.status === 'busy') { $('#status').textContent = t('sync_all_running'); }
+    else { $('#status').textContent = t('sync_all_err', [(r && r.error) || 'error']); }
+  } catch (e) { $('#status').textContent = t('sync_all_err', [(e && e.message) || String(e)]); }
+  finally { b.disabled = false; b.textContent = t('sync_all'); }
 }
 
 async function onLoadStore() {
