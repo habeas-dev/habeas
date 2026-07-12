@@ -192,6 +192,32 @@ test('does not infer auth.context from a one-off id', () => {
   assert.ok(!r.draft.auth.context);
 });
 
+// Body-based pagination: some APIs page in the POST body, not the query string. Template the page/
+// offset field so the runtime's pager fills it.
+test('infers page pagination inside a form-encoded POST body', () => {
+  const s = [{ url: 'https://www.bank.es/mov', method: 'POST', status: 200,
+    reqHeaders: { 'content-type': 'application/x-www-form-urlencoded' }, reqBody: 'page=0&size=10',
+    json: { movements: [{ id: 'M1', fecha: '2026-01-01', importe: 3 }] } }];
+  const r = draftAdapterFromSamples(s, { domain: 'bank.es', pageHost: 'www.bank.es' });
+  assert.equal(r.draft.api.list.paging, 'page');
+  assert.equal(r.draft.api.list.pageParam, 'page');
+  assert.ok(r.draft.api.list.body.includes('page={page}'));
+  assert.ok(r.draft.api.list.body.includes('size=10')); // other fields preserved
+});
+
+test('infers offset pagination inside a JSON POST body (GraphQL variables.skip)', () => {
+  const body = JSON.stringify({ operationName: 'H', variables: { skip: 0, take: 10 }, query: 'query H($skip:Int){list(skip:$skip){id}}' });
+  const s = [{ url: 'https://order.ikea.com/graphql', method: 'POST', status: 200, reqHeaders: {}, reqBody: body,
+    json: { data: { list: [{ id: 'X1', date: '2026-01-01', total: 5 }] } } }];
+  const r = draftAdapterFromSamples(s, { domain: 'ikea.com', pageHost: 'www.ikea.com' });
+  assert.equal(r.draft.api.list.paging, 'offset');
+  assert.equal(r.draft.api.list.offsetParam, 'skip');
+  assert.ok(r.draft.api.list.body.includes('{skip}'));
+  const filled = r.draft.api.list.body.replace('{skip}', '20'); // fills to valid JSON
+  assert.doesNotThrow(() => JSON.parse(filled));
+  assert.equal(JSON.parse(filled).variables.skip, 20);
+});
+
 // TDD: page pagination is inferred when the request carries a `page` query param and the response
 // has neither a cursor nor an offsets object.
 test('detects page pagination from a `page` query param', () => {

@@ -551,6 +551,55 @@ function inferCsrf(body, samples) {
   return null;
 }
 
+// Body-based pagination: a page/offset field lives INSIDE the POST body (a form field, or a nested
+// GraphQL variable like variables.skip) rather than the query string. Template that field so the
+// runtime's pager fills it each page. Returns { body, paging, list } or null. Only page/offset (a
+// body cursor is response-derived and handled by the cursor pager). Deliberately keyed on strongly
+// page/offset-named fields to avoid mistaking an ordinary numeric field for the pager.
+const BODY_PAGE_KEY = /^(page|pagina|pag|pageno|pagenumber|p)$/i;
+const BODY_OFFSET_KEY = /^(offset|start|from|skip)$/i;
+function walkNumeric(node, cb, path = []) {
+  if (!node || typeof node !== 'object') return;
+  for (const k of Object.keys(node)) { const v = node[k]; cb(k, v, node); if (v && typeof v === 'object') walkNumeric(v, cb, path.concat(k)); }
+}
+function deduceBodyPaging(body, contentType) {
+  if (!body) return null;
+  let obj = null; try { obj = JSON.parse(body); } catch (e) {}
+  if (obj && typeof obj === 'object') {
+    let hit = null;
+    walkNumeric(obj, (k, v, parent) => {
+      if (hit || typeof v !== 'number' || !Number.isFinite(v)) return;
+      if (BODY_PAGE_KEY.test(k)) hit = { key: k, kind: 'page', value: v, parent };
+      else if (BODY_OFFSET_KEY.test(k)) hit = { key: k, kind: 'offset', value: v, parent };
+    });
+    if (!hit) return null;
+    // A body offset (skip/start/from) is a real pager ONLY with a sibling POSITIVE page size; a
+    // negative/absent size (e.g. GraphQL take:-1 = fetch everything at once) is NOT pagination.
+    let step = 0;
+    if (hit.kind === 'offset') {
+      const sk = Object.keys(hit.parent).find((kk) => /^(take|limit|size|count|pagesize|rows|num)$/i.test(kk));
+      step = sk ? Number(hit.parent[sk]) : NaN;
+      if (!(Number.isFinite(step) && step > 0)) return null;
+    }
+    const SENT = '__HABEAS_PG__';
+    hit.parent[hit.key] = SENT;
+    const templated = JSON.stringify(obj).split('"' + SENT + '"').join('{' + hit.key + '}');
+    hit.parent[hit.key] = hit.value; // restore (don't mutate the caller's parsed view)
+    return hit.kind === 'page'
+      ? { body: templated, paging: 'page', list: { pageParam: hit.key, pageStart: hit.value } }
+      : { body: templated, paging: 'offset', list: { offsetParam: hit.key, offsetStart: 0, offsetStep: step } };
+  }
+  try {
+    for (const [k, v] of new URLSearchParams(body)) {
+      if (!/^\d+$/.test(v)) continue;
+      const tmpl = () => body.replace(new RegExp('(^|&)(' + escRe(k) + ')=[^&]*'), (m, pre, key) => pre + key + '={' + key + '}');
+      if (BODY_PAGE_KEY.test(k)) return { body: tmpl(), paging: 'page', list: { pageParam: k, pageStart: Number(v) } };
+      if (BODY_OFFSET_KEY.test(k)) return { body: tmpl(), paging: 'offset', list: { offsetParam: k, offsetStart: 0 } };
+    }
+  } catch (e) {}
+  return null;
+}
+
 // auth.context inference: a STABLE personal identifier (a DNI/NIF, a customer number) that the SPA
 // puts in the URL of several requests — captured once as {ctx.<name>} and reused, instead of freezing
 // one user's id into the source. Conservative: the value must (a) look like an id (alnum, ≥8, has a
@@ -675,6 +724,12 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
     draft.api.list.contentType = ct;
     // content-type is carried via list.contentType now → don't duplicate it in list.headers.
     if (draft.api.list.headers) { delete draft.api.list.headers['content-type']; if (!Object.keys(draft.api.list.headers).length) delete draft.api.list.headers; }
+    // Pagination inside the body (page/offset field) — only if the URL didn't already yield a pager.
+    // Runs before the CSRF step so it parses clean JSON (the CSRF step may inject a non-JSON {csrf}).
+    if (draft.api.list.paging === 'none') {
+      const bp = deduceBodyPaging(draft.api.list.body, ct);
+      if (bp) { draft.api.list.body = bp.body; draft.api.list.paging = bp.paging; Object.assign(draft.api.list, bp.list); }
+    }
     // A per-session CSRF token baked into the body → fetch it fresh via a prelude and template {csrf}.
     const csrf = inferCsrf(draft.api.list.body, samples);
     if (csrf) {
