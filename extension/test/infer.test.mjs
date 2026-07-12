@@ -308,6 +308,24 @@ test('matchedArtifacts returns the distinct id-matched download formats', () => 
   assert.ok(arts[0].pdf.path.includes('{internalId}'));
 });
 
+// Cross-domain: the login site and the API live on different registrable domains (Ikea: ikea.com /
+// ingka.com). Emit crossDomainHosts so the same-domain guard passes (the runtime then forces a consent
+// screen for the off-site host). Without it the draft would be hard-rejected by validateAdapter.
+test('emits crossDomainHosts when the API is on a different registrable domain (Ikea-shape)', () => {
+  const s = [{ url: 'https://order.ingka.com/purchase-history/list', method: 'GET', status: 200, reqHeaders: { authorization: 'eyJz' },
+    json: { orders: [{ id: 'X1', date: '2026-01-02', total: 5 }] } }];
+  const r = draftAdapterFromSamples(s, { domain: 'ikea.com', pageHost: 'www.ikea.com' });
+  assert.ok(r.ok);
+  assert.ok(r.draft.crossDomainHosts && r.draft.crossDomainHosts.includes('ingka.com'), 'ingka.com flagged as cross-domain');
+  assert.ok(validateAdapter(r.draft).ok, 'now passes the same-domain guard');
+});
+
+// A same-domain source never gets a spurious crossDomainHosts.
+test('does not emit crossDomainHosts for a same-domain source', () => {
+  const r = draftAdapterFromSamples(carrefourSamples, { domain: 'carrefour.es', pageHost: 'www.carrefour.es' });
+  assert.ok(!r.draft.crossDomainHosts);
+});
+
 // TDD: page pagination is inferred when the request carries a `page` query param and the response
 // has neither a cursor nor an offsets object.
 test('detects page pagination from a `page` query param', () => {

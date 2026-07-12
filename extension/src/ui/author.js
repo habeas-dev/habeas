@@ -158,7 +158,9 @@ function drawDraft(chosen) {
   candidates = r.fieldCandidates; // [{ path, value }]
   fillForm(DRAFT);
   const doc = DRAFT.api.detail ? t('doc_json') : DRAFT.api.pdf ? t('doc_pdf') : t('doc_none');
-  $('#status').textContent = t('author_detected', [r.itemsPath, String(r.count)]) + ' · ' + doc;
+  let status = t('author_detected', [r.itemsPath, String(r.count)]) + ' · ' + doc;
+  if (DRAFT.crossDomainHosts && DRAFT.crossDomainHosts.length) status += ' · ' + t('author_crossdomain', [DRAFT.crossDomainHosts.join(', ')]);
+  $('#status').textContent = status;
 }
 
 function hostFromOrigin(origin) { try { return new URL(origin.replace('/*', '')).host; } catch (e) { return LEARN.domain; } }

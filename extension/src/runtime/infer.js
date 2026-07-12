@@ -11,6 +11,18 @@
 // captured as `kind:'html'`. For HTML we detect the repeated row structure and draft a `from:'html'`
 // list with a declarative `rows` config that the runtime's `parseHtmlItems` consumes AS-IS.
 import { parseHtmlItems } from './inventory.js';
+import { registrableDomain, collectHosts } from '../adapters/validate.js';
+
+// Flag every host the draft touches whose registrable domain differs from the source's own as a
+// crossDomainHost — so the same-domain guard (validate.checkHosts) passes. The runtime still forces a
+// prominent off-site consent screen for those (lib/consent needsConsent), so this never bypasses trust.
+function applyCrossDomain(draft) {
+  if (!draft || !draft.api) return draft;
+  const base = registrableDomain(draft.domain || draft.api.host || '');
+  const extra = [...new Set(collectHosts(draft).map(registrableDomain))].filter((d) => d && d !== base);
+  if (extra.length) draft.crossDomainHosts = extra; else delete draft.crossDomainHosts;
+  return draft;
+}
 
 // Flatten an object's leaf + shallow-object keys to dotted paths with a sample value.
 export function flattenKeys(obj, prefix = '', depth = 2, out = []) {
@@ -784,6 +796,7 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
     if (draft.api.detail && draft.api.detail.path) draft.api.detail.path = draft.api.detail.path.split(actx.value).join(tok);
   }
 
+  applyCrossDomain(draft); // flag any off-registrable-domain host so the guard passes (+ forces consent)
   // The list array's field candidates power the visual mapper dropdowns.
   return { ok: true, draft, fieldCandidates: flat, itemsPath: best.itemsPath, host, count: best.len };
 }
@@ -879,6 +892,7 @@ export function draftStreamsFromSamples(samples, ctx = {}, chosenKeys = null) {
     streams,
   };
   if (base.api.csrf) draft.api.csrf = base.api.csrf; // a shared prelude lives at the base
+  applyCrossDomain(draft);
   return { ok: true, draft, streams, host: hostOfCand(all[0]), count: picks.reduce((n, c) => n + c.len, 0) };
 }
 
@@ -927,5 +941,6 @@ export function draftWithGroups(samples, ctx = {}, listKey = null, groupsKey = n
   base.draft.api.list.path = base.draft.api.list.path.split(idVal).join(tok);
   if (base.draft.api.list.params) for (const k of Object.keys(base.draft.api.list.params)) base.draft.api.list.params[k] = String(base.draft.api.list.params[k]).split(idVal).join(tok);
   if (base.draft.api.list.body) base.draft.api.list.body = base.draft.api.list.body.split(idVal).join(tok);
+  applyCrossDomain(base.draft); // the groups endpoint may add an off-domain host
   return base;
 }
