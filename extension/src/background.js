@@ -21,6 +21,7 @@ import { t } from './lib/i18n.js';
 import { validateProposal, originHost } from './lib/exthooks.js';
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
+import { autoDebounced, retainAutoDebounce } from './lib/autosync.js';
 
 chrome.action.onClicked.addListener(() => {
   chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/popup.html') });
@@ -166,7 +167,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 });
 
-const DEBOUNCE_MS = 10 * 60 * 1000;
 const running = new Set();
 
 async function runAutoRoutes(matches, tabId) {
@@ -184,13 +184,19 @@ async function runAutoRoutes(matches, tabId) {
     if (!sink || sink.type === 'download' || sink.type === 'local-folder') continue; // need a page
     const dk = 'autoLast:' + route.id;
     const o = await chrome.storage.session.get(dk);
-    if (o[dk] && Date.now() - o[dk] < DEBOUNCE_MS) continue;
+    if (autoDebounced(o[dk], Date.now())) continue;
     // Don't run on a Cloudflare/anti-bot interstitial — the real session isn't available yet. When the
     // challenge passes, the page reloads → onUpdated fires again → this runs on the real site.
     if (tabId != null) { if (challenge === null) challenge = await isChallenged(tabId); if (challenge) return; }
     running.add(route.id);
     await chrome.storage.session.set({ [dk]: Date.now() });
-    runRoute(ds, adapter, sink).finally(() => running.delete(route.id));
+    // Release the debounce on a transient/auth failure (e.g. the run fired on the login page before the
+    // session was ready → csrf 400) so the user's real login re-triggers a retry at once; only a
+    // completed run holds the 10-min window. Keeps a first, premature failure from muting the source.
+    runRoute(ds, adapter, sink)
+      .then((res) => (retainAutoDebounce(res && res.status) ? null : chrome.storage.session.remove(dk)))
+      .catch(() => chrome.storage.session.remove(dk))
+      .finally(() => running.delete(route.id));
   }
 }
 // Trigger A: captured auth (a bearer source's JWT was seen). host = the API host.
