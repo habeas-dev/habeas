@@ -41,7 +41,13 @@ export function buildRecord(d, adapter) {
   // Omitted when the source isn't grouped, so ungrouped records stay byte-identical.
   const gl = d._group ? groupLabelOf(d._group) : '';
   const withGroup = (r) => (gl ? { ...r, group: gl } : r);
-  const done = (r) => withGroup(withNumber(r));
+  // `pdfUrl` = the absolute document URL for `pdf.urlField` sources (CaixaBank's statement `Url`), which
+  // lives only on the raw list item. Persisting it lets a row loaded from the store (no `_raw`) still fetch
+  // the PDF. Omitted otherwise, so records for non-urlField sources stay byte-identical.
+  const uf = adapter && adapter.api && adapter.api.pdf && adapter.api.pdf.urlField;
+  const pdfUrl = uf && d._raw ? uf.split('.').reduce((o, k) => (o == null ? o : o[k]), d._raw) : null;
+  const withPdfUrl = (r) => (pdfUrl != null && pdfUrl !== '' ? { ...r, pdfUrl: String(pdfUrl) } : r);
+  const done = (r) => withPdfUrl(withGroup(withNumber(r)));
   if (kind === 'transaction') {
     const r = { internalId: d.internalId, date: d.date, amount: num(d.amount ?? d.total), currency, category: d.category, description: d.description ?? d.label ?? '', counterparty: d.counterparty ?? d.party ?? '', direction: d.direction ?? dirOf(d.amount ?? d.total), source: d.source, type: d.type };
     // Carry any extra per-movement data a card source captures (merchant city, card mask…) so nothing is lost.
@@ -58,7 +64,7 @@ export function buildRecord(d, adapter) {
     // row loaded from the store shows it instead of the opaque internalId. Omitted when absent so
     // existing invoice records stay byte-identical.
     if (d.description != null && d.description !== '') r.description = d.description;
-    return withGroup(r);
+    return withPdfUrl(withGroup(r));
   }
   // receipt@1 (default) — unchanged shape (number appended only when present).
   return done({ internalId: d.internalId, date: d.date, total: d.total, currency, category: d.category, store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type });

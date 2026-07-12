@@ -491,9 +491,10 @@ export function artifactKinds(adapter, doc) {
   const dc = documentCfg(api);
   if (dc) { if (!doc || tmplResolvable(dc.path, doc)) out.push({ kind: 'document', ext: docExtOf(dc) }); }
   else if (api.pdf) {
-    // urlField: the document is an absolute URL on the list item — available iff that field is present.
+    // urlField: the document is an absolute URL on the list item — available iff that field is present on
+    // the raw item, OR (a row loaded from the store, no `_raw`) it was persisted as `record.pdfUrl`.
     const ok = api.pdf.urlField
-      ? (!doc || (doc._raw && get(doc._raw, api.pdf.urlField) != null && get(doc._raw, api.pdf.urlField) !== ''))
+      ? (!doc || (doc._raw && get(doc._raw, api.pdf.urlField) != null && get(doc._raw, api.pdf.urlField) !== '') || !!(doc.record && doc.record.pdfUrl))
       : (!doc || tmplResolvable(api.pdf.path, doc));
     if (ok) out.push({ kind: 'document', ext: api.pdf.ext || 'pdf' });
   }
@@ -592,9 +593,10 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
     // ABSOLUTE-URL document: the list item already carries the full https:// link to the file (e.g.
     // CaixaBank's statement `Url`). Fetch it verbatim — but keep the same-domain guard honest: the
     // URL's host MUST be the source's own domain or a declared crossDomainHosts entry.
-    const abs = doc && doc._raw ? get(doc._raw, pdf.urlField) : undefined;
+    // From the raw list item, or — for a row loaded from the store (no `_raw`) — the persisted record.pdfUrl.
+    const abs = (doc && doc._raw ? get(doc._raw, pdf.urlField) : undefined) || (doc && doc.record ? doc.record.pdfUrl : undefined);
     if (!abs || !/^https:\/\//i.test(String(abs))) throw new Error('no document for this item');
-    assertAllowedDocHost(adapter, String(abs));
+    assertAllowedDocHost(adapter, String(abs)); // re-validate EVERY time — a persisted/imported URL isn't trusted
     url = String(abs);
     try { path = new URL(url).pathname; } catch (e) { path = url.split('?')[0]; }
   } else {

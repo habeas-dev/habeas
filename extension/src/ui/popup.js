@@ -460,7 +460,9 @@ async function onSend() {
   const formatsOf = (d) => (d._formats && d._formats.length ? d._formats : ['']);
   // Fetch a single doc's artifacts for ONE output (skip a document kind this doc lacks, e.g. no invoice).
   const fetchArts = async (d, eff) => {
-    if (d._fromStore) return []; // projection from the store: deliver the record only, no document fetch
+    // A store projection delivers the record only — EXCEPT when its record persisted an absolute PDF url
+    // (urlField sources like CaixaBank), which can still be fetched (re-validated to the source domain).
+    if (d._fromStore && !(d.record && d.record.pdfUrl)) return [];
     const arts = [];
     const kinds = artifactKinds(eff).filter((k) => sinkAcceptsArtifact(sink, k));
     const avail = artifactKinds(eff, d);
