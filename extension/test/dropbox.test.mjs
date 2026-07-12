@@ -66,12 +66,17 @@ test('dropbox: Connect (PKCE) exchanges the auth code and stores the refresh tok
   globalThis.chrome.identity = {
     getRedirectURL: () => 'https://ext.chromiumapp.org/',
     launchWebAuthFlow: async ({ url }) => {
-      const p = new URL(url).searchParams; // the auth request carries PKCE + offline
+      const p = new URL(url).searchParams; // the auth request carries PKCE + offline + the bounce redirect
       assert.equal(p.get('code_challenge_method'), 'S256');
       assert.ok(p.get('code_challenge'));
       assert.equal(p.get('token_access_type'), 'offline');
       assert.equal(p.get('client_id'), 'APPKEY');
-      return 'https://ext.chromiumapp.org/?code=AUTHCODE';
+      assert.equal(p.get('redirect_uri'), 'https://habeas.dev/oauth/dropbox.html');
+      // simulate the static bounce: read `state.ret` and forward the code + state there (what the page does)
+      const state = p.get('state');
+      const ret = JSON.parse(atob(state.replace(/-/g, '+').replace(/_/g, '/'))).ret;
+      assert.equal(ret, 'https://ext.chromiumapp.org/');
+      return ret + '?code=AUTHCODE&state=' + encodeURIComponent(state);
     },
   };
   const calls = [];
@@ -85,6 +90,7 @@ test('dropbox: Connect (PKCE) exchanges the auth code and stores the refresh tok
   const ex = calls.find((c) => c.url.includes('/oauth2/token'));
   assert.ok(ex.body.includes('grant_type=authorization_code'));
   assert.ok(ex.body.includes('code=AUTHCODE') && ex.body.includes('code_verifier='), 'exchanged with PKCE verifier, no secret');
+  assert.ok(ex.body.includes('redirect_uri=https%3A%2F%2Fhabeas.dev%2Foauth%2Fdropbox.html'), 'token exchange uses the bounce redirect');
   assert.equal(await dropboxConnected(sink), true); // refresh token now stored → connected
   delete globalThis.fetch;
   delete globalThis.chrome.identity;

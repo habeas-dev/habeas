@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex">
+  <title>Habeas — Dropbox authorization</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; max-width: 480px; margin: 60px auto; padding: 0 20px; color: #1a1a1a; text-align: center; }
+    @media (prefers-color-scheme: dark) { body { background: #111; color: #eee; } }
+    .muted { opacity: .7; font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <h1>Connecting Dropbox…</h1>
+  <p class="muted" id="msg">Returning to Habeas.</p>
+  <script>
+    // Static OAuth "bounce" for the Habeas browser extension. Dropbox redirects here (a single, stable
+    // https redirect URI registered on the app) with the authorization ?code. Firefox/Chrome extension
+    // redirect URLs are per-install and can't be pre-registered, so the extension passes its own redirect
+    // URL in `state`; we forward the code there and launchWebAuthFlow picks it up. This page holds NO
+    // secret and never sees a token — the code is PKCE-bound (useless without the verifier in the
+    // extension). We only forward to a browser-extension redirect origin, so it can't be an open redirect.
+    (function () {
+      var q = new URLSearchParams(location.search);
+      var raw = q.get('state') || '';
+      var ret = '';
+      try {
+        var json = atob(raw.replace(/-/g, '+').replace(/_/g, '/'));
+        ret = (JSON.parse(json) || {}).ret || '';
+      } catch (e) { ret = ''; }
+      var OK = /^https:\/\/[a-z0-9-]+\.(chromiumapp\.org|extensions\.allizom\.org)\//i;
+      if (!ret || !OK.test(ret)) { document.getElementById('msg').textContent = 'Invalid or missing redirect target.'; return; }
+      var u = new URL(ret);
+      q.forEach(function (v, k) { u.searchParams.set(k, v); }); // forward code + state (+ error, if any)
+      location.replace(u.toString());
+    })();
+  </script>
+</body>
+</html>
