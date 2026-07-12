@@ -160,7 +160,7 @@ async function render() {
     finally { b.disabled = false; }
   });
 
-  const swSinks = cfg.sinks.filter((s) => s.type === 'drive' || s.type === 'http');
+  const swSinks = cfg.sinks.filter((s) => s.type === 'drive' || s.type === 'http' || s.type === 'webdav');
   const enabledDs = cfg.datasources.filter((d) => d.enabled);
   const routeOf = (d) => (cfg.routes || []).find((r) => r.datasource === d.id && r.mode === 'auto');
   const nameOf = (d) => (CATALOG[d.adapter] && CATALOG[d.adapter].name) || d.id;
@@ -212,6 +212,8 @@ function renderFields() {
   const type = $('#stype').value;
   if (type === 'http') {
     $('#sfields').innerHTML = `id:<input id="sid" size="8"> url:<input id="surl" size="22"> token:<input id="stok" size="10"> <label>${t('sink_accepts')}</label><input id="saccepts" size="14" placeholder="grocery,fuel">`;
+  } else if (type === 'webdav') {
+    $('#sfields').innerHTML = `id:<input id="sid" size="8"> <label>${t('webdav_url')}</label><input id="surl" size="24" placeholder="https://host/remote.php/dav/files/me/Habeas"> <label>${t('webdav_user')}</label><input id="swuser" size="10"> <label>${t('webdav_pass')}</label><input id="swpass" type="password" size="10">`;
   } else if (type === 'drive') {
     $('#sfields').innerHTML = `id:<input id="sid" size="8"> <label>${t('client_id_optional')}</label><input id="sclient" size="26">`
       + `<div style="flex-basis:100%;margin-top:6px"><small>${t('redirect_hint')}</small><br><code>${redirectUri()}</code></div>`;
@@ -230,6 +232,10 @@ async function addSink() {
     if ($('#stok').value.trim()) await setSecret(id, $('#stok').value.trim());
     const acc = (($('#saccepts') && $('#saccepts').value) || '').split(',').map((x) => x.trim()).filter(Boolean);
     if (acc.length) sink.accepts = { categories: acc };
+  } else if (type === 'webdav') {
+    sink.url = ($('#surl').value || '').trim();
+    sink.username = ($('#swuser').value || '').trim() || undefined;
+    if ($('#swpass').value) { sink.passwordRef = 'secret://' + id; await setSecret(id, $('#swpass').value); }
   } else if (type === 'drive') {
     sink.clientId = ($('#sclient').value || '').trim() || undefined;
     sink.rootFolderName = 'Habeas';

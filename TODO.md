@@ -9,6 +9,12 @@
   per-route debounce; one summary notification + activity-log entry.
 
 * Crear varios sink más: Dropbox, WebDAV y S3.
+  * [DONE v0.1.58.2] ~~WebDAV~~ — `sinks/sinks.js#webdav`: PUT each file (MKCOL parents) + a cumulative
+    per-source manifest, Basic auth (username inline, password in the encrypted secrets store as
+    `passwordRef`). Configurable in Settings (URL/user/password) and selectable for auto routes. Unit-tested
+    with a mocked WebDAV server. Needs a live smoke test against a real server (Nextcloud/Apache).
+  * [ ] Dropbox — OAuth (app + token), upload via `/2/files/upload`.
+  * [ ] S3 — bucket + SigV4 signing (or a pre-signed-URL / STS model); decide the credential story.
 
 * [DONE v0.1.53.5] ~~Caixabankconsumer: aparece "[object Object]" en el campo Tienda.~~ Fixed: nested
   `{name}` (invoice issuer / receipt store) now resolves to a display string, live + from store.

@@ -8,7 +8,7 @@ import { makeZip } from '../lib/zip.js';
 import { pathFor, buildManifest, toRecords, mergeRecords, jsonBlob, today } from './format.js';
 import { driveWrite, driveRead } from './drive.js';
 
-export function listSinkTypes() { return ['download', 'local-folder', 'drive', 'http']; }
+export function listSinkTypes() { return ['download', 'local-folder', 'drive', 'http', 'webdav']; }
 
 export async function writeToSink(sink, docs, files, opts = {}) {
   const impl = IMPL[sink.type];
@@ -77,7 +77,64 @@ const IMPL = {
     if (!res.ok) throw new Error('http sink ' + res.status);
     return await res.json().catch(() => ({ written: docs.length, total: docs.length }));
   },
+
+  // WebDAV (Nextcloud/ownCloud, Apache mod_dav, box.com/dav…): PUT each file under the base URL with
+  // Basic auth, MKCOL'ing parent collections, and keep a cumulative per-source manifest (read → merge →
+  // write) like the local-folder sink. Needs host permission for the server (like the http sink).
+  async webdav(sink, docs, files, opts = {}) {
+    const base = String(sink.url || '').replace(/\/+$/, '');
+    if (!base) throw new Error('webdav: no url');
+    const auth = await webdavAuthHeader(sink);
+    const service = opts.service || 'documents';
+    const made = new Set();
+    let n = 0;
+    for (const d of docs) {
+      for (const art of files.get(d.internalId) || []) {
+        const rel = pathFor(sink, d, opts, art.ext);
+        await webdavMkcols(base, rel, auth, made);
+        await webdavPut(base + '/' + encodePath(rel), art.blob, auth);
+        n++;
+      }
+    }
+    const mf = service + '/' + manifestName(opts);
+    await webdavMkcols(base, mf, auth, made);
+    const existing = await webdavGetJson(base + '/' + encodePath(mf), auth);
+    const merged = mergeRecords(existing, toRecords(docs, files));
+    await webdavPut(base + '/' + encodePath(mf), jsonBlob(JSON.stringify(merged, null, 2)), auth);
+    return { written: n, total: docs.length };
+  },
 };
+
+// --- WebDAV helpers ---------------------------------------------------------------------------------
+const encodePath = (p) => String(p).split('/').filter(Boolean).map(encodeURIComponent).join('/');
+async function webdavAuthHeader(sink) {
+  const pass = sink.passwordRef ? await getSecret(sink.passwordRef) : '';
+  const user = sink.username || '';
+  if (!user && !pass) return null; // an open/pre-authenticated endpoint
+  return 'Basic ' + btoa(unescape(encodeURIComponent(user + ':' + (pass || ''))));
+}
+async function webdavPut(url, blob, auth) {
+  const r = await fetch(url, { method: 'PUT', headers: { ...(auth ? { Authorization: auth } : {}), 'Content-Type': blob.type || 'application/octet-stream' }, body: blob });
+  if (!r.ok && r.status !== 204) throw new Error('webdav put ' + r.status);
+}
+async function webdavGetJson(url, auth) {
+  try {
+    const r = await fetch(url, { headers: { ...(auth ? { Authorization: auth } : {}), Accept: 'application/json' } });
+    if (!r.ok) return []; // 404 → no manifest yet
+    return await r.json().catch(() => []);
+  } catch (e) { return []; }
+}
+// MKCOL each parent collection of `rel` (best-effort — a 405/301 means it already exists).
+async function webdavMkcols(base, rel, auth, made) {
+  const parts = rel.split('/').filter(Boolean).slice(0, -1); // drop the filename
+  let path = '';
+  for (const seg of parts) {
+    path += (path ? '/' : '') + seg;
+    if (made.has(path)) continue;
+    made.add(path);
+    try { await fetch(base + '/' + encodePath(path), { method: 'MKCOL', headers: auth ? { Authorization: auth } : {} }); } catch (e) { /* already exists / best-effort */ }
+  }
+}
 
 function triggerDownload(blob, name) {
   const url = URL.createObjectURL(blob);
