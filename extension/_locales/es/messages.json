@@ -128,6 +128,7 @@
 
   "st_ok": { "message": "$N$ doc(s) → $SINK$", "placeholders": { "n": { "content": "$1" }, "sink": { "content": "$2" } } },
   "st_none": { "message": "sin novedades" },
+  "st_listing": { "message": "sincronizando…" },
   "st_nosession": { "message": "sin sesión" },
   "st_challenged": { "message": "verificación anti-bot — abre el sitio y resuélvela, luego reintenta" },
   "st_error": { "message": "error: $MSG$", "placeholders": { "msg": { "content": "$1" } } },

@@ -239,6 +239,7 @@ async function sweepAllSources() {
       if (!swRunnable(sink)) { noSink++; continue; }
       sources++;
       setStatus(t('status_listing', [adapter.name || ds.adapter]));
+      await appendLog({ kind: 'sweep', datasource: ds.id, status: 'listing' }); // incremental: "syncing X…" in the log
       let res = await runRoute(ds, adapter, sink, { kind: 'sweep' }); // 1) unattended
       if (needsTabEscalation(res)) {                                   // 2) escalate to a tab, retry in-session
         const net = await ensureSiteFetch(adapter, { open: true }).catch(() => null);

@@ -581,6 +581,7 @@ async function renderActivity() {
       : e.status === 'none' ? t('st_none')
       : e.status === 'nosession' ? t('st_nosession')
       : e.status === 'challenged' ? t('st_challenged')
+      : e.status === 'listing' ? t('st_listing')
       : t('st_ok', [String(n ?? ''), e.sink || '']);
     return `<div class="activity-item"><span class="when">${esc(when)}</span><span class="kind">${esc(e.kind || '')}</span><span>${esc(e.datasource || '')} · ${esc(detail)}</span></div>`;
   }).join('') || `<p class="muted">${t('no_activity')}</p>`;
