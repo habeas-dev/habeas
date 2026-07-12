@@ -61,6 +61,9 @@ jobs:
 
       - name: Upload to Chrome Web Store (publish)
         if: (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch') && env.HAS_CWS == 'true'
+        # Best-effort: a store hiccup (e.g. ITEM_NOT_UPDATABLE while a prior version is still in review)
+        # must NOT fail the release or skip the sibling AMO step — the GitHub Release + zip already shipped.
+        continue-on-error: true
         uses: mnao305/chrome-extension-upload@v5.0.0
         with:
           file-path: ${{ steps.zip.outputs.path }}
@@ -75,6 +78,9 @@ jobs:
       # Self-skips until the AMO_* secrets are set. The same MV3 zip source-dir loads in Firefox too.
       - name: Submit to Firefox Add-ons (AMO)
         if: (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch') && env.HAS_AMO == 'true'
+        # Best-effort, and independent of the CWS step above (continue-on-error) so each store publishes
+        # on its own. Fails visibly (annotation) if the AMO_JWT_* credentials are wrong ("Unknown JWT iss").
+        continue-on-error: true
         run: npx --yes web-ext sign --source-dir extension --channel listed --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET"
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
