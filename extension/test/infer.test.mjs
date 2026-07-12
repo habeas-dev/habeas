@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { draftAdapterFromSamples, draftStreamsFromSamples, listCandidates, matchCandidates } from '../src/runtime/infer.js';
+import { draftAdapterFromSamples, draftStreamsFromSamples, draftWithGroups, listCandidates, matchCandidates } from '../src/runtime/infer.js';
 import { validateAdapter } from '../src/adapters/validate.js';
 
 const carrefourSamples = [
@@ -238,6 +238,40 @@ test('does not treat an arbitrary 4-digit id as a year pager', () => {
     json: { items: [{ orderId: 'O1', createdAt: '2026-01-01', totalEur: 9 }] } }];
   const r = draftAdapterFromSamples(s, { domain: 'shop.es', pageHost: 'www.shop.es' });
   assert.notEqual(r.draft.api.list.paging, 'years');
+});
+
+// Groups (multi-account): the user marks a captured list as their accounts/cards; the doc list is
+// fetched per account. Build api.groups from that list and template the doc list with {group.id}.
+test('drafts api.groups from an accounts list and templates the doc list with {group.id}', () => {
+  const acct = '00811234';
+  const samples = [
+    { url: 'https://www.bank.es/api/accounts', method: 'GET', status: 200, reqHeaders: { authorization: 'eyJ' },
+      json: { accounts: [{ accountId: acct, alias: 'Nómina', iban: 'ES9121000418450200051332' }] } },
+    { url: `https://www.bank.es/api/accounts/${acct}/movements`, method: 'GET', status: 200, reqHeaders: { authorization: 'eyJ' },
+      json: { movements: [{ id: 'M1', date: '2026-01-01', amount: 3 }] } },
+  ];
+  const cands = listCandidates(samples);
+  const listKey = cands.find((c) => c.url.includes('movements')).key;
+  const groupsKey = cands.find((c) => c.url.endsWith('/api/accounts')).key;
+  const r = draftWithGroups(samples, { domain: 'bank.es', pageHost: 'www.bank.es' }, listKey, groupsKey);
+  assert.ok(r.ok);
+  assert.ok(r.draft.api.groups, 'has api.groups');
+  assert.equal(r.draft.api.groups.itemsPath, 'accounts');
+  assert.equal(r.draft.api.groups.fields.id, 'accountId');
+  assert.equal(r.draft.api.groups.fields.name, 'alias');
+  assert.ok((r.draft.api.groups.mask || []).length, 'the IBAN-like field is masked');
+  assert.ok(r.draft.api.list.path.includes('{group.id}'), 'doc list templated with {group.id}');
+  assert.ok(!r.draft.api.list.path.includes(acct), 'the frozen account id is gone');
+  assert.ok(validateAdapter(r.draft).ok);
+});
+
+// Without a groups selection it stays a normal single-list draft.
+test('draftWithGroups without a groups key is a plain draft', () => {
+  const s = [{ url: 'https://api.x.es/orders', method: 'GET', status: 200, reqHeaders: { authorization: 'eyJ' },
+    json: { items: [{ orderId: 'O1', createdAt: '2026-01-01', totalEur: 9 }] } }];
+  const r = draftWithGroups(s, { domain: 'x.es', pageHost: 'www.x.es' }, null, null);
+  assert.ok(r.ok);
+  assert.ok(!r.draft.api.groups);
 });
 
 // TDD: page pagination is inferred when the request carries a `page` query param and the response

@@ -1,7 +1,7 @@
 import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen, getAssets, getDomTexts } from '../lib/learn.js';
-import { draftAdapterFromSamples, draftStreamsFromSamples, listCandidates, matchCandidates } from '../runtime/infer.js';
+import { draftAdapterFromSamples, draftStreamsFromSamples, draftWithGroups, listCandidates, matchCandidates } from '../runtime/infer.js';
 import { listInventory, artifactKinds, fetchArtifact } from '../runtime/inventory.js';
 import { ensureSiteFetch } from '../lib/pagefetch.js';
 import { editJson } from './jsoneditor.js';
@@ -20,6 +20,8 @@ let TEST_COUNT = 0;       // documents listed in the last Test (for the status l
 let ASSETS = [];          // captured document (PDF) requests
 let DOMTEXTS = [];        // rendered page texts (public vs internal id)
 let CANDS = [];           // candidate document lists across the samples
+let CHOSEN = null;        // the candidate currently drafted as the document list
+let GROUPS_KEY = '';      // a candidate marked as the accounts/cards list (multi-account) — '' = none
 let DRAFT = null;         // the inferred adapter draft (form edits are merged onto this)
 
 // Normalized fields offered per target schema.
@@ -108,6 +110,13 @@ async function onAnalyze() {
   const msGroup = Object.values(groups).find((g) => g.length >= 2);
   $('#multistream').hidden = !msGroup;
   if (msGroup) $('#multistream').onclick = () => onMultiStream(msGroup);
+  // Multi-account: let the user mark one captured list as their accounts/cards → the doc list is then
+  // fetched per account (api.groups). Only useful with ≥2 lists; '' = none (a flat, single listing).
+  GROUPS_KEY = '';
+  $('#groupspickrow').hidden = CANDS.length <= 1;
+  $('#f_groups').innerHTML = `<option value="">${t('author_groups_none')}</option>`
+    + CANDS.map((c) => `<option value="${esc(c.key)}">${esc(c.path)} · ${esc(c.host)}</option>`).join('');
+  $('#f_groups').onchange = () => { GROUPS_KEY = $('#f_groups').value; if (CHOSEN) drawDraft(CHOSEN); };
   drawDraft(CANDS[0]);
 }
 
@@ -139,7 +148,11 @@ function onFind() {
 }
 
 function drawDraft(chosen) {
-  const r = draftAdapterFromSamples(SAMPLES, { domain: LEARN.domain, pageHost: hostFromOrigin(LEARN.origin), assets: ASSETS, domTexts: DOMTEXTS }, { key: chosen.key });
+  CHOSEN = chosen;
+  const ctx = { domain: LEARN.domain, pageHost: hostFromOrigin(LEARN.origin), assets: ASSETS, domTexts: DOMTEXTS };
+  const r = (GROUPS_KEY && GROUPS_KEY !== chosen.key)
+    ? draftWithGroups(SAMPLES, ctx, chosen.key, GROUPS_KEY)
+    : draftAdapterFromSamples(SAMPLES, ctx, { key: chosen.key });
   if (!r.ok) { $('#status').textContent = t('author_no_list'); return; }
   DRAFT = r.draft;
   candidates = r.fieldCandidates; // [{ path, value }]

@@ -303,6 +303,8 @@
   "author_find_multi": { "message": "Found in $N$ lists — pick the right one below.", "placeholders": { "n": { "content": "$1" } } },
   "author_which_list": { "message": "Which list is your data?" },
   "author_multistream": { "message": "Author all lists as one multi-stream source…" },
+  "author_groups_label": { "message": "Accounts / cards list (optional)" },
+  "author_groups_none": { "message": "— none (single listing) —" },
   "author_items": { "message": "items" },
   "author_pages": { "message": "page(s)" },
   "author_list_hint": { "message": "Totals across the pages you browsed (items · pages captured). When you use the source it paginates to fetch them all — you pick the right list here, not pages." },

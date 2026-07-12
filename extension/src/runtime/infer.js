@@ -847,3 +847,51 @@ export function draftStreamsFromSamples(samples, ctx = {}, chosenKeys = null) {
   if (base.api.csrf) draft.api.csrf = base.api.csrf; // a shared prelude lives at the base
   return { ok: true, draft, streams, host: hostOfCand(all[0]), count: picks.reduce((n, c) => n + c.len, 0) };
 }
+
+// Multi-account (groups) drafting: the user marks a captured list as their ACCOUNTS/CARDS (groupsKey);
+// the document list (listKey) is then fetched once PER account. Build api.groups from the accounts list
+// — its id field is the one whose value appears in the doc-list request — plus a display name and a
+// masked sensitive field (IBAN/card) when present, and template the doc list's path/params/body with
+// {group.id}. Returns a plain single-list draft when no accounts list is chosen.
+export function draftWithGroups(samples, ctx = {}, listKey = null, groupsKey = null) {
+  const base = draftAdapterFromSamples(samples, ctx, listKey ? { key: listKey } : null);
+  if (!base.ok || !groupsKey) return base;
+  const cands = [...collect(samples), ...collectHtml(samples)].sort((a, b) => b.len - a.len);
+  const g = cands.find((c) => c.key === groupsKey);
+  const listCand = cands.find((c) => c.key === listKey) || cands.find((c) => c.key !== groupsKey);
+  if (!g || !listCand || g.key === listCand.key) return base;
+
+  let lu; try { lu = new URL(listCand.s.url); } catch (e) { return base; }
+  const listStr = lu.pathname + lu.search + '|' + (listCand.s.reqBody || '');
+  const acct = g.items && g.items[0];
+  if (!acct) return base;
+
+  // The account id = the field whose value the doc-list request carries (path/query/body).
+  let idField = null, idVal = null;
+  for (const f of flattenKeys(acct, '', 4)) {
+    if (f.value == null || String(f.value).length < 3) continue;
+    if (listStr.includes(String(f.value))) { idField = f.path; idVal = String(f.value); break; }
+  }
+  if (!idField) return base;
+
+  const flat = flattenKeys(acct, '', 4);
+  const fields = { id: idField };
+  const nameF = flat.find((f) => /alias|name|nombre|descrip|titular|holder/i.test(f.path.split('.').pop()) && f.path !== idField);
+  if (nameF) fields.name = nameF.path;
+  const mask = [];
+  const sensF = flat.find((f) => /iban|cardnumber|card|pan|accountnumber|numerocuenta/i.test(f.path.split('.').pop()) && !Object.values(fields).includes(f.path));
+  if (sensF) { fields.number = sensF.path; mask.push('number'); }
+
+  let gu; try { gu = new URL(g.s.url); } catch (e) { gu = lu; }
+  const groups = { path: gu.pathname, itemsPath: g.itemsPath || 'items', fields };
+  if (gu.host !== lu.host) groups.host = gu.protocol + '//' + gu.host;
+  if ((g.s.method || 'GET').toUpperCase() !== 'GET') groups.method = (g.s.method || 'GET').toUpperCase();
+  if (mask.length) groups.mask = mask;
+
+  base.draft.api.groups = groups;
+  const tok = '{group.id}';
+  base.draft.api.list.path = base.draft.api.list.path.split(idVal).join(tok);
+  if (base.draft.api.list.params) for (const k of Object.keys(base.draft.api.list.params)) base.draft.api.list.params[k] = String(base.draft.api.list.params[k]).split(idVal).join(tok);
+  if (base.draft.api.list.body) base.draft.api.list.body = base.draft.api.list.body.split(idVal).join(tok);
+  return base;
+}
