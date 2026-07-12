@@ -44,7 +44,9 @@ test('legacy plaintext is returned and migrated to an envelope in place', async 
   reset();
   LOCAL['habeas:secrets'] = { 'http-1': 'plain-legacy-token' };
   assert.equal(await getSecret('http-1'), 'plain-legacy-token');
-  await new Promise((r) => setTimeout(r, 20)); // let the best-effort re-encrypt settle
+  // The in-place re-encrypt is best-effort (fire-and-forget) — poll for it to settle rather than
+  // race a fixed sleep, which flakes under load when AES-GCM + the IndexedDB key take >20ms.
+  for (let i = 0; i < 200 && LOCAL['habeas:secrets']['http-1'].v !== 1; i++) await new Promise((r) => setTimeout(r, 5));
   assert.equal(LOCAL['habeas:secrets']['http-1'].v, 1, 'now an encrypted envelope');
   assert.equal(await getSecret('http-1'), 'plain-legacy-token', 'still decodes to the same value');
 });
