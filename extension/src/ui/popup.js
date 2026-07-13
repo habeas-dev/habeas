@@ -662,8 +662,12 @@ async function renderDocuments() {
   }
   rows.sort((a, b) => ((a.record.date || '') < (b.record.date || '') ? 1 : -1)); // newest first
   docsRows = rows;
+  // One source at a time — the documents view must NEVER show items from different sources mixed together.
+  // The source selector is mandatory (no "all"); default to the first, preserving a still-valid selection.
   const srcs = [...new Set(rows.map((r) => r.base))].sort();
-  $('#docs-source').innerHTML = `<option value="">${esc(t('all_sources'))}</option>` + srcs.map((s) => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  const prev = $('#docs-source').value;
+  $('#docs-source').innerHTML = srcs.length ? srcs.map((s) => `<option value="${esc(s)}">${esc(s)}</option>`).join('') : `<option value="">—</option>`;
+  if (srcs.includes(prev)) $('#docs-source').value = prev;
   renderDocsTable();
 }
 
@@ -672,7 +676,7 @@ function renderDocsTable() {
   const q = ($('#docs-search').value || '').trim().toLowerCase();
   const srcFilter = $('#docs-source').value;
   const rows = docsRows.filter((r) => {
-    if (srcFilter && r.base !== srcFilter) return false;
+    if (r.base !== srcFilter) return false; // exactly one source — never mix
     if (!q) return true;
     return [r.base, r.internalId, r.record.date, docStore(r.record), r.record.type].join(' ').toLowerCase().includes(q);
   });
