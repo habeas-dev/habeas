@@ -292,7 +292,12 @@ async function runRoute(ds, adapter, sink, opts = {}) {
   setStatus(t('status_listing', [name]));
   try {
     const auth = await authFor(adapter);
-    if (!auth) { await appendLog({ ...base, status: 'nosession' }); await badgeClear(); setStatus(t('status_nosession', [name])); return { status: 'nosession' }; }
+    // NOT ready if there's no session, OR a required captured context value is still missing — the SPA
+    // captures a JWT on the login page BEFORE the user finishes authenticating (so e.g. the DNI needed for
+    // {ctx.dni} isn't there yet). Running now would send an empty/wrong value (CaixaBank: groups 401 "Nif
+    // incorrecto"). Treat it as no-session → the sweep opens the login page; retries once fully logged in.
+    const ctxMissing = ((adapter.auth && adapter.auth.context) || []).some((c) => !(auth && auth.ctx && auth.ctx[c.name] != null && auth.ctx[c.name] !== ''));
+    if (!auth || ctxMissing) { await appendLog({ ...base, status: 'nosession' }); await badgeClear(); setStatus(t('status_nosession', [name])); return { status: 'nosession' }; }
     const net = opts.net || await resolveSiteFetch(adapter); // fetch from the user's tab → inherits the session
     const delivered = await deliveredSet(ds.id, sink.id);
     // A source may expose several outputs (streams×formats). Auto-mode delivers the outputs THIS sink accepts
