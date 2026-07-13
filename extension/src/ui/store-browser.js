@@ -88,28 +88,30 @@ async function render() {
   // The store key is "<sourceId>:<stream>"; the delivery ledger is keyed by the DATASOURCE id (before ":").
   const delivered = sinkId ? await deliveredSet(sourceId.split(':')[0], sinkId) : null;
 
-  const items = Object.values(src.items);
+  // The canonical store keys items by internalId — the id lives ONLY as the map KEY (cleanEntry drops it
+  // from the value), so read it from the key, not e.internalId.
+  const items = Object.entries(src.items);
   let live = 0, gone = 0, withDoc = 0, deliveredN = 0, pending = 0;
-  const rows = items.map((e) => {
+  const rows = items.map(([id, e]) => {
     const r = e.record || {};
     const isGone = !!e.gone;
-    const isDelivered = delivered ? !!delivered[String(e.internalId)] : null;
+    const isDelivered = delivered ? !!delivered[id] : null;
     if (isGone) gone++; else live++;
     if (e.docAvailable) withDoc++;
     if (delivered && !isGone) (isDelivered ? deliveredN++ : pending++);
-    return { e, r, isGone, isDelivered };
+    return { id, e, r, isGone, isDelivered };
   }).sort((a, b) => ((a.r.date || '') < (b.r.date || '') ? 1 : -1)); // newest first for display
 
   $('#summary').textContent = `${items.length} items · ${live} vivos · ${gone} tombstones · ${withDoc} con documento`
     + (delivered ? ` · ${deliveredN} entregados · ${pending} pendientes → ${sinkId}` : '');
 
-  $('#tbody').innerHTML = rows.map(({ e, r, isGone, isDelivered }) => {
+  $('#tbody').innerHTML = rows.map(({ id, e, r, isGone, isDelivered }) => {
     const status = isGone ? `<span class="pill gone">gone${e.goneReason ? ' · ' + esc(e.goneReason) : ''}</span>`
       : delivered ? (isDelivered ? '<span class="pill ok">entregado</span>' : '<span class="pill pend">pendiente</span>')
       : '<span class="pill">—</span>';
     return `<tr>
-      <td><input type="checkbox" class="sel" data-id="${esc(String(e.internalId))}"></td>
-      <td class="idcell">${esc(String(e.internalId))}</td>
+      <td><input type="checkbox" class="sel" data-id="${esc(id)}"></td>
+      <td class="idcell">${esc(id)}</td>
       <td>${esc((r.date || '').slice(0, 10))}</td>
       <td>${esc(storeName(r))}${r.group ? ' <span class="muted">· ' + esc(r.group) + '</span>' : ''}</td>
       <td class="r">${esc(money(r.total ?? r.amount, r.currency))}</td>
