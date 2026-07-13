@@ -6,13 +6,13 @@ import { chrome } from './lib/ext.js';
 import { getConfig } from './lib/config.js';
 import { registerCapture } from './lib/capture.js';
 import { loadAuth, hasAuth } from './lib/authstore.js';
-import { deliveredSet, markDelivered, appendLog } from './lib/state.js';
+import { deliveredSet, markDelivered, appendLog, rememberDocMeta } from './lib/state.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
 import { resolveSiteFetch, ensureSiteFetch, recoverSession } from './lib/pagefetch.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
 import { recordDelivered } from './lib/store.js';
-import { acceptsDoc, sinkAcceptsArtifact, sinkAcceptsSource } from './sinks/format.js';
+import { acceptsDoc, sinkAcceptsArtifact, sinkAcceptsSource, bakeLearned } from './sinks/format.js';
 import { outputsForSink, resolveOutput, storeKeyOf } from './lib/outputs.js';
 import { getAdapters } from './adapters/index.js';
 import { hasConsent } from './lib/consent.js';
@@ -337,7 +337,9 @@ async function runRoute(ds, adapter, sink, opts = {}) {
       setStatus(t('status_sending', [String(eligible.length), sink.id]));
       await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, source: sk, ext: documentExt(eff) || 'pdf', interactive: !!opts.interactive });
       await markDelivered(ds.id, sink.id, eligible.map((d) => d.internalId));
+      for (const d of eligible) d.record = bakeLearned(d); // persist the real date/amount learned from the detail
       try { await recordDelivered(sk, eligible, { source: adapter.id, schema: eff.schema }); } catch (e) { /* store is best-effort */ } // write-through to the canonical store
+      try { await rememberDocMeta(adapter.id, eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, returnStatus: d.returnStatus || undefined }))); } catch (e) { /* best-effort */ }
       totalNew += eligible.length;
     }
     if (!totalNew) { await appendLog({ ...base, status: 'none', new: 0 }); await badgeClear(); setStatus(t('status_none', [name])); return { status: 'done', new: 0 }; }

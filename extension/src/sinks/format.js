@@ -26,13 +26,28 @@ export function toRecord(d) {
   return d.record || buildRecord(d, null);
 }
 
+// Bake the REAL values learned by fetching a document's DETAIL at download time (date/amount/return status)
+// into its normalized record, so the CANONICAL STORE carries the truth — not the list-time placeholder. Some
+// sources (Amazon) only expose the year in their listing; the true date + total come from the order detail,
+// which is fetched at delivery. Called at write-through so the store, and every consumer of it, sees reality.
+export function bakeLearned(d) {
+  const r = { ...(d.record || {}) };
+  if (/^\d{4}-\d{2}-\d{2}/.test(d.date || '')) r.date = d.date;
+  if (typeof d.total === 'number') r.total = d.total;
+  if (d.returnStatus) r.returnStatus = d.returnStatus;
+  return r;
+}
+
 // Schema-aware normalized record. `receipt@1` is byte-identical to the historical shape so
 // existing manifests do not change. New schemas (invoice/transaction/investment) shape the
 // same mapped doc differently. Currency defaults to EUR unless the adapter overrides it.
 export function buildRecord(d, adapter) {
   const schema = (adapter && adapter.schema) || 'receipt@1';
   const kind = String(schema).split('@')[0];
-  const currency = (adapter && adapter.currency) || 'EUR';
+  // Prefer a per-document currency the source actually mapped/extracted (fields.currency, or a detail
+  // const), then the adapter-wide default, then EUR. Never force EUR onto a source that bills in another
+  // currency (e.g. Hover → USD).
+  const currency = d.currency || (adapter && adapter.currency) || 'EUR';
   // `number` = the public receipt/invoice number the user sees (distinct from the internal
   // internalId). Added only when mapped, so receipt@1 stays byte-identical when absent.
   const withNumber = (r) => (d.number != null ? { ...r, number: d.number } : r);

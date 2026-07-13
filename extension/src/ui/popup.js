@@ -5,7 +5,7 @@ import { ensureSiteFetch, recoverSession, siteBaseUrl } from '../lib/pagefetch.j
 import { pickGroup } from './grouppicker.js';
 import { renderPage, challengeUrlOf } from '../lib/render.js';
 import { writeToSink } from '../sinks/sinks.js';
-import { sinkAcceptsSource, acceptsDoc, sinkAcceptsArtifact, groupLabelOf } from '../sinks/format.js';
+import { sinkAcceptsSource, acceptsDoc, sinkAcceptsArtifact, groupLabelOf, bakeLearned } from '../sinks/format.js';
 import { deliveredSet, markDelivered, getLog, appendLog, getDocMeta, rememberDocMeta } from '../lib/state.js';
 import { badgeWorking, badgeClear } from '../lib/badge.js';
 import { getHandle, verifyPermission } from '../lib/fs.js';
@@ -15,7 +15,7 @@ import { getAdapters } from '../adapters/index.js';
 import { hasConsent } from '../lib/consent.js';
 import { loadAuth } from '../lib/authstore.js';
 import { recordDelivered, getRecords, countLive, putItems, listSources, getSource } from '../lib/store.js';
-import { retrieveDelivered, isRetrievable } from '../lib/retrieve.js';
+import { isRetrievable } from '../lib/retrieve.js';
 import { outputsOf, resolveOutput, storeKeyOf } from '../lib/outputs.js';
 import { esc } from '../lib/esc.js';
 import { inventoryView, distinctBy } from '../lib/inventoryview.js';
@@ -554,7 +554,7 @@ async function onSend() {
     // Items live per STREAM store key (formats share items) → group and record under each stream's key.
     try {
       const byStore = new Map();
-      for (const d of eligible) { const sk = d._storeKey || adapter.id; (byStore.get(sk) || byStore.set(sk, []).get(sk)).push(d); }
+      for (const d of eligible) { const sk = d._storeKey || adapter.id; d.record = bakeLearned(d); (byStore.get(sk) || byStore.set(sk, []).get(sk)).push(d); }
       for (const [sk, docs] of byStore) await recordDelivered(sk, docs, { source: adapter.id, schema: outFor(docs[0], '').schema });
     } catch (e) { /* store is best-effort */ }
     // Does this delivery involve documents at all? A transactions/records-only stream has none BY DESIGN —
@@ -679,7 +679,7 @@ function renderDocsTable() {
   docsFiltered = rows;
   $('#docs-status').textContent = t('n_documents', [String(rows.length)]);
   $('#docs-tbody').innerHTML = rows.map((r, i) => {
-    const money = r.record.total != null ? esc(`${r.record.total} ${r.record.currency || 'EUR'}`) : '';
+    const money = r.record.total != null ? esc(`${r.record.total}${r.record.currency ? ' ' + r.record.currency : ''}`) : '';
     const badges = r.delivered.length
       ? r.delivered.map((s) => `<span class="badge-sink" data-row="${i}" data-sink="${esc(s.id)}" title="${esc(t('view_from', [sinkLabel(s)]))}">${esc(sinkLabel(s))}</span>`).join('')
       : '<span class="muted">—</span>';
@@ -694,7 +694,7 @@ function renderDocsTable() {
     </tr>`;
   }).join('') || `<tr><td colspan="7" class="muted">${esc(t('no_documents'))}</td></tr>`;
   $('#docs-tbody').querySelectorAll('.doc-view').forEach((b) => { b.onclick = () => openDocModal(docsFiltered[+b.dataset.row]); });
-  $('#docs-tbody').querySelectorAll('.badge-sink').forEach((b) => { b.onclick = () => openDocModal(docsFiltered[+b.dataset.row], b.dataset.sink); });
+  $('#docs-tbody').querySelectorAll('.badge-sink').forEach((b) => { b.onclick = () => { const r = docsFiltered[+b.dataset.row]; openDeliveredFile(r, r.delivered.find((s) => s.id === b.dataset.sink)); }; });
 }
 
 // Generic schematic viewer for a JSON object (record or a retrieved JSON file). Recursive key→value table;
@@ -718,45 +718,27 @@ function closeDocModal() {
   $('#doc-modal-actions').innerHTML = '';
 }
 
-async function openDocModal(row, preferSinkId) {
+function openDocModal(row) {
   if (!row) return;
   $('#doc-modal-title').textContent = `${row.base} · ${(row.record.date || '').slice(0, 10)}`;
   const body = $('#doc-modal-body'); body.innerHTML = ''; body.appendChild(renderKv(row.record));
   const actions = $('#doc-modal-actions'); actions.innerHTML = '';
+  // One "Open from <sink>" per retrievable delivery → opens the real file in a new full-size tab.
   for (const sink of row.delivered) {
     const btn = document.createElement('button');
     btn.textContent = t('open_from', [sinkLabel(sink)]);
-    btn.onclick = () => openDeliveredFile(row, sink, btn);
+    btn.onclick = () => openDeliveredFile(row, sink);
     actions.appendChild(btn);
   }
   $('#doc-modal').hidden = false;
-  if (preferSinkId) { const s = row.delivered.find((x) => x.id === preferSinkId); if (s) openDeliveredFile(row, s); }
 }
 
-async function openDeliveredFile(row, sink, btn) {
-  const body = $('#doc-modal-body');
-  const prev = btn && btn.textContent; if (btn) { btn.disabled = true; btn.textContent = t('opening'); }
-  try {
-    const res = await retrieveDelivered(sink, row.adapter, row.record);
-    if (!res) { note(body, t('retrieve_failed')); return; }
-    const type = (res.blob.type || '').toLowerCase();
-    if (res.ext === 'json' || type.includes('json')) {
-      const txt = await res.blob.text(); let obj = null; try { obj = JSON.parse(txt); } catch (e) {}
-      body.innerHTML = ''; if (obj) body.appendChild(renderKv(obj)); else { const pre = document.createElement('pre'); pre.textContent = txt; body.appendChild(pre); }
-    } else if (res.ext === 'pdf' || res.ext === 'html' || type.includes('pdf') || type.includes('html') || type.startsWith('image/')) {
-      const url = URL.createObjectURL(res.blob);
-      body.innerHTML = ''; const f = document.createElement('iframe'); f.className = 'doc-frame'; f.src = url; body.appendChild(f);
-    } else {
-      const url = URL.createObjectURL(res.blob);
-      body.innerHTML = ''; const a = document.createElement('a'); a.href = url; a.download = `${row.internalId}.${res.ext || 'bin'}`; a.textContent = t('download'); a.className = 'badge-sink'; body.appendChild(a);
-    }
-  } catch (e) { note(body, (e && e.message) || String(e)); }
-  finally { if (btn) { btn.disabled = false; btn.textContent = prev; } }
-}
-
-function note(body, msg) {
-  const p = document.createElement('p'); p.className = 'muted'; p.textContent = msg;
-  body.insertBefore(p, body.firstChild);
+// Open the actual delivered document in a NEW TAB (docview.html re-fetches it there, so the blob URL isn't
+// tied to — and revoked by — the popup). PDFs/HTML/images render full-size via the browser's own viewer.
+function openDeliveredFile(row, sink) {
+  if (!row || !sink) return;
+  const url = chrome.runtime.getURL(`src/ui/docview.html?sink=${encodeURIComponent(sink.id)}&src=${encodeURIComponent(row.base)}&id=${encodeURIComponent(row.internalId)}`);
+  chrome.tabs.create({ url });
 }
 
 init();
