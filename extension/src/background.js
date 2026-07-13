@@ -8,7 +8,7 @@ import { registerCapture } from './lib/capture.js';
 import { loadAuth, hasAuth } from './lib/authstore.js';
 import { deliveredSet, markDelivered, appendLog } from './lib/state.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
-import { resolveSiteFetch, ensureSiteFetch } from './lib/pagefetch.js';
+import { resolveSiteFetch, ensureSiteFetch, recoverSession } from './lib/pagefetch.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
 import { recordDelivered } from './lib/store.js';
@@ -241,7 +241,13 @@ async function sweepAllSources() {
       setStatus(t('status_listing', [adapter.name || ds.adapter]));
       await appendLog({ kind: 'sweep', datasource: ds.id, status: 'listing' }); // incremental: "syncing X…" in the log
       let res = await runRoute(ds, adapter, sink, { kind: 'sweep' }); // 1) unattended
-      if (needsTabEscalation(res)) {                                   // 2) escalate to a tab, retry in-session
+      if (res.status === 'nosession') {
+        // No captured session → open/navigate the login page (foregrounded) so the user CAN authenticate.
+        // A bearer source's session only exists after login, so there's nothing to retry in-place now —
+        // the user logs in and re-runs (or auto-sync resumes on capture for a source with an auto route).
+        try { await recoverSession(adapter); } catch (e) {}
+      } else if (needsTabEscalation(res)) {
+        // Session may be live but there's no tab (anti-bot/CSRF) → open the site tab and retry in-session.
         const net = await ensureSiteFetch(adapter, { open: true }).catch(() => null);
         if (net) res = await runRoute(ds, adapter, sink, { kind: 'sweep', net, interactive: true });
       }
