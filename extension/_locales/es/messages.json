@@ -14,6 +14,7 @@
   "outputs_label": { "message": "Obtener:" },
   "n_listed": { "message": "$T$ documentos · $N$ recuperados", "placeholders": { "t": { "content": "$1" }, "n": { "content": "$2" } } },
   "full_history": { "message": "Todo el historial" },
+  "full_history_hint": { "message": "Vuelve a listar todo en fresco desde el sitio para poder re-descargar los documentos seleccionados (las filas cargadas del almacén local son solo registro y NO se re-descargan). Requiere tener la sesión iniciada en el sitio." },
   "n_from_store": { "message": "$N$ del almacén (sin extraer)", "placeholders": { "n": { "content": "$1" } } },
   "send_to": { "message": "Enviar a" },
   "send_selected": { "message": "Enviar seleccionados" },

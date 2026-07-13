@@ -14,6 +14,7 @@
   "outputs_label": { "message": "Get:" },
   "n_listed": { "message": "$T$ documents · $N$ retrieved", "placeholders": { "t": { "content": "$1" }, "n": { "content": "$2" } } },
   "full_history": { "message": "Full history" },
+  "full_history_hint": { "message": "Re-list everything fresh from the site so the selected documents can be re-downloaded (rows loaded from the local store are record-only and are NOT re-fetched). Requires being logged in to the site." },
   "n_from_store": { "message": "$N$ from store (no extraction)", "placeholders": { "n": { "content": "$1" } } },
   "send_to": { "message": "Send to" },
   "send_selected": { "message": "Send selected" },
