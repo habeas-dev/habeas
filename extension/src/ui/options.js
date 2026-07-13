@@ -378,6 +378,7 @@ $('#auto-search').oninput = filterRoutes;
 $('#store-backend').onchange = renderStoreFields;
 $('#store-move').onclick = moveStore;
 $('#store-import').onclick = importFromSink;
+$('#store-browse').onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/store-browser.html') });
 renderStore();
 $('#paste').onclick = async () => {
   const adapter = await editJson(PASTE_TEMPLATE);

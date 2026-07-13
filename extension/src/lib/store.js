@@ -50,7 +50,26 @@ export async function markGone(sourceId, ids, reason) {
   await putItems(sourceId, (ids || []).map((id) => ({ internalId: id, gone: true, goneReason: reason || 'rescan' })));
 }
 
+export async function listSources() { try { return await (await backendFor()).listSources(); } catch (e) { return []; } }
 export async function getSource(sourceId) { return (await (await backendFor()).loadSource(sourceId)) || null; }
+
+// Delete specific items from a source's store (debug/repair). Returns how many were removed.
+export async function deleteStoreItems(sourceId, ids) {
+  const backend = await backendFor();
+  const src = await backend.loadSource(sourceId);
+  if (!src || !src.items) return 0;
+  let n = 0;
+  for (const id of ids || []) { if (src.items[String(id)]) { delete src.items[String(id)]; n++; } }
+  if (n) await backend.saveSource(sourceId, src);
+  return n;
+}
+// Empty a source's store entirely (keeps its meta). A full backend "delete file/entry" isn't part of the
+// backend interface, so the source stays listed but empty.
+export async function clearStoreSource(sourceId) {
+  const backend = await backendFor();
+  const src = await backend.loadSource(sourceId);
+  await backend.saveSource(sourceId, { meta: (src && src.meta) || {}, items: {} });
+}
 export async function getRecords(sourceId, opts) { return project(await (await backendFor()).loadSource(sourceId), opts); }
 export async function getViews(sourceId, delivered) { return views(await (await backendFor()).loadSource(sourceId), delivered); }
 // Passive UI hint (the "Load from store" button badge) → never pop an OAuth window just to count; a Drive

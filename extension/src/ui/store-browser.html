@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Habeas · Almacén canónico</title>
+  <link rel="stylesheet" href="theme.css" />
+  <style>
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 16px; }
+    .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+    .controls select { min-width: 180px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; position: sticky; top: 0; background: var(--bg); }
+    td.r { text-align: right; font-variant-numeric: tabular-nums; }
+    .idcell { font-family: ui-monospace, monospace; font-size: 11px; max-width: 220px; overflow-wrap: anywhere; }
+    .muted { color: var(--muted); }
+    .pill { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11px; border: 1px solid var(--line); }
+    .pill.ok { background: #16833522; border-color: #16833555; }
+    .pill.pend { background: #b4690022; border-color: #b4690055; }
+    .pill.gone { background: #99999922; color: var(--muted); }
+    #summary { margin: 8px 0; font-size: 13px; }
+    .tablewrap { overflow-x: auto; }
+    button.danger { border-color: #b3261e88; color: #b3261e; }
+    button.danger:hover { background: #b3261e18; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Almacén canónico</h2>
+    <p class="muted">Inspector de depuración: qué hay guardado por fuente, con qué documento, y (opcional) su estado de entrega a un destino.</p>
+    <p class="muted">Backend: <code id="backend">—</code></p>
+    <div class="controls">
+      <label>Fuente <select id="source"></select></label>
+      <label>Entrega a <select id="sink"></select></label>
+      <button id="refresh">Recargar</button>
+    </div>
+    <div id="summary" class="muted"></div>
+    <div class="controls" id="actions" hidden>
+      <button id="del-items" class="danger">Borrar del almacén (0)</button>
+      <button id="reset-ledger" hidden>Marcar no entregados (0)</button>
+      <span style="flex:1"></span>
+      <button id="clear-source" class="danger">Vaciar esta fuente…</button>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th><input type="checkbox" id="sel-all" title="Seleccionar todo"></th>
+          <th>internalId</th><th>Fecha</th><th>Comercio / Emisor</th><th class="r">Total</th>
+          <th>Tipo</th><th>Doc</th><th>Registrado</th><th>Estado</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <script type="module" src="store-browser.js"></script>
+</body>
+</html>

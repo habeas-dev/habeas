@@ -31,6 +31,16 @@ export async function forgetDelivered(datasourceId, sinkId) {
   await chrome.storage.local.set({ [KEY]: st });
 }
 
+// Drop specific internalIds from a (source, sink) delivery ledger → they become PENDING again (re-delivered
+// on the next send). Used by the store browser to reset "downloaded" status for chosen items.
+export async function forgetDeliveredItems(datasourceId, sinkId, ids) {
+  const st = await getState();
+  const set = st.delivered[keyFor(datasourceId, sinkId)];
+  if (!set) return;
+  for (const id of ids || []) delete set[String(id)];
+  await chrome.storage.local.set({ [KEY]: st });
+}
+
 // Learned per-document metadata (SOURCE level, not per sink): facts we discovered by fetching a
 // document's detail — its real date + amount. Lets a later listing show the true date for items whose
 // list only exposes a year (Amazon). A minimal precursor to the incremental-sync index (docs/incremental-sync.md).

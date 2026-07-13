@@ -283,6 +283,7 @@
   "drive_disconnected": { "message": "Drive disconnected." },
   "store_http": { "message": "HTTP endpoint" },
   "store_move": { "message": "Move store here" },
+  "store_browse": { "message": "Browse store…" },
   "store_pick_folder": { "message": "Choose folder…" },
   "store_import_from": { "message": "Backfill from a sink:" },
   "store_import": { "message": "Import" },
