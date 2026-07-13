@@ -44,10 +44,11 @@ export function bakeLearned(d) {
 export function buildRecord(d, adapter) {
   const schema = (adapter && adapter.schema) || 'receipt@1';
   const kind = String(schema).split('@')[0];
-  // Prefer a per-document currency the source actually mapped/extracted (fields.currency, or a detail
-  // const), then the adapter-wide default, then EUR. Never force EUR onto a source that bills in another
-  // currency (e.g. Hover → USD).
-  const currency = d.currency || (adapter && adapter.currency) || 'EUR';
+  // Currency, most-authoritative first: a symbol/ISO code embedded in the amount itself (e.g. Hover's
+  // "$9.00" → USD), then a per-document currency the source mapped, then the adapter default, then EUR.
+  // Never force EUR onto a source that bills in another currency.
+  const amtField = d.total != null && d.total !== '' ? d.total : d.amount;
+  const currency = curOf(amtField) || d.currency || (adapter && adapter.currency) || 'EUR';
   // `number` = the public receipt/invoice number the user sees (distinct from the internal
   // internalId). Added only when mapped, so receipt@1 stays byte-identical when absent.
   const withNumber = (r) => (d.number != null ? { ...r, number: d.number } : r);
@@ -64,17 +65,17 @@ export function buildRecord(d, adapter) {
   const withPdfUrl = (r) => (pdfUrl != null && pdfUrl !== '' ? { ...r, pdfUrl: String(pdfUrl) } : r);
   const done = (r) => withPdfUrl(withGroup(withNumber(r)));
   if (kind === 'transaction') {
-    const r = { internalId: d.internalId, date: d.date, amount: num(d.amount ?? d.total), currency, category: d.category, description: d.description ?? d.label ?? '', counterparty: d.counterparty ?? d.party ?? '', direction: d.direction ?? dirOf(d.amount ?? d.total), source: d.source, type: d.type };
+    const r = { internalId: d.internalId, date: d.date, amount: money(d.amount ?? d.total), currency, category: d.category, description: d.description ?? d.label ?? '', counterparty: d.counterparty ?? d.party ?? '', direction: d.direction ?? dirOf(d.amount ?? d.total), source: d.source, type: d.type };
     // Carry any extra per-movement data a card source captures (merchant city, card mask…) so nothing is lost.
     if (d.location != null && d.location !== '') r.location = d.location;
     if (d.card != null && d.card !== '') r.card = d.card;
     return done(r);
   }
   if (kind === 'investment') {
-    return done({ internalId: d.internalId, date: d.date, instrument: d.instrument ?? d.label ?? '', isin: d.isin ?? '', units: num(d.units), price: num(d.price), amount: num(d.amount ?? d.total), currency, category: d.category, operation: d.operation ?? d.type, source: d.source });
+    return done({ internalId: d.internalId, date: d.date, instrument: d.instrument ?? d.label ?? '', isin: d.isin ?? '', units: num(d.units), price: money(d.price), amount: money(d.amount ?? d.total), currency, category: d.category, operation: d.operation ?? d.type, source: d.source });
   }
   if (kind === 'invoice') {
-    const r = { internalId: d.internalId, date: d.date, total: num(d.total), currency, category: d.category, issuer: { name: d.issuer ?? d.storeName ?? d.party ?? '', address: d.issuerAddress ?? d.storeAddress ?? '' }, number: d.number ?? d.internalId, source: d.source, type: d.type };
+    const r = { internalId: d.internalId, date: d.date, total: money(d.total), currency, category: d.category, issuer: { name: d.issuer ?? d.storeName ?? d.party ?? '', address: d.issuerAddress ?? d.storeAddress ?? '' }, number: d.number ?? d.internalId, source: d.source, type: d.type };
     // A human display label (e.g. "Extracto 2026-06-23") when the source provides one — carried so a
     // row loaded from the store shows it instead of the opaque internalId. Omitted when absent so
     // existing invoice records stay byte-identical.
@@ -82,10 +83,31 @@ export function buildRecord(d, adapter) {
     return withPdfUrl(withGroup(r));
   }
   // receipt@1 (default) — unchanged shape (number appended only when present).
-  return done({ internalId: d.internalId, date: d.date, total: d.total, currency, category: d.category, store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type });
+  return done({ internalId: d.internalId, date: d.date, total: money(d.total), currency, category: d.category, store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type });
 }
 function num(v) { if (v == null || v === '') return v; const n = Number(v); return Number.isFinite(n) ? n : v; }
-function dirOf(v) { const n = Number(v); return Number.isFinite(n) ? (n < 0 ? 'debit' : 'credit') : undefined; }
+// Parse a possibly currency-formatted amount into a Number: strips symbols/codes and normalizes the decimal
+// separator (both "9.00" and "9,00", and grouped "1.234,56" / "1,234.56"). A clean number passes through
+// unchanged (byte-identical); an unparseable value is kept as-is so nothing is silently lost.
+function money(v) {
+  if (v == null || v === '' || typeof v === 'number') return v;
+  let t = String(v).replace(/[^\d.,-]/g, '');
+  if (t.includes(',') && t.includes('.')) t = t.lastIndexOf(',') > t.lastIndexOf('.') ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, '');
+  else if (t.includes(',')) t = /,\d{1,2}$/.test(t) ? t.replace(',', '.') : t.replace(/,/g, '');
+  const n = Number(t);
+  return Number.isFinite(n) ? n : v;
+}
+// Currency code embedded in an amount string: an explicit ISO code wins, else a common symbol. null if none.
+function curOf(v) {
+  if (typeof v !== 'string') return null;
+  const iso = v.match(/\b(USD|EUR|GBP|JPY|CHF|CAD|AUD|MXN|BRL|INR|SEK|NOK|DKK|PLN)\b/); if (iso) return iso[1];
+  if (v.includes('€')) return 'EUR';
+  if (v.includes('£')) return 'GBP';
+  if (v.includes('¥')) return 'JPY';
+  if (v.includes('$')) return 'USD';
+  return null;
+}
+function dirOf(v) { const n = typeof v === 'number' ? v : Number(money(v)); return Number.isFinite(n) ? (n < 0 ? 'debit' : 'credit') : undefined; }
 
 // Source-level compatibility: does this sink accept documents from this source at all?
 // A sink with no `accepts` takes everything (download/local/drive). A sink may restrict by
