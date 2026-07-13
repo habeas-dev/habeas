@@ -231,22 +231,22 @@ async function refreshStoreButton() {
 // needs its session). One button for "pull whatever's new across all my sources".
 async function onSyncAll() {
   const b = $('#sync-all');
-  b.disabled = true; b.textContent = t('syncing');
+  b.textContent = t('stop'); b.onclick = () => chrome.runtime.sendMessage({ type: 'habeas:sync-stop' }); // click again to stop
   $('#status').textContent = t('sync_all_running');
   // Reflect the background's live per-source progress (Listing…/Fetching…/Sending…) while the sweep runs.
   const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#status').textContent = v.msg; };
   chrome.storage.onChanged.addListener(onStatus);
   try {
     const r = await chrome.runtime.sendMessage({ type: 'habeas:sync-all' });
-    if (r && r.ok && r.status !== 'busy') {
-      let msg = t('sync_all_done', [String(r.new || 0), String(r.sources || 0)]);
+    if (r && r.ok && (r.status === 'done' || r.status === 'stopped')) {
+      let msg = (r.status === 'stopped' ? t('sync_all_stopped') + ' · ' : '') + t('sync_all_done', [String(r.new || 0), String(r.sources || 0)]);
       if (r.needLogin) msg += ' · ' + t('sync_all_needlogin', [String(r.needLogin)]);
       if (r.noSink) msg += ' · ' + t('sync_all_nosink', [String(r.noSink)]);
       $('#status').textContent = msg;
     } else if (r && r.status === 'busy') { $('#status').textContent = t('sync_all_running'); }
     else { $('#status').textContent = t('sync_all_err', [(r && r.error) || 'error']); }
   } catch (e) { $('#status').textContent = t('sync_all_err', [(e && e.message) || String(e)]); }
-  finally { chrome.storage.onChanged.removeListener(onStatus); b.disabled = false; b.textContent = t('sync_all'); }
+  finally { chrome.storage.onChanged.removeListener(onStatus); b.textContent = t('sync_all'); b.onclick = onSyncAll; }
 }
 
 async function onLoadStore() {
@@ -585,6 +585,7 @@ async function renderActivity() {
       : e.status === 'nosession' ? t('st_nosession')
       : e.status === 'challenged' ? t('st_challenged')
       : e.status === 'listing' ? t('st_listing')
+      : e.status === 'stopped' ? t('st_stopped')
       : t('st_ok', [String(n ?? ''), e.sink || '']);
     return `<div class="activity-item"><span class="when">${esc(when)}</span><span class="kind">${esc(e.kind || '')}</span><span>${esc(e.datasource || '')} · ${esc(detail)}</span></div>`;
   }).join('') || `<p class="muted">${t('no_activity')}</p>`;

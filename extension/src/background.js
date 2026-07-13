@@ -129,6 +129,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     sweepAllSources().then((r) => sendResponse({ ok: true, ...r }), (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true; // async response
   }
+  if (msg.type === 'habeas:sync-stop') { stopSweep(); sendResponse({ ok: true }); return; } // stop a running sweep
   if (msg.type === 'habeas:auth' && msg.host) {
     saveAuth(msg.host, msg.path, msg.headers).then(() => { maybeAutoRun(msg.host); runPendingExternalCollects(msg.host); });
   } else if (msg.type === 'habeas:context' && msg.host && msg.name) {
@@ -217,9 +218,13 @@ const maybeAutoRunForSite = (host, tabId, url) => runAutoRoutes((a) => siteMatch
 // session is still valid, and lets the user log in when it isn't). Bypasses the per-route debounce (this
 // is an explicit request) and emits one summary notification instead of one per source.
 let sweeping = false;
+let sweepController = null; // AbortController for the running sweep (so the popup can stop it)
+function stopSweep() { if (sweepController) { try { sweepController.abort(); } catch (e) {} } }
 async function sweepAllSources() {
   if (sweeping) return { status: 'busy' };
   sweeping = true;
+  sweepController = new AbortController();
+  const signal = sweepController.signal;
   try {
     const cfg = await getConfig();
     const adapters = await getAdapters();
@@ -233,6 +238,7 @@ async function sweepAllSources() {
     await badgeWorking();
     let sources = 0, totalNew = 0, needLogin = 0, errors = 0, noSink = 0;
     for (const ds of (cfg.datasources || []).filter((d) => d.enabled)) {
+      if (signal.aborted) break; // stopped by the user
       const adapter = adapters[ds.adapter];
       if (!adapter || !(await hasConsent(adapter))) continue;
       const sink = cfg.sinks.find((s) => s.id === sweepSinkId(ds.id, autoBy, favs, def));
@@ -240,7 +246,8 @@ async function sweepAllSources() {
       sources++;
       setStatus(t('status_listing', [adapter.name || ds.adapter]));
       await appendLog({ kind: 'sweep', datasource: ds.id, status: 'listing' }); // incremental: "syncing X…" in the log
-      let res = await runRoute(ds, adapter, sink, { kind: 'sweep' }); // 1) unattended
+      let res = await runRoute(ds, adapter, sink, { kind: 'sweep', signal }); // 1) unattended
+      if (signal.aborted) break; // don't open login tabs / escalate after a stop
       if (res.status === 'nosession') {
         // No captured session → open/navigate the login page (foregrounded) so the user CAN authenticate.
         // A bearer source's session only exists after login, so there's nothing to retry in-place now —
@@ -255,11 +262,12 @@ async function sweepAllSources() {
       else if (res.status === 'nosession' || res.status === 'challenged') needLogin++;
       else if (res.status === 'error') errors++;
     }
-    await appendLog({ kind: 'sweep', status: 'ok', sources, new: totalNew, needLogin, errors, noSink });
-    notify(t('notify_sweep', [String(totalNew), String(sources)]));
+    const stopped = signal.aborted;
+    await appendLog({ kind: 'sweep', status: stopped ? 'stopped' : 'ok', sources, new: totalNew, needLogin, errors, noSink });
+    if (!stopped) notify(t('notify_sweep', [String(totalNew), String(sources)]));
     if (totalNew) await badgeCount(totalNew); else await badgeClear();
-    return { status: 'done', sources, new: totalNew, needLogin, errors, noSink };
-  } finally { sweeping = false; }
+    return { status: stopped ? 'stopped' : 'done', sources, new: totalNew, needLogin, errors, noSink };
+  } finally { sweeping = false; sweepController = null; }
 }
 
 const hostOf = (adapter) => adapter.api.host.replace(/^https?:\/\//, '');
@@ -295,15 +303,17 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     const fmtsFor = (sid) => outs.filter((o) => o.stream === sid).map((o) => o.format);
     let totalNew = 0;
     for (const sid of streamIds) {
+      if (opts.signal && opts.signal.aborted) break; // Sync-all was stopped
       const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(adapter.id, sid); const fmts = fmtsFor(sid);
-      // onProgress → live per-page status (visible in an open popup during a Sync-all sweep).
-      const all = await listInventory(eff, auth, net, { groupId: opts.groupId, onProgress: (p) => setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])) }); // opts.groupId → one account only
+      // onProgress → live per-page status (visible in an open popup during a Sync-all sweep). signal → stop.
+      const all = await listInventory(eff, auth, net, { groupId: opts.groupId, signal: opts.signal, onProgress: (p) => setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])) }); // opts.groupId → one account only
       const fresh = all.filter((d) => !delivered[d.internalId]);
       const eligible = fresh.filter((d) => acceptsDoc(sink, d));
       if (!eligible.length) continue;
       setStatus(t('status_fetching', [String(eligible.length), name]));
       const files = new Map();
       for (const d of eligible) {
+        if (opts.signal && opts.signal.aborted) break; // stop fetching mid-source
         const arts = [];
         for (const fmt of (fmts.length ? fmts : [''])) {
           const oeff = resolveOutput(adapter, sid + (fmt ? '/' + fmt : ''));

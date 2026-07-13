@@ -129,6 +129,8 @@
   "st_ok": { "message": "$N$ doc(s) → $SINK$", "placeholders": { "n": { "content": "$1" }, "sink": { "content": "$2" } } },
   "st_none": { "message": "no new documents" },
   "st_listing": { "message": "syncing…" },
+  "sync_all_stopped": { "message": "Stopped" },
+  "st_stopped": { "message": "stopped" },
   "st_nosession": { "message": "no session" },
   "st_challenged": { "message": "anti-bot check — open the site and solve it, then retry" },
   "st_error": { "message": "error: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
