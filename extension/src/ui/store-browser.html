@@ -22,14 +22,16 @@
     .tablewrap { overflow-x: auto; }
     button.danger { border-color: #b3261e88; color: #b3261e; }
     button.danger:hover { background: #b3261e18; }
+    .err { color: #b3261e; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h2>Almacén canónico</h2>
     <p class="muted">Inspector de depuración: qué hay guardado por fuente, con qué documento, y (opcional) su estado de entrega a un destino.</p>
-    <p class="muted">Backend: <code id="backend">—</code></p>
+    <p class="muted">El almacén canónico es independiente del <em>sink</em> de entrega: descargar a un sink (p. ej. Dropbox) no mueve el store. Elige qué backend inspeccionar.</p>
     <div class="controls">
+      <label>Backend <select id="backend"></select></label>
       <label>Fuente <select id="source"></select></label>
       <label>Entrega a <select id="sink"></select></label>
       <button id="refresh">Recargar</button>

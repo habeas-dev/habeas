@@ -1,8 +1,11 @@
 // Debug browser for the canonical store: what's saved per source (records + doc availability + when
 // recorded + tombstones) and, overlaid against a sink's delivery ledger, what's delivered vs pending.
-// Reads the CURRENTLY-configured store backend (local / folder / Drive / Dropbox / WebDAV / S3 / HTTP).
-// Can DELETE store data (selected items or the whole source) and reset a sink's "delivered" ledger.
-import { getStoreConfig, listSources, getSource, deleteStoreItems, clearStoreSource } from '../lib/store.js';
+// IMPORTANT distinction (a frequent confusion): the canonical STORE and a delivery SINK are separate.
+// Downloading to a Dropbox *sink* does NOT move the store to Dropbox — the store stays on its configured
+// backend (local by default). So this page lets you pick WHICH backend to inspect: the configured store,
+// plain local, or a specific cloud sink's store. Can also DELETE store data and reset a sink's ledger.
+import { getStoreConfig, openBackend } from '../lib/store.js';
+import { emptySource } from '../lib/store/format.js';
 import { deliveredSet, forgetDeliveredItems } from '../lib/state.js';
 import { getConfig } from '../lib/config.js';
 import { esc } from '../lib/esc.js';
@@ -12,21 +15,53 @@ const money = (v, c) => (v == null || v === '' ? '' : `${v} ${c || ''}`.trim());
 const storeName = (r) => (r.store && r.store.name) || (r.issuer && r.issuer.name) || r.storeName || '';
 const selectedIds = () => [...document.querySelectorAll('.sel:checked')].map((c) => c.dataset.id);
 
+const SINK_STORE_TYPES = new Set(['dropbox', 'webdav', 's3', 'drive', 'folder', 'http']);
+let backends = [];       // [{ label, cfg }]
+let backend = null;      // the resolved backend object currently inspected
+
 async function init() {
-  const cfg = await getStoreConfig();
-  $('#backend').textContent = cfg.backend + (cfg.sinkId ? ' · sink ' + cfg.sinkId : '') + (cfg.url ? ' · ' + cfg.url : '');
-  const sources = (await listSources()).slice().sort();
-  $('#source').innerHTML = sources.length ? sources.map((s) => `<option value="${esc(s)}">${esc(s)}</option>`).join('') : '<option value="">(almacén vacío)</option>';
+  const storeCfg = await getStoreConfig();
   const conf = await getConfig();
+  // Backend choices: the configured store, plain local, and every sink that can host a store.
+  backends = [
+    { label: `configurado (${storeCfg.backend}${storeCfg.sinkId ? ' · ' + storeCfg.sinkId : ''})`, cfg: storeCfg },
+    { label: 'local (IndexedDB)', cfg: { backend: 'local' } },
+    ...(conf.sinks || []).filter((s) => SINK_STORE_TYPES.has(s.type))
+      .map((s) => ({ label: `sink ${s.id} (${s.type})`, cfg: { backend: s.type, sinkId: s.id } })),
+  ];
+  $('#backend').innerHTML = backends.map((b, i) => `<option value="${i}">${esc(b.label)}</option>`).join('');
   $('#sink').innerHTML = '<option value="">— sin overlay de entrega —</option>' + (conf.sinks || []).map((s) => `<option value="${esc(s.id)}">${esc(s.id)}</option>`).join('');
+  $('#backend').onchange = loadBackend;
   $('#source').onchange = render;
   $('#sink').onchange = render;
-  $('#refresh').onclick = render;
+  $('#refresh').onclick = loadBackend;
   $('#sel-all').onchange = (e) => { document.querySelectorAll('.sel').forEach((c) => { c.checked = e.target.checked; }); updateCounts(); };
   $('#del-items').onclick = onDeleteItems;
   $('#reset-ledger').onclick = onResetLedger;
   $('#clear-source').onclick = onClearSource;
-  if (sources.length) render();
+  await loadBackend();
+}
+
+// (Re)open the chosen backend and list its sources. Any backend error (cloud not connected, no token in this
+// tab) is surfaced verbatim instead of silently looking empty.
+async function loadBackend() {
+  const cfg = backends[+$('#backend').value].cfg;
+  $('#source').innerHTML = '<option value="">…</option>';
+  $('#summary').textContent = 'abriendo backend…';
+  $('#actions').hidden = true;
+  try {
+    backend = await openBackend(cfg);
+    const sources = (await backend.listSources()).slice().sort();
+    $('#source').innerHTML = sources.length
+      ? sources.map((s) => `<option value="${esc(s)}">${esc(s)}</option>`).join('')
+      : '<option value="">(este backend no tiene ninguna fuente)</option>';
+    $('#summary').textContent = sources.length ? `${sources.length} fuente(s) en este backend` : 'backend accesible pero vacío — ¿estás mirando el backend correcto? El store es independiente del sink de entrega.';
+    if (sources.length) await render();
+  } catch (e) {
+    backend = null;
+    $('#source').innerHTML = '<option value="">(backend no accesible)</option>';
+    $('#summary').innerHTML = `<span class="err">No se pudo abrir el backend: ${esc((e && e.message) || String(e))}</span>`;
+  }
 }
 
 function updateCounts() {
@@ -37,11 +72,17 @@ function updateCounts() {
 
 async function render() {
   const sourceId = $('#source').value;
-  $('#actions').hidden = !sourceId;
-  if (!sourceId) { $('#tbody').innerHTML = ''; $('#summary').textContent = ''; return; }
-  $('#summary').textContent = 'cargando…';
-  const src = await getSource(sourceId);
-  if (!src || !src.items) { $('#tbody').innerHTML = ''; $('#summary').textContent = 'sin datos para esta fuente (¿backend no accesible / no conectado?)'; return; }
+  $('#actions').hidden = !sourceId || !backend;
+  if (!sourceId || !backend) { $('#tbody').innerHTML = ''; return; }
+  $('#summary').textContent = 'cargando fuente…';
+  let src;
+  try { src = await backend.loadSource(sourceId); }
+  catch (e) { $('#tbody').innerHTML = ''; $('#summary').innerHTML = `<span class="err">Error cargando «${esc(sourceId)}»: ${esc((e && e.message) || String(e))}</span>`; return; }
+  if (!src || !src.items || !Object.keys(src.items).length) {
+    $('#tbody').innerHTML = '';
+    $('#summary').textContent = src ? `«${sourceId}» existe en el store pero está vacío (0 items).` : `«${sourceId}» está listado pero no se pudo cargar (¿backend cloud no conectado en esta pestaña?).`;
+    return;
+  }
   const sinkId = $('#sink').value;
   $('#reset-ledger').hidden = !sinkId;
   // The store key is "<sourceId>:<stream>"; the delivery ledger is keyed by the DATASOURCE id (before ":").
@@ -84,18 +125,20 @@ async function render() {
 }
 
 async function onDeleteItems() {
-  const ids = selectedIds();
-  if (!ids.length) return;
-  if (!confirm(`Borrar ${ids.length} item(s) del almacén de «${$('#source').value}»? No se puede deshacer.`)) return;
-  await deleteStoreItems($('#source').value, ids);
+  const sourceId = $('#source').value; const ids = selectedIds();
+  if (!backend || !sourceId || !ids.length) return;
+  if (!confirm(`Borrar ${ids.length} item(s) del almacén de «${sourceId}»? No se puede deshacer.`)) return;
+  const src = await backend.loadSource(sourceId);
+  if (src && src.items) { for (const id of ids) delete src.items[String(id)]; await backend.saveSource(sourceId, src); }
   await render();
 }
 
 async function onClearSource() {
   const sourceId = $('#source').value;
-  if (!sourceId) return;
+  if (!backend || !sourceId) return;
   if (!confirm(`Vaciar TODO el almacén de «${sourceId}»? Se borran todos sus registros. No se puede deshacer.`)) return;
-  await clearStoreSource(sourceId);
+  const src = await backend.loadSource(sourceId);
+  await backend.saveSource(sourceId, { ...emptySource((src && src.meta) || {}), items: {} });
   await render();
 }
 

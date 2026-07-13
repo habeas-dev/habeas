@@ -28,6 +28,9 @@ async function makeBackend(cfg) {
   }
 }
 async function backendFor() { return override || makeBackend(); }
+// Open an ARBITRARY backend without repointing the global config — used by the store browser to inspect
+// (and repair) any backend directly (the configured one, plain local, or a specific cloud sink's store).
+export async function openBackend(cfg) { return makeBackend(cfg); }
 const now = () => new Date().toISOString();
 
 // Write-through: merge captured items into a source's store. entries: [{ internalId, record, docAvailable? }]
