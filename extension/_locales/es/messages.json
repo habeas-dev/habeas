@@ -15,6 +15,8 @@
   "n_listed": { "message": "$T$ documentos · $N$ recuperados", "placeholders": { "t": { "content": "$1" }, "n": { "content": "$2" } } },
   "full_history": { "message": "Todo el historial" },
   "full_history_hint": { "message": "Vuelve a listar todo en fresco desde el sitio para poder re-descargar los documentos seleccionados (las filas cargadas del almacén local son solo registro y NO se re-descargan). Requiere tener la sesión iniciada en el sitio." },
+  "force_redownload": { "message": "Re-descargar del sitio" },
+  "force_redownload_hint": { "message": "Vuelve a bajar del sitio los ficheros + detalles de los documentos seleccionados (incluso filas cargadas del almacén local), actualizando la fecha/importe reales en el almacén. Requiere sesión iniciada." },
   "n_from_store": { "message": "$N$ del almacén (sin extraer)", "placeholders": { "n": { "content": "$1" } } },
   "send_to": { "message": "Enviar a" },
   "send_selected": { "message": "Enviar seleccionados" },

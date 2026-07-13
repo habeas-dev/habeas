@@ -442,6 +442,7 @@ async function onSend() {
   const auth = await getAuth(adapter);
   const chosen = [...document.querySelectorAll('#tbl input:checked')].map((c) => inventory[+c.dataset.i]);
   if (!chosen.length) { $('#status').textContent = t('nothing_selected'); return; }
+  const forceRedownload = !!($('#force-redownload') && $('#force-redownload').checked); // re-fetch even store-loaded rows
   // Deliver oldest → newest regardless of the table's display order, so documents are saved (files written,
   // manifest appended) chronologically rather than newest-first.
   const eligible = chosen.filter((d) => acceptsDoc(sink, d))
@@ -471,7 +472,9 @@ async function onSend() {
   const fetchArts = async (d, eff) => {
     // A store projection delivers the record only — EXCEPT when its record persisted an absolute PDF url
     // (urlField sources like CaixaBank), which can still be fetched (re-validated to the source domain).
-    if (d._fromStore && !(d.record && d.record.pdfUrl)) return [];
+    // The "Re-download from site" toggle overrides this: it forces a fresh fetch of PDF + detail (and thus
+    // re-bakes the real date/amount) straight from a store-loaded row, without re-listing via Full history.
+    if (!forceRedownload && d._fromStore && !(d.record && d.record.pdfUrl)) return [];
     const arts = [];
     const kinds = artifactKinds(eff).filter((k) => sinkAcceptsArtifact(sink, k));
     const avail = artifactKinds(eff, d);
