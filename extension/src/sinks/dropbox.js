@@ -155,13 +155,15 @@ export function dropboxStore(sink, cfg = {}) {
   const filePath = (id) => folder + '/' + id + '.json';
   return {
     async loadSource(id) {
-      try {
-        const token = await dropboxToken(sink);
-        const r = await fetch(DOWNLOAD_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Dropbox-API-Arg': apiArg({ path: filePath(id) }) } });
-        if (!r.ok) return null; // 409 path/not_found → no store entry yet
-        const j = await r.json().catch(() => null);
-        return j && typeof j === 'object' && !Array.isArray(j) && j.items ? j : null;
-      } catch (e) { return null; }
+      const token = await dropboxToken(sink);
+      const r = await fetch(DOWNLOAD_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Dropbox-API-Arg': apiArg({ path: filePath(id) }) } });
+      // 409 = path/not_found → genuinely no store entry yet (return null, not an error). Any OTHER non-ok
+      // status (401 token, 5xx…) is a real failure the caller must SEE — don't collapse it to "empty".
+      if (r.status === 409) return null;
+      if (!r.ok) throw new Error(`Dropbox download ${r.status} for ${filePath(id)}: ${(await r.text().catch(() => '')).slice(0, 200)}`);
+      const j = await r.json().catch(() => null);
+      if (!j || typeof j !== 'object' || Array.isArray(j) || !j.items) throw new Error(`Dropbox store file ${filePath(id)} exists but is not a valid store object (no .items)`);
+      return j;
     },
     async saveSource(id, data) {
       try { await dbxUpload(await dropboxToken(sink), filePath(id), jsonBlob(JSON.stringify(data))); } catch (e) { /* best-effort */ }

@@ -80,7 +80,7 @@ async function render() {
   catch (e) { $('#tbody').innerHTML = ''; $('#summary').innerHTML = `<span class="err">Error cargando «${esc(sourceId)}»: ${esc((e && e.message) || String(e))}</span>`; return; }
   if (!src || !src.items || !Object.keys(src.items).length) {
     $('#tbody').innerHTML = '';
-    $('#summary').textContent = src ? `«${sourceId}» existe en el store pero está vacío (0 items).` : `«${sourceId}» está listado pero no se pudo cargar (¿backend cloud no conectado en esta pestaña?).`;
+    $('#summary').textContent = src ? `«${sourceId}» existe en el store pero está vacío (0 items).` : `«${sourceId}» aparece en el listado pero el backend responde "no existe" al cargarlo (fichero renombrado/movido o borrado a medias).`;
     return;
   }
   const sinkId = $('#sink').value;

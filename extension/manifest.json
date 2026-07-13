@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extName__",
-  "version": "0.1.64.4",
+  "version": "0.1.64.5",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAov5pyeKHoEtDqarjgyY3JChjXGUVq7NkSBTxiyVWVrYGU7bean1AkTTYgep2YwCP3F+lpJEvEnSbEdSIGszJpbxl421M5DKfsMMbLMC1QGRe3DVahIINJ+SrItyOh9QxOlNX6YrSArS5WGF6JVpMnndhmkEdfohtfzO6IkLGkc4ZTYTkEfmiESrRv0bfUbZ0fHY3BHhQnUOyEj0h/WDHmGmitC8GWKy0hwyu/dPykiVo9McpUKnOYU3ZUGuuhb+c9/oHzkP114Xv80VY2YChhdhrFEy6ASU9LK4PPee0ka9WNQrIrDx7DEWsNpEdA0n4aC6N7yo9eyuBfW5eTWm20wIDAQAB",
   "oauth2": {
     "client_id": "246972215385-1vvdh4kraid8dvksoa6gm41ctub746f8.apps.googleusercontent.com",

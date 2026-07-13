@@ -54,7 +54,10 @@ export async function markGone(sourceId, ids, reason) {
 }
 
 export async function listSources() { try { return await (await backendFor()).listSources(); } catch (e) { return []; } }
-export async function getSource(sourceId) { return (await (await backendFor()).loadSource(sourceId)) || null; }
+// Public read helpers stay tolerant (a flaky/unconnected cloud backend must not crash the popup's normal
+// list flow) — they degrade to null/empty. The store BROWSER calls a backend's loadSource DIRECTLY so it
+// can surface the real failure reason (see ui/store-browser.js).
+export async function getSource(sourceId) { try { return (await (await backendFor()).loadSource(sourceId)) || null; } catch (e) { return null; } }
 
 // Delete specific items from a source's store (debug/repair). Returns how many were removed.
 export async function deleteStoreItems(sourceId, ids) {
@@ -73,11 +76,11 @@ export async function clearStoreSource(sourceId) {
   const src = await backend.loadSource(sourceId);
   await backend.saveSource(sourceId, { meta: (src && src.meta) || {}, items: {} });
 }
-export async function getRecords(sourceId, opts) { return project(await (await backendFor()).loadSource(sourceId), opts); }
-export async function getViews(sourceId, delivered) { return views(await (await backendFor()).loadSource(sourceId), delivered); }
+export async function getRecords(sourceId, opts) { try { return project(await (await backendFor()).loadSource(sourceId), opts); } catch (e) { return project(null, opts); } }
+export async function getViews(sourceId, delivered) { try { return views(await (await backendFor()).loadSource(sourceId), delivered); } catch (e) { return views(null, delivered); } }
 // Passive UI hint (the "Load from store" button badge) → never pop an OAuth window just to count; a Drive
 // backend reads this silently (interactive:false) and returns null if no token is available yet.
-export async function countLive(sourceId) { const s = await (await backendFor()).loadSource(sourceId, { interactive: false }); return s ? Object.values(s.items).filter((e) => !e.gone).length : 0; }
+export async function countLive(sourceId) { try { const s = await (await backendFor()).loadSource(sourceId, { interactive: false }); return s ? Object.values(s.items).filter((e) => !e.gone).length : 0; } catch (e) { return 0; } }
 
 // Union every source from one backend into another (never clobbers; keyed by id). Idempotent → safe to
 // re-run an interrupted move. Returns how many sources were copied.
