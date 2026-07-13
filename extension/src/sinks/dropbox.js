@@ -105,6 +105,12 @@ export async function dropboxConnect(sink) {
   const nonce = pkceVerifier().slice(0, 24);
   const authUrl = 'https://www.dropbox.com/oauth2/authorize?' + new URLSearchParams({
     client_id: appKey, response_type: 'code', token_access_type: 'offline',
+    // Request the scopes we actually use, explicitly. list_folder needs files.metadata.read; sink delivery
+    // needs files.content.write; the canonical STORE-on-Dropbox back-end reads its JSON back via
+    // files/download → files.content.read (WITHOUT it, download 401s "app not permitted to access this
+    // endpoint" while list/upload still work). The scopes must ALSO be enabled on the Dropbox app itself
+    // (App Console → Permissions); a refresh token minted before a scope was granted lacks it → reconnect.
+    scope: 'files.metadata.read files.content.write files.content.read',
     code_challenge: await pkceChallenge(verifier), code_challenge_method: 'S256', redirect_uri: bounce, state: nonce,
   });
   const code = await authViaTab(authUrl, bounce, nonce);
@@ -127,11 +133,10 @@ async function dbxUpload(token, path, blob) {
   if (!r.ok) throw new Error('dropbox upload ' + r.status + ' ' + (await r.text().catch(() => '')).slice(0, 120));
 }
 async function dbxDownloadJson(token, path) {
-  try {
-    const r = await fetch(DOWNLOAD_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Dropbox-API-Arg': apiArg({ path }) } });
-    if (!r.ok) return []; // 409 path/not_found → no manifest yet
-    return await r.json().catch(() => []);
-  } catch (e) { return []; }
+  const r = await fetch(DOWNLOAD_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Dropbox-API-Arg': apiArg({ path }) } });
+  if (r.status === 409) return []; // path/not_found → no manifest yet
+  if (!r.ok) throw new Error(`Dropbox download ${r.status}: ${(await r.text().catch(() => '')).slice(0, 200)}`); // e.g. 401 missing files.content.read
+  return await r.json().catch(() => []);
 }
 
 export async function dropboxWrite(sink, docs, files, opts = {}) {
@@ -143,8 +148,13 @@ export async function dropboxWrite(sink, docs, files, opts = {}) {
   let n = 0;
   for (const d of docs) for (const art of files.get(d.internalId) || []) { await dbxUpload(token, dbxPath(root, pathFor(sink, d, opts, art.ext)), art.blob); n++; }
   const mfPath = dbxPath(root, service + '/' + mfName(opts));
-  const merged = mergeRecords(await dbxDownloadJson(token, mfPath), toRecords(docs, files));
-  await dbxUpload(token, mfPath, jsonBlob(JSON.stringify(merged, null, 2)));
+  // The manifest is CUMULATIVE (read existing → merge → write). If we can't READ it (e.g. the app lacks the
+  // files.content.read scope), do NOT overwrite it with only this batch — that would erase history. Deliver
+  // the files and leave the manifest untouched; surface the reason so the user can fix the Dropbox scope.
+  let prev;
+  try { prev = await dbxDownloadJson(token, mfPath); }
+  catch (e) { return { written: n, total: docs.length, manifestSkipped: (e && e.message) || String(e) }; }
+  await dbxUpload(token, mfPath, jsonBlob(JSON.stringify(mergeRecords(prev, toRecords(docs, files)), null, 2)));
   return { written: n, total: docs.length };
 }
 
