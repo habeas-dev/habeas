@@ -14,7 +14,8 @@ import { applyI18n, t } from '../lib/i18n.js';
 import { getAdapters } from '../adapters/index.js';
 import { hasConsent } from '../lib/consent.js';
 import { loadAuth } from '../lib/authstore.js';
-import { recordDelivered, getRecords, countLive, putItems } from '../lib/store.js';
+import { recordDelivered, getRecords, countLive, putItems, listSources, getSource } from '../lib/store.js';
+import { retrieveDelivered, isRetrievable } from '../lib/retrieve.js';
 import { outputsOf, resolveOutput, storeKeyOf } from '../lib/outputs.js';
 import { esc } from '../lib/esc.js';
 import { inventoryView, distinctBy } from '../lib/inventoryview.js';
@@ -83,6 +84,7 @@ async function init() {
   $('#stop').onclick = () => { if (aborter) { aborter.abort(); $('#status').textContent = t('stopping'); } };
   await badgeClear();
   watchThemeIcon();
+  wireDocsTab();
   await renderActivity();
   chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch['habeas:log']) renderActivity(); });
   await resumePendingList(); // a list left pending on login resumes automatically once the session is captured
@@ -589,6 +591,172 @@ async function renderActivity() {
       : t('st_ok', [String(n ?? ''), e.sink || '']);
     return `<div class="activity-item"><span class="when">${esc(when)}</span><span class="kind">${esc(e.kind || '')}</span><span>${esc(e.datasource || '')} · ${esc(detail)}</span></div>`;
   }).join('') || `<p class="muted">${t('no_activity')}</p>`;
+}
+
+// ==== All-documents browser =============================================================================
+// A cross-source view of the canonical store: every recovered document from every source, in one place, no
+// backend/sink pickers. Each row shows the REAL date/amount learned at download time (docMeta overlay, e.g.
+// Amazon's true date + total) and, per retrievable sink it was delivered to, a badge that opens the file.
+let docsRows = null;       // flattened rows, or null = not loaded yet
+let docsFiltered = [];     // currently-rendered subset (index target for row handlers)
+
+const sinkLabel = (s) => s.name || s.id || s.type;
+const docStore = (r) => nameOf(r.store && r.store.name) || nameOf(r.storeName) || nameOf(r.issuer) || nameOf(r.counterparty) || nameOf(r.description) || '';
+
+function wireDocsTab() {
+  $('#tab-sources').onclick = () => switchTab('sources');
+  $('#tab-docs').onclick = () => switchTab('docs');
+  $('#docs-refresh').onclick = () => { docsRows = null; renderDocuments(); };
+  $('#docs-search').oninput = renderDocsTable;
+  $('#docs-source').onchange = renderDocsTable;
+  $('#doc-modal-close').onclick = closeDocModal;
+  $('#doc-modal .doc-modal-backdrop').onclick = closeDocModal;
+}
+
+function switchTab(which) {
+  const docs = which === 'docs';
+  $('#tab-docs').classList.toggle('active', docs);
+  $('#tab-sources').classList.toggle('active', !docs);
+  $('#view-docs').hidden = !docs;
+  $('#view-sources').hidden = docs;
+  if (docs && docsRows === null) renderDocuments();
+}
+
+// Overlay the real date/amount/return-status learned when the document detail was fetched (state docMeta).
+function enrichRecord(r, k) {
+  if (!k) return r;
+  const out = { ...r };
+  if (k.date && !/^\d{4}-\d{2}-\d{2}/.test(out.date || '')) out.date = k.date;
+  if (typeof k.total === 'number' && out.total == null) out.total = k.total;
+  if (k.returnStatus && !out.returnStatus) out.returnStatus = k.returnStatus;
+  return out;
+}
+
+async function renderDocuments() {
+  $('#docs-status').textContent = t('docs_loading');
+  const cfg = await getConfig();
+  const retrievableSinks = (cfg.sinks || []).filter((s) => isRetrievable(s));
+  const keys = await listSources();
+  const rows = [];
+  const metaCache = {};        // adapterId -> docMeta
+  const deliveredCache = {};   // "dsId::sinkId" -> delivered set
+  for (const key of keys) {
+    const base = String(key).split(':')[0];                       // adapter.id (store key = storeKeyOf(adapter.id, stream))
+    const ds = cfg.datasources.find((d) => d.adapter === base) || cfg.datasources.find((d) => d.id === base);
+    const dsId = (ds && ds.id) || base;                           // delivery ledger is keyed by the DATASOURCE id
+    const adapter = (ds && ADAPTERS[ds.adapter]) || ADAPTERS[base] || null;
+    const src = await getSource(key).catch(() => null);
+    if (!src || !src.items) continue;
+    const known = metaCache[base] || (metaCache[base] = await getDocMeta(base).catch(() => ({})));
+    for (const [internalId, e] of Object.entries(src.items)) {
+      if (e.gone) continue;
+      const record = enrichRecord(e.record || {}, known[internalId]);
+      const delivered = [];
+      for (const sink of retrievableSinks) {
+        const ck = dsId + '::' + sink.id;
+        const set = deliveredCache[ck] || (deliveredCache[ck] = await deliveredSet(dsId, sink.id).catch(() => ({})));
+        if (set[internalId]) delivered.push(sink);
+      }
+      rows.push({ base, dsId, adapter, internalId, record, delivered });
+    }
+  }
+  rows.sort((a, b) => ((a.record.date || '') < (b.record.date || '') ? 1 : -1)); // newest first
+  docsRows = rows;
+  const srcs = [...new Set(rows.map((r) => r.base))].sort();
+  $('#docs-source').innerHTML = `<option value="">${esc(t('all_sources'))}</option>` + srcs.map((s) => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  renderDocsTable();
+}
+
+function renderDocsTable() {
+  if (!docsRows) return;
+  const q = ($('#docs-search').value || '').trim().toLowerCase();
+  const srcFilter = $('#docs-source').value;
+  const rows = docsRows.filter((r) => {
+    if (srcFilter && r.base !== srcFilter) return false;
+    if (!q) return true;
+    return [r.base, r.internalId, r.record.date, docStore(r.record), r.record.type].join(' ').toLowerCase().includes(q);
+  });
+  docsFiltered = rows;
+  $('#docs-status').textContent = t('n_documents', [String(rows.length)]);
+  $('#docs-tbody').innerHTML = rows.map((r, i) => {
+    const money = r.record.total != null ? esc(`${r.record.total} ${r.record.currency || 'EUR'}`) : '';
+    const badges = r.delivered.length
+      ? r.delivered.map((s) => `<span class="badge-sink" data-row="${i}" data-sink="${esc(s.id)}" title="${esc(t('view_from', [sinkLabel(s)]))}">${esc(sinkLabel(s))}</span>`).join('')
+      : '<span class="muted">—</span>';
+    return `<tr>
+      <td>${esc(r.base)}</td>
+      <td>${esc((r.record.date || '').slice(0, 10))}</td>
+      <td>${esc(docStore(r.record))}${r.record.group ? ' <span class="muted">· ' + esc(r.record.group) + '</span>' : ''}</td>
+      <td>${esc(r.record.type || '')}</td>
+      <td class="r">${money}</td>
+      <td>${badges}</td>
+      <td><button class="doc-view" data-row="${i}" title="${esc(t('view'))}">👁</button></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" class="muted">${esc(t('no_documents'))}</td></tr>`;
+  $('#docs-tbody').querySelectorAll('.doc-view').forEach((b) => { b.onclick = () => openDocModal(docsFiltered[+b.dataset.row]); });
+  $('#docs-tbody').querySelectorAll('.badge-sink').forEach((b) => { b.onclick = () => openDocModal(docsFiltered[+b.dataset.row], b.dataset.sink); });
+}
+
+// Generic schematic viewer for a JSON object (record or a retrieved JSON file). Recursive key→value table;
+// arrays render as index→value. textContent only (no HTML injection).
+function renderKv(obj) {
+  const tbl = document.createElement('table'); tbl.className = 'kv';
+  const src = Array.isArray(obj) ? obj.reduce((a, v, i) => ((a[i] = v), a), {}) : (obj && typeof obj === 'object' ? obj : { value: obj });
+  for (const [k, v] of Object.entries(src)) {
+    const tr = document.createElement('tr');
+    const th = document.createElement('th'); th.textContent = k; tr.appendChild(th);
+    const td = document.createElement('td'); td.className = 'v';
+    if (v && typeof v === 'object') td.appendChild(renderKv(v)); else td.textContent = v == null ? '' : String(v);
+    tr.appendChild(td); tbl.appendChild(tr);
+  }
+  return tbl;
+}
+
+function closeDocModal() {
+  $('#doc-modal').hidden = true;
+  $('#doc-modal-body').innerHTML = '';
+  $('#doc-modal-actions').innerHTML = '';
+}
+
+async function openDocModal(row, preferSinkId) {
+  if (!row) return;
+  $('#doc-modal-title').textContent = `${row.base} · ${(row.record.date || '').slice(0, 10)}`;
+  const body = $('#doc-modal-body'); body.innerHTML = ''; body.appendChild(renderKv(row.record));
+  const actions = $('#doc-modal-actions'); actions.innerHTML = '';
+  for (const sink of row.delivered) {
+    const btn = document.createElement('button');
+    btn.textContent = t('open_from', [sinkLabel(sink)]);
+    btn.onclick = () => openDeliveredFile(row, sink, btn);
+    actions.appendChild(btn);
+  }
+  $('#doc-modal').hidden = false;
+  if (preferSinkId) { const s = row.delivered.find((x) => x.id === preferSinkId); if (s) openDeliveredFile(row, s); }
+}
+
+async function openDeliveredFile(row, sink, btn) {
+  const body = $('#doc-modal-body');
+  const prev = btn && btn.textContent; if (btn) { btn.disabled = true; btn.textContent = t('opening'); }
+  try {
+    const res = await retrieveDelivered(sink, row.adapter, row.record);
+    if (!res) { note(body, t('retrieve_failed')); return; }
+    const type = (res.blob.type || '').toLowerCase();
+    if (res.ext === 'json' || type.includes('json')) {
+      const txt = await res.blob.text(); let obj = null; try { obj = JSON.parse(txt); } catch (e) {}
+      body.innerHTML = ''; if (obj) body.appendChild(renderKv(obj)); else { const pre = document.createElement('pre'); pre.textContent = txt; body.appendChild(pre); }
+    } else if (res.ext === 'pdf' || res.ext === 'html' || type.includes('pdf') || type.includes('html') || type.startsWith('image/')) {
+      const url = URL.createObjectURL(res.blob);
+      body.innerHTML = ''; const f = document.createElement('iframe'); f.className = 'doc-frame'; f.src = url; body.appendChild(f);
+    } else {
+      const url = URL.createObjectURL(res.blob);
+      body.innerHTML = ''; const a = document.createElement('a'); a.href = url; a.download = `${row.internalId}.${res.ext || 'bin'}`; a.textContent = t('download'); a.className = 'badge-sink'; body.appendChild(a);
+    }
+  } catch (e) { note(body, (e && e.message) || String(e)); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = prev; } }
+}
+
+function note(body, msg) {
+  const p = document.createElement('p'); p.className = 'muted'; p.textContent = msg;
+  body.insertBefore(p, body.firstChild);
 }
 
 init();

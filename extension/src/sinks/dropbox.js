@@ -158,6 +158,17 @@ export async function dropboxWrite(sink, docs, files, opts = {}) {
   return { written: n, total: docs.length };
 }
 
+// Retrieve a previously-delivered artifact (relative path under the sink root) as a Blob, for the in-app
+// document viewer. null if the file isn't there (409). Needs files.content.read (same scope as store read).
+export async function dropboxRetrieve(sink, relPath) {
+  const token = await dropboxToken(sink);
+  const path = dbxPath(sink.rootFolderName || '', relPath);
+  const r = await fetch(DOWNLOAD_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Dropbox-API-Arg': apiArg({ path }) } });
+  if (r.status === 409) return null;
+  if (!r.ok) throw new Error(`Dropbox download ${r.status}`);
+  return await r.blob();
+}
+
 // Canonical-store backend on Dropbox: per-source JSON at <root>/<storeFolder>/<sourceId>.json, reusing the
 // sink's token. All ops are best-effort/silent — a store read/write must never break a List or delivery.
 export function dropboxStore(sink, cfg = {}) {

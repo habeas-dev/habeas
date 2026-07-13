@@ -238,6 +238,33 @@ async function readJsonFile(dir, name) {
   catch (e) { return []; }
 }
 
+// --- Retrieve a delivered artifact (relative path under the sink's target) as a Blob, for the in-app
+// document viewer. null if absent; throws on a real error. Mirror the delivery sinks' rooting/auth. -------
+export async function webdavRetrieve(sink, relPath) {
+  const base = String(sink.url || '').replace(/\/+$/, '');
+  const auth = await webdavAuthHeader(sink);
+  const r = await fetch(base + '/' + encodePath(relPath), { headers: auth ? { Authorization: auth } : {} });
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error(`WebDAV GET ${r.status}`);
+  return await r.blob();
+}
+export async function s3Retrieve(sink, relPath) {
+  const cfg = await s3Config(sink);
+  const url = s3Url(cfg, s3Key(cfg, relPath));
+  const { headers } = await sigv4Sign({ method: 'GET', url, region: cfg.region, accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey, amzDate: amzNow(), payloadHash: S3_EMPTY_SHA });
+  const r = await fetch(url, { headers });
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error(`S3 GET ${r.status}`);
+  return await r.blob();
+}
+export async function folderRetrieve(dirHandle, relPath) {
+  let dir = dirHandle;
+  const parts = String(relPath).split('/').filter(Boolean);
+  const name = parts.pop();
+  for (const p of parts) dir = await dir.getDirectoryHandle(p);
+  return await (await dir.getFileHandle(name)).getFile();
+}
+
 // --- Canonical-store backends (reuse the delivery sinks' primitives) --------------------------------
 // Per-source JSON at <storeFolder>/<sourceId>.json under the sink's target, reusing its credentials.
 // All ops best-effort/silent — a store read/write must never break a List or delivery.
