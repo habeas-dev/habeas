@@ -75,12 +75,15 @@ function render() {
     const ver = e.version ? ` · v${esc(e.version)}` : '';
     const needs = !compatible ? ` <span class="pill" style="border-color:#c77;color:#c77" title="${esc(t('market_needs_version', [e.minVersion]))}">${t('market_needs_pill', [esc(e.minVersion)])}</span>` : '';
     const label = !compatible ? t('market_needs_version', [esc(e.minVersion)]) : !installed ? t('market_install') : up ? t('market_update', [esc(inst.version || '?'), esc(e.version)]) : t('market_installed');
+    // Declared GAPS — products this source doesn't cover yet (e.g. cards) that a user who has them can add.
+    const gaps = (inst && inst.gaps) || e.gaps;
+    const gapsHtml = (gaps && gaps.length) ? ` <span class="pill" style="border-color:#b46900;color:#b46900" title="${esc(t('market_gaps_hint'))}">${esc(t('market_gaps', [gaps.join(', ')]))}</span>` : '';
     return `<div class="card" data-id="${esc(e.id)}">
       <div class="row">
         <div style="flex:1">
           <b>${esc(e.name || e.id)}</b> <code>${esc(e.id)}</code><br>
           <span class="muted">${e.country ? flag(e.country) + ' ' : ''}${esc((e.categories || []).join(', '))} · ${esc(e.domain || '')}${(e.formats || []).length ? ' · ' + esc((e.formats || []).join('/').toUpperCase()) : ''}${ver}</span>
-          <span class="pill type">${trust}</span> ${offsite}${up ? ` <span class="pill" style="border-color:#c77;color:#c77">${t('market_update_pill')}</span>` : ''}${needs}
+          <span class="pill type">${trust}</span> ${offsite}${up ? ` <span class="pill" style="border-color:#c77;color:#c77">${t('market_update_pill')}</span>` : ''}${needs}${gapsHtml}
           <span class="rating muted" data-rate="${esc(e.id)}"></span>
         </div>
         <button data-more="${esc(e.id)}">${t('market_details')}</button>

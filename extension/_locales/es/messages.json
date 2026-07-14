@@ -347,6 +347,8 @@
   "market_install": { "message": "Instalar" },
   "market_complete": { "message": "Completar" },
   "market_complete_hint": { "message": "Graba un producto que le falte a esta fuente (una tarjeta, una inversión) y añádelo como stream nuevo." },
+  "market_gaps": { "message": "faltan: $G$", "placeholders": { "g": { "content": "$1" } } },
+  "market_gaps_hint": { "message": "Productos que esta fuente aún no cubre — instálala y usa «Completar» para añadir uno que tengas." },
   "market_installed": { "message": "Instalada" },
   "market_update": { "message": "Actualizar ($V1$ → $V2$)", "placeholders": { "v1": { "content": "$1" }, "v2": { "content": "$2" } } },
   "market_update_pill": { "message": "actualización" },

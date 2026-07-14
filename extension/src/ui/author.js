@@ -8,6 +8,7 @@ import { editJson } from './jsoneditor.js';
 import { renderPage } from '../lib/render.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { saveSource, getAdapters } from '../adapters/index.js';
+import { bumpSourceVersion } from '../registry/share.js';
 import { grantConsent } from '../lib/consent.js';
 import { esc } from '../lib/esc.js';
 
@@ -363,7 +364,8 @@ async function onAugment() {
   const cur = buildAdapter();
   if (!cur || !cur.api || !cur.api.list || !cur.api.list.path) { $('#status').textContent = t('author_no_list'); return; }
   const sid = streamIdOf(cur);
-  const augmented = augmentSource(BASE, flatToStream(cur, sid));
+  // Bump the version so the edit is a proper UPDATE the marketplace will offer (the PR overwrites the file).
+  const augmented = bumpSourceVersion(augmentSource(BASE, flatToStream(cur, sid)));
   const v = validateAdapter(augmented);
   if (!v.ok) { $('#status').textContent = t('author_invalid', [v.errors.join('; ')]); return; }
   const edited = await editJson(augmented);

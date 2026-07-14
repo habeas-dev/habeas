@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { augmentSource, flatToStream } from '../src/runtime/infer.js';
+import { bumpSourceVersion } from '../src/registry/share.js';
 import { resolveOutput, outputsOf } from '../src/lib/outputs.js';
 import { validateAdapter } from '../src/adapters/validate.js';
 
@@ -57,6 +58,14 @@ test('augmenting an ALREADY-streamed source just appends', () => {
   assert.equal(out2.streams.length, 3);
   assert.deepEqual(out2.streams.map((s) => s.id), ['principal', 'tarjetas', 'inversion']);
   assert.ok(validateAdapter(out2).ok);
+});
+
+test('bumpSourceVersion moves an edited source forward so the marketplace offers it', () => {
+  assert.equal(bumpSourceVersion({ version: '2026-07-01' }, '2026-07-14').version, '2026-07-14'); // older → today
+  assert.equal(bumpSourceVersion({ version: '2026-07-14' }, '2026-07-14').version, '2026-07-14.1'); // same day → .1
+  assert.equal(bumpSourceVersion({ version: '2026-07-14.1' }, '2026-07-14').version, '2026-07-14.2'); // .1 → .2
+  assert.equal(bumpSourceVersion({ version: '2026-08-01' }, '2026-07-14').version, '2026-08-01.1'); // future → .1
+  assert.equal(bumpSourceVersion({}, '2026-07-14').version, '2026-07-14'); // none → today
 });
 
 test('flatToStream de-nests a flat adapter (host stays out, list/fields go in)', () => {

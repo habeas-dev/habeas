@@ -347,6 +347,8 @@
   "market_install": { "message": "Install" },
   "market_complete": { "message": "Complete" },
   "market_complete_hint": { "message": "Record a product this source is missing (a card, an investment) and add it as a new stream." },
+  "market_gaps": { "message": "missing: $G$", "placeholders": { "g": { "content": "$1" } } },
+  "market_gaps_hint": { "message": "Products this source does not cover yet — install it and use “Complete” to add one you have." },
   "market_installed": { "message": "Installed" },
   "market_update": { "message": "Update ($V1$ → $V2$)", "placeholders": { "v1": { "content": "$1" }, "v2": { "content": "$2" } } },
   "market_update_pill": { "message": "update available" },
