@@ -45,7 +45,11 @@ const fail = (m) => { mount.innerHTML = ''; const p = document.createElement('p'
     document.title = `${base} ${(record.date || '').slice(0, 10)}`;
 
     const res = await retrieveDelivered(sink, adapter, record);
-    if (!res) return fail('No se pudo recuperar el fichero de este destino (¿ruta no reconstruible o falta reconectar?).');
+    if (!res || !res.blob) {
+      const tried = (res && res.tried && res.tried.length) ? '\n\nRutas probadas:\n' + res.tried.join('\n') : '';
+      const hint = (res && res.reason) ? ' (' + res.reason + ')' : ' — si fue entregado por una versión antigua, prueba a re-descargarlo (toggle «Re-descargar del sitio») para regenerar la ruta.';
+      return fail('No se pudo recuperar el fichero de este destino' + hint + tried);
+    }
     const url = URL.createObjectURL(res.blob); // created in THIS tab → lives as long as the tab
     const f = document.createElement('iframe'); f.className = 'frame'; f.src = url;
     mount.innerHTML = ''; mount.appendChild(f);
