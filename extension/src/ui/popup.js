@@ -29,7 +29,7 @@ let filterGroup = '', filterType = '', sortKey = 'date', sortDir = -1; // date d
 const resetView = () => { filterGroup = ''; filterType = ''; sortKey = 'date'; sortDir = -1; };
 const log = (m) => { const el = $('#log'); if (el) el.textContent += m + '\n'; console.debug('[Habeas]', m); };
 const clearLog = () => { const el = $('#log'); if (el) el.textContent = ''; };
-const fmt = (n) => (typeof n === 'number' ? n.toFixed(2) + ' €' : '');
+const fmt = (n, cur) => (typeof n === 'number' ? n.toFixed(2) + ' ' + (cur || 'EUR') : (n == null || n === '' ? '' : String(n)));
 const localWhen = (iso) => {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso || '';
@@ -213,7 +213,7 @@ const nameOf = (v) => (v && typeof v === 'object') ? (v.name || v.nombre || v.de
 // Marked _fromStore so send delivers them WITHOUT fetching documents (a projection of what we already have).
 const docsFromStore = (records) => records.map((r) => ({
   internalId: r.internalId, record: r, _fromStore: true,
-  date: r.date, total: r.total ?? r.amount, type: r.type, returnStatus: r.returnStatus, group: r.group || '',
+  date: r.date, total: r.total ?? r.amount, currency: r.currency, type: r.type, returnStatus: r.returnStatus, group: r.group || '',
   storeName: nameOf(r.store && r.store.name) || nameOf(r.storeName), label: nameOf(r.store && r.store.name) || nameOf(r.issuer) || nameOf(r.counterparty) || nameOf(r.description) || '',
 }));
 
@@ -408,7 +408,7 @@ const rowHtml = (d, i, delivered) => {
      <td><span class="pill type">${esc(d.type || '')}</span>${d.returnStatus ? ` <span class="pill returned" title="${esc(d.returnStatus)}">↩ ${esc(d.returnStatus)}</span>` : ''}</td>
      <td>${esc(d.storeName || d.label || d._streamName || d.internalId || '')}</td>
      <td class="files">${renderFiles(d)}</td>
-     <td class="r">${fmt(d.total ?? d.amount)}</td>
+     <td class="r">${fmt(d.total ?? d.amount, d.currency || (d.record && d.record.currency))}</td>
      <td>${sent ? `<span class="pill sent" title="${esc(t('pill_sent_hint'))}">${t('pill_sent')}</span>` : `<span class="pill new" title="${esc(t('pill_new_hint'))}">${t('pill_new')}</span>`}</td>
    </tr>`;
 };
@@ -686,7 +686,7 @@ function renderDocsTable() {
   docsFiltered = rows;
   $('#docs-status').textContent = t('n_documents', [String(rows.length)]);
   $('#docs-tbody').innerHTML = rows.map((r, i) => {
-    const money = r.record.total != null ? esc(`${r.record.total}${r.record.currency ? ' ' + r.record.currency : ''}`) : '';
+    const money = esc(fmt(r.record.total ?? r.record.amount, r.record.currency));
     const badges = r.delivered.length
       ? r.delivered.map((s) => `<span class="badge-sink" data-row="${i}" data-sink="${esc(s.id)}" title="${esc(t('view_from', [sinkLabel(s)]))}">${esc(sinkLabel(s))}</span>`).join('')
       : '<span class="muted">—</span>';
