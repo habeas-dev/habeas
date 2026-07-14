@@ -98,11 +98,20 @@ function adapterFor(dsId, cfg) {
   return { ds, adapter: ds && ADAPTERS[ds.adapter] };
 }
 
+// The effective GROUPED adapter for a source: the base if it declares api.groups, else the first stream
+// that does — a streamed source (ING) declares api.groups per stream, not at the top level. null = not grouped.
+function groupedAdapterOf(adapter) {
+  if (!adapter) return null;
+  if (adapter.api && adapter.api.groups) return adapter;
+  for (const s of adapter.streams || []) { const eff = resolveOutput(adapter, s.id); if (eff.api && eff.api.groups) return eff; }
+  return null;
+}
+
 // The "Accounts" button only makes sense for a grouped source (a bank with several accounts/cards).
 function refreshAccountsBtn(cfg) {
   const btn = $('#accounts'); if (!btn) return;
   const { adapter } = adapterFor($('#ds').value, cfg);
-  btn.hidden = !(adapter && adapter.api && adapter.api.groups);
+  btn.hidden = !groupedAdapterOf(adapter);
 }
 
 // Persistent account filter: enumerate the source's accounts, let the user check which to import, and SAVE
@@ -110,13 +119,14 @@ function refreshAccountsBtn(cfg) {
 async function onManageAccounts() {
   const cfg = await getConfig();
   const { ds, adapter } = adapterFor($('#ds').value, cfg);
-  if (!adapter || !(adapter.api && adapter.api.groups)) return;
+  const gAdapter = groupedAdapterOf(adapter);           // has api.groups (base or a stream) — used to enumerate
+  if (!gAdapter) return;
   if (!(await hasConsent(adapter))) { $('#status').textContent = t('needs_consent'); return; }
   const auth = await getAuth(adapter);
   $('#status').textContent = t('accounts_loading');
   let net; try { net = await ensureSiteFetch(adapter, { open: true }); } catch (e) {}
   let selected;
-  try { selected = await manageAccounts(adapter, auth, net, (ds && ds.groups) || null); }
+  try { selected = await manageAccounts(gAdapter, auth, net, (ds && ds.groups) || null); }
   catch (e) { $('#status').textContent = t('accounts_failed'); return; }
   if (selected == null) { $('#status').textContent = ''; return; } // cancelled
   const c = await getConfig();
