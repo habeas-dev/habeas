@@ -68,6 +68,7 @@
   "all_documents": { "message": "Todos los documentos" },
   "refresh": { "message": "Recargar" },
   "docs_search": { "message": "Buscar…" },
+  "docs_pick_source": { "message": "Elige fuente…" },
   "th_source": { "message": "Fuente" },
   "th_delivered_to": { "message": "Entregado en" },
   "docs_loading": { "message": "Cargando documentos…" },

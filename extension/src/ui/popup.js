@@ -642,12 +642,22 @@ const docStore = (r) => nameOf(r.store && r.store.name) || nameOf(r.storeName) |
 function wireDocsTab() {
   $('#tab-sources').onclick = () => switchTab('sources');
   $('#tab-docs').onclick = () => switchTab('docs');
-  $('#docs-refresh').onclick = () => { docsRows = null; renderDocuments(); };
+  $('#docs-refresh').onclick = () => renderDocuments();
   $('#docs-search').oninput = renderDocsTable;
-  $('#docs-source').onchange = () => { populateDocsGroups(); renderDocsTable(); };
+  $('#docs-source').onchange = () => { const v = $('#docs-source').value; if (v) loadSourceDocs(v); else clearDocs(); };
   $('#docs-group').onchange = renderDocsTable;
+  // Event delegation: one handler for the whole (incrementally-rendered) table, no per-row wiring.
+  $('#docs-tbody').onclick = (ev) => {
+    const view = ev.target.closest('.doc-view'); if (view) { openDocModal(docsFiltered[+view.dataset.row]); return; }
+    const badge = ev.target.closest('.badge-sink'); if (badge && badge.dataset.sink) { const r = docsFiltered[+badge.dataset.row]; openDeliveredFile(r, r.delivered.find((s) => s.id === badge.dataset.sink)); }
+  };
   $('#doc-modal-close').onclick = closeDocModal;
   $('#doc-modal .doc-modal-backdrop').onclick = closeDocModal;
+}
+
+function clearDocs() {
+  docsRows = null; docsFiltered = [];
+  $('#docs-tbody').innerHTML = ''; $('#docs-group').hidden = true; $('#docs-status').textContent = '';
 }
 
 function switchTab(which) {
@@ -669,22 +679,33 @@ function enrichRecord(r, k) {
   return out;
 }
 
+// Populate the source selector ONLY (cheap: just the store keys) — do NOT load any source's items yet, so
+// opening the tab is instant even when a source (e.g. Amazon, ~15y) is huge. Items load when a source is picked.
 async function renderDocuments() {
+  const keys = await listSources();
+  const srcs = [...new Set(keys.map((k) => String(k).split(':')[0]))].sort();
+  const prev = $('#docs-source').value;
+  $('#docs-source').innerHTML = `<option value="">${esc(t('docs_pick_source'))}</option>` + srcs.map((s) => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  $('#docs-source').value = srcs.includes(prev) ? prev : '';
+  if ($('#docs-source').value) await loadSourceDocs($('#docs-source').value);
+  else clearDocs();
+}
+
+// Load ONE source's documents from the canonical store (only when picked), then render incrementally.
+async function loadSourceDocs(base) {
   $('#docs-status').textContent = t('docs_loading');
   const cfg = await getConfig();
   const retrievableSinks = (cfg.sinks || []).filter((s) => isRetrievable(s));
-  const keys = await listSources();
-  const rows = [];
-  const metaCache = {};        // adapterId -> docMeta
+  const ds = cfg.datasources.find((d) => d.adapter === base) || cfg.datasources.find((d) => d.id === base);
+  const dsId = (ds && ds.id) || base;                           // delivery ledger is keyed by the DATASOURCE id
+  const adapter = (ds && ADAPTERS[ds.adapter]) || ADAPTERS[base] || null;
+  const known = await getDocMeta(base).catch(() => ({}));
+  const keys = (await listSources()).filter((k) => String(k).split(':')[0] === base);
   const deliveredCache = {};   // "dsId::sinkId" -> delivered set
+  const rows = [];
   for (const key of keys) {
-    const base = String(key).split(':')[0];                       // adapter.id (store key = storeKeyOf(adapter.id, stream))
-    const ds = cfg.datasources.find((d) => d.adapter === base) || cfg.datasources.find((d) => d.id === base);
-    const dsId = (ds && ds.id) || base;                           // delivery ledger is keyed by the DATASOURCE id
-    const adapter = (ds && ADAPTERS[ds.adapter]) || ADAPTERS[base] || null;
     const src = await getSource(key).catch(() => null);
     if (!src || !src.items) continue;
-    const known = metaCache[base] || (metaCache[base] = await getDocMeta(base).catch(() => ({})));
     for (const [internalId, e] of Object.entries(src.items)) {
       if (e.gone) continue;
       const record = enrichRecord(e.record || {}, known[internalId]);
@@ -699,14 +720,8 @@ async function renderDocuments() {
   }
   rows.sort((a, b) => ((a.record.date || '') < (b.record.date || '') ? 1 : -1)); // newest first
   docsRows = rows;
-  // One source at a time — the documents view must NEVER show items from different sources mixed together.
-  // The source selector is mandatory (no "all"); default to the first, preserving a still-valid selection.
-  const srcs = [...new Set(rows.map((r) => r.base))].sort();
-  const prev = $('#docs-source').value;
-  $('#docs-source').innerHTML = srcs.length ? srcs.map((s) => `<option value="${esc(s)}">${esc(s)}</option>`).join('') : `<option value="">—</option>`;
-  if (srcs.includes(prev)) $('#docs-source').value = prev;
   populateDocsGroups();
-  renderDocsTable();
+  await renderDocsTable();
 }
 
 // Group/account filter for the Documents view — only when the selected source has ≥2 accounts (record.group).
@@ -720,25 +735,12 @@ function populateDocsGroups() {
   sel.value = groups.includes(prev) ? prev : '';
 }
 
-function renderDocsTable() {
-  if (!docsRows) return;
-  const q = ($('#docs-search').value || '').trim().toLowerCase();
-  const srcFilter = $('#docs-source').value;
-  const grpFilter = $('#docs-group').value;
-  const rows = docsRows.filter((r) => {
-    if (r.base !== srcFilter) return false; // exactly one source — never mix
-    if (grpFilter && r.record.group !== grpFilter) return false; // filter by account (grouped sources)
-    if (!q) return true;
-    return [r.base, r.internalId, r.record.date, docStore(r.record), r.record.type].join(' ').toLowerCase().includes(q);
-  });
-  docsFiltered = rows;
-  $('#docs-status').textContent = t('n_documents', [String(rows.length)]);
-  $('#docs-tbody').innerHTML = rows.map((r, i) => {
-    const money = esc(fmt(r.record.total ?? r.record.amount, r.record.currency));
-    const badges = r.delivered.length
-      ? r.delivered.map((s) => `<span class="badge-sink" data-row="${i}" data-sink="${esc(s.id)}" title="${esc(t('view_from', [sinkLabel(s)]))}">${esc(sinkLabel(s))}</span>`).join('')
-      : '<span class="muted">—</span>';
-    return `<tr>
+function docRowHtml(r, i) {
+  const money = esc(fmt(r.record.total ?? r.record.amount, r.record.currency));
+  const badges = r.delivered.length
+    ? r.delivered.map((s) => `<span class="badge-sink" data-row="${i}" data-sink="${esc(s.id)}" title="${esc(t('view_from', [sinkLabel(s)]))}">${esc(sinkLabel(s))}</span>`).join('')
+    : '<span class="muted">—</span>';
+  return `<tr>
       <td>${esc(r.base)}</td>
       <td>${esc((r.record.date || '').slice(0, 10))}</td>
       <td>${esc(docStore(r.record))}${r.record.group ? ' <span class="muted">· ' + esc(r.record.group) + '</span>' : ''}</td>
@@ -747,9 +749,35 @@ function renderDocsTable() {
       <td>${badges}</td>
       <td><button class="doc-view" data-row="${i}" title="${esc(t('view'))}">👁</button></td>
     </tr>`;
-  }).join('') || `<tr><td colspan="7" class="muted">${esc(t('no_documents'))}</td></tr>`;
-  $('#docs-tbody').querySelectorAll('.doc-view').forEach((b) => { b.onclick = () => openDocModal(docsFiltered[+b.dataset.row]); });
-  $('#docs-tbody').querySelectorAll('.badge-sink').forEach((b) => { b.onclick = () => { const r = docsFiltered[+b.dataset.row]; openDeliveredFile(r, r.delivered.find((s) => s.id === b.dataset.sink)); }; });
+}
+
+// Render the (filtered) rows in BATCHES, yielding between them, so a large source (thousands of rows) paints
+// progressively and never freezes the popup. A render-sequence guard aborts a run superseded by a newer one
+// (e.g. the user typed in the search box or switched account) so overlapping renders don't fight.
+let docsRenderSeq = 0;
+async function renderDocsTable() {
+  if (!docsRows) { $('#docs-tbody').innerHTML = ''; return; }
+  const seq = ++docsRenderSeq;
+  const q = ($('#docs-search').value || '').trim().toLowerCase();
+  const srcFilter = $('#docs-source').value;
+  const grpFilter = $('#docs-group').value;
+  const rows = docsRows.filter((r) => {
+    if (srcFilter && r.base !== srcFilter) return false; // exactly one source — never mix
+    if (grpFilter && r.record.group !== grpFilter) return false; // filter by account (grouped sources)
+    if (!q) return true;
+    return [r.base, r.internalId, r.record.date, docStore(r.record), r.record.type].join(' ').toLowerCase().includes(q);
+  });
+  docsFiltered = rows;
+  const tbody = $('#docs-tbody'); tbody.innerHTML = '';
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="7" class="muted">${esc(t('no_documents'))}</td></tr>`; $('#docs-status').textContent = t('n_documents', ['0']); return; }
+  const BATCH = 250;
+  for (let i = 0; i < rows.length; i += BATCH) {
+    if (seq !== docsRenderSeq) return; // superseded by a newer render → stop
+    tbody.insertAdjacentHTML('beforeend', rows.slice(i, i + BATCH).map((r, j) => docRowHtml(r, i + j)).join(''));
+    $('#docs-status').textContent = t('n_documents', [String(Math.min(i + BATCH, rows.length))]);
+    if (i + BATCH < rows.length) await new Promise((res) => setTimeout(res, 0)); // yield → progressive paint
+  }
+  $('#docs-status').textContent = t('n_documents', [String(rows.length)]);
 }
 
 // Generic schematic viewer for a JSON object (record or a retrieved JSON file). Recursive key→value table;
