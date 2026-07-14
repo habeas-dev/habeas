@@ -11,6 +11,8 @@
     .tab.active { color: var(--fg, inherit); border-bottom-color: var(--accent, #4a7); font-weight: 600; }
     .badge-sink { display: inline-block; padding: 1px 7px; margin: 0 3px 3px 0; border-radius: 999px; font-size: 11px; border: 1px solid var(--line); cursor: pointer; }
     .badge-sink:hover { background: var(--accent, #4a7); color: #fff; }
+    .badge-sink.nofile { cursor: default; opacity: .55; }
+    .badge-sink.nofile:hover { background: none; color: inherit; }
     #doc-modal[hidden] { display: none; }
     .doc-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); }
     .doc-modal-panel { position: fixed; inset: 5% 5% auto 5%; max-height: 88vh; overflow: auto; background: var(--bg, #fff); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; box-shadow: 0 10px 40px rgba(0,0,0,.35); }

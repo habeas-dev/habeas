@@ -16,9 +16,9 @@ export const isRetrievable = (sink) => !!sink && RETRIEVABLE.has(sink.type);
 // The relative paths a delivered doc could occupy. Mirrors delivery: service = adapter.service||id, ext
 // variants (a source may emit pdf and/or html/json), and BOTH with- and without the account/group folder —
 // a row loaded from the store may have lost/changed its group label vs the folder it was written under.
-function candidatePaths(adapter, sink, record) {
+function candidatePaths(adapter, sink, record, preferExt) {
   const service = (adapter && adapter.service) || (adapter && adapter.id) || 'documents';
-  const exts = [...new Set([documentExt(adapter), 'pdf', 'html', 'json'].filter(Boolean))];
+  const exts = [...new Set([preferExt, documentExt(adapter), 'pdf', 'xls', 'xlsx', 'html', 'json'].filter(Boolean))];
   const variants = [{ date: record.date, internalId: record.internalId, _group: record.group ? { name: record.group } : null }];
   if (record.group) variants.push({ date: record.date, internalId: record.internalId, _group: null }); // no-group fallback
   const out = [];
@@ -28,7 +28,8 @@ function candidatePaths(adapter, sink, record) {
 
 // Try to pull the delivered file back. Returns { blob, ext } on success, or { tried:[paths] } on failure
 // (so the viewer can show what it looked for — was the file absent, or the path not reconstructable?).
-export async function retrieveDelivered(sink, adapter, record) {
+// preferExt: try that format's path first (a statement delivered as both PDF and Excel).
+export async function retrieveDelivered(sink, adapter, record, preferExt) {
   if (!isRetrievable(sink)) return { tried: [] };
   let handle = null;
   if (sink.type === 'local-folder') {
@@ -36,7 +37,7 @@ export async function retrieveDelivered(sink, adapter, record) {
     if (!handle || !(await verifyPermission(handle).catch(() => false))) return { tried: [], reason: 'folder not connected' };
   }
   const tried = [];
-  for (const { ext, path } of candidatePaths(adapter, sink, record)) {
+  for (const { ext, path } of candidatePaths(adapter, sink, record, preferExt)) {
     try {
       let blob = null;
       if (sink.type === 'dropbox') blob = await dropboxRetrieve(sink, path);

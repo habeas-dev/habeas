@@ -80,6 +80,7 @@
   "opening": { "message": "Opening…" },
   "retrieve_failed": { "message": "Could not retrieve the file from this destination." },
   "download": { "message": "Download" },
+  "delivered_nofile": { "message": "Delivered here (record only — no individual file)" },
   "fetching": { "message": "Fetching $COUNT$ documents…", "placeholders": { "count": { "content": "$1" } } },
   "with_without_pdf": { "message": "With PDF: $A$ · without PDF (not retained): $B$", "placeholders": { "a": { "content": "$1" }, "b": { "content": "$2" } } },
   "sent_docs": { "message": "Sent to \"$SINK$\": $N$ documents + manifest ($T$ records)", "placeholders": { "sink": { "content": "$1" }, "n": { "content": "$2" }, "t": { "content": "$3" } } },

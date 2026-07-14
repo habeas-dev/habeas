@@ -106,6 +106,26 @@ function groupAllowed(ds, group) {
   return !(labels && labels.length) || !group || labels.includes(group);
 }
 
+// The deliverable FILE formats for a store key's stream: [{ id, ext, name }] — empty when the stream is
+// record-only (a bank movement has no per-item file, only its manifest record). A statement stream may
+// have several (PDF + Excel). Used to decide whether a "delivered" badge is openable (and offer each file).
+function fileFormatsFor(adapter, streamId) {
+  if (!adapter) return [];
+  if (!adapter.streams || !adapter.streams.length) {
+    return artifactKinds(adapter).filter((k) => k.kind === 'document').map((k) => ({ id: '', ext: k.ext, name: (k.ext || 'file').toUpperCase() }));
+  }
+  const s = adapter.streams.find((x) => x.id === streamId);
+  if (!s) return [];
+  const formats = (s.formats && s.formats.length) ? s.formats : [{ id: '', name: '' }];
+  const out = [];
+  for (const f of formats) {
+    const eff = resolveOutput(adapter, s.id + (f.id ? '/' + f.id : ''));
+    const doc = artifactKinds(eff).find((k) => k.kind === 'document');
+    if (doc) out.push({ id: f.id, ext: doc.ext, name: f.name || (doc.ext || 'file').toUpperCase() });
+  }
+  return out;
+}
+
 // The effective GROUPED adapter for a source: the base if it declares api.groups, else the first stream
 // that does — a streamed source (ING) declares api.groups per stream, not at the top level. null = not grouped.
 function groupedAdapterOf(adapter) {
@@ -671,7 +691,7 @@ function wireDocsTab() {
   // Event delegation: one handler for the whole (incrementally-rendered) table, no per-row wiring.
   $('#docs-tbody').onclick = (ev) => {
     const view = ev.target.closest('.doc-view'); if (view) { openDocModal(docsFiltered[+view.dataset.row]); return; }
-    const badge = ev.target.closest('.badge-sink'); if (badge && badge.dataset.sink) { const r = docsFiltered[+badge.dataset.row]; openDeliveredFile(r, r.delivered.find((s) => s.id === badge.dataset.sink)); }
+    const badge = ev.target.closest('.badge-sink'); if (badge && !badge.classList.contains('nofile') && badge.dataset.sink) { const r = docsFiltered[+badge.dataset.row]; openDeliveredFile(r, r.delivered.find((s) => s.id === badge.dataset.sink), badge.dataset.ext); }
   };
   $('#doc-modal-close').onclick = closeDocModal;
   $('#doc-modal .doc-modal-backdrop').onclick = closeDocModal;
@@ -728,6 +748,8 @@ async function loadSourceDocs(base) {
   for (const key of keys) {
     const src = await getSource(key).catch(() => null);
     if (!src || !src.items) continue;
+    const stream = String(key).split(':')[1] || '';
+    const formats = fileFormatsFor(adapter, stream);   // deliverable file formats for this stream (empty = record-only)
     for (const [internalId, e] of Object.entries(src.items)) {
       if (e.gone) continue;
       const record = enrichRecord(e.record || {}, known[internalId]);
@@ -738,7 +760,7 @@ async function loadSourceDocs(base) {
         const set = deliveredCache[ck] || (deliveredCache[ck] = await deliveredSet(dsId, sink.id).catch(() => ({})));
         if (set[internalId]) delivered.push(sink);
       }
-      rows.push({ base, dsId, adapter, internalId, record, delivered });
+      rows.push({ base, dsId, adapter, internalId, record, delivered, formats });
     }
   }
   rows.sort((a, b) => ((a.record.date || '') < (b.record.date || '') ? 1 : -1)); // newest first
@@ -760,8 +782,13 @@ function populateDocsGroups() {
 
 function docRowHtml(r, i) {
   const money = esc(fmt(r.record.total ?? r.record.amount, r.record.currency));
+  // One badge per (sink × file format). A record-only stream (a bank movement) has no file → the badge is
+  // non-clickable (.nofile). A statement stream with PDF+Excel gets one openable badge per format.
   const badges = r.delivered.length
-    ? r.delivered.map((s) => `<span class="badge-sink" data-row="${i}" data-sink="${esc(s.id)}" title="${esc(t('view_from', [sinkLabel(s)]))}">${esc(sinkLabel(s))}</span>`).join('')
+    ? r.delivered.map((s) => (!r.formats.length
+      ? `<span class="badge-sink nofile" data-row="${i}" data-sink="${esc(s.id)}" title="${esc(t('delivered_nofile'))}">${esc(sinkLabel(s))}</span>`
+      : r.formats.map((f) => `<span class="badge-sink" data-row="${i}" data-sink="${esc(s.id)}" data-ext="${esc(f.ext)}" title="${esc(t('open_from', [sinkLabel(s)]))} · ${esc(f.name)}">${esc(sinkLabel(s))}${r.formats.length > 1 ? ' · ' + esc(f.name) : ''}</span>`).join('')
+    )).join('')
     : '<span class="muted">—</span>';
   return `<tr>
       <td>${esc(r.base)}</td>
@@ -829,11 +856,12 @@ function openDocModal(row) {
   $('#doc-modal-title').textContent = `${row.base} · ${(row.record.date || '').slice(0, 10)}`;
   const body = $('#doc-modal-body'); body.innerHTML = ''; body.appendChild(renderKv(row.record));
   const actions = $('#doc-modal-actions'); actions.innerHTML = '';
-  // One "Open from <sink>" per retrievable delivery → opens the real file in a new full-size tab.
-  for (const sink of row.delivered) {
+  // One "Open from <sink>" button per retrievable delivery × file format (a record-only movement gets none;
+  // a statement with PDF + Excel gets one per format). Opens the real file in a new full-size tab.
+  for (const sink of row.delivered) for (const f of (row.formats || [])) {
     const btn = document.createElement('button');
-    btn.textContent = t('open_from', [sinkLabel(sink)]);
-    btn.onclick = () => openDeliveredFile(row, sink);
+    btn.textContent = t('open_from', [sinkLabel(sink)]) + ((row.formats.length > 1) ? ' · ' + f.name : '');
+    btn.onclick = () => openDeliveredFile(row, sink, f.ext);
     actions.appendChild(btn);
   }
   $('#doc-modal').hidden = false;
@@ -841,9 +869,9 @@ function openDocModal(row) {
 
 // Open the actual delivered document in a NEW TAB (docview.html re-fetches it there, so the blob URL isn't
 // tied to — and revoked by — the popup). PDFs/HTML/images render full-size via the browser's own viewer.
-function openDeliveredFile(row, sink) {
+function openDeliveredFile(row, sink, ext) {
   if (!row || !sink) return;
-  const url = chrome.runtime.getURL(`src/ui/docview.html?sink=${encodeURIComponent(sink.id)}&src=${encodeURIComponent(row.base)}&id=${encodeURIComponent(row.internalId)}`);
+  const url = chrome.runtime.getURL(`src/ui/docview.html?sink=${encodeURIComponent(sink.id)}&src=${encodeURIComponent(row.base)}&id=${encodeURIComponent(row.internalId)}${ext ? '&ext=' + encodeURIComponent(ext) : ''}`);
   chrome.tabs.create({ url });
 }
 

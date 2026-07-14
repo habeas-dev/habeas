@@ -80,6 +80,7 @@
   "opening": { "message": "Abriendo…" },
   "retrieve_failed": { "message": "No se pudo recuperar el fichero de este destino." },
   "download": { "message": "Descargar" },
+  "delivered_nofile": { "message": "Entregado aquí (solo registro — sin fichero individual)" },
   "fetching": { "message": "Obteniendo $COUNT$ documentos…", "placeholders": { "count": { "content": "$1" } } },
   "with_without_pdf": { "message": "Con PDF: $A$ · sin PDF (no conservados): $B$", "placeholders": { "a": { "content": "$1" }, "b": { "content": "$2" } } },
   "sent_docs": { "message": "Enviado a «$SINK$»: $N$ documentos + manifiesto ($T$ registros)", "placeholders": { "sink": { "content": "$1" }, "n": { "content": "$2" }, "t": { "content": "$3" } } },

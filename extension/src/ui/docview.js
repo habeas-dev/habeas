@@ -10,7 +10,7 @@ import { getDocMeta } from '../lib/state.js';
 import { retrieveDelivered } from '../lib/retrieve.js';
 
 const qs = new URLSearchParams(location.search);
-const sinkId = qs.get('sink'), base = qs.get('src'), id = qs.get('id');
+const sinkId = qs.get('sink'), base = qs.get('src'), id = qs.get('id'), preferExt = qs.get('ext') || undefined;
 const bar = document.getElementById('bar');
 const mount = document.getElementById('mount');
 const fail = (m) => { mount.innerHTML = ''; const p = document.createElement('p'); p.className = 'msg'; p.textContent = m; mount.appendChild(p); };
@@ -44,7 +44,7 @@ const fail = (m) => { mount.innerHTML = ''; const p = document.createElement('p'
     bar.textContent = label + ' — cargando…';
     document.title = `${base} ${(record.date || '').slice(0, 10)}`;
 
-    const res = await retrieveDelivered(sink, adapter, record);
+    const res = await retrieveDelivered(sink, adapter, record, preferExt);
     if (!res || !res.blob) {
       const tried = (res && res.tried && res.tried.length) ? '\n\nRutas probadas:\n' + res.tried.join('\n') : '';
       const hint = (res && res.reason) ? ' (' + res.reason + ')' : ' — si fue entregado por una versión antigua, prueba a re-descargarlo (toggle «Re-descargar del sitio») para regenerar la ruta.';
