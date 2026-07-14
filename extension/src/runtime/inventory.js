@@ -235,7 +235,11 @@ async function pageList(adapter, auth, net, group, opts) {
       const added = collect(adapter, data, seen, all, group);
       report({ page: g + 1 });
       cursor = get(data, list.nextPath);
-      if (!added || !cursor) break;
+      // Some APIs keep a cursor even on the last page and signal "more" with a separate flag (Openbank:
+      // `memento` + `hasMore: "S"`). When `morePath` is declared, continue only while it equals `moreValue`
+      // (default "S"); otherwise fall back to "keep going while there's a cursor".
+      const more = list.morePath ? String(get(data, list.morePath)) === String(list.moreValue ?? 'S') : true;
+      if (!added || !cursor || !more) break;
     }
   } else if (paging === 'synthetic') {
     // No API list to page — the documents exist once per GROUP (a per-account report over the window) or

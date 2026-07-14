@@ -72,16 +72,18 @@ function onWebRequestHeaders(details) {
     const adapters = WR_MAP[u.host];
     if (!adapters || !adapters.length) return;
     const reqH = details.requestHeaders || [];
-    const authz = reqH.find((h) => h.name.toLowerCase() === 'authorization');
     for (const a of adapters) {
-      if (authz && authz.value) {
+      // The token can live in a header OTHER than Authorization (e.g. Openbank's `openbankauthtoken`) —
+      // a source declares `auth.tokenHeader`. Gate on that header + tokenMatch, then capture it and every
+      // companion header the source replays (e.g. ING's x-ing-extendedsessioncontext).
+      const tokenHeader = ((a.auth && a.auth.tokenHeader) || 'authorization').toLowerCase();
+      const tok = reqH.find((h) => h.name.toLowerCase() === tokenHeader);
+      if (tok && tok.value) {
         const tm = (a.auth && a.auth.tokenMatch) || 'eyJ';
-        let ok; try { ok = new RegExp(tm).test(authz.value); } catch (e) { ok = authz.value.indexOf(tm) >= 0; }
+        let ok; try { ok = new RegExp(tm).test(tok.value); } catch (e) { ok = tok.value.indexOf(tm) >= 0; }
         if (ok) {
-          // Capture EVERY header this source replays (not just the token) — a source may need a companion
-          // header alongside the bearer (e.g. ING's x-ing-extendedsessioncontext). Default: authorization only.
-          const want = new Set(((a.auth && a.auth.replayHeaders) || ['authorization']).map((h) => h.toLowerCase()));
-          const hdrs = { authorization: authz.value };
+          const want = new Set(((a.auth && a.auth.replayHeaders) || [tokenHeader]).map((h) => h.toLowerCase()));
+          const hdrs = { [tokenHeader]: tok.value };
           for (const h of reqH) { const ln = h.name.toLowerCase(); if (want.has(ln) && h.value) hdrs[ln] = h.value; }
           saveAuth(u.host, u.pathname, hdrs).then(() => { maybeAutoRun(u.host); runPendingExternalCollects(u.host); });
         }

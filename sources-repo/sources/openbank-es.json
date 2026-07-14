@@ -1,0 +1,55 @@
+{
+  "id": "openbank-es",
+  "name": "Openbank España",
+  "service": "openbank",
+  "trust": "community",
+  "domain": "openbank.es",
+  "country": "ES",
+  "version": "2026-07-14",
+  "minVersion": "0.1.66.5",
+  "categories": ["banking"],
+  "gaps": ["movimientos", "tarjetas", "inversión"],
+  "throttle": { "minMs": 400, "jitterMs": 600 },
+  "match": ["https://clientes.openbank.es/*"],
+  "openUrl": "https://clientes.openbank.es/",
+  "auth": {
+    "mode": "bearer",
+    "tokenHeader": "openbankauthtoken",
+    "tokenMatch": "^eyJ",
+    "replayHeaders": ["openbankauthtoken"]
+  },
+  "api": { "host": "https://api.openbank.es" },
+  "streams": [
+    {
+      "id": "extracto-integrado",
+      "name": "Extracto integrado",
+      "schema": "invoice@1",
+      "api": {
+        "list": {
+          "path": "/extractos/comunicaciones-cursadas",
+          "paging": "cursor",
+          "cursorParam": "memento",
+          "nextPath": "memento",
+          "morePath": "hasMore",
+          "moreValue": "S",
+          "itemsPath": "datos.datos",
+          "params": { "codCategoria": "0001", "codGrupoComunicacion": "0006", "hasMorePagination": "S" }
+        },
+        "pdf": {
+          "path": "/extractos/documentos?gestorDocumental={gestorDocumental}&codigoSubaplicacion={codSubaplicacion}&codComunicacion={codComunicacion}",
+          "method": "GET",
+          "ext": "pdf"
+        }
+      },
+      "fields": {
+        "internalId": "codComunicacion",
+        "date": "fechaAlta",
+        "number": "codComunicacion",
+        "description": "Extracto integrado {fechaAlta}"
+      }
+    }
+  ],
+  "changelog": [
+    { "version": "2026-07-14", "changes": "Initial: integrated monthly statements (PDF) across all accounts. Movements/cards/investments are declared gaps for community contribution." }
+  ]
+}
