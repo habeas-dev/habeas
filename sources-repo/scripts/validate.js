@@ -113,9 +113,15 @@ function checkExtraction(a, req, label) {
   const p = label ? `[${label}] ` : '';
   req(typeof a.schema === 'string' && SCHEMA_RE.test(a.schema), p + 'schema like "receipt@1" required');
   const list = (a.api && a.api.list) || {};
-  req(typeof list.path === 'string' && list.path.startsWith('/'), p + 'api.list.path required');
-  req(list.from === 'html' || (typeof list.itemsPath === 'string' && list.itemsPath.length > 0), p + 'api.list.itemsPath required (unless list.from is "html")');
-  req(!list.paging || PAGING.has(list.paging), p + 'api.list.paging must be offsets|offset|page|cursor|none|years');
+  if (list.paging === 'synthetic') {
+    // Synthetic list: documents aren't enumerated from an API list — they exist once per period/account
+    // (a monthly or per-account statement). No path/itemsPath; the document itself comes from api.pdf.
+    req(list.synthetic && ['months', 'group', 'group-months'].includes(list.synthetic.each), p + 'api.list.synthetic.each must be months|group|group-months');
+  } else {
+    req(typeof list.path === 'string' && list.path.startsWith('/'), p + 'api.list.path required');
+    req(list.from === 'html' || (typeof list.itemsPath === 'string' && list.itemsPath.length > 0), p + 'api.list.itemsPath required (unless list.from is "html")');
+    req(!list.paging || PAGING.has(list.paging), p + 'api.list.paging must be offsets|offset|page|cursor|none|years');
+  }
   const fields = a.fields || {};
   req(typeof fields.internalId === 'string', p + 'fields.internalId required');
   req(typeof fields.date === 'string', p + 'fields.date required');

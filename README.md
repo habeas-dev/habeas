@@ -60,7 +60,7 @@ Websites (Sources)
         ▼
 Destinations (Sinks)
 
-Folder • Downloads • Google Drive • HTTP • Your applications
+Folder • Downloads • Google Drive • HTTP • WebDAV • S3 • Dropbox • Your applications
 ```
 
 Everything happens locally.
@@ -114,6 +114,9 @@ Current sinks include:
 - Local folders
 - Google Drive
 - HTTP endpoints
+- WebDAV servers
+- S3 and S3-compatible storage (MinIO, Cloudflare R2, Backblaze B2)
+- Dropbox
 
 Applications can also integrate with Habeas to receive user-authorized data without implementing provider-specific authentication and extraction logic.
 
@@ -171,7 +174,7 @@ Habeas simply runs there.
 
 # Current status
 
-**Working beta — published on both stores.**
+**Public beta — published on both stores.**
 
 Habeas is live on the [Chrome Web Store](https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog)
 and [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/habeas/).
@@ -181,10 +184,11 @@ The project already includes:
 - a Manifest V3 extension;
 - Chrome/Chromium support;
 - Firefox support;
-- multiple production-ready Sources;
-- multiple Sinks (download / local folder / native Google Drive / HTTP);
-- automatic synchronization on login;
+- a growing catalog of production-ready Sources (supermarkets, retail, and banks);
+- multiple Sinks (download / local folder / native Google Drive / HTTP / WebDAV / S3 / Dropbox);
+- automatic synchronization on login, plus a "Sync all" sweep across every source;
 - duplicate detection;
+- a cross-source "Documents" browser of everything recovered;
 - a community Sources catalog with in-extension record mode, authoring, and sharing;
 - multilingual interface (English + Spanish).
 

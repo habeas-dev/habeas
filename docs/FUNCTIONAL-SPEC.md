@@ -94,7 +94,7 @@ Flujo canónico (Ana):
 - **FR-5** Registrar un histórico local de sincronizaciones (qué, cuándo, cuántos registros, errores).
 
 ### 6.2 Modelo de adaptador (declarativo)
-- **FR-6** Formato declarativo (YAML/JSON) con: `id`, `hosts`, `loginSignal`, `list` (endpoint/selector + paginación), `detail` (fetch por registro), `fields` (mapeo vía JSONPath/CSS), `dedupeKey`, `schema` destino, `capabilities`.
+- **FR-6** Formato declarativo (YAML/JSON) con: `id`, `hosts`, `loginSignal`, `list` (endpoint/selector + paginación), `detail` (fetch por registro), `fields` (mapeo por **paths con puntos**, que soportan un **selector de array** `key[field=value].sub` para elegir un elemento por un campo — p. ej. el IBAN de ING en `identifiers[type=PRODUCT_NUMBER].value`), `dedupeKey`, `schema` destino, `capabilities`.
 - **FR-7** Los adaptadores **no ejecutan JS arbitrario**. Para lógica no expresable de forma declarativa, un conjunto **acotado** de transformaciones predefinidas (fechas, importes, regex de extracción) — nunca `eval`.
 - **FR-8** Versionado de adaptadores y comprobación de compatibilidad con la versión del Core.
 
@@ -102,11 +102,27 @@ Flujo canónico (Ana):
 - **FR-9** `fetch` **con credenciales de la sesión** (`credentials:'include'`), same-origin al host del adaptador — las cookies y el `cf_clearance` viajan solos.
 - **FR-10** Descarga de **blobs/PDF** autenticados y su envío al sink.
 - **FR-11** Lectura de DOM (para servicios sin endpoint JSON: fallback a scraping de la página renderizada).
-- **FR-12** Paginación (cursor, offset o "cargar más") declarada por el adaptador.
+- **FR-12** Paginación **declarativa**: el adaptador elige una estrategia y el runtime
+  (`runtime/inventory.js`) permanece agnóstico a la fuente — `offsets` / `offset` / `page` /
+  `cursor` / `years` (particionado por año) / `none`, o **`synthetic`** (documentos que **no** se
+  enumeran por una lista API sino que existen una vez por **periodo** o por **cuenta** — p. ej. los
+  extractos mensuales de un banco; `api.list.synthetic.each = months | group | group-months`, y la
+  ventana año/mes/fromDate/toDate viaja en el ítem para que una plantilla de PDF la rellene).
 
 ### 6.4 Normalización y esquemas
-- **FR-13** Esquemas normalizados versionados por dominio. MVP: **`receipt`** (ticket) y **`transaction`** (movimiento financiero). Después: `invoice`, `energy_reading`, `investment_position`.
+- **FR-13** Esquemas normalizados versionados por dominio. Implementados: **`receipt`**, **`invoice`**,
+  **`transaction`** e **`investment`** (`sinks/format.js#buildRecord`). Los importes se parsean con
+  `money()` (símbolos/separadores → número) y la **moneda se infiere** del símbolo/código ISO embebido
+  en el importe (nunca se fuerza EUR).
 - **FR-14** Cada registro exportado incluye metadatos de procedencia: adaptador, host, timestamp de captura, versión de esquema.
+- **FR-14b** **Nada se pierde:** cada campo que un adaptador mapea y el esquema no coloca en el registro se
+  conserva en `record.extra`; con `keepRaw: true` (opt-in) se arrastra además **todo** campo del ítem de
+  lista crudo que el esquema no consumió. Sin `keepRaw` los registros quedan byte-idénticos.
+- **FR-14c** **Capa de normalización declarativa opcional** (`lib/normalize.js`): un adaptador puede declarar
+  `normalize.counterparty { from, re[] }` para extraer una contraparte limpia de texto libre en tiempo de
+  mapeo; y `canonicalize(record)` proyecta **cualquier** esquema a una **forma canónica uniforme**
+  (`id/date/amount/currency/direction/description/counterparty/category/type/account/number/source/extra`),
+  que un sink pide vía `sink.normalize` para que un consumidor no tenga que adaptarse por-fuente.
 
 ### 6.5 Sinks / exportación
 - **FR-15** Sink **fichero**: JSON + ZIP de PDFs (descarga local).

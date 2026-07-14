@@ -23,11 +23,16 @@ operate. Every decision must preserve this.
 
 ## Status — working beta (published on Chrome Web Store + Firefox AMO)
 
-First data source (Carrefour España) works **end-to-end** in Chrome and Firefox. Implemented:
-capture → inventory → sinks (download / local-folder / **native Google Drive** / http),
-per-sink dedupe, **automatic mode** (sync new docs on login), activity log + badge +
-notifications, **source categories + sink `accepts` filtering**, full **i18n (en default +
-es)**, a **landing site**, and **CI packaging**.
+**11 sources published** to the community registry (Carrefour, Dia, Hover, Decathlon, Bip&Drive,
+Leroy Merlín, WiZink, CaixaBank Consumer, IKEA, Amazon, and **ING España** — a 3-output bank source:
+movements + per-account monthly statements PDF/Excel + integrated monthly statement PDF). Implemented:
+capture → inventory → sinks (download / local-folder / **native Google Drive** / http / **WebDAV** /
+**S3 (+compatible)** / **Dropbox**), per-sink dedupe, **automatic mode** (sync new docs on login) +
+**Sync all** (sweep every source), activity log + badge + notifications, **source categories + sink
+`accepts` filtering**, a **persistent per-account filter** for grouped bank sources, a cross-source
+**Documents browser** + a **canonical-store inspector** (with delete), a light **declarative
+normalization** layer (counterparty extraction + a uniform `canonicalize` output, opt-in per sink) with
+**`record.extra` keepRaw**, full **i18n (en default + es)**, a **landing site**, and **CI packaging**.
 
 **External hooks** (`lib/exthooks.js` · `lib/grants.js` · `content/extbridge.js` · `ui/authorize.*`):
 any website can, via `window.postMessage` (bridge on all https pages, both browsers — no allowlist),
@@ -38,9 +43,11 @@ mints a **grant** (`storage.local habeas:grants`, one origin→one route) revoca
 Site integrations. `collect` always runs in a **dedicated tab** (foregrounded only for manual login;
 never handles credentials), debounced + logged, no notification. See `consumers/external-hooks.md`.
 
-**Community sources system** (in-extension parts done, verified in node): a **generalized runtime**
-(declarative pager `offsets|page|cursor|none`, dotted field paths, schemas `receipt|invoice|
-transaction|investment`, optional PDF); an **adapter loader + validator** with a **same-registrable-
+**Community sources system** (LIVE — 11 sources published): a **generalized runtime**
+(declarative pager `offsets|offset|page|cursor|none|years|synthetic`, dotted field paths **+ array
+selectors** `key[field=value].sub`, schemas `receipt|invoice|transaction|investment`, optional PDF/Excel;
+`synthetic` = documents that exist once per period/account, e.g. monthly statements); an **adapter loader
++ validator** with a **same-registrable-
 domain security guard** (a source's captured session can only be replayed to its own eTLD+1; cross-
 domain needs an explicit `crossDomainHosts` allowlist + a **consent** screen); **record mode**
 (learn-mode hook captures response samples in-session → `runtime/infer.js` auto-drafts a source →
@@ -104,8 +111,19 @@ scaffolding kept as design notes (safe to consolidate later).
   `id, name, service, categories[], categorize{field,map,default}, match[], auth{tokenMatch,
   replayHeaders[]}, api{host,list{path,itemsPath,offsetsPath,window,params},pdf{path}},
   fields{…}, schema`. Add new sources as sibling files + register in `adapters/index.js`.
-- **Normalized record** (`sinks/format.js#toRecord`): `{internalId, date, total, currency,
-  category, store{name,address}, source, type}`.
+- **Normalized record** (`sinks/format.js#buildRecord`): per-schema shape (receipt: `{internalId, date,
+  total, currency, category, store{name,address}, source, type}`; transaction/invoice/investment differ).
+  Plus **`record.extra`** when a source sets `keepRaw` — every raw list-item field the schema didn't
+  consume, so nothing captured is lost. Amount/currency are parsed (`money()`/`curOf()`: "$9.00" → 9 USD;
+  never forces EUR).
+- **Declarative normalization** (`lib/normalize.js`, wired in `runtime/inventory.js#mapDoc`): an adapter's
+  `normalize.counterparty {from, re[]}` extracts a clean counterparty from free text (ING "Bizum enviado a
+  X" → "X"); `canonicalize(record)` maps ANY schema to one uniform shape `{id,date,amount,currency,
+  direction,description,counterparty,category,type,account,number,source,extra}` — delivered when a sink
+  opts in via `sink.normalize` (consumer-friendly; default off keeps manifests byte-identical).
+- **Grouped sources + account filter** — a source with `api.groups` (a bank, many accounts) enumerates
+  accounts; a **persisted per-datasource allow-list** (`datasource.groups` + `groupLabels`) chosen in the
+  popup's "Cuentas" picker restricts what listing/auto/sweep touch AND hides other accounts' stored docs.
 - **Categories** classify each document (Carrefour: `HYPERMARKET`→`grocery`, `REFUELING`→
   `fuel`, default `retail`). **Sinks** may declare `accepts:{categories?,sources?}`; without
   it they accept everything. Two-layer filter: the UI only offers compatible sinks, and
@@ -241,10 +259,14 @@ update; `YYYY-MM-DD`, or `YYYY-MM-DD.N` same day). `minVersion` gates by extensi
 
 - ~~Stand up community infra~~ DONE: `habeas-dev/sources` (Pages, LIVE) + `api.habeas.dev`
   (Cloudflare Worker + D1, LIVE). Optional: add CF secrets to `habeas-dev/api` for CI auto-deploy.
-- **Author real sources** via record mode / community PRs, API-verified against real services,
-  then publish to the registry (the fictional test fixtures must never be published or shipped).
-- **HTTP → Tiquetera** ingest endpoint (POST normalized records + PDFs; pairing token) — the
-  category model already supports it.
+- **Author real sources** (ONGOING) — **11 published** so far (Carrefour, Dia, Hover, Decathlon,
+  Bip&Drive, Leroy Merlín, WiZink, CaixaBank Consumer, IKEA, Amazon, **ING España**), all API-verified
+  against real services. Keep going via record mode / community PRs (the fictional test fixtures must
+  never be published or shipped). Pending targets: obramat, AliExpress, Pepe Energy, Pepephone,
+  Financiera El Corte Inglés, Revolut, TradeRepublic, Openbank, Raisin, Telepizza.
+- **HTTP → Tiquetera / Cuéntamo** ingest endpoint (POST normalized records + PDFs; pairing token). The
+  category model + the opt-in **`sink.normalize` uniform canonical record** (`lib/normalize.js`) already
+  support it — the consumer side still needs building.
 - ~~Encrypt secrets at rest~~ DONE: `lib/secrets.js` stores AES-GCM envelopes (`lib/crypto.js`)
   keyed by a non-extractable IndexedDB CryptoKey (`lib/keystore.js`); legacy plaintext migrates on
   read. Keeps credentials out of plaintext `storage.local` — not a defense against a stolen profile
@@ -257,5 +279,9 @@ update; `YYYY-MM-DD`, or `YYYY-MM-DD.N` same day). `minVersion` gates by extensi
 - ~~Harden dynamic HTML~~ DONE: all network/source/OS-derived values in `ui/popup.js` + `ui/options.js`
   now escaped via a single shared `lib/esc.js` (was 7 duplicated inline helpers). web-ext/AMO still
   flags `innerHTML` structurally, but no unescaped dynamic sink remains.
-- AMO + Chrome Web Store submission; Firefox Drive OAuth redirect. Note MV3 review: `scripting` +
-  `optional_host_permissions: https://*/*` (record mode) will need justification at store review.
+- ~~AMO + Chrome Web Store submission~~ DONE: **published on both** (AMO approved/live; CWS live, a new
+  milestone waits its turn while the previous one is in review — `ITEM_NOT_UPDATABLE` until it clears).
+  Firefox Drive OAuth redirect still per-user. MV3 review note: `scripting` +
+  `optional_host_permissions: https://*/*` (record mode) needed justification at store review.
+- **Consumers** — build the Tiquetera/Cuéntamo ingest endpoints (the `sink.normalize` canonical output +
+  `record.extra` are ready on the Habeas side).

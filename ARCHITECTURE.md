@@ -142,6 +142,7 @@ Its responsibilities include:
 - presenting progress to the user;
 - managing destinations;
 - inventory management;
+- a canonical store of everything retrieved (browsable across sources);
 - duplicate detection;
 - automatic synchronization;
 - permissions;
@@ -160,6 +161,9 @@ Examples include:
 - Downloads
 - Local folders
 - Google Drive
+- Dropbox
+- WebDAV servers
+- S3 (and S3-compatible) object storage
 - HTTP endpoints
 
 Future Sinks may include:

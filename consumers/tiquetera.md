@@ -37,7 +37,13 @@ destination for sources that can emit `grocery`, and (b) sends only the document
 `category` is `grocery` — e.g. Carrefour fuel (`REFUELING`) tickets are filtered out.
 
 Each normalized record carries a `category` (a source classifies its documents; Carrefour:
-`HYPERMARKET`→`grocery`, `REFUELING`→`fuel`).
+`HYPERMARKET`→`grocery`, `REFUELING`→`fuel`) and a `record.extra` object holding the raw source
+fields, so Tiquetera can reach anything the `receipt@1` shape dropped.
+
+If Tiquetera would rather ingest one uniform shape across all grocers instead of each source's
+`receipt@1`, set the sink's opt-in **`sink.normalize`** flag: Habeas then delivers the canonical
+record (`id/date/amount/currency/direction/description/counterparty/category/type/account/number/source/extra`)
+described in [`README.md`](README.md). Leave it off to keep the higher-fidelity `receipt@1` + PDF path.
 
 ## Adapters that feed Tiquetera
 

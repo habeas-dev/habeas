@@ -34,7 +34,7 @@ Copy-paste material for the **Chrome Web Store** and **Firefox Add-ons (AMO)**. 
 > invoices, card and investment records) from online services that offer no API or bulk export, by
 > reading them through each service's own web API inside the user's already-authenticated browser
 > session, and delivering them to a destination the user chooses (a download, a local folder, their
-> own Google Drive, or an HTTP endpoint they configure).
+> own Google Drive or Dropbox, an HTTP endpoint they configure, or a WebDAV / S3-compatible store).
 
 ---
 
@@ -55,8 +55,8 @@ Copy-paste material for the **Chrome Web Store** and **Firefox Add-ons (AMO)**. 
 > • **Local-first.** Your documents and your session never leave your browser unless you pick a
 >   destination. The project runs no servers and never receives your data.
 > • **You choose where it goes:** a download, a local folder, your **own** Google Drive (only files
->   Habeas creates — it can't see your other files), or an HTTP endpoint you configure (e.g. a
->   personal-finance app you use).
+>   Habeas creates — it can't see your other files) or Dropbox, an HTTP endpoint you configure (e.g. a
+>   personal-finance app you use), or a WebDAV / S3-compatible store you control.
 > • **Declarative, auditable sources.** Each service is described by data, not code — open to
 >   community contributions and reviewed in the open. No remotely-hosted code, ever.
 > • **No trackers.** No analytics, no telemetry, self-hosted fonts.
@@ -82,7 +82,8 @@ Copy-paste material for the **Chrome Web Store** and **Firefox Add-ons (AMO)**. 
 > • **Local-first.** Tus documentos y tu sesión no salen del navegador salvo que elijas un destino.
 >   El proyecto no tiene servidores y nunca recibe tus datos.
 > • **Tú eliges el destino:** descarga, carpeta local, tu **propio** Google Drive (solo los ficheros
->   que Habeas crea — no puede ver los demás), o un endpoint HTTP que configures.
+>   que Habeas crea — no puede ver los demás) o Dropbox, un endpoint HTTP que configures, o un almacén
+>   WebDAV / compatible con S3 que controles.
 > • **Fuentes declarativas y auditables.** Cada servicio se describe con datos, no con código —
 >   abiertas a la comunidad y revisadas en abierto. Nunca código remoto.
 > • **Sin rastreadores.** Sin analítica ni telemetría; fuentes tipográficas propias.
@@ -135,14 +136,14 @@ Copy-paste material for the **Chrome Web Store** and **Firefox Add-ons (AMO)**. 
 
 1. **The popup** listing a source's documents (e.g. Carrefour/Dia receipts) with dates and totals.
 2. **Settings → Sources** (the tabbed options page) showing an installed source.
-3. **Settings → Destinations** showing Download / Local folder / Google Drive / HTTP.
+3. **Settings → Destinations** showing Download / Local folder / Google Drive / HTTP / WebDAV / S3 / Dropbox.
 4. **Record mode / author** — drafting or testing a source (the visual mapper with test rows).
 5. **Site integrations** — the consent/authorize screen or the granted-integrations list.
 
 Tip: use a real, non-sensitive account and blur any personal identifiers. A 440×280 (CWS) or
 promotional tile can reuse the hero from habeas.dev.
 
-## Store URLs (fill in after publishing → then swap the site's install buttons)
+## Store URLs (live — the site's install buttons point here)
 
-- Chrome Web Store: `https://chrome.google.com/webstore/detail/<id>`
+- Chrome Web Store: `https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog`
 - Firefox Add-ons:  `https://addons.mozilla.org/firefox/addon/habeas/`

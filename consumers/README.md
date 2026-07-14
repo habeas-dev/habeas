@@ -30,3 +30,29 @@ authors agree on the contract.
 - PDFs (when present) uploaded as multipart/attachment.
 - Idempotent on the record's `internalId` (the extension also dedupes, but
   consumers must tolerate re-sends).
+
+## Record shape: per-source vs. canonical (`sink.normalize`)
+
+By default a sink delivers the source's own normalized record (schema-shaped:
+`receipt@1`, `transaction@1`, …), and each record now also carries
+`record.extra` — an object preserving **all raw source fields** so a consumer can
+reach anything the normalized shape dropped.
+
+For consumers that ingest from many sources (Cuéntamo, Tiquetera) and don't want to
+adapt per source, set the opt-in **`sink.normalize`** flag on the sink. Habeas then
+delivers a **uniform canonical record** with the same field names and types across
+every source:
+
+```
+{ id, date, amount, currency, direction, description, counterparty,
+  category, type, account, number, source, extra }
+```
+
+- `direction` — `debit` / `credit` sign of the movement.
+- `account` / `number` — the group/account (see external-hooks `list-groups`) and
+  document number when the source exposes them.
+- `source` — the adapter id (e.g. `ing-es`).
+- `extra` — the untouched raw source fields (same as `record.extra` above).
+
+With `sink.normalize` on, a consumer writes one ingest mapping and it works for
+Carrefour receipts, ING transactions and WiZink statements alike.

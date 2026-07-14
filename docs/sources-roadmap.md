@@ -23,38 +23,46 @@ screen. Financial sources are welcome from the community under this guard (trust
 
 Status: `todo` = needs capture · `draft` = recorded, not verified · `live` = published.
 
+**Published so far (11):** `carrefour-es`, `dia-es`, `hover-com`, `decathlon-es`, `bipdrive-es`,
+`leroymerlin-es`, `wizink-es`, `caixabank-consumer-es`, `ikea-es`, `amazon-es`, `ing-es`.
+
 | # | Service | Login domain | Category | Schema | Status | Notes |
 |---|---|---|---|---|---|---|
-| 0 | Carrefour | carrefour.es | grocery/fuel/retail | receipt | **live** | first-party, shipped |
-| 1 | Ikea | ikea.es | retail | receipt | todo | |
-| 2 | Decathlon | decathlon.es | retail | receipt | todo | |
-| 3 | Leroy Merlin | leroymerlin.es | retail | receipt | todo | |
-| 4 | Obramat | obramat.es | retail | receipt | todo | ex-Bricomart |
-| 5 | Telepizza | telepizza.es | food/retail | receipt | todo | |
-| 6 | Amazon | amazon.es | retail | receipt | todo | strong anti-bot; no public order API |
-| 7 | AliExpress | aliexpress.com | retail | receipt | todo | strong anti-bot |
-| 8 | Bip&Drive | bipandrive.com | mobility/toll | invoice | todo | tolls/parking — new category `toll` |
-| 9 | Pepe Energy | pepeenergy.com | utility | invoice | todo | electricity |
-| 10 | Pepephone | pepephone.com | telco | invoice | todo | mobile |
-| 11 | Wizink | wizink.es | card | transaction | todo | credit card |
-| 12 | Financiera El Corte Inglés | elcorteingles.es | card | transaction | todo | store card / financing |
-| 13 | CaixaBank (tarjetas) | caixabank.es | card | transaction | todo | cards only |
-| 14 | Openbank | openbank.es | bank/card | transaction | todo | PSD2 is the canonical path; Habeas covers the gaps |
-| 15 | ING | ing.es | bank/card | transaction | todo | idem PSD2 |
-| 16 | Revolut | revolut.com | card | transaction | todo | likely cross-domain (app.revolut.com/api) → off-site consent |
-| 17 | Trade Republic | traderepublic.com | investment | investment | todo | WebSocket API — extra work |
-| 18 | Raisin | raisin.es | investment | investment | todo | deposits/savings |
+| 0 | Carrefour | carrefour.es | grocery/fuel/retail | receipt | **live** | `carrefour-es`, first-party, shipped |
+| 1 | Dia | dia.es | grocery/retail | receipt | **live** | `dia-es` |
+| 2 | Hover | hover.com | retail/service | receipt | **live** | `hover-com`, domain registrar receipts |
+| 3 | Ikea | ikea.es | retail | receipt | **live** | `ikea-es` |
+| 4 | Decathlon | decathlon.es | retail | receipt | **live** | `decathlon-es` |
+| 5 | Leroy Merlin | leroymerlin.es | retail | receipt | **live** | `leroymerlin-es` |
+| 6 | Amazon | amazon.es | retail | receipt | **live** | `amazon-es` |
+| 7 | Bip&Drive | bipandrive.com | mobility/toll | invoice | **live** | `bipdrive-es`, tolls/parking |
+| 8 | Wizink | wizink.es | card | transaction | **live** | `wizink-es`, multi-output (movimientos + extractos PDF/Excel) |
+| 9 | CaixaBank Consumer | caixabank.es | card/financing | invoice | **live** | `caixabank-consumer-es`, financing statements (extractos) |
+| 10 | ING | ing.es | bank/card | transaction | **live** | `ing-es`, 3 streams: transactions + per-account statements (PDF/Excel) + integrated statement (PDF) |
+| 11 | Obramat | obramat.es | retail | receipt | todo | ex-Bricomart |
+| 12 | Telepizza | telepizza.es | food/retail | receipt | todo | |
+| 13 | AliExpress | aliexpress.com | retail | receipt | todo | strong anti-bot |
+| 14 | Pepe Energy | pepeenergy.com | utility | invoice | todo | electricity |
+| 15 | Pepephone | pepephone.com | telco | invoice | todo | mobile |
+| 16 | Financiera El Corte Inglés | elcorteingles.es | card | transaction | todo | store card / financing |
+| 17 | Openbank | openbank.es | bank/card | transaction | todo | PSD2 is the canonical path; Habeas covers the gaps |
+| 18 | Revolut | revolut.com | card | transaction | todo | likely cross-domain (app.revolut.com/api) → off-site consent |
+| 19 | Trade Republic | traderepublic.com | investment | investment | todo | WebSocket API — extra work |
+| 20 | Raisin | raisin.es | investment | investment | todo | deposits/savings |
 
 ## Notes by group
 
-- **Retail (1–7):** simplest — `receipt@1`, usually same-domain, often a PDF/ticket per order. Best
-  first cases after Carrefour. Amazon/AliExpress are the hardest (anti-bot, no clean order API).
-- **Utility / telco / toll (8–10):** recurring PDF invoices → `invoice@1`. Bip&Drive needs a new
-  `toll`/`mobility` category (categories are just strings the adapter declares).
-- **Cards & financial (11–18):** allowed from the community under the same-domain guard + consent.
-  Proper banks (ING, Openbank, CaixaBank) — PSD2 AIS is the sanctioned aggregation path; Habeas adds
-  what PSD2 handles poorly (specific card movements, financing, investments). Revolut / Trade
-  Republic are cross-domain and/or non-REST → expect `crossDomainHosts` and extra runtime work.
+- **Retail:** simplest — `receipt@1`, usually same-domain, often a PDF/ticket per order. Best first
+  cases after Carrefour; Ikea, Decathlon, Leroy Merlin, Dia and Amazon are now live. AliExpress
+  remains hard (anti-bot, no clean order API).
+- **Utility / telco / toll:** recurring PDF invoices → `invoice@1`. Bip&Drive (live) uses a
+  `toll`/`mobility` category — categories are just strings the adapter declares. Pepe Energy /
+  Pepephone still `todo`.
+- **Cards & financial:** allowed from the community under the same-domain guard + consent. Proper
+  banks (ING — live — Openbank, CaixaBank) — PSD2 AIS is the sanctioned aggregation path; Habeas
+  adds what PSD2 handles poorly (specific card movements, financing, investments). ING and WiZink are
+  the reference multi-stream/multi-output financial sources. Revolut / Trade Republic are
+  cross-domain and/or non-REST → expect `crossDomainHosts` and extra runtime work.
 
 ## Runtime gaps this backlog may surface
 

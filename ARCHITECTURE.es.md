@@ -142,6 +142,7 @@ Sus responsabilidades incluyen:
 - mostrar progreso a la persona usuaria;
 - gestionar destinos;
 - gestión de inventario;
+- un almacén canónico de todo lo recuperado (navegable entre fuentes);
 - detección de duplicados;
 - sincronización automática;
 - permisos;
@@ -160,6 +161,9 @@ Ejemplos:
 - Descargas
 - Carpetas locales
 - Google Drive
+- Dropbox
+- Servidores WebDAV
+- Almacenamiento de objetos S3 (y compatibles con S3)
 - Endpoints HTTP
 
 Destinos futuros pueden incluir:

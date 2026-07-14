@@ -30,4 +30,6 @@ never here.
 - No credential storage.
 - No `eval` / no remotely-hosted code (MV3 + security).
 
-Status: **not yet implemented.** See `../docs/FUNCTIONAL-SPEC.md` §6.
+Status: **design scaffolding.** The shipped runtime that fulfills these responsibilities lives in
+`../extension/src/` (loader/validate, `runtime/inventory.js`, `sinks/`, `lib/store/`, consent). See
+`../docs/FUNCTIONAL-SPEC.md` §6.

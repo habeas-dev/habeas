@@ -59,15 +59,37 @@ heavy and not yet covered by e2e**. Needs a manual pass (or a dedicated https e2
 - [ ] Confirm no path stores/forwards credentials; no path delivers to an origin other than the caller's.
 
 Caveats to check during that pass:
-- [ ] The `https://*/*` content script (extbridge) adds an **"all sites" permission warning** at install
-      — the accepted cost of "anyone can propose". Decide if acceptable for store submission.
+- [x] The `https://*/*` content script (extbridge) adds an **"all sites" permission warning** at install
+      — the accepted cost of "anyone can propose". Accepted; the extension is now published on both stores.
 - [ ] For sources **other than Carrefour**, in-tab capture depends on injecting the hook
       (`executeScript`, best-effort) + host permission for that domain — verify with a 2nd source.
 - [ ] MV3 store review: justify `scripting` + the broad content script + `optional_host_permissions`.
 
 ## Other pending (from CLAUDE.md roadmap)
-- [ ] Author real sources via record mode / community PRs, API-verified; publish to the registry.
+- [~] Author real sources via record mode / community PRs, API-verified; publish to the registry.
+  **11 published** so far: carrefour-es, dia-es, hover-com, decathlon-es, bipdrive-es, leroymerlin-es,
+  wizink-es, caixabank-consumer-es, ikea-es, amazon-es, **ing-es** (3-stream: movimientos + per-account
+  monthly statements PDF/Excel + integrated monthly statement PDF). Keep growing the catalog.
 - [ ] HTTP → Tiquetera ingest endpoint (POST normalized records + PDFs; pairing token).
-- [ ] Encrypt secrets at rest; harden dynamic HTML (web-ext flags `innerHTML`).
-- [ ] AMO + Chrome Web Store submission; Firefox Drive OAuth redirect.
+- [x] Encrypt secrets at rest — DONE (`lib/secrets.js` AES-GCM envelopes keyed by a non-extractable
+  IndexedDB CryptoKey; sink pairing-token headers + the Drive OAuth token also encrypted).
+- [x] Harden dynamic HTML — DONE (all dynamic values in `ui/popup.js`/`ui/options.js` escaped via
+  shared `lib/esc.js`; web-ext still flags `innerHTML` structurally but no unescaped sink remains).
+- [x] AMO + Chrome Web Store submission — AMO **approved & live**; CWS published (public beta).
+  Firefox Drive OAuth redirect still shown in Settings for users to register on their own client.
 - [ ] Optional: CF secrets in `habeas-dev/api` for CI auto-deploy.
+
+## Done since (0.1.59 → 0.1.66)
+- [DONE] Delivery sinks **Dropbox, WebDAV, S3** (+ S3-compatible: MinIO/R2/B2) — also available as
+  canonical-store backends (`lib/store/{dropbox,webdav,s3}.js`); store backends now: local(IndexedDB),
+  folder, http, drive, dropbox, webdav, s3.
+- [DONE] **ING España** source (`ing-es`, 3 streams/outputs) published to the registry.
+- [DONE] Persistent per-account filter for grouped bank sources.
+- [DONE] **"Documents" tab** in the popup — cross-source browser of everything recovered, with a JSON
+  schematic viewer (`ui/docview.js`) and open-delivered-file; plus a canonical-store inspector with
+  delete (`ui/store-browser.js`).
+- [DONE] Light **declarative data-normalization layer** (`lib/normalize.js`) — counterparty extraction
+  + a uniform canonical output shape, **opt-in per sink**; `record.extra` keepRaw preserves every raw
+  field of a movement; currency parsing no longer forces EUR.
+- [DONE] `habeas.dev/sources.html` catalog is now statically **pre-rendered** (works without JS) and
+  auto-refreshed by a scheduled workflow.

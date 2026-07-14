@@ -70,9 +70,9 @@ const res = await habeas('collect', { grantId });
 ```
 
 Collection lists the source, delivers only **new** documents (Habeas dedupes per route), and POSTs
-to your sink a `multipart/form-data` with: `records` (JSON manifest of normalized records),
-`files[]` (PDFs when available), `source` (e.g. `carrefour-es`) and `service`. Re-running only ever
-sends what's new.
+to your sink a `multipart/form-data` with: `records` (JSON manifest of normalized records — each
+carries a `extra` object with the raw source fields), `files[]` (PDFs when available), `source`
+(e.g. `carrefour-es`) and `service`. Re-running only ever sends what's new.
 
 ## C. List groups (accounts) — for sources that group their data
 

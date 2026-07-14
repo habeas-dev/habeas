@@ -6,7 +6,8 @@ Habeas uses each permission (all local, in the user's own session; nothing sent 
 ## Single purpose
 Habeas lets a user extract **their own** personal data (receipts, invoices, orders, card/investment
 statements) from services they are logged into, and save it where they choose (download, a local
-folder, their own Google Drive, or an endpoint they configure). Everything runs in the user's already
+folder, their own Google Drive, Dropbox, a WebDAV or S3-compatible store, or an HTTP endpoint they
+configure). Everything runs in the user's already
 authenticated browser session; Habeas stores no credentials and sends nothing to any Habeas server.
 
 ## cookies  *(flagged — required)*
@@ -63,7 +64,8 @@ allowlist. Habeas never accesses a site the user hasn't enabled.
 
 ## Data usage disclosures (checkboxes)
 - Does the extension collect/transmit personal data off the user's device? **No** — data stays on the
-  device unless the user configures a sink they own (their Google Drive, a local folder, or their own
-  HTTP endpoint). Habeas operates no server that receives user data.
+  device unless the user configures a sink they own (their Google Drive, Dropbox, a local folder, a
+  WebDAV/S3-compatible store, or their own HTTP endpoint). Habeas operates no server that receives user
+  data.
 - Is data sold to third parties? **No.**
 - Is data used for purposes unrelated to the single purpose? **No.**

@@ -37,8 +37,10 @@ do **not** reach for inline JS.
 
 ## Financial adapters
 
-Banking / card / investment / pension adapters are **first-party only** (see
-`../CONTRIBUTING.md`).
+Banking / card / investment / pension adapters are **allowed from the community**, gated by the
+same-registrable-domain trust boundary (a captured session can only be replayed to its own eTLD+1;
+cross-domain requires an explicit allow-list + consent). `first-party` is an audited **label**, not
+a gate. See rule #4 in `../CLAUDE.md`.
 
 ## Example
 

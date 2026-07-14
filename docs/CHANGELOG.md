@@ -1,6 +1,59 @@
 # Changelog
 
-## 0.1.53 → 0.1.54 (in progress)
+## 0.1.54 → 0.1.66 (Public beta)
+
+Habeas is now a **public beta**, published on the **Chrome Web Store** and **Firefox AMO**.
+
+### New sources
+- **ING España** (`ing-es`) — a bank source with three outputs: account **movements** (transactions),
+  per-account **monthly statements** (PDF + Excel), and the **integrated monthly statement** (PDF). Grouped
+  by account, with a 90-day window (avoids the extra-auth wall) and full per-movement detail preserved.
+- Also live in the registry: `amazon-es`, plus the earlier `carrefour-es`, `dia-es`, `hover-com`,
+  `decathlon-es`, `bipdrive-es`, `leroymerlin-es`, `wizink-es`, `caixabank-consumer-es`, `ikea-es`.
+
+### New delivery destinations (sinks)
+- **WebDAV** (Nextcloud/ownCloud, Apache mod_dav…), **S3** (and S3-compatible: MinIO, Cloudflare R2,
+  Backblaze B2), and **Dropbox** (public app, PKCE — no client secret, works on Chrome and Firefox).
+- Each can also host the **canonical store** (backends now: local, synced folder, HTTP, Drive, Dropbox,
+  WebDAV, S3).
+- **Sync all** — one action sweeps every enabled source to a default destination, with live progress and a
+  Stop button.
+
+### Grouped bank sources
+- **Persistent account filter** — choose which of a bank's accounts/cards to import; the selection is saved
+  and honored by listing, auto-sync and Sync all, and hides other accounts' already-stored documents.
+
+### Documents & the canonical store
+- A **Documents** tab in the popup: a browser of everything you've recovered, one source at a time
+  (loads lazily and renders incrementally), showing the real date/amount learned at download time, where
+  each document was delivered, a generic **JSON schematic viewer**, and one-click open of a delivered file
+  (PDF/Excel) from a retrievable destination.
+- A **canonical-store inspector** (Settings) to see exactly what's stored per source/backend, and delete
+  items or empty a source.
+- **`record.extra` (keepRaw)** — a source can preserve *every* raw field of an item (e.g. a bank movement's
+  concept/balance/reference) so nothing captured is lost.
+
+### Data normalization (declarative)
+- **Counterparty extraction** — an adapter can declare a regex to pull a clean merchant/beneficiary out of a
+  free-text description (e.g. ING's "Bizum enviado a X" → "X").
+- **Uniform canonical output** — an opt-in per-sink `normalize` flag delivers one consistent record shape
+  across all sources (same field names/types), so a consumer never adapts per source. `record.extra` is kept.
+- **Currency** is parsed from the amount itself ("$9.00" → 9 USD) instead of always assuming EUR.
+
+### Runtime (declarative adapter engine)
+- New **`synthetic` pager** for documents that aren't enumerated by an API list but exist once per period or
+  account (`api.list.synthetic.each` = `months` | `group` | `group-months`) — e.g. monthly statements.
+- **Array field selectors** — `get()` supports `key[field=value].sub` (pick an array element by a field).
+- Multi-header session capture (a source can replay a companion header alongside the bearer), per-account
+  error tolerance, and completed-months-only statement enumeration.
+
+### Community & site
+- The **habeas.dev/sources** catalog is now **statically pre-rendered** (works without JavaScript) and
+  **auto-refreshed** several times a day.
+- Trust is a **label**: community sources — financial included — are permitted under the same-registrable-
+  domain guard + consent; `first-party` simply carries an audited label.
+
+## 0.1.53 → 0.1.54
 
 ### Reliability & session capture
 - **Anti-bot CAPTCHA is shown to the user** — when a source's API returns a DataDome/Cloudflare/Akamai

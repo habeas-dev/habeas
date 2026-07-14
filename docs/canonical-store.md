@@ -1,6 +1,8 @@
 # Canonical store + projections — design
 
-> Status: **design agreed 2026-07-10**, implementation in progress. Supersedes the earlier
+> Status: **design agreed 2026-07-10**, largely implemented (portable format + merge, write-through on
+> delivery, pluggable backends local/folder/drive/dropbox/webdav/s3/http, and the Settings store
+> inspector; incremental early-stop against the store index is wired into the pagers). Supersedes the earlier
 > `incremental-sync.md` (its index/tombstone/retention model is folded in here). Extraction is decoupled
 > from delivery: a portable **canonical store** holds the user's data once; every sink is a **projection**
 > of it. The store can live in any generic backend the user chooses (local or cloud) and be **moved freely**
@@ -28,7 +30,8 @@ store[sourceId] = {
   meta: { source, capturedFrom, schema },
   items: {
     [internalId]: {
-      record,                 // the normalized record (sinks/format.js#buildRecord output)
+      record,                 // the normalized record (sinks/format.js#buildRecord output), incl. its
+                              //   optional `record.extra` (every raw field the schema didn't consume — nothing lost)
       docAvailable?: bool,    // whether a document artifact exists for it
       gone?: bool, goneReason?: 'retention'|'404'|'rescan', goneAt?: ISO,  // tombstone (never hard-deleted)
       at: ISO                 // provenance: when this item was last captured/confirmed
@@ -43,11 +46,19 @@ in file backends, or fetched on demand; records are always cheap to carry.
 | Backend | Generic / path-addressable | Readable back | Canonical store? |
 | --- | --- | --- | --- |
 | `local` (IndexedDB) | yes | yes | ✅ default (single device) |
-| `local-folder` | yes | yes | ✅ |
+| `folder` (local-folder) | yes | yes | ✅ |
 | `drive` | yes | yes | ✅ |
+| `dropbox` | yes | yes | ✅ |
+| `webdav` | yes | yes | ✅ |
+| `s3` (AWS + S3-compatible) | yes | yes | ✅ |
 | `http` **generic** (GET/PUT) | yes | yes | ✅ |
 | `download` (ephemeral zip) | yes | no | ❌ projection only |
 | `http` **typed consumer** (POST, `accepts`) | no | no | ❌ projection only |
+
+Implemented backends live in `extension/src/lib/store/` (`local.js`, `folder.js`, `drive.js`,
+`dropbox.js`, `webdav.js`, `s3.js`, `http.js`); `lib/store.js#makeBackend` selects one from the store
+config, and `openBackend(cfg)` opens an arbitrary one without repointing the global config (used by the
+inspector below).
 
 Only a **generic + readable-back** sink can HOST the store. `download` (write-only) and **typed consumers**
 (one-way, filtered listing) are **pure projections**, never the store. Each sink declares a **capability**:
@@ -101,6 +112,14 @@ Per-sink derived views (computed, not stored): `pending[sink]`, `archived[sink]`
 4. **Incremental sync** — early-stop against the store index (K-consecutive + date overlap); `retentionDays`
    / `documentRetentionDays`; definitive-404 tombstones; full-rescan reconciliation; per-sink
    pending/archived/missed reporting.
+
+## Store inspector (Settings)
+An in-extension **store inspector** (`ui/store-browser.js`, opened from Settings) reads any backend
+directly via `openBackend(cfg)` — the configured canonical store, plain `local`, or a specific cloud
+sink's store — with a **backend picker**, so a user can audit what's held and repair a backend without
+repointing the global config. It can **delete** items (`deleteStoreItems(sourceId, ids)`) or empty a
+source wholesale (`clearStoreSource(sourceId)` — keeps its meta). Records show their canonical projection
+including `record.extra`.
 
 ## Sink capability (schema/config)
 Sinks gain a declared capability: `role: 'store' | 'consumer'` (or derived from type: local/local-folder/

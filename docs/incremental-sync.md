@@ -1,10 +1,14 @@
 > SUPERSEDED by [canonical-store.md](canonical-store.md) — the index/tombstone/retention model here is folded into the canonical-store design (extraction decoupled from delivery; portable store; projections).
 
-# Incremental sync — design (NOT YET IMPLEMENTED)
+# Incremental sync — design (HEAD early-stop implemented; tail/deletions pending)
 
-> Status: **design only**, agreed 2026-07-09. Do not implement until scheduled. Captures the model for
-> making heavy sources (e.g. Amazon) fast by not re-enumerating / re-delivering what's already known,
-> while staying correct across multiple sinks, undelivered-old items, deletions, and document expiry.
+> Status: **design agreed 2026-07-09; partially implemented.** The **head** early-stop is live — the pagers
+> in `runtime/inventory.js` seed their `seen` set with the store's known ids (`opts.knownIds`) so known
+> items dedup out and paging stops early (the year pager stops once a year is fully known). The **tail**
+> (`retentionDays` / `documentRetentionDays` floors, definitive-404 tombstones, full-rescan reconciliation)
+> and per-sink pending/archived/missed reporting are still pending. Captures the model for making heavy
+> sources (e.g. Amazon) fast by not re-enumerating / re-delivering what's already known, while staying
+> correct across multiple sinks, undelivered-old items, deletions, and document expiry.
 
 ## Problem
 Some sources are slow to enumerate **all** items (Amazon pages year-by-year, then fetches per-order

@@ -12,7 +12,15 @@ sources/
   <id>.json            # one source per file, e.g. sources/carrefour-es.json
 index.json             # generated catalog (CI), served at https://habeas-dev.github.io/sources/index.json
 schema/adapter.schema.json   # copy of the extension's adapter schema (CI validates against it)
+scripts/validate.js          # copy of the extension's adapter validator (CI runs it — checkHosts + schema)
 ```
+
+The catalog is **LIVE** with 11 published sources (Carrefour, Amazon, Dia, Decathlon, Ikea, Leroy Merlín,
+Bip&Drive, Hover, WiZink, CaixaBank, and **ING España**).
+
+> **Keep the two validators in sync.** `scripts/validate.js` is a copy of
+> `extension/src/adapters/validate.js`; when a new runtime feature lands (e.g. the `synthetic` pager mode),
+> update the registry's copy too, or a source using it will pass locally but fail registry CI.
 
 - **Contributing** = open a PR that adds/edits `sources/<id>.json`. The extension's **Share**
   button builds the JSON and opens a prefilled GitHub "new file" PR (`registry/share.js`).

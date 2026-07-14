@@ -5,24 +5,32 @@ is usually a **new adapter**.
 
 ## Contributing an adapter
 
-Adapters are **declarative data, not code** (see `adapters/README.md`). To add one:
+Adapters are **declarative data, not code** — plain JS objects interpreted by a fixed
+runtime (`extension/src/runtime/inventory.js`), never `eval`'d. The easiest way to author
+one is **record mode** inside the extension (no hand-writing required):
 
-1. Copy an existing adapter (e.g. `adapters/carrefour-es.yaml`) as a starting point.
-2. Fill in the service's host match, login signal, list/detail fetch, field
-   mapping, dedupe key, target schema, and capability scope.
-3. Validate it against `adapters/schema/adapter.schema.json`.
-4. Map your fields into an existing normalized schema in `schemas/` (open an issue
-   first if you need a new one).
-5. Open a PR describing: the service, what data it exposes, and any legal/ToS
-   caveats you're aware of.
+1. On a device logged in to the service, open the extension → **Create a source**
+   (record mode) and browse your data so Habeas observes the real API calls.
+2. **Analyze** → review the auto-drafted host match, login signal, list/detail/PDF
+   fetch, pagination, field mapping, dedupe key, target schema and category in the
+   visual mapper.
+3. **Test** → confirm sample docs come back; fix the mapping / schema / category.
+   Every source is validated by `extension/src/adapters/validate.js` (schema +
+   same-registrable-domain guard) before it can be used.
+4. Map your fields into an existing normalized schema (`receipt`, `invoice`,
+   `transaction`, `investment`); open an issue first if you genuinely need a new one.
+5. **Save**, then **Share** → opens a prefilled PR to
+   [`habeas-dev/sources`](https://github.com/habeas-dev/sources), describing the
+   service, what data it exposes, and any legal/ToS caveats you're aware of. Only
+   real, API-verified sources are published (never invented endpoints/fields).
 
 ### Rules for adapters
 
 - **No code.** If your service needs logic that the declarative format + the
   predefined transforms can't express, open an issue — we extend the format for
   everyone rather than allowing arbitrary JS.
-- **Least privilege.** Declare the narrowest `capabilities` (hosts read, sink
-  written) that works.
+- **Least privilege.** Touch the fewest hosts that works, and never list a host in
+  `crossDomainHosts` unless the service genuinely spans registrable domains.
 - **Same registrable domain (eTLD+1) is the hard boundary.** Every host your
   adapter reads from or replays the session to must share one registrable domain.
   If a service legitimately spans domains (e.g. login on `bank.es`, API on

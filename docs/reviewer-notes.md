@@ -3,7 +3,8 @@
 ## What it does (single purpose)
 Habeas lets a user export **their own** data (receipts, invoices, orders, card/investment statements)
 from services they are **already logged into**, and save it where they choose (a download, a local
-folder, their own Google Drive, or an HTTP endpoint they configure). It runs entirely inside the user's
+folder, their own Google Drive, Dropbox, an S3 / S3-compatible bucket, a WebDAV server, or an HTTP
+endpoint they configure). It runs entirely inside the user's
 existing authenticated session. It stores **no credentials** and runs **no Habeas server that receives
 user data**.
 
@@ -26,6 +27,10 @@ was captured from; any cross-domain use requires an explicit allowlist **and** a
   Sends a source id + a star rating / comment text. **No personal or extracted data.**
 - **Google APIs** (`googleapis.com`): only if the user connects the optional Google Drive sink (OAuth
   `drive.file`, files this app creates).
+- **User-configured delivery targets** (optional Dropbox, S3 / S3-compatible, WebDAV or HTTP sinks): the
+  user's extracted data is uploaded **only** to the host the user themselves entered/authorized for that
+  sink. Dropbox uses a public OAuth app (`drive.file`-style, files this app creates); S3/WebDAV/HTTP use
+  credentials the user supplies. No Habeas server sits in between.
 Everything else (the user's actual data) goes only to the destination the user configured, or stays local.
 
 ## Permissions (rationale)
