@@ -71,12 +71,20 @@ function onWebRequestHeaders(details) {
     const u = new URL(details.url);
     const adapters = WR_MAP[u.host];
     if (!adapters || !adapters.length) return;
-    const authz = (details.requestHeaders || []).find((h) => h.name.toLowerCase() === 'authorization');
+    const reqH = details.requestHeaders || [];
+    const authz = reqH.find((h) => h.name.toLowerCase() === 'authorization');
     for (const a of adapters) {
       if (authz && authz.value) {
         const tm = (a.auth && a.auth.tokenMatch) || 'eyJ';
         let ok; try { ok = new RegExp(tm).test(authz.value); } catch (e) { ok = authz.value.indexOf(tm) >= 0; }
-        if (ok) saveAuth(u.host, u.pathname, { authorization: authz.value }).then(() => { maybeAutoRun(u.host); runPendingExternalCollects(u.host); });
+        if (ok) {
+          // Capture EVERY header this source replays (not just the token) — a source may need a companion
+          // header alongside the bearer (e.g. ING's x-ing-extendedsessioncontext). Default: authorization only.
+          const want = new Set(((a.auth && a.auth.replayHeaders) || ['authorization']).map((h) => h.toLowerCase()));
+          const hdrs = { authorization: authz.value };
+          for (const h of reqH) { const ln = h.name.toLowerCase(); if (want.has(ln) && h.value) hdrs[ln] = h.value; }
+          saveAuth(u.host, u.pathname, hdrs).then(() => { maybeAutoRun(u.host); runPendingExternalCollects(u.host); });
+        }
       }
       for (const c of (a.auth && a.auth.context) || []) {
         let m; try { m = new RegExp(c.match).exec(details.url); } catch (e) { continue; }

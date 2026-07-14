@@ -1,0 +1,58 @@
+{
+  "id": "ing-es",
+  "name": "ING España — Movimientos",
+  "service": "ing",
+  "trust": "community",
+  "domain": "ingdirect.es",
+  "country": "ES",
+  "version": "2026-07-14",
+  "minVersion": "0.1.65.3",
+  "categories": ["banking"],
+  "match": ["https://ing.ingdirect.es/*"],
+  "openUrl": "https://ing.ingdirect.es/app/login",
+  "auth": {
+    "mode": "bearer",
+    "tokenMatch": "^Bearer eyJ[A-Za-z0-9._-]+$",
+    "replayHeaders": ["authorization", "x-ing-extendedsessioncontext"]
+  },
+  "api": {
+    "host": "https://api.ing.ingdirect.es",
+    "groups": {
+      "path": "/position-keeping",
+      "itemsPath": "products",
+      "fields": {
+        "id": "uuid",
+        "name": "commercialName",
+        "type": "type",
+        "iban": "identifiers[type=PRODUCT_NUMBER].value",
+        "currency": "denominationCurrency"
+      },
+      "mask": ["iban"]
+    },
+    "list": {
+      "path": "/v2/products/{group.id}/transactions",
+      "paging": "offset",
+      "offsetParam": "offset",
+      "offsetStep": 100,
+      "itemsPath": "transactions",
+      "window": "90d",
+      "maxAgeDays": 90,
+      "range": { "from": "fromDate", "to": "toDate", "format": "date" },
+      "params": { "limit": 100, "filterEru": "false" }
+    }
+  },
+  "fields": {
+    "internalId": "transactionLocalUUID",
+    "date": "transactionDate",
+    "amount": "amount",
+    "description": "description",
+    "label": "concept",
+    "type": "transactionCode",
+    "account": "{group.iban}"
+  },
+  "schema": "transaction@1",
+  "currency": "EUR",
+  "changelog": [
+    { "version": "2026-07-14", "changes": "Initial: account movements (transactions), grouped by product, 90-day window." }
+  ]
+}

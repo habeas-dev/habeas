@@ -74,8 +74,18 @@ export async function listInventory(adapter, auth, net, opts) {
     let groups = await listGroups(adapter, a, net);
     // opts.groupId restricts to one account (a consumer's collect{group} asks for a single account).
     if (opts && opts.groupId != null) groups = groups.filter((g) => String(g.id) === String(opts.groupId));
+    // opts.groups: a persisted per-datasource allow-list — only these accounts are offered/listed. Absent
+    // or empty → all accounts (backward-compatible). Ids compared as strings.
+    else if (opts && opts.groups && opts.groups.length) { const allow = new Set(opts.groups.map(String)); groups = groups.filter((g) => allow.has(String(g.id))); }
     const all = [];
-    for (const g of groups) all.push(...await pageList(adapter, a, net, g, opts));
+    let errs = 0, lastErr;
+    // Tolerate a single account failing (e.g. a product with no transactions endpoint → 404): don't let it
+    // kill the whole run. But if EVERY account failed (e.g. no session), surface the error to the caller.
+    for (const g of groups) {
+      try { all.push(...await pageList(adapter, a, net, g, opts)); }
+      catch (e) { errs++; lastErr = e; }
+    }
+    if (groups.length && errs === groups.length) throw lastErr;
     all.sort(byDate);
     return capAge(all);
   }
@@ -1055,8 +1065,18 @@ function rangeParams(list) {
 function get(obj, path) {
   if (obj == null || path == null) return undefined;
   if (path === '$' || path === '') return obj; // the response itself (e.g. a top-level array — no wrapper object)
-  if (String(path).indexOf('.') < 0) return obj[path];
-  return String(path).split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
+  const s = String(path);
+  if (s.indexOf('.') < 0 && s.indexOf('[') < 0) return obj[s];
+  // Each segment is a plain key OR an array selector `key[field=value]` — pick the element whose `field`
+  // (itself a dotted path) equals `value`. Lets a source read e.g. ING's IBAN out of a typed identifiers[]:
+  //   identifiers[type=PRODUCT_NUMBER].value
+  return s.split('.').reduce((o, k) => {
+    if (o == null) return undefined;
+    const m = k.match(/^([^[]+)\[([^=\]]+)=([^\]]*)\]$/);
+    if (!m) return o[k];
+    const arr = o[m[1]];
+    return Array.isArray(arr) ? arr.find((e) => e != null && String(get(e, m[2])) === m[3]) : undefined;
+  }, obj);
 }
 function windowMs(w) {
   // Accept days / months / years — e.g. "90d" (WiZink: only the last 90 days need no extra auth), "6m", "3y".
