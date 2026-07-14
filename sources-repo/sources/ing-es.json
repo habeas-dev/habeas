@@ -9,6 +9,7 @@
   "minVersion": "0.1.65.5",
   "categories": ["banking"],
   "gaps": ["tarjetas", "inversión"],
+  "throttle": { "minMs": 300, "jitterMs": 500 },
   "match": ["https://ing.ingdirect.es/*"],
   "openUrl": "https://ing.ingdirect.es/app/login",
   "currency": "EUR",

@@ -172,6 +172,11 @@ export function validateAdapter(adapter) {
     else checkExtraction(adapter, req);
     const auth = adapter.auth || {};
     req(Array.isArray(auth.replayHeaders), 'auth.replayHeaders must be an array (may be empty for cookie auth)');
+    if (adapter.throttle != null) {
+      const th = adapter.throttle;
+      req(th && typeof th.minMs === 'number' && th.minMs >= 0 && (th.jitterMs == null || (typeof th.jitterMs === 'number' && th.jitterMs >= 0)),
+        'throttle must be { minMs: number≥0, jitterMs?: number≥0 }');
+    }
 
     const h = checkHosts(adapter);
     req(h.ok, h.offenders.length
