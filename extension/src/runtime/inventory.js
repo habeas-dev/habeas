@@ -224,10 +224,68 @@ async function pageList(adapter, auth, net, group, opts) {
       cursor = get(data, list.nextPath);
       if (!added || !cursor) break;
     }
+  } else if (paging === 'synthetic') {
+    // No API list to page — the documents exist once per GROUP (a per-account report over the window) or
+    // once per PERIOD (a monthly statement). Build the items locally; each maps to one doc → one file.
+    for (const p of synthItems(list, group)) {
+      const doc = mapDoc(adapter, p, group);
+      if (doc.internalId != null && seen.has(doc.internalId)) continue;
+      if (doc.internalId != null) seen.add(doc.internalId);
+      all.push(doc);
+    }
   } else { // 'none' — single request
     collect(adapter, await call({ ...range, ...baseParams }), seen, all, group);
   }
   return all; // sorted by the caller (listInventory) across all groups
+}
+
+// Synthetic list items — for DOCUMENTS not enumerated by an API list. `synthetic.each`:
+//  - "months": one item per calendar month back to `maxAgeDays` (a monthly statement, e.g. ING's integrated
+//    extract) — item carries {year, month, period, date}.
+//  - "group":  one item = the current account/group (a per-account report over the window).
+// The window range is attached to each item's _raw so a pdf template can read {fromDate}/{toDate}/{year}/…
+function synthItems(list, group) {
+  const s = list.synthetic || {};
+  const rangeVals = {};
+  if (list.window || list.range) {
+    rangeVals.fromDate = new Date(Date.now() - windowMs(list.window)).toISOString().slice(0, 10);
+    rangeVals.toDate = new Date().toISOString().slice(0, 10);
+  }
+  if (s.each === 'months') {
+    const out = [];
+    const cutoff = Date.now() - (list.maxAgeDays || 90) * 86400000;
+    const now = new Date();
+    let y = now.getUTCFullYear(), m = now.getUTCMonth() + 1; // 1-12
+    for (let i = 0; i < 36; i++) {
+      const last = new Date(Date.UTC(y, m, 0)); // last day of month y-m
+      if (last.getTime() < cutoff) break;       // whole month older than the window → stop
+      out.push({ year: String(y), month: String(m), period: `${y}-${String(m).padStart(2, '0')}`, date: last.toISOString().slice(0, 10), ...rangeVals });
+      m--; if (m < 1) { m = 12; y--; }
+    }
+    return out;
+  }
+  if (s.each === 'group') {
+    if (!group) return [];
+    return [{ ...(group._raw || {}), ...rangeVals, date: rangeVals.toDate || new Date().toISOString().slice(0, 10) }];
+  }
+  // "group-months": one item per (account × month) — a MONTHLY per-account statement (like WiZink's). Each
+  // item carries that month's fromDate/toDate so a range-report endpoint returns just that month.
+  if (s.each === 'group-months') {
+    if (!group) return [];
+    const out = [];
+    const cutoff = Date.now() - (list.maxAgeDays || 90) * 86400000;
+    const now = new Date();
+    let y = now.getUTCFullYear(), m = now.getUTCMonth() + 1;
+    for (let i = 0; i < 36; i++) {
+      const first = new Date(Date.UTC(y, m - 1, 1)), last = new Date(Date.UTC(y, m, 0));
+      if (last.getTime() < cutoff) break;
+      out.push({ ...(group._raw || {}), year: String(y), month: String(m), period: `${y}-${String(m).padStart(2, '0')}`,
+        date: last.toISOString().slice(0, 10), fromDate: first.toISOString().slice(0, 10), toDate: last.toISOString().slice(0, 10) });
+      m--; if (m < 1) { m = 12; y--; }
+    }
+    return out;
+  }
+  return [];
 }
 
 // Year-partitioned pager. Some services (Amazon /your-orders) only expose orders one year at a time
