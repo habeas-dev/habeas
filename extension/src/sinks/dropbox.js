@@ -154,7 +154,7 @@ export async function dropboxWrite(sink, docs, files, opts = {}) {
   let prev;
   try { prev = await dbxDownloadJson(token, mfPath); }
   catch (e) { return { written: n, total: docs.length, manifestSkipped: (e && e.message) || String(e) }; }
-  await dbxUpload(token, mfPath, jsonBlob(JSON.stringify(mergeRecords(prev, toRecords(docs, files)), null, 2)));
+  await dbxUpload(token, mfPath, jsonBlob(JSON.stringify(mergeRecords(prev, toRecords(docs, files, opts)), null, 2)));
   return { written: n, total: docs.length };
 }
 

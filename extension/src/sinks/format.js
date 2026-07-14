@@ -1,5 +1,6 @@
 // Shared formatting helpers used by every sink.
 import { renderPath } from '../lib/naming.js';
+import { canonicalize } from '../lib/normalize.js';
 
 export function pathFor(sink, d, opts, ext) {
   ext = ext || (opts && opts.ext) || 'pdf';
@@ -174,8 +175,13 @@ export function acceptsDoc(sink, doc) {
   if (!a || !(a.categories && a.categories.length)) return true;
   return a.categories.includes(doc.category);
 }
-export function toRecords(docs, files) {
-  return docs.map((d) => ({ ...toRecord(d), pdf: files.has(d.internalId) }));
+export function toRecords(docs, files, opts) {
+  const norm = opts && opts.normalize; // sink opted into the uniform canonical shape (consumers)
+  return docs.map((d) => {
+    const rec = toRecord(d);
+    const has = files.has(d.internalId);
+    return norm ? { ...canonicalize(rec), pdf: has } : { ...rec, pdf: has };
+  });
 }
 // Merge new records into an existing manifest array by internalId (new wins), newest first.
 export function mergeRecords(existing, incoming) {
@@ -184,8 +190,8 @@ export function mergeRecords(existing, incoming) {
   for (const r of incoming) map.set(r.internalId, r);
   return [...map.values()].sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : (a.date || '') > (b.date || '') ? 1 : 0)); // oldest → newest
 }
-export function buildManifest(docs, files) {
-  return JSON.stringify(toRecords(docs, files), null, 2);
+export function buildManifest(docs, files, opts) {
+  return JSON.stringify(toRecords(docs, files, opts), null, 2);
 }
 export function jsonBlob(s) { return new Blob([s], { type: 'application/json' }); }
 export function today() { return new Date().toISOString().slice(0, 10); }

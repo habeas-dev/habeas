@@ -55,6 +55,17 @@
         "description": "description",
         "type": "transactionCode",
         "account": "{group.iban}"
+      },
+      "normalize": {
+        "counterparty": {
+          "from": "description",
+          "flags": "i",
+          "re": [
+            "(?:enviad[oa] a|recibid[oa] de|a favor de|domiciliaci[oó]n de)\\s+(.+)$",
+            "^N[oó]mina recibida\\s+(.+)$",
+            "^Recibo\\s+(.+?)\\s*(?:·.*)?$"
+          ]
+        }
       }
     },
     {

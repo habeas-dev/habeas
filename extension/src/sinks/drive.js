@@ -233,7 +233,7 @@ export async function driveWrite(sink, docs, files, opts) {
     const svcId = await ensureFolderPath(token, [root, service], cache);
     const mf = mfName(opts);
     const existing = await readJson(token, mf, svcId);
-    const merged = mergeRecords(existing, toRecords(docs, files));
+    const merged = mergeRecords(existing, toRecords(docs, files, opts));
     await putJson(token, mf, svcId, JSON.stringify(merged, null, 2));
     return { written: n, total: docs.length };
   });

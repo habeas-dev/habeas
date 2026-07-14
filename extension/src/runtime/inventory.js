@@ -6,6 +6,7 @@
 // runtime stays source-agnostic. Carrefour uses `offsets` paging; other sources use
 // `page` / `cursor` / `none`.
 import { buildRecord } from '../sinks/format.js';
+import { applyNormalize } from '../lib/normalize.js';
 import { chrome } from '../lib/ext.js';
 import { registrableDomain, hostOf } from '../adapters/validate.js';
 import { esc as escH } from '../lib/esc.js';
@@ -1095,6 +1096,7 @@ function mapDoc(adapter, p, group) {
   const nameOf = (v) => (v && typeof v === 'object') ? (v.name || v.nombre || v.descripcion || '') : (v == null ? '' : String(v));
   doc.label = nameOf(doc.storeName) || nameOf(doc.issuer) || nameOf(doc.counterparty) || nameOf(doc.instrument) || nameOf(doc.description) || nameOf(doc.party)
     || (adapter.itemLabel ? applyTmpl(adapter.itemLabel, doc, doc.internalId) : '');
+  applyNormalize(doc, adapter); // declarative derivations (e.g. counterparty from description) before the record is built
   doc.record = buildRecord(doc, adapter);
   return doc;
 }

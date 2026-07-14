@@ -15,7 +15,9 @@ export function listSinkTypes() { return ['download', 'local-folder', 'drive', '
 export async function writeToSink(sink, docs, files, opts = {}) {
   const impl = IMPL[sink.type];
   if (!impl) throw new Error('unknown sink type: ' + sink.type);
-  return impl(sink, docs, files, opts);
+  // A sink can opt into the uniform canonical manifest shape (sink.normalize) — e.g. a consumer that wants
+  // the same record shape regardless of source. Threaded to the manifest builders via opts.
+  return impl(sink, docs, files, { ...opts, normalize: opts.normalize ?? sink.normalize });
 }
 
 // One manifest PER SOURCE (not per service) so different sources under the same service — e.g. WiZink
@@ -33,7 +35,7 @@ const IMPL = {
     const entries = [];
     for (const d of docs) for (const art of files.get(d.internalId) || []) entries.push({ name: pathFor(sink, d, opts, art.ext), blob: art.blob });
     const written = entries.length;
-    entries.push({ name: `${service}/${manifestName(opts)}`, blob: jsonBlob(buildManifest(docs, files)) });
+    entries.push({ name: `${service}/${manifestName(opts)}`, blob: jsonBlob(buildManifest(docs, files, opts)) });
     const zip = await makeZip(entries);
     triggerDownload(zip, `habeas-${service}-${today()}.zip`);
     return { written, total: docs.length };
@@ -55,7 +57,7 @@ const IMPL = {
     const svcDir = await ensureDir(root, [service]);
     const mf = manifestName(opts);
     const existing = await readJsonFile(svcDir, mf);
-    const merged = mergeRecords(existing, toRecords(docs, files));
+    const merged = mergeRecords(existing, toRecords(docs, files, opts));
     await writeFile(svcDir, mf, jsonBlob(JSON.stringify(merged, null, 2)));
     return { written: n, total: docs.length };
   },
@@ -73,7 +75,7 @@ const IMPL = {
     // Tell the consumer WHICH source produced this data (e.g. "decathlon-es").
     if (opts.source) form.append('source', opts.source);
     if (opts.service) form.append('service', opts.service);
-    form.append('records', buildManifest(docs, files));
+    form.append('records', buildManifest(docs, files, opts));
     for (const d of docs) for (const art of files.get(d.internalId) || []) form.append('files[]', art.blob, d.internalId + '.' + art.ext);
     // Caller-supplied headers (e.g. an externally-proposed sink's pairing token) — resolved from the
     // encrypted headersRef, falling back to any legacy inline sink.headers. tokenRef wins on conflict.
@@ -104,7 +106,7 @@ const IMPL = {
     const mf = service + '/' + manifestName(opts);
     await webdavMkcols(base, mf, auth, made);
     const existing = await webdavGetJson(base + '/' + encodePath(mf), auth);
-    const merged = mergeRecords(existing, toRecords(docs, files));
+    const merged = mergeRecords(existing, toRecords(docs, files, opts));
     await webdavPut(base + '/' + encodePath(mf), jsonBlob(JSON.stringify(merged, null, 2)), auth);
     return { written: n, total: docs.length };
   },
@@ -124,7 +126,7 @@ const IMPL = {
       }
     }
     const mfKey = s3Key(cfg, service + '/' + manifestName(opts));
-    const merged = mergeRecords(await s3GetJson(cfg, mfKey), toRecords(docs, files));
+    const merged = mergeRecords(await s3GetJson(cfg, mfKey), toRecords(docs, files, opts));
     await s3Put(cfg, mfKey, jsonBlob(JSON.stringify(merged, null, 2)));
     return { written: n, total: docs.length };
   },
