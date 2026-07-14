@@ -82,6 +82,18 @@ export function buildRecord(d, adapter) {
       if (k[0] === '_' || RESERVED.has(k)) continue; // internal or already consumed by the schema
       if (d[k] != null && d[k] !== '') extra[k] = d[k];
     }
+    // keepRaw: carry EVERY field from the raw list item that the schema didn't already place in the record,
+    // so nothing at all is lost — a bank movement's issuer / reference / "more info" that the adapter didn't
+    // explicitly map. Dedupes scalars already represented (date/type/amount) and the internalId's raw source.
+    if (adapter && adapter.keepRaw && d._raw && typeof d._raw === 'object' && !Array.isArray(d._raw)) {
+      const seen = new Set(Object.values(r).filter((v) => v != null && typeof v !== 'object'));
+      for (const [k, v] of Object.entries(d._raw)) {
+        if (k[0] === '_' || RESERVED.has(k) || k in extra) continue;
+        if (v == null || v === '' || typeof v === 'function' || v === d.internalId) continue;
+        if (typeof v !== 'object' && seen.has(v)) continue; // already in the record (e.g. transactionDate = date)
+        extra[k] = v;
+      }
+    }
     return Object.keys(extra).length ? { ...r, extra } : r;
   };
   const done = (r) => withExtra(withPdfUrl(withGroup(withNumber(r))));

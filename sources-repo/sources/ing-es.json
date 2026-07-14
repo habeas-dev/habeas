@@ -22,6 +22,7 @@
       "id": "movimientos",
       "name": "Movimientos",
       "schema": "transaction@1",
+      "keepRaw": true,
       "api": {
         "groups": {
           "path": "/position-keeping",
@@ -53,13 +54,7 @@
         "amount": "amount",
         "description": "description",
         "type": "transactionCode",
-        "account": "{group.iban}",
-        "concept": "concept",
-        "balance": "balance",
-        "subcategoryId": "subcategoryId",
-        "mode": "mode",
-        "excludedAmount": "excludedAmount",
-        "transactionSequence": "transactionId.transactionSequence"
+        "account": "{group.iban}"
       }
     },
     {

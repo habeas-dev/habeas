@@ -31,6 +31,7 @@ export function resolveOutput(adapter, outputId) {
     fields: { ...(adapter.fields || {}), ...(s.fields || {}), ...(f.fields || {}) },
     schema: f.schema || s.schema || adapter.schema,
     categories: f.categories || s.categories || adapter.categories,
+    keepRaw: f.keepRaw ?? s.keepRaw ?? adapter.keepRaw, // preserve the raw list item under record.extra (per stream)
     _stream: s.id, _format: f.id || '', _output: s.id + (f.id ? '/' + f.id : ''),
     _outputName: (s.name || s.id) + (f.name ? ' · ' + f.name : ''),
   };
