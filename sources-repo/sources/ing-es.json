@@ -52,9 +52,14 @@
         "date": "transactionDate",
         "amount": "amount",
         "description": "description",
-        "label": "concept",
         "type": "transactionCode",
-        "account": "{group.iban}"
+        "account": "{group.iban}",
+        "concept": "concept",
+        "balance": "balance",
+        "subcategoryId": "subcategoryId",
+        "mode": "mode",
+        "excludedAmount": "excludedAmount",
+        "transactionSequence": "transactionId.transactionSequence"
       }
     },
     {

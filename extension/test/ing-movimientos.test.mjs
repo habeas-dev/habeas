@@ -26,7 +26,7 @@ const POSITION = {
 };
 const TX = {
   'acc-1': [
-    { transactionLocalUUID: 't-a1-1', transactionDate: iso(3), amount: -20, concept: 'Compra', description: 'Compra super', transactionCode: 'PURCH' },
+    { transactionLocalUUID: 't-a1-1', transactionDate: iso(3), amount: -20, balance: 980.5, concept: 'Compra', description: 'Compra super', transactionCode: 'PURCH', subcategoryId: '42', mode: 'P' },
     { transactionLocalUUID: 't-a1-2', transactionDate: iso(10), amount: 1500, concept: 'Nómina', description: 'Nomina recibida', transactionCode: 'PAYROLL' },
   ],
   'acc-2': [{ transactionLocalUUID: 't-a2-1', transactionDate: iso(5), amount: 3.21, concept: 'Interés', description: 'Intereses', transactionCode: 'INT' }],
@@ -54,6 +54,11 @@ test('ING movimientos: lists transactions; account allow-list filters', async ()
   assert.equal(one.length, 2);
   const rec = buildRecord(one.find((d) => d.internalId === 't-a1-1'), MOV);
   assert.equal(rec.amount, -20); assert.equal(rec.currency, 'EUR'); assert.equal(rec.direction, 'debit');
+  // ALL the movement's detail is preserved under record.extra (concept, balance, subcategory, mode…).
+  assert.equal(rec.extra.concept, 'Compra');
+  assert.equal(rec.extra.balance, 980.5);
+  assert.equal(rec.extra.subcategoryId, '42');
+  assert.equal(rec.extra.mode, 'P');
 });
 
 // Capture the document URL the runtime would fetch (per synthetic item), without downloading anything.

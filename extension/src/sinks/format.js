@@ -41,6 +41,15 @@ export function bakeLearned(d) {
 // Schema-aware normalized record. `receipt@1` is byte-identical to the historical shape so
 // existing manifests do not change. New schemas (invoice/transaction/investment) shape the
 // same mapped doc differently. Currency defaults to EUR unless the adapter overrides it.
+// Field keys the schemas already consume (directly OR into a nested object like issuer{name,address}, and a
+// few intentionally-dropped ones). Everything ELSE an adapter maps is preserved under record.extra.
+const RESERVED = new Set([
+  'internalId', 'date', 'amount', 'total', 'currency', 'category', 'description', 'label', 'counterparty', 'party',
+  'direction', 'type', 'number', 'group', 'storeName', 'storeAddress', 'issuer', 'issuerAddress', 'instrument',
+  'isin', 'units', 'price', 'operation', 'location', 'card', 'source', 'account', 'pdfUrl', 'returnStatus',
+  'refundTotal', 'paymentMethod', 'paymentLast4',
+]);
+
 export function buildRecord(d, adapter) {
   const schema = (adapter && adapter.schema) || 'receipt@1';
   const kind = String(schema).split('@')[0];
@@ -63,7 +72,19 @@ export function buildRecord(d, adapter) {
   const uf = adapter && adapter.api && adapter.api.pdf && adapter.api.pdf.urlField;
   const pdfUrl = uf && d._raw ? uf.split('.').reduce((o, k) => (o == null ? o : o[k]), d._raw) : null;
   const withPdfUrl = (r) => (pdfUrl != null && pdfUrl !== '' ? { ...r, pdfUrl: String(pdfUrl) } : r);
-  const done = (r) => withPdfUrl(withGroup(withNumber(r)));
+  // `extra` = any field the adapter mapped that the schema didn't already place in the record (e.g. a bank
+  // movement's concept, balance, reference, issuer, "more info" from a detail fetch). Carried verbatim under
+  // record.extra so no captured detail is lost. Keyed off "not already in r" so it's per-schema automatically;
+  // sources that only map standard fields get no `extra` → records stay byte-identical. `label` is display-only.
+  const withExtra = (r) => {
+    const extra = {};
+    for (const k of Object.keys((adapter && adapter.fields) || {})) {
+      if (k[0] === '_' || RESERVED.has(k)) continue; // internal or already consumed by the schema
+      if (d[k] != null && d[k] !== '') extra[k] = d[k];
+    }
+    return Object.keys(extra).length ? { ...r, extra } : r;
+  };
+  const done = (r) => withExtra(withPdfUrl(withGroup(withNumber(r))));
   if (kind === 'transaction') {
     const r = { internalId: d.internalId, date: d.date, amount: money(d.amount ?? d.total), currency, category: d.category, description: d.description ?? d.label ?? '', counterparty: d.counterparty ?? d.party ?? '', direction: d.direction ?? dirOf(d.amount ?? d.total), source: d.source, type: d.type };
     // Carry any extra per-movement data a card source captures (merchant city, card mask…) so nothing is lost.
@@ -80,7 +101,7 @@ export function buildRecord(d, adapter) {
     // row loaded from the store shows it instead of the opaque internalId. Omitted when absent so
     // existing invoice records stay byte-identical.
     if (d.description != null && d.description !== '') r.description = d.description;
-    return withPdfUrl(withGroup(r));
+    return withExtra(withPdfUrl(withGroup(r)));
   }
   // receipt@1 (default) — unchanged shape (number appended only when present).
   return done({ internalId: d.internalId, date: d.date, total: money(d.total), currency, category: d.category, store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type });
