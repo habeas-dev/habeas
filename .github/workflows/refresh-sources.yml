@@ -1,0 +1,39 @@
+name: Refresh sources catalog
+
+# Keep the STATIC pre-rendered list in docs/sources.html fresh (it's a no-JS fallback baked from the live
+# registry index). Runs a few times a day; commits ONLY when the catalog actually changed, so it's quiet
+# between source publishes. A push to main redeploys GitHub Pages automatically. [skip ci] on the commit
+# keeps it from triggering the extension build.
+on:
+  schedule:
+    - cron: '0 */6 * * *' # every 6 hours (00, 06, 12, 18 UTC)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-sources
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Re-bake the static catalog from the live index
+        run: node docs/tools/render-sources.mjs
+      - name: Commit if the catalog changed
+        run: |
+          if git diff --quiet -- docs/sources.html; then
+            echo "catalog unchanged — nothing to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/sources.html
+          git commit -m "docs(sources): auto-refresh static catalog [skip ci]"
+          git push
