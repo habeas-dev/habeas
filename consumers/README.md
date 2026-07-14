@@ -17,7 +17,11 @@ authors agree on the contract.
 - **Cuéntamo** (planned) — finance (`transaction@1`, `investment_position@1`).
   Strategy: PSD2 AIS for SEPA current accounts; Habeas as a first-class source for
   what PSD2 does not cover (credit cards, investments, pensions, long history).
-  Financial adapters are first-party only.
+  Financial adapters are **allowed from the community**, not first-party-only: the
+  same-registrable-domain guard (a captured session can only ever be replayed to the
+  *same* service, cross-domain needs an explicit allowlist + consent — CLAUDE.md rule #4)
+  makes credential exfiltration structurally impossible regardless of category. `first-party`
+  is just an **audited trust label**, not a gate.
 
 ## Ingest contract (shared shape)
 
