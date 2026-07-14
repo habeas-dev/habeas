@@ -319,7 +319,8 @@ async function runRoute(ds, adapter, sink, opts = {}) {
       if (opts.signal && opts.signal.aborted) break; // Sync-all was stopped
       const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(adapter.id, sid); const fmts = fmtsFor(sid);
       // onProgress → live per-page status (visible in an open popup during a Sync-all sweep). signal → stop.
-      const all = await listInventory(eff, auth, net, { groupId: opts.groupId, signal: opts.signal, onProgress: (p) => setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])) }); // opts.groupId → one account only
+      // ds.groups = the user's saved account allow-list (grouped sources): auto/sweep only ever touch those.
+      const all = await listInventory(eff, auth, net, { groupId: opts.groupId, groups: (ds.groups && ds.groups.length) ? ds.groups : undefined, signal: opts.signal, onProgress: (p) => setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])) }); // opts.groupId → one account; opts.groups → allow-list
       const fresh = all.filter((d) => !delivered[d.internalId]);
       // Deliver oldest → newest (the list comes newest-first) — files written + manifest appended + store
       // recorded chronologically, matching the manual send. Covers auto, sweep and external collect.

@@ -1,5 +1,6 @@
 import { chrome } from '../lib/ext.js';
-import { getConfig } from '../lib/config.js';
+import { getConfig, saveConfig } from '../lib/config.js';
+import { manageAccounts } from './accountpicker.js';
 import { listInventory, artifactKinds, fetchArtifact, documentExt } from '../runtime/inventory.js';
 import { ensureSiteFetch, recoverSession, siteBaseUrl } from '../lib/pagefetch.js';
 import { pickGroup } from './grouppicker.js';
@@ -60,6 +61,8 @@ async function init() {
   if (!enabled.length) $('#status').textContent = t('no_datasources');
   $('#list').onclick = () => onList();
   $('#full-history').onclick = () => onList('full');
+  $('#accounts').onclick = onManageAccounts;
+  refreshAccountsBtn(cfg);
   $('#load-store').onclick = onLoadStore;
   $('#send').onclick = onSend;
   $('#sink').onchange = async () => { await setFavSink($('#ds').value, $('#sink').value); render(); }; // remember this source's preferred sink
@@ -68,7 +71,7 @@ async function init() {
     inventory = []; resetView(); clearLog(); $('#status').textContent = '';
     $('#sendbar').hidden = true; $('#selbar').hidden = true; $('#filterbar').hidden = true;
     const c = await getConfig(); await populateSinks(c); renderOutputs(adapterFor($('#ds').value, c).adapter);
-    await render(); refreshStoreButton();
+    await render(); refreshStoreButton(); refreshAccountsBtn(c);
   };
   refreshStoreButton();
   $('#sel-new').onclick = () => setSelection('new');
@@ -93,6 +96,33 @@ async function init() {
 function adapterFor(dsId, cfg) {
   const ds = cfg.datasources.find((d) => d.id === dsId);
   return { ds, adapter: ds && ADAPTERS[ds.adapter] };
+}
+
+// The "Accounts" button only makes sense for a grouped source (a bank with several accounts/cards).
+function refreshAccountsBtn(cfg) {
+  const btn = $('#accounts'); if (!btn) return;
+  const { adapter } = adapterFor($('#ds').value, cfg);
+  btn.hidden = !(adapter && adapter.api && adapter.api.groups);
+}
+
+// Persistent account filter: enumerate the source's accounts, let the user check which to import, and SAVE
+// the allow-list on the datasource (ds.groups). Listing/auto/sweep then only ever touch the chosen accounts.
+async function onManageAccounts() {
+  const cfg = await getConfig();
+  const { ds, adapter } = adapterFor($('#ds').value, cfg);
+  if (!adapter || !(adapter.api && adapter.api.groups)) return;
+  if (!(await hasConsent(adapter))) { $('#status').textContent = t('needs_consent'); return; }
+  const auth = await getAuth(adapter);
+  $('#status').textContent = t('accounts_loading');
+  let net; try { net = await ensureSiteFetch(adapter, { open: true }); } catch (e) {}
+  let selected;
+  try { selected = await manageAccounts(adapter, auth, net, (ds && ds.groups) || null); }
+  catch (e) { $('#status').textContent = t('accounts_failed'); return; }
+  if (selected == null) { $('#status').textContent = ''; return; } // cancelled
+  const c = await getConfig();
+  const d = c.datasources.find((x) => x.id === $('#ds').value);
+  if (d) { d.groups = selected; await saveConfig(c); }
+  $('#status').textContent = t('accounts_saved', [String(selected.length)]);
 }
 // Auto-resume listing after login: when List is clicked with no captured session, we open the login tab
 // and want to list AUTOMATICALLY once the token is captured. The popup closes when you focus the login tab,
@@ -292,7 +322,7 @@ const mergeInv = (base, fresh) => {
 async function onList(mode, opts = {}) {
   clearLog();
   const cfg = await getConfig();
-  const { adapter } = adapterFor($('#ds').value, cfg);
+  const { ds, adapter } = adapterFor($('#ds').value, cfg);
   if (!adapter) { $('#status').textContent = t('no_datasources'); return; }
   if (!(await hasConsent(adapter))) { $('#status').textContent = t('needs_consent'); return; }
   const auth = await getAuth(adapter);
@@ -332,10 +362,13 @@ async function onList(mode, opts = {}) {
     for (const sid of streamIds) {
       if (aborted()) break;
       const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(adapter.id, sid);
-      const groupId = await pickGroup(eff, auth, net);
+      // A saved account filter (ds.groups) takes over: list ALL selected accounts, no per-list picker.
+      // Without one, keep the transient "which account this time?" picker.
+      const filter = (ds && ds.groups && ds.groups.length) ? ds.groups : null;
+      const groupId = filter ? undefined : await pickGroup(eff, auth, net);
       const baseIds = new Set([...acc.values()].filter((d) => d._stream === sid).map((d) => d.internalId));
       const fresh = await listInventory(eff, auth, net, {
-        groupId, signal: aborter.signal, knownIds: mode === 'full' ? null : baseIds,
+        groupId, groups: filter, signal: aborter.signal, knownIds: mode === 'full' ? null : baseIds,
         onProgress: ({ year, page, docs }) => {
           $('#status').textContent = year != null ? t('listing_year_page', [String(year), String(page), String(docs.length)]) : t('listing_page', [String(page), String(docs.length)]);
           for (const d of docs) acc.set(key(tag(d, sid, sk)), d);
@@ -611,7 +644,8 @@ function wireDocsTab() {
   $('#tab-docs').onclick = () => switchTab('docs');
   $('#docs-refresh').onclick = () => { docsRows = null; renderDocuments(); };
   $('#docs-search').oninput = renderDocsTable;
-  $('#docs-source').onchange = renderDocsTable;
+  $('#docs-source').onchange = () => { populateDocsGroups(); renderDocsTable(); };
+  $('#docs-group').onchange = renderDocsTable;
   $('#doc-modal-close').onclick = closeDocModal;
   $('#doc-modal .doc-modal-backdrop').onclick = closeDocModal;
 }
@@ -671,15 +705,29 @@ async function renderDocuments() {
   const prev = $('#docs-source').value;
   $('#docs-source').innerHTML = srcs.length ? srcs.map((s) => `<option value="${esc(s)}">${esc(s)}</option>`).join('') : `<option value="">—</option>`;
   if (srcs.includes(prev)) $('#docs-source').value = prev;
+  populateDocsGroups();
   renderDocsTable();
+}
+
+// Group/account filter for the Documents view — only when the selected source has ≥2 accounts (record.group).
+function populateDocsGroups() {
+  if (!docsRows) return;
+  const src = $('#docs-source').value;
+  const groups = [...new Set(docsRows.filter((r) => r.base === src).map((r) => r.record.group).filter(Boolean))].sort();
+  const sel = $('#docs-group'); const prev = sel.value;
+  sel.hidden = groups.length < 2;
+  sel.innerHTML = `<option value="">${esc(t('all_accounts'))}</option>` + groups.map((g) => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
+  sel.value = groups.includes(prev) ? prev : '';
 }
 
 function renderDocsTable() {
   if (!docsRows) return;
   const q = ($('#docs-search').value || '').trim().toLowerCase();
   const srcFilter = $('#docs-source').value;
+  const grpFilter = $('#docs-group').value;
   const rows = docsRows.filter((r) => {
     if (r.base !== srcFilter) return false; // exactly one source — never mix
+    if (grpFilter && r.record.group !== grpFilter) return false; // filter by account (grouped sources)
     if (!q) return true;
     return [r.base, r.internalId, r.record.date, docStore(r.record), r.record.type].join(' ').toLowerCase().includes(q);
   });
