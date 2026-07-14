@@ -896,6 +896,57 @@ export function draftStreamsFromSamples(samples, ctx = {}, chosenKeys = null) {
   return { ok: true, draft, streams, host: hostOfCand(all[0]), count: picks.reduce((n, c) => n + c.len, 0) };
 }
 
+// Lift a FLAT adapter (or a flat inference draft) into a single stream object. Shared identity (host/auth/
+// match/domain) stays at the adapter level; only the per-output bits (list/groups/detail/pdf/fields/schema/
+// formats/keepRaw/normalize) move into the stream. Used to make a flat source streamed so a second stream
+// can be appended — the basis of "complete an existing source" contributions.
+export function flatToStream(a, id) {
+  const api = (a && a.api) || {};
+  const st = { id, name: (a && a.name) || (id.charAt(0).toUpperCase() + id.slice(1)), schema: a && a.schema, api: {} };
+  if (a && a.categories) st.categories = a.categories;
+  if (api.list) st.api.list = api.list;
+  if (api.groups) st.api.groups = api.groups;
+  if (api.detail) st.api.detail = api.detail;
+  if (api.pdf) st.api.pdf = api.pdf;
+  if (a && a.fields) st.fields = a.fields;
+  if (a && a.formats) st.formats = a.formats;
+  if (a && a.keepRaw) st.keepRaw = a.keepRaw;
+  if (a && a.normalize) st.normalize = a.normalize;
+  return st;
+}
+
+// Add inferred stream(s) to an EXISTING source, producing the augmented adapter (the community "patch"). The
+// base's identity is preserved — id/name/service/trust/domain/country/version/match/auth and the shared
+// api.host (+ csrf). A flat base is first lifted into one stream so a second can be appended. Each addition
+// is a stream object (see flatToStream); its id is de-duplicated. Only the declarative SHAPE is merged —
+// nothing about the contributor's data. This is what lets a user with a product the author lacks (a card,
+// an investment) complete a source without ever sharing their data.
+export function augmentSource(base, additions) {
+  const adds = (Array.isArray(additions) ? additions : [additions]).filter(Boolean);
+  if (!base || !adds.length) return base;
+  const out = { ...base };
+  let streams;
+  if (base.streams && base.streams.length) {
+    streams = base.streams.slice();
+  } else {
+    streams = [flatToStream(base, base._flatId || 'principal')];
+    for (const k of ['fields', 'schema', 'formats', 'keepRaw', 'normalize']) delete out[k]; // moved into the stream
+  }
+  const used = new Set(streams.map((s) => s.id));
+  for (const add of adds) {
+    let sid = add.id || 'stream';
+    while (used.has(sid)) sid += '-2';
+    used.add(sid);
+    streams.push({ ...add, id: sid });
+  }
+  const sharedApi = {};
+  if (base.api && base.api.host) sharedApi.host = base.api.host;
+  if (base.api && base.api.csrf) sharedApi.csrf = base.api.csrf;
+  out.api = sharedApi;
+  out.streams = streams;
+  return out;
+}
+
 // Multi-account (groups) drafting: the user marks a captured list as their ACCOUNTS/CARDS (groupsKey);
 // the document list (listKey) is then fetched once PER account. Build api.groups from the accounts list
 // — its id field is the one whose value appears in the doc-list request — plus a display name and a
