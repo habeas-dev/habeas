@@ -251,15 +251,18 @@ function synthItems(list, group) {
     rangeVals.fromDate = new Date(Date.now() - windowMs(list.window)).toISOString().slice(0, 10);
     rangeVals.toDate = new Date().toISOString().slice(0, 10);
   }
+  // Only COMPLETED months — the current, in-progress month has no final statement yet, so its last day
+  // must be strictly before today (00:00 UTC) for the month to count.
+  const now = new Date();
+  const todayStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
   if (s.each === 'months') {
     const out = [];
     const cutoff = Date.now() - (list.maxAgeDays || 90) * 86400000;
-    const now = new Date();
     let y = now.getUTCFullYear(), m = now.getUTCMonth() + 1; // 1-12
     for (let i = 0; i < 36; i++) {
       const last = new Date(Date.UTC(y, m, 0)); // last day of month y-m
       if (last.getTime() < cutoff) break;       // whole month older than the window → stop
-      out.push({ year: String(y), month: String(m), period: `${y}-${String(m).padStart(2, '0')}`, date: last.toISOString().slice(0, 10), ...rangeVals });
+      if (last.getTime() < todayStart) out.push({ year: String(y), month: String(m), period: `${y}-${String(m).padStart(2, '0')}`, date: last.toISOString().slice(0, 10), ...rangeVals });
       m--; if (m < 1) { m = 12; y--; }
     }
     return out;
@@ -274,12 +277,11 @@ function synthItems(list, group) {
     if (!group) return [];
     const out = [];
     const cutoff = Date.now() - (list.maxAgeDays || 90) * 86400000;
-    const now = new Date();
     let y = now.getUTCFullYear(), m = now.getUTCMonth() + 1;
     for (let i = 0; i < 36; i++) {
       const first = new Date(Date.UTC(y, m - 1, 1)), last = new Date(Date.UTC(y, m, 0));
       if (last.getTime() < cutoff) break;
-      out.push({ ...(group._raw || {}), year: String(y), month: String(m), period: `${y}-${String(m).padStart(2, '0')}`,
+      if (last.getTime() < todayStart) out.push({ ...(group._raw || {}), year: String(y), month: String(m), period: `${y}-${String(m).padStart(2, '0')}`,
         date: last.toISOString().slice(0, 10), fromDate: first.toISOString().slice(0, 10), toDate: last.toISOString().slice(0, 10) });
       m--; if (m < 1) { m = 12; y--; }
     }
