@@ -84,6 +84,7 @@ function render() {
           <span class="rating muted" data-rate="${esc(e.id)}"></span>
         </div>
         <button data-more="${esc(e.id)}">${t('market_details')}</button>
+        ${installed ? `<button data-augment="${esc(e.id)}" title="${esc(t('market_complete_hint'))}">${t('market_complete')}</button>` : ''}
         <button data-install="${esc(e.id)}" ${(!compatible || (installed && !up)) ? 'disabled' : ''}>${label}</button>
       </div>
       <div class="panel" data-panel="${esc(e.id)}" hidden style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px"></div>
@@ -91,6 +92,8 @@ function render() {
   }).join('');
   $('#list').querySelectorAll('[data-install]').forEach((b) => b.onclick = () => onInstall(b.dataset.install));
   $('#list').querySelectorAll('[data-more]').forEach((b) => b.onclick = () => toggleDetails(b.dataset.more));
+  // "Complete this source" → open the authoring page in augment mode with this source preloaded as the base.
+  $('#list').querySelectorAll('[data-augment]').forEach((b) => b.onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/author.html?base=' + encodeURIComponent(b.dataset.augment)) }));
   const ua = $('#update-all'); if (ua) ua.onclick = () => onUpdateAll(outdated.map((e) => e.id));
   list.forEach(fillRating);
 }

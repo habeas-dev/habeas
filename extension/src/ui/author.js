@@ -1,13 +1,13 @@
 import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen, getAssets, getDomTexts } from '../lib/learn.js';
-import { draftAdapterFromSamples, draftStreamsFromSamples, draftWithGroups, listCandidates, matchCandidates } from '../runtime/infer.js';
+import { draftAdapterFromSamples, draftStreamsFromSamples, draftWithGroups, listCandidates, matchCandidates, augmentSource, flatToStream } from '../runtime/infer.js';
 import { listInventory, artifactKinds, fetchArtifact } from '../runtime/inventory.js';
 import { ensureSiteFetch } from '../lib/pagefetch.js';
 import { editJson } from './jsoneditor.js';
 import { renderPage } from '../lib/render.js';
 import { validateAdapter } from '../adapters/validate.js';
-import { saveSource } from '../adapters/index.js';
+import { saveSource, getAdapters } from '../adapters/index.js';
 import { grantConsent } from '../lib/consent.js';
 import { esc } from '../lib/esc.js';
 
@@ -23,6 +23,7 @@ let CANDS = [];           // candidate document lists across the samples
 let CHOSEN = null;        // the candidate currently drafted as the document list
 let GROUPS_KEY = '';      // a candidate marked as the accounts/cards list (multi-account) — '' = none
 let DRAFT = null;         // the inferred adapter draft (form edits are merged onto this)
+let BASE = null;          // when COMPLETING an existing source (?base=<id>): the adapter we augment
 
 // Normalized fields offered per target schema.
 const SCHEMA_FIELDS = {
@@ -51,7 +52,19 @@ async function init() {
   $('#analyze').onclick = onAnalyze;
   $('#test').onclick = onTest;
   $('#save').onclick = onSave;
+  $('#augment').onclick = onAugment;
   $('#f_schema').onchange = () => renderFieldMap(collectFields());
+  // "Complete an existing source" mode: ?base=<id> loads that source; drafting then ADDS a stream to it
+  // (a contributor recording a product the author lacks — a card, an investment) instead of a new source.
+  const baseId = new URLSearchParams(location.search).get('base');
+  if (baseId) {
+    try { BASE = (await getAdapters())[baseId] || null; } catch (e) {}
+    if (BASE) {
+      $('#augbanner').hidden = false;
+      $('#augbase').textContent = ' ' + (BASE.name || BASE.id);
+      if (BASE.match && BASE.match[0] && !$('#url').value) $('#url').value = BASE.match[0].replace('/*', '/');
+    }
+  }
   $('#editjson').onclick = async () => {
     const edited = await editJson(buildAdapter());
     if (edited) { DRAFT = edited; fillForm(DRAFT); $('#status').textContent = t('json_saved'); }
@@ -157,6 +170,8 @@ function drawDraft(chosen) {
   DRAFT = r.draft;
   candidates = r.fieldCandidates; // [{ path, value }]
   fillForm(DRAFT);
+  // In "complete an existing source" mode, offer to ADD this as a stream instead of saving a new source.
+  $('#augment').hidden = !BASE; $('#save').hidden = !!BASE;
   const doc = DRAFT.api.detail ? t('doc_json') : DRAFT.api.pdf ? t('doc_pdf') : t('doc_none');
   let status = t('author_detected', [r.itemsPath, String(r.count)]) + ' · ' + doc;
   if (DRAFT.crossDomainHosts && DRAFT.crossDomainHosts.length) status += ' · ' + t('author_crossdomain', [DRAFT.crossDomainHosts.join(', ')]);
@@ -331,6 +346,37 @@ async function onSave() {
     await stopLearning();
     $('#status').textContent = t('author_saved', [adapter.id]);
   } catch (e) { $('#status').textContent = t('author_invalid', [e.message]); }
+}
+
+// A readable stream id from the drafted list path (last non-templated segment).
+function streamIdOf(a) {
+  const p = (a && a.api && a.api.list && a.api.list.path) || 'stream';
+  const seg = String(p).split('?')[0].split('/').filter((x) => x && !x.includes('{')).pop() || 'nuevo';
+  return seg.replace(/[^a-z0-9-]/gi, '').toLowerCase() || 'nuevo';
+}
+
+// COMPLETE an existing source: take the freshly-drafted list as a new STREAM and fold it into BASE, then
+// open the merged source for review (rename the stream, tweak field mapping) before saving/sharing. Only
+// the declarative shape is added — the contributor's data never leaves the draft.
+async function onAugment() {
+  if (!BASE) return;
+  const cur = buildAdapter();
+  if (!cur || !cur.api || !cur.api.list || !cur.api.list.path) { $('#status').textContent = t('author_no_list'); return; }
+  const sid = streamIdOf(cur);
+  const augmented = augmentSource(BASE, flatToStream(cur, sid));
+  const v = validateAdapter(augmented);
+  if (!v.ok) { $('#status').textContent = t('author_invalid', [v.errors.join('; ')]); return; }
+  const edited = await editJson(augmented);
+  if (!edited) return;
+  const v2 = validateAdapter(edited);
+  if (!v2.ok) { $('#status').textContent = t('author_invalid', [v2.errors.join('; ')]); return; }
+  try {
+    await saveSource(edited);
+    await grantConsent(edited);
+    await stopLearning();
+    BASE = edited; // so a second stream can be added on top
+    $('#status').textContent = t('author_augmented', [edited.id, sid]);
+  } catch (e) { $('#status').textContent = t('author_invalid', [(e && e.message) || String(e)]); }
 }
 
 init();
