@@ -42,7 +42,9 @@ export async function manageAccounts(adapter, auth, net, current) {
     const ok = document.createElement('button'); ok.className = 'primary'; ok.textContent = t('save');
     const done = (v) => { ov.remove(); resolve(v); };
     cancel.onclick = () => done(null);
-    ok.onclick = () => done([...list.querySelectorAll('input:checked')].map((c) => c.value));
+    // Return the selected GROUP OBJECTS (not just ids) so the caller can persist both the ids (for listing)
+    // and each account's label (for filtering what's shown from the store).
+    ok.onclick = () => { const ids = new Set([...list.querySelectorAll('input:checked')].map((c) => c.value)); done(groups.filter((g) => ids.has(String(g.id)))); };
     ov.onclick = (e) => { if (e.target === ov) done(null); };
     row.append(cancel, ok); box.append(h, p, quick, list, row); ov.append(box); document.body.append(ov);
   });

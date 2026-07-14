@@ -98,6 +98,14 @@ function adapterFor(dsId, cfg) {
   return { ds, adapter: ds && ADAPTERS[ds.adapter] };
 }
 
+// Does a stored doc's account (its group label) pass the datasource's account filter? A saved filter
+// (ds.groupLabels) hides other accounts' already-stored docs from the views. Docs with NO group (a
+// non-account output, e.g. the integrated monthly statement) are always allowed.
+function groupAllowed(ds, group) {
+  const labels = ds && ds.groupLabels;
+  return !(labels && labels.length) || !group || labels.includes(group);
+}
+
 // The effective GROUPED adapter for a source: the base if it declares api.groups, else the first stream
 // that does — a streamed source (ING) declares api.groups per stream, not at the top level. null = not grouped.
 function groupedAdapterOf(adapter) {
@@ -131,7 +139,11 @@ async function onManageAccounts() {
   if (selected == null) { $('#status').textContent = ''; return; } // cancelled
   const c = await getConfig();
   const d = c.datasources.find((x) => x.id === $('#ds').value);
-  if (d) { d.groups = selected; await saveConfig(c); }
+  if (d) {
+    d.groups = selected.map((g) => String(g.id));                          // ids → restrict listing/auto/sweep
+    d.groupLabels = selected.map((g) => groupLabelOf(g)).filter(Boolean);  // labels (= record.group) → hide other accounts' stored docs
+    await saveConfig(c);
+  }
   $('#status').textContent = t('accounts_saved', [String(selected.length)]);
 }
 // Auto-resume listing after login: when List is clicked with no captured session, we open the login tab
@@ -359,7 +371,7 @@ async function onList(mode, opts = {}) {
   const key = (d) => (d._stream || '') + '|' + d.internalId;
   const tag = (d, sid, sk) => { d._stream = sid; d._streamName = streamNameOf(adapter, sid); d._storeKey = sk; d._formats = fmtsFor(sid); d._files = fileInfo(adapter, d); return d; };
   const acc = new Map();
-  for (const sid of streamIds) { const sk = storeKeyOf(adapter.id, sid); for (const d of docsFromStore(await getRecords(sk))) acc.set(key(tag(d, sid, sk)), d); }
+  for (const sid of streamIds) { const sk = storeKeyOf(adapter.id, sid); for (const d of docsFromStore(await getRecords(sk))) if (groupAllowed(ds, d.group)) acc.set(key(tag(d, sid, sk)), d); }
   const rebuild = () => { inventory = [...acc.values()].sort((a, b) => ((a.date || '') < (b.date || '') ? 1 : -1)); enrichMeta(inventory, known); };
   const bars = () => { $('#sendbar').hidden = !inventory.length; $('#selbar').hidden = !inventory.length; };
   rebuild(); await render(delivered); bars();
@@ -719,6 +731,7 @@ async function loadSourceDocs(base) {
     for (const [internalId, e] of Object.entries(src.items)) {
       if (e.gone) continue;
       const record = enrichRecord(e.record || {}, known[internalId]);
+      if (!groupAllowed(ds, record.group)) continue; // respect the saved account filter (hide other accounts)
       const delivered = [];
       for (const sink of retrievableSinks) {
         const ck = dsId + '::' + sink.id;
