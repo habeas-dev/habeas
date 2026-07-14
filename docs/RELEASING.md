@@ -123,6 +123,19 @@ gh run watch "$(gh run list --repo habeas-dev/sources --limit 1 --json databaseI
   --repo habeas-dev/sources --exit-status   # confirms "Sources CI" built the index + deployed Pages
 ```
 
+**Then re-bake the landing catalog** (habeas.dev/sources.html has a STATIC pre-rendered list so it works
+without JavaScript; the page's own script hydrates it with live data on load). After a source is published,
+regenerate the static snapshot and commit it to THIS repo:
+
+```bash
+node docs/tools/render-sources.mjs        # fetch the live index → rewrite the SOURCES:START/END block
+git add docs/sources.html && git commit -m "docs(sources): re-bake static catalog"
+```
+
+If the registry's `scripts/validate.js` rejected a source using a runtime feature the extension already
+supports (e.g. a new `api.list.paging` mode), sync that check from `extension/src/adapters/validate.js` into
+the registry clone's `scripts/validate.js` (it's a zero-dependency copy) before publishing.
+
 Per-source fields that matter:
 - **`version`** — a date string (`YYYY-MM-DD`, or `YYYY-MM-DD.N` for a same-day re-publish). Compared
   **lexicographically** (`marketplace.js#isOutdated` uses `String(a) > String(b)`), so bump it or the

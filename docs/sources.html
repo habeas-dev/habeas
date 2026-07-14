@@ -53,14 +53,83 @@
 
   <main class="doc">
     <h1 data-t="title">Sources</h1>
-    <p class="sub" data-t="intro"></p>
+    <p class="sub" data-t="intro">The catalog of sources you can install in the Habeas extension. Each one describes — as data, never code — how to read your own documents from a service, within your own session. First-party sources are audited; community ones are contributed and open to ratings &amp; scrutiny.</p>
     <div class="filters" style="margin:0 0 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <label><span data-t="country"></span> <select id="country"></select></label>
-      <label><span data-t="format"></span> <select id="format"></select></label>
+      <label><span data-t="country">Country:</span> <select id="country"></select></label>
+      <label><span data-t="format">Format:</span> <select id="format"></select></label>
     </div>
-    <div id="list" class="srcgrid" aria-live="polite"></div>
+    <!-- The list below is pre-rendered STATICALLY at build time (tools/render-sources.mjs) so it's visible
+         without JavaScript. The script hydrates it with live data, ratings and filters on load. -->
+    <div id="list" class="srcgrid" aria-live="polite"><!-- SOURCES:START -->
+      <div class="src">
+        <div class="top"><span class="name">Amazon España — pedidos</span><span class="pill fp">first-party</span></div>
+        <div class="meta">🇪🇸 amazon · amazon.es</div>
+        <div class="cats"><span class="cat">marketplace</span><span class="cat fmt">json</span><span class="cat fmt">pdf</span></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/amazon-es.json" rel="noopener">View JSON →</a></div>
+      </div>
+      <div class="src">
+        <div class="top"><span class="name">Bip&amp;Drive — facturas</span><span class="pill fp">first-party</span></div>
+        <div class="meta">🇪🇸 bipdrive · bipdrive.com</div>
+        <div class="cats"><span class="cat">tolls</span><span class="cat fmt">pdf</span></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/bipdrive-es.json" rel="noopener">View JSON →</a></div>
+      </div>
+      <div class="src">
+        <div class="top"><span class="name">CaixaBank Consumer — extractos</span><span class="pill fp">first-party</span></div>
+        <div class="meta">🇪🇸 caixabank-consumer · caixabankconsumer.com</div>
+        <div class="cats"><span class="cat">card</span><span class="cat fmt">pdf</span></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/caixabank-consumer-es.json" rel="noopener">View JSON →</a></div>
+      </div>
+      <div class="src">
+        <div class="top"><span class="name">Carrefour España — tickets</span><span class="pill fp">first-party</span></div>
+        <div class="meta">🇪🇸 carrefour · carrefour.es</div>
+        <div class="cats"><span class="cat">grocery</span><span class="cat">fuel</span><span class="cat">retail</span><span class="cat fmt">pdf</span></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/carrefour-es.json" rel="noopener">View JSON →</a></div>
+      </div>
+      <div class="src">
+        <div class="top"><span class="name">IKEA España — compras y tiquets</span><span class="pill fp">first-party</span></div>
+        <div class="meta">🇪🇸 ikea · ikea.com</div>
+        <div class="cats"><span class="cat">home</span><span class="cat fmt">pdf</span></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/ikea-es.json" rel="noopener">View JSON →</a></div>
+      </div>
+      <div class="src">
+        <div class="top"><span class="name">WiZink España</span><span class="pill fp">first-party</span></div>
+        <div class="meta">🇪🇸 wizink · wizink.es</div>
+        <div class="cats"><span class="cat">card</span><span class="cat">banking</span></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/wizink-es.json" rel="noopener">View JSON →</a></div>
+      </div>
+      <div class="src">
+        <div class="top"><span class="name">Decathlon España — tickets</span><span class="pill ">community</span></div>
+        <div class="meta">🇪🇸 decathlon · decathlon.es</div>
+        <div class="cats"><span class="cat">sports</span><span class="cat fmt">json</span></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/decathlon-es.json" rel="noopener">View JSON →</a></div>
+      </div>
+      <div class="src">
+        <div class="top"><span class="name">Dia España — tickets</span><span class="pill ">community</span></div>
+        <div class="meta">🇪🇸 dia · dia.es</div>
+        <div class="cats"><span class="cat">grocery</span><span class="cat fmt">json</span><span class="cat fmt">pdf</span></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/dia-es.json" rel="noopener">View JSON →</a></div>
+      </div>
+      <div class="src">
+        <div class="top"><span class="name">Hover — Receipts</span><span class="pill ">community</span></div>
+        <div class="meta">🌐 hover · hover.com</div>
+        <div class="cats"><span class="cat">domains</span><span class="cat fmt">json</span><span class="cat fmt">html</span></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/hover-com.json" rel="noopener">View JSON →</a></div>
+      </div>
+      <div class="src">
+        <div class="top"><span class="name">ING España</span><span class="pill ">community</span></div>
+        <div class="meta">🇪🇸 ing · ingdirect.es</div>
+        <div class="cats"><span class="cat">banking</span></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/ing-es.json" rel="noopener">View JSON →</a></div>
+      </div>
+      <div class="src">
+        <div class="top"><span class="name">Leroy Merlin España</span><span class="pill ">community</span></div>
+        <div class="meta">🇪🇸 leroymerlin · leroymerlin.es</div>
+        <div class="cats"><span class="cat">diy</span></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/leroymerlin-es.json" rel="noopener">View JSON →</a></div>
+      </div>
+      <!-- SOURCES:END --></div>
     <p id="msg" class="note"></p>
-    <p class="note" data-t="cta"></p>
+    <p class="note" data-t="cta">Install any of these from the extension: Settings → Browse sources. Contribute a new one at github.com/habeas-dev/sources.</p>
   </main>
 
   <script src="nav-i18n.js"></script>
@@ -117,8 +186,10 @@
       document.querySelectorAll('[data-t]').forEach((el) => { const v = t[el.getAttribute('data-t')]; if (typeof v === 'string') el.textContent = v; });
       document.querySelectorAll('.langswitch button[data-lang]').forEach((b) => b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === LANG)));
       const list = document.getElementById('list'), msg = document.getElementById('msg');
-      if (SOURCES === null) { list.innerHTML = ''; msg.textContent = t.loading; return; }
-      if (SOURCES === false) { list.innerHTML = ''; msg.textContent = t.failed; return; }
+      // Keep the STATIC pre-rendered list while loading and if the fetch fails — so a client with JS but no
+      // network (or before the catalog arrives) still sees the baked snapshot rather than an empty page.
+      if (SOURCES === null) { msg.textContent = t.loading; return; }
+      if (SOURCES === false) { msg.textContent = t.failed; return; }
       if (!SOURCES.length) { list.innerHTML = ''; msg.textContent = t.empty; return; }
       // Filter dropdowns (built from the catalog; preserve the current selection).
       const sel = document.getElementById('country');
