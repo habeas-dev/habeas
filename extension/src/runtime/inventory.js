@@ -41,6 +41,15 @@ export function netFetch(net, throttle) {
   return async (u, i) => { await throttleGate(throttle, u); return base(u, i); };
 }
 
+// Cookie policy for the source's own API calls. Default 'include' (a cookie-authed source needs its
+// session cookie; a bearer source that also carries a CSRF cookie needs it too). A token-only source
+// can opt out with `auth.cookies: false` — some bank APIs (Openbank) authenticate purely by the token
+// header and REJECT the request when the browser attaches its large cookie jar (HTTP 413, oversized
+// request headers). Omitting cookies there mirrors exactly what the site's own SPA sends.
+function credOf(adapter) {
+  return adapter && adapter.auth && adapter.auth.cookies === false ? 'omit' : 'include';
+}
+
 // Some services gate the PDF behind a Referer that must be the document's detail page. A page/
 // extension fetch cannot set Referer (forbidden header) — declarativeNetRequest is the MV3 way.
 let __ruleSeq = 1;
@@ -114,7 +123,7 @@ async function fetchCsrf(adapter, auth, net) {
   const c = adapter.api.csrf;
   const host = c.host ? absHost(c.host) : adapter.api.host;
   const url = host + c.path;
-  const init = { method: c.method || 'GET', headers: { accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', ...(c.headers || {}), ...headersFor(auth, c.path, false) }, credentials: 'include' };
+  const init = { method: c.method || 'GET', headers: { accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', ...(c.headers || {}), ...headersFor(auth, c.path, false) }, credentials: credOf(adapter) };
   const res = await NET(url, init);
   if (!res.ok) throw new Error('csrf ' + res.status);
   const m = (await res.text()).match(new RegExp(c.match));
@@ -136,6 +145,16 @@ export async function listGroups(adapter, auth, net) {
   for (const item of (items || [])) {
     const grp = { _raw: item };
     for (const k of Object.keys(g.fields || {})) grp[k] = get(item, g.fields[k]);
+    // `derive`: compute extra group fields from mapped ones with simple, auditable string ops — trim and a
+    // [start,end] slice. Banks often pack several values into one string (Openbank's BBAN carries the
+    // control digit + account number), so a source can split them out declaratively: e.g.
+    //   derive: { digitoControl: { from: "bban", trim: true, slice: [8, 10] } }
+    for (const [k, d] of Object.entries(g.derive || {})) {
+      let v = grp[d.from]; v = v == null ? '' : String(v);
+      if (d.trim) v = v.trim();
+      if (Array.isArray(d.slice)) v = v.slice(d.slice[0], d.slice[1]);
+      grp[k] = v;
+    }
     if (grp.id != null && grp.id !== '' && seen.has(grp.id)) continue; // dedup (repeated onclick handlers per card)
     if (grp.id != null && grp.id !== '') seen.add(grp.id);
     out.push(grp);
@@ -153,7 +172,7 @@ async function fetchGroupItems(adapter, auth, net) {
   const cookie = adapter.auth && adapter.auth.mode === 'cookie';
   const accept = isHtml ? 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' : 'application/json';
   const method = (g.method || 'GET').toUpperCase();
-  const init = { method, headers: { accept, ...(g.headers || {}), ...headersFor(auth, path, !cookie) }, credentials: 'include' };
+  const init = { method, headers: { accept, ...(g.headers || {}), ...headersFor(auth, path, !cookie) }, credentials: credOf(adapter) };
   if (method === 'POST' && g.body != null) { init.body = fillTmpl(g.body, null, auth, g.params || {}); init.headers['content-type'] = g.contentType || 'application/x-www-form-urlencoded'; }
   if (g.referer) init.referrer = g.referer;
   const res = await withReferer(url, g.referer || null, () => NET(url, init));
@@ -218,7 +237,7 @@ async function pageList(adapter, auth, net, group, opts) {
     for (let g = 0; g < maxPages; g++) {
       if (stop()) break;
       const data = await call({ ...range, ...baseParams, [offsetParam]: offset });
-      const items = get(data, itemsPathOf(list)) || [];
+      const items = getItems(data, list);
       const added = collect(adapter, data, seen, all, group);
       report({ page: g + 1 });
       if (!items.length || !added) break;
@@ -229,15 +248,28 @@ async function pageList(adapter, auth, net, group, opts) {
     let cursor = null;
     for (let g = 0; g < maxPages; g++) {
       if (stop()) break;
-      const params = { ...range, ...baseParams };
-      if (cursor) params[cursorParam] = cursor;
-      const data = await call(params);
+      await maybeKeepAlive(adapter, auth, net); // long paged listings can outlive a short-lived session
+      let data;
+      if (list.nextIsUrl && cursor) data = await fetchAbsList(adapter, auth, cursor, net); // cursor IS the full next-page URL
+      else {
+        const params = { ...range, ...baseParams };
+        // `cursorParams` ride ONLY with a cursor: some APIs (Openbank) send a "this is a continuation"
+        // flag (`hasMorePagination:S`) alongside the memento on pages 2+, but NOT on the first request —
+        // sending it on page 1 makes the server return an empty page. First call = base params only.
+        if (cursor) { params[cursorParam] = cursor; Object.assign(params, list.cursorParams || {}); }
+        data = await call(params);
+      }
+      // Step-up (SCA/OTP) boundary: a flag meaning "older data needs a one-time code the user didn't ask
+      // for" (Openbank's `scaRequired` past ~90 days). Keep what THIS page returned — it arrived without a
+      // challenge — then STOP. Habeas never crosses the boundary, so no SMS/OTP is ever triggered.
+      const scaStop = list.stopPath && String(get(data, list.stopPath)) === String(list.stopValue ?? true);
       const added = collect(adapter, data, seen, all, group);
       report({ page: g + 1 });
+      if (scaStop) break;
       cursor = get(data, list.nextPath);
       // Some APIs keep a cursor even on the last page and signal "more" with a separate flag (Openbank:
-      // `memento` + `hasMore: "S"`). When `morePath` is declared, continue only while it equals `moreValue`
-      // (default "S"); otherwise fall back to "keep going while there's a cursor".
+      // `memento` + `hasMore: "S"`, or `_links.nextPage.href` + `masMovimientos: true`). When `morePath` is
+      // declared, continue only while it equals `moreValue` (default "S"); else keep going while a cursor exists.
       const more = list.morePath ? String(get(data, list.morePath)) === String(list.moreValue ?? 'S') : true;
       if (!added || !cursor || !more) break;
     }
@@ -284,9 +316,13 @@ function synthItems(list, group) {
     }
     return out;
   }
+  // The group's own fields (id, name + any `derive`d scalars like Openbank's digitoControl/numeroCuenta)
+  // are folded into each synthetic item's _raw, so a `keepRaw` source persists them in record.extra and a
+  // store re-download can rebuild the download URL after the transient _group is gone.
+  const gf = group ? Object.fromEntries(Object.entries(group).filter(([k, v]) => k !== '_raw' && (v == null || typeof v !== 'object'))) : {};
   if (s.each === 'group') {
     if (!group) return [];
-    return [{ ...(group._raw || {}), ...rangeVals, date: rangeVals.toDate || new Date().toISOString().slice(0, 10) }];
+    return [{ ...(group._raw || {}), ...gf, ...rangeVals, date: rangeVals.toDate || new Date().toISOString().slice(0, 10) }];
   }
   // "group-months": one item per (account × month) — a MONTHLY per-account statement (like WiZink's). Each
   // item carries that month's fromDate/toDate so a range-report endpoint returns just that month.
@@ -298,7 +334,7 @@ function synthItems(list, group) {
     for (let i = 0; i < 36; i++) {
       const first = new Date(Date.UTC(y, m - 1, 1)), last = new Date(Date.UTC(y, m, 0));
       if (last.getTime() < cutoff) break;
-      if (last.getTime() < todayStart) out.push({ ...(group._raw || {}), year: String(y), month: String(m), period: `${y}-${String(m).padStart(2, '0')}`,
+      if (last.getTime() < todayStart) out.push({ ...(group._raw || {}), ...gf, year: String(y), month: String(m), period: `${y}-${String(m).padStart(2, '0')}`,
         date: last.toISOString().slice(0, 10), fromDate: first.toISOString().slice(0, 10), toDate: last.toISOString().slice(0, 10) });
       m--; if (m < 1) { m = 12; y--; }
     }
@@ -339,7 +375,7 @@ async function pageListYears(adapter, auth, net, group, opts) {
       const params = { ...baseParams, [param]: yv };
       if (startParam && idx > 0) params[startParam] = idx; // first page carries no startIndex (matches the site)
       const data = await fetchList(adapter, auth, params, net, group);
-      const items = get(data, itemsPathOf(list)) || [];
+      const items = getItems(data, list);
       // Stamp the page's year onto each item so the listing carries at least year precision (the full date
       // is encrypted in the list; it's recovered from the per-order detail). Map it via fields.date:"_year".
       for (const it of items) if (it && typeof it === 'object' && it._year == null) it._year = String(yr);
@@ -426,7 +462,7 @@ async function fetchPeriodHtml(adapter, auth, net, group, periodCfg, extra) {
   const cookie = adapter.auth && adapter.auth.mode === 'cookie';
   const htmlAccept = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
   const method = (list.method || 'POST').toUpperCase();
-  const init = { method, headers: { accept: htmlAccept, ...(list.headers || {}), ...headersFor(auth, path.split('?')[0], !cookie) }, credentials: 'include' };
+  const init = { method, headers: { accept: htmlAccept, ...(list.headers || {}), ...headersFor(auth, path.split('?')[0], !cookie) }, credentials: credOf(adapter) };
   if (periodCfg.body != null) {
     init.body = fillTmpl(periodCfg.body, group, auth, extra || {}); // {group.*} + {csrf} + {period}
     init.headers['content-type'] = list.contentType || 'application/x-www-form-urlencoded';
@@ -481,7 +517,12 @@ function fillDocTmpl(str, doc, id, csrf, auth) {
     if (k === 'internalId') return tid(id);
     if (k === 'csrf') return csrf == null ? '' : String(csrf);
     if (k.indexOf('ctx.') === 0) { const v = ctx[k.slice(4)]; return v == null ? m : tid(v); }
-    const v = k.indexOf('group.') === 0 ? (doc && doc._group ? get(doc._group, k.slice(6)) : undefined) : (doc && doc._raw ? get(doc._raw, k) : undefined);
+    const isGroup = k.indexOf('group.') === 0;
+    const rk = isGroup ? k.slice(6) : k;
+    let v = isGroup ? (doc && doc._group ? get(doc._group, rk) : undefined) : (doc && doc._raw ? get(doc._raw, k) : undefined);
+    // Store re-download of a synthetic doc: the transient _group/_raw are gone — recover the value from the
+    // persisted record (and its keepRaw `extra`, which captured the group's derived fields + the period window).
+    if (v == null && doc && doc.record) { v = get(doc.record, rk); if (v == null && doc.record.extra) v = get(doc.record.extra, rk); }
     return v == null ? m : tid(v);
   });
 }
@@ -564,8 +605,13 @@ const documentCfg = (api) => api.document || (api.detail && api.detail.as ? api.
 function tmplResolvable(str, doc) {
   for (const m of String(str || '').matchAll(/\{([^}]+)\}/g)) {
     const k = m[1];
-    if (k === 'internalId' || k === 'csrf') continue; // always available at fetch time
-    const v = k.indexOf('group.') === 0 ? (doc && doc._group ? get(doc._group, k.slice(6)) : undefined) : (doc && doc._raw ? get(doc._raw, k) : undefined);
+    if (k === 'internalId' || k === 'csrf' || k.indexOf('ctx.') === 0) continue; // always available at fetch time
+    const isGroup = k.indexOf('group.') === 0;
+    const rk = isGroup ? k.slice(6) : k;
+    let v = isGroup ? (doc && doc._group ? get(doc._group, rk) : undefined) : (doc && doc._raw ? get(doc._raw, k) : undefined);
+    // Match fillDocTmpl: a doc loaded from the store has no _group/_raw but its persisted record (+ keepRaw
+    // `extra`) carries the same values, so the artifact is still resolvable.
+    if (v == null && doc && doc.record) { v = get(doc.record, rk); if (v == null && doc.record.extra) v = get(doc.record.extra, rk); }
     if (v == null || v === '') return false;
   }
   return true;
@@ -662,7 +708,7 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
     const r = pdf.resolve;
     const rPath = fillDocTmpl(r.path, doc, internalId, csrf, auth);
     if (/\{[^}]+\}/.test(rPath)) throw new Error('no document for this item'); // unfillable → skip cleanly
-    const rInit = { method: r.method || 'GET', headers: { accept: 'text/html,*/*', ...(r.headers || {}), ...headersFor(auth, rPath.split('?')[0]) }, credentials: 'include' };
+    const rInit = { method: r.method || 'GET', headers: { accept: 'text/html,*/*', ...(r.headers || {}), ...headersFor(auth, rPath.split('?')[0]) }, credentials: credOf(adapter) };
     const rRes = await NET(host + rPath, rInit);
     if (!rRes.ok) throw new Error('resolve ' + rRes.status + ' ' + (await rRes.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
     const m = new RegExp(r.linkMatch, 'i').exec(await rRes.text());
@@ -671,7 +717,7 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
     if (!/^https?:\/\//i.test(docUrl)) docUrl = adapter.api.host + (docUrl[0] === '/' ? docUrl : '/' + docUrl); // relative → same origin
     assertAllowedDocHost(adapter, docUrl); // the URL came from HTML — enforce it stays on the source's domain
     let dPath; try { dPath = new URL(docUrl).pathname; } catch (e) { dPath = docUrl; }
-    const dRes = await NET(docUrl, { method: 'GET', headers: { accept: '*/*', ...headersFor(auth, dPath) }, credentials: 'include', wantBlob: true });
+    const dRes = await NET(docUrl, { method: 'GET', headers: { accept: '*/*', ...headersFor(auth, dPath) }, credentials: credOf(adapter), wantBlob: true });
     if (!dRes.ok) throw new Error('pdf ' + dRes.status + ' ' + (await dRes.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
     return await dRes.blob();
   }
@@ -698,7 +744,7 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
   // base64Field: the document comes back INSIDE a JSON response (e.g. IKEA's GraphQL
   // `data.receipt.receiptPdf` holds the PDF base64-encoded) — read JSON, not a blob.
   const wantBlob = !pdf.base64Field;
-  const init = { method: pdf.method || 'GET', headers: { accept: wantBlob ? '*/*' : 'application/json', ...(pdf.headers || {}), ...headersFor(auth, path.split('?')[0]) }, credentials: 'include', wantBlob };
+  const init = { method: pdf.method || 'GET', headers: { accept: wantBlob ? '*/*' : 'application/json', ...(pdf.headers || {}), ...headersFor(auth, path.split('?')[0]) }, credentials: credOf(adapter), wantBlob };
   if (init.method !== 'GET' && pdf.body != null) {
     init.body = fillDocTmpl(pdf.body, doc, internalId, csrf, auth);
     init.headers['content-type'] = pdf.contentType || 'application/json';
@@ -812,7 +858,7 @@ async function fetchHtmlDoc(adapter, auth, internalId, net) {
   const host = d.host ? absHost(d.host) : adapter.api.host;
   const path = d.path.split('{internalId}').join(tid(internalId));
   const url = host + path;
-  const init = { headers: { accept: 'text/html', ...(d.headers || {}), ...headersFor(auth, path.split('?')[0]) }, credentials: 'include' };
+  const init = { headers: { accept: 'text/html', ...(d.headers || {}), ...headersFor(auth, path.split('?')[0]) }, credentials: credOf(adapter) };
   const referer = d.referer ? String(d.referer).split('{internalId}').join(internalId) : null;
   if (referer) init.referrer = referer;
   const res = await withReferer(url, referer, () => NET(url, init));
@@ -861,7 +907,7 @@ export async function fetchDetail(adapter, auth, docOrId, net) {
   const url = host + path;
   // d.headers: static headers the SPA sends for this endpoint (e.g. dkt-ecom-origin). Captured auth
   // and the accept default fill the rest; cookies ride along via credentials:'include'.
-  const init = { method: d.method || 'GET', headers: { accept: 'application/json, text/html', ...(d.headers || {}), ...headersFor(auth, path.split('?')[0]) }, credentials: 'include' };
+  const init = { method: d.method || 'GET', headers: { accept: 'application/json, text/html', ...(d.headers || {}), ...headersFor(auth, path.split('?')[0]) }, credentials: credOf(adapter) };
   // d.referer: some endpoints validate the Referer (e.g. the item's detail page). fetch can't set it
   // (forbidden header) → declarativeNetRequest, same as the PDF path.
   const referer = d.referer ? applyTmpl(d.referer, doc, internalId) : null;
@@ -874,6 +920,55 @@ export async function fetchDetail(adapter, auth, docOrId, net) {
   if (d.fields) return { blob: new Blob([JSON.stringify(extractDetailFields(text, d))], { type: 'application/json' }), via: 'html-fields' };
   const { json, via } = extractDetail(text, url, internalId);
   return { blob: new Blob([json], { type: 'application/json' }), via };
+}
+
+// Session keep-alive. Some sessions expire fast (Openbank's token lives ~300s) and a long paged listing or
+// a multi-source sweep can outlast it. A source declares `keepAlive { path, method, everyMs, tokenField }`;
+// the runtime pings it at most once per `everyMs` (per host) DURING paging, and — when the response returns
+// a fresh token (`tokenField`) — swaps it into the in-memory auth (merged + every byPath entry) so the rest
+// of the operation keeps authenticating. Best-effort: a keep-alive failure never aborts the listing.
+const KA_LAST = new Map(); // host → last keep-alive ms
+async function maybeKeepAlive(adapter, auth, net) {
+  const ka = adapter && adapter.keepAlive;
+  if (!ka || !ka.path || !auth) return;
+  const host = (adapter.api && adapter.api.host) || '';
+  const now = Date.now();
+  if (now - (KA_LAST.get(host) || 0) < (ka.everyMs || 120000)) return;
+  KA_LAST.set(host, now);
+  try {
+    const NET = netFetch(net, null); // never throttle the keep-alive
+    const method = (ka.method || 'POST').toUpperCase();
+    const cookie = adapter.auth && adapter.auth.mode === 'cookie';
+    const init = { method, headers: { accept: 'application/json', ...(ka.headers || {}), ...headersFor(auth, ka.path.split('?')[0], !cookie) }, credentials: credOf(adapter) };
+    if (method !== 'GET') { if (ka.body != null) init.body = ka.body; if (ka.contentType) init.headers['content-type'] = ka.contentType; }
+    const res = await NET(host + ka.path, init);
+    if (res.ok && ka.tokenField) {
+      const j = await res.json().catch(() => null);
+      const tok = j && get(j, ka.tokenField);
+      if (tok) {
+        const th = ((adapter.auth && adapter.auth.tokenHeader) || 'authorization').toLowerCase();
+        if (auth.merged && auth.merged[th] != null) auth.merged[th] = tok;
+        if (auth.byPath) for (const p of Object.keys(auth.byPath)) if (auth.byPath[p] && auth.byPath[p][th] != null) auth.byPath[p][th] = tok;
+      }
+    }
+  } catch (e) { /* keep-alive is best-effort; listing continues on the existing token */ }
+}
+
+// Follow a full-URL next-page link (some APIs return `_links.nextPage.href`, a complete URL that already
+// carries every pagination param, instead of a bare cursor token). The href is fetched verbatim —
+// normalised to https (a capture/proxy may echo http:80) and re-checked against the same-domain guard so a
+// tampered link can never redirect the authenticated session off the source's own domain.
+async function fetchAbsList(adapter, auth, rawUrl, net) {
+  let u = String(rawUrl).replace(/^http:\/\//i, 'https://').replace(/:80(?=[/?]|$)/, '');
+  assertAllowedDocHost(adapter, u);
+  const NET = netFetch(net, adapter && adapter.throttle);
+  let pth; try { pth = new URL(u).pathname; } catch (e) { pth = u.split('?')[0]; }
+  const cookie = adapter.auth && adapter.auth.mode === 'cookie';
+  const list = adapter.api.list || {};
+  const init = { method: 'GET', headers: { accept: 'application/json', ...(list.headers || {}), ...headersFor(auth, pth, !cookie) }, credentials: credOf(adapter) };
+  const res = await NET(u, init);
+  if (!res.ok) throw new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160));
+  return await res.json();
 }
 
 async function fetchList(adapter, auth, params, net, group) {
@@ -892,7 +987,7 @@ async function fetchList(adapter, auth, params, net, group) {
   // full browser navigation Accept so the server serves the real SSR page.
   const htmlAccept = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
   const method = (list.method || 'GET').toUpperCase();
-  const init = { method, headers: { accept: html ? htmlAccept : 'application/json', ...(list.headers || {}), ...headersFor(auth, path.split('?')[0], !cookie) }, credentials: 'include' };
+  const init = { method, headers: { accept: html ? htmlAccept : 'application/json', ...(list.headers || {}), ...headersFor(auth, path.split('?')[0], !cookie) }, credentials: credOf(adapter) };
   // POST list (AEM/WiZink send params in the body; CaixaBank posts a JSON body with a date window):
   // fill {group.*} + {ctx.*} + {csrf} + {paramName} + the {fromDate}/{toDate} window (from list.window).
   if (method === 'POST' && list.body != null) {
@@ -1022,6 +1117,19 @@ function parseHtmlRows(html) {
   return out;
 }
 const itemsPathOf = (list) => (list.from === 'html' ? '__items' : list.itemsPath);
+// Resolve the items array. `itemsPath` may be an ARRAY of candidate paths — some APIs return the list under
+// different keys depending on the call (Openbank's first page is flat `movimientos`; a paginated/continuation
+// page nests it under `methodResult.movimientos`). Try each; take the first that yields a non-empty array,
+// else the first that is at least an array, else [].
+function getItems(data, list) {
+  const p = itemsPathOf(list);
+  if (Array.isArray(p)) {
+    let firstArr = null;
+    for (const cand of p) { const v = get(data, cand); if (Array.isArray(v)) { if (v.length) return v; if (firstArr == null) firstArr = v; } }
+    return firstArr || [];
+  }
+  return get(data, p) || [];
+}
 
 // Normalize a date value to ISO (YYYY-MM-DD). Handles ISO/ISO-datetime, epoch s/ms, textual months
 // (English + Spanish, "October 22, 2021" / "22 de octubre de 2021"), and D/M/Y numeric — so lists
@@ -1075,7 +1183,7 @@ export function normalizeAmount(v) {
 // Map fresh items onto the shared docs array; returns how many were newly added.
 function collect(adapter, data, seen, all, group) {
   const list = adapter.api.list;
-  let items = get(data, itemsPathOf(list)) || [];
+  let items = getItems(data, list);
   // Optional item filter: keep only items whose `field` value is in `values` (e.g. a list that mixes ONLINE
   // and IN_STORE orders → keep the online ones). dotted field path supported.
   if (list.keep && list.keep.field && Array.isArray(list.keep.values)) {

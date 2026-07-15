@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-10T08:39:53.328Z",
+  "generated": "2026-07-15T04:51:17.232Z",
   "sources": [
     {
       "id": "amazon-es",
@@ -18,9 +18,10 @@
       "crossDomain": [],
       "version": "2026-07-10",
       "minVersion": "0.1.38",
+      "gaps": [],
       "changelog": [],
       "url": "https://habeas-dev.github.io/sources/amazon-es.json",
-      "updated": "2026-07-10T08:39:53.328Z"
+      "updated": "2026-07-15T04:51:17.232Z"
     },
     {
       "id": "bipdrive-es",
@@ -38,6 +39,7 @@
       "crossDomain": [],
       "version": "2026-07-08",
       "minVersion": null,
+      "gaps": [],
       "changelog": [
         {
           "version": "2026-07-08",
@@ -45,7 +47,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/bipdrive-es.json",
-      "updated": "2026-07-10T08:39:53.328Z"
+      "updated": "2026-07-15T04:51:17.232Z"
     },
     {
       "id": "caixabank-consumer-es",
@@ -65,6 +67,7 @@
       ],
       "version": "2026-07-08",
       "minVersion": "0.1.35",
+      "gaps": [],
       "changelog": [
         {
           "version": "2026-07-08",
@@ -72,7 +75,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/caixabank-consumer-es.json",
-      "updated": "2026-07-10T08:39:53.328Z"
+      "updated": "2026-07-15T04:51:17.232Z"
     },
     {
       "id": "carrefour-es",
@@ -92,6 +95,7 @@
       "crossDomain": [],
       "version": "2026-07-08",
       "minVersion": null,
+      "gaps": [],
       "changelog": [
         {
           "version": "2026-07-08",
@@ -99,7 +103,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/carrefour-es.json",
-      "updated": "2026-07-10T08:39:53.328Z"
+      "updated": "2026-07-15T04:51:17.232Z"
     },
     {
       "id": "decathlon-es",
@@ -117,6 +121,7 @@
       "crossDomain": [],
       "version": "2026-07-08",
       "minVersion": null,
+      "gaps": [],
       "changelog": [
         {
           "version": "2026-07-08",
@@ -124,7 +129,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/decathlon-es.json",
-      "updated": "2026-07-10T08:39:53.328Z"
+      "updated": "2026-07-15T04:51:17.232Z"
     },
     {
       "id": "dia-es",
@@ -143,6 +148,7 @@
       "crossDomain": [],
       "version": "2026-07-08",
       "minVersion": null,
+      "gaps": [],
       "changelog": [
         {
           "version": "2026-07-08",
@@ -150,7 +156,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/dia-es.json",
-      "updated": "2026-07-10T08:39:53.328Z"
+      "updated": "2026-07-15T04:51:17.232Z"
     },
     {
       "id": "hover-com",
@@ -167,16 +173,21 @@
         "html"
       ],
       "crossDomain": [],
-      "version": "2026-07-08",
+      "version": "2026-07-13",
       "minVersion": null,
+      "gaps": [],
       "changelog": [
+        {
+          "version": "2026-07-13",
+          "changes": "Bill in USD (Hover charges USD; was defaulting to EUR)."
+        },
         {
           "version": "2026-07-08",
           "changes": "Facturas de dominios (JSON + recibo HTML)."
         }
       ],
       "url": "https://habeas-dev.github.io/sources/hover-com.json",
-      "updated": "2026-07-10T08:39:53.328Z"
+      "updated": "2026-07-15T04:51:17.232Z"
     },
     {
       "id": "ikea-es",
@@ -196,9 +207,37 @@
       ],
       "version": "2026-07-08",
       "minVersion": "0.1.36",
+      "gaps": [],
       "changelog": [],
       "url": "https://habeas-dev.github.io/sources/ikea-es.json",
-      "updated": "2026-07-10T08:39:53.328Z"
+      "updated": "2026-07-15T04:51:17.232Z"
+    },
+    {
+      "id": "ing-es",
+      "name": "ING España",
+      "service": "ing",
+      "categories": [
+        "banking"
+      ],
+      "trust": "community",
+      "domain": "ingdirect.es",
+      "country": "ES",
+      "formats": [],
+      "crossDomain": [],
+      "version": "2026-07-14.1",
+      "minVersion": "0.1.65.5",
+      "gaps": [
+        "tarjetas",
+        "inversión"
+      ],
+      "changelog": [
+        {
+          "version": "2026-07-14",
+          "changes": "Initial: movements (transactions), per-account monthly statements (PDF/Excel), and the integrated monthly statement (PDF). Grouped by account, 90-day window."
+        }
+      ],
+      "url": "https://habeas-dev.github.io/sources/ing-es.json",
+      "updated": "2026-07-15T04:51:17.232Z"
     },
     {
       "id": "leroymerlin-es",
@@ -212,9 +251,14 @@
       "country": "ES",
       "formats": [],
       "crossDomain": [],
-      "version": "2026-07-10.2",
-      "minVersion": "0.1.53.10",
+      "version": "2026-07-10.3",
+      "minVersion": "0.1.53.13",
+      "gaps": [],
       "changelog": [
+        {
+          "version": "2026-07-10.3",
+          "changes": "Tickets: no cortar al llegar a un año sin compras (stopAfterEmpty) — antes se paraba en 2025 (sin compras) y ocultaba los tickets más antiguos."
+        },
         {
           "version": "2026-07-10.2",
           "changes": "Stream «Pedidos»: mostrar TODOS los pedidos de «mis pedidos» (se quita el filtro que dejaba solo los ONLINE y ocultaba pedidos de tienda que también aparecen ahí)."
@@ -233,7 +277,42 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/leroymerlin-es.json",
-      "updated": "2026-07-10T08:39:53.328Z"
+      "updated": "2026-07-15T04:51:17.232Z"
+    },
+    {
+      "id": "openbank-es",
+      "name": "Openbank España",
+      "service": "openbank",
+      "categories": [
+        "banking"
+      ],
+      "trust": "community",
+      "domain": "openbank.es",
+      "country": "ES",
+      "formats": [],
+      "crossDomain": [],
+      "version": "2026-07-15.1",
+      "minVersion": "0.1.67",
+      "gaps": [
+        "tarjetas",
+        "inversión"
+      ],
+      "changelog": [
+        {
+          "version": "2026-07-15.1",
+          "changes": "Fix `movimientos`: the first (non-SCA) page returns a flat `movimientos` array, not `methodResult.movimientos` — itemsPath now accepts both shapes."
+        },
+        {
+          "version": "2026-07-15",
+          "changes": "Add `movimientos` (transactions) per account — 90-day window, full-URL nextPage pager, stops at the SCA boundary (no OTP triggered). Add per-account monthly movement statements (PDF/Excel). Token-only auth (auth.cookies:false, avoids HTTP 413) + session keep-alive. Movements is no longer a declared gap."
+        },
+        {
+          "version": "2026-07-14",
+          "changes": "Initial: integrated monthly statements (PDF) across all accounts. Movements/cards/investments are declared gaps for community contribution."
+        }
+      ],
+      "url": "https://habeas-dev.github.io/sources/openbank-es.json",
+      "updated": "2026-07-15T04:51:17.232Z"
     },
     {
       "id": "wizink-es",
@@ -248,16 +327,21 @@
       "country": "ES",
       "formats": [],
       "crossDomain": [],
-      "version": "2026-07-09",
+      "version": "2026-07-10",
       "minVersion": "0.1.52",
+      "gaps": [],
       "changelog": [
+        {
+          "version": "2026-07-10",
+          "changes": "Los extractos ahora muestran una etiqueta legible («Extracto <fecha>») en lugar del identificador interno, y llevan el tipo «Extracto»."
+        },
         {
           "version": "2026-07-09",
           "changes": "Fuente unificada: reemplaza las tres fuentes WiZink (movimientos, extractos-PDF, extractos-Excel) por un único source con salidas seleccionables (stream × formato). El stream «Movimientos» captura las transacciones de tarjeta; el stream «Extractos» ofrece cada extracto en PDF o Excel compartiendo el mismo listado. Requiere la extensión 0.1.52+ (soporte de salidas)."
         }
       ],
       "url": "https://habeas-dev.github.io/sources/wizink-es.json",
-      "updated": "2026-07-10T08:39:53.328Z"
+      "updated": "2026-07-15T04:51:17.232Z"
     }
   ]
 }

@@ -91,7 +91,7 @@ function checkExtraction(a, req, label) {
     req(list.synthetic && ['months', 'group', 'group-months'].includes(list.synthetic.each), p + 'api.list.synthetic.each must be months|group|group-months');
   } else {
     req(typeof list.path === 'string' && list.path.startsWith('/'), p + 'api.list.path required');
-    req(list.from === 'html' || (typeof list.itemsPath === 'string' && list.itemsPath.length > 0), p + 'api.list.itemsPath required (unless list.from is "html")');
+    req(list.from === 'html' || (typeof list.itemsPath === 'string' && list.itemsPath.length > 0) || (Array.isArray(list.itemsPath) && list.itemsPath.length > 0 && list.itemsPath.every((x) => typeof x === 'string' && x)), p + 'api.list.itemsPath required — a dotted path, or an array of candidate paths (unless list.from is "html")');
     req(!list.paging || PAGING.has(list.paging), p + 'api.list.paging must be offsets|offset|page|cursor|none|years');
   }
   const fields = a.fields || {};

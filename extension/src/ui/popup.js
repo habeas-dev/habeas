@@ -151,11 +151,19 @@ async function onManageAccounts() {
   if (!gAdapter) return;
   if (!(await hasConsent(adapter))) { $('#status').textContent = t('needs_consent'); return; }
   const auth = await getAuth(adapter);
+  if (!auth) { // no captured session yet → open the login tab so the token is captured, then retry
+    await ensureSiteFetch(adapter, { open: true });
+    $('#status').textContent = t('login_wait');
+    return;
+  }
   $('#status').textContent = t('accounts_loading');
-  let net; try { net = await ensureSiteFetch(adapter, { open: true }); } catch (e) {}
+  // Do NOT open a foreground tab here: it steals focus and CLOSES the popup, taking the account dialog with
+  // it. Reuse an already-open site tab if there is one; otherwise pass null so listGroups fetches directly
+  // from the extension (host permission → no CORS; auth.cookies:false → no oversized-cookie 413).
+  let net; try { net = await ensureSiteFetch(adapter, { open: false }); } catch (e) {}
   let selected;
   try { selected = await manageAccounts(gAdapter, auth, net, (ds && ds.groups) || null); }
-  catch (e) { $('#status').textContent = t('accounts_failed'); return; }
+  catch (e) { $('#status').textContent = t('accounts_failed') + (e && e.message ? ' — ' + e.message : ''); return; }
   if (selected == null) { $('#status').textContent = ''; return; } // cancelled
   const c = await getConfig();
   const d = c.datasources.find((x) => x.id === $('#ds').value);

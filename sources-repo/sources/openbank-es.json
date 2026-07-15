@@ -5,25 +5,48 @@
   "trust": "community",
   "domain": "openbank.es",
   "country": "ES",
-  "version": "2026-07-14",
-  "minVersion": "0.1.66.5",
-  "categories": ["banking"],
-  "gaps": ["movimientos", "tarjetas", "inversión"],
-  "throttle": { "minMs": 400, "jitterMs": 600 },
-  "match": ["https://clientes.openbank.es/*"],
+  "version": "2026-07-15.1",
+  "minVersion": "0.1.67",
+  "categories": [
+    "banking"
+  ],
+  "gaps": [
+    "tarjetas",
+    "inversión"
+  ],
+  "throttle": {
+    "minMs": 400,
+    "jitterMs": 600
+  },
+  "keepAlive": {
+    "path": "/token/keepalive",
+    "method": "POST",
+    "contentType": "application/json",
+    "everyMs": 120000,
+    "tokenField": "tokenCredential"
+  },
+  "match": [
+    "https://clientes.openbank.es/*"
+  ],
   "openUrl": "https://clientes.openbank.es/",
   "auth": {
     "mode": "bearer",
     "tokenHeader": "openbankauthtoken",
     "tokenMatch": "^eyJ",
-    "replayHeaders": ["openbankauthtoken"]
+    "replayHeaders": [
+      "openbankauthtoken"
+    ],
+    "cookies": false
   },
-  "api": { "host": "https://api.openbank.es" },
+  "api": {
+    "host": "https://api.openbank.es"
+  },
   "streams": [
     {
       "id": "extracto-integrado",
       "name": "Extracto integrado",
       "schema": "invoice@1",
+      "keepRaw": true,
       "api": {
         "list": {
           "path": "/extractos/comunicaciones-cursadas",
@@ -33,10 +56,16 @@
           "morePath": "hasMore",
           "moreValue": "S",
           "itemsPath": "datos.datos",
-          "params": { "codCategoria": "0001", "codGrupoComunicacion": "0006", "hasMorePagination": "S" }
+          "params": {
+            "codCategoria": "0001",
+            "codGrupoComunicacion": "0006"
+          },
+          "cursorParams": {
+            "hasMorePagination": "S"
+          }
         },
         "pdf": {
-          "path": "/extractos/documentos?gestorDocumental={gestorDocumental}&codigoSubaplicacion={codSubaplicacion}&codComunicacion={codComunicacion}",
+          "path": "/extractos/documentos?gestorDocumental={gestorDocumental}&codigoSubaplicacion={codSubaplicacion}&codComunicacion={internalId}",
           "method": "GET",
           "ext": "pdf"
         }
@@ -47,9 +76,229 @@
         "number": "codComunicacion",
         "description": "Extracto integrado {fechaAlta}"
       }
+    },
+    {
+      "id": "movimientos",
+      "name": "Movimientos",
+      "schema": "transaction@1",
+      "keepRaw": true,
+      "normalize": {
+        "counterparty": {
+          "from": "conceptoTabla",
+          "re": [
+            "A FAVOR DE\\s+([^,]+)",
+            "\\bDE\\s+([^,]+)",
+            "\\bEN\\s+([^,]+)"
+          ]
+        }
+      },
+      "api": {
+        "groups": {
+          "path": "/posicion-global-total",
+          "params": {
+            "listaSolicitada": "TODOS",
+            "indicadorSaldoPreTarj": "false",
+            "invocationMode": "GLOBAL_API"
+          },
+          "itemsPath": "datosSalidaCuentas.cuentas",
+          "fields": {
+            "id": "id",
+            "name": "descripcion",
+            "titular": "nombretitular",
+            "bban": "codiban.codbban"
+          },
+          "derive": {
+            "titular": {
+              "from": "titular",
+              "trim": true
+            },
+            "digitoControl": {
+              "from": "bban",
+              "trim": true,
+              "slice": [
+                8,
+                10
+              ]
+            },
+            "numeroCuenta": {
+              "from": "bban",
+              "trim": true,
+              "slice": [
+                10,
+                20
+              ]
+            },
+            "producto": {
+              "from": "bban",
+              "trim": true,
+              "slice": [
+                10,
+                13
+              ]
+            },
+            "contrato": {
+              "from": "bban",
+              "trim": true,
+              "slice": [
+                13,
+                20
+              ]
+            }
+          }
+        },
+        "list": {
+          "path": "/my-money/cuentas/movimientos",
+          "params": {
+            "producto": "{group.producto}",
+            "numeroContrato": "{group.contrato}"
+          },
+          "range": {
+            "from": "fechaDesde",
+            "format": "date"
+          },
+          "window": "90d",
+          "paging": "cursor",
+          "nextPath": "_links.nextPage.href",
+          "nextIsUrl": true,
+          "morePath": "masMovimientos",
+          "moreValue": true,
+          "stopPath": "scaRequired",
+          "stopValue": true,
+          "itemsPath": [
+            "movimientos",
+            "methodResult.movimientos"
+          ]
+        }
+      },
+      "fields": {
+        "internalId": "{group.contrato}-{fechaOperacion}-{diaMvto}-{nummov}",
+        "date": "fechaOperacion",
+        "amount": "importe.importe",
+        "currency": "importe.divisa",
+        "description": "conceptoTabla",
+        "account": "{group.numeroCuenta}"
+      }
+    },
+    {
+      "id": "movimientos-doc",
+      "name": "Extracto de movimientos por cuenta",
+      "schema": "invoice@1",
+      "keepRaw": true,
+      "api": {
+        "groups": {
+          "path": "/posicion-global-total",
+          "params": {
+            "listaSolicitada": "TODOS",
+            "indicadorSaldoPreTarj": "false",
+            "invocationMode": "GLOBAL_API"
+          },
+          "itemsPath": "datosSalidaCuentas.cuentas",
+          "fields": {
+            "id": "id",
+            "name": "descripcion",
+            "titular": "nombretitular",
+            "bban": "codiban.codbban"
+          },
+          "derive": {
+            "titular": {
+              "from": "titular",
+              "trim": true
+            },
+            "digitoControl": {
+              "from": "bban",
+              "trim": true,
+              "slice": [
+                8,
+                10
+              ]
+            },
+            "numeroCuenta": {
+              "from": "bban",
+              "trim": true,
+              "slice": [
+                10,
+                20
+              ]
+            },
+            "producto": {
+              "from": "bban",
+              "trim": true,
+              "slice": [
+                10,
+                13
+              ]
+            },
+            "contrato": {
+              "from": "bban",
+              "trim": true,
+              "slice": [
+                13,
+                20
+              ]
+            }
+          }
+        },
+        "list": {
+          "paging": "synthetic",
+          "synthetic": {
+            "each": "group-months"
+          },
+          "maxAgeDays": 90
+        }
+      },
+      "fields": {
+        "internalId": "{group.numeroCuenta}-{period}",
+        "date": "{date}",
+        "number": "{period}",
+        "account": "{group.numeroCuenta}",
+        "description": "Movimientos {group.name} {period}"
+      },
+      "formats": [
+        {
+          "id": "pdf",
+          "name": "PDF",
+          "api": {
+            "pdf": {
+              "path": "/cuentas/movimientos/descarga?digitoControl={group.digitoControl}&producto={group.producto}&contrato={group.contrato}&numeroCuenta={group.numeroCuenta}&tipoMovimiento=+&tipoArchivo=p&concepto=000&titular={group.titular}&fechaDesde={fromDate}&fechaHasta={date}",
+              "method": "GET",
+              "ext": "pdf",
+              "mime": "application/pdf",
+              "headers": {
+                "accept": "application/json, application/json"
+              }
+            }
+          }
+        },
+        {
+          "id": "excel",
+          "name": "Excel",
+          "api": {
+            "pdf": {
+              "path": "/cuentas/movimientos/descarga?digitoControl={group.digitoControl}&producto={group.producto}&contrato={group.contrato}&numeroCuenta={group.numeroCuenta}&tipoMovimiento=+&tipoArchivo=t&concepto=000&titular={group.titular}&fechaDesde={fromDate}&fechaHasta={date}",
+              "method": "GET",
+              "ext": "xls",
+              "mime": "application/vnd.ms-excel",
+              "headers": {
+                "accept": "application/json, application/json"
+              }
+            }
+          }
+        }
+      ]
     }
   ],
   "changelog": [
-    { "version": "2026-07-14", "changes": "Initial: integrated monthly statements (PDF) across all accounts. Movements/cards/investments are declared gaps for community contribution." }
+    {
+      "version": "2026-07-15.1",
+      "changes": "Fix `movimientos`: the first (non-SCA) page returns a flat `movimientos` array, not `methodResult.movimientos` — itemsPath now accepts both shapes."
+    },
+    {
+      "version": "2026-07-15",
+      "changes": "Add `movimientos` (transactions) per account — 90-day window, full-URL nextPage pager, stops at the SCA boundary (no OTP triggered). Add per-account monthly movement statements (PDF/Excel). Token-only auth (auth.cookies:false, avoids HTTP 413) + session keep-alive. Movements is no longer a declared gap."
+    },
+    {
+      "version": "2026-07-14",
+      "changes": "Initial: integrated monthly statements (PDF) across all accounts. Movements/cards/investments are declared gaps for community contribution."
+    }
   ]
 }

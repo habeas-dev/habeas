@@ -16,6 +16,7 @@ export function makePageFetch(tabId) {
       body: typeof init.body === 'string' ? init.body : null,
       wantBlob: !!init.wantBlob,
       referrer: init.referrer || null, // set from the tab (same-origin) — the reliable way to spoof Referer
+      credentials: init.credentials || 'include', // honor a source's cookie opt-out (auth.cookies:false → 'omit')
     };
     let out;
     try {
@@ -25,7 +26,7 @@ export function makePageFetch(tabId) {
         args: [arg],
         func: async (o) => {
           try {
-            const r = await fetch(o.url, { method: o.method, headers: o.headers, body: o.body || undefined, credentials: 'include', ...(o.referrer ? { referrer: o.referrer, referrerPolicy: 'unsafe-url' } : {}) });
+            const r = await fetch(o.url, { method: o.method, headers: o.headers, body: o.body || undefined, credentials: o.credentials || 'include', ...(o.referrer ? { referrer: o.referrer, referrerPolicy: 'unsafe-url' } : {}) });
             const d = { ok: r.ok, status: r.status, contentType: r.headers.get('content-type') || '' };
             if (o.wantBlob) {
               const bytes = new Uint8Array(await r.arrayBuffer());

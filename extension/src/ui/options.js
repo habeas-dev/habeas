@@ -90,7 +90,7 @@ async function render() {
     return `<div class="src-card${on ? ' on' : ''}" data-hay="${esc(hay)}">
       <div class="src-info">
         <div class="src-title"><b>${esc(a.name)}</b> <span class="pill type">${trust}</span></div>
-        <div class="src-meta muted">${a.country ? flag(a.country) + ' ' : ''}${cats ? esc(cats) + ' · ' : ''}<code>${esc(a.id)}</code></div>
+        <div class="src-meta muted">${a.country ? flag(a.country) + ' ' : ''}${cats ? esc(cats) + ' · ' : ''}<code>${esc(a.id)}</code>${a.version ? ` · <span class="ver">v${esc(String(a.version))}</span>` : ''}</div>
       </div>
       <div class="src-actions">
         <button data-ds="${esc(a.id)}" data-on="${on ? 1 : 0}" class="${on ? '' : 'primary'}">${on ? t('deactivate') : t('activate')}</button>
