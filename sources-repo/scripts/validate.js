@@ -113,7 +113,13 @@ function checkExtraction(a, req, label) {
   const p = label ? `[${label}] ` : '';
   req(typeof a.schema === 'string' && SCHEMA_RE.test(a.schema), p + 'schema like "receipt@1" required');
   const list = (a.api && a.api.list) || {};
-  if (list.paging === 'synthetic') {
+  const ws = a.api && a.api.ws;
+  if (ws) {
+    // WebSocket-API source (Trade Republic): no HTTP list — declares a ws(s):// endpoint + a subscription.
+    req(typeof ws.url === 'string' && /^wss?:\/\//.test(ws.url), p + 'api.ws.url must be a ws:// or wss:// URL');
+    req(ws.sub && typeof ws.sub.type === 'string' && ws.sub.type, p + 'api.ws.sub.type required');
+    req(typeof ws.itemsPath === 'string' && ws.itemsPath.length > 0, p + 'api.ws.itemsPath required');
+  } else if (list.paging === 'synthetic') {
     // Synthetic list: documents aren't enumerated from an API list — they exist once per period/account
     // (a monthly or per-account statement). No path/itemsPath; the document itself comes from api.pdf.
     req(list.synthetic && ['months', 'group', 'group-months'].includes(list.synthetic.each), p + 'api.list.synthetic.each must be months|group|group-months');
