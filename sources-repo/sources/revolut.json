@@ -8,7 +8,7 @@
   "categories": [
     "banking"
   ],
-  "version": "2026-07-15",
+  "version": "2026-07-15.1",
   "minVersion": "0.1.68",
   "minorUnits": true,
   "keepRaw": true,
@@ -37,6 +37,16 @@
   },
   "api": {
     "host": "https://app.revolut.com",
+    "groups": {
+      "path": "/api/retail/user/current/wallet",
+      "itemsPath": "pockets",
+      "fields": {
+        "id": "id",
+        "name": "currency",
+        "currency": "currency",
+        "type": "type"
+      }
+    },
     "list": {
       "path": "/api/retail/user/current/transactions/last",
       "itemsPath": "$",
@@ -44,7 +54,8 @@
       "cursorParam": "to",
       "cursorFromItem": "startedDate",
       "params": {
-        "count": "500"
+        "count": "500",
+        "internalPocketId": "{group.id}"
       },
       "headers": {
         "x-browser-application": "WEB_CLIENT",
@@ -63,6 +74,10 @@
     "counterparty": "merchant.name"
   },
   "changelog": [
+    {
+      "version": "2026-07-15.1",
+      "changes": "Add per-account (pocket) filter: enumerate the personal wallet pockets (EUR/GBP/USD/…) and list per internalPocketId, with a currency-labelled Accounts picker. Statements (PDF/CSV) remain a gap."
+    },
     {
       "version": "2026-07-15",
       "changes": "Initial: personal transactions across all accounts (app.revolut.com), paged by the `to` timestamp cursor. Cookie session + captured x-device-id. Amounts are minor units scaled per the transaction currency ISO 4217 exponent (EUR 2dp, JPY 0dp…). Statements (PDF/CSV) and per-account filtering are gaps for later."

@@ -24,21 +24,29 @@ const ALL = [
   tx('t1', 1700000001000, -1250, 'EUR', 'Grocery Store', 'CARD_PAYMENT', 'Grocery Store'),
 ];
 const auth = { merged: { 'x-device-id': 'DEV-abc123' }, byPath: {}, ctx: {} };
+// The personal wallet enumerates pockets (per-currency accounts); listing runs once per pocket with
+// internalPocketId templated in. Fictitious single EUR pocket here.
+const WALLET = { id: 'w1', pockets: [{ id: 'pocket-eur', currency: 'EUR', type: 'CURRENT', state: 'ACTIVE' }] };
+const netFor = (rows, seenHeaders) => async (url, init) => {
+  if (seenHeaders) seenHeaders.push((init && init.headers) || {});
+  const u = new URL(url);
+  if (u.pathname === '/api/retail/user/current/wallet') return { ok: true, status: 200, json: async () => WALLET };
+  if (u.pathname === '/api/retail/user/current/transactions/last') {
+    const to = u.searchParams.get('to');
+    const page = to == null ? rows : rows.filter((t) => t.startedDate < Number(to)); // rows OLDER than the cursor
+    return { ok: true, status: 200, json: async () => page, text: async () => JSON.stringify(page) };
+  }
+  return { ok: false, status: 404, json: async () => ({}) };
+};
 
 test('Revolut adapter validates', () => { assert.ok(validateAdapter(ADP).ok, JSON.stringify(validateAdapter(ADP).errors)); });
 
 test('transactions: to-cursor paging, minor-unit scaling, epoch dates, x-device-id replay', async () => {
   const seenHeaders = [];
   const net = async (url, init) => {
-    seenHeaders.push((init && init.headers) || {});
-    const u = new URL(url);
-    if (u.pathname === '/api/retail/user/current/transactions/last') {
-      assert.equal(u.searchParams.get('count'), '500', 'count param sent every page');
-      const to = u.searchParams.get('to');
-      const page = to == null ? ALL : ALL.filter((t) => t.startedDate < Number(to)); // rows OLDER than the cursor
-      return { ok: true, status: 200, json: async () => page, text: async () => JSON.stringify(page) };
-    }
-    return { ok: false, status: 404, json: async () => ({}) };
+    const r = await netFor(ALL, seenHeaders)(url, init);
+    if (new URL(url).pathname === '/api/retail/user/current/transactions/last') assert.equal(new URL(url).searchParams.get('count'), '500', 'count param sent every page');
+    return r;
   };
   const docs = await listInventory(EFF, auth, net, {});
   // page1 = 4 rows (cursor = min startedDate = t1) → page2 = rows < t1 = none → stop. 4 unique.
@@ -56,20 +64,38 @@ test('transactions: to-cursor paging, minor-unit scaling, epoch dates, x-device-
   assert.equal(byId.t3.currency, 'EUR');
   assert.equal(byId.t1.type, 'CARD_PAYMENT');
 
-  // the captured x-device-id (cookie source) is replayed on every API request
-  assert.ok(seenHeaders.length >= 1);
+  // the captured x-device-id (cookie source) is replayed on EVERY API request (wallet + transactions)
+  assert.ok(seenHeaders.length >= 2); // /wallet (groups) + transactions
   assert.ok(seenHeaders.every((h) => h['x-device-id'] === 'DEV-abc123'), 'x-device-id replayed on all calls');
-  assert.ok(seenHeaders.every((h) => h['x-browser-application'] === 'WEB_CLIENT'), 'static client headers sent');
+  assert.ok(seenHeaders.some((h) => h['x-browser-application'] === 'WEB_CLIENT'), 'static client headers sent on the transactions list');
+});
+
+test('per-account filter: pockets enumerate as currency-labelled accounts, listing filters to one', async () => {
+  const WALLET2 = { id: 'w1', pockets: [
+    { id: 'p-eur', currency: 'EUR', type: 'CURRENT', state: 'ACTIVE' },
+    { id: 'p-gbp', currency: 'GBP', type: 'CURRENT', state: 'ACTIVE' },
+  ] };
+  const perPocket = { 'p-eur': [tx('e1', 1700000001000, -500, 'EUR', 'Shop', 'CARD_PAYMENT', 'Shop')], 'p-gbp': [tx('g1', 1700000002000, -300, 'GBP', 'Pub', 'CARD_PAYMENT', 'Pub')] };
+  const net = async (url) => {
+    const u = new URL(url);
+    if (u.pathname === '/api/retail/user/current/wallet') return { ok: true, status: 200, json: async () => WALLET2 };
+    if (u.pathname === '/api/retail/user/current/transactions/last') {
+      const pid = u.searchParams.get('internalPocketId'); const to = u.searchParams.get('to');
+      const rows = perPocket[pid] || []; const page = to == null ? rows : [];
+      return { ok: true, status: 200, json: async () => page, text: async () => JSON.stringify(page) };
+    }
+    return { ok: false, status: 404, json: async () => ({}) };
+  };
+  const both = await listInventory(EFF, auth, net, {}); // all pockets
+  assert.equal(both.length, 2);
+  assert.deepEqual([...new Set(both.map((d) => d.record.group))].sort(), ['EUR', 'GBP']); // group label = currency
+  const eurOnly = await listInventory(EFF, auth, net, { groups: ['p-eur'] }); // saved account filter
+  assert.equal(eurOnly.length, 1);
+  assert.equal(eurOnly[0].record.currency, 'EUR');
 });
 
 test('keepRaw preserves the full transaction detail in record.extra', async () => {
-  const net = async (url) => {
-    const u = new URL(url);
-    if (u.pathname === '/api/retail/user/current/transactions/last' && !u.searchParams.get('to'))
-      return { ok: true, status: 200, json: async () => [ALL[0]], text: async () => JSON.stringify([ALL[0]]) };
-    return { ok: true, status: 200, json: async () => [], text: async () => '[]' };
-  };
-  const docs = await listInventory(EFF, auth, net, {});
+  const docs = await listInventory(EFF, auth, netFor([ALL[0]]), {});
   assert.ok(docs[0].record.extra, 'record.extra present (keepRaw)');
   assert.equal(docs[0].record.extra.state, 'COMPLETED');
 });
