@@ -5,14 +5,22 @@
   "trust": "community",
   "domain": "traderepublic.com",
   "country": "global",
-  "categories": ["banking", "investment"],
-  "version": "2026-07-15",
+  "categories": [
+    "banking",
+    "investment"
+  ],
+  "version": "2026-07-15.1",
   "minVersion": "0.2.0",
   "keepRaw": true,
   "schema": "transaction@1",
-  "match": ["https://app.traderepublic.com/*"],
+  "match": [
+    "https://app.traderepublic.com/*"
+  ],
   "openUrl": "https://app.traderepublic.com/",
-  "auth": { "mode": "cookie", "replayHeaders": [] },
+  "auth": {
+    "mode": "cookie",
+    "replayHeaders": []
+  },
   "api": {
     "host": "https://api.traderepublic.com",
     "ws": {
@@ -25,12 +33,20 @@
         "clientId": "app.traderepublic.com",
         "clientVersion": "15.101.0"
       },
-      "sub": { "type": "timelineTransactions" },
+      "sub": {
+        "type": "timelineTransactions"
+      },
       "itemsPath": "items",
       "cursorPath": "cursors.after",
       "cursorParam": "after",
       "maxPages": 200,
-      "detail": { "subType": "timelineDetailV2", "idField": "id", "idParam": "id", "attachAs": "detail", "max": 2000 }
+      "detail": {
+        "subType": "timelineDetailV2",
+        "idField": "id",
+        "idParam": "id",
+        "attachAs": "detail",
+        "max": 2000
+      }
     }
   },
   "fields": {
@@ -43,6 +59,13 @@
     "counterparty": "title"
   },
   "changelog": [
-    { "version": "2026-07-15", "changes": "Initial: the whole transaction timeline via Trade Republic's WebSocket API (connect → sub timelineTransactions → paginate by the `after` cursor), run in the site tab so the session cookie + anti-bot token ride the socket. Amounts are decimal (amount.value). Statements and per-instrument detail are gaps for later." }
+    {
+      "version": "2026-07-15.1",
+      "changes": "Enrich each timeline transaction with its timelineDetailV2 detail (asset, quantity × price, fees) in record.extra.detail. No per-transaction PDF is downloaded."
+    },
+    {
+      "version": "2026-07-15",
+      "changes": "Initial: the whole transaction timeline via Trade Republic’s WebSocket API (connect → sub timelineTransactions → paginate by the after cursor), run in the site tab so the session cookie + anti-bot token ride the socket. Amounts are decimal (amount.value)."
+    }
   ]
 }
