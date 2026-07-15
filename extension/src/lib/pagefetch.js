@@ -10,8 +10,10 @@ import { chrome } from './ext.js';
 // A page-context WebSocket lister. Some services (Trade Republic) expose transactions ONLY over a WS API
 // (wss://…): the SPA opens a socket, sends `connect <ver> {…}`, subscribes with `sub <id> {type,…}`, and the
 // server streams back `<id> A {payload}` frames ending in `<id> C`. Run entirely in the site's tab (via
-// executeScript) so the session cookie + anti-bot token ride the handshake — no token replay needed. The
-// whole connect→sub→paginate(after)→collect loop happens in-page and returns the flat items array.
+// executeScript) so the session cookie + anti-bot token ride the handshake — no token replay needed.
+// Phase 1 paginates the list (follow the `after` cursor). Phase 2 (optional `cfg.detail`) then subscribes
+// per item for its detail (Trade Republic's timelineDetailV2 — the asset, quantity × price, fees, docs)
+// and attaches it to the item, so the mapped record carries the full detail. Returns the flat items array.
 export function makePageWs(tabId) {
   return async (cfg) => {
     let out;
@@ -20,32 +22,52 @@ export function makePageWs(tabId) {
         target: { tabId }, world: 'MAIN', args: [cfg],
         func: (c) => new Promise((resolve) => {
           const get = (o, p) => (p ? String(p).split('.').reduce((x, k) => (x == null ? x : x[k]), o) : o);
-          const all = []; let subId = 1, after = null, pages = 0, connected = false, done = false;
+          const items = []; let subId = 1, connected = false, done = false;
+          const pending = new Map(); // subId → callback(dataObj)
           let ws; try { ws = new WebSocket(c.url); } catch (e) { return resolve({ items: [], error: String(e) }); }
-          const finish = (extra) => { if (done) return; done = true; clearTimeout(to); try { ws.close(); } catch (e) {} resolve({ items: all, ...(extra || {}) }); };
-          const to = setTimeout(() => finish({ timeout: true }), c.timeoutMs || 25000);
-          const sendSub = () => { subId++; const p = { type: c.sub.type, ...(c.sub.extra || {}), ...(after ? { [c.cursorParam || 'after']: after } : {}) }; ws.send('sub ' + subId + ' ' + JSON.stringify(p)); };
+          const finish = (extra) => { if (done) return; done = true; clearTimeout(to); try { ws.close(); } catch (e) {} resolve({ items, ...(extra || {}) }); };
+          const to = setTimeout(() => finish({ timeout: true }), c.timeoutMs || 60000);
+          const isHeartbeat = (d) => d && typeof d === 'object' && ('status' in d) && !('items' in d) && !('sections' in d) && !('cursors' in d);
+          const send = (payload, cb) => { const id = ++subId; pending.set(id, cb); try { ws.send('sub ' + id + ' ' + JSON.stringify(payload)); } catch (e) { finish({ error: 'send' }); } };
           ws.onopen = () => { try { ws.send('connect ' + (c.connectVersion || 31) + ' ' + JSON.stringify(c.connect || {})); } catch (e) { finish({ error: 'send connect' }); } };
           ws.onmessage = (ev) => {
             const s = String(ev.data);
-            if (!connected) { connected = true; sendSub(); return; }        // first frame after connect = "connected" ack
+            if (!connected) { connected = true; timelinePage(); return; } // first frame after connect = "connected" ack
             const m = s.match(/^(\d+) ([A-Z])(?: ([\s\S]*))?$/);
             if (!m) return;
-            const code = m[2], body = m[3];
+            const id = +m[1], code = m[2], body = m[3];
             if (code === 'A' && body) {
               let d; try { d = JSON.parse(body); } catch (e) { return; }
-              if (d && d.status && get(d, c.itemsPath) == null) return;     // subscription-active heartbeat, not data
-              const items = get(d, c.itemsPath) || [];
-              for (const it of items) all.push(it);
-              try { ws.send('unsub ' + m[1]); } catch (e) {}
-              const next = c.cursorPath ? get(d, c.cursorPath) : null;
-              pages++;
-              if (next && items.length && pages < (c.maxPages || 100)) { after = next; sendSub(); }
-              else finish();
-            } else if (code === 'E') finish({ error: body });
+              if (isHeartbeat(d)) return;              // subscription-active heartbeat, keep waiting for data
+              const cb = pending.get(id); if (!cb) return;
+              pending.delete(id); try { ws.send('unsub ' + id); } catch (e) {}
+              cb(d);
+            } else if (code === 'E') { const cb = pending.get(id); pending.delete(id); if (cb) cb(null); }
           };
           ws.onerror = () => finish({ error: 'ws error' });
           ws.onclose = () => finish({ closed: true });
+          // Phase 1: paginate the list by the `after` cursor.
+          let pages = 0;
+          const timelinePage = (after) => send({ type: c.sub.type, ...(c.sub.extra || {}), ...(after ? { [c.cursorParam || 'after']: after } : {}) }, (d) => {
+            if (!d) return finish({ error: 'sub failed' });
+            for (const it of (get(d, c.itemsPath) || [])) items.push(it);
+            const next = c.cursorPath ? get(d, c.cursorPath) : null;
+            if (next && ++pages < (c.maxPages || 100)) timelinePage(next);
+            else phase2();
+          });
+          // Phase 2: enrich each item with its detail subscription (optional).
+          const phase2 = () => {
+            if (!c.detail || !items.length) return finish();
+            let i = 0;
+            const nextDetail = () => {
+              if (i >= items.length || i >= (c.detail.max || 2000)) return finish();
+              const it = items[i++];
+              const detId = get(it, c.detail.idField || 'id');
+              if (detId == null || detId === '') return nextDetail();
+              send({ type: c.detail.subType, [c.detail.idParam || 'id']: detId }, (d) => { if (d) it[c.detail.attachAs || 'detail'] = d; nextDetail(); });
+            };
+            nextDetail();
+          };
         }),
       });
       out = res && res.result;

@@ -53,8 +53,18 @@ test('ws transport: surfaces a socket error, and dedupes by id', async () => {
   assert.equal(dupes.length, 2); // a1 deduped
 });
 
-test('ws transport: keepRaw keeps the full timeline item in record.extra', async () => {
-  const docs = await listInventory(EFF, auth, mkNet({ items: [ITEMS[0]] }), {});
+test('ws transport: keepRaw keeps the full timeline item + attached detail in record.extra', async () => {
+  const cap = {};
+  const docs = await listInventory(EFF, auth, mkNet({ items: [ITEMS[0]] }, cap), {});
   assert.ok(docs[0].record.extra, 'record.extra present');
   assert.equal(docs[0].record.extra.status, 'EXECUTED');
+  // the runtime asks the executor to enrich each item with its detail subscription
+  assert.equal(cap.cfg.detail.subType, 'timelineDetailV2');
+
+  // a trade item the executor enriched with its timelineDetailV2 detail (asset, quantity × price, fees)
+  const trade = { ...item('t9', '2026-06-16T09:00:00.000+0000', -12, 'EUR', 'Commodity ETF', 'TRADING_SAVINGSPLAN_EXECUTED'),
+    detail: { id: 't9', sections: [{ type: 'table', title: 'Resumen', data: [{ title: 'Transacción', detail: { text: '1,47 × 8,13 €' } }] }] } };
+  const [d2] = await listInventory(EFF, auth, mkNet({ items: [trade] }), {});
+  assert.ok(d2.record.extra.detail, 'attached WS detail preserved in record.extra.detail');
+  assert.equal(d2.record.extra.detail.sections[0].title, 'Resumen');
 });

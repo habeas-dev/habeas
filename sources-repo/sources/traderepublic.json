@@ -29,7 +29,8 @@
       "itemsPath": "items",
       "cursorPath": "cursors.after",
       "cursorParam": "after",
-      "maxPages": 200
+      "maxPages": 200,
+      "detail": { "subType": "timelineDetailV2", "idField": "id", "idParam": "id", "attachAs": "detail", "max": 2000 }
     }
   },
   "fields": {
