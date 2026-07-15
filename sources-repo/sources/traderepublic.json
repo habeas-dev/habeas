@@ -1,0 +1,47 @@
+{
+  "id": "traderepublic",
+  "name": "Trade Republic",
+  "service": "traderepublic",
+  "trust": "community",
+  "domain": "traderepublic.com",
+  "country": "global",
+  "categories": ["banking", "investment"],
+  "version": "2026-07-15",
+  "minVersion": "0.1.69",
+  "keepRaw": true,
+  "schema": "transaction@1",
+  "match": ["https://app.traderepublic.com/*"],
+  "openUrl": "https://app.traderepublic.com/",
+  "auth": { "mode": "cookie", "replayHeaders": [] },
+  "api": {
+    "host": "https://api.traderepublic.com",
+    "ws": {
+      "url": "wss://api.traderepublic.com",
+      "connectVersion": 34,
+      "connect": {
+        "locale": "en",
+        "platformId": "webtrading",
+        "platformVersion": "web",
+        "clientId": "app.traderepublic.com",
+        "clientVersion": "15.101.0"
+      },
+      "sub": { "type": "timelineTransactions" },
+      "itemsPath": "items",
+      "cursorPath": "cursors.after",
+      "cursorParam": "after",
+      "maxPages": 200
+    }
+  },
+  "fields": {
+    "internalId": "id",
+    "date": "timestamp",
+    "amount": "amount.value",
+    "currency": "amount.currency",
+    "description": "title",
+    "type": "eventType",
+    "counterparty": "title"
+  },
+  "changelog": [
+    { "version": "2026-07-15", "changes": "Initial: the whole transaction timeline via Trade Republic's WebSocket API (connect → sub timelineTransactions → paginate by the `after` cursor), run in the site tab so the session cookie + anti-bot token ride the socket. Amounts are decimal (amount.value). Statements and per-instrument detail are gaps for later." }
+  ]
+}

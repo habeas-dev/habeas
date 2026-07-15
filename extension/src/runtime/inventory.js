@@ -89,6 +89,24 @@ export async function listInventory(adapter, auth, net, opts) {
   // cut is applied at the statement-date level BEFORE fetching (see pageListPeriods); here it drops
   // finished statement documents (XLS/PDF) so they're never downloaded.
   const capAge = (docs) => (list.maxAgeDays && !list.periods) ? docs.filter((d) => withinAgeDays(d.date, list.maxAgeDays)) : docs;
+  // WebSocket-API source (Trade Republic): the whole connect→sub→paginate loop runs in the site tab via
+  // net.ws and returns a flat items array. Map each item like any list row. No HTTP list/groups.
+  if (adapter.api && adapter.api.ws) {
+    const wsFn = net && net.ws;
+    if (!wsFn) throw new Error('list ws — no WebSocket transport (open the site tab first)');
+    const res = await wsFn({ ...adapter.api.ws });
+    if (res && res.error) throw new Error('list ws — ' + res.error);
+    const seen = new Set(opts && opts.knownIds ? opts.knownIds : []), all = [];
+    for (const it of (res && res.items) || []) {
+      const doc = mapDoc(adapter, it, null);
+      const id = doc.internalId;
+      if (id != null && seen.has(id)) continue;
+      if (id != null) seen.add(id);
+      all.push(doc);
+    }
+    all.sort(byDate);
+    return capAge(all);
+  }
   // CSRF prelude (AEM/WiZink): fetch a page, extract the securityToken, expose it as {csrf} in every
   // subsequent list/group/pdf template via auth.__csrf.
   const a = adapter.api.csrf ? { ...(auth || {}), __csrf: await fetchCsrf(adapter, auth, net) } : auth;

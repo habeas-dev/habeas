@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-15T07:07:19.519Z",
+  "generated": "2026-07-15T08:08:46.400Z",
   "sources": [
     {
       "id": "amazon-es",
@@ -21,7 +21,7 @@
       "gaps": [],
       "changelog": [],
       "url": "https://habeas-dev.github.io/sources/amazon-es.json",
-      "updated": "2026-07-15T07:07:19.519Z"
+      "updated": "2026-07-15T08:08:46.400Z"
     },
     {
       "id": "bipdrive-es",
@@ -47,7 +47,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/bipdrive-es.json",
-      "updated": "2026-07-15T07:07:19.519Z"
+      "updated": "2026-07-15T08:08:46.400Z"
     },
     {
       "id": "caixabank-consumer-es",
@@ -75,7 +75,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/caixabank-consumer-es.json",
-      "updated": "2026-07-15T07:07:19.519Z"
+      "updated": "2026-07-15T08:08:46.400Z"
     },
     {
       "id": "carrefour-es",
@@ -103,7 +103,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/carrefour-es.json",
-      "updated": "2026-07-15T07:07:19.519Z"
+      "updated": "2026-07-15T08:08:46.400Z"
     },
     {
       "id": "decathlon-es",
@@ -129,7 +129,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/decathlon-es.json",
-      "updated": "2026-07-15T07:07:19.519Z"
+      "updated": "2026-07-15T08:08:46.400Z"
     },
     {
       "id": "dia-es",
@@ -156,7 +156,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/dia-es.json",
-      "updated": "2026-07-15T07:07:19.519Z"
+      "updated": "2026-07-15T08:08:46.400Z"
     },
     {
       "id": "hover-com",
@@ -187,7 +187,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/hover-com.json",
-      "updated": "2026-07-15T07:07:19.519Z"
+      "updated": "2026-07-15T08:08:46.400Z"
     },
     {
       "id": "ikea-es",
@@ -210,7 +210,7 @@
       "gaps": [],
       "changelog": [],
       "url": "https://habeas-dev.github.io/sources/ikea-es.json",
-      "updated": "2026-07-15T07:07:19.519Z"
+      "updated": "2026-07-15T08:08:46.400Z"
     },
     {
       "id": "ing-es",
@@ -237,7 +237,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/ing-es.json",
-      "updated": "2026-07-15T07:07:19.519Z"
+      "updated": "2026-07-15T08:08:46.400Z"
     },
     {
       "id": "leroymerlin-es",
@@ -277,7 +277,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/leroymerlin-es.json",
-      "updated": "2026-07-15T07:07:19.519Z"
+      "updated": "2026-07-15T08:08:46.400Z"
     },
     {
       "id": "openbank-es",
@@ -311,7 +311,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/openbank-es.json",
-      "updated": "2026-07-15T07:07:19.519Z"
+      "updated": "2026-07-15T08:08:46.400Z"
     },
     {
       "id": "revolut",
@@ -345,7 +345,32 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/revolut.json",
-      "updated": "2026-07-15T07:07:19.519Z"
+      "updated": "2026-07-15T08:08:46.400Z"
+    },
+    {
+      "id": "traderepublic",
+      "name": "Trade Republic",
+      "service": "traderepublic",
+      "categories": [
+        "banking",
+        "investment"
+      ],
+      "trust": "community",
+      "domain": "traderepublic.com",
+      "country": "global",
+      "formats": [],
+      "crossDomain": [],
+      "version": "2026-07-15",
+      "minVersion": "0.1.69",
+      "gaps": [],
+      "changelog": [
+        {
+          "version": "2026-07-15",
+          "changes": "Initial: the whole transaction timeline via Trade Republic's WebSocket API (connect → sub timelineTransactions → paginate by the `after` cursor), run in the site tab so the session cookie + anti-bot token ride the socket. Amounts are decimal (amount.value). Statements and per-instrument detail are gaps for later."
+        }
+      ],
+      "url": "https://habeas-dev.github.io/sources/traderepublic.json",
+      "updated": "2026-07-15T08:08:46.400Z"
     },
     {
       "id": "wizink-es",
@@ -374,7 +399,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/wizink-es.json",
-      "updated": "2026-07-15T07:07:19.519Z"
+      "updated": "2026-07-15T08:08:46.400Z"
     }
   ]
 }

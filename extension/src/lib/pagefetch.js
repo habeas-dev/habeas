@@ -7,8 +7,55 @@ import { chrome } from './ext.js';
 
 // Returns a fetch-like function bound to a tab, yielding a minimal Response ({ ok, status, text,
 // json, blob }). Binary bodies (PDFs) are marshalled as base64 across the executeScript boundary.
+// A page-context WebSocket lister. Some services (Trade Republic) expose transactions ONLY over a WS API
+// (wss://…): the SPA opens a socket, sends `connect <ver> {…}`, subscribes with `sub <id> {type,…}`, and the
+// server streams back `<id> A {payload}` frames ending in `<id> C`. Run entirely in the site's tab (via
+// executeScript) so the session cookie + anti-bot token ride the handshake — no token replay needed. The
+// whole connect→sub→paginate(after)→collect loop happens in-page and returns the flat items array.
+export function makePageWs(tabId) {
+  return async (cfg) => {
+    let out;
+    try {
+      const [res] = await chrome.scripting.executeScript({
+        target: { tabId }, world: 'MAIN', args: [cfg],
+        func: (c) => new Promise((resolve) => {
+          const get = (o, p) => (p ? String(p).split('.').reduce((x, k) => (x == null ? x : x[k]), o) : o);
+          const all = []; let subId = 1, after = null, pages = 0, connected = false, done = false;
+          let ws; try { ws = new WebSocket(c.url); } catch (e) { return resolve({ items: [], error: String(e) }); }
+          const finish = (extra) => { if (done) return; done = true; clearTimeout(to); try { ws.close(); } catch (e) {} resolve({ items: all, ...(extra || {}) }); };
+          const to = setTimeout(() => finish({ timeout: true }), c.timeoutMs || 25000);
+          const sendSub = () => { subId++; const p = { type: c.sub.type, ...(c.sub.extra || {}), ...(after ? { [c.cursorParam || 'after']: after } : {}) }; ws.send('sub ' + subId + ' ' + JSON.stringify(p)); };
+          ws.onopen = () => { try { ws.send('connect ' + (c.connectVersion || 31) + ' ' + JSON.stringify(c.connect || {})); } catch (e) { finish({ error: 'send connect' }); } };
+          ws.onmessage = (ev) => {
+            const s = String(ev.data);
+            if (!connected) { connected = true; sendSub(); return; }        // first frame after connect = "connected" ack
+            const m = s.match(/^(\d+) ([A-Z])(?: ([\s\S]*))?$/);
+            if (!m) return;
+            const code = m[2], body = m[3];
+            if (code === 'A' && body) {
+              let d; try { d = JSON.parse(body); } catch (e) { return; }
+              if (d && d.status && get(d, c.itemsPath) == null) return;     // subscription-active heartbeat, not data
+              const items = get(d, c.itemsPath) || [];
+              for (const it of items) all.push(it);
+              try { ws.send('unsub ' + m[1]); } catch (e) {}
+              const next = c.cursorPath ? get(d, c.cursorPath) : null;
+              pages++;
+              if (next && items.length && pages < (c.maxPages || 100)) { after = next; sendSub(); }
+              else finish();
+            } else if (code === 'E') finish({ error: body });
+          };
+          ws.onerror = () => finish({ error: 'ws error' });
+          ws.onclose = () => finish({ closed: true });
+        }),
+      });
+      out = res && res.result;
+    } catch (e) { out = { items: [], error: String((e && e.message) || e) }; }
+    return out || { items: [] };
+  };
+}
+
 export function makePageFetch(tabId) {
-  return async (url, init = {}) => {
+  const pf = async (url, init = {}) => {
     const arg = {
       url: String(url),
       method: (init.method || 'GET'),
@@ -53,6 +100,8 @@ export function makePageFetch(tabId) {
       },
     };
   };
+  pf.ws = makePageWs(tabId); // WebSocket-API sources (Trade Republic) list through this same tab
+  return pf;
 }
 
 // Find an open tab on the source's site and return a page-bound fetch (or null if none is open —
