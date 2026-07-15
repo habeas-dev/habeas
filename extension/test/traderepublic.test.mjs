@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { listInventory } from '../src/runtime/inventory.js';
+import { listInventory, fetchArtifact, artifactKinds } from '../src/runtime/inventory.js';
 import { validateAdapter } from '../src/adapters/validate.js';
 import { resolveOutput } from '../src/lib/outputs.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const ADP = JSON.parse(readFileSync(join(here, '../../sources-repo/sources/traderepublic.json'), 'utf8'));
-const EFF = resolveOutput(ADP, ADP.id);
+const EFF = resolveOutput(ADP, 'transactions'); // the WebSocket timeline stream
 
 // Trade Republic's timeline comes over a WebSocket, not HTTP. The runtime asks net.ws (a page-context WS
 // executor) which returns the flat items array; the runtime maps each like a list row. Fictitious items,
@@ -69,4 +69,37 @@ test('ws transport: keepRaw keeps the full timeline item + attached detail in re
   const [d2] = await listInventory(EFF, auth, mkNet({ items: [trade] }), {});
   assert.ok(d2.record.extra.detail, 'attached WS detail preserved in record.extra.detail');
   assert.equal(d2.record.extra.detail.sections[0].title, 'Resumen');
+});
+
+// Monthly documents (invoice stream): the account statement PDF (direct GET, per month) and the monthly
+// transactions CSV (async export job: POST → poll status → download). Synthetic per-completed-month items.
+test('statements: account statement PDF is a direct per-month GET', async () => {
+  const PDF = resolveOutput(ADP, 'extracto/pdf');
+  let url = null;
+  const net = async (u) => { const x = new URL(u, 'https://api.traderepublic.com'); if (x.pathname.endsWith('/accountstatement/statement')) { url = x.pathname + '?' + x.searchParams.toString(); return { ok: true, status: 200, blob: async () => new Blob(['%PDF']), text: async () => '', headers: { get: () => 'application/pdf' } }; } return { ok: false, status: 404, json: async () => ({}) }; };
+  const docs = await listInventory(PDF, auth, net, {});
+  assert.ok(docs.length >= 1 && docs[0].internalId.match(/^\d{4}-\d{2}$/));
+  await fetchArtifact(PDF, auth, docs[0], net, null, artifactKinds(PDF, docs[0])[0].kind);
+  assert.match(url, /\/accountstatement\/statement\?fromDate=\d{4}-\d{2}&toDate=\d{4}-\d{2}$/);
+});
+
+test('statements: transactions CSV is an async export job (POST → poll → download)', async () => {
+  const CSV = resolveOutput(ADP, 'extracto/csv');
+  const calls = [];
+  const net = async (u, init) => {
+    const x = new URL(u, 'https://api.traderepublic.com'); const p = x.pathname;
+    calls.push({ m: (init && init.method) || 'GET', p, body: init && init.body });
+    if (p.endsWith('/export/request')) return { ok: true, status: 202, text: async () => JSON.stringify({ jobId: 'J1', status: 'PENDING' }) };
+    if (p.endsWith('/export/status')) return { ok: true, status: 200, text: async () => JSON.stringify({ status: 'COMPLETED' }) };
+    if (p.endsWith('/export/download')) return { ok: true, status: 200, blob: async () => new Blob(['a,b']), text: async () => '', headers: { get: () => 'text/csv' } };
+    return { ok: false, status: 404, json: async () => ({}) };
+  };
+  const docs = await listInventory(CSV, auth, net, {});
+  assert.deepEqual(artifactKinds(CSV, docs[0]), [{ kind: 'document', ext: 'csv' }]);
+  const blob = await fetchArtifact(CSV, auth, docs[0], net, null, artifactKinds(CSV, docs[0])[0].kind);
+  const start = calls.find((c) => c.p.endsWith('/export/request'));
+  assert.equal(start.m, 'POST');
+  assert.match(start.body, /^\{"from":"\d{4}-\d{2}-01","to":"\d{4}-\d{2}-\d{2}"\}$/); // JSON body filled, not treated as a template
+  assert.ok(calls.some((c) => c.p.endsWith('/export/status') && c.p.includes) && calls.some((c) => c.p.endsWith('/export/download')));
+  assert.ok(blob);
 });

@@ -334,9 +334,11 @@ function synthItems(list, group) {
     const cutoff = Date.now() - (list.maxAgeDays || 90) * 86400000;
     let y = now.getUTCFullYear(), m = now.getUTCMonth() + 1; // 1-12
     for (let i = 0; i < 36; i++) {
-      const last = new Date(Date.UTC(y, m, 0)); // last day of month y-m
+      const first = new Date(Date.UTC(y, m - 1, 1)), last = new Date(Date.UTC(y, m, 0)); // first/last day of month y-m
       if (last.getTime() < cutoff) break;       // whole month older than the window → stop
-      if (last.getTime() < todayStart) out.push({ year: String(y), month: String(m), period: `${y}-${String(m).padStart(2, '0')}`, date: last.toISOString().slice(0, 10), ...rangeVals });
+      // Each month carries its OWN bounds (fromDate/toDate) so a per-month statement/export can request them,
+      // NOT just the window range — a document endpoint that takes from&to (Trade Republic CSV export).
+      if (last.getTime() < todayStart) out.push({ year: String(y), month: String(m), period: `${y}-${String(m).padStart(2, '0')}`, date: last.toISOString().slice(0, 10), fromDate: first.toISOString().slice(0, 10), toDate: last.toISOString().slice(0, 10), ...rangeVals });
       m--; if (m < 1) { m = 12; y--; }
     }
     return out;
@@ -628,7 +630,8 @@ const documentCfg = (api) => api.document || (api.detail && api.detail.as ? api.
 // Lets a per-doc-conditional artifact (Dia's invoice PDF needs {invoices.0}) be skipped for docs that
 // don't have it (a ticket with no invoice) instead of firing a malformed request.
 function tmplResolvable(str, doc) {
-  for (const m of String(str || '').matchAll(/\{([^}]+)\}/g)) {
+  // Only {word.word} tokens are templates (matches fillDocTmpl); a JSON body's own braces ({"from":…}) are not.
+  for (const m of String(str || '').matchAll(/\{([\w.]+)\}/g)) {
     const k = m[1];
     if (k === 'internalId' || k === 'csrf' || k.indexOf('ctx.') === 0) continue; // always available at fetch time
     const isGroup = k.indexOf('group.') === 0;
@@ -655,7 +658,9 @@ export function artifactKinds(adapter, doc) {
       ? (!doc || (doc._raw && get(doc._raw, api.pdf.urlField) != null && get(doc._raw, api.pdf.urlField) !== '') || !!(doc.record && doc.record.pdfUrl))
       : api.pdf.poll // async-generated (Revolut statements): the poll path is what must be fillable
         ? (!doc || tmplResolvable(api.pdf.poll.path, doc))
-        : (!doc || tmplResolvable(api.pdf.path, doc));
+        : api.pdf.job // async job export (Trade Republic CSV): the start path/body is what must be fillable
+          ? (!doc || (tmplResolvable(api.pdf.job.start.path, doc) && tmplResolvable(api.pdf.job.start.body || '', doc)))
+          : (!doc || tmplResolvable(api.pdf.path, doc));
     if (ok) out.push({ kind: 'document', ext: api.pdf.ext || 'pdf' });
   }
   return out;
@@ -747,6 +752,32 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
     assertAllowedDocHost(adapter, String(url)); // the signed URL's host must be an allowed (crossDomain) host
     const dRes = await NET(String(url), { method: 'GET', headers: { accept: '*/*' }, credentials: 'omit', wantBlob: true }); // signed URL: no cookies/auth
     if (!dRes.ok) throw new Error('statement download ' + dRes.status);
+    return await dRes.blob();
+  }
+  // Async JOB export (Trade Republic CSV): POST a `start` request → get a jobId → poll a `status` endpoint by
+  // jobId until ready → GET the `download` endpoint by jobId. All same-origin (unlike poll's signed URL).
+  if (pdf.job) {
+    const jb = pdf.job;
+    const startPath = fillDocTmpl(jb.start.path, doc, internalId, csrf, auth);
+    const startBody = jb.start.body != null ? fillDocTmpl(jb.start.body, doc, internalId, csrf, auth) : undefined;
+    if (/\{[\w.]+\}/.test(startPath) || (startBody && /\{[\w.]+\}/.test(startBody))) throw new Error('no document for this item'); // leftover {token} → unfillable (JSON braces are fine)
+    const sInit = { method: jb.start.method || 'POST', headers: { accept: 'application/json', ...(jb.start.headers || {}), ...headersFor(auth, startPath.split('?')[0]) }, credentials: credOf(adapter) };
+    if (startBody != null) { sInit.body = startBody; sInit.headers['content-type'] = jb.start.contentType || 'application/json'; }
+    const sRes = await NET(host + startPath, sInit);
+    if (!sRes.ok) throw new Error('export ' + sRes.status + ' ' + (await sRes.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
+    const jobId = get(JSON.parse(await sRes.text()), jb.start.idField || 'jobId');
+    if (jobId == null || jobId === '') throw new Error('export: no job id');
+    const fill = (p) => String(p).split('{jobId}').join(encodeURIComponent(String(jobId)));
+    let ready = false;
+    for (let i = 0; i < (jb.status.tries || 10); i++) {
+      const stRes = await NET(host + fill(jb.status.path), { method: 'GET', headers: { accept: 'application/json', ...headersFor(auth, fill(jb.status.path).split('?')[0]) }, credentials: credOf(adapter) });
+      if (!stRes.ok) throw new Error('export status ' + stRes.status);
+      if (String(get(JSON.parse(await stRes.text()), jb.status.statePath || 'status')) === String(jb.status.readyValue ?? 'COMPLETED')) { ready = true; break; }
+      if (i < (jb.status.tries || 10) - 1) await new Promise((r) => setTimeout(r, jb.status.delayMs || 1000));
+    }
+    if (!ready) throw new Error('export not ready (still generating)');
+    const dRes = await NET(host + fill(jb.download.path), { method: 'GET', headers: { accept: '*/*', ...headersFor(auth, fill(jb.download.path).split('?')[0]) }, credentials: credOf(adapter), wantBlob: true });
+    if (!dRes.ok) throw new Error('export download ' + dRes.status);
     return await dRes.blob();
   }
   // Two-step document resolution: some services don't expose a stable PDF URL — the detail/list only
