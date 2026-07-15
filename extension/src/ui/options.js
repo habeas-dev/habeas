@@ -1,5 +1,5 @@
 import { chrome } from '../lib/ext.js';
-import { getConfig, upsert, remove } from '../lib/config.js';
+import { getConfig, saveConfig, upsert, remove } from '../lib/config.js';
 import { setSecret } from '../lib/secrets.js';
 import { driveSignIn, redirectUri, driveConnected, disconnectDrive, preferDeviceFlow, driveDeviceConnect } from '../sinks/drive.js';
 import { dropboxConnect, dropboxRedirectUri } from '../sinks/dropbox.js';
@@ -17,6 +17,7 @@ import { getGrants, revokeGrant } from '../lib/grants.js';
 import { getStoreConfig, moveStoreTo, putItems } from '../lib/store.js';
 import { readSinkRecords } from '../sinks/sinks.js';
 import { esc } from '../lib/esc.js';
+import { nextOccurrence, describeSchedule, validateSpec } from '../lib/schedule.js';
 
 let CATALOG = {};
 const $ = (s) => document.querySelector(s);
@@ -222,6 +223,68 @@ async function render() {
     }).join('')
     : `<p class="muted">${t('no_grants')}</p>`;
   $('#grants').querySelectorAll('[data-revoke]').forEach((b) => b.onclick = async () => { await revokeGrant(b.dataset.revoke); render(); });
+  await renderPlanner(cfg);
+}
+
+// ---- Download planner UI ----------------------------------------------------------------------------
+const WEEKDAYS = [[1, 'sched_mon'], [2, 'sched_tue'], [3, 'sched_wed'], [4, 'sched_thu'], [5, 'sched_fri'], [6, 'sched_sat'], [7, 'sched_sun']];
+// Read the schedule spec from the form's currently-visible fields.
+function readSpec() {
+  const kind = $('#pl-kind').value, time = $('#pl-time').value;
+  if (kind === 'weekly') return { kind, time, weekdays: [...$('#pl-weekdays').querySelectorAll('input:checked')].map((c) => Number(c.value)) };
+  if (kind === 'monthly-day') return { kind, time, days: ($('#pl-days').value.match(/\d+/g) || []).map(Number).filter((n) => n >= 1 && n <= 31) };
+  if (kind === 'monthly-weekday') return { kind, time, nth: Number($('#pl-nth').value), weekday: Number($('#pl-weekday').value) };
+  if (kind === 'monthly-businessday') return { kind, time, nth: Number($('#pl-nth').value) };
+  return { kind: 'daily', time };
+}
+// Show only the fields relevant to the chosen kind + refresh the live preview.
+function syncPlannerForm() {
+  const kind = $('#pl-kind').value;
+  $('#pl-weekdays').hidden = kind !== 'weekly';
+  $('#pl-days').hidden = kind !== 'monthly-day';
+  $('#pl-nth').hidden = !(kind === 'monthly-weekday' || kind === 'monthly-businessday');
+  $('#pl-weekday').hidden = kind !== 'monthly-weekday';
+  const spec = readSpec(); const v = validateSpec(spec);
+  const nx = v.ok ? nextOccurrence(spec, Date.now()) : null;
+  $('#pl-preview').textContent = v.ok ? describeSchedule(spec, t) + (nx ? ' · ' + t('sched_next', [new Date(nx).toLocaleString()]) : '') : '';
+  $('#pl-add').disabled = !(v.ok && $('#pl-ds').value && $('#pl-sink').value);
+}
+async function renderPlanner(cfg) {
+  cfg = cfg || (await getConfig());
+  const adapters = CATALOG;
+  // Only enabled sources, and destinations a schedule can run unattended (not download / not local folder —
+  // those need a user click / a live picker). folder is fine (a directory handle persists).
+  const dsList = (cfg.datasources || []).filter((d) => d.enabled);
+  // Unattended-runnable destinations only: download needs a click; local-folder needs a user gesture to
+  // (re)grant File System Access. Cloud sinks (drive/dropbox/webdav/s3) + http run in the background.
+  const sinkList = (cfg.sinks || []).filter((s) => s.type !== 'download' && s.type !== 'local-folder');
+  const opt = (v, label, sel) => `<option value="${esc(v)}"${sel === v ? ' selected' : ''}>${esc(label)}</option>`;
+  const dsSel = $('#pl-ds'), sinkSel = $('#pl-sink');
+  if (dsSel) dsSel.innerHTML = dsList.map((d) => opt(d.id, (adapters[d.adapter] && adapters[d.adapter].name) || d.adapter, dsSel.value)).join('') || opt('', t('sched_no_sources'));
+  if (sinkSel) sinkSel.innerHTML = sinkList.map((s) => opt(s.id, `${s.id} (${s.type})`, sinkSel.value)).join('') || opt('', t('sched_no_sinks'));
+  const wd = $('#pl-weekdays'); if (wd && !wd.dataset.built) { wd.dataset.built = '1'; wd.innerHTML = WEEKDAYS.map(([n, k]) => `<label class="pill" style="cursor:pointer">${esc(t(k))}<input type="checkbox" value="${n}" style="margin-left:3px"></label>`).join(''); }
+  const wdSel = $('#pl-weekday'); if (wdSel && !wdSel.options.length) wdSel.innerHTML = WEEKDAYS.map(([n, k]) => `<option value="${n}">${esc(t(k))}</option>`).join('');
+  syncPlannerForm();
+
+  const schedules = cfg.schedules || [];
+  $('#pl-empty').hidden = schedules.length > 0;
+  $('#pl-list').innerHTML = schedules.map((s) => {
+    const dsName = (adapters[(dsList.find((d) => d.id === s.datasource) || {}).adapter] || {}).name || s.datasource;
+    const nx = s.enabled ? nextOccurrence(s.spec, Date.now()) : null;
+    return `<div class="src-card${s.enabled ? ' on' : ''}">
+      <div class="src-info">
+        <div class="src-title"><b>${esc(dsName)}</b> <span class="muted">→ ${esc(s.sink)}</span></div>
+        <div class="src-meta muted">${esc(describeSchedule(s.spec, t))}${nx ? ' · ' + esc(t('sched_next', [new Date(nx).toLocaleString()])) : ''}</div>
+      </div>
+      <div class="src-actions">
+        <button data-pl-toggle="${esc(s.id)}">${s.enabled ? t('deactivate') : t('activate')}</button>
+        <button data-pl-run="${esc(s.id)}" title="${t('sched_run_now')}">${t('sched_run_now')}</button>
+        <button class="link danger" data-pl-del="${esc(s.id)}">${t('remove')}</button>
+      </div></div>`;
+  }).join('');
+  $('#pl-list').querySelectorAll('[data-pl-toggle]').forEach((b) => b.onclick = async () => { const c = await getConfig(); const s = (c.schedules || []).find((x) => x.id === b.dataset.plToggle); if (s) { s.enabled = !s.enabled; await saveConfig(c); render(); } });
+  $('#pl-list').querySelectorAll('[data-pl-del]').forEach((b) => b.onclick = async () => { await remove('schedules', b.dataset.plDel); render(); });
+  $('#pl-list').querySelectorAll('[data-pl-run]').forEach((b) => b.onclick = () => { chrome.runtime.sendMessage({ type: 'habeas:sched-run', id: b.dataset.plRun }); b.textContent = t('sched_running'); });
 }
 
 function renderFields() {
@@ -411,3 +474,20 @@ $('#importfile').onchange = async (e) => {
 renderFields();
 render();
 watchThemeIcon();
+
+// Download planner form: reflect field changes in the live preview; add a schedule.
+(function initPlanner() {
+  const ids = ['#pl-kind', '#pl-time', '#pl-days', '#pl-ds', '#pl-sink'];
+  ids.forEach((s) => { const el = $(s); if (el) el.addEventListener('change', syncPlannerForm); });
+  ['#pl-nth', '#pl-weekday'].forEach((s) => { const el = $(s); if (el) el.addEventListener('change', syncPlannerForm); });
+  $('#pl-days') && $('#pl-days').addEventListener('input', syncPlannerForm);
+  document.addEventListener('change', (e) => { if (e.target && e.target.closest && e.target.closest('#pl-weekdays')) syncPlannerForm(); });
+  const add = $('#pl-add');
+  if (add) add.onclick = async () => {
+    const spec = readSpec(); if (!validateSpec(spec).ok) return;
+    const ds = $('#pl-ds').value, sink = $('#pl-sink').value; if (!ds || !sink) return;
+    const id = 'sch_' + Math.random().toString(36).slice(2, 9);
+    await upsert('schedules', { id, datasource: ds, sink, spec, enabled: true });
+    render(); // saveConfig → background re-arms the alarm
+  };
+})();

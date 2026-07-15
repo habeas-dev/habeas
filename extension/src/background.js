@@ -12,6 +12,7 @@ import { resolveSiteFetch, ensureSiteFetch, recoverSession } from './lib/pagefet
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
 import { recordDelivered } from './lib/store.js';
+import { nextOccurrence } from './lib/schedule.js';
 import { acceptsDoc, sinkAcceptsArtifact, sinkAcceptsSource, bakeLearned } from './sinks/format.js';
 import { outputsForSink, resolveOutput, storeKeyOf } from './lib/outputs.js';
 import { getAdapters } from './adapters/index.js';
@@ -38,11 +39,16 @@ chrome.action.onClicked.addListener(() => {
   // One-time: encrypt any pairing-token headers left plaintext in config by older versions.
   migrateSinkHeaders().catch(() => {});
   syncWebRequestCapture();
+  syncSchedules().catch(() => {}); // (re)arm the download planner's alarms; overdue ones fire the catch-up
 })();
-// Re-sync the webRequest capture filter when the enabled sources change.
+// Re-sync the webRequest capture filter + the schedule alarms when the config changes.
 chrome.storage.onChanged.addListener((ch, area) => {
   if (area === 'local' && (ch['habeas:config'] || ch['habeas:sources'])) syncWebRequestCapture();
+  if (area === 'local' && ch['habeas:config']) syncSchedules().catch(() => {});
 });
+// The download planner: chrome.alarms wakes the SW at each schedule's fire time (a browser that was closed
+// fires the overdue alarm on next start → catch-up). onAlarm runs the schedule, then re-arms next / retry.
+chrome.alarms.onAlarm.addListener((alarm) => { if (alarm && String(alarm.name).startsWith('sched:')) onScheduleAlarm(alarm.name.slice(6)).catch(() => {}); });
 
 // ---- auth/context capture (shared by the page hook messages AND the webRequest observer) ----------
 async function saveAuth(host, path, headers) {
@@ -153,6 +159,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true; // async response
   }
   if (msg.type === 'habeas:sync-stop') { stopSweep(); sendResponse({ ok: true }); return; } // stop a running sweep
+  if (msg.type === 'habeas:sched-run' && msg.id) { onScheduleAlarm(msg.id).then(() => sendResponse({ ok: true }), (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) })); return true; } // run a schedule now
   if (msg.type === 'habeas:auth' && msg.host) {
     saveAuth(msg.host, msg.path, msg.headers).then(() => { maybeAutoRun(msg.host); runPendingExternalCollects(msg.host); });
   } else if (msg.type === 'habeas:context' && msg.host && msg.name) {
@@ -395,6 +402,74 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     setStatus(t('status_error', [name, msg.slice(0, 80)]));
     return { status: 'error', error: msg };
   }
+}
+
+// ---- Download planner (scheduled source→sink deliveries) --------------------------------------------
+// Per-schedule runtime state (nextRun / retries / opened flag) kept OUT of config so arming doesn't churn it.
+const SCHED_STATE = 'habeas:schedstate';
+const RETRY_MS = 15 * 60 * 1000;   // wait between retries when a run couldn't complete (no session / error)
+const MAX_RETRIES = 4;             // ~1h of retries, then give up until the next scheduled occurrence
+async function getSchedState() { try { return (await chrome.storage.local.get(SCHED_STATE))[SCHED_STATE] || {}; } catch (e) { return {}; } }
+async function setSchedState(s) { try { await chrome.storage.local.set({ [SCHED_STATE]: s }); } catch (e) {} }
+const nowMs = () => Date.now();
+
+// Arm one chrome.alarm per enabled schedule at its target time (a pending retry, else the stored nextRun,
+// else the next occurrence). Chrome fires an overdue `when` on browser start → that IS the catch-up.
+async function syncSchedules() {
+  if (!chrome.alarms) return;
+  const cfg = await getConfig();
+  const schedules = (cfg.schedules || []).filter((s) => s && s.enabled && s.datasource && s.sink && s.spec);
+  const state = await getSchedState();
+  const live = new Set();
+  for (const s of schedules) {
+    const st = state[s.id] || {};
+    let target = st.retryAt || st.nextRun;
+    if (!target) { target = nextOccurrence(s.spec, nowMs()); st.nextRun = target; }
+    if (target == null) continue;               // malformed spec → skip
+    state[s.id] = st; live.add(s.id);
+    try { await chrome.alarms.create('sched:' + s.id, { when: Math.max(target, nowMs() + 1000) }); } catch (e) {}
+  }
+  // Drop alarms + state for schedules that no longer exist / were disabled.
+  try { for (const a of await chrome.alarms.getAll()) { const id = String(a.name).startsWith('sched:') && a.name.slice(6); if (id && !live.has(id)) chrome.alarms.clear(a.name); } } catch (e) {}
+  for (const id of Object.keys(state)) if (!live.has(id)) delete state[id];
+  await setSchedState(state);
+}
+
+// A schedule fired (or a browser start replayed an overdue alarm). Run it, then re-arm: next occurrence on
+// success, or a retry in RETRY_MS while it couldn't complete (no live session / error), bounded by MAX_RETRIES.
+async function onScheduleAlarm(id) {
+  const cfg = await getConfig();
+  const s = (cfg.schedules || []).find((x) => x.id === id);
+  if (!s || !s.enabled) { await chrome.alarms.clear('sched:' + id).catch(() => {}); return; }
+  const adapters = await getAdapters();
+  const ds = (cfg.datasources || []).find((d) => d.id === s.datasource);
+  const adapter = ds && adapters[ds.adapter];
+  const sink = (cfg.sinks || []).find((k) => k.id === s.sink);
+  const state = await getSchedState(); const st = state[id] || {};
+  const arm = async (when) => { st.nextRun = when; try { await chrome.alarms.create('sched:' + id, { when: Math.max(when, nowMs() + 1000) }); } catch (e) {} };
+  const scheduleNext = async () => { st.retryAt = null; st.retries = 0; st.opened = false; const nx = nextOccurrence(s.spec, nowMs()); await arm(nx); };
+  if (!ds || !adapter || !sink) { await scheduleNext(); state[id] = st; return setSchedState(state); } // dangling → skip to next
+
+  await appendLog({ kind: 'schedule', datasource: s.datasource, sink: s.sink, status: 'running' });
+  let res;
+  try { res = await runRoute(ds, adapter, sink, { kind: 'schedule' }); }
+  catch (e) { res = { status: 'error', error: (e && e.message) || String(e) }; }
+  st.lastRun = nowMs(); st.lastStatus = res.status;
+
+  if (res.status === 'done') { await scheduleNext(); }
+  else {
+    // Couldn't complete. If there's no live session, open the source tab ONCE (so the user can log in) and
+    // notify; further retries just re-run silently against the now-open tab. Retry every RETRY_MS.
+    if (res.status === 'nosession' && !st.opened) {
+      st.opened = true;
+      try { await ensureSiteFetch(adapter, { open: true }); } catch (e) {}
+      notify(t('notify_sched_login', [adapter.name || ds.adapter]));
+    }
+    st.retries = (st.retries || 0) + 1;
+    if (st.retries <= MAX_RETRIES) { st.retryAt = nowMs() + RETRY_MS; await arm(st.retryAt); }
+    else { notify(t('notify_sched_gaveup', [adapter.name || ds.adapter])); await scheduleNext(); }
+  }
+  state[id] = st; await setSchedState(state);
 }
 
 // ---------------------------------------------------------------------------

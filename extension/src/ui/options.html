@@ -27,6 +27,7 @@
       <button class="tab-btn" role="tab" data-tab="sources" data-i18n="datasources" aria-selected="true"></button>
       <button class="tab-btn" role="tab" data-tab="dests" data-i18n="destinations"></button>
       <button class="tab-btn" role="tab" data-tab="auto" data-i18n="auto_sync"></button>
+      <button class="tab-btn" role="tab" data-tab="planner" data-i18n="planner_title"></button>
       <button class="tab-btn" role="tab" data-tab="integrations" data-i18n="grants_title"></button>
     </div>
 
@@ -96,6 +97,43 @@
       <div class="toolbar"><input id="auto-search" type="search" class="search" data-i18n-ph="search_sources" autocomplete="off" /></div>
       <div id="routes" class="src-list"></div>
       <p id="auto-empty" class="muted" hidden data-i18n="no_sources_match"></p>
+    </section>
+
+    <section class="tab" data-tab="planner" role="tabpanel" hidden>
+      <p class="muted" data-i18n="planner_help" style="margin:2px 0 12px"></p>
+      <div class="card" style="display:flex;flex-direction:column;gap:8px">
+        <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+          <select id="pl-ds" title="source"></select>
+          <span class="muted">→</span>
+          <select id="pl-sink" title="destination"></select>
+        </div>
+        <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+          <select id="pl-kind">
+            <option value="daily" data-i18n="sched_kind_daily"></option>
+            <option value="weekly" data-i18n="sched_kind_weekly"></option>
+            <option value="monthly-day" data-i18n="sched_kind_monthlyday"></option>
+            <option value="monthly-weekday" data-i18n="sched_kind_monthlyweekday"></option>
+            <option value="monthly-businessday" data-i18n="sched_kind_monthlybusiness"></option>
+          </select>
+          <span id="pl-weekdays" class="row" style="gap:4px" hidden></span>
+          <select id="pl-nth" hidden>
+            <option value="1" data-i18n="sched_ord_1"></option>
+            <option value="2" data-i18n="sched_ord_2"></option>
+            <option value="3" data-i18n="sched_ord_3"></option>
+            <option value="4" data-i18n="sched_ord_4"></option>
+            <option value="5" data-i18n="sched_ord_5"></option>
+            <option value="-1" data-i18n="sched_ord_last"></option>
+          </select>
+          <select id="pl-weekday" hidden></select>
+          <input id="pl-days" type="text" inputmode="numeric" placeholder="5, 20" size="8" hidden />
+          <label class="muted" data-i18n="sched_time_label"></label>
+          <input id="pl-time" type="time" value="09:00" />
+          <button id="pl-add" class="primary" data-i18n="sched_add"></button>
+        </div>
+        <p id="pl-preview" class="muted" style="margin:0"></p>
+      </div>
+      <div id="pl-list" class="src-list" style="margin-top:10px"></div>
+      <p id="pl-empty" class="muted" hidden data-i18n="sched_none"></p>
     </section>
 
     <section class="tab" data-tab="integrations" role="tabpanel" hidden>

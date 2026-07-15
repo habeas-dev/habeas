@@ -1,415 +1,1853 @@
 {
-  "extName": { "message": "Habeas" },
-  "extDesc": { "message": "Reclaim your own personal data from services that lock it behind non-automatable walls — within your own session." },
-  "tagline": { "message": "your data, in your hands" },
-  "settings": { "message": "Settings" },
-
-  "about_title": { "message": "About" },
-  "about_body": { "message": "Habeas extracts your own data — receipts, invoices, transactions — from services with no API and no email export, entirely within your own logged-in session. It never stores your credentials, and nothing is sent anywhere you don't choose." },
-  "learn_more": { "message": "Learn more on GitHub" },
-
-  "documents": { "message": "Documents" },
-  "list_docs": { "message": "List documents" },
-  "load_store": { "message": "Load from store" },
-  "outputs_label": { "message": "Get:" },
-  "n_listed": { "message": "$T$ documents · $N$ retrieved", "placeholders": { "t": { "content": "$1" }, "n": { "content": "$2" } } },
-  "full_history": { "message": "Full history" },
-  "save": { "message": "Save" },
-  "cancel": { "message": "Cancel" },
-  "manage_accounts": { "message": "Accounts" },
-  "manage_accounts_hint": { "message": "Choose which of this source's accounts to import. Only the selected accounts are offered for listing, auto and sync. Saved on the source." },
-  "accounts_pick_title": { "message": "Accounts to import" },
-  "accounts_pick_sub": { "message": "Only the checked accounts are offered for download (listing, auto and sync)." },
-  "accounts_loading": { "message": "Loading accounts…" },
-  "accounts_failed": { "message": "Could not load accounts (log in to the site first?)." },
-  "accounts_saved": { "message": "$N$ account(s) selected", "placeholders": { "n": { "content": "$1" } } },
-  "all_accounts": { "message": "All accounts" },
-  "full_history_hint": { "message": "Re-list everything fresh from the site so the selected documents can be re-downloaded (rows loaded from the local store are record-only and are NOT re-fetched). Requires being logged in to the site." },
-  "force_redownload": { "message": "Re-download from site" },
-  "force_redownload_hint": { "message": "Re-fetch the selected documents' files + details from the site (even rows loaded from the local store), refreshing the real date/amount in the store. Requires being logged in." },
-  "n_from_store": { "message": "$N$ from store (no extraction)", "placeholders": { "n": { "content": "$1" } } },
-  "send_to": { "message": "Send to" },
-  "send_selected": { "message": "Send selected" },
-  "th_date": { "message": "Date" },
-  "th_group": { "message": "Account" },
-  "th_type": { "message": "Type" },
-  "filter_label": { "message": "Filter:" },
-  "filter_all_groups": { "message": "All accounts" },
-  "filter_all_types": { "message": "All types" },
-  "th_store": { "message": "Store" },
-  "th_files": { "message": "Files" },
-  "file_unavailable": { "message": "not available for this item" },
-  "th_amount": { "message": "Amount" },
-  "th_status": { "message": "Status" },
-  "activity": { "message": "Recent activity" },
-  "no_activity": { "message": "No activity yet." },
-  "pill_new": { "message": "pending" },
-  "pill_sent": { "message": "sent" },
-  "pill_new_hint": { "message": "Not yet delivered to the selected destination — it will be included in the next send." },
-  "pill_sent_hint": { "message": "Already delivered to the selected destination." },
-  "select_label": { "message": "Select:" },
-  "sel_new": { "message": "Pending" },
-  "sel_all": { "message": "All" },
-  "sel_none": { "message": "None" },
-
-  "no_datasources": { "message": "Activate a data source in Settings." },
-  "capture_hint": { "message": "Open the site and your purchases page to capture your session, then retry." },
-  "login_in_tab": { "message": "Log in to the site in the tab we just opened, then try again." },
-  "login_wait": { "message": "Log in to the site in the tab we opened — listing resumes automatically once your session is detected." },
-  "challenge_solve": { "message": "The site showed an anti-bot check — solve it in the tab we opened, then List again." },
-  "cookies_cleared": { "message": "Cleared $N$ site cookies for a clean login.", "placeholders": { "n": { "content": "$1" } } },
-  "cookies_cleared_login": { "message": "Cleared $N$ site cookies — log in in the new tab, then test again.", "placeholders": { "n": { "content": "$1" } } },
-  "listing": { "message": "Listing…" },
-  "listing_page": { "message": "Listing documents… page $P$ ($N$ so far)", "placeholders": { "p": { "content": "$1" }, "n": { "content": "$2" } } },
-  "listing_year_page": { "message": "Listing documents from $Y$, page $P$ ($N$ so far)", "placeholders": { "y": { "content": "$1" }, "p": { "content": "$2" }, "n": { "content": "$3" } } },
-  "n_documents": { "message": "$COUNT$ documents", "placeholders": { "count": { "content": "$1" } } },
-  "tab_sources": { "message": "Sources" },
-  "tab_documents": { "message": "Documents" },
-  "all_documents": { "message": "All documents" },
-  "refresh": { "message": "Refresh" },
-  "docs_search": { "message": "Search…" },
-  "docs_pick_source": { "message": "Choose source…" },
-  "th_source": { "message": "Source" },
-  "th_delivered_to": { "message": "Delivered to" },
-  "docs_loading": { "message": "Loading documents…" },
-  "all_sources": { "message": "All sources" },
-  "no_documents": { "message": "No documents yet" },
-  "view": { "message": "View" },
-  "view_from": { "message": "View from $SINK$", "placeholders": { "sink": { "content": "$1" } } },
-  "open_from": { "message": "Open from $SINK$", "placeholders": { "sink": { "content": "$1" } } },
-  "opening": { "message": "Opening…" },
-  "retrieve_failed": { "message": "Could not retrieve the file from this destination." },
-  "download": { "message": "Download" },
-  "delivered_nofile": { "message": "Delivered here (record only — no individual file)" },
-  "fetching": { "message": "Fetching $COUNT$ documents…", "placeholders": { "count": { "content": "$1" } } },
-  "with_without_pdf": { "message": "With PDF: $A$ · without PDF (not retained): $B$", "placeholders": { "a": { "content": "$1" }, "b": { "content": "$2" } } },
-  "sent_docs": { "message": "Sent to \"$SINK$\": $N$ documents + manifest ($T$ records)", "placeholders": { "sink": { "content": "$1" }, "n": { "content": "$2" }, "t": { "content": "$3" } } },
-  "sent_records": { "message": "Saved to \"$SINK$\": manifest with $T$ records", "placeholders": { "sink": { "content": "$1" }, "t": { "content": "$2" } } },
-  "n_nodoc": { "message": "$N$ without a document", "placeholders": { "n": { "content": "$1" } } },
-  "sink_error": { "message": "Destination error: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "pick_sink": { "message": "Set up a destination in Settings." },
-  "nothing_selected": { "message": "Nothing selected." },
-  "folder_cancelled": { "message": "Folder selection cancelled." },
-  "configure_folder": { "message": "Set the destination folder in Settings." },
-  "folder_denied": { "message": "Folder permission denied." },
-  "change_folder": { "message": "Change folder" },
-  "fs_unsupported": { "message": "This browser can’t pick a folder (no File System Access). Use Downloads or Drive." },
-  "generic_error": { "message": "Error: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-
-  "opt_title": { "message": "Settings" },
-  "datasources": { "message": "Data sources" },
-  "destinations": { "message": "Destinations" },
-  "auto_sync": { "message": "Automatic sync" },
-  "auto_help": { "message": "Runs when YOU log in to the site and sends only what's new. Drive/HTTP destinations only (local ones need the page open)." },
-  "add_destination": { "message": "Add destination" },
-  "add": { "message": "Add" },
-  "activate": { "message": "Activate" },
-  "deactivate": { "message": "Deactivate" },
-  "connect_drive": { "message": "Connect Drive" },
-  "connected": { "message": "Connected" },
-  "connecting": { "message": "Connecting…" },
-  "device_enter_code": { "message": "On the opened page, enter code: $CODE$", "placeholders": { "code": { "content": "$1" } } },
-  "remove": { "message": "Remove" },
-  "no_sinks": { "message": "No destinations yet." },
-  "default_sink": { "message": "default" },
-  "set_default": { "message": "Set default" },
-  "unset_default": { "message": "Unset default" },
-  "set_default_hint": { "message": "Pre-select this destination for sources without their own, and use it in Sync all." },
-  "sync_all_nosink": { "message": "$N$ with no destination", "placeholders": { "n": { "content": "$1" } } },
-  "enable_auto": { "message": "Enable auto" },
-  "disable_auto": { "message": "Disable auto" },
-  "auto_on_pill": { "message": "auto on" },
-  "no_sw_sinks": { "message": "(no Drive/HTTP destinations)" },
-  "enable_ds_first": { "message": "Enable a data source to configure auto." },
-  "add_sink_first": { "message": "Add a Drive or HTTP destination first." },
-  "client_id_optional": { "message": "Client ID (optional):" },
-  "redirect_hint": { "message": "Empty = use Habeas's client. Redirect URI to register in Google Console (with trailing slash):" },
-  "sink_download": { "message": "Downloads" },
-  "sink_local": { "message": "Local folder (= cloud if synced)" },
-  "sink_drive": { "message": "Google Drive (native)" },
-  "sink_http": { "message": "HTTP consumer" },
-  "sink_webdav": { "message": "WebDAV" },
-  "webdav_url": { "message": "URL" },
-  "webdav_user": { "message": "user" },
-  "webdav_pass": { "message": "password" },
-  "sink_s3": { "message": "S3 (or compatible)" },
-  "s3_bucket": { "message": "bucket" },
-  "s3_region": { "message": "region" },
-  "s3_key": { "message": "access key" },
-  "s3_secret": { "message": "secret key" },
-  "s3_endpoint_opt": { "message": "endpoint (optional)" },
-  "s3_prefix_opt": { "message": "prefix (optional)" },
-  "sink_dropbox": { "message": "Dropbox" },
-  "connect_dropbox": { "message": "Connect Dropbox" },
-  "dbx_appkey_opt": { "message": "app key (optional)" },
-  "dbx_refresh_opt": { "message": "refresh token (advanced)" },
-  "dbx_folder_opt": { "message": "folder" },
-  "dbx_folder_ph": { "message": "blank = app folder" },
-  "dbx_hint": { "message": "Add the sink, then click “Connect Dropbox” to authorize (one click). Advanced/Firefox fallback: paste your own app key + a refresh token." },
-  "sink_accepts": { "message": "Accepts:" },
-  "none_compatible": { "message": "No compatible documents for this destination." },
-  "skipped_incompat": { "message": "$N$ skipped (category)", "placeholders": { "n": { "content": "$1" } } },
-  "sending_progress": { "message": "Saving $I$/$N$…", "placeholders": { "i": { "content": "$1" }, "n": { "content": "$2" } } },
-  "doc_failed": { "message": "$ID$ failed: $ERR$", "placeholders": { "id": { "content": "$1" }, "err": { "content": "$2" } } },
-  "n_failed": { "message": "$N$ failed", "placeholders": { "n": { "content": "$1" } } },
-  "stop": { "message": "Stop" },
-  "stopping": { "message": "Stopping…" },
-  "stopped": { "message": "Stopped" },
-  "stopped_n": { "message": "Stopped — $N$ documents so far", "placeholders": { "n": { "content": "$1" } } },
-
-  "st_ok": { "message": "$N$ doc(s) → $SINK$", "placeholders": { "n": { "content": "$1" }, "sink": { "content": "$2" } } },
-  "st_none": { "message": "no new documents" },
-  "st_listing": { "message": "syncing…" },
-  "sync_all_stopped": { "message": "Stopped" },
-  "st_stopped": { "message": "stopped" },
-  "st_nosession": { "message": "no session" },
-  "st_challenged": { "message": "anti-bot check — open the site and solve it, then retry" },
-  "st_error": { "message": "error: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "status_listing": { "message": "Checking $NAME$…", "placeholders": { "name": { "content": "$1" } } },
-  "status_listing_page": { "message": "Listing $NAME$… page $P$ ($N$)", "placeholders": { "name": { "content": "$1" }, "p": { "content": "$2" }, "n": { "content": "$3" } } },
-  "status_fetching": { "message": "Fetching $N$ new from $NAME$…", "placeholders": { "n": { "content": "$1" }, "name": { "content": "$2" } } },
-  "status_sending": { "message": "Sending $N$ to $SINK$…", "placeholders": { "n": { "content": "$1" }, "sink": { "content": "$2" } } },
-  "status_done": { "message": "$NAME$: $N$ new synced", "placeholders": { "name": { "content": "$1" }, "n": { "content": "$2" } } },
-  "status_none": { "message": "$NAME$: nothing new", "placeholders": { "name": { "content": "$1" } } },
-  "status_nosession": { "message": "$NAME$: sign in to sync", "placeholders": { "name": { "content": "$1" } } },
-  "status_error": { "message": "$NAME$ error: $MSG$", "placeholders": { "name": { "content": "$1" }, "msg": { "content": "$2" } } },
-  "status_challenged": { "message": "$NAME$: anti-bot check — open the site and solve it", "placeholders": { "name": { "content": "$1" } } },
-  "group_pick_title": { "message": "Choose an account" },
-  "group_pick_sub": { "message": "This source has several accounts. Pick one, or all." },
-  "group_all": { "message": "All accounts" },
-  "group_continue": { "message": "Continue" },
-  "group_n": { "message": "Account $N$", "placeholders": { "n": { "content": "$1" } } },
-  "notify_new": { "message": "$N$ new document(s) → $SINK$", "placeholders": { "n": { "content": "$1" }, "sink": { "content": "$2" } } },
-  "notify_sweep": { "message": "$NEW$ new document(s) across $SOURCES$ source(s)", "placeholders": { "new": { "content": "$1" }, "sources": { "content": "$2" } } },
-  "sync_all": { "message": "Sync all" },
-  "syncing": { "message": "Syncing…" },
-  "sync_all_running": { "message": "Syncing all sources…" },
-  "sync_all_done": { "message": "$NEW$ new across $SOURCES$ source(s)", "placeholders": { "new": { "content": "$1" }, "sources": { "content": "$2" } } },
-  "sync_all_needlogin": { "message": "$N$ need sign-in", "placeholders": { "n": { "content": "$1" } } },
-  "sync_all_err": { "message": "Sync failed: $E$", "placeholders": { "e": { "content": "$1" } } },
-  "notify_autoerr": { "message": "Auto-sync error: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "notify_challenge": { "message": "$NAME$: solve the anti-bot check we just opened, then it will sync.", "placeholders": { "name": { "content": "$1" } } },
-
-  "trust_first_party": { "message": "first-party" },
-  "trust_community": { "message": "community" },
-  "consent_title": { "message": "Enable “$NAME$”?", "placeholders": { "name": { "content": "$1" } } },
-  "consent_reads": { "message": "Reads your data in your own logged-in session on: $HOSTS$", "placeholders": { "hosts": { "content": "$1" } } },
-  "consent_replays": { "message": "Replays that session to the service API: $HOST$", "placeholders": { "host": { "content": "$1" } } },
-  "consent_offsite_warn": { "message": "⚠ This source also sends your session to a DIFFERENT domain: $HOSTS$. Only enable it if you trust it.", "placeholders": { "hosts": { "content": "$1" } } },
-  "consent_accept": { "message": "Enable" },
-  "consent_cancel": { "message": "Cancel" },
-  "needs_consent": { "message": "Enable this source in Settings first (it needs your consent)." },
-
-  "authz_tagline": { "message": "authorize an integration" },
-  "authz_intro": { "message": "A website is asking Habeas to set up a data flow. Nothing runs until you allow it." },
-  "authz_origin": { "message": "Requesting site" },
-  "authz_source": { "message": "Data source" },
-  "authz_dest": { "message": "Sends to" },
-  "authz_scope": { "message": "Data scope" },
-  "authz_scope_all": { "message": "all documents" },
-  "authz_note": { "message": "The destination is on the requesting site's own domain — your data can only go back to it. You can revoke this anytime in Settings." },
-  "authz_allow": { "message": "Allow" },
-  "authz_deny": { "message": "Deny" },
-  "authz_granted": { "message": "Allowed — you can close this window." },
-  "authz_denied": { "message": "Denied." },
-  "authz_expired": { "message": "This request has expired. Ask the site to try again." },
-  "authz_unknown_source": { "message": "Unknown data source." },
-
-  "grants_title": { "message": "Site integrations" },
-  "grants_help": { "message": "Sites you've allowed to trigger collection to their own domain. Revoke any at any time." },
-  "no_grants": { "message": "No site integrations yet." },
-  "grant_revoke": { "message": "Revoke" },
-  "grant_line": { "message": "$ORIGIN$ · $SOURCE$ → itself", "placeholders": { "origin": { "content": "$1" }, "source": { "content": "$2" } } },
-
-  "create_source": { "message": "Create a source (record mode)" },
-  "author_title": { "message": "Create source" },
-  "author_intro": { "message": "Record a new source from a site you use: Habeas watches your own session as you browse your data, then drafts a source you can test, save, and share. Nothing leaves your browser." },
-  "author_step1": { "message": "1 · Learn from a site" },
-  "author_tips_title": { "message": "For a complete capture, in this order:" },
-  "author_tip_pages": { "message": "If your list spans several pages, browse a few of them (page 2, 3…) so Habeas sees the pagination." },
-  "author_tip_detail": { "message": "Then open the detail of one item — that captures the per-item data endpoint." },
-  "author_tip_pdf": { "message": "If you want the PDFs, download one invoice/receipt from its detail page during capture." },
-  "author_tip_wait": { "message": "Give each page a second to load its data before moving on, then come back and Analyze." },
-  "author_note_advanced": { "message": "Heads-up: capture doesn't work on every site. Some — heavily protected SPAs or advanced anti-bot walls (seen on certain retailers) — don't expose their data to record mode, and nothing gets captured. If that happens you can still build the source by hand: open the site's DevTools → Network, find the request that returns your data, and use \"Write/paste JSON\" (in Settings) to define it — like the shipped sources were made." },
-  "author_url_ph": { "message": "https://www.example.com/your-account" },
-  "author_start": { "message": "Grant access & open site" },
-  "author_stop": { "message": "Stop learning" },
-  "author_step2": { "message": "2 · Build the source" },
-  "author_analyze": { "message": "Analyze captured activity" },
-  "author_samples": { "message": "responses captured" },
-  "author_fields": { "message": "Field mapping" },
-  "author_id": { "message": "Id" },
-  "author_name": { "message": "Name" },
-  "author_apihost": { "message": "API host" },
-  "author_listpath": { "message": "List path" },
-  "author_itemspath": { "message": "Items path" },
-  "author_paging": { "message": "Pagination" },
-  "author_pdfpath": { "message": "PDF path (optional)" },
-  "author_detailpath": { "message": "Detail JSON path (optional)" },
-  "doc_json": { "message": "saves each item's JSON detail" },
-  "doc_pdf": { "message": "saves a PDF per item" },
-  "doc_none": { "message": "metadata only (no per-item file)" },
-  "author_schema": { "message": "Schema" },
-  "author_categories": { "message": "Categories" },
-  "author_test": { "message": "Test" },
-  "author_save": { "message": "Save source" },
-  "author_bad_url": { "message": "Enter a full https:// URL." },
-  "author_denied": { "message": "Access to that site was denied." },
-  "author_learning": { "message": "Learning from $DOMAIN$ — browse your data, then Analyze.", "placeholders": { "domain": { "content": "$1" } } },
-  "author_start_first": { "message": "Start learning from a site first." },
-  "author_no_samples": { "message": "No responses captured yet — browse your data on the site, then retry." },
-  "author_no_requests": { "message": "The recorder didn't see any requests. Reload the extension, re-open the site, accept the access prompt, then browse your orders and retry." },
-  "author_no_list_seen": { "message": "Saw $N$ requests (from: $HOSTS$) but none returned a document list. Open your orders/invoices page so it loads the data, then retry — or tell us these hosts.", "placeholders": { "n": { "content": "$1" }, "hosts": { "content": "$2" } } },
-  "author_no_list": { "message": "Couldn't find a document list in the captured responses." },
-  "author_detected": { "message": "Detected list “$ITEMS$” ($COUNT$ items). Review the mapping below.", "placeholders": { "items": { "content": "$1" }, "count": { "content": "$2" } } },
-  "author_crossdomain": { "message": "Off-site data host: $HOSTS$ — will ask for consent.", "placeholders": { "hosts": { "content": "$1" } } },
-  "author_invalid": { "message": "Invalid source: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "author_no_auth": { "message": "No captured session for this API yet — browse your data on the site first." },
-  "author_testing": { "message": "Testing…" },
-  "author_test_ok": { "message": "OK — listed $COUNT$ documents.", "placeholders": { "count": { "content": "$1" } } },
-  "author_doc_fetching": { "message": "downloading $ID$…", "placeholders": { "id": { "content": "$1" } } },
-  "author_doc_via": { "message": "detail loads via $VIA$", "placeholders": { "via": { "content": "$1" } } },
-  "author_doc_fail": { "message": "detail failed: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "via_json": { "message": "an AJAX/API JSON call" },
-  "via_embedded": { "message": "JSON embedded in the page" },
-  "via_table": { "message": "an HTML table on the page" },
-  "via_html": { "message": "raw HTML (no structured data found)" },
-  "via_pdf": { "message": "a PDF file" },
-  "via_list": { "message": "the list item itself (JSON)" },
-  "via_page": { "message": "the print page (self-contained HTML)" },
-  "via_render": { "message": "the rendered page, captured (self-contained HTML)" },
-  "via_invoice": { "message": "a generated printable invoice (HTML)" },
-  "author_doc_preview": { "message": "Detail preview (first document):" },
-  "author_doc_pdf_size": { "message": "PDF · $N$ KB", "placeholders": { "n": { "content": "$1" } } },
-  "author_test_err": { "message": "Test failed: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "author_saved": { "message": "Saved “$ID$”. Enable it in Settings.", "placeholders": { "id": { "content": "$1" } } },
-  "author_completing_h": { "message": "Completing an existing source:" },
-  "author_completing_sub": { "message": "Record the product this source is missing (e.g. a card). Drafting then ADDS it as a new stream — you contribute the declarative shape, never your data." },
-  "author_augment": { "message": "Add as stream" },
-  "author_augmented": { "message": "Added stream “$SID$” to $ID$ — review and share it as a PR.", "placeholders": { "id": { "content": "$1" }, "sid": { "content": "$2" } } },
-
-  "edit_json": { "message": "Edit JSON" },
-  "edit_json_title": { "message": "Edit source: $ID$", "placeholders": { "id": { "content": "$1" } } },
-  "json_save": { "message": "Validate & save" },
-  "je_test": { "message": "Test" },
-  "view_source": { "message": "View HTML source" },
-  "view_rendered": { "message": "View rendered" },
-  "je_no_tab": { "message": "Tip: open the site in a tab and log in, so the test runs in your session." },
-  "json_badsyntax": { "message": "Invalid JSON: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "json_invalid": { "message": "Invalid source: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "json_saved": { "message": "Applied — review, Test and Save." },
-  "import_source": { "message": "Import (JSON)" },
-  "paste_source": { "message": "Write/paste JSON" },
-  "browse_sources": { "message": "Browse community" },
-  "search_sources": { "message": "Search sources by name, service, category…" },
-  "store_title": { "message": "Canonical store" },
-  "store_help": { "message": "Where your extracted data is kept. Sinks and consumers are served from it — so a second sink, device or record-only consumer reuses it instead of re-extracting. Choose local, a synced folder, or your own HTTP endpoint, and move it freely." },
-  "dest_multidevice_hint": { "message": "Syncing across devices? Use a native cloud backend the extension writes directly — Google Drive, Dropbox, WebDAV or S3 — as both store and sink. Don't point the local-folder option at a folder synced by an external tool (Google Drive Desktop, grive2, rclone…): the extension can't dedup against files another app created (and with Drive's drive.file scope it can't even see them), which duplicates folders. A native backend is the same app on every device, so it dedups across them." },
-  "store_where": { "message": "Store lives in:" },
-  "store_local": { "message": "This device (local)" },
-  "store_folder": { "message": "Synced folder" },
-  "store_drive": { "message": "Google Drive" },
-  "store_dropbox": { "message": "Dropbox" },
-  "store_webdav": { "message": "WebDAV" },
-  "store_s3": { "message": "S3 (or compatible)" },
-  "store_no_sink": { "message": "— add a sink of this type first —" },
-  "store_need_sink": { "message": "Pick a configured sink for the store." },
-  "drive_disconnect": { "message": "Disconnect Drive" },
-  "drive_disconnected": { "message": "Drive disconnected." },
-  "store_http": { "message": "HTTP endpoint" },
-  "store_move": { "message": "Move store here" },
-  "store_browse": { "message": "Browse store…" },
-  "store_pick_folder": { "message": "Choose folder…" },
-  "store_import_from": { "message": "Backfill from a sink:" },
-  "store_import": { "message": "Import" },
-  "store_importing": { "message": "Importing…" },
-  "store_imported": { "message": "Imported $N$ records into the store.", "placeholders": { "n": { "content": "$1" } } },
-  "store_folder_ok": { "message": "Folder chosen." },
-  "store_need_url": { "message": "Enter the endpoint URL." },
-  "store_moving": { "message": "Moving…" },
-  "store_moved": { "message": "Moved ($N$ sources).", "placeholders": { "n": { "content": "$1" } } },
-  "store_move_err": { "message": "Move failed: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "no_sources_match": { "message": "No sources match your search." },
-  "export_source": { "message": "Export" },
-  "share_source": { "message": "Share" },
-  "import_ok": { "message": "Imported “$ID$”.", "placeholders": { "id": { "content": "$1" } } },
-  "import_err": { "message": "Import failed: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-
-  "market_title": { "message": "Community sources" },
-  "market_intro": { "message": "Browse sources shared by the community. Each one is reviewed JSON — data, not code — and is confined to its own site's domain. Sources marked with a warning also send your session off-site; enable those only if you trust them." },
-  "market_search": { "message": "Search by name, service, category…" },
-  "market_reload": { "message": "Reload" },
-  "market_loading": { "message": "Loading…" },
-  "market_count": { "message": "$N$ sources", "placeholders": { "n": { "content": "$1" } } },
-  "market_unavailable": { "message": "Registry unavailable (offline or not published yet)." },
-  "market_empty": { "message": "No sources match." },
-  "market_offsite": { "message": "⚠ sends session off-site" },
-  "market_install": { "message": "Install" },
-  "market_complete": { "message": "Complete" },
-  "market_complete_hint": { "message": "Record a product this source is missing (a card, an investment) and add it as a new stream." },
-  "market_gaps": { "message": "missing: $G$", "placeholders": { "g": { "content": "$1" } } },
-  "market_gaps_hint": { "message": "Products this source does not cover yet — install it and use “Complete” to add one you have." },
-  "market_installed": { "message": "Installed" },
-  "market_update": { "message": "Update ($V1$ → $V2$)", "placeholders": { "v1": { "content": "$1" }, "v2": { "content": "$2" } } },
-  "market_update_pill": { "message": "update available" },
-  "market_updates_available": { "message": "$N$ update(s) available for your installed sources.", "placeholders": { "n": { "content": "$1" } } },
-  "market_update_all": { "message": "Update all" },
-  "market_updating": { "message": "Updating $N$ source(s)…", "placeholders": { "n": { "content": "$1" } } },
-  "market_updated": { "message": "Updated $OK$; $FAIL$ failed.", "placeholders": { "ok": { "content": "$1" }, "fail": { "content": "$2" } } },
-  "market_needs_version": { "message": "Needs Habeas $V$+", "placeholders": { "v": { "content": "$1" } } },
-  "market_needs_pill": { "message": "needs v$V$", "placeholders": { "v": { "content": "$1" } } },
-  "market_changelog": { "message": "Changelog" },
-  "market_new": { "message": "new" },
-  "market_installing": { "message": "Installing…" },
-  "market_install_ok": { "message": "Installed “$ID$”. Enable it in Settings.", "placeholders": { "id": { "content": "$1" } } },
-  "market_install_err": { "message": "Install failed: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-
-  "market_details": { "message": "Ratings & comments" },
-  "market_rate": { "message": "Your rating:" },
-  "market_comments": { "message": "Comments" },
-  "market_no_comments": { "message": "No comments yet." },
-  "market_author_ph": { "message": "Name (optional)" },
-  "market_comment_ph": { "message": "Write a comment…" },
-  "market_post": { "message": "Post" },
-  "market_rated": { "message": "Thanks for rating!" },
-  "market_posted": { "message": "Comment posted." },
-  "market_social_off": { "message": "Ratings service unavailable right now." },
-
-  "author_map_intro": { "message": "Habeas detected your data. Check each field below shows the right example, then Test and Save. You rarely need “Advanced”." },
-  "author_find_label": { "message": "Find your data" },
-  "author_find_ph": { "message": "a ticket no., an amount…" },
-  "author_find": { "message": "Find" },
-  "author_find_none": { "message": "Not found in the captured data — try another value, or open the exact page/order first." },
-  "author_find_ok": { "message": "Found in a list of $N$ items — mapping below.", "placeholders": { "n": { "content": "$1" } } },
-  "author_find_multi": { "message": "Found in $N$ lists — pick the right one below.", "placeholders": { "n": { "content": "$1" } } },
-  "author_which_list": { "message": "Which list is your data?" },
-  "author_multistream": { "message": "This site has several data sets — capture them all together" },
-  "author_groups_label": { "message": "Accounts / cards list (optional)" },
-  "author_groups_none": { "message": "— none (single listing) —" },
-  "author_items": { "message": "items" },
-  "author_pages": { "message": "page(s)" },
-  "author_list_hint": { "message": "Totals across the pages you browsed (items · pages captured). When you use the source it paginates to fetch them all — you pick the right list here, not pages." },
-  "author_kind": { "message": "Kind of data" },
-  "author_advanced": { "message": "Advanced (usually not needed)" },
-  "kind_receipt": { "message": "Receipts / tickets" },
-  "kind_invoice": { "message": "Invoices" },
-  "kind_transaction": { "message": "Card / account movements" },
-  "kind_investment": { "message": "Investments" },
-  "fld_internalid": { "message": "Internal id (links detail / PDF)" },
-  "fld_number": { "message": "Receipt / invoice number (shown to you)" },
-  "fld_date": { "message": "Date" },
-  "fld_amount": { "message": "Amount" },
-  "fld_store": { "message": "Store / place" },
-  "fld_address": { "message": "Address" },
-  "fld_type": { "message": "Type" },
-  "fld_channel": { "message": "Channel" },
-  "fld_issuer": { "message": "Issuer / company" },
-  "fld_description": { "message": "Description" },
-  "fld_payee": { "message": "Payee / merchant" },
-  "fld_direction": { "message": "In / out" },
-  "fld_instrument": { "message": "Instrument / fund" },
-  "fld_isin": { "message": "ISIN" },
-  "fld_units": { "message": "Units" },
-  "fld_price": { "message": "Price" },
-  "fld_operation": { "message": "Operation" }
+  "extName": {
+    "message": "Habeas"
+  },
+  "extDesc": {
+    "message": "Reclaim your own personal data from services that lock it behind non-automatable walls — within your own session."
+  },
+  "tagline": {
+    "message": "your data, in your hands"
+  },
+  "settings": {
+    "message": "Settings"
+  },
+  "about_title": {
+    "message": "About"
+  },
+  "about_body": {
+    "message": "Habeas extracts your own data — receipts, invoices, transactions — from services with no API and no email export, entirely within your own logged-in session. It never stores your credentials, and nothing is sent anywhere you don't choose."
+  },
+  "learn_more": {
+    "message": "Learn more on GitHub"
+  },
+  "documents": {
+    "message": "Documents"
+  },
+  "list_docs": {
+    "message": "List documents"
+  },
+  "load_store": {
+    "message": "Load from store"
+  },
+  "outputs_label": {
+    "message": "Get:"
+  },
+  "n_listed": {
+    "message": "$T$ documents · $N$ retrieved",
+    "placeholders": {
+      "t": {
+        "content": "$1"
+      },
+      "n": {
+        "content": "$2"
+      }
+    }
+  },
+  "full_history": {
+    "message": "Full history"
+  },
+  "save": {
+    "message": "Save"
+  },
+  "cancel": {
+    "message": "Cancel"
+  },
+  "manage_accounts": {
+    "message": "Accounts"
+  },
+  "manage_accounts_hint": {
+    "message": "Choose which of this source's accounts to import. Only the selected accounts are offered for listing, auto and sync. Saved on the source."
+  },
+  "accounts_pick_title": {
+    "message": "Accounts to import"
+  },
+  "accounts_pick_sub": {
+    "message": "Only the checked accounts are offered for download (listing, auto and sync)."
+  },
+  "accounts_loading": {
+    "message": "Loading accounts…"
+  },
+  "accounts_failed": {
+    "message": "Could not load accounts (log in to the site first?)."
+  },
+  "accounts_saved": {
+    "message": "$N$ account(s) selected",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "all_accounts": {
+    "message": "All accounts"
+  },
+  "full_history_hint": {
+    "message": "Re-list everything fresh from the site so the selected documents can be re-downloaded (rows loaded from the local store are record-only and are NOT re-fetched). Requires being logged in to the site."
+  },
+  "force_redownload": {
+    "message": "Re-download from site"
+  },
+  "force_redownload_hint": {
+    "message": "Re-fetch the selected documents' files + details from the site (even rows loaded from the local store), refreshing the real date/amount in the store. Requires being logged in."
+  },
+  "n_from_store": {
+    "message": "$N$ from store (no extraction)",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "send_to": {
+    "message": "Send to"
+  },
+  "send_selected": {
+    "message": "Send selected"
+  },
+  "th_date": {
+    "message": "Date"
+  },
+  "th_group": {
+    "message": "Account"
+  },
+  "th_type": {
+    "message": "Type"
+  },
+  "filter_label": {
+    "message": "Filter:"
+  },
+  "filter_all_groups": {
+    "message": "All accounts"
+  },
+  "filter_all_types": {
+    "message": "All types"
+  },
+  "th_store": {
+    "message": "Store"
+  },
+  "th_files": {
+    "message": "Files"
+  },
+  "file_unavailable": {
+    "message": "not available for this item"
+  },
+  "th_amount": {
+    "message": "Amount"
+  },
+  "th_status": {
+    "message": "Status"
+  },
+  "activity": {
+    "message": "Recent activity"
+  },
+  "no_activity": {
+    "message": "No activity yet."
+  },
+  "pill_new": {
+    "message": "pending"
+  },
+  "pill_sent": {
+    "message": "sent"
+  },
+  "pill_new_hint": {
+    "message": "Not yet delivered to the selected destination — it will be included in the next send."
+  },
+  "pill_sent_hint": {
+    "message": "Already delivered to the selected destination."
+  },
+  "select_label": {
+    "message": "Select:"
+  },
+  "sel_new": {
+    "message": "Pending"
+  },
+  "sel_all": {
+    "message": "All"
+  },
+  "sel_none": {
+    "message": "None"
+  },
+  "no_datasources": {
+    "message": "Activate a data source in Settings."
+  },
+  "capture_hint": {
+    "message": "Open the site and your purchases page to capture your session, then retry."
+  },
+  "login_in_tab": {
+    "message": "Log in to the site in the tab we just opened, then try again."
+  },
+  "login_wait": {
+    "message": "Log in to the site in the tab we opened — listing resumes automatically once your session is detected."
+  },
+  "challenge_solve": {
+    "message": "The site showed an anti-bot check — solve it in the tab we opened, then List again."
+  },
+  "cookies_cleared": {
+    "message": "Cleared $N$ site cookies for a clean login.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "cookies_cleared_login": {
+    "message": "Cleared $N$ site cookies — log in in the new tab, then test again.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "listing": {
+    "message": "Listing…"
+  },
+  "listing_page": {
+    "message": "Listing documents… page $P$ ($N$ so far)",
+    "placeholders": {
+      "p": {
+        "content": "$1"
+      },
+      "n": {
+        "content": "$2"
+      }
+    }
+  },
+  "listing_year_page": {
+    "message": "Listing documents from $Y$, page $P$ ($N$ so far)",
+    "placeholders": {
+      "y": {
+        "content": "$1"
+      },
+      "p": {
+        "content": "$2"
+      },
+      "n": {
+        "content": "$3"
+      }
+    }
+  },
+  "n_documents": {
+    "message": "$COUNT$ documents",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "tab_sources": {
+    "message": "Sources"
+  },
+  "tab_documents": {
+    "message": "Documents"
+  },
+  "all_documents": {
+    "message": "All documents"
+  },
+  "refresh": {
+    "message": "Refresh"
+  },
+  "docs_search": {
+    "message": "Search…"
+  },
+  "docs_pick_source": {
+    "message": "Choose source…"
+  },
+  "th_source": {
+    "message": "Source"
+  },
+  "th_delivered_to": {
+    "message": "Delivered to"
+  },
+  "docs_loading": {
+    "message": "Loading documents…"
+  },
+  "all_sources": {
+    "message": "All sources"
+  },
+  "no_documents": {
+    "message": "No documents yet"
+  },
+  "view": {
+    "message": "View"
+  },
+  "view_from": {
+    "message": "View from $SINK$",
+    "placeholders": {
+      "sink": {
+        "content": "$1"
+      }
+    }
+  },
+  "open_from": {
+    "message": "Open from $SINK$",
+    "placeholders": {
+      "sink": {
+        "content": "$1"
+      }
+    }
+  },
+  "opening": {
+    "message": "Opening…"
+  },
+  "retrieve_failed": {
+    "message": "Could not retrieve the file from this destination."
+  },
+  "download": {
+    "message": "Download"
+  },
+  "delivered_nofile": {
+    "message": "Delivered here (record only — no individual file)"
+  },
+  "fetching": {
+    "message": "Fetching $COUNT$ documents…",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "with_without_pdf": {
+    "message": "With PDF: $A$ · without PDF (not retained): $B$",
+    "placeholders": {
+      "a": {
+        "content": "$1"
+      },
+      "b": {
+        "content": "$2"
+      }
+    }
+  },
+  "sent_docs": {
+    "message": "Sent to \"$SINK$\": $N$ documents + manifest ($T$ records)",
+    "placeholders": {
+      "sink": {
+        "content": "$1"
+      },
+      "n": {
+        "content": "$2"
+      },
+      "t": {
+        "content": "$3"
+      }
+    }
+  },
+  "sent_records": {
+    "message": "Saved to \"$SINK$\": manifest with $T$ records",
+    "placeholders": {
+      "sink": {
+        "content": "$1"
+      },
+      "t": {
+        "content": "$2"
+      }
+    }
+  },
+  "n_nodoc": {
+    "message": "$N$ without a document",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "sink_error": {
+    "message": "Destination error: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "pick_sink": {
+    "message": "Set up a destination in Settings."
+  },
+  "nothing_selected": {
+    "message": "Nothing selected."
+  },
+  "folder_cancelled": {
+    "message": "Folder selection cancelled."
+  },
+  "configure_folder": {
+    "message": "Set the destination folder in Settings."
+  },
+  "folder_denied": {
+    "message": "Folder permission denied."
+  },
+  "change_folder": {
+    "message": "Change folder"
+  },
+  "fs_unsupported": {
+    "message": "This browser can’t pick a folder (no File System Access). Use Downloads or Drive."
+  },
+  "generic_error": {
+    "message": "Error: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_title": {
+    "message": "Settings"
+  },
+  "datasources": {
+    "message": "Data sources"
+  },
+  "destinations": {
+    "message": "Destinations"
+  },
+  "auto_sync": {
+    "message": "Automatic sync"
+  },
+  "auto_help": {
+    "message": "Runs when YOU log in to the site and sends only what's new. Drive/HTTP destinations only (local ones need the page open)."
+  },
+  "add_destination": {
+    "message": "Add destination"
+  },
+  "add": {
+    "message": "Add"
+  },
+  "activate": {
+    "message": "Activate"
+  },
+  "deactivate": {
+    "message": "Deactivate"
+  },
+  "connect_drive": {
+    "message": "Connect Drive"
+  },
+  "connected": {
+    "message": "Connected"
+  },
+  "connecting": {
+    "message": "Connecting…"
+  },
+  "device_enter_code": {
+    "message": "On the opened page, enter code: $CODE$",
+    "placeholders": {
+      "code": {
+        "content": "$1"
+      }
+    }
+  },
+  "remove": {
+    "message": "Remove"
+  },
+  "no_sinks": {
+    "message": "No destinations yet."
+  },
+  "default_sink": {
+    "message": "default"
+  },
+  "set_default": {
+    "message": "Set default"
+  },
+  "unset_default": {
+    "message": "Unset default"
+  },
+  "set_default_hint": {
+    "message": "Pre-select this destination for sources without their own, and use it in Sync all."
+  },
+  "sync_all_nosink": {
+    "message": "$N$ with no destination",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "enable_auto": {
+    "message": "Enable auto"
+  },
+  "disable_auto": {
+    "message": "Disable auto"
+  },
+  "auto_on_pill": {
+    "message": "auto on"
+  },
+  "no_sw_sinks": {
+    "message": "(no Drive/HTTP destinations)"
+  },
+  "enable_ds_first": {
+    "message": "Enable a data source to configure auto."
+  },
+  "add_sink_first": {
+    "message": "Add a Drive or HTTP destination first."
+  },
+  "client_id_optional": {
+    "message": "Client ID (optional):"
+  },
+  "redirect_hint": {
+    "message": "Empty = use Habeas's client. Redirect URI to register in Google Console (with trailing slash):"
+  },
+  "sink_download": {
+    "message": "Downloads"
+  },
+  "sink_local": {
+    "message": "Local folder (= cloud if synced)"
+  },
+  "sink_drive": {
+    "message": "Google Drive (native)"
+  },
+  "sink_http": {
+    "message": "HTTP consumer"
+  },
+  "sink_webdav": {
+    "message": "WebDAV"
+  },
+  "webdav_url": {
+    "message": "URL"
+  },
+  "webdav_user": {
+    "message": "user"
+  },
+  "webdav_pass": {
+    "message": "password"
+  },
+  "sink_s3": {
+    "message": "S3 (or compatible)"
+  },
+  "s3_bucket": {
+    "message": "bucket"
+  },
+  "s3_region": {
+    "message": "region"
+  },
+  "s3_key": {
+    "message": "access key"
+  },
+  "s3_secret": {
+    "message": "secret key"
+  },
+  "s3_endpoint_opt": {
+    "message": "endpoint (optional)"
+  },
+  "s3_prefix_opt": {
+    "message": "prefix (optional)"
+  },
+  "sink_dropbox": {
+    "message": "Dropbox"
+  },
+  "connect_dropbox": {
+    "message": "Connect Dropbox"
+  },
+  "dbx_appkey_opt": {
+    "message": "app key (optional)"
+  },
+  "dbx_refresh_opt": {
+    "message": "refresh token (advanced)"
+  },
+  "dbx_folder_opt": {
+    "message": "folder"
+  },
+  "dbx_folder_ph": {
+    "message": "blank = app folder"
+  },
+  "dbx_hint": {
+    "message": "Add the sink, then click “Connect Dropbox” to authorize (one click). Advanced/Firefox fallback: paste your own app key + a refresh token."
+  },
+  "sink_accepts": {
+    "message": "Accepts:"
+  },
+  "none_compatible": {
+    "message": "No compatible documents for this destination."
+  },
+  "skipped_incompat": {
+    "message": "$N$ skipped (category)",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "sending_progress": {
+    "message": "Saving $I$/$N$…",
+    "placeholders": {
+      "i": {
+        "content": "$1"
+      },
+      "n": {
+        "content": "$2"
+      }
+    }
+  },
+  "doc_failed": {
+    "message": "$ID$ failed: $ERR$",
+    "placeholders": {
+      "id": {
+        "content": "$1"
+      },
+      "err": {
+        "content": "$2"
+      }
+    }
+  },
+  "n_failed": {
+    "message": "$N$ failed",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "stop": {
+    "message": "Stop"
+  },
+  "stopping": {
+    "message": "Stopping…"
+  },
+  "stopped": {
+    "message": "Stopped"
+  },
+  "stopped_n": {
+    "message": "Stopped — $N$ documents so far",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "st_ok": {
+    "message": "$N$ doc(s) → $SINK$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "sink": {
+        "content": "$2"
+      }
+    }
+  },
+  "st_none": {
+    "message": "no new documents"
+  },
+  "st_listing": {
+    "message": "syncing…"
+  },
+  "sync_all_stopped": {
+    "message": "Stopped"
+  },
+  "st_stopped": {
+    "message": "stopped"
+  },
+  "st_nosession": {
+    "message": "no session"
+  },
+  "st_challenged": {
+    "message": "anti-bot check — open the site and solve it, then retry"
+  },
+  "st_error": {
+    "message": "error: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "status_listing": {
+    "message": "Checking $NAME$…",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "status_listing_page": {
+    "message": "Listing $NAME$… page $P$ ($N$)",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      },
+      "p": {
+        "content": "$2"
+      },
+      "n": {
+        "content": "$3"
+      }
+    }
+  },
+  "status_fetching": {
+    "message": "Fetching $N$ new from $NAME$…",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "name": {
+        "content": "$2"
+      }
+    }
+  },
+  "status_sending": {
+    "message": "Sending $N$ to $SINK$…",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "sink": {
+        "content": "$2"
+      }
+    }
+  },
+  "status_done": {
+    "message": "$NAME$: $N$ new synced",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      },
+      "n": {
+        "content": "$2"
+      }
+    }
+  },
+  "status_none": {
+    "message": "$NAME$: nothing new",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "status_nosession": {
+    "message": "$NAME$: sign in to sync",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "status_error": {
+    "message": "$NAME$ error: $MSG$",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      },
+      "msg": {
+        "content": "$2"
+      }
+    }
+  },
+  "status_challenged": {
+    "message": "$NAME$: anti-bot check — open the site and solve it",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "group_pick_title": {
+    "message": "Choose an account"
+  },
+  "group_pick_sub": {
+    "message": "This source has several accounts. Pick one, or all."
+  },
+  "group_all": {
+    "message": "All accounts"
+  },
+  "group_continue": {
+    "message": "Continue"
+  },
+  "group_n": {
+    "message": "Account $N$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "notify_new": {
+    "message": "$N$ new document(s) → $SINK$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "sink": {
+        "content": "$2"
+      }
+    }
+  },
+  "notify_sweep": {
+    "message": "$NEW$ new document(s) across $SOURCES$ source(s)",
+    "placeholders": {
+      "new": {
+        "content": "$1"
+      },
+      "sources": {
+        "content": "$2"
+      }
+    }
+  },
+  "sync_all": {
+    "message": "Sync all"
+  },
+  "syncing": {
+    "message": "Syncing…"
+  },
+  "sync_all_running": {
+    "message": "Syncing all sources…"
+  },
+  "sync_all_done": {
+    "message": "$NEW$ new across $SOURCES$ source(s)",
+    "placeholders": {
+      "new": {
+        "content": "$1"
+      },
+      "sources": {
+        "content": "$2"
+      }
+    }
+  },
+  "sync_all_needlogin": {
+    "message": "$N$ need sign-in",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "sync_all_err": {
+    "message": "Sync failed: $E$",
+    "placeholders": {
+      "e": {
+        "content": "$1"
+      }
+    }
+  },
+  "notify_autoerr": {
+    "message": "Auto-sync error: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "notify_challenge": {
+    "message": "$NAME$: solve the anti-bot check we just opened, then it will sync.",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "trust_first_party": {
+    "message": "first-party"
+  },
+  "trust_community": {
+    "message": "community"
+  },
+  "consent_title": {
+    "message": "Enable “$NAME$”?",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "consent_reads": {
+    "message": "Reads your data in your own logged-in session on: $HOSTS$",
+    "placeholders": {
+      "hosts": {
+        "content": "$1"
+      }
+    }
+  },
+  "consent_replays": {
+    "message": "Replays that session to the service API: $HOST$",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "consent_offsite_warn": {
+    "message": "⚠ This source also sends your session to a DIFFERENT domain: $HOSTS$. Only enable it if you trust it.",
+    "placeholders": {
+      "hosts": {
+        "content": "$1"
+      }
+    }
+  },
+  "consent_accept": {
+    "message": "Enable"
+  },
+  "consent_cancel": {
+    "message": "Cancel"
+  },
+  "needs_consent": {
+    "message": "Enable this source in Settings first (it needs your consent)."
+  },
+  "authz_tagline": {
+    "message": "authorize an integration"
+  },
+  "authz_intro": {
+    "message": "A website is asking Habeas to set up a data flow. Nothing runs until you allow it."
+  },
+  "authz_origin": {
+    "message": "Requesting site"
+  },
+  "authz_source": {
+    "message": "Data source"
+  },
+  "authz_dest": {
+    "message": "Sends to"
+  },
+  "authz_scope": {
+    "message": "Data scope"
+  },
+  "authz_scope_all": {
+    "message": "all documents"
+  },
+  "authz_note": {
+    "message": "The destination is on the requesting site's own domain — your data can only go back to it. You can revoke this anytime in Settings."
+  },
+  "authz_allow": {
+    "message": "Allow"
+  },
+  "authz_deny": {
+    "message": "Deny"
+  },
+  "authz_granted": {
+    "message": "Allowed — you can close this window."
+  },
+  "authz_denied": {
+    "message": "Denied."
+  },
+  "authz_expired": {
+    "message": "This request has expired. Ask the site to try again."
+  },
+  "authz_unknown_source": {
+    "message": "Unknown data source."
+  },
+  "grants_title": {
+    "message": "Site integrations"
+  },
+  "grants_help": {
+    "message": "Sites you've allowed to trigger collection to their own domain. Revoke any at any time."
+  },
+  "no_grants": {
+    "message": "No site integrations yet."
+  },
+  "grant_revoke": {
+    "message": "Revoke"
+  },
+  "grant_line": {
+    "message": "$ORIGIN$ · $SOURCE$ → itself",
+    "placeholders": {
+      "origin": {
+        "content": "$1"
+      },
+      "source": {
+        "content": "$2"
+      }
+    }
+  },
+  "create_source": {
+    "message": "Create a source (record mode)"
+  },
+  "author_title": {
+    "message": "Create source"
+  },
+  "author_intro": {
+    "message": "Record a new source from a site you use: Habeas watches your own session as you browse your data, then drafts a source you can test, save, and share. Nothing leaves your browser."
+  },
+  "author_step1": {
+    "message": "1 · Learn from a site"
+  },
+  "author_tips_title": {
+    "message": "For a complete capture, in this order:"
+  },
+  "author_tip_pages": {
+    "message": "If your list spans several pages, browse a few of them (page 2, 3…) so Habeas sees the pagination."
+  },
+  "author_tip_detail": {
+    "message": "Then open the detail of one item — that captures the per-item data endpoint."
+  },
+  "author_tip_pdf": {
+    "message": "If you want the PDFs, download one invoice/receipt from its detail page during capture."
+  },
+  "author_tip_wait": {
+    "message": "Give each page a second to load its data before moving on, then come back and Analyze."
+  },
+  "author_note_advanced": {
+    "message": "Heads-up: capture doesn't work on every site. Some — heavily protected SPAs or advanced anti-bot walls (seen on certain retailers) — don't expose their data to record mode, and nothing gets captured. If that happens you can still build the source by hand: open the site's DevTools → Network, find the request that returns your data, and use \"Write/paste JSON\" (in Settings) to define it — like the shipped sources were made."
+  },
+  "author_url_ph": {
+    "message": "https://www.example.com/your-account"
+  },
+  "author_start": {
+    "message": "Grant access & open site"
+  },
+  "author_stop": {
+    "message": "Stop learning"
+  },
+  "author_step2": {
+    "message": "2 · Build the source"
+  },
+  "author_analyze": {
+    "message": "Analyze captured activity"
+  },
+  "author_samples": {
+    "message": "responses captured"
+  },
+  "author_fields": {
+    "message": "Field mapping"
+  },
+  "author_id": {
+    "message": "Id"
+  },
+  "author_name": {
+    "message": "Name"
+  },
+  "author_apihost": {
+    "message": "API host"
+  },
+  "author_listpath": {
+    "message": "List path"
+  },
+  "author_itemspath": {
+    "message": "Items path"
+  },
+  "author_paging": {
+    "message": "Pagination"
+  },
+  "author_pdfpath": {
+    "message": "PDF path (optional)"
+  },
+  "author_detailpath": {
+    "message": "Detail JSON path (optional)"
+  },
+  "doc_json": {
+    "message": "saves each item's JSON detail"
+  },
+  "doc_pdf": {
+    "message": "saves a PDF per item"
+  },
+  "doc_none": {
+    "message": "metadata only (no per-item file)"
+  },
+  "author_schema": {
+    "message": "Schema"
+  },
+  "author_categories": {
+    "message": "Categories"
+  },
+  "author_test": {
+    "message": "Test"
+  },
+  "author_save": {
+    "message": "Save source"
+  },
+  "author_bad_url": {
+    "message": "Enter a full https:// URL."
+  },
+  "author_denied": {
+    "message": "Access to that site was denied."
+  },
+  "author_learning": {
+    "message": "Learning from $DOMAIN$ — browse your data, then Analyze.",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_start_first": {
+    "message": "Start learning from a site first."
+  },
+  "author_no_samples": {
+    "message": "No responses captured yet — browse your data on the site, then retry."
+  },
+  "author_no_requests": {
+    "message": "The recorder didn't see any requests. Reload the extension, re-open the site, accept the access prompt, then browse your orders and retry."
+  },
+  "author_no_list_seen": {
+    "message": "Saw $N$ requests (from: $HOSTS$) but none returned a document list. Open your orders/invoices page so it loads the data, then retry — or tell us these hosts.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "hosts": {
+        "content": "$2"
+      }
+    }
+  },
+  "author_no_list": {
+    "message": "Couldn't find a document list in the captured responses."
+  },
+  "author_detected": {
+    "message": "Detected list “$ITEMS$” ($COUNT$ items). Review the mapping below.",
+    "placeholders": {
+      "items": {
+        "content": "$1"
+      },
+      "count": {
+        "content": "$2"
+      }
+    }
+  },
+  "author_crossdomain": {
+    "message": "Off-site data host: $HOSTS$ — will ask for consent.",
+    "placeholders": {
+      "hosts": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_invalid": {
+    "message": "Invalid source: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_no_auth": {
+    "message": "No captured session for this API yet — browse your data on the site first."
+  },
+  "author_testing": {
+    "message": "Testing…"
+  },
+  "author_test_ok": {
+    "message": "OK — listed $COUNT$ documents.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_doc_fetching": {
+    "message": "downloading $ID$…",
+    "placeholders": {
+      "id": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_doc_via": {
+    "message": "detail loads via $VIA$",
+    "placeholders": {
+      "via": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_doc_fail": {
+    "message": "detail failed: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "via_json": {
+    "message": "an AJAX/API JSON call"
+  },
+  "via_embedded": {
+    "message": "JSON embedded in the page"
+  },
+  "via_table": {
+    "message": "an HTML table on the page"
+  },
+  "via_html": {
+    "message": "raw HTML (no structured data found)"
+  },
+  "via_pdf": {
+    "message": "a PDF file"
+  },
+  "via_list": {
+    "message": "the list item itself (JSON)"
+  },
+  "via_page": {
+    "message": "the print page (self-contained HTML)"
+  },
+  "via_render": {
+    "message": "the rendered page, captured (self-contained HTML)"
+  },
+  "via_invoice": {
+    "message": "a generated printable invoice (HTML)"
+  },
+  "author_doc_preview": {
+    "message": "Detail preview (first document):"
+  },
+  "author_doc_pdf_size": {
+    "message": "PDF · $N$ KB",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_test_err": {
+    "message": "Test failed: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_saved": {
+    "message": "Saved “$ID$”. Enable it in Settings.",
+    "placeholders": {
+      "id": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_completing_h": {
+    "message": "Completing an existing source:"
+  },
+  "author_completing_sub": {
+    "message": "Record the product this source is missing (e.g. a card). Drafting then ADDS it as a new stream — you contribute the declarative shape, never your data."
+  },
+  "author_augment": {
+    "message": "Add as stream"
+  },
+  "author_augmented": {
+    "message": "Added stream “$SID$” to $ID$ — review and share it as a PR.",
+    "placeholders": {
+      "id": {
+        "content": "$1"
+      },
+      "sid": {
+        "content": "$2"
+      }
+    }
+  },
+  "edit_json": {
+    "message": "Edit JSON"
+  },
+  "edit_json_title": {
+    "message": "Edit source: $ID$",
+    "placeholders": {
+      "id": {
+        "content": "$1"
+      }
+    }
+  },
+  "json_save": {
+    "message": "Validate & save"
+  },
+  "je_test": {
+    "message": "Test"
+  },
+  "view_source": {
+    "message": "View HTML source"
+  },
+  "view_rendered": {
+    "message": "View rendered"
+  },
+  "je_no_tab": {
+    "message": "Tip: open the site in a tab and log in, so the test runs in your session."
+  },
+  "json_badsyntax": {
+    "message": "Invalid JSON: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "json_invalid": {
+    "message": "Invalid source: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "json_saved": {
+    "message": "Applied — review, Test and Save."
+  },
+  "import_source": {
+    "message": "Import (JSON)"
+  },
+  "paste_source": {
+    "message": "Write/paste JSON"
+  },
+  "browse_sources": {
+    "message": "Browse community"
+  },
+  "search_sources": {
+    "message": "Search sources by name, service, category…"
+  },
+  "store_title": {
+    "message": "Canonical store"
+  },
+  "store_help": {
+    "message": "Where your extracted data is kept. Sinks and consumers are served from it — so a second sink, device or record-only consumer reuses it instead of re-extracting. Choose local, a synced folder, or your own HTTP endpoint, and move it freely."
+  },
+  "dest_multidevice_hint": {
+    "message": "Syncing across devices? Use a native cloud backend the extension writes directly — Google Drive, Dropbox, WebDAV or S3 — as both store and sink. Don't point the local-folder option at a folder synced by an external tool (Google Drive Desktop, grive2, rclone…): the extension can't dedup against files another app created (and with Drive's drive.file scope it can't even see them), which duplicates folders. A native backend is the same app on every device, so it dedups across them."
+  },
+  "store_where": {
+    "message": "Store lives in:"
+  },
+  "store_local": {
+    "message": "This device (local)"
+  },
+  "store_folder": {
+    "message": "Synced folder"
+  },
+  "store_drive": {
+    "message": "Google Drive"
+  },
+  "store_dropbox": {
+    "message": "Dropbox"
+  },
+  "store_webdav": {
+    "message": "WebDAV"
+  },
+  "store_s3": {
+    "message": "S3 (or compatible)"
+  },
+  "store_no_sink": {
+    "message": "— add a sink of this type first —"
+  },
+  "store_need_sink": {
+    "message": "Pick a configured sink for the store."
+  },
+  "drive_disconnect": {
+    "message": "Disconnect Drive"
+  },
+  "drive_disconnected": {
+    "message": "Drive disconnected."
+  },
+  "store_http": {
+    "message": "HTTP endpoint"
+  },
+  "store_move": {
+    "message": "Move store here"
+  },
+  "store_browse": {
+    "message": "Browse store…"
+  },
+  "store_pick_folder": {
+    "message": "Choose folder…"
+  },
+  "store_import_from": {
+    "message": "Backfill from a sink:"
+  },
+  "store_import": {
+    "message": "Import"
+  },
+  "store_importing": {
+    "message": "Importing…"
+  },
+  "store_imported": {
+    "message": "Imported $N$ records into the store.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "store_folder_ok": {
+    "message": "Folder chosen."
+  },
+  "store_need_url": {
+    "message": "Enter the endpoint URL."
+  },
+  "store_moving": {
+    "message": "Moving…"
+  },
+  "store_moved": {
+    "message": "Moved ($N$ sources).",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "store_move_err": {
+    "message": "Move failed: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "no_sources_match": {
+    "message": "No sources match your search."
+  },
+  "export_source": {
+    "message": "Export"
+  },
+  "share_source": {
+    "message": "Share"
+  },
+  "import_ok": {
+    "message": "Imported “$ID$”.",
+    "placeholders": {
+      "id": {
+        "content": "$1"
+      }
+    }
+  },
+  "import_err": {
+    "message": "Import failed: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_title": {
+    "message": "Community sources"
+  },
+  "market_intro": {
+    "message": "Browse sources shared by the community. Each one is reviewed JSON — data, not code — and is confined to its own site's domain. Sources marked with a warning also send your session off-site; enable those only if you trust them."
+  },
+  "market_search": {
+    "message": "Search by name, service, category…"
+  },
+  "market_reload": {
+    "message": "Reload"
+  },
+  "market_loading": {
+    "message": "Loading…"
+  },
+  "market_count": {
+    "message": "$N$ sources",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_unavailable": {
+    "message": "Registry unavailable (offline or not published yet)."
+  },
+  "market_empty": {
+    "message": "No sources match."
+  },
+  "market_offsite": {
+    "message": "⚠ sends session off-site"
+  },
+  "market_install": {
+    "message": "Install"
+  },
+  "market_complete": {
+    "message": "Complete"
+  },
+  "market_complete_hint": {
+    "message": "Record a product this source is missing (a card, an investment) and add it as a new stream."
+  },
+  "market_gaps": {
+    "message": "missing: $G$",
+    "placeholders": {
+      "g": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_gaps_hint": {
+    "message": "Products this source does not cover yet — install it and use “Complete” to add one you have."
+  },
+  "market_installed": {
+    "message": "Installed"
+  },
+  "market_update": {
+    "message": "Update ($V1$ → $V2$)",
+    "placeholders": {
+      "v1": {
+        "content": "$1"
+      },
+      "v2": {
+        "content": "$2"
+      }
+    }
+  },
+  "market_update_pill": {
+    "message": "update available"
+  },
+  "market_updates_available": {
+    "message": "$N$ update(s) available for your installed sources.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_update_all": {
+    "message": "Update all"
+  },
+  "market_updating": {
+    "message": "Updating $N$ source(s)…",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_updated": {
+    "message": "Updated $OK$; $FAIL$ failed.",
+    "placeholders": {
+      "ok": {
+        "content": "$1"
+      },
+      "fail": {
+        "content": "$2"
+      }
+    }
+  },
+  "market_needs_version": {
+    "message": "Needs Habeas $V$+",
+    "placeholders": {
+      "v": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_needs_pill": {
+    "message": "needs v$V$",
+    "placeholders": {
+      "v": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_changelog": {
+    "message": "Changelog"
+  },
+  "market_new": {
+    "message": "new"
+  },
+  "market_installing": {
+    "message": "Installing…"
+  },
+  "market_install_ok": {
+    "message": "Installed “$ID$”. Enable it in Settings.",
+    "placeholders": {
+      "id": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_install_err": {
+    "message": "Install failed: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_details": {
+    "message": "Ratings & comments"
+  },
+  "market_rate": {
+    "message": "Your rating:"
+  },
+  "market_comments": {
+    "message": "Comments"
+  },
+  "market_no_comments": {
+    "message": "No comments yet."
+  },
+  "market_author_ph": {
+    "message": "Name (optional)"
+  },
+  "market_comment_ph": {
+    "message": "Write a comment…"
+  },
+  "market_post": {
+    "message": "Post"
+  },
+  "market_rated": {
+    "message": "Thanks for rating!"
+  },
+  "market_posted": {
+    "message": "Comment posted."
+  },
+  "market_social_off": {
+    "message": "Ratings service unavailable right now."
+  },
+  "author_map_intro": {
+    "message": "Habeas detected your data. Check each field below shows the right example, then Test and Save. You rarely need “Advanced”."
+  },
+  "author_find_label": {
+    "message": "Find your data"
+  },
+  "author_find_ph": {
+    "message": "a ticket no., an amount…"
+  },
+  "author_find": {
+    "message": "Find"
+  },
+  "author_find_none": {
+    "message": "Not found in the captured data — try another value, or open the exact page/order first."
+  },
+  "author_find_ok": {
+    "message": "Found in a list of $N$ items — mapping below.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_find_multi": {
+    "message": "Found in $N$ lists — pick the right one below.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_which_list": {
+    "message": "Which list is your data?"
+  },
+  "author_multistream": {
+    "message": "This site has several data sets — capture them all together"
+  },
+  "author_groups_label": {
+    "message": "Accounts / cards list (optional)"
+  },
+  "author_groups_none": {
+    "message": "— none (single listing) —"
+  },
+  "author_items": {
+    "message": "items"
+  },
+  "author_pages": {
+    "message": "page(s)"
+  },
+  "author_list_hint": {
+    "message": "Totals across the pages you browsed (items · pages captured). When you use the source it paginates to fetch them all — you pick the right list here, not pages."
+  },
+  "author_kind": {
+    "message": "Kind of data"
+  },
+  "author_advanced": {
+    "message": "Advanced (usually not needed)"
+  },
+  "kind_receipt": {
+    "message": "Receipts / tickets"
+  },
+  "kind_invoice": {
+    "message": "Invoices"
+  },
+  "kind_transaction": {
+    "message": "Card / account movements"
+  },
+  "kind_investment": {
+    "message": "Investments"
+  },
+  "fld_internalid": {
+    "message": "Internal id (links detail / PDF)"
+  },
+  "fld_number": {
+    "message": "Receipt / invoice number (shown to you)"
+  },
+  "fld_date": {
+    "message": "Date"
+  },
+  "fld_amount": {
+    "message": "Amount"
+  },
+  "fld_store": {
+    "message": "Store / place"
+  },
+  "fld_address": {
+    "message": "Address"
+  },
+  "fld_type": {
+    "message": "Type"
+  },
+  "fld_channel": {
+    "message": "Channel"
+  },
+  "fld_issuer": {
+    "message": "Issuer / company"
+  },
+  "fld_description": {
+    "message": "Description"
+  },
+  "fld_payee": {
+    "message": "Payee / merchant"
+  },
+  "fld_direction": {
+    "message": "In / out"
+  },
+  "fld_instrument": {
+    "message": "Instrument / fund"
+  },
+  "fld_isin": {
+    "message": "ISIN"
+  },
+  "fld_units": {
+    "message": "Units"
+  },
+  "fld_price": {
+    "message": "Price"
+  },
+  "fld_operation": {
+    "message": "Operation"
+  },
+  "planner_title": {
+    "message": "Planner"
+  },
+  "planner_help": {
+    "message": "Schedule periodic downloads from a source to a destination. They run in your live browser session — if you're not signed in when a schedule fires, Habeas opens the site so you can sign in, then retries."
+  },
+  "sched_kind_daily": {
+    "message": "Every day"
+  },
+  "sched_kind_weekly": {
+    "message": "Weekly"
+  },
+  "sched_kind_monthlyday": {
+    "message": "Monthly · day of month"
+  },
+  "sched_kind_monthlyweekday": {
+    "message": "Monthly · nth weekday"
+  },
+  "sched_kind_monthlybusiness": {
+    "message": "Monthly · nth business day"
+  },
+  "sched_mon": {
+    "message": "Mon"
+  },
+  "sched_tue": {
+    "message": "Tue"
+  },
+  "sched_wed": {
+    "message": "Wed"
+  },
+  "sched_thu": {
+    "message": "Thu"
+  },
+  "sched_fri": {
+    "message": "Fri"
+  },
+  "sched_sat": {
+    "message": "Sat"
+  },
+  "sched_sun": {
+    "message": "Sun"
+  },
+  "sched_ord_1": {
+    "message": "1st"
+  },
+  "sched_ord_2": {
+    "message": "2nd"
+  },
+  "sched_ord_3": {
+    "message": "3rd"
+  },
+  "sched_ord_4": {
+    "message": "4th"
+  },
+  "sched_ord_5": {
+    "message": "5th"
+  },
+  "sched_ord_last": {
+    "message": "last"
+  },
+  "sched_time_label": {
+    "message": "at"
+  },
+  "sched_add": {
+    "message": "Add schedule"
+  },
+  "sched_none": {
+    "message": "No schedules yet."
+  },
+  "sched_next": {
+    "message": "next: $p1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sched_run_now": {
+    "message": "Run now"
+  },
+  "sched_running": {
+    "message": "Running…"
+  },
+  "sched_no_sources": {
+    "message": "no enabled sources"
+  },
+  "sched_no_sinks": {
+    "message": "no destinations"
+  },
+  "sched_at": {
+    "message": "at $p1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sched_desc_daily": {
+    "message": "Every day $p1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sched_desc_weekly": {
+    "message": "Every $p1$ $p2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "sched_desc_monthlyday": {
+    "message": "Day $p1$ of each month $p2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "sched_desc_monthlyweekday": {
+    "message": "The $p1$ $p2$ of each month $p3$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "sched_desc_monthlybusiness": {
+    "message": "The $p1$ business day of each month $p2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "notify_sched_login": {
+    "message": "$p1$: a scheduled download needs you to sign in — we opened the site.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "notify_sched_gaveup": {
+    "message": "$p1$: a scheduled download couldn't complete after retries; it will try again at the next scheduled time.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  }
 }

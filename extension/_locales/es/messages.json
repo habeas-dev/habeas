@@ -1,415 +1,1853 @@
 {
-  "extName": { "message": "Habeas" },
-  "extDesc": { "message": "Recupera tus propios datos personales de servicios que los esconden tras muros no automatizables — dentro de tu propia sesión." },
-  "tagline": { "message": "tus datos, en tus manos" },
-  "settings": { "message": "Ajustes" },
-
-  "about_title": { "message": "Acerca de" },
-  "about_body": { "message": "Habeas extrae tus propios datos —tickets, facturas, movimientos— de servicios sin API ni exportación por email, dentro de tu propia sesión iniciada. Nunca guarda tus credenciales, y nada se envía a ningún sitio que no elijas." },
-  "learn_more": { "message": "Más información en GitHub" },
-
-  "documents": { "message": "Documentos" },
-  "list_docs": { "message": "Listar documentos" },
-  "load_store": { "message": "Cargar del almacén" },
-  "outputs_label": { "message": "Obtener:" },
-  "n_listed": { "message": "$T$ documentos · $N$ recuperados", "placeholders": { "t": { "content": "$1" }, "n": { "content": "$2" } } },
-  "full_history": { "message": "Todo el historial" },
-  "save": { "message": "Guardar" },
-  "cancel": { "message": "Cancelar" },
-  "manage_accounts": { "message": "Cuentas" },
-  "manage_accounts_hint": { "message": "Elige qué cuentas de esta fuente importar. Solo las cuentas seleccionadas se ofrecen para listar, auto y sincronizar. Se guarda en la fuente." },
-  "accounts_pick_title": { "message": "Cuentas a importar" },
-  "accounts_pick_sub": { "message": "Solo las cuentas marcadas se ofrecen para descargar (listar, auto y sincronizar)." },
-  "accounts_loading": { "message": "Cargando cuentas…" },
-  "accounts_failed": { "message": "No se pudieron cargar las cuentas (¿inicia sesión en el sitio primero?)." },
-  "accounts_saved": { "message": "$N$ cuenta(s) seleccionada(s)", "placeholders": { "n": { "content": "$1" } } },
-  "all_accounts": { "message": "Todas las cuentas" },
-  "full_history_hint": { "message": "Vuelve a listar todo en fresco desde el sitio para poder re-descargar los documentos seleccionados (las filas cargadas del almacén local son solo registro y NO se re-descargan). Requiere tener la sesión iniciada en el sitio." },
-  "force_redownload": { "message": "Re-descargar del sitio" },
-  "force_redownload_hint": { "message": "Vuelve a bajar del sitio los ficheros + detalles de los documentos seleccionados (incluso filas cargadas del almacén local), actualizando la fecha/importe reales en el almacén. Requiere sesión iniciada." },
-  "n_from_store": { "message": "$N$ del almacén (sin extraer)", "placeholders": { "n": { "content": "$1" } } },
-  "send_to": { "message": "Enviar a" },
-  "send_selected": { "message": "Enviar seleccionados" },
-  "th_date": { "message": "Fecha" },
-  "th_group": { "message": "Cuenta" },
-  "th_type": { "message": "Tipo" },
-  "filter_label": { "message": "Filtrar:" },
-  "filter_all_groups": { "message": "Todas las cuentas" },
-  "filter_all_types": { "message": "Todos los tipos" },
-  "th_store": { "message": "Tienda" },
-  "th_files": { "message": "Archivos" },
-  "file_unavailable": { "message": "no disponible para este elemento" },
-  "th_amount": { "message": "Importe" },
-  "th_status": { "message": "Estado" },
-  "activity": { "message": "Actividad reciente" },
-  "no_activity": { "message": "Sin actividad todavía." },
-  "pill_new": { "message": "pendiente" },
-  "pill_sent": { "message": "enviado" },
-  "pill_new_hint": { "message": "Aún no entregado al destino seleccionado — se incluirá en el próximo envío." },
-  "pill_sent_hint": { "message": "Ya entregado al destino seleccionado." },
-  "select_label": { "message": "Seleccionar:" },
-  "sel_new": { "message": "Pendientes" },
-  "sel_all": { "message": "Todos" },
-  "sel_none": { "message": "Ninguno" },
-
-  "no_datasources": { "message": "Activa un datasource en Ajustes." },
-  "capture_hint": { "message": "Abre el sitio y tu página de compras para capturar tu sesión, y reintenta." },
-  "login_in_tab": { "message": "Inicia sesión en el sitio en la pestaña que acabamos de abrir y vuelve a intentarlo." },
-  "login_wait": { "message": "Inicia sesión en la pestaña que hemos abierto — el listado continuará automáticamente en cuanto se detecte tu sesión." },
-  "challenge_solve": { "message": "El sitio mostró una verificación anti-bot — resuélvela en la pestaña que hemos abierto y vuelve a listar." },
-  "cookies_cleared": { "message": "Borradas $N$ cookies del sitio para un login limpio.", "placeholders": { "n": { "content": "$1" } } },
-  "cookies_cleared_login": { "message": "Borradas $N$ cookies del sitio — inicia sesión en la pestaña nueva y prueba de nuevo.", "placeholders": { "n": { "content": "$1" } } },
-  "listing": { "message": "Listando…" },
-  "listing_page": { "message": "Listando documentos… página $P$ ($N$ hasta ahora)", "placeholders": { "p": { "content": "$1" }, "n": { "content": "$2" } } },
-  "listing_year_page": { "message": "Listando documentos de $Y$. Página $P$ ($N$ hasta ahora)", "placeholders": { "y": { "content": "$1" }, "p": { "content": "$2" }, "n": { "content": "$3" } } },
-  "n_documents": { "message": "$COUNT$ documentos", "placeholders": { "count": { "content": "$1" } } },
-  "tab_sources": { "message": "Fuentes" },
-  "tab_documents": { "message": "Documentos" },
-  "all_documents": { "message": "Todos los documentos" },
-  "refresh": { "message": "Recargar" },
-  "docs_search": { "message": "Buscar…" },
-  "docs_pick_source": { "message": "Elige fuente…" },
-  "th_source": { "message": "Fuente" },
-  "th_delivered_to": { "message": "Entregado en" },
-  "docs_loading": { "message": "Cargando documentos…" },
-  "all_sources": { "message": "Todas las fuentes" },
-  "no_documents": { "message": "Aún no hay documentos" },
-  "view": { "message": "Ver" },
-  "view_from": { "message": "Ver desde $SINK$", "placeholders": { "sink": { "content": "$1" } } },
-  "open_from": { "message": "Abrir desde $SINK$", "placeholders": { "sink": { "content": "$1" } } },
-  "opening": { "message": "Abriendo…" },
-  "retrieve_failed": { "message": "No se pudo recuperar el fichero de este destino." },
-  "download": { "message": "Descargar" },
-  "delivered_nofile": { "message": "Entregado aquí (solo registro — sin fichero individual)" },
-  "fetching": { "message": "Obteniendo $COUNT$ documentos…", "placeholders": { "count": { "content": "$1" } } },
-  "with_without_pdf": { "message": "Con PDF: $A$ · sin PDF (no conservados): $B$", "placeholders": { "a": { "content": "$1" }, "b": { "content": "$2" } } },
-  "sent_docs": { "message": "Enviado a «$SINK$»: $N$ documentos + manifiesto ($T$ registros)", "placeholders": { "sink": { "content": "$1" }, "n": { "content": "$2" }, "t": { "content": "$3" } } },
-  "sent_records": { "message": "Guardado en «$SINK$»: manifiesto con $T$ registros", "placeholders": { "sink": { "content": "$1" }, "t": { "content": "$2" } } },
-  "n_nodoc": { "message": "$N$ sin documento", "placeholders": { "n": { "content": "$1" } } },
-  "sink_error": { "message": "Error de destino: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "pick_sink": { "message": "Configura un destino en Ajustes." },
-  "nothing_selected": { "message": "Nada seleccionado." },
-  "folder_cancelled": { "message": "Selección de carpeta cancelada." },
-  "configure_folder": { "message": "Configura la carpeta destino en Ajustes." },
-  "folder_denied": { "message": "Permiso de carpeta denegado." },
-  "change_folder": { "message": "Cambiar carpeta" },
-  "fs_unsupported": { "message": "Este navegador no puede elegir carpeta (sin File System Access). Usa Descargas o Drive." },
-  "generic_error": { "message": "Error: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-
-  "opt_title": { "message": "Ajustes" },
-  "datasources": { "message": "Datasources" },
-  "destinations": { "message": "Destinos" },
-  "auto_sync": { "message": "Sincronización automática" },
-  "auto_help": { "message": "Se ejecuta cuando TÚ te logueas en el sitio y envía solo lo nuevo. Solo destinos Drive/HTTP (los locales necesitan la página abierta)." },
-  "add_destination": { "message": "Añadir destino" },
-  "add": { "message": "Añadir" },
-  "activate": { "message": "Activar" },
-  "deactivate": { "message": "Desactivar" },
-  "connect_drive": { "message": "Conectar Drive" },
-  "connected": { "message": "Conectado" },
-  "connecting": { "message": "Conectando…" },
-  "device_enter_code": { "message": "En la página que se ha abierto, introduce el código: $CODE$", "placeholders": { "code": { "content": "$1" } } },
-  "remove": { "message": "Eliminar" },
-  "no_sinks": { "message": "Aún no hay destinos." },
-  "default_sink": { "message": "por defecto" },
-  "set_default": { "message": "Por defecto" },
-  "unset_default": { "message": "Quitar por defecto" },
-  "set_default_hint": { "message": "Se preselecciona para las fuentes sin destino propio y se usa en Sincronizar todo." },
-  "sync_all_nosink": { "message": "$N$ sin destino", "placeholders": { "n": { "content": "$1" } } },
-  "enable_auto": { "message": "Activar auto" },
-  "disable_auto": { "message": "Desactivar auto" },
-  "auto_on_pill": { "message": "auto activo" },
-  "no_sw_sinks": { "message": "(sin destinos Drive/HTTP)" },
-  "enable_ds_first": { "message": "Activa un datasource para configurar auto." },
-  "add_sink_first": { "message": "Añade un destino Drive o HTTP primero." },
-  "client_id_optional": { "message": "Client ID (opcional):" },
-  "redirect_hint": { "message": "Vacío = usa el client de Habeas. Redirect URI para registrar en Google Console (con la barra final):" },
-  "sink_download": { "message": "Descargas" },
-  "sink_local": { "message": "Carpeta local (= nube si está sincronizada)" },
-  "sink_drive": { "message": "Google Drive (nativo)" },
-  "sink_http": { "message": "Consumidor HTTP" },
-  "sink_webdav": { "message": "WebDAV" },
-  "webdav_url": { "message": "URL" },
-  "webdav_user": { "message": "usuario" },
-  "webdav_pass": { "message": "contraseña" },
-  "sink_s3": { "message": "S3 (o compatible)" },
-  "s3_bucket": { "message": "bucket" },
-  "s3_region": { "message": "región" },
-  "s3_key": { "message": "access key" },
-  "s3_secret": { "message": "secret key" },
-  "s3_endpoint_opt": { "message": "endpoint (opcional)" },
-  "s3_prefix_opt": { "message": "prefijo (opcional)" },
-  "sink_dropbox": { "message": "Dropbox" },
-  "connect_dropbox": { "message": "Conectar Dropbox" },
-  "dbx_appkey_opt": { "message": "app key (opcional)" },
-  "dbx_refresh_opt": { "message": "refresh token (avanzado)" },
-  "dbx_folder_opt": { "message": "carpeta" },
-  "dbx_folder_ph": { "message": "vacío = carpeta de la app" },
-  "dbx_hint": { "message": "Añade el sink y pulsa «Conectar Dropbox» para autorizar (un clic). Avanzado/fallback Firefox: pega tu propia app key + un refresh token." },
-  "sink_accepts": { "message": "Acepta:" },
-  "none_compatible": { "message": "Ningún documento compatible con este destino." },
-  "skipped_incompat": { "message": "$N$ omitidos (categoría)", "placeholders": { "n": { "content": "$1" } } },
-  "sending_progress": { "message": "Guardando $I$/$N$…", "placeholders": { "i": { "content": "$1" }, "n": { "content": "$2" } } },
-  "doc_failed": { "message": "$ID$ falló: $ERR$", "placeholders": { "id": { "content": "$1" }, "err": { "content": "$2" } } },
-  "n_failed": { "message": "$N$ fallidos", "placeholders": { "n": { "content": "$1" } } },
-  "stop": { "message": "Detener" },
-  "stopping": { "message": "Deteniendo…" },
-  "stopped": { "message": "Detenido" },
-  "stopped_n": { "message": "Detenido — $N$ documentos hasta ahora", "placeholders": { "n": { "content": "$1" } } },
-
-  "st_ok": { "message": "$N$ doc(s) → $SINK$", "placeholders": { "n": { "content": "$1" }, "sink": { "content": "$2" } } },
-  "st_none": { "message": "sin novedades" },
-  "st_listing": { "message": "sincronizando…" },
-  "sync_all_stopped": { "message": "Detenido" },
-  "st_stopped": { "message": "detenido" },
-  "st_nosession": { "message": "sin sesión" },
-  "st_challenged": { "message": "verificación anti-bot — abre el sitio y resuélvela, luego reintenta" },
-  "st_error": { "message": "error: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "status_listing": { "message": "Comprobando $NAME$…", "placeholders": { "name": { "content": "$1" } } },
-  "status_listing_page": { "message": "Listando $NAME$… página $P$ ($N$)", "placeholders": { "name": { "content": "$1" }, "p": { "content": "$2" }, "n": { "content": "$3" } } },
-  "status_fetching": { "message": "Descargando $N$ nuevos de $NAME$…", "placeholders": { "n": { "content": "$1" }, "name": { "content": "$2" } } },
-  "status_sending": { "message": "Enviando $N$ a $SINK$…", "placeholders": { "n": { "content": "$1" }, "sink": { "content": "$2" } } },
-  "status_done": { "message": "$NAME$: $N$ nuevos sincronizados", "placeholders": { "name": { "content": "$1" }, "n": { "content": "$2" } } },
-  "status_none": { "message": "$NAME$: nada nuevo", "placeholders": { "name": { "content": "$1" } } },
-  "status_nosession": { "message": "$NAME$: inicia sesión para sincronizar", "placeholders": { "name": { "content": "$1" } } },
-  "status_error": { "message": "$NAME$ error: $MSG$", "placeholders": { "name": { "content": "$1" }, "msg": { "content": "$2" } } },
-  "status_challenged": { "message": "$NAME$: verificación anti-bot — abre el sitio y resuélvela", "placeholders": { "name": { "content": "$1" } } },
-  "group_pick_title": { "message": "Elige una cuenta" },
-  "group_pick_sub": { "message": "Esta fuente tiene varias cuentas. Elige una, o todas." },
-  "group_all": { "message": "Todas las cuentas" },
-  "group_continue": { "message": "Continuar" },
-  "group_n": { "message": "Cuenta $N$", "placeholders": { "n": { "content": "$1" } } },
-  "notify_new": { "message": "$N$ documento(s) nuevo(s) → $SINK$", "placeholders": { "n": { "content": "$1" }, "sink": { "content": "$2" } } },
-  "notify_sweep": { "message": "$NEW$ documento(s) nuevo(s) en $SOURCES$ fuente(s)", "placeholders": { "new": { "content": "$1" }, "sources": { "content": "$2" } } },
-  "sync_all": { "message": "Sincronizar todo" },
-  "syncing": { "message": "Sincronizando…" },
-  "sync_all_running": { "message": "Sincronizando todas las fuentes…" },
-  "sync_all_done": { "message": "$NEW$ nuevo(s) en $SOURCES$ fuente(s)", "placeholders": { "new": { "content": "$1" }, "sources": { "content": "$2" } } },
-  "sync_all_needlogin": { "message": "$N$ requieren iniciar sesión", "placeholders": { "n": { "content": "$1" } } },
-  "sync_all_err": { "message": "Fallo al sincronizar: $E$", "placeholders": { "e": { "content": "$1" } } },
-  "notify_autoerr": { "message": "Error de auto-sync: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "notify_challenge": { "message": "$NAME$: resuelve la verificación anti-bot que acabamos de abrir y se sincronizará.", "placeholders": { "name": { "content": "$1" } } },
-
-  "trust_first_party": { "message": "oficial" },
-  "trust_community": { "message": "comunidad" },
-  "consent_title": { "message": "¿Activar «$NAME$»?", "placeholders": { "name": { "content": "$1" } } },
-  "consent_reads": { "message": "Lee tus datos en tu propia sesión iniciada en: $HOSTS$", "placeholders": { "hosts": { "content": "$1" } } },
-  "consent_replays": { "message": "Reenvía esa sesión a la API del servicio: $HOST$", "placeholders": { "host": { "content": "$1" } } },
-  "consent_offsite_warn": { "message": "⚠ Esta fuente también envía tu sesión a un dominio DISTINTO: $HOSTS$. Actívala solo si confías en ella.", "placeholders": { "hosts": { "content": "$1" } } },
-  "consent_accept": { "message": "Activar" },
-  "consent_cancel": { "message": "Cancelar" },
-  "needs_consent": { "message": "Activa esta fuente en Ajustes primero (requiere tu consentimiento)." },
-
-  "authz_tagline": { "message": "autorizar una integración" },
-  "authz_intro": { "message": "Una web pide a Habeas crear un flujo de datos. No se ejecuta nada hasta que lo permitas." },
-  "authz_origin": { "message": "Sitio que lo pide" },
-  "authz_source": { "message": "Fuente de datos" },
-  "authz_dest": { "message": "Envía a" },
-  "authz_scope": { "message": "Alcance de datos" },
-  "authz_scope_all": { "message": "todos los documentos" },
-  "authz_note": { "message": "El destino está en el propio dominio del sitio que lo pide — tus datos solo pueden volver a él. Podrás revocarlo cuando quieras en Ajustes." },
-  "authz_allow": { "message": "Permitir" },
-  "authz_deny": { "message": "Denegar" },
-  "authz_granted": { "message": "Permitido — puedes cerrar esta ventana." },
-  "authz_denied": { "message": "Denegado." },
-  "authz_expired": { "message": "La solicitud ha caducado. Pide al sitio que lo intente de nuevo." },
-  "authz_unknown_source": { "message": "Fuente de datos desconocida." },
-
-  "grants_title": { "message": "Integraciones de sitios" },
-  "grants_help": { "message": "Sitios a los que has permitido iniciar recolecciones hacia su propio dominio. Revoca cuando quieras." },
-  "no_grants": { "message": "Aún no hay integraciones." },
-  "grant_revoke": { "message": "Revocar" },
-  "grant_line": { "message": "$ORIGIN$ · $SOURCE$ → sí mismo", "placeholders": { "origin": { "content": "$1" }, "source": { "content": "$2" } } },
-
-  "create_source": { "message": "Crear una fuente (modo grabación)" },
-  "author_title": { "message": "Crear fuente" },
-  "author_intro": { "message": "Graba una fuente nueva desde una web que uses: Habeas observa tu propia sesión mientras navegas tus datos y luego redacta un borrador de fuente que puedes probar, guardar y compartir. Nada sale de tu navegador." },
-  "author_step1": { "message": "1 · Aprender de una web" },
-  "author_tips_title": { "message": "Para una captura completa, en este orden:" },
-  "author_tip_pages": { "message": "Si tu listado tiene varias páginas, navega unas cuantas (página 2, 3…) para que Habeas vea la paginación." },
-  "author_tip_detail": { "message": "Después abre el detalle de un elemento — eso captura el endpoint de datos por elemento." },
-  "author_tip_pdf": { "message": "Si quieres los PDF, descarga una factura/recibo desde su página de detalle durante la captura." },
-  "author_tip_wait": { "message": "Deja que cada página cargue sus datos un segundo antes de seguir, y luego vuelve y pulsa Analizar." },
-  "author_note_advanced": { "message": "Aviso: la captura no funciona en todas las webs. Algunas —SPAs muy protegidas o con anti-bot avanzado (visto en ciertas tiendas)— no exponen sus datos al grabador y no se captura nada. Si pasa, aún puedes crear la fuente a mano: abre DevTools → Red del sitio, localiza la petición que devuelve tus datos, y usa «Escribir/pegar JSON» (en Ajustes) para definirla — así se hicieron las fuentes que ya vienen." },
-  "author_url_ph": { "message": "https://www.ejemplo.com/mi-cuenta" },
-  "author_start": { "message": "Dar acceso y abrir la web" },
-  "author_stop": { "message": "Dejar de aprender" },
-  "author_step2": { "message": "2 · Construir la fuente" },
-  "author_analyze": { "message": "Analizar actividad capturada" },
-  "author_samples": { "message": "respuestas capturadas" },
-  "author_fields": { "message": "Mapeo de campos" },
-  "author_id": { "message": "Id" },
-  "author_name": { "message": "Nombre" },
-  "author_apihost": { "message": "Host de la API" },
-  "author_listpath": { "message": "Ruta de listado" },
-  "author_itemspath": { "message": "Ruta de items" },
-  "author_paging": { "message": "Paginación" },
-  "author_pdfpath": { "message": "Ruta del PDF (opcional)" },
-  "author_detailpath": { "message": "Ruta del JSON de detalle (opcional)" },
-  "doc_json": { "message": "guarda el JSON de detalle de cada elemento" },
-  "doc_pdf": { "message": "guarda un PDF por elemento" },
-  "doc_none": { "message": "solo metadatos (sin archivo por elemento)" },
-  "author_schema": { "message": "Esquema" },
-  "author_categories": { "message": "Categorías" },
-  "author_test": { "message": "Probar" },
-  "author_save": { "message": "Guardar fuente" },
-  "author_bad_url": { "message": "Introduce una URL https:// completa." },
-  "author_denied": { "message": "Se denegó el acceso a esa web." },
-  "author_learning": { "message": "Aprendiendo de $DOMAIN$ — navega tus datos y luego pulsa Analizar.", "placeholders": { "domain": { "content": "$1" } } },
-  "author_start_first": { "message": "Empieza a aprender de una web primero." },
-  "author_no_samples": { "message": "Aún no se capturaron respuestas — navega tus datos en la web y reinténtalo." },
-  "author_no_requests": { "message": "El grabador no vio ninguna petición. Recarga la extensión, vuelve a abrir la web, acepta el permiso, navega tus pedidos y reinténtalo." },
-  "author_no_list_seen": { "message": "Vi $N$ peticiones (de: $HOSTS$) pero ninguna devolvió un listado de documentos. Abre tu página de pedidos/facturas para que cargue los datos y reinténtalo — o dime estos hosts.", "placeholders": { "n": { "content": "$1" }, "hosts": { "content": "$2" } } },
-  "author_no_list": { "message": "No se encontró un listado de documentos en las respuestas capturadas." },
-  "author_detected": { "message": "Listado detectado «$ITEMS$» ($COUNT$ items). Revisa el mapeo de abajo.", "placeholders": { "items": { "content": "$1" }, "count": { "content": "$2" } } },
-  "author_crossdomain": { "message": "Host de datos externo: $HOSTS$ — pedirá consentimiento.", "placeholders": { "hosts": { "content": "$1" } } },
-  "author_invalid": { "message": "Fuente no válida: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "author_no_auth": { "message": "Aún no hay sesión capturada para esta API — navega tus datos en la web primero." },
-  "author_testing": { "message": "Probando…" },
-  "author_test_ok": { "message": "OK — se listaron $COUNT$ documentos.", "placeholders": { "count": { "content": "$1" } } },
-  "author_doc_fetching": { "message": "descargando $ID$…", "placeholders": { "id": { "content": "$1" } } },
-  "author_doc_via": { "message": "el detalle carga vía $VIA$", "placeholders": { "via": { "content": "$1" } } },
-  "author_doc_fail": { "message": "falló el detalle: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "via_json": { "message": "una llamada AJAX/API JSON" },
-  "via_embedded": { "message": "JSON incrustado en la página" },
-  "via_table": { "message": "una tabla HTML en la página" },
-  "via_html": { "message": "HTML sin datos estructurados" },
-  "via_pdf": { "message": "un archivo PDF" },
-  "via_list": { "message": "el propio elemento de la lista (JSON)" },
-  "via_page": { "message": "la página de impresión (HTML autocontenido)" },
-  "via_render": { "message": "la página renderizada, capturada (HTML autocontenido)" },
-  "via_invoice": { "message": "una factura imprimible generada (HTML)" },
-  "author_doc_preview": { "message": "Vista previa del detalle (primer documento):" },
-  "author_doc_pdf_size": { "message": "PDF · $N$ KB", "placeholders": { "n": { "content": "$1" } } },
-  "author_test_err": { "message": "Falló la prueba: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "author_saved": { "message": "Guardada «$ID$». Actívala en Ajustes.", "placeholders": { "id": { "content": "$1" } } },
-  "author_completing_h": { "message": "Completando una fuente existente:" },
-  "author_completing_sub": { "message": "Graba el producto que le falta a esta fuente (p. ej. una tarjeta). Al detectarlo se AÑADE como un stream nuevo — aportas la forma declarativa, nunca tus datos." },
-  "author_augment": { "message": "Añadir como stream" },
-  "author_augmented": { "message": "Añadido el stream «$SID$» a $ID$ — revísalo y compártelo como PR.", "placeholders": { "id": { "content": "$1" }, "sid": { "content": "$2" } } },
-
-  "edit_json": { "message": "Editar JSON" },
-  "edit_json_title": { "message": "Editar source: $ID$", "placeholders": { "id": { "content": "$1" } } },
-  "json_save": { "message": "Validar y guardar" },
-  "je_test": { "message": "Probar" },
-  "view_source": { "message": "Ver código HTML" },
-  "view_rendered": { "message": "Ver renderizado" },
-  "je_no_tab": { "message": "Sugerencia: abre el sitio en una pestaña e inicia sesión, para que la prueba use tu sesión." },
-  "json_badsyntax": { "message": "JSON inválido: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "json_invalid": { "message": "Source no válido: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "json_saved": { "message": "Aplicado — revisa, Prueba y Guarda." },
-  "import_source": { "message": "Importar (JSON)" },
-  "paste_source": { "message": "Escribir/pegar JSON" },
-  "browse_sources": { "message": "Explorar comunidad" },
-  "search_sources": { "message": "Buscar fuentes por nombre, servicio, categoría…" },
-  "store_title": { "message": "Almacén canónico" },
-  "store_help": { "message": "Dónde se guardan tus datos extraídos. Los destinos y consumidores se sirven de él — así un segundo destino, dispositivo o consumidor de solo-datos lo reutiliza en vez de re-extraer. Elige local, una carpeta sincronizada o tu propio endpoint HTTP, y muévelo cuando quieras." },
-  "dest_multidevice_hint": { "message": "¿Sincronizas entre dispositivos? Usa un backend de nube nativo que escriba la propia extensión —Google Drive, Dropbox, WebDAV o S3— como almacén y destino. No apuntes la opción de carpeta local a una carpeta sincronizada por una herramienta externa (Google Drive Desktop, grive2, rclone…): la extensión no puede deduplicar contra ficheros que crea otra app (y con el scope drive.file de Drive ni siquiera los ve), lo que duplica carpetas. Un backend nativo es la misma app en cada equipo, así que deduplica entre ellos." },
-  "store_where": { "message": "El almacén vive en:" },
-  "store_local": { "message": "Este dispositivo (local)" },
-  "store_folder": { "message": "Carpeta sincronizada" },
-  "store_drive": { "message": "Google Drive" },
-  "store_dropbox": { "message": "Dropbox" },
-  "store_webdav": { "message": "WebDAV" },
-  "store_s3": { "message": "S3 (o compatible)" },
-  "store_no_sink": { "message": "— añade antes un sink de este tipo —" },
-  "store_need_sink": { "message": "Elige un sink configurado para el almacén." },
-  "drive_disconnect": { "message": "Desconectar Drive" },
-  "drive_disconnected": { "message": "Drive desconectado." },
-  "store_http": { "message": "Endpoint HTTP" },
-  "store_move": { "message": "Mover almacén aquí" },
-  "store_browse": { "message": "Inspeccionar almacén…" },
-  "store_pick_folder": { "message": "Elegir carpeta…" },
-  "store_import_from": { "message": "Rellenar desde un destino:" },
-  "store_import": { "message": "Importar" },
-  "store_importing": { "message": "Importando…" },
-  "store_imported": { "message": "Importados $N$ registros al almacén.", "placeholders": { "n": { "content": "$1" } } },
-  "store_folder_ok": { "message": "Carpeta elegida." },
-  "store_need_url": { "message": "Introduce la URL del endpoint." },
-  "store_moving": { "message": "Moviendo…" },
-  "store_moved": { "message": "Movido ($N$ fuentes).", "placeholders": { "n": { "content": "$1" } } },
-  "store_move_err": { "message": "Error al mover: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-  "no_sources_match": { "message": "Ninguna fuente coincide con la búsqueda." },
-  "export_source": { "message": "Exportar" },
-  "share_source": { "message": "Compartir" },
-  "import_ok": { "message": "Importada «$ID$».", "placeholders": { "id": { "content": "$1" } } },
-  "import_err": { "message": "Falló la importación: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-
-  "market_title": { "message": "Fuentes de la comunidad" },
-  "market_intro": { "message": "Explora fuentes compartidas por la comunidad. Cada una es JSON revisado —datos, no código— y está confinada al dominio de su propia web. Las marcadas con aviso también envían tu sesión fuera del dominio; actívalas solo si confías en ellas." },
-  "market_search": { "message": "Buscar por nombre, servicio, categoría…" },
-  "market_reload": { "message": "Recargar" },
-  "market_loading": { "message": "Cargando…" },
-  "market_count": { "message": "$N$ fuentes", "placeholders": { "n": { "content": "$1" } } },
-  "market_unavailable": { "message": "Registro no disponible (sin conexión o aún no publicado)." },
-  "market_empty": { "message": "Ninguna fuente coincide." },
-  "market_offsite": { "message": "⚠ envía la sesión fuera del dominio" },
-  "market_install": { "message": "Instalar" },
-  "market_complete": { "message": "Completar" },
-  "market_complete_hint": { "message": "Graba un producto que le falte a esta fuente (una tarjeta, una inversión) y añádelo como stream nuevo." },
-  "market_gaps": { "message": "faltan: $G$", "placeholders": { "g": { "content": "$1" } } },
-  "market_gaps_hint": { "message": "Productos que esta fuente aún no cubre — instálala y usa «Completar» para añadir uno que tengas." },
-  "market_installed": { "message": "Instalada" },
-  "market_update": { "message": "Actualizar ($V1$ → $V2$)", "placeholders": { "v1": { "content": "$1" }, "v2": { "content": "$2" } } },
-  "market_update_pill": { "message": "actualización" },
-  "market_updates_available": { "message": "$N$ actualización(es) disponible(s) para tus fuentes instaladas.", "placeholders": { "n": { "content": "$1" } } },
-  "market_update_all": { "message": "Actualizar todo" },
-  "market_updating": { "message": "Actualizando $N$ fuente(s)…", "placeholders": { "n": { "content": "$1" } } },
-  "market_updated": { "message": "Actualizadas $OK$; $FAIL$ con error.", "placeholders": { "ok": { "content": "$1" }, "fail": { "content": "$2" } } },
-  "market_needs_version": { "message": "Requiere Habeas $V$+", "placeholders": { "v": { "content": "$1" } } },
-  "market_needs_pill": { "message": "requiere v$V$", "placeholders": { "v": { "content": "$1" } } },
-  "market_changelog": { "message": "Cambios" },
-  "market_new": { "message": "nuevo" },
-  "market_installing": { "message": "Instalando…" },
-  "market_install_ok": { "message": "Instalada «$ID$». Actívala en Ajustes.", "placeholders": { "id": { "content": "$1" } } },
-  "market_install_err": { "message": "Falló la instalación: $MSG$", "placeholders": { "msg": { "content": "$1" } } },
-
-  "market_details": { "message": "Valoraciones y comentarios" },
-  "market_rate": { "message": "Tu valoración:" },
-  "market_comments": { "message": "Comentarios" },
-  "market_no_comments": { "message": "Aún no hay comentarios." },
-  "market_author_ph": { "message": "Nombre (opcional)" },
-  "market_comment_ph": { "message": "Escribe un comentario…" },
-  "market_post": { "message": "Publicar" },
-  "market_rated": { "message": "¡Gracias por valorar!" },
-  "market_posted": { "message": "Comentario publicado." },
-  "market_social_off": { "message": "Servicio de valoraciones no disponible ahora." },
-
-  "author_map_intro": { "message": "Habeas detectó tus datos. Comprueba que cada campo de abajo muestra el ejemplo correcto, y pulsa Probar y Guardar. Rara vez necesitas «Avanzado»." },
-  "author_find_label": { "message": "Encuentra tus datos" },
-  "author_find_ph": { "message": "un nº de ticket, un importe…" },
-  "author_find": { "message": "Buscar" },
-  "author_find_none": { "message": "No aparece en lo capturado — prueba otro valor, o abre primero la página/pedido exacto." },
-  "author_find_ok": { "message": "Encontrado en una lista de $N$ elementos — mapeo abajo.", "placeholders": { "n": { "content": "$1" } } },
-  "author_find_multi": { "message": "Encontrado en $N$ listas — elige la correcta abajo.", "placeholders": { "n": { "content": "$1" } } },
-  "author_which_list": { "message": "¿Cuál de las listas son tus datos?" },
-  "author_multistream": { "message": "Este sitio tiene varias listas de datos — captúralas todas juntas" },
-  "author_groups_label": { "message": "Lista de cuentas / tarjetas (opcional)" },
-  "author_groups_none": { "message": "— ninguna (listado único) —" },
-  "author_items": { "message": "elementos" },
-  "author_pages": { "message": "página(s)" },
-  "author_list_hint": { "message": "Totales de las páginas que navegaste (elementos · páginas capturadas). Al usar la fuente se pagina para traerlos todos — aquí eliges la lista correcta, no páginas." },
-  "author_kind": { "message": "Tipo de datos" },
-  "author_advanced": { "message": "Avanzado (normalmente no hace falta)" },
-  "kind_receipt": { "message": "Tickets / recibos" },
-  "kind_invoice": { "message": "Facturas" },
-  "kind_transaction": { "message": "Movimientos de tarjeta / cuenta" },
-  "kind_investment": { "message": "Inversiones" },
-  "fld_internalid": { "message": "Id interno (enlaza detalle / PDF)" },
-  "fld_number": { "message": "Nº de recibo / factura (el que ves)" },
-  "fld_date": { "message": "Fecha" },
-  "fld_amount": { "message": "Importe" },
-  "fld_store": { "message": "Tienda / lugar" },
-  "fld_address": { "message": "Dirección" },
-  "fld_type": { "message": "Tipo" },
-  "fld_channel": { "message": "Canal" },
-  "fld_issuer": { "message": "Emisor / empresa" },
-  "fld_description": { "message": "Descripción" },
-  "fld_payee": { "message": "Comercio / beneficiario" },
-  "fld_direction": { "message": "Entrada / salida" },
-  "fld_instrument": { "message": "Instrumento / fondo" },
-  "fld_isin": { "message": "ISIN" },
-  "fld_units": { "message": "Participaciones" },
-  "fld_price": { "message": "Precio" },
-  "fld_operation": { "message": "Operación" }
+  "extName": {
+    "message": "Habeas"
+  },
+  "extDesc": {
+    "message": "Recupera tus propios datos personales de servicios que los esconden tras muros no automatizables — dentro de tu propia sesión."
+  },
+  "tagline": {
+    "message": "tus datos, en tus manos"
+  },
+  "settings": {
+    "message": "Ajustes"
+  },
+  "about_title": {
+    "message": "Acerca de"
+  },
+  "about_body": {
+    "message": "Habeas extrae tus propios datos —tickets, facturas, movimientos— de servicios sin API ni exportación por email, dentro de tu propia sesión iniciada. Nunca guarda tus credenciales, y nada se envía a ningún sitio que no elijas."
+  },
+  "learn_more": {
+    "message": "Más información en GitHub"
+  },
+  "documents": {
+    "message": "Documentos"
+  },
+  "list_docs": {
+    "message": "Listar documentos"
+  },
+  "load_store": {
+    "message": "Cargar del almacén"
+  },
+  "outputs_label": {
+    "message": "Obtener:"
+  },
+  "n_listed": {
+    "message": "$T$ documentos · $N$ recuperados",
+    "placeholders": {
+      "t": {
+        "content": "$1"
+      },
+      "n": {
+        "content": "$2"
+      }
+    }
+  },
+  "full_history": {
+    "message": "Todo el historial"
+  },
+  "save": {
+    "message": "Guardar"
+  },
+  "cancel": {
+    "message": "Cancelar"
+  },
+  "manage_accounts": {
+    "message": "Cuentas"
+  },
+  "manage_accounts_hint": {
+    "message": "Elige qué cuentas de esta fuente importar. Solo las cuentas seleccionadas se ofrecen para listar, auto y sincronizar. Se guarda en la fuente."
+  },
+  "accounts_pick_title": {
+    "message": "Cuentas a importar"
+  },
+  "accounts_pick_sub": {
+    "message": "Solo las cuentas marcadas se ofrecen para descargar (listar, auto y sincronizar)."
+  },
+  "accounts_loading": {
+    "message": "Cargando cuentas…"
+  },
+  "accounts_failed": {
+    "message": "No se pudieron cargar las cuentas (¿inicia sesión en el sitio primero?)."
+  },
+  "accounts_saved": {
+    "message": "$N$ cuenta(s) seleccionada(s)",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "all_accounts": {
+    "message": "Todas las cuentas"
+  },
+  "full_history_hint": {
+    "message": "Vuelve a listar todo en fresco desde el sitio para poder re-descargar los documentos seleccionados (las filas cargadas del almacén local son solo registro y NO se re-descargan). Requiere tener la sesión iniciada en el sitio."
+  },
+  "force_redownload": {
+    "message": "Re-descargar del sitio"
+  },
+  "force_redownload_hint": {
+    "message": "Vuelve a bajar del sitio los ficheros + detalles de los documentos seleccionados (incluso filas cargadas del almacén local), actualizando la fecha/importe reales en el almacén. Requiere sesión iniciada."
+  },
+  "n_from_store": {
+    "message": "$N$ del almacén (sin extraer)",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "send_to": {
+    "message": "Enviar a"
+  },
+  "send_selected": {
+    "message": "Enviar seleccionados"
+  },
+  "th_date": {
+    "message": "Fecha"
+  },
+  "th_group": {
+    "message": "Cuenta"
+  },
+  "th_type": {
+    "message": "Tipo"
+  },
+  "filter_label": {
+    "message": "Filtrar:"
+  },
+  "filter_all_groups": {
+    "message": "Todas las cuentas"
+  },
+  "filter_all_types": {
+    "message": "Todos los tipos"
+  },
+  "th_store": {
+    "message": "Tienda"
+  },
+  "th_files": {
+    "message": "Archivos"
+  },
+  "file_unavailable": {
+    "message": "no disponible para este elemento"
+  },
+  "th_amount": {
+    "message": "Importe"
+  },
+  "th_status": {
+    "message": "Estado"
+  },
+  "activity": {
+    "message": "Actividad reciente"
+  },
+  "no_activity": {
+    "message": "Sin actividad todavía."
+  },
+  "pill_new": {
+    "message": "pendiente"
+  },
+  "pill_sent": {
+    "message": "enviado"
+  },
+  "pill_new_hint": {
+    "message": "Aún no entregado al destino seleccionado — se incluirá en el próximo envío."
+  },
+  "pill_sent_hint": {
+    "message": "Ya entregado al destino seleccionado."
+  },
+  "select_label": {
+    "message": "Seleccionar:"
+  },
+  "sel_new": {
+    "message": "Pendientes"
+  },
+  "sel_all": {
+    "message": "Todos"
+  },
+  "sel_none": {
+    "message": "Ninguno"
+  },
+  "no_datasources": {
+    "message": "Activa un datasource en Ajustes."
+  },
+  "capture_hint": {
+    "message": "Abre el sitio y tu página de compras para capturar tu sesión, y reintenta."
+  },
+  "login_in_tab": {
+    "message": "Inicia sesión en el sitio en la pestaña que acabamos de abrir y vuelve a intentarlo."
+  },
+  "login_wait": {
+    "message": "Inicia sesión en la pestaña que hemos abierto — el listado continuará automáticamente en cuanto se detecte tu sesión."
+  },
+  "challenge_solve": {
+    "message": "El sitio mostró una verificación anti-bot — resuélvela en la pestaña que hemos abierto y vuelve a listar."
+  },
+  "cookies_cleared": {
+    "message": "Borradas $N$ cookies del sitio para un login limpio.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "cookies_cleared_login": {
+    "message": "Borradas $N$ cookies del sitio — inicia sesión en la pestaña nueva y prueba de nuevo.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "listing": {
+    "message": "Listando…"
+  },
+  "listing_page": {
+    "message": "Listando documentos… página $P$ ($N$ hasta ahora)",
+    "placeholders": {
+      "p": {
+        "content": "$1"
+      },
+      "n": {
+        "content": "$2"
+      }
+    }
+  },
+  "listing_year_page": {
+    "message": "Listando documentos de $Y$. Página $P$ ($N$ hasta ahora)",
+    "placeholders": {
+      "y": {
+        "content": "$1"
+      },
+      "p": {
+        "content": "$2"
+      },
+      "n": {
+        "content": "$3"
+      }
+    }
+  },
+  "n_documents": {
+    "message": "$COUNT$ documentos",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "tab_sources": {
+    "message": "Fuentes"
+  },
+  "tab_documents": {
+    "message": "Documentos"
+  },
+  "all_documents": {
+    "message": "Todos los documentos"
+  },
+  "refresh": {
+    "message": "Recargar"
+  },
+  "docs_search": {
+    "message": "Buscar…"
+  },
+  "docs_pick_source": {
+    "message": "Elige fuente…"
+  },
+  "th_source": {
+    "message": "Fuente"
+  },
+  "th_delivered_to": {
+    "message": "Entregado en"
+  },
+  "docs_loading": {
+    "message": "Cargando documentos…"
+  },
+  "all_sources": {
+    "message": "Todas las fuentes"
+  },
+  "no_documents": {
+    "message": "Aún no hay documentos"
+  },
+  "view": {
+    "message": "Ver"
+  },
+  "view_from": {
+    "message": "Ver desde $SINK$",
+    "placeholders": {
+      "sink": {
+        "content": "$1"
+      }
+    }
+  },
+  "open_from": {
+    "message": "Abrir desde $SINK$",
+    "placeholders": {
+      "sink": {
+        "content": "$1"
+      }
+    }
+  },
+  "opening": {
+    "message": "Abriendo…"
+  },
+  "retrieve_failed": {
+    "message": "No se pudo recuperar el fichero de este destino."
+  },
+  "download": {
+    "message": "Descargar"
+  },
+  "delivered_nofile": {
+    "message": "Entregado aquí (solo registro — sin fichero individual)"
+  },
+  "fetching": {
+    "message": "Obteniendo $COUNT$ documentos…",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "with_without_pdf": {
+    "message": "Con PDF: $A$ · sin PDF (no conservados): $B$",
+    "placeholders": {
+      "a": {
+        "content": "$1"
+      },
+      "b": {
+        "content": "$2"
+      }
+    }
+  },
+  "sent_docs": {
+    "message": "Enviado a «$SINK$»: $N$ documentos + manifiesto ($T$ registros)",
+    "placeholders": {
+      "sink": {
+        "content": "$1"
+      },
+      "n": {
+        "content": "$2"
+      },
+      "t": {
+        "content": "$3"
+      }
+    }
+  },
+  "sent_records": {
+    "message": "Guardado en «$SINK$»: manifiesto con $T$ registros",
+    "placeholders": {
+      "sink": {
+        "content": "$1"
+      },
+      "t": {
+        "content": "$2"
+      }
+    }
+  },
+  "n_nodoc": {
+    "message": "$N$ sin documento",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "sink_error": {
+    "message": "Error de destino: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "pick_sink": {
+    "message": "Configura un destino en Ajustes."
+  },
+  "nothing_selected": {
+    "message": "Nada seleccionado."
+  },
+  "folder_cancelled": {
+    "message": "Selección de carpeta cancelada."
+  },
+  "configure_folder": {
+    "message": "Configura la carpeta destino en Ajustes."
+  },
+  "folder_denied": {
+    "message": "Permiso de carpeta denegado."
+  },
+  "change_folder": {
+    "message": "Cambiar carpeta"
+  },
+  "fs_unsupported": {
+    "message": "Este navegador no puede elegir carpeta (sin File System Access). Usa Descargas o Drive."
+  },
+  "generic_error": {
+    "message": "Error: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_title": {
+    "message": "Ajustes"
+  },
+  "datasources": {
+    "message": "Datasources"
+  },
+  "destinations": {
+    "message": "Destinos"
+  },
+  "auto_sync": {
+    "message": "Sincronización automática"
+  },
+  "auto_help": {
+    "message": "Se ejecuta cuando TÚ te logueas en el sitio y envía solo lo nuevo. Solo destinos Drive/HTTP (los locales necesitan la página abierta)."
+  },
+  "add_destination": {
+    "message": "Añadir destino"
+  },
+  "add": {
+    "message": "Añadir"
+  },
+  "activate": {
+    "message": "Activar"
+  },
+  "deactivate": {
+    "message": "Desactivar"
+  },
+  "connect_drive": {
+    "message": "Conectar Drive"
+  },
+  "connected": {
+    "message": "Conectado"
+  },
+  "connecting": {
+    "message": "Conectando…"
+  },
+  "device_enter_code": {
+    "message": "En la página que se ha abierto, introduce el código: $CODE$",
+    "placeholders": {
+      "code": {
+        "content": "$1"
+      }
+    }
+  },
+  "remove": {
+    "message": "Eliminar"
+  },
+  "no_sinks": {
+    "message": "Aún no hay destinos."
+  },
+  "default_sink": {
+    "message": "por defecto"
+  },
+  "set_default": {
+    "message": "Por defecto"
+  },
+  "unset_default": {
+    "message": "Quitar por defecto"
+  },
+  "set_default_hint": {
+    "message": "Se preselecciona para las fuentes sin destino propio y se usa en Sincronizar todo."
+  },
+  "sync_all_nosink": {
+    "message": "$N$ sin destino",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "enable_auto": {
+    "message": "Activar auto"
+  },
+  "disable_auto": {
+    "message": "Desactivar auto"
+  },
+  "auto_on_pill": {
+    "message": "auto activo"
+  },
+  "no_sw_sinks": {
+    "message": "(sin destinos Drive/HTTP)"
+  },
+  "enable_ds_first": {
+    "message": "Activa un datasource para configurar auto."
+  },
+  "add_sink_first": {
+    "message": "Añade un destino Drive o HTTP primero."
+  },
+  "client_id_optional": {
+    "message": "Client ID (opcional):"
+  },
+  "redirect_hint": {
+    "message": "Vacío = usa el client de Habeas. Redirect URI para registrar en Google Console (con la barra final):"
+  },
+  "sink_download": {
+    "message": "Descargas"
+  },
+  "sink_local": {
+    "message": "Carpeta local (= nube si está sincronizada)"
+  },
+  "sink_drive": {
+    "message": "Google Drive (nativo)"
+  },
+  "sink_http": {
+    "message": "Consumidor HTTP"
+  },
+  "sink_webdav": {
+    "message": "WebDAV"
+  },
+  "webdav_url": {
+    "message": "URL"
+  },
+  "webdav_user": {
+    "message": "usuario"
+  },
+  "webdav_pass": {
+    "message": "contraseña"
+  },
+  "sink_s3": {
+    "message": "S3 (o compatible)"
+  },
+  "s3_bucket": {
+    "message": "bucket"
+  },
+  "s3_region": {
+    "message": "región"
+  },
+  "s3_key": {
+    "message": "access key"
+  },
+  "s3_secret": {
+    "message": "secret key"
+  },
+  "s3_endpoint_opt": {
+    "message": "endpoint (opcional)"
+  },
+  "s3_prefix_opt": {
+    "message": "prefijo (opcional)"
+  },
+  "sink_dropbox": {
+    "message": "Dropbox"
+  },
+  "connect_dropbox": {
+    "message": "Conectar Dropbox"
+  },
+  "dbx_appkey_opt": {
+    "message": "app key (opcional)"
+  },
+  "dbx_refresh_opt": {
+    "message": "refresh token (avanzado)"
+  },
+  "dbx_folder_opt": {
+    "message": "carpeta"
+  },
+  "dbx_folder_ph": {
+    "message": "vacío = carpeta de la app"
+  },
+  "dbx_hint": {
+    "message": "Añade el sink y pulsa «Conectar Dropbox» para autorizar (un clic). Avanzado/fallback Firefox: pega tu propia app key + un refresh token."
+  },
+  "sink_accepts": {
+    "message": "Acepta:"
+  },
+  "none_compatible": {
+    "message": "Ningún documento compatible con este destino."
+  },
+  "skipped_incompat": {
+    "message": "$N$ omitidos (categoría)",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "sending_progress": {
+    "message": "Guardando $I$/$N$…",
+    "placeholders": {
+      "i": {
+        "content": "$1"
+      },
+      "n": {
+        "content": "$2"
+      }
+    }
+  },
+  "doc_failed": {
+    "message": "$ID$ falló: $ERR$",
+    "placeholders": {
+      "id": {
+        "content": "$1"
+      },
+      "err": {
+        "content": "$2"
+      }
+    }
+  },
+  "n_failed": {
+    "message": "$N$ fallidos",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "stop": {
+    "message": "Detener"
+  },
+  "stopping": {
+    "message": "Deteniendo…"
+  },
+  "stopped": {
+    "message": "Detenido"
+  },
+  "stopped_n": {
+    "message": "Detenido — $N$ documentos hasta ahora",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "st_ok": {
+    "message": "$N$ doc(s) → $SINK$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "sink": {
+        "content": "$2"
+      }
+    }
+  },
+  "st_none": {
+    "message": "sin novedades"
+  },
+  "st_listing": {
+    "message": "sincronizando…"
+  },
+  "sync_all_stopped": {
+    "message": "Detenido"
+  },
+  "st_stopped": {
+    "message": "detenido"
+  },
+  "st_nosession": {
+    "message": "sin sesión"
+  },
+  "st_challenged": {
+    "message": "verificación anti-bot — abre el sitio y resuélvela, luego reintenta"
+  },
+  "st_error": {
+    "message": "error: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "status_listing": {
+    "message": "Comprobando $NAME$…",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "status_listing_page": {
+    "message": "Listando $NAME$… página $P$ ($N$)",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      },
+      "p": {
+        "content": "$2"
+      },
+      "n": {
+        "content": "$3"
+      }
+    }
+  },
+  "status_fetching": {
+    "message": "Descargando $N$ nuevos de $NAME$…",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "name": {
+        "content": "$2"
+      }
+    }
+  },
+  "status_sending": {
+    "message": "Enviando $N$ a $SINK$…",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "sink": {
+        "content": "$2"
+      }
+    }
+  },
+  "status_done": {
+    "message": "$NAME$: $N$ nuevos sincronizados",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      },
+      "n": {
+        "content": "$2"
+      }
+    }
+  },
+  "status_none": {
+    "message": "$NAME$: nada nuevo",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "status_nosession": {
+    "message": "$NAME$: inicia sesión para sincronizar",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "status_error": {
+    "message": "$NAME$ error: $MSG$",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      },
+      "msg": {
+        "content": "$2"
+      }
+    }
+  },
+  "status_challenged": {
+    "message": "$NAME$: verificación anti-bot — abre el sitio y resuélvela",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "group_pick_title": {
+    "message": "Elige una cuenta"
+  },
+  "group_pick_sub": {
+    "message": "Esta fuente tiene varias cuentas. Elige una, o todas."
+  },
+  "group_all": {
+    "message": "Todas las cuentas"
+  },
+  "group_continue": {
+    "message": "Continuar"
+  },
+  "group_n": {
+    "message": "Cuenta $N$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "notify_new": {
+    "message": "$N$ documento(s) nuevo(s) → $SINK$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "sink": {
+        "content": "$2"
+      }
+    }
+  },
+  "notify_sweep": {
+    "message": "$NEW$ documento(s) nuevo(s) en $SOURCES$ fuente(s)",
+    "placeholders": {
+      "new": {
+        "content": "$1"
+      },
+      "sources": {
+        "content": "$2"
+      }
+    }
+  },
+  "sync_all": {
+    "message": "Sincronizar todo"
+  },
+  "syncing": {
+    "message": "Sincronizando…"
+  },
+  "sync_all_running": {
+    "message": "Sincronizando todas las fuentes…"
+  },
+  "sync_all_done": {
+    "message": "$NEW$ nuevo(s) en $SOURCES$ fuente(s)",
+    "placeholders": {
+      "new": {
+        "content": "$1"
+      },
+      "sources": {
+        "content": "$2"
+      }
+    }
+  },
+  "sync_all_needlogin": {
+    "message": "$N$ requieren iniciar sesión",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "sync_all_err": {
+    "message": "Fallo al sincronizar: $E$",
+    "placeholders": {
+      "e": {
+        "content": "$1"
+      }
+    }
+  },
+  "notify_autoerr": {
+    "message": "Error de auto-sync: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "notify_challenge": {
+    "message": "$NAME$: resuelve la verificación anti-bot que acabamos de abrir y se sincronizará.",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "trust_first_party": {
+    "message": "oficial"
+  },
+  "trust_community": {
+    "message": "comunidad"
+  },
+  "consent_title": {
+    "message": "¿Activar «$NAME$»?",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "consent_reads": {
+    "message": "Lee tus datos en tu propia sesión iniciada en: $HOSTS$",
+    "placeholders": {
+      "hosts": {
+        "content": "$1"
+      }
+    }
+  },
+  "consent_replays": {
+    "message": "Reenvía esa sesión a la API del servicio: $HOST$",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "consent_offsite_warn": {
+    "message": "⚠ Esta fuente también envía tu sesión a un dominio DISTINTO: $HOSTS$. Actívala solo si confías en ella.",
+    "placeholders": {
+      "hosts": {
+        "content": "$1"
+      }
+    }
+  },
+  "consent_accept": {
+    "message": "Activar"
+  },
+  "consent_cancel": {
+    "message": "Cancelar"
+  },
+  "needs_consent": {
+    "message": "Activa esta fuente en Ajustes primero (requiere tu consentimiento)."
+  },
+  "authz_tagline": {
+    "message": "autorizar una integración"
+  },
+  "authz_intro": {
+    "message": "Una web pide a Habeas crear un flujo de datos. No se ejecuta nada hasta que lo permitas."
+  },
+  "authz_origin": {
+    "message": "Sitio que lo pide"
+  },
+  "authz_source": {
+    "message": "Fuente de datos"
+  },
+  "authz_dest": {
+    "message": "Envía a"
+  },
+  "authz_scope": {
+    "message": "Alcance de datos"
+  },
+  "authz_scope_all": {
+    "message": "todos los documentos"
+  },
+  "authz_note": {
+    "message": "El destino está en el propio dominio del sitio que lo pide — tus datos solo pueden volver a él. Podrás revocarlo cuando quieras en Ajustes."
+  },
+  "authz_allow": {
+    "message": "Permitir"
+  },
+  "authz_deny": {
+    "message": "Denegar"
+  },
+  "authz_granted": {
+    "message": "Permitido — puedes cerrar esta ventana."
+  },
+  "authz_denied": {
+    "message": "Denegado."
+  },
+  "authz_expired": {
+    "message": "La solicitud ha caducado. Pide al sitio que lo intente de nuevo."
+  },
+  "authz_unknown_source": {
+    "message": "Fuente de datos desconocida."
+  },
+  "grants_title": {
+    "message": "Integraciones de sitios"
+  },
+  "grants_help": {
+    "message": "Sitios a los que has permitido iniciar recolecciones hacia su propio dominio. Revoca cuando quieras."
+  },
+  "no_grants": {
+    "message": "Aún no hay integraciones."
+  },
+  "grant_revoke": {
+    "message": "Revocar"
+  },
+  "grant_line": {
+    "message": "$ORIGIN$ · $SOURCE$ → sí mismo",
+    "placeholders": {
+      "origin": {
+        "content": "$1"
+      },
+      "source": {
+        "content": "$2"
+      }
+    }
+  },
+  "create_source": {
+    "message": "Crear una fuente (modo grabación)"
+  },
+  "author_title": {
+    "message": "Crear fuente"
+  },
+  "author_intro": {
+    "message": "Graba una fuente nueva desde una web que uses: Habeas observa tu propia sesión mientras navegas tus datos y luego redacta un borrador de fuente que puedes probar, guardar y compartir. Nada sale de tu navegador."
+  },
+  "author_step1": {
+    "message": "1 · Aprender de una web"
+  },
+  "author_tips_title": {
+    "message": "Para una captura completa, en este orden:"
+  },
+  "author_tip_pages": {
+    "message": "Si tu listado tiene varias páginas, navega unas cuantas (página 2, 3…) para que Habeas vea la paginación."
+  },
+  "author_tip_detail": {
+    "message": "Después abre el detalle de un elemento — eso captura el endpoint de datos por elemento."
+  },
+  "author_tip_pdf": {
+    "message": "Si quieres los PDF, descarga una factura/recibo desde su página de detalle durante la captura."
+  },
+  "author_tip_wait": {
+    "message": "Deja que cada página cargue sus datos un segundo antes de seguir, y luego vuelve y pulsa Analizar."
+  },
+  "author_note_advanced": {
+    "message": "Aviso: la captura no funciona en todas las webs. Algunas —SPAs muy protegidas o con anti-bot avanzado (visto en ciertas tiendas)— no exponen sus datos al grabador y no se captura nada. Si pasa, aún puedes crear la fuente a mano: abre DevTools → Red del sitio, localiza la petición que devuelve tus datos, y usa «Escribir/pegar JSON» (en Ajustes) para definirla — así se hicieron las fuentes que ya vienen."
+  },
+  "author_url_ph": {
+    "message": "https://www.ejemplo.com/mi-cuenta"
+  },
+  "author_start": {
+    "message": "Dar acceso y abrir la web"
+  },
+  "author_stop": {
+    "message": "Dejar de aprender"
+  },
+  "author_step2": {
+    "message": "2 · Construir la fuente"
+  },
+  "author_analyze": {
+    "message": "Analizar actividad capturada"
+  },
+  "author_samples": {
+    "message": "respuestas capturadas"
+  },
+  "author_fields": {
+    "message": "Mapeo de campos"
+  },
+  "author_id": {
+    "message": "Id"
+  },
+  "author_name": {
+    "message": "Nombre"
+  },
+  "author_apihost": {
+    "message": "Host de la API"
+  },
+  "author_listpath": {
+    "message": "Ruta de listado"
+  },
+  "author_itemspath": {
+    "message": "Ruta de items"
+  },
+  "author_paging": {
+    "message": "Paginación"
+  },
+  "author_pdfpath": {
+    "message": "Ruta del PDF (opcional)"
+  },
+  "author_detailpath": {
+    "message": "Ruta del JSON de detalle (opcional)"
+  },
+  "doc_json": {
+    "message": "guarda el JSON de detalle de cada elemento"
+  },
+  "doc_pdf": {
+    "message": "guarda un PDF por elemento"
+  },
+  "doc_none": {
+    "message": "solo metadatos (sin archivo por elemento)"
+  },
+  "author_schema": {
+    "message": "Esquema"
+  },
+  "author_categories": {
+    "message": "Categorías"
+  },
+  "author_test": {
+    "message": "Probar"
+  },
+  "author_save": {
+    "message": "Guardar fuente"
+  },
+  "author_bad_url": {
+    "message": "Introduce una URL https:// completa."
+  },
+  "author_denied": {
+    "message": "Se denegó el acceso a esa web."
+  },
+  "author_learning": {
+    "message": "Aprendiendo de $DOMAIN$ — navega tus datos y luego pulsa Analizar.",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_start_first": {
+    "message": "Empieza a aprender de una web primero."
+  },
+  "author_no_samples": {
+    "message": "Aún no se capturaron respuestas — navega tus datos en la web y reinténtalo."
+  },
+  "author_no_requests": {
+    "message": "El grabador no vio ninguna petición. Recarga la extensión, vuelve a abrir la web, acepta el permiso, navega tus pedidos y reinténtalo."
+  },
+  "author_no_list_seen": {
+    "message": "Vi $N$ peticiones (de: $HOSTS$) pero ninguna devolvió un listado de documentos. Abre tu página de pedidos/facturas para que cargue los datos y reinténtalo — o dime estos hosts.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "hosts": {
+        "content": "$2"
+      }
+    }
+  },
+  "author_no_list": {
+    "message": "No se encontró un listado de documentos en las respuestas capturadas."
+  },
+  "author_detected": {
+    "message": "Listado detectado «$ITEMS$» ($COUNT$ items). Revisa el mapeo de abajo.",
+    "placeholders": {
+      "items": {
+        "content": "$1"
+      },
+      "count": {
+        "content": "$2"
+      }
+    }
+  },
+  "author_crossdomain": {
+    "message": "Host de datos externo: $HOSTS$ — pedirá consentimiento.",
+    "placeholders": {
+      "hosts": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_invalid": {
+    "message": "Fuente no válida: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_no_auth": {
+    "message": "Aún no hay sesión capturada para esta API — navega tus datos en la web primero."
+  },
+  "author_testing": {
+    "message": "Probando…"
+  },
+  "author_test_ok": {
+    "message": "OK — se listaron $COUNT$ documentos.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_doc_fetching": {
+    "message": "descargando $ID$…",
+    "placeholders": {
+      "id": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_doc_via": {
+    "message": "el detalle carga vía $VIA$",
+    "placeholders": {
+      "via": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_doc_fail": {
+    "message": "falló el detalle: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "via_json": {
+    "message": "una llamada AJAX/API JSON"
+  },
+  "via_embedded": {
+    "message": "JSON incrustado en la página"
+  },
+  "via_table": {
+    "message": "una tabla HTML en la página"
+  },
+  "via_html": {
+    "message": "HTML sin datos estructurados"
+  },
+  "via_pdf": {
+    "message": "un archivo PDF"
+  },
+  "via_list": {
+    "message": "el propio elemento de la lista (JSON)"
+  },
+  "via_page": {
+    "message": "la página de impresión (HTML autocontenido)"
+  },
+  "via_render": {
+    "message": "la página renderizada, capturada (HTML autocontenido)"
+  },
+  "via_invoice": {
+    "message": "una factura imprimible generada (HTML)"
+  },
+  "author_doc_preview": {
+    "message": "Vista previa del detalle (primer documento):"
+  },
+  "author_doc_pdf_size": {
+    "message": "PDF · $N$ KB",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_test_err": {
+    "message": "Falló la prueba: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_saved": {
+    "message": "Guardada «$ID$». Actívala en Ajustes.",
+    "placeholders": {
+      "id": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_completing_h": {
+    "message": "Completando una fuente existente:"
+  },
+  "author_completing_sub": {
+    "message": "Graba el producto que le falta a esta fuente (p. ej. una tarjeta). Al detectarlo se AÑADE como un stream nuevo — aportas la forma declarativa, nunca tus datos."
+  },
+  "author_augment": {
+    "message": "Añadir como stream"
+  },
+  "author_augmented": {
+    "message": "Añadido el stream «$SID$» a $ID$ — revísalo y compártelo como PR.",
+    "placeholders": {
+      "id": {
+        "content": "$1"
+      },
+      "sid": {
+        "content": "$2"
+      }
+    }
+  },
+  "edit_json": {
+    "message": "Editar JSON"
+  },
+  "edit_json_title": {
+    "message": "Editar source: $ID$",
+    "placeholders": {
+      "id": {
+        "content": "$1"
+      }
+    }
+  },
+  "json_save": {
+    "message": "Validar y guardar"
+  },
+  "je_test": {
+    "message": "Probar"
+  },
+  "view_source": {
+    "message": "Ver código HTML"
+  },
+  "view_rendered": {
+    "message": "Ver renderizado"
+  },
+  "je_no_tab": {
+    "message": "Sugerencia: abre el sitio en una pestaña e inicia sesión, para que la prueba use tu sesión."
+  },
+  "json_badsyntax": {
+    "message": "JSON inválido: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "json_invalid": {
+    "message": "Source no válido: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "json_saved": {
+    "message": "Aplicado — revisa, Prueba y Guarda."
+  },
+  "import_source": {
+    "message": "Importar (JSON)"
+  },
+  "paste_source": {
+    "message": "Escribir/pegar JSON"
+  },
+  "browse_sources": {
+    "message": "Explorar comunidad"
+  },
+  "search_sources": {
+    "message": "Buscar fuentes por nombre, servicio, categoría…"
+  },
+  "store_title": {
+    "message": "Almacén canónico"
+  },
+  "store_help": {
+    "message": "Dónde se guardan tus datos extraídos. Los destinos y consumidores se sirven de él — así un segundo destino, dispositivo o consumidor de solo-datos lo reutiliza en vez de re-extraer. Elige local, una carpeta sincronizada o tu propio endpoint HTTP, y muévelo cuando quieras."
+  },
+  "dest_multidevice_hint": {
+    "message": "¿Sincronizas entre dispositivos? Usa un backend de nube nativo que escriba la propia extensión —Google Drive, Dropbox, WebDAV o S3— como almacén y destino. No apuntes la opción de carpeta local a una carpeta sincronizada por una herramienta externa (Google Drive Desktop, grive2, rclone…): la extensión no puede deduplicar contra ficheros que crea otra app (y con el scope drive.file de Drive ni siquiera los ve), lo que duplica carpetas. Un backend nativo es la misma app en cada equipo, así que deduplica entre ellos."
+  },
+  "store_where": {
+    "message": "El almacén vive en:"
+  },
+  "store_local": {
+    "message": "Este dispositivo (local)"
+  },
+  "store_folder": {
+    "message": "Carpeta sincronizada"
+  },
+  "store_drive": {
+    "message": "Google Drive"
+  },
+  "store_dropbox": {
+    "message": "Dropbox"
+  },
+  "store_webdav": {
+    "message": "WebDAV"
+  },
+  "store_s3": {
+    "message": "S3 (o compatible)"
+  },
+  "store_no_sink": {
+    "message": "— añade antes un sink de este tipo —"
+  },
+  "store_need_sink": {
+    "message": "Elige un sink configurado para el almacén."
+  },
+  "drive_disconnect": {
+    "message": "Desconectar Drive"
+  },
+  "drive_disconnected": {
+    "message": "Drive desconectado."
+  },
+  "store_http": {
+    "message": "Endpoint HTTP"
+  },
+  "store_move": {
+    "message": "Mover almacén aquí"
+  },
+  "store_browse": {
+    "message": "Inspeccionar almacén…"
+  },
+  "store_pick_folder": {
+    "message": "Elegir carpeta…"
+  },
+  "store_import_from": {
+    "message": "Rellenar desde un destino:"
+  },
+  "store_import": {
+    "message": "Importar"
+  },
+  "store_importing": {
+    "message": "Importando…"
+  },
+  "store_imported": {
+    "message": "Importados $N$ registros al almacén.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "store_folder_ok": {
+    "message": "Carpeta elegida."
+  },
+  "store_need_url": {
+    "message": "Introduce la URL del endpoint."
+  },
+  "store_moving": {
+    "message": "Moviendo…"
+  },
+  "store_moved": {
+    "message": "Movido ($N$ fuentes).",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "store_move_err": {
+    "message": "Error al mover: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "no_sources_match": {
+    "message": "Ninguna fuente coincide con la búsqueda."
+  },
+  "export_source": {
+    "message": "Exportar"
+  },
+  "share_source": {
+    "message": "Compartir"
+  },
+  "import_ok": {
+    "message": "Importada «$ID$».",
+    "placeholders": {
+      "id": {
+        "content": "$1"
+      }
+    }
+  },
+  "import_err": {
+    "message": "Falló la importación: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_title": {
+    "message": "Fuentes de la comunidad"
+  },
+  "market_intro": {
+    "message": "Explora fuentes compartidas por la comunidad. Cada una es JSON revisado —datos, no código— y está confinada al dominio de su propia web. Las marcadas con aviso también envían tu sesión fuera del dominio; actívalas solo si confías en ellas."
+  },
+  "market_search": {
+    "message": "Buscar por nombre, servicio, categoría…"
+  },
+  "market_reload": {
+    "message": "Recargar"
+  },
+  "market_loading": {
+    "message": "Cargando…"
+  },
+  "market_count": {
+    "message": "$N$ fuentes",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_unavailable": {
+    "message": "Registro no disponible (sin conexión o aún no publicado)."
+  },
+  "market_empty": {
+    "message": "Ninguna fuente coincide."
+  },
+  "market_offsite": {
+    "message": "⚠ envía la sesión fuera del dominio"
+  },
+  "market_install": {
+    "message": "Instalar"
+  },
+  "market_complete": {
+    "message": "Completar"
+  },
+  "market_complete_hint": {
+    "message": "Graba un producto que le falte a esta fuente (una tarjeta, una inversión) y añádelo como stream nuevo."
+  },
+  "market_gaps": {
+    "message": "faltan: $G$",
+    "placeholders": {
+      "g": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_gaps_hint": {
+    "message": "Productos que esta fuente aún no cubre — instálala y usa «Completar» para añadir uno que tengas."
+  },
+  "market_installed": {
+    "message": "Instalada"
+  },
+  "market_update": {
+    "message": "Actualizar ($V1$ → $V2$)",
+    "placeholders": {
+      "v1": {
+        "content": "$1"
+      },
+      "v2": {
+        "content": "$2"
+      }
+    }
+  },
+  "market_update_pill": {
+    "message": "actualización"
+  },
+  "market_updates_available": {
+    "message": "$N$ actualización(es) disponible(s) para tus fuentes instaladas.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_update_all": {
+    "message": "Actualizar todo"
+  },
+  "market_updating": {
+    "message": "Actualizando $N$ fuente(s)…",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_updated": {
+    "message": "Actualizadas $OK$; $FAIL$ con error.",
+    "placeholders": {
+      "ok": {
+        "content": "$1"
+      },
+      "fail": {
+        "content": "$2"
+      }
+    }
+  },
+  "market_needs_version": {
+    "message": "Requiere Habeas $V$+",
+    "placeholders": {
+      "v": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_needs_pill": {
+    "message": "requiere v$V$",
+    "placeholders": {
+      "v": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_changelog": {
+    "message": "Cambios"
+  },
+  "market_new": {
+    "message": "nuevo"
+  },
+  "market_installing": {
+    "message": "Instalando…"
+  },
+  "market_install_ok": {
+    "message": "Instalada «$ID$». Actívala en Ajustes.",
+    "placeholders": {
+      "id": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_install_err": {
+    "message": "Falló la instalación: $MSG$",
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
+  },
+  "market_details": {
+    "message": "Valoraciones y comentarios"
+  },
+  "market_rate": {
+    "message": "Tu valoración:"
+  },
+  "market_comments": {
+    "message": "Comentarios"
+  },
+  "market_no_comments": {
+    "message": "Aún no hay comentarios."
+  },
+  "market_author_ph": {
+    "message": "Nombre (opcional)"
+  },
+  "market_comment_ph": {
+    "message": "Escribe un comentario…"
+  },
+  "market_post": {
+    "message": "Publicar"
+  },
+  "market_rated": {
+    "message": "¡Gracias por valorar!"
+  },
+  "market_posted": {
+    "message": "Comentario publicado."
+  },
+  "market_social_off": {
+    "message": "Servicio de valoraciones no disponible ahora."
+  },
+  "author_map_intro": {
+    "message": "Habeas detectó tus datos. Comprueba que cada campo de abajo muestra el ejemplo correcto, y pulsa Probar y Guardar. Rara vez necesitas «Avanzado»."
+  },
+  "author_find_label": {
+    "message": "Encuentra tus datos"
+  },
+  "author_find_ph": {
+    "message": "un nº de ticket, un importe…"
+  },
+  "author_find": {
+    "message": "Buscar"
+  },
+  "author_find_none": {
+    "message": "No aparece en lo capturado — prueba otro valor, o abre primero la página/pedido exacto."
+  },
+  "author_find_ok": {
+    "message": "Encontrado en una lista de $N$ elementos — mapeo abajo.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_find_multi": {
+    "message": "Encontrado en $N$ listas — elige la correcta abajo.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_which_list": {
+    "message": "¿Cuál de las listas son tus datos?"
+  },
+  "author_multistream": {
+    "message": "Este sitio tiene varias listas de datos — captúralas todas juntas"
+  },
+  "author_groups_label": {
+    "message": "Lista de cuentas / tarjetas (opcional)"
+  },
+  "author_groups_none": {
+    "message": "— ninguna (listado único) —"
+  },
+  "author_items": {
+    "message": "elementos"
+  },
+  "author_pages": {
+    "message": "página(s)"
+  },
+  "author_list_hint": {
+    "message": "Totales de las páginas que navegaste (elementos · páginas capturadas). Al usar la fuente se pagina para traerlos todos — aquí eliges la lista correcta, no páginas."
+  },
+  "author_kind": {
+    "message": "Tipo de datos"
+  },
+  "author_advanced": {
+    "message": "Avanzado (normalmente no hace falta)"
+  },
+  "kind_receipt": {
+    "message": "Tickets / recibos"
+  },
+  "kind_invoice": {
+    "message": "Facturas"
+  },
+  "kind_transaction": {
+    "message": "Movimientos de tarjeta / cuenta"
+  },
+  "kind_investment": {
+    "message": "Inversiones"
+  },
+  "fld_internalid": {
+    "message": "Id interno (enlaza detalle / PDF)"
+  },
+  "fld_number": {
+    "message": "Nº de recibo / factura (el que ves)"
+  },
+  "fld_date": {
+    "message": "Fecha"
+  },
+  "fld_amount": {
+    "message": "Importe"
+  },
+  "fld_store": {
+    "message": "Tienda / lugar"
+  },
+  "fld_address": {
+    "message": "Dirección"
+  },
+  "fld_type": {
+    "message": "Tipo"
+  },
+  "fld_channel": {
+    "message": "Canal"
+  },
+  "fld_issuer": {
+    "message": "Emisor / empresa"
+  },
+  "fld_description": {
+    "message": "Descripción"
+  },
+  "fld_payee": {
+    "message": "Comercio / beneficiario"
+  },
+  "fld_direction": {
+    "message": "Entrada / salida"
+  },
+  "fld_instrument": {
+    "message": "Instrumento / fondo"
+  },
+  "fld_isin": {
+    "message": "ISIN"
+  },
+  "fld_units": {
+    "message": "Participaciones"
+  },
+  "fld_price": {
+    "message": "Precio"
+  },
+  "fld_operation": {
+    "message": "Operación"
+  },
+  "planner_title": {
+    "message": "Planificador"
+  },
+  "planner_help": {
+    "message": "Planifica descargas periódicas de una fuente a un destino. Se ejecutan en tu sesión viva del navegador — si no tienes la sesión iniciada cuando salta una planificación, Habeas abre el sitio para que inicies sesión y reintenta."
+  },
+  "sched_kind_daily": {
+    "message": "Cada día"
+  },
+  "sched_kind_weekly": {
+    "message": "Semanal"
+  },
+  "sched_kind_monthlyday": {
+    "message": "Mensual · día del mes"
+  },
+  "sched_kind_monthlyweekday": {
+    "message": "Mensual · n-ésimo día de la semana"
+  },
+  "sched_kind_monthlybusiness": {
+    "message": "Mensual · n-ésimo día laborable"
+  },
+  "sched_mon": {
+    "message": "Lun"
+  },
+  "sched_tue": {
+    "message": "Mar"
+  },
+  "sched_wed": {
+    "message": "Mié"
+  },
+  "sched_thu": {
+    "message": "Jue"
+  },
+  "sched_fri": {
+    "message": "Vie"
+  },
+  "sched_sat": {
+    "message": "Sáb"
+  },
+  "sched_sun": {
+    "message": "Dom"
+  },
+  "sched_ord_1": {
+    "message": "1º"
+  },
+  "sched_ord_2": {
+    "message": "2º"
+  },
+  "sched_ord_3": {
+    "message": "3º"
+  },
+  "sched_ord_4": {
+    "message": "4º"
+  },
+  "sched_ord_5": {
+    "message": "5º"
+  },
+  "sched_ord_last": {
+    "message": "último"
+  },
+  "sched_time_label": {
+    "message": "a las"
+  },
+  "sched_add": {
+    "message": "Añadir planificación"
+  },
+  "sched_none": {
+    "message": "Aún no hay planificaciones."
+  },
+  "sched_next": {
+    "message": "próxima: $p1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sched_run_now": {
+    "message": "Ejecutar ahora"
+  },
+  "sched_running": {
+    "message": "Ejecutando…"
+  },
+  "sched_no_sources": {
+    "message": "sin fuentes activas"
+  },
+  "sched_no_sinks": {
+    "message": "sin destinos"
+  },
+  "sched_at": {
+    "message": "a las $p1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sched_desc_daily": {
+    "message": "Cada día $p1$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "sched_desc_weekly": {
+    "message": "Cada $p1$ $p2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "sched_desc_monthlyday": {
+    "message": "El día $p1$ de cada mes $p2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "sched_desc_monthlyweekday": {
+    "message": "El $p1$ $p2$ de cada mes $p3$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      },
+      "p3": {
+        "content": "$3"
+      }
+    }
+  },
+  "sched_desc_monthlybusiness": {
+    "message": "El $p1$ día laborable de cada mes $p2$",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      },
+      "p2": {
+        "content": "$2"
+      }
+    }
+  },
+  "notify_sched_login": {
+    "message": "$p1$: una descarga programada necesita que inicies sesión — hemos abierto el sitio.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  },
+  "notify_sched_gaveup": {
+    "message": "$p1$: una descarga programada no se pudo completar tras varios reintentos; se intentará de nuevo en la próxima ocurrencia.",
+    "placeholders": {
+      "p1": {
+        "content": "$1"
+      }
+    }
+  }
 }

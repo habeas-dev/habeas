@@ -2,7 +2,7 @@ import { chrome } from './ext.js';
 // Config store: datasources / sinks / routes as a versioned JSON in storage.local.
 // Local-first: nothing here leaves the browser. Secrets live elsewhere (secrets.js).
 const KEY = 'habeas:config';
-const DEFAULT = { version: 1, datasources: [], sinks: [], routes: [] };
+const DEFAULT = { version: 1, datasources: [], sinks: [], routes: [], schedules: [] };
 
 export async function getConfig() {
   const o = await chrome.storage.local.get(KEY);
