@@ -1177,6 +1177,16 @@ export function normalizeDate(v) {
 }
 
 // Spanish/EUR amount text → number. "21,00 €" → 21 · "1.234,56 €" → 1234.56 · "-5,00"/"5,00-" → -5.
+// ISO 4217 minor-unit exponent for a currency — how many decimals it has. Default 2; the exceptions are
+// the zero-decimal currencies (JPY, KRW, HUF-as-traded, …) and the three-decimal ones (BHD, KWD, …). Used
+// to turn an integer minor-unit amount into a real value per the transaction's OWN currency.
+const CCY_EXP0 = new Set(['BIF', 'CLP', 'DJF', 'GNF', 'ISK', 'JPY', 'KMF', 'KRW', 'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF']);
+const CCY_EXP3 = new Set(['BHD', 'IQD', 'JOD', 'KWD', 'LYD', 'OMR', 'TND']);
+function minorExp(ccy) {
+  const c = String(ccy || '').toUpperCase();
+  return CCY_EXP0.has(c) ? 0 : CCY_EXP3.has(c) ? 3 : 2;
+}
+
 export function normalizeAmount(v) {
   if (v == null || v === '' || typeof v === 'number') return v;
   let s = String(v).replace(/[\s ]|€|eur/gi, '');
@@ -1219,9 +1229,11 @@ function mapDoc(adapter, p, group) {
     doc.internalId = [group && (group.accountNumber != null ? group.accountNumber : group.id), p._period, p._idx, p.date, p.amount].filter((x) => x != null && x !== '').join('|');
   if (doc.date != null && doc.date !== '') doc.date = normalizeDate(doc.date); // textual/locale → ISO (also epoch ms/s)
   for (const k of ['total', 'amount']) if (typeof doc[k] === 'string' && doc[k] !== '') doc[k] = normalizeAmount(doc[k]); // "21,00 €" → 21
-  // Minor-unit amounts: some APIs return integer cents (Revolut: -791 = -7.91). Scale the numeric money
-  // fields declaratively (`amountScale: 0.01`); raw values stay untouched in record.extra via keepRaw.
-  if (adapter.amountScale) for (const k of ['total', 'amount', 'balance']) if (typeof doc[k] === 'number') doc[k] = doc[k] * adapter.amountScale;
+  // Minor-unit amounts: some APIs return integer minor units. `amountScale` is a FIXED factor (e.g. 0.01);
+  // `minorUnits:true` scales by the transaction's OWN currency exponent (ISO 4217) so a JPY amount (0 decimals)
+  // and a EUR amount (2) both come out right. Raw values stay untouched in record.extra via keepRaw.
+  const scale = adapter.minorUnits ? Math.pow(10, -minorExp(doc.currency)) : adapter.amountScale;
+  if (scale) for (const k of ['total', 'amount', 'balance']) if (typeof doc[k] === 'number') doc[k] = doc[k] * scale;
   doc.category = categorize(adapter, p);
   // A generic display label across schemas (store / issuer / counterparty / instrument / …). When none
   // resolve (e.g. a source whose list encrypts everything but the id, like Amazon), fall back to the

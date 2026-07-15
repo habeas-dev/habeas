@@ -18,6 +18,7 @@ const tx = (id, startedDate, amount, currency, description, type, merchantName) 
   description, type, state: 'COMPLETED', ...(merchantName ? { merchant: { name: merchantName } } : {}),
 });
 const ALL = [
+  tx('t4', 1700000004000, 1000, 'JPY', 'Tokyo Ramen', 'CARD_PAYMENT', 'Tokyo Ramen'), // 0-decimal currency
   tx('t3', 1700000003000, -791, 'EUR', 'Coffee Shop', 'CARD_PAYMENT', 'Coffee Shop'),
   tx('t2', 1700000002000, 900, 'EUR', 'Payment from Jane Doe', 'TOPUP', null),
   tx('t1', 1700000001000, -1250, 'EUR', 'Grocery Store', 'CARD_PAYMENT', 'Grocery Store'),
@@ -40,15 +41,17 @@ test('transactions: to-cursor paging, minor-unit scaling, epoch dates, x-device-
     return { ok: false, status: 404, json: async () => ({}) };
   };
   const docs = await listInventory(EFF, auth, net, {});
-  // page1 = 3 rows (cursor = min startedDate = t1) → page2 = rows < t1 = none → stop. 3 unique.
-  assert.equal(docs.length, 3);
-  assert.equal(new Set(docs.map((d) => d.internalId)).size, 3);
+  // page1 = 4 rows (cursor = min startedDate = t1) → page2 = rows < t1 = none → stop. 4 unique.
+  assert.equal(docs.length, 4);
+  assert.equal(new Set(docs.map((d) => d.internalId)).size, 4);
 
   const byId = Object.fromEntries(docs.map((d) => [d.internalId, d.record]));
-  assert.equal(byId.t3.amount, -7.91, 'minor units scaled by 0.01');       // −791 → −7.91
+  assert.equal(byId.t3.amount, -7.91, 'EUR (2 decimals): −791 → −7.91');
   assert.equal(byId.t3.direction, 'debit');
   assert.equal(byId.t2.amount, 9);                                          // 900 → 9.00
   assert.equal(byId.t2.direction, 'credit');
+  assert.equal(byId.t4.amount, 1000, 'JPY (0 decimals): 1000 stays 1000, not 10'); // per-currency exponent
+  assert.equal(byId.t4.currency, 'JPY');
   assert.equal(byId.t1.date, '2023-11-14');                                // epoch ms → ISO (normalizeDate)
   assert.equal(byId.t3.currency, 'EUR');
   assert.equal(byId.t1.type, 'CARD_PAYMENT');
