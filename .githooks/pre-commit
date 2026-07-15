@@ -1,0 +1,10 @@
+#!/bin/sh
+# Habeas pre-commit guard. Blocks committing real captured data (account numbers, IBANs, live
+# tokens) or raw capture dumps. Enable once per clone:  git config core.hooksPath .githooks
+# (also run automatically by `npm run prepare`).
+node scripts/scan-pii.mjs --staged || {
+  echo ""
+  echo "Commit blocked by the PII/secret guard (scripts/scan-pii.mjs)."
+  echo "Sanitise the flagged value, or — if it is genuinely fictitious — add it to ALLOWLIST."
+  exit 1
+}
