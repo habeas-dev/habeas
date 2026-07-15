@@ -427,7 +427,12 @@ async function onList(mode, opts = {}) {
       });
       for (const d of fresh) acc.set(key(tag(d, sid, sk)), d);
       newTotal += fresh.length;
-      try { await putItems(sk, fresh.filter((d) => d.internalId != null).map((d) => ({ internalId: d.internalId, record: d.record })), { source: adapter.id, schema: eff.schema }); } catch (e) { /* store best-effort */ }
+      // Synthetic docs are OPTIMISTIC (every month in the window) — many don't exist (before the account
+      // opened). Don't persist them to the store at list time, or "All documents" would mark phantom months
+      // as existing files. They still show in THIS list (to pick + download); a successful download/delivery
+      // is what proves a month exists and puts it in the store.
+      const synthetic = eff.api && eff.api.list && eff.api.list.paging === 'synthetic';
+      if (!synthetic) try { await putItems(sk, fresh.filter((d) => d.internalId != null).map((d) => ({ internalId: d.internalId, record: d.record })), { source: adapter.id, schema: eff.schema }); } catch (e) { /* store best-effort */ }
     }
     rebuild(); await render(delivered); bars();
     $('#status').textContent = aborted() ? t('stopped_n', [String(inventory.length)]) : t('n_listed', [String(inventory.length), String(newTotal)]);
