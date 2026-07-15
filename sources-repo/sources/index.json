@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-15T04:55:51.344Z",
+  "generated": "2026-07-15T05:30:33.354Z",
   "sources": [
     {
       "id": "amazon-es",
@@ -21,7 +21,7 @@
       "gaps": [],
       "changelog": [],
       "url": "https://habeas-dev.github.io/sources/amazon-es.json",
-      "updated": "2026-07-15T04:55:51.344Z"
+      "updated": "2026-07-15T05:30:33.354Z"
     },
     {
       "id": "bipdrive-es",
@@ -47,7 +47,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/bipdrive-es.json",
-      "updated": "2026-07-15T04:55:51.344Z"
+      "updated": "2026-07-15T05:30:33.354Z"
     },
     {
       "id": "caixabank-consumer-es",
@@ -75,7 +75,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/caixabank-consumer-es.json",
-      "updated": "2026-07-15T04:55:51.344Z"
+      "updated": "2026-07-15T05:30:33.354Z"
     },
     {
       "id": "carrefour-es",
@@ -103,7 +103,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/carrefour-es.json",
-      "updated": "2026-07-15T04:55:51.344Z"
+      "updated": "2026-07-15T05:30:33.354Z"
     },
     {
       "id": "decathlon-es",
@@ -129,7 +129,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/decathlon-es.json",
-      "updated": "2026-07-15T04:55:51.344Z"
+      "updated": "2026-07-15T05:30:33.354Z"
     },
     {
       "id": "dia-es",
@@ -156,7 +156,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/dia-es.json",
-      "updated": "2026-07-15T04:55:51.344Z"
+      "updated": "2026-07-15T05:30:33.354Z"
     },
     {
       "id": "hover-com",
@@ -187,7 +187,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/hover-com.json",
-      "updated": "2026-07-15T04:55:51.344Z"
+      "updated": "2026-07-15T05:30:33.354Z"
     },
     {
       "id": "ikea-es",
@@ -210,7 +210,7 @@
       "gaps": [],
       "changelog": [],
       "url": "https://habeas-dev.github.io/sources/ikea-es.json",
-      "updated": "2026-07-15T04:55:51.344Z"
+      "updated": "2026-07-15T05:30:33.354Z"
     },
     {
       "id": "ing-es",
@@ -237,7 +237,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/ing-es.json",
-      "updated": "2026-07-15T04:55:51.344Z"
+      "updated": "2026-07-15T05:30:33.354Z"
     },
     {
       "id": "leroymerlin-es",
@@ -277,7 +277,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/leroymerlin-es.json",
-      "updated": "2026-07-15T04:55:51.344Z"
+      "updated": "2026-07-15T05:30:33.354Z"
     },
     {
       "id": "openbank-es",
@@ -311,7 +311,31 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/openbank-es.json",
-      "updated": "2026-07-15T04:55:51.344Z"
+      "updated": "2026-07-15T05:30:33.354Z"
+    },
+    {
+      "id": "revolut",
+      "name": "Revolut",
+      "service": "revolut",
+      "categories": [
+        "banking"
+      ],
+      "trust": "community",
+      "domain": "revolut.com",
+      "country": "global",
+      "formats": [],
+      "crossDomain": [],
+      "version": "2026-07-15",
+      "minVersion": "0.1.68",
+      "gaps": [],
+      "changelog": [
+        {
+          "version": "2026-07-15",
+          "changes": "Initial: personal transactions across all accounts (app.revolut.com), paged by the `to` timestamp cursor. Cookie session + captured x-device-id. Amounts are minor units (scaled). Statements (PDF/CSV) and per-pocket filtering are gaps for later."
+        }
+      ],
+      "url": "https://habeas-dev.github.io/sources/revolut.json",
+      "updated": "2026-07-15T05:30:33.354Z"
     },
     {
       "id": "wizink-es",
@@ -340,7 +364,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/wizink-es.json",
-      "updated": "2026-07-15T04:55:51.344Z"
+      "updated": "2026-07-15T05:30:33.354Z"
     }
   ]
 }

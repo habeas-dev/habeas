@@ -1,0 +1,52 @@
+{
+  "id": "revolut",
+  "name": "Revolut",
+  "service": "revolut",
+  "trust": "community",
+  "domain": "revolut.com",
+  "country": "global",
+  "categories": ["banking"],
+  "version": "2026-07-15",
+  "minVersion": "0.1.68",
+  "amountScale": 0.01,
+  "keepRaw": true,
+  "throttle": { "minMs": 300, "jitterMs": 400 },
+  "match": ["https://app.revolut.com/*"],
+  "openUrl": "https://app.revolut.com/home",
+  "schema": "transaction@1",
+  "auth": {
+    "mode": "cookie",
+    "replayHeaders": ["x-device-id"]
+  },
+  "normalize": {
+    "counterparty": { "from": "description", "re": ["^(?:To|From|Payment to|Payment from)\\s+(.+)$"] }
+  },
+  "api": {
+    "host": "https://app.revolut.com",
+    "list": {
+      "path": "/api/retail/user/current/transactions/last",
+      "itemsPath": "$",
+      "paging": "cursor",
+      "cursorParam": "to",
+      "cursorFromItem": "startedDate",
+      "params": { "count": "500" },
+      "headers": {
+        "x-browser-application": "WEB_CLIENT",
+        "x-client-version": "100.0"
+      },
+      "referer": "https://app.revolut.com/home"
+    }
+  },
+  "fields": {
+    "internalId": "id",
+    "date": "startedDate",
+    "amount": "amount",
+    "currency": "currency",
+    "description": "description",
+    "type": "type",
+    "counterparty": "merchant.name"
+  },
+  "changelog": [
+    { "version": "2026-07-15", "changes": "Initial: personal transactions across all accounts (app.revolut.com), paged by the `to` timestamp cursor. Cookie session + captured x-device-id. Amounts are minor units (scaled). Statements (PDF/CSV) and per-pocket filtering are gaps for later." }
+  ]
+}

@@ -1,0 +1,72 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+import { listInventory } from '../src/runtime/inventory.js';
+import { validateAdapter } from '../src/adapters/validate.js';
+import { resolveOutput } from '../src/lib/outputs.js';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const ADP = JSON.parse(readFileSync(join(here, '../../sources-repo/sources/revolut.json'), 'utf8'));
+const EFF = resolveOutput(ADP, ADP.id);
+
+// Wholly fictitious transactions. Revolut returns a TOP-LEVEL array; amounts are integer minor units
+// (−791 = −7.91) and dates are epoch ms. Paging is "give me rows before this `to` timestamp".
+const tx = (id, startedDate, amount, currency, description, type, merchantName) => ({
+  id, legId: id, startedDate, completedDate: startedDate, currency, amount, balance: 10000,
+  description, type, state: 'COMPLETED', ...(merchantName ? { merchant: { name: merchantName } } : {}),
+});
+const ALL = [
+  tx('t3', 1700000003000, -791, 'EUR', 'Coffee Shop', 'CARD_PAYMENT', 'Coffee Shop'),
+  tx('t2', 1700000002000, 900, 'EUR', 'Payment from Jane Doe', 'TOPUP', null),
+  tx('t1', 1700000001000, -1250, 'EUR', 'Grocery Store', 'CARD_PAYMENT', 'Grocery Store'),
+];
+const auth = { merged: { 'x-device-id': 'DEV-abc123' }, byPath: {}, ctx: {} };
+
+test('Revolut adapter validates', () => { assert.ok(validateAdapter(ADP).ok, JSON.stringify(validateAdapter(ADP).errors)); });
+
+test('transactions: to-cursor paging, minor-unit scaling, epoch dates, x-device-id replay', async () => {
+  const seenHeaders = [];
+  const net = async (url, init) => {
+    seenHeaders.push((init && init.headers) || {});
+    const u = new URL(url);
+    if (u.pathname === '/api/retail/user/current/transactions/last') {
+      assert.equal(u.searchParams.get('count'), '500', 'count param sent every page');
+      const to = u.searchParams.get('to');
+      const page = to == null ? ALL : ALL.filter((t) => t.startedDate < Number(to)); // rows OLDER than the cursor
+      return { ok: true, status: 200, json: async () => page, text: async () => JSON.stringify(page) };
+    }
+    return { ok: false, status: 404, json: async () => ({}) };
+  };
+  const docs = await listInventory(EFF, auth, net, {});
+  // page1 = 3 rows (cursor = min startedDate = t1) → page2 = rows < t1 = none → stop. 3 unique.
+  assert.equal(docs.length, 3);
+  assert.equal(new Set(docs.map((d) => d.internalId)).size, 3);
+
+  const byId = Object.fromEntries(docs.map((d) => [d.internalId, d.record]));
+  assert.equal(byId.t3.amount, -7.91, 'minor units scaled by 0.01');       // −791 → −7.91
+  assert.equal(byId.t3.direction, 'debit');
+  assert.equal(byId.t2.amount, 9);                                          // 900 → 9.00
+  assert.equal(byId.t2.direction, 'credit');
+  assert.equal(byId.t1.date, '2023-11-14');                                // epoch ms → ISO (normalizeDate)
+  assert.equal(byId.t3.currency, 'EUR');
+  assert.equal(byId.t1.type, 'CARD_PAYMENT');
+
+  // the captured x-device-id (cookie source) is replayed on every API request
+  assert.ok(seenHeaders.length >= 1);
+  assert.ok(seenHeaders.every((h) => h['x-device-id'] === 'DEV-abc123'), 'x-device-id replayed on all calls');
+  assert.ok(seenHeaders.every((h) => h['x-browser-application'] === 'WEB_CLIENT'), 'static client headers sent');
+});
+
+test('keepRaw preserves the full transaction detail in record.extra', async () => {
+  const net = async (url) => {
+    const u = new URL(url);
+    if (u.pathname === '/api/retail/user/current/transactions/last' && !u.searchParams.get('to'))
+      return { ok: true, status: 200, json: async () => [ALL[0]], text: async () => JSON.stringify([ALL[0]]) };
+    return { ok: true, status: 200, json: async () => [], text: async () => '[]' };
+  };
+  const docs = await listInventory(EFF, auth, net, {});
+  assert.ok(docs[0].record.extra, 'record.extra present (keepRaw)');
+  assert.equal(docs[0].record.extra.state, 'COMPLETED');
+});

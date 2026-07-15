@@ -172,7 +172,7 @@ async function fetchGroupItems(adapter, auth, net) {
   const cookie = adapter.auth && adapter.auth.mode === 'cookie';
   const accept = isHtml ? 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' : 'application/json';
   const method = (g.method || 'GET').toUpperCase();
-  const init = { method, headers: { accept, ...(g.headers || {}), ...headersFor(auth, path, !cookie) }, credentials: credOf(adapter) };
+  const init = { method, headers: { accept, ...(g.headers || {}), ...headersFor(auth, path, true /*allow captured replay headers (cookie sources only ever capture replayHeaders like x-device-id, never a token)*/) }, credentials: credOf(adapter) };
   if (method === 'POST' && g.body != null) { init.body = fillTmpl(g.body, null, auth, g.params || {}); init.headers['content-type'] = g.contentType || 'application/x-www-form-urlencoded'; }
   if (g.referer) init.referrer = g.referer;
   const res = await withReferer(url, g.referer || null, () => NET(url, init));
@@ -192,7 +192,7 @@ async function pageList(adapter, auth, net, group, opts) {
   // Resolve the strategy from an explicit `paging`, else from whichever paging field is present
   // (robust to a blank `paging` — e.g. an editor/UI that didn't offer the right option).
   const paging = list.paging
-    || (list.offsetsPath ? 'offsets' : list.offsetParam ? 'offset' : list.pageParam ? 'page' : list.nextPath ? 'cursor' : 'none');
+    || (list.offsetsPath ? 'offsets' : list.offsetParam ? 'offset' : list.pageParam ? 'page' : (list.nextPath || list.cursorFromItem) ? 'cursor' : 'none');
   const stop = () => !!(opts && opts.signal && opts.signal.aborted); // Stop pressed → end paging, keep what's collected
   const report = (info) => { if (opts && opts.onProgress) { try { opts.onProgress({ ...info, docs: all }); } catch (e) {} } }; // live progress + partial results
   const baseParams = { ...(list.params || {}) };
@@ -266,7 +266,14 @@ async function pageList(adapter, auth, net, group, opts) {
       const added = collect(adapter, data, seen, all, group);
       report({ page: g + 1 });
       if (scaStop) break;
-      cursor = get(data, list.nextPath);
+      // `cursorFromItem`: the next cursor is derived from the PAGE's own items, not a field in the response
+      // envelope — for time-windowed lists that page by "give me rows before this timestamp" (Revolut's
+      // `to` = the oldest row's startedDate). Take the MIN across the page; dedup by id absorbs the overlap.
+      if (list.cursorFromItem) {
+        const items = getItems(data, list);
+        let mn = null; for (const it of items) { const v = Number(get(it, list.cursorFromItem)); if (!isNaN(v)) mn = mn == null ? v : Math.min(mn, v); }
+        cursor = items.length && mn != null ? mn : null; // no items → stop
+      } else cursor = get(data, list.nextPath);
       // Some APIs keep a cursor even on the last page and signal "more" with a separate flag (Openbank:
       // `memento` + `hasMore: "S"`, or `_links.nextPage.href` + `masMovimientos: true`). When `morePath` is
       // declared, continue only while it equals `moreValue` (default "S"); else keep going while a cursor exists.
@@ -462,7 +469,7 @@ async function fetchPeriodHtml(adapter, auth, net, group, periodCfg, extra) {
   const cookie = adapter.auth && adapter.auth.mode === 'cookie';
   const htmlAccept = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
   const method = (list.method || 'POST').toUpperCase();
-  const init = { method, headers: { accept: htmlAccept, ...(list.headers || {}), ...headersFor(auth, path.split('?')[0], !cookie) }, credentials: credOf(adapter) };
+  const init = { method, headers: { accept: htmlAccept, ...(list.headers || {}), ...headersFor(auth, path.split('?')[0], true /*allow captured replay headers (cookie sources only ever capture replayHeaders like x-device-id, never a token)*/) }, credentials: credOf(adapter) };
   if (periodCfg.body != null) {
     init.body = fillTmpl(periodCfg.body, group, auth, extra || {}); // {group.*} + {csrf} + {period}
     init.headers['content-type'] = list.contentType || 'application/x-www-form-urlencoded';
@@ -939,7 +946,7 @@ async function maybeKeepAlive(adapter, auth, net) {
     const NET = netFetch(net, null); // never throttle the keep-alive
     const method = (ka.method || 'POST').toUpperCase();
     const cookie = adapter.auth && adapter.auth.mode === 'cookie';
-    const init = { method, headers: { accept: 'application/json', ...(ka.headers || {}), ...headersFor(auth, ka.path.split('?')[0], !cookie) }, credentials: credOf(adapter) };
+    const init = { method, headers: { accept: 'application/json', ...(ka.headers || {}), ...headersFor(auth, ka.path.split('?')[0], true /*allow captured replay headers (cookie sources only ever capture replayHeaders like x-device-id, never a token)*/) }, credentials: credOf(adapter) };
     if (method !== 'GET') { if (ka.body != null) init.body = ka.body; if (ka.contentType) init.headers['content-type'] = ka.contentType; }
     const res = await NET(host + ka.path, init);
     if (res.ok && ka.tokenField) {
@@ -965,7 +972,7 @@ async function fetchAbsList(adapter, auth, rawUrl, net) {
   let pth; try { pth = new URL(u).pathname; } catch (e) { pth = u.split('?')[0]; }
   const cookie = adapter.auth && adapter.auth.mode === 'cookie';
   const list = adapter.api.list || {};
-  const init = { method: 'GET', headers: { accept: 'application/json', ...(list.headers || {}), ...headersFor(auth, pth, !cookie) }, credentials: credOf(adapter) };
+  const init = { method: 'GET', headers: { accept: 'application/json', ...(list.headers || {}), ...headersFor(auth, pth, true /*allow captured replay headers (cookie sources only ever capture replayHeaders like x-device-id, never a token)*/) }, credentials: credOf(adapter) };
   const res = await NET(u, init);
   if (!res.ok) throw new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160));
   return await res.json();
@@ -987,7 +994,7 @@ async function fetchList(adapter, auth, params, net, group) {
   // full browser navigation Accept so the server serves the real SSR page.
   const htmlAccept = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
   const method = (list.method || 'GET').toUpperCase();
-  const init = { method, headers: { accept: html ? htmlAccept : 'application/json', ...(list.headers || {}), ...headersFor(auth, path.split('?')[0], !cookie) }, credentials: credOf(adapter) };
+  const init = { method, headers: { accept: html ? htmlAccept : 'application/json', ...(list.headers || {}), ...headersFor(auth, path.split('?')[0], true /*allow captured replay headers (cookie sources only ever capture replayHeaders like x-device-id, never a token)*/) }, credentials: credOf(adapter) };
   // POST list (AEM/WiZink send params in the body; CaixaBank posts a JSON body with a date window):
   // fill {group.*} + {ctx.*} + {csrf} + {paramName} + the {fromDate}/{toDate} window (from list.window).
   if (method === 'POST' && list.body != null) {
@@ -1210,8 +1217,11 @@ function mapDoc(adapter, p, group) {
   // per-period index + raw date + raw amount, so re-runs dedupe (same input → same id).
   if ((doc.internalId == null || doc.internalId === '') && adapter.api && adapter.api.list && adapter.api.list.periods)
     doc.internalId = [group && (group.accountNumber != null ? group.accountNumber : group.id), p._period, p._idx, p.date, p.amount].filter((x) => x != null && x !== '').join('|');
-  if (doc.date != null && doc.date !== '') doc.date = normalizeDate(doc.date); // textual/locale → ISO
+  if (doc.date != null && doc.date !== '') doc.date = normalizeDate(doc.date); // textual/locale → ISO (also epoch ms/s)
   for (const k of ['total', 'amount']) if (typeof doc[k] === 'string' && doc[k] !== '') doc[k] = normalizeAmount(doc[k]); // "21,00 €" → 21
+  // Minor-unit amounts: some APIs return integer cents (Revolut: -791 = -7.91). Scale the numeric money
+  // fields declaratively (`amountScale: 0.01`); raw values stay untouched in record.extra via keepRaw.
+  if (adapter.amountScale) for (const k of ['total', 'amount', 'balance']) if (typeof doc[k] === 'number') doc[k] = doc[k] * adapter.amountScale;
   doc.category = categorize(adapter, p);
   // A generic display label across schemas (store / issuer / counterparty / instrument / …). When none
   // resolve (e.g. a source whose list encrypts everything but the id, like Amazon), fall back to the

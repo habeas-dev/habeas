@@ -88,6 +88,14 @@ function onWebRequestHeaders(details) {
           saveAuth(u.host, u.pathname, hdrs).then(() => { maybeAutoRun(u.host); runPendingExternalCollects(u.host); });
         }
       }
+      // Cookie source (no token to gate on): capture the declared non-cookie headers it needs replayed
+      // alongside the session cookies (Revolut's `x-device-id`). Store like auth so headersFor replays them.
+      if (a.auth && a.auth.mode === 'cookie' && Array.isArray(a.auth.replayHeaders) && a.auth.replayHeaders.length) {
+        const want = new Set(a.auth.replayHeaders.map((h) => h.toLowerCase()));
+        const hdrs = {};
+        for (const h of reqH) { const ln = h.name.toLowerCase(); if (want.has(ln) && h.value) hdrs[ln] = h.value; }
+        if (Object.keys(hdrs).length) saveAuth(u.host, u.pathname, hdrs).then(() => { maybeAutoRun(u.host); runPendingExternalCollects(u.host); });
+      }
       for (const c of (a.auth && a.auth.context) || []) {
         let m; try { m = new RegExp(c.match).exec(details.url); } catch (e) { continue; }
         if (m && m[1]) saveContext(u.host, c.name, m[1]);
@@ -103,7 +111,12 @@ async function syncWebRequestCapture() {
   const add = (h, a) => { const host = bareHost(h); if (host) (map[host] = map[host] || []).push(a); };
   for (const d of (cfg.datasources || []).filter((x) => x.enabled)) {
     const a = adapters[d.adapter];
-    if (!a || !(a.auth && a.auth.mode === 'bearer')) continue; // cookie sources carry the session in cookies
+    // Bearer sources capture their token; cookie sources normally carry the session in cookies alone — BUT a
+    // cookie source can still need a non-cookie header replayed (Revolut's `x-device-id`). Capture when it
+    // declares replayHeaders or a context to grab, else skip.
+    const bearer = a && a.auth && a.auth.mode === 'bearer';
+    const grabsHeaders = a && a.auth && ((Array.isArray(a.auth.replayHeaders) && a.auth.replayHeaders.length) || (Array.isArray(a.auth.context) && a.auth.context.length));
+    if (!a || !(bearer || grabsHeaders)) continue;
     if (a.api && a.api.host) add(a.api.host, a);
     for (const ch of a.crossDomainHosts || []) add(ch, a);
     for (const m of a.match || []) add(m, a);
