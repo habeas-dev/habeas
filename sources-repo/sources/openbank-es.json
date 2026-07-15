@@ -11,8 +11,7 @@
     "banking"
   ],
   "gaps": [
-    "tarjetas",
-    "inversión"
+    "tarjetas"
   ],
   "throttle": {
     "minMs": 400,
