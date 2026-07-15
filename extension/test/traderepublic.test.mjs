@@ -14,14 +14,14 @@ const EFF = resolveOutput(ADP, ADP.id);
 // Trade Republic's timeline comes over a WebSocket, not HTTP. The runtime asks net.ws (a page-context WS
 // executor) which returns the flat items array; the runtime maps each like a list row. Fictitious items,
 // mirroring the real shape: decimal amount {value,currency}, ISO timestamp, eventType.
-const item = (id, ts, value, currency, title, eventType) => ({
-  id, timestamp: ts, title, subtitle: 'Completed', eventType, status: 'EXECUTED',
+const item = (id, ts, value, currency, title, eventType, icon) => ({
+  id, timestamp: ts, title, subtitle: 'Completed', eventType, status: 'EXECUTED', icon,
   amount: { value, currency, fractionDigits: 2 },
 });
 const ITEMS = [
-  item('a1', '2026-07-13T12:24:31.555+0000', 50, 'EUR', 'Jane Doe', 'BANK_TRANSACTION_INCOMING'),
-  item('a2', '2026-06-16T09:00:00.000+0000', -20, 'EUR', 'NASDAQ100 ETF', 'TRADING_SAVINGSPLAN_EXECUTED'),
-  item('a3', '2026-06-01T08:00:00.000+0000', 0.01, 'EUR', 'Interest', 'INTEREST_PAYOUT'),
+  item('a1', '2026-07-13T12:24:31.555+0000', 50, 'EUR', 'Jane Doe', 'BANK_TRANSACTION_INCOMING', 'logos/contacts-D-Grey/v2'),
+  item('a2', '2026-06-16T09:00:00.000+0000', -20, 'EUR', 'NASDAQ100 ETF', 'TRADING_SAVINGSPLAN_EXECUTED', 'logos/IE00B53SZB19/v2'),
+  item('a3', '2026-06-01T08:00:00.000+0000', 0.01, 'EUR', 'Interest', 'INTEREST_PAYOUT', 'logos/bank/v2'),
 ];
 const auth = { merged: {}, byPath: {}, ctx: {} };
 const mkNet = (result, capture) => { const net = async () => ({ ok: false, status: 404, json: async () => ({}) }); net.ws = async (cfg) => { if (capture) capture.cfg = cfg; return result; }; return net; };
@@ -45,6 +45,8 @@ test('ws transport: lists timeline via net.ws, maps decimal amounts + direction 
   assert.equal(byId.a2.amount, -20);
   assert.equal(byId.a2.direction, 'debit');    // −20 savings-plan buy
   assert.equal(byId.a2.description, 'NASDAQ100 ETF');
+  assert.equal(byId.a2.isin, 'IE00B53SZB19', 'ISIN extracted from the trade icon path');
+  assert.equal(byId.a1.isin, undefined, 'a transfer has no ISIN');
 });
 
 test('ws transport: surfaces a socket error, and dedupes by id', async () => {

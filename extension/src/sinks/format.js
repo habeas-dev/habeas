@@ -103,6 +103,9 @@ export function buildRecord(d, adapter) {
     // Carry any extra per-movement data a card source captures (merchant city, card mask…) so nothing is lost.
     if (d.location != null && d.location !== '') r.location = d.location;
     if (d.card != null && d.card !== '') r.card = d.card;
+    // A traded instrument's ISIN when the source has one (Trade Republic's timeline mixes transfers with
+    // ETF/stock trades) — added only when present, so records without it stay byte-identical.
+    if (d.isin != null && d.isin !== '') r.isin = d.isin;
     return done(r);
   }
   if (kind === 'investment') {

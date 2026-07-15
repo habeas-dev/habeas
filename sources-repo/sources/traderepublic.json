@@ -9,10 +9,20 @@
     "banking",
     "investment"
   ],
-  "version": "2026-07-15.1",
+  "version": "2026-07-15.2",
   "minVersion": "0.2.0",
   "keepRaw": true,
   "schema": "transaction@1",
+  "normalize": {
+    "fields": {
+      "isin": {
+        "from": "icon",
+        "re": [
+          "^logos/([A-Z]{2}[A-Z0-9]{9}[0-9])/"
+        ]
+      }
+    }
+  },
   "match": [
     "https://app.traderepublic.com/*"
   ],
@@ -59,6 +69,10 @@
     "counterparty": "title"
   },
   "changelog": [
+    {
+      "version": "2026-07-15.2",
+      "changes": "Extract the traded instrument ISIN from the timeline icon (logos/{ISIN}/v2) into record.isin for stock/ETF trades."
+    },
     {
       "version": "2026-07-15.1",
       "changes": "Enrich each timeline transaction with its timelineDetailV2 detail (asset, quantity × price, fees) in record.extra.detail. No per-transaction PDF is downloaded."

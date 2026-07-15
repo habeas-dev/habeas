@@ -12,15 +12,25 @@ export function applyNormalize(doc, adapter) {
   if (!n || !doc) return doc;
   // counterparty: { from: "<field or raw key>", re: "…(group1)…" | ["p1","p2"], flags?: "i" }. The patterns
   // are tried in order; the first whose group 1 matches wins (a source's free text has several shapes).
-  const cp = n.counterparty;
-  if (cp && cp.re && (doc.counterparty == null || doc.counterparty === '')) {
-    const src = String((doc[cp.from] != null ? doc[cp.from] : (doc._raw && doc._raw[cp.from])) ?? '');
-    for (const p of (Array.isArray(cp.re) ? cp.re : [cp.re])) {
+  const extract = (spec, cur) => {
+    if (!spec || !spec.re || (cur != null && cur !== '')) return undefined;
+    const src = String((doc[spec.from] != null ? doc[spec.from] : (doc._raw && doc._raw[spec.from])) ?? '');
+    for (const p of (Array.isArray(spec.re) ? spec.re : [spec.re])) {
       try {
-        const m = new RegExp(p, cp.flags || '').exec(src);
-        if (m && m[1] != null && m[1].trim() !== '') { doc.counterparty = m[1].trim(); break; }
+        const m = new RegExp(p, spec.flags || '').exec(src);
+        if (m && m[1] != null && m[1].trim() !== '') return m[1].trim();
       } catch (e) { /* a bad pattern must never break extraction */ }
     }
+    return undefined;
+  };
+  // counterparty: { from, re: "…(group1)…" | [...], flags? } — the merchant/beneficiary out of free text.
+  const cp = extract(n.counterparty, doc.counterparty);
+  if (cp !== undefined) doc.counterparty = cp;
+  // fields: { <name>: { from, re, flags? } } — extract any named field (e.g. a security ISIN out of an icon
+  // path "logos/IE00…/v2"). Only fills when empty, so a directly-mapped value always wins.
+  for (const [name, spec] of Object.entries(n.fields || {})) {
+    const v = extract(spec, doc[name]);
+    if (v !== undefined) doc[name] = v;
   }
   return doc;
 }
