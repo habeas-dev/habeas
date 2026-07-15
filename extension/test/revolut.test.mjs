@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { listInventory } from '../src/runtime/inventory.js';
+import { listInventory, fetchArtifact, artifactKinds } from '../src/runtime/inventory.js';
 import { validateAdapter } from '../src/adapters/validate.js';
 import { resolveOutput } from '../src/lib/outputs.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const ADP = JSON.parse(readFileSync(join(here, '../../sources-repo/sources/revolut.json'), 'utf8'));
-const EFF = resolveOutput(ADP, ADP.id);
+const EFF = resolveOutput(ADP, 'transactions'); // the transactions stream (per-account)
 
 // Wholly fictitious transactions. Revolut returns a TOP-LEVEL array; amounts are integer minor units
 // (−791 = −7.91) and dates are epoch ms. Paging is "give me rows before this `to` timestamp".
@@ -98,4 +98,36 @@ test('keepRaw preserves the full transaction detail in record.extra', async () =
   const docs = await listInventory(EFF, auth, netFor([ALL[0]]), {});
   assert.ok(docs[0].record.extra, 'record.extra present (keepRaw)');
   assert.equal(docs[0].record.extra.state, 'COMPLETED');
+});
+
+// Account statements (invoice stream): per pocket × completed month, PDF/CSV, async-generated. The
+// account-statements endpoint returns {state} — poll until READY — then the signed Google Storage URL is
+// fetched cross-domain (crossDomainHosts + credentials:omit). Verified against the real capture shape.
+const STMT = resolveOutput(ADP, 'extracto/pdf');
+test('statements: poll account-statements until READY, then cross-domain download of the signed URL', async () => {
+  let dlUrl = null, polls = 0;
+  const net = async (url) => {
+    const u = new URL(url);
+    if (u.pathname === '/api/retail/user/current/wallet') return { ok: true, status: 200, json: async () => WALLET };
+    if (u.pathname.endsWith('/statements/account-statements')) {
+      polls++;
+      assert.equal(u.searchParams.get('format'), 'PDF');
+      assert.equal(u.searchParams.get('ccy'), 'EUR');
+      assert.match(u.searchParams.get('from'), /^\d{4}-\d{2}-01$/);
+      assert.match(u.searchParams.get('to'), /^\d{4}-\d{2}-\d{2}$/);
+      const body = polls === 1 ? { state: 'IN_PREPARATION' } : { state: 'READY', url: 'https://storage.googleapis.com/revolut-statements/demo.pdf?sig=x' };
+      return { ok: true, status: 200, text: async () => JSON.stringify(body) };
+    }
+    if (u.host === 'storage.googleapis.com') { dlUrl = String(url); return { ok: true, status: 200, blob: async () => new Blob(['%PDF']), text: async () => '' }; }
+    return { ok: false, status: 404, json: async () => ({}) };
+  };
+  const docs = await listInventory(STMT, auth, net, {});
+  assert.ok(docs.length >= 1, 'synthetic per-month statements listed');
+  assert.match(docs[0].internalId, /^EUR-\d{4}-\d{2}$/);
+  const kinds = artifactKinds(STMT, docs[0]);
+  assert.deepEqual(kinds, [{ kind: 'document', ext: 'pdf' }]);
+  const blob = await fetchArtifact(STMT, auth, docs[0], net, null, kinds[0].kind);
+  assert.ok(polls >= 2, 'polled through IN_PREPARATION then READY');
+  assert.ok(dlUrl && dlUrl.startsWith('https://storage.googleapis.com/'), 'downloaded the signed Google Storage URL');
+  assert.ok(blob, 'blob returned');
 });

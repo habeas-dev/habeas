@@ -635,7 +635,9 @@ export function artifactKinds(adapter, doc) {
     // the raw item, OR (a row loaded from the store, no `_raw`) it was persisted as `record.pdfUrl`.
     const ok = api.pdf.urlField
       ? (!doc || (doc._raw && get(doc._raw, api.pdf.urlField) != null && get(doc._raw, api.pdf.urlField) !== '') || !!(doc.record && doc.record.pdfUrl))
-      : (!doc || tmplResolvable(api.pdf.path, doc));
+      : api.pdf.poll // async-generated (Revolut statements): the poll path is what must be fillable
+        ? (!doc || tmplResolvable(api.pdf.poll.path, doc))
+        : (!doc || tmplResolvable(api.pdf.path, doc));
     if (ok) out.push({ kind: 'document', ext: api.pdf.ext || 'pdf' });
   }
   return out;
@@ -707,6 +709,28 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
   // Refresh it right before each document fetch so the download carries a valid {csrf}.
   let csrf = auth && auth.__csrf;
   if (adapter.api.csrf) { try { csrf = await fetchCsrf(adapter, auth, net); } catch (e) {} }
+  // Async-generated document (Revolut statements): a `prepare` endpoint kicks off generation and returns
+  // {state}; poll it until `readyValue`, read the signed download URL out of the READY response, then GET
+  // that URL (typically a cross-domain object store — guarded by crossDomainHosts + consent, fetched with
+  // no auth/cookies since the URL is itself signed).
+  if (pdf.poll) {
+    const pl = pdf.poll;
+    const pollPath = fillDocTmpl(pl.path, doc, internalId, csrf, auth);
+    if (/\{[^}]+\}/.test(pollPath)) throw new Error('no document for this item'); // unfillable → skip cleanly
+    let url = null;
+    for (let i = 0; i < (pl.tries || 8); i++) {
+      const res = await NET(host + pollPath, { method: 'GET', headers: { accept: 'application/json', ...(pl.headers || {}), ...headersFor(auth, pollPath.split('?')[0]) }, credentials: credOf(adapter) });
+      if (!res.ok) throw new Error('statement ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
+      const j = JSON.parse(await res.text());
+      if (String(get(j, pl.statePath || 'state')) === String(pl.readyValue ?? 'READY')) { url = get(j, pl.urlField || 'url'); break; }
+      if (i < (pl.tries || 8) - 1) await new Promise((r) => setTimeout(r, pl.delayMs || 1200)); // still generating → wait, poll again
+    }
+    if (url == null || url === '') throw new Error('statement not ready (still generating)');
+    assertAllowedDocHost(adapter, String(url)); // the signed URL's host must be an allowed (crossDomain) host
+    const dRes = await NET(String(url), { method: 'GET', headers: { accept: '*/*' }, credentials: 'omit', wantBlob: true }); // signed URL: no cookies/auth
+    if (!dRes.ok) throw new Error('statement download ' + dRes.status);
+    return await dRes.blob();
+  }
   // Two-step document resolution: some services don't expose a stable PDF URL — the detail/list only
   // links a small resolver page (e.g. Amazon's invoice popover) that in turn carries the real, opaque
   // document URL. Fetch the resolver, regex its TEXT for the link (capture group 1), guard the host,

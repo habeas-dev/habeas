@@ -5,82 +5,80 @@
   "trust": "community",
   "domain": "revolut.com",
   "country": "global",
-  "categories": [
-    "banking"
-  ],
-  "version": "2026-07-15.1",
+  "categories": ["banking"],
+  "version": "2026-07-15.2",
   "minVersion": "0.1.68",
   "minorUnits": true,
   "keepRaw": true,
-  "throttle": {
-    "minMs": 300,
-    "jitterMs": 400
-  },
-  "match": [
-    "https://app.revolut.com/*"
-  ],
+  "throttle": { "minMs": 300, "jitterMs": 400 },
+  "match": ["https://app.revolut.com/*"],
   "openUrl": "https://app.revolut.com/home",
-  "schema": "transaction@1",
+  "crossDomainHosts": ["storage.googleapis.com"],
   "auth": {
     "mode": "cookie",
-    "replayHeaders": [
-      "x-device-id"
-    ]
-  },
-  "normalize": {
-    "counterparty": {
-      "from": "description",
-      "re": [
-        "^(?:To|From|Payment to|Payment from)\\s+(.+)$"
-      ]
-    }
+    "replayHeaders": ["x-device-id"]
   },
   "api": {
     "host": "https://app.revolut.com",
     "groups": {
       "path": "/api/retail/user/current/wallet",
       "itemsPath": "pockets",
+      "fields": { "id": "id", "name": "currency", "currency": "currency", "type": "type" }
+    }
+  },
+  "streams": [
+    {
+      "id": "transactions",
+      "name": "Transacciones",
+      "schema": "transaction@1",
+      "normalize": {
+        "counterparty": { "from": "description", "re": ["^(?:To|From|Payment to|Payment from)\\s+(.+)$"] }
+      },
+      "api": {
+        "list": {
+          "path": "/api/retail/user/current/transactions/last",
+          "itemsPath": "$",
+          "paging": "cursor",
+          "cursorParam": "to",
+          "cursorFromItem": "startedDate",
+          "params": { "count": "500", "internalPocketId": "{group.id}" },
+          "headers": { "x-browser-application": "WEB_CLIENT", "x-client-version": "100.0" },
+          "referer": "https://app.revolut.com/home"
+        }
+      },
       "fields": {
-        "id": "id",
-        "name": "currency",
+        "internalId": "id",
+        "date": "startedDate",
+        "amount": "amount",
         "currency": "currency",
-        "type": "type"
+        "description": "description",
+        "type": "type",
+        "counterparty": "merchant.name"
       }
     },
-    "list": {
-      "path": "/api/retail/user/current/transactions/last",
-      "itemsPath": "$",
-      "paging": "cursor",
-      "cursorParam": "to",
-      "cursorFromItem": "startedDate",
-      "params": {
-        "count": "500",
-        "internalPocketId": "{group.id}"
+    {
+      "id": "extracto",
+      "name": "Extractos de cuenta",
+      "schema": "invoice@1",
+      "api": {
+        "list": { "paging": "synthetic", "synthetic": { "each": "group-months" }, "maxAgeDays": 366 }
       },
-      "headers": {
-        "x-browser-application": "WEB_CLIENT",
-        "x-client-version": "100.0"
+      "fields": {
+        "internalId": "{group.currency}-{period}",
+        "date": "{date}",
+        "number": "{period}",
+        "account": "{group.currency}",
+        "description": "Extracto {group.currency} {period}"
       },
-      "referer": "https://app.revolut.com/home"
+      "formats": [
+        { "id": "pdf", "name": "PDF", "api": { "pdf": { "poll": { "path": "/api/retail/user/current/statements/account-statements?from={fromDate}&to={date}&ccy={group.currency}&format=PDF&type=OFFICIAL", "statePath": "state", "readyValue": "READY", "urlField": "url", "tries": 10, "delayMs": 1500 }, "ext": "pdf", "mime": "application/pdf" } } },
+        { "id": "csv", "name": "CSV", "api": { "pdf": { "poll": { "path": "/api/retail/user/current/statements/account-statements?from={fromDate}&to={date}&ccy={group.currency}&format=CSV&type=OFFICIAL", "statePath": "state", "readyValue": "READY", "urlField": "url", "tries": 10, "delayMs": 1500 }, "ext": "csv", "mime": "text/csv" } } }
+      ]
     }
-  },
-  "fields": {
-    "internalId": "id",
-    "date": "startedDate",
-    "amount": "amount",
-    "currency": "currency",
-    "description": "description",
-    "type": "type",
-    "counterparty": "merchant.name"
-  },
+  ],
   "changelog": [
-    {
-      "version": "2026-07-15.1",
-      "changes": "Add per-account (pocket) filter: enumerate the personal wallet pockets (EUR/GBP/USD/…) and list per internalPocketId, with a currency-labelled Accounts picker. Statements (PDF/CSV) remain a gap."
-    },
-    {
-      "version": "2026-07-15",
-      "changes": "Initial: personal transactions across all accounts (app.revolut.com), paged by the `to` timestamp cursor. Cookie session + captured x-device-id. Amounts are minor units scaled per the transaction currency ISO 4217 exponent (EUR 2dp, JPY 0dp…). Statements (PDF/CSV) and per-account filtering are gaps for later."
-    }
+    { "version": "2026-07-15.2", "changes": "Add account statements (PDF/CSV) per account × month: async-generated (poll account-statements until READY) then download the signed Google Storage URL (crossDomainHosts + consent). Statements bounded to the last ~12 months." },
+    { "version": "2026-07-15.1", "changes": "Add per-account (pocket) filter with a currency-labelled Accounts picker." },
+    { "version": "2026-07-15", "changes": "Initial: personal transactions across all accounts, paged by the `to` timestamp cursor; cookie + captured x-device-id; minor-unit amounts scaled per ISO 4217." }
   ]
 }
