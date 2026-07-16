@@ -7,7 +7,7 @@
   "country": "global",
   "categories": ["marketplace", "retail"],
   "version": "2026-07-16",
-  "minVersion": "0.2.1",
+  "minVersion": "0.3.0",
   "keepRaw": true,
   "schema": "receipt@1",
   "match": ["https://www.aliexpress.com/*"],

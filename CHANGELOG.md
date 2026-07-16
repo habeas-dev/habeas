@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-07-16
+
 ### Added
 - **Download planner** — schedule recurring deliveries from a source to a destination. Versatile
   recurrence: every day; weekly on chosen weekdays; monthly on days-of-month; the nth (or last)
