@@ -123,3 +123,30 @@ test('handoff: two-way thread + status transitions + attribution', async () => {
   assert.equal(inbox[0].status, 'published'); assert.equal(inbox[0].sourceId, 'financiera-elcorteingles-es');
   assert.equal(inbox[0].teamMessages, 1);
 });
+
+test('handoff: a newer submission supersedes the sender prior OPEN ones for the same domain', async () => {
+  const s = memoryStore();
+  const bundle = (d) => ({ ...BUNDLE, domain: d });
+  const a = await (await call(s, 'POST', '/handoff', { submitter: 'sub1', bundle: bundle('feci.es') })).json();
+  // team starts a question on the first (still open)
+  await call(s, 'POST', `/handoff/${a.id}/messages?token=ADMIN`, { text: 'q' });
+  // a more complete second submission for the SAME domain from the SAME submitter
+  const b = await call(s, 'POST', '/handoff', { submitter: 'sub1', bundle: bundle('feci.es') });
+  assert.equal((await b.clone().json()).superseded, 1);
+  const bid = (await b.json()).id;
+  // the first is now superseded; the second is new
+  const inbox = await (await call(s, 'GET', '/submitter/sub1/handoffs')).json();
+  const byId = Object.fromEntries(inbox.map((h) => [h.id, h.status]));
+  assert.equal(byId[a.id], 'superseded');
+  assert.equal(byId[bid], 'new');
+  // a DIFFERENT domain from the same submitter is untouched; a terminal status is not re-opened
+  const other = await (await call(s, 'POST', '/handoff', { submitter: 'sub1', bundle: bundle('other.es') })).json();
+  assert.equal(other.superseded, 0);
+});
+
+test('handoff: team can manually close a submission as superseded', async () => {
+  const s = memoryStore();
+  const { id } = await (await call(s, 'POST', '/handoff', { submitter: 'sub1', bundle: BUNDLE })).json();
+  const r = await (await call(s, 'POST', `/handoff/${id}?token=ADMIN`, { status: 'superseded' })).json();
+  assert.equal(r.status, 'superseded');
+});

@@ -107,7 +107,10 @@ async function handleHandoff(request, env, url, parts) {
     const handle = String((body && body.handle) || '').trim().slice(0, MAX_AUTHOR);
     const domain = String(bundle.domain || '').slice(0, 120);
     const id = await store.addHandoff({ domain, bundle: serialized, submitter, handle, client, now });
-    return json({ ok: true, id, status: 'new' });
+    // A newer submission for the same source (submitter + domain) supersedes the sender's earlier OPEN
+    // ones — the team reviews only the most complete recording, and the contributor's inbox reflects it.
+    const superseded = await store.supersedePrior(submitter, domain, id, now);
+    return json({ ok: true, id, status: 'new', superseded });
   }
 
   // GET /handoff  — team list (admin only).

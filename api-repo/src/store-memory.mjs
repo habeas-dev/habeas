@@ -81,6 +81,12 @@ export function memoryStore() {
     async getMessages(id) {
       return hmsgs.filter((m) => m.handoff_id === id).sort((a, b) => a.at - b.at).map((m) => ({ from: m.from, text: m.text, at: new Date(m.at).toISOString() }));
     },
+    async supersedePrior(submitter, domain, exceptId, now) {
+      const OPEN = new Set(['new', 'in_review', 'needs_info']);
+      let n = 0;
+      for (const h of handoffs) if (h.submitter === submitter && h.domain === domain && h.id !== exceptId && OPEN.has(h.status)) { h.status = 'superseded'; h.updated_at = now; n++; }
+      return n;
+    },
     async listSubmitterHandoffs(sid, limit) {
       return handoffs.filter((h) => h.submitter === sid).sort((a, b) => b.updated_at - a.updated_at).slice(0, limit).map((h) => {
         const ms = hmsgs.filter((m) => m.handoff_id === h.id).sort((a, b) => a.at - b.at);

@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS handoffs (
   submitter  TEXT    NOT NULL,             -- pseudonymous extension id
   handle     TEXT    NOT NULL DEFAULT '',  -- optional display name to credit
   client     TEXT    NOT NULL,             -- rate-limit fingerprint
-  status     TEXT    NOT NULL DEFAULT 'new', -- new | in_review | needs_info | authored | published | declined
+  status     TEXT    NOT NULL DEFAULT 'new', -- new | in_review | needs_info | authored | published | declined | superseded
   source_id  TEXT,                          -- the source once authored/published (attribution link)
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL

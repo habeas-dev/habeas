@@ -66,6 +66,11 @@ export function d1Store(DB) {
       const r = await DB.prepare('SELECT sender, text, created_at FROM handoff_messages WHERE handoff_id = ? ORDER BY created_at ASC').bind(id).all();
       return (r.results || []).map((m) => ({ from: m.sender, text: m.text, at: new Date(m.created_at).toISOString() }));
     },
+    async supersedePrior(submitter, domain, exceptId, now) {
+      const r = await DB.prepare("UPDATE handoffs SET status = 'superseded', updated_at = ? WHERE submitter = ? AND domain = ? AND id != ? AND status IN ('new', 'in_review', 'needs_info')")
+        .bind(now, submitter, domain, exceptId).run();
+      return (r.meta && r.meta.changes) || 0;
+    },
     async listSubmitterHandoffs(sid, limit) {
       const r = await DB.prepare(`SELECT h.id, h.domain, h.status, h.source_id, h.created_at, h.updated_at,
           (SELECT COUNT(*) FROM handoff_messages m WHERE m.handoff_id = h.id) AS messages,
