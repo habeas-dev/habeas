@@ -29,6 +29,7 @@
       <button class="tab-btn" role="tab" data-tab="auto" data-i18n="auto_sync"></button>
       <button class="tab-btn" role="tab" data-tab="planner" data-i18n="planner_title"></button>
       <button class="tab-btn" role="tab" data-tab="integrations" data-i18n="grants_title"></button>
+      <button class="tab-btn" role="tab" data-tab="contributions" data-i18n="contrib_title"></button>
     </div>
 
     <section class="tab" data-tab="sources" role="tabpanel">
@@ -139,6 +140,12 @@
     <section class="tab" data-tab="integrations" role="tabpanel" hidden>
       <p class="muted" data-i18n="grants_help" style="margin:2px 0 12px"></p>
       <div id="grants"></div>
+    </section>
+
+    <section class="tab" data-tab="contributions" role="tabpanel" hidden>
+      <p class="muted" data-i18n="contrib_help" style="margin:2px 0 12px"></p>
+      <div id="contriblist"></div>
+      <p id="contribempty" class="muted" data-i18n="contrib_empty" hidden></p>
     </section>
   </div>
 

@@ -18,6 +18,8 @@ import { getStoreConfig, moveStoreTo, putItems } from '../lib/store.js';
 import { readSinkRecords } from '../sinks/sinks.js';
 import { esc } from '../lib/esc.js';
 import { nextOccurrence, describeSchedule, validateSpec } from '../lib/schedule.js';
+import { getSubmitter, markSeen, unreadCount } from '../lib/submitter.js';
+import { getMyHandoffs, getHandoffThread, replyHandoff } from '../registry/client.js';
 
 let CATALOG = {};
 const $ = (s) => document.querySelector(s);
@@ -459,12 +461,62 @@ $('#importfile').onchange = async (e) => {
   e.target.value = '';
 };
 // Four tabs (sources / destinations / auto-sync / site integrations) — keeps Settings short.
+// --- "My contributions": the return half of the handoff loop. Poll this contributor's submissions,
+// show status + the team's questions, let them reply or re-record. Degrades to empty if the API is down.
+function tabBadge(name, n) {
+  const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
+  if (!btn) return;
+  btn.querySelector('.tabcount')?.remove();
+  if (n > 0) { const s = document.createElement('span'); s.className = 'tabcount pill sent'; s.style.marginLeft = '6px'; s.textContent = String(n); btn.appendChild(s); }
+}
+async function renderContributions() {
+  const wrap = $('#contriblist'); if (!wrap) return;
+  const sub = await getSubmitter();
+  const list = await getMyHandoffs(sub.id);
+  const empty = $('#contribempty'); if (empty) empty.hidden = list.length > 0;
+  tabBadge('contributions', unreadCount(list, sub.seen));
+  wrap.innerHTML = list.map((h) => {
+    const unread = h.lastFrom === 'team' && h.lastAt && (!sub.seen[h.id] || sub.seen[h.id] < h.lastAt);
+    const st = t('contrib_status_' + h.status) || esc(h.status);
+    return `<div class="card">
+      <div class="row"><b style="flex:1">${esc(h.domain)}${unread ? ` <span class="pill sent">● ${t('contrib_new')}</span>` : ''}</b><span class="pill type">${st}</span></div>
+      ${h.sourceId ? `<div class="muted">${t('contrib_published_as', [esc(h.sourceId)])}</div>` : ''}
+      <div class="muted" style="font-size:12px">${esc(String(h.at || '').slice(0, 10))} · ${h.messages || 0} msg</div>
+      <div style="margin-top:6px"><button class="link" data-thread="${esc(h.id)}">${t('contrib_view')}</button>
+        <button class="link" data-rerec="${esc(h.domain)}">${t('contrib_rerecord')}</button></div>
+      <div id="thr-${esc(h.id)}" hidden style="margin-top:8px;border-top:1px solid #333;padding-top:8px"></div>
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('[data-thread]').forEach((b) => { b.onclick = () => openThread(b.dataset.thread); });
+  wrap.querySelectorAll('[data-rerec]').forEach((b) => { b.onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/author.html') + '?url=' + encodeURIComponent('https://' + b.dataset.rerec + '/') }); });
+}
+async function openThread(id) {
+  const el = document.getElementById('thr-' + id); if (!el) return;
+  if (!el.hidden) { el.hidden = true; return; }
+  el.hidden = false; el.textContent = '…';
+  const sub = await getSubmitter();
+  let data; try { data = await getHandoffThread(id, sub.id); } catch (e) { el.textContent = t('contrib_load_fail'); return; }
+  const last = data.messages[data.messages.length - 1];
+  if (last) await markSeen(id, last.at);
+  el.innerHTML = (data.messages.length ? data.messages : []).map((m) =>
+    `<div style="margin:4px 0"><b>${m.from === 'team' ? t('contrib_team') : t('contrib_you')}:</b> ${esc(m.text)} <span class="muted" style="font-size:11px">${esc(String(m.at || '').slice(0, 16))}</span></div>`).join('')
+    || `<div class="muted">${t('contrib_no_msgs')}</div>`;
+  el.innerHTML += `<div style="margin-top:8px"><textarea id="rep-${esc(id)}" rows="2" style="width:100%;box-sizing:border-box" placeholder="${t('contrib_reply_ph')}"></textarea>
+    <button class="primary" data-send="${esc(id)}">${t('contrib_reply')}</button></div>`;
+  el.querySelector('[data-send]').onclick = async () => {
+    const txt = (document.getElementById('rep-' + id).value || '').trim(); if (!txt) return;
+    try { await replyHandoff(id, sub.id, txt); el.hidden = true; await openThread(id); tabBadge('contributions', unreadCount(await getMyHandoffs(sub.id), (await getSubmitter()).seen)); } catch (e) { $('#status') && ($('#status').textContent = t('contrib_reply_fail')); }
+  };
+  tabBadge('contributions', unreadCount(await getMyHandoffs(sub.id), (await getSubmitter()).seen));
+}
+
 (function initTabs() {
   const btns = [...document.querySelectorAll('.tab-btn')];
   const show = (name) => {
     document.querySelectorAll('.tab').forEach((s) => { s.hidden = s.dataset.tab !== name; });
     btns.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
     try { localStorage.setItem('habeas-settings-tab', name); } catch (e) {}
+    if (name === 'contributions') renderContributions();
   };
   btns.forEach((b) => { b.onclick = () => show(b.dataset.tab); });
   let saved; try { saved = localStorage.getItem('habeas-settings-tab'); } catch (e) {}
@@ -474,6 +526,7 @@ $('#importfile').onchange = async (e) => {
 renderFields();
 render();
 watchThemeIcon();
+renderContributions().catch(() => {}); // populate the "My contributions" unread badge on load
 
 // Download planner form: reflect field changes in the live preview; add a schedule.
 (function initPlanner() {

@@ -50,6 +50,7 @@ const sampleOf = (v) => { const s = String(v ?? ''); return s.length > 26 ? s.sl
 
 async function init() {
   applyI18n();
+  try { const pre = new URLSearchParams(location.search).get('url'); if (pre && /^https?:\/\//.test(pre)) $('#url').value = pre; } catch (e) {} // ?url= prefill (e.g. re-record from My contributions)
   $('#opts').onclick = () => chrome.runtime.openOptionsPage();
   $('#start').onclick = onStart;
   $('#stop').onclick = onStop;
