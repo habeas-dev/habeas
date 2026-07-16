@@ -21,26 +21,29 @@ test('Financiera ECI adapter validates (all streams)', () => {
   assert.deepEqual(outputsOf(ADP).map((o) => o.id), ['movimientos', 'aplazamientos', 'extractos']);
 });
 
-test('movimientos: per-group accountNumber + eci-custom-encrypted-pan header, mapped to transactions', async () => {
-  let movUrl = '', movInit = null;
+const mov = (id, date, amount) => ({ invoiceNumber: id, operationDate: date, amount, company: 'DEMO STORE', center: 'MADRID', centerCode: '0012', type: '0006' });
+
+test('movimientos: unions the monthFilter views (paramSets), per-group header verbatim, mapped to transactions', async () => {
+  const calls = []; let lastHdr = null, lastUrl = '';
   const net = async (url, init) => {
     if (url.endsWith('/dashboard/user')) return okJson({ userEciCardList: [CARD] });
     if (url.includes('movements-close')) {
-      movUrl = url; movInit = init;
-      return okJson({ movements: [
-        { invoiceNumber: 'INV1', operationDate: '2020-05-05', amount: '9,99€', company: 'DEMO STORE', center: 'MADRID', centerCode: '0012', type: '0006' },
-        { invoiceNumber: 'INV2', operationDate: '2020-06-07', amount: '4,00€', company: 'OTHER', center: 'BCN', centerCode: '0034', type: '0019' },
-      ] });
+      calls.push(url); lastUrl = url; lastHdr = init.headers['eci-custom-encrypted-pan'];
+      if (url.includes('monthFilter=N')) return okJson({ movements: [mov('INV1', '2020-05-05', '9,99€'), mov('INV2', '2020-06-07', '4,00€'), mov('INV3', '2020-06-08', '1,00€')] });
+      if (url.includes('monthFilter=A')) return okJson({ movements: [mov('INV4', '2020-07-01', '2,00€'), mov('INV5', '2020-07-02', '3,00€')] });
+      return okJson({ movements: [] });
     }
     return miss;
   };
   const EFF = resolveOutput(ADP, 'movimientos');
   const docs = await listInventory(EFF, { merged: {}, byPath: {}, ctx: {} }, net, {});
 
-  assert.ok(movUrl.includes('accountNumber=C0001'), 'accountNumber templated from {group.id}');
-  assert.ok(movUrl.includes('operationType=A'), 'enum params sent');
-  assert.equal(movInit.headers['eci-custom-encrypted-pan'], 'AbC+dEf/gHi012=', 'per-group header sent VERBATIM (base64 not URL-encoded)'); // regression: tid() would corrupt +/=
-  assert.equal(docs.length, 2);
+  // the SPA loads all movements as disjoint monthFilter views → the adapter replays each set and unions
+  assert.equal(calls.length, 2, 'one list call per paramSet (N + A)');
+  assert.ok(calls.some((u) => u.includes('monthFilter=N')) && calls.some((u) => u.includes('monthFilter=A')));
+  assert.ok(lastUrl.includes('accountNumber=C0001') && lastUrl.includes('operationType=A'));
+  assert.equal(lastHdr, 'AbC+dEf/gHi012=', 'per-group header sent VERBATIM (base64 not URL-encoded)');
+  assert.equal(docs.length, 5, 'union of both views (3 + 2)');
   const byId = Object.fromEntries(docs.map((d) => [d.internalId, d.record]));
   assert.equal(byId.INV1.date, '2020-05-05');
   assert.equal(byId.INV1.amount, 9.99);

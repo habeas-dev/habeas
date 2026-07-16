@@ -89,6 +89,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
     **Report a problem** button that posts that diagnostic (scrubbed) to the team thread. A non-technical
     contributor can send back exactly what a maintainer needs to fix the source, with no DevTools.
 
+- Runtime: **`paramSets` list pager** — replay a FIXED set of disjoint filter-views the SPA uses to load
+  "all" (FECI's movements arrive as `monthFilter` N/A/S tabs, not pages) and UNION them, deduped. Derived
+  straight from the recording (the exact param sets the app fetched — no guessing).
 - Runtime: **per-group header templating** — `api.list.headers` values now resolve `{group.*}` (e.g. a
   card's own `eci-custom-encrypted-pan` header rides that card's movements list).
 - **Financiera El Corte Inglés** (`financiera-elcorteingles-es`) — authored end-to-end from a redacted

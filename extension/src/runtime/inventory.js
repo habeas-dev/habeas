@@ -241,6 +241,19 @@ async function pageList(adapter, auth, net, group, opts) {
   const seen = new Set(opts && opts.knownIds ? opts.knownIds : []), all = []; // incremental: seed with store ids → known items dedup out + paging stops early
   const call = (params) => fetchList(adapter, auth, params, net, group);
 
+  // paramSets: some UIs split "all" into a FIXED set of disjoint filter-views rather than pages (FECI's
+  // movements arrive as monthFilter=N/A/S tabs). Replay each set the SPA uses and UNION them, deduped by
+  // internalId. Derived straight from the recording (the exact param sets the app fetched).
+  if (Array.isArray(list.paramSets)) {
+    for (let i = 0; i < list.paramSets.length; i++) {
+      if (stop()) break;
+      const data = await call({ ...range, ...baseParams, ...list.paramSets[i] });
+      collect(adapter, data, seen, all, group);
+      report({ page: i + 1 });
+    }
+    return all.sort((x, y) => ((x.date || '') < (y.date || '') ? 1 : -1));
+  }
+
   if (paging === 'offsets') {
     let offs = { ...(list.initialOffsets || {}) };
     for (let g = 0; g < maxPages; g++) {
