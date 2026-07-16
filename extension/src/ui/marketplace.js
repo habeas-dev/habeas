@@ -84,6 +84,7 @@ function render() {
           <b>${esc(e.name || e.id)}</b> <code>${esc(e.id)}</code><br>
           <span class="muted">${e.country ? flag(e.country) + ' ' : ''}${esc((e.categories || []).join(', '))} · ${esc(e.domain || '')}${(e.formats || []).length ? ' · ' + esc((e.formats || []).join('/').toUpperCase()) : ''}${ver}</span>
           <span class="pill type">${trust}</span> ${offsite}${up ? ` <span class="pill" style="border-color:#c77;color:#c77">${t('market_update_pill')}</span>` : ''}${needs}${gapsHtml}
+          ${(e.contributors || []).length ? `<br><span class="muted" style="font-size:12px">${t('market_contributed_by', [esc(e.contributors.join(', '))])}</span>` : ''}
           <span class="rating muted" data-rate="${esc(e.id)}"></span>
         </div>
         <button data-more="${esc(e.id)}">${t('market_details')}</button>

@@ -47,7 +47,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   (reception, a two-way Q&A thread, status, and attribution) — see the api service.
   - **My contributions** inbox (Settings tab) — the return half of the loop: it polls the contributor's
     own submissions, shows each one's status, and opens the two-way conversation so they can answer the
-    team's questions or re-record. An unread-reply badge appears on the tab. (Marketplace attribution next.)
+    team's questions or re-record. An unread-reply badge appears on the tab.
+  - **Marketplace attribution** — a source can carry a `contributors` handle list (in the adapter, carried
+    into the catalog index); the marketplace card credits them (“🙌 Contributed by …”). Closes the loop:
+    record → send → collaborate → published & credited.
 
 ## [0.3.0] — 2026-07-16
 

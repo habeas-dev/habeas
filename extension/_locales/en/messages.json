@@ -1502,6 +1502,10 @@
   "market_installed": {
     "message": "Installed"
   },
+  "market_contributed_by": {
+    "message": "🙌 Contributed by $WHO$",
+    "placeholders": { "WHO": { "content": "$1" } }
+  },
   "market_update": {
     "message": "Update ($V1$ → $V2$)",
     "placeholders": {

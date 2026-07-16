@@ -32,6 +32,7 @@ const entries = readdirSync(dir)
       version: (a.version || now.slice(0, 10)),
       minVersion: a.minVersion || null,
       gaps: a.gaps || [],   // products this source doesn't cover yet — a user who has one can "Complete" it
+      contributors: a.contributors || [], // handles credited for the recording this source was built from
       changelog: a.changelog || [],
       url: `${BASE}/${f}`, updated: now,
     };
