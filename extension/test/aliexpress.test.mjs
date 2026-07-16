@@ -33,7 +33,7 @@ test('mtop transport: extracts component-keyed orders across pages, maps to rece
   const docs = await listInventory(EFF, { merged: {}, byPath: {}, ctx: {} }, net, {});
   // the runtime hands the executor the mtop api + pagination config
   assert.equal(cfg.api, 'mtop.aliexpress.trade.buyer.order.list');
-  assert.equal(cfg.pageInner, 'pc_om_list_body_*.fields.pageIndex');
+  assert.equal(cfg.pagePath, 'params~.data~.pc_om_list_body_*.fields.pageIndex');
   assert.equal(docs.length, 3);
   const byId = Object.fromEntries(docs.map((d) => [d.internalId, d.record]));
   assert.equal(byId.A1.date, '2026-05-24');            // "24 may, 2026" → ISO, no off-by-one

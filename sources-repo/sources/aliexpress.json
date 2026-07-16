@@ -18,7 +18,7 @@
     "mtop": {
       "api": "mtop.aliexpress.trade.buyer.order.list",
       "v": "1.0",
-      "pageInner": "pc_om_list_body_*.fields.pageIndex",
+      "pagePath": "params~.data~.pc_om_list_body_*.fields.pageIndex",
       "morePath": "data.data.pc_om_list_body_*.fields.hasMore",
       "startPage": 1,
       "maxPages": 100

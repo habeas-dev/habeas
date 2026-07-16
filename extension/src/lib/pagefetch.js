@@ -89,10 +89,22 @@ export function makePageMtop(tabId) {
       const [res] = await chrome.scripting.executeScript({
         target: { tabId }, world: 'MAIN', args: [cfg],
         func: async (c) => {
-          // dotted get/set with a trailing-`*` wildcard segment (component keys like pc_om_list_body_109702).
+          // dotted get with a trailing-`*` wildcard segment (component keys like pc_om_list_body_109702).
           const wildKey = (obj, seg) => seg.endsWith('*') ? Object.keys(obj || {}).find((k) => k.startsWith(seg.slice(0, -1))) : seg;
           const get = (o, p) => { let c2 = o; for (const s of String(p).split('.')) { if (c2 == null) return undefined; c2 = c2[wildKey(c2, s)]; } return c2; };
-          const setIn = (o, p, v) => { const segs = String(p).split('.'); let c2 = o; for (let i = 0; i < segs.length - 1; i++) { if (c2 == null) return; c2 = c2[wildKey(c2, segs[i])]; } if (c2 != null) c2[wildKey(c2, segs[segs.length - 1])] = v; };
+          // Deep-set through STRINGIFIED-JSON layers: a segment ending in `~` means that key's value is a
+          // JSON string (parse before descending, re-stringify on unwind). mtop/DIDA nests the page field
+          // several strings deep: payload.params (string) → .data (string) → pc_om_list_body_*.fields.pageIndex.
+          const setDeep = (node, segs, v) => {
+            if (node == null || !segs.length) return;
+            let seg = segs[0]; const str = seg.endsWith('~'); if (str) seg = seg.slice(0, -1);
+            const k = wildKey(node, seg); if (k == null) return;
+            if (segs.length === 1) { node[k] = v; return; }
+            let child = node[k]; const parse = str && typeof child === 'string';
+            if (parse) { try { child = JSON.parse(child); } catch (e) { return; } }
+            setDeep(child, segs.slice(1), v);
+            if (parse) node[k] = JSON.stringify(child);
+          };
           const key = String(c.api).toLowerCase();
           const t0 = Date.now(); let raw = null;
           while (Date.now() - t0 < (c.seedTimeoutMs || 15000)) { raw = window.__habeas_mtop && window.__habeas_mtop[key]; if (raw) break; await new Promise((r) => setTimeout(r, 300)); }
@@ -100,12 +112,12 @@ export function makePageMtop(tabId) {
           const mtop = (window.lib && window.lib.mtop) || window.mtop;
           if (!mtop || !mtop.request) return { pages: [], error: 'mtop lib not found on the page' };
           let payload; try { payload = JSON.parse(new URLSearchParams(raw).get('data')); } catch (e) { return { pages: [], error: 'seed payload parse failed' }; }
-          // The page field lives inside payload.params.data, which is itself a STRINGIFIED component tree.
-          const bump = (n) => { try { const inner = JSON.parse(payload.params.data); setIn(inner, c.pageInner, n); payload.params.data = JSON.stringify(inner); } catch (e) {} };
+          // The page field lives several stringified layers deep (c.pagePath uses `~` to mark each one).
+          const bump = (n) => { try { setDeep(payload, String(c.pagePath).split('.'), n); } catch (e) {} };
           const pages = [];
           let page = c.startPage || 1;
           for (let i = 0; i < (c.maxPages || 100); i++) {
-            if (c.pageInner) bump(page);
+            if (c.pagePath) bump(page);
             let resp; try { resp = await mtop.request({ api: c.api, v: c.v || '1.0', data: payload, type: 'originaljson', dataType: 'json', ...(c.request || {}) }); } catch (e) { if (!pages.length) return { pages: [], error: 'mtop.request threw: ' + ((e && e.message) || e) }; break; }
             pages.push(resp);
             const more = c.morePath ? String(get(resp, c.morePath)) === 'true' : false;

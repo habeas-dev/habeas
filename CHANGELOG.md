@@ -23,7 +23,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   site tab and reuses the app's own live request payload (`window.__habeas_mtop`, stashed by the page
   hook) + its `lib.mtop` signing — no hardcoded payload, no forged anti-bot signature. Orders are
   extracted from the DIDA component response via `itemsFromKeys` (a `pc_om_list_order_*` key prefix,
-  wildcard-tolerant to component-version bumps).
+  wildcard-tolerant to component-version bumps). Pagination bumps the page field through the seed's
+  nested stringified-JSON layers (`pagePath` with `~` markers: `params~.data~.…pageIndex`).
 
 ### Fixed
 - `normalizeDate` handles `DD Mon, YYYY` (e.g. AliExpress `24 may, 2026`) — was shifting a day via the
