@@ -106,6 +106,8 @@
       "additionalProperties": false,
       "properties": {
         "host": { "type": "string", "pattern": "^https://", "description": "API origin, https only." },
+        "mtop": { "type": "object", "additionalProperties": true, "required": ["api"], "description": "[mtop] Alibaba mtop-gateway source (AliExpress/Taobao/Tmall/Lazada/1688): the list runs in the site tab, reusing the app's OWN signed request via lib.mtop (no HTTP list, no forged signature). Paginated by bumping a page field through the seed's nested stringified-JSON layers (pagePath, with ~ marking each stringified layer).", "properties": { "api": { "type": "string" }, "v": { "type": "string" }, "request": { "type": "object" }, "pagePath": { "type": "string" }, "morePath": { "type": "string" }, "startPage": { "type": "number" }, "maxPages": { "type": "number" } } },
+        "itemsFromKeys": { "type": "object", "additionalProperties": false, "required": ["prefix"], "description": "Extract items from sibling OBJECT keys sharing a prefix (component-keyed responses, e.g. mtop DIDA pc_om_list_order_*), not an array. `at` = dotted path to the container, `sub` = per-item sub-object.", "properties": { "at": { "type": "string" }, "prefix": { "type": "string" }, "sub": { "type": "string" } } },
         "csrf": {
           "type": "object",
           "required": ["path", "match"],
@@ -229,6 +231,10 @@
             "items": { "$ref": "#/$defs/rows" },
             "const": { "type": "object", "additionalProperties": true, "description": "Constant fields merged into every detail record (e.g. currency)." },
             "as": { "enum": ["html", "invoice", "render"], "description": "'render' → open the path in a background tab, let the SPA render + fetch its data in the user's session, then capture the FINAL DOM self-contained (cross-browser; the faithful document for client-rendered pages). 'html' → fetch the path as a page and store it self-contained (server-rendered). 'invoice' → render a clean printable invoice from the detail JSON. All save a printable .html." },
+            "mtop": { "type": "object", "additionalProperties": true, "description": "[detail] Fetch the detail through an mtop call with an explicit params payload (no captured seed needed) — e.g. AliExpress queryorderreceiptinfo. The page's lib.mtop signs it.", "properties": { "api": { "type": "string" }, "v": { "type": "string" }, "request": { "type": "object" } } },
+            "params": { "type": "object", "additionalProperties": { "type": "string" }, "description": "[detail.mtop] Request payload; values templated with {internalId}/{field.path} and in-session directives (@seed:FIELD reuses the app's own request field, @tz = browser offset). Unresolved directives are dropped." },
+            "dataPath": { "type": "string", "description": "[detail.mtop] Dotted path to the detail object inside the mtop response (e.g. data.data)." },
+            "template": { "type": "object", "additionalProperties": true, "description": "[detail as:invoice] Declarative receipt layout (title/subtitle/meta/blocks/items/totals) with {dotted.path} tokens resolved against the detail JSON; labels can reuse the source's own i18n strings." },
             "waitFor": { "type": "string", "description": "[render] CSS selector to wait for before capturing (robust). If absent, waits waitMs." },
             "waitMs": { "type": "number", "description": "[render] Fixed wait in ms before capturing (default 3500) when waitFor is not set." },
             "path": { "type": "string", "description": "Detail path with {internalId} placeholder." },
