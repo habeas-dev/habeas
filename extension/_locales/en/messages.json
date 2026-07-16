@@ -1120,6 +1120,11 @@
   "contrib_status_published": { "message": "published" },
   "contrib_status_declined": { "message": "not used" },
   "contrib_status_superseded": { "message": "replaced by a newer send" },
+  "contrib_install": { "message": "Install & test" },
+  "contrib_install_hint": { "message": "the team built this source from your recording — install it to test" },
+  "contrib_installed": { "message": "✓ Installed — open the Habeas popup and press List" },
+  "contrib_install_fail": { "message": "couldn't install" },
+  "contrib_has_source": { "message": "source ready to install" },
   "author_no_list_seen": {
     "message": "Saw $N$ requests (from: $HOSTS$) but none returned a document list. Open your orders/invoices page so it loads the data, then retry — or tell us these hosts.",
     "placeholders": {

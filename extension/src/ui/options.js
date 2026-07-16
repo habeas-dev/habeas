@@ -20,6 +20,7 @@ import { esc } from '../lib/esc.js';
 import { nextOccurrence, describeSchedule, validateSpec } from '../lib/schedule.js';
 import { getSubmitter, markSeen, unreadCount } from '../lib/submitter.js';
 import { getMyHandoffs, getHandoffThread, replyHandoff } from '../registry/client.js';
+import { validateAdapter } from '../adapters/validate.js';
 
 let CATALOG = {};
 const $ = (s) => document.querySelector(s);
@@ -479,7 +480,7 @@ async function renderContributions() {
     const unread = h.lastFrom === 'team' && h.lastAt && (!sub.seen[h.id] || sub.seen[h.id] < h.lastAt);
     const st = t('contrib_status_' + h.status) || esc(h.status);
     return `<div class="card">
-      <div class="row"><b style="flex:1">${esc(h.domain)}${unread ? ` <span class="pill sent">● ${t('contrib_new')}</span>` : ''}</b><span class="pill type">${st}</span></div>
+      <div class="row"><b style="flex:1">${esc(h.domain)}${unread ? ` <span class="pill sent">● ${t('contrib_new')}</span>` : ''}${h.hasSource ? ` <span class="pill sent">⬇ ${t('contrib_has_source')}</span>` : ''}</b><span class="pill type">${st}</span></div>
       ${h.sourceId ? `<div class="muted">${t('contrib_published_as', [esc(h.sourceId)])}</div>` : ''}
       <div class="muted" style="font-size:12px">${esc(String(h.at || '').slice(0, 10))} · ${h.messages || 0} msg</div>
       <div style="margin-top:6px"><button class="link" data-thread="${esc(h.id)}">${t('contrib_view')}</button>
@@ -489,6 +490,17 @@ async function renderContributions() {
   }).join('');
   wrap.querySelectorAll('[data-thread]').forEach((b) => { b.onclick = () => openThread(b.dataset.thread); });
   wrap.querySelectorAll('[data-rerec]').forEach((b) => { b.onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/author.html') + '?url=' + encodeURIComponent('https://' + b.dataset.rerec + '/') }); });
+}
+// One-click install of the source the team authored from this recording — so the contributor can test it
+// without touching any JSON. Saves it, grants consent + capture perms, and enables it as a datasource.
+async function installContribSource(adapter) {
+  const v = validateAdapter(adapter);
+  if (!v.ok) return false;
+  await saveSource(adapter);
+  if (needsConsent(adapter) && !(await hasConsent(adapter))) { if (!(await confirmConsent(consentDescriptor(adapter)))) return false; await grantConsent(adapter); }
+  try { await requestCapturePermissions(adapter); await registerCapture(adapter); } catch (e) {}
+  await upsert('datasources', { id: adapter.id, adapter: adapter.id, enabled: true, options: {} });
+  return true;
 }
 async function openThread(id) {
   const el = document.getElementById('thr-' + id); if (!el) return;
@@ -501,8 +513,18 @@ async function openThread(id) {
   el.innerHTML = (data.messages.length ? data.messages : []).map((m) =>
     `<div style="margin:4px 0"><b>${m.from === 'team' ? t('contrib_team') : t('contrib_you')}:</b> ${esc(m.text)} <span class="muted" style="font-size:11px">${esc(String(m.at || '').slice(0, 16))}</span></div>`).join('')
     || `<div class="muted">${t('contrib_no_msgs')}</div>`;
+  // The team attached a source built from this recording → let the contributor install + test it in one click.
+  if (data.source && data.source.id) {
+    el.innerHTML += `<div style="margin-top:8px;padding:8px;border:1px solid #2e7d32;border-radius:6px"><b>${esc(data.source.name || data.source.id)}</b>
+      <span class="muted" style="font-size:12px"> — ${t('contrib_install_hint')}</span><br>
+      <button class="accent" id="inst-${esc(id)}" style="margin-top:6px">${t('contrib_install')}</button> <span id="inststat-${esc(id)}" class="muted" style="font-size:12px"></span></div>`;
+  }
   el.innerHTML += `<div style="margin-top:8px"><textarea id="rep-${esc(id)}" rows="2" style="width:100%;box-sizing:border-box" placeholder="${t('contrib_reply_ph')}"></textarea>
     <button class="primary" data-send="${esc(id)}">${t('contrib_reply')}</button></div>`;
+  if (data.source && data.source.id) {
+    const ib = document.getElementById('inst-' + id);
+    if (ib) ib.onclick = async () => { ib.disabled = true; const ok = await installContribSource(data.source); const st = document.getElementById('inststat-' + id); if (st) st.textContent = ok ? t('contrib_installed') : t('contrib_install_fail'); ib.disabled = false; };
+  }
   el.querySelector('[data-send]').onclick = async () => {
     const txt = (document.getElementById('rep-' + id).value || '').trim(); if (!txt) return;
     try { await replyHandoff(id, sub.id, txt); el.hidden = true; await openThread(id); tabBadge('contributions', unreadCount(await getMyHandoffs(sub.id), (await getSubmitter()).seen)); } catch (e) { $('#status') && ($('#status').textContent = t('contrib_reply_fail')); }

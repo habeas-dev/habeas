@@ -150,3 +150,15 @@ test('handoff: team can manually close a submission as superseded', async () => 
   const r = await (await call(s, 'POST', `/handoff/${id}?token=ADMIN`, { status: 'superseded' })).json();
   assert.equal(r.status, 'superseded');
 });
+
+test('handoff: team attaches the authored source; the submitter can retrieve it to install', async () => {
+  const s = memoryStore();
+  const { id } = await (await call(s, 'POST', '/handoff', { submitter: 'sub1', bundle: BUNDLE })).json();
+  const SRC = { id: 'x-es', name: 'X', schema: 'transaction@1' };
+  await call(s, 'POST', `/handoff/${id}?token=ADMIN`, { status: 'authored', sourceId: 'x-es', sourceJson: SRC });
+  const view = await (await call(s, 'GET', `/handoff/${id}?submitter=sub1`)).json();
+  assert.equal(view.status, 'authored');
+  assert.deepEqual(view.source, SRC);              // one-click install payload
+  const inbox = await (await call(s, 'GET', '/submitter/sub1/handoffs')).json();
+  assert.equal(inbox[0].hasSource, true);
+});

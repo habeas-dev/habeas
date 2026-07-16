@@ -76,6 +76,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
     stays redacted. Only the handful of orphans are ever shown, never the hundreds of traceable ids.
   - A submission now carries the contributor's **browser locale** so the team knows which language to reply
     in (shown in the team list / record).
+  - **One-click source install** — the team can attach the authored adapter JSON to a handoff (`POST
+    /handoff/:id {sourceJson}`); the contributor's *My contributions* inbox then shows an **Install & test**
+    button that installs + enables the source (consent + capture perms) with no manual JSON import. So a
+    non-technical contributor can test what the team built.
 
 - Runtime: **per-group header templating** — `api.list.headers` values now resolve `{group.*}` (e.g. a
   card's own `eci-custom-encrypted-pan` header rides that card's movements list).

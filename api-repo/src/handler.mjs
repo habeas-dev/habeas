@@ -148,7 +148,8 @@ async function handleHandoff(request, env, url, parts) {
       if (admin) return json(await store.getHandoff(id));
       const submitter = url.searchParams.get('submitter');
       if (!submitter || submitter !== meta.submitter) return err(401, 'unauthorized');
-      return json({ id: meta.id, domain: meta.domain, status: meta.status, sourceId: meta.source_id || null, handle: meta.handle || '', messages: await store.getMessages(id) });
+      let source = null; if (meta.source_json) { try { source = JSON.parse(meta.source_json); } catch (e) {} }
+      return json({ id: meta.id, domain: meta.domain, status: meta.status, sourceId: meta.source_id || null, handle: meta.handle || '', source, messages: await store.getMessages(id) });
     }
 
     // POST /handoff/:id — team updates status / links the created source (admin only).
@@ -159,6 +160,12 @@ async function handleHandoff(request, env, url, parts) {
       const patch = { updated_at: now };
       if (body && body.status) patch.status = String(body.status).slice(0, 20);
       if (body && body.sourceId != null) patch.source_id = String(body.sourceId).slice(0, 80);
+      // The authored adapter JSON → the contributor installs it in one click to test (no manual import).
+      if (body && body.sourceJson !== undefined) {
+        const s = typeof body.sourceJson === 'string' ? body.sourceJson : JSON.stringify(body.sourceJson);
+        if (s.length > 100000) return err(413, 'sourceJson too large');
+        patch.source_json = s;
+      }
       return json(await store.setHandoff(id, patch));
     }
   }

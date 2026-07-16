@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS handoffs (
   client     TEXT    NOT NULL,             -- rate-limit fingerprint
   status     TEXT    NOT NULL DEFAULT 'new', -- new | in_review | needs_info | authored | published | declined | superseded
   source_id  TEXT,                          -- the source once authored/published (attribution link)
+  source_json TEXT   NOT NULL DEFAULT '',   -- the authored adapter JSON, so the contributor installs it in one click to test
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );

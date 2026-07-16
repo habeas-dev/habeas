@@ -33,6 +33,7 @@ export function d1Store(DB) {
       const id = crypto.randomUUID();
       await DB.prepare('INSERT INTO handoffs (id, domain, bundle, submitter, handle, locale, client, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
         .bind(id, domain, bundle, submitter, handle || '', locale || '', client, 'new', now, now).run();
+      // source_json stays at its column default ('') until the team attaches an authored adapter.
       await DB.prepare('INSERT INTO writes (client, created_at) VALUES (?, ?)').bind(client, now).run();
       return id;
     },
@@ -41,7 +42,7 @@ export function d1Store(DB) {
       return (r.results || []).map((h) => ({ id: h.id, domain: h.domain, handle: h.handle || '', locale: h.locale || '', status: h.status, sourceId: h.source_id || null, at: new Date(h.created_at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(), bytes: h.bytes, messages: h.messages }));
     },
     async getHandoffMeta(id) {
-      return (await DB.prepare('SELECT id, domain, status, submitter, handle, locale, source_id FROM handoffs WHERE id = ?').bind(id).first()) || null;
+      return (await DB.prepare('SELECT id, domain, status, submitter, handle, locale, source_id, source_json FROM handoffs WHERE id = ?').bind(id).first()) || null;
     },
     async getHandoff(id) {
       const h = await DB.prepare('SELECT id, domain, handle, locale, submitter, status, source_id, bundle, created_at, updated_at FROM handoffs WHERE id = ?').bind(id).first();
@@ -52,6 +53,7 @@ export function d1Store(DB) {
       const sets = [], vals = [];
       if (patch.status != null) { sets.push('status = ?'); vals.push(patch.status); }
       if (patch.source_id != null) { sets.push('source_id = ?'); vals.push(patch.source_id); }
+      if (patch.source_json != null) { sets.push('source_json = ?'); vals.push(patch.source_json); }
       if (patch.updated_at != null) { sets.push('updated_at = ?'); vals.push(patch.updated_at); }
       if (sets.length) { vals.push(id); await DB.prepare(`UPDATE handoffs SET ${sets.join(', ')} WHERE id = ?`).bind(...vals).run(); }
       const h = await this.getHandoffMeta(id);
@@ -72,13 +74,13 @@ export function d1Store(DB) {
       return (r.meta && r.meta.changes) || 0;
     },
     async listSubmitterHandoffs(sid, limit) {
-      const r = await DB.prepare(`SELECT h.id, h.domain, h.status, h.source_id, h.created_at, h.updated_at,
+      const r = await DB.prepare(`SELECT h.id, h.domain, h.status, h.source_id, h.created_at, h.updated_at, (LENGTH(h.source_json) > 0) AS has_source,
           (SELECT COUNT(*) FROM handoff_messages m WHERE m.handoff_id = h.id) AS messages,
           (SELECT COUNT(*) FROM handoff_messages m WHERE m.handoff_id = h.id AND m.sender = 'team') AS team_messages,
           (SELECT sender FROM handoff_messages m WHERE m.handoff_id = h.id ORDER BY m.created_at DESC LIMIT 1) AS last_from,
           (SELECT created_at FROM handoff_messages m WHERE m.handoff_id = h.id ORDER BY m.created_at DESC LIMIT 1) AS last_at
         FROM handoffs h WHERE h.submitter = ? ORDER BY h.updated_at DESC LIMIT ?`).bind(sid, limit).all();
-      return (r.results || []).map((h) => ({ id: h.id, domain: h.domain, status: h.status, sourceId: h.source_id || null, at: new Date(h.created_at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(), messages: h.messages, teamMessages: h.team_messages, lastFrom: h.last_from || null, lastAt: h.last_at ? new Date(h.last_at).toISOString() : null }));
+      return (r.results || []).map((h) => ({ id: h.id, domain: h.domain, status: h.status, sourceId: h.source_id || null, hasSource: !!h.has_source, at: new Date(h.created_at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(), messages: h.messages, teamMessages: h.team_messages, lastFrom: h.last_from || null, lastAt: h.last_at ? new Date(h.last_at).toISOString() : null }));
     },
   };
 }

@@ -41,7 +41,7 @@ export function memoryStore() {
     // --- handoff collaboration workflow ---
     async addHandoff({ domain, bundle, submitter, handle, locale, client, now }) {
       const id = 'h' + (++hseq);
-      handoffs.push({ id, domain, bundle, submitter, handle: handle || '', locale: locale || '', client, at: now, updated_at: now, status: 'new', source_id: null });
+      handoffs.push({ id, domain, bundle, submitter, handle: handle || '', locale: locale || '', client, at: now, updated_at: now, status: 'new', source_id: null, source_json: '' });
       writes.push({ client, at: now });
       return id;
     },
@@ -54,7 +54,7 @@ export function memoryStore() {
     },
     async getHandoffMeta(id) {
       const h = handoffs.find((x) => x.id === id);
-      return h ? { id: h.id, domain: h.domain, status: h.status, submitter: h.submitter, handle: h.handle, source_id: h.source_id } : null;
+      return h ? { id: h.id, domain: h.domain, status: h.status, submitter: h.submitter, handle: h.handle, source_id: h.source_id, source_json: h.source_json || '' } : null;
     },
     async getHandoff(id) {
       const h = handoffs.find((x) => x.id === id);
@@ -70,6 +70,7 @@ export function memoryStore() {
       if (!h) return null;
       if (patch.status != null) h.status = patch.status;
       if (patch.source_id != null) h.source_id = patch.source_id;
+      if (patch.source_json != null) h.source_json = patch.source_json;
       if (patch.updated_at != null) h.updated_at = patch.updated_at;
       return { id: h.id, domain: h.domain, status: h.status, sourceId: h.source_id || null };
     },
@@ -94,7 +95,7 @@ export function memoryStore() {
         return {
           id: h.id, domain: h.domain, status: h.status, sourceId: h.source_id || null,
           at: new Date(h.at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(),
-          messages: ms.length, teamMessages: ms.filter((m) => m.from === 'team').length,
+          messages: ms.length, teamMessages: ms.filter((m) => m.from === 'team').length, hasSource: !!h.source_json,
           lastFrom: last ? last.from : null, lastAt: last ? new Date(last.at).toISOString() : null,
         };
       });
