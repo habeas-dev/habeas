@@ -39,15 +39,15 @@ export function memoryStore() {
     },
 
     // --- handoff collaboration workflow ---
-    async addHandoff({ domain, bundle, submitter, handle, client, now }) {
+    async addHandoff({ domain, bundle, submitter, handle, locale, client, now }) {
       const id = 'h' + (++hseq);
-      handoffs.push({ id, domain, bundle, submitter, handle: handle || '', client, at: now, updated_at: now, status: 'new', source_id: null });
+      handoffs.push({ id, domain, bundle, submitter, handle: handle || '', locale: locale || '', client, at: now, updated_at: now, status: 'new', source_id: null });
       writes.push({ client, at: now });
       return id;
     },
     async listHandoffs(limit) {
       return handoffs.slice().sort((a, b) => b.updated_at - a.updated_at).slice(0, limit).map((h) => ({
-        id: h.id, domain: h.domain, handle: h.handle || '', status: h.status, sourceId: h.source_id || null,
+        id: h.id, domain: h.domain, handle: h.handle || '', locale: h.locale || '', status: h.status, sourceId: h.source_id || null,
         at: new Date(h.at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(),
         bytes: h.bundle.length, messages: hmsgs.filter((m) => m.handoff_id === h.id).length,
       }));
@@ -60,7 +60,7 @@ export function memoryStore() {
       const h = handoffs.find((x) => x.id === id);
       if (!h) return null;
       return {
-        id: h.id, domain: h.domain, handle: h.handle || '', submitter: h.submitter, status: h.status, sourceId: h.source_id || null,
+        id: h.id, domain: h.domain, handle: h.handle || '', locale: h.locale || '', submitter: h.submitter, status: h.status, sourceId: h.source_id || null,
         at: new Date(h.at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(),
         bundle: JSON.parse(h.bundle), messages: await this.getMessages(id),
       };

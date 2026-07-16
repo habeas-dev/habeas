@@ -68,10 +68,10 @@ export async function postComment(id, text, token) {
 
 // ---- handoff collaboration (submit a redacted recording + follow it up) ----
 // See api-repo (api.habeas.dev). Degrades gracefully when the service is unreachable.
-export async function submitHandoff(bundle, submitter, handle) {
+export async function submitHandoff(bundle, submitter, handle, locale) {
   const r = await fetch(`${API_BASE}/handoff`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ submitter, handle: handle || '', bundle }),
+    body: JSON.stringify({ submitter, handle: handle || '', locale: locale || '', bundle }),
   });
   if (!r.ok) throw new Error('submit ' + r.status);
   return await r.json(); // { ok, id, status }

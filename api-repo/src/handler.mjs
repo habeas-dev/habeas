@@ -105,8 +105,9 @@ async function handleHandoff(request, env, url, parts) {
     const submitter = String((body && body.submitter) || '').slice(0, 80);
     if (!submitter) return err(400, 'submitter id required');
     const handle = String((body && body.handle) || '').trim().slice(0, MAX_AUTHOR);
+    const locale = String((body && body.locale) || '').slice(0, 20); // browser locale → what language to reply in
     const domain = String(bundle.domain || '').slice(0, 120);
-    const id = await store.addHandoff({ domain, bundle: serialized, submitter, handle, client, now });
+    const id = await store.addHandoff({ domain, bundle: serialized, submitter, handle, locale, client, now });
     // A newer submission for the same source (submitter + domain) supersedes the sender's earlier OPEN
     // ones — the team reviews only the most complete recording, and the contributor's inbox reflects it.
     const superseded = await store.supersedePrior(submitter, domain, id, now);

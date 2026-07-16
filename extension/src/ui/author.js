@@ -8,7 +8,6 @@ import { editJson } from './jsoneditor.js';
 import { buildHandoff, findOrphans, revealOrphans } from '../lib/redact.js';
 import { getSubmitter, setHandle } from '../lib/submitter.js';
 import { submitHandoff } from '../registry/client.js';
-import { esc } from '../lib/esc.js';
 import { renderPage } from '../lib/render.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { saveSource, getAdapters } from '../adapters/index.js';
@@ -167,7 +166,7 @@ async function submitBundle(bundle) {
   if (handle && handle !== sub.handle) await setHandle(handle);
   $('#sharestatus').textContent = t('author_sending');
   try {
-    const res = await submitHandoff(bundle, sub.id, handle);
+    const res = await submitHandoff(bundle, sub.id, handle, (navigator.languages && navigator.languages[0]) || navigator.language || '');
     $('#sharestatus').textContent = t('author_sent', [String(res.id || '')]);
   } catch (e) {
     $('#sharestatus').textContent = t('author_send_fail', [String((e && e.message) || e).slice(0, 80)]);

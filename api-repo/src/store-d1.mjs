@@ -29,24 +29,24 @@ export function d1Store(DB) {
     },
 
     // --- handoff collaboration workflow ---
-    async addHandoff({ domain, bundle, submitter, handle, client, now }) {
+    async addHandoff({ domain, bundle, submitter, handle, locale, client, now }) {
       const id = crypto.randomUUID();
-      await DB.prepare('INSERT INTO handoffs (id, domain, bundle, submitter, handle, client, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-        .bind(id, domain, bundle, submitter, handle || '', client, 'new', now, now).run();
+      await DB.prepare('INSERT INTO handoffs (id, domain, bundle, submitter, handle, locale, client, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .bind(id, domain, bundle, submitter, handle || '', locale || '', client, 'new', now, now).run();
       await DB.prepare('INSERT INTO writes (client, created_at) VALUES (?, ?)').bind(client, now).run();
       return id;
     },
     async listHandoffs(limit) {
-      const r = await DB.prepare('SELECT h.id, h.domain, h.handle, h.status, h.source_id, h.created_at, h.updated_at, LENGTH(h.bundle) AS bytes, (SELECT COUNT(*) FROM handoff_messages m WHERE m.handoff_id = h.id) AS messages FROM handoffs h ORDER BY h.updated_at DESC LIMIT ?').bind(limit).all();
-      return (r.results || []).map((h) => ({ id: h.id, domain: h.domain, handle: h.handle || '', status: h.status, sourceId: h.source_id || null, at: new Date(h.created_at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(), bytes: h.bytes, messages: h.messages }));
+      const r = await DB.prepare('SELECT h.id, h.domain, h.handle, h.locale, h.status, h.source_id, h.created_at, h.updated_at, LENGTH(h.bundle) AS bytes, (SELECT COUNT(*) FROM handoff_messages m WHERE m.handoff_id = h.id) AS messages FROM handoffs h ORDER BY h.updated_at DESC LIMIT ?').bind(limit).all();
+      return (r.results || []).map((h) => ({ id: h.id, domain: h.domain, handle: h.handle || '', locale: h.locale || '', status: h.status, sourceId: h.source_id || null, at: new Date(h.created_at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(), bytes: h.bytes, messages: h.messages }));
     },
     async getHandoffMeta(id) {
-      return (await DB.prepare('SELECT id, domain, status, submitter, handle, source_id FROM handoffs WHERE id = ?').bind(id).first()) || null;
+      return (await DB.prepare('SELECT id, domain, status, submitter, handle, locale, source_id FROM handoffs WHERE id = ?').bind(id).first()) || null;
     },
     async getHandoff(id) {
-      const h = await DB.prepare('SELECT id, domain, handle, submitter, status, source_id, bundle, created_at, updated_at FROM handoffs WHERE id = ?').bind(id).first();
+      const h = await DB.prepare('SELECT id, domain, handle, locale, submitter, status, source_id, bundle, created_at, updated_at FROM handoffs WHERE id = ?').bind(id).first();
       if (!h) return null;
-      return { id: h.id, domain: h.domain, handle: h.handle || '', submitter: h.submitter, status: h.status, sourceId: h.source_id || null, at: new Date(h.created_at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(), bundle: JSON.parse(h.bundle), messages: await this.getMessages(id) };
+      return { id: h.id, domain: h.domain, handle: h.handle || '', locale: h.locale || '', submitter: h.submitter, status: h.status, sourceId: h.source_id || null, at: new Date(h.created_at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(), bundle: JSON.parse(h.bundle), messages: await this.getMessages(id) };
     },
     async setHandoff(id, patch) {
       const sets = [], vals = [];

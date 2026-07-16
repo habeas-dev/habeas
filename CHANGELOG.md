@@ -74,6 +74,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
     panel now surfaces just those un-derivable ids (`findOrphans`) and lets the owner opt in to share the
     real value of the ones that are non-personal system/entity ids (`revealOrphans`) — everything else
     stays redacted. Only the handful of orphans are ever shown, never the hundreds of traceable ids.
+  - A submission now carries the contributor's **browser locale** so the team knows which language to reply
+    in (shown in the team list / record).
+
+### Fixed
+- Author page no longer fails to load — a duplicate `esc` import (added with the orphan review) was a
+  `SyntaxError` that broke the whole module.
 
 ## [0.3.0] — 2026-07-16
 
