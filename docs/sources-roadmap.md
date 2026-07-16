@@ -45,9 +45,9 @@ Status: `todo` = needs capture · `draft` = recorded, not verified · `live` = p
 | 14 | Pepe Energy | pepeenergy.com | utility | invoice | todo | electricity |
 | 15 | Pepephone | pepephone.com | telco | invoice | todo | mobile |
 | 16 | Financiera El Corte Inglés | elcorteingles.es | card | transaction | todo | store card / financing |
-| 17 | Openbank | openbank.es | bank/card | transaction | todo | PSD2 is the canonical path; Habeas covers the gaps |
-| 18 | Revolut | revolut.com | card | transaction | todo | likely cross-domain (app.revolut.com/api) → off-site consent |
-| 19 | Trade Republic | traderepublic.com | investment | investment | todo | WebSocket API — extra work |
+| 17 | Openbank | openbank.es | bank/card | transaction | **live** | `openbank-es`, integrated statements + per-account movements (PDF/XLS) + transactions; SCA-safe 90-day window |
+| 18 | Revolut | revolut.com | card | transaction | **live** | `revolut`, transactions (`to` cursor) + per-pocket filter + statements PDF/CSV; cookie + captured x-device-id |
+| 19 | Trade Republic | traderepublic.com | investment | investment | **live** | `traderepublic`, timeline over the **WebSocket** transport (in-tab) + ISIN/detail + monthly statement PDF + transactions CSV |
 | 20 | Raisin | raisin.es | investment | investment | todo | deposits/savings |
 
 ## Notes by group
