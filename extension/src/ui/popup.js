@@ -438,6 +438,9 @@ async function onList(mode, opts = {}) {
     $('#status').textContent = aborted() ? t('stopped_n', [String(inventory.length)]) : t('n_listed', [String(inventory.length), String(newTotal)]);
     log(t('n_listed', [String(inventory.length), String(newTotal)]));
   } catch (e) {
+    // Remember the last list failure so the contributor can report it to the Habeas team in one click
+    // (My contributions → Report a problem) without touching DevTools. Redacted before it's ever sent.
+    try { await chrome.storage.local.set({ ['habeas:diag:' + adapter.id]: { error: String((e && e.message) || e), at: new Date().toISOString() } }); } catch (_) {}
     // Anti-bot CAPTCHA (DataDome/Cloudflare/Akamai) on the API → SHOW it to the user so they solve it live
     // (the interstitial URL comes back in the response body). Solving it sets the anti-bot cookie; then List
     // again. Checked first, before the generic 4xx/login branch (a challenge is a 403 too).

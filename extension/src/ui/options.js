@@ -21,6 +21,7 @@ import { nextOccurrence, describeSchedule, validateSpec } from '../lib/schedule.
 import { getSubmitter, markSeen, unreadCount } from '../lib/submitter.js';
 import { getMyHandoffs, getHandoffThread, replyHandoff } from '../registry/client.js';
 import { validateAdapter } from '../adapters/validate.js';
+import { scrubText } from '../lib/redact.js';
 
 let CATALOG = {};
 const $ = (s) => document.querySelector(s);
@@ -519,8 +520,22 @@ async function openThread(id) {
       <span class="muted" style="font-size:12px"> — ${t('contrib_install_hint')}</span><br>
       <button class="accent" id="inst-${esc(id)}" style="margin-top:6px">${t('contrib_install')}</button> <span id="inststat-${esc(id)}" class="muted" style="font-size:12px"></span></div>`;
   }
+  // If a List test for this source failed, offer to report the (redacted) diagnostic to the team — no DevTools.
+  let diag = null;
+  if (data.sourceId) { try { const o = await chrome.storage.local.get('habeas:diag:' + data.sourceId); diag = o['habeas:diag:' + data.sourceId]; } catch (e) {} }
+  if (diag && diag.error) {
+    el.innerHTML += `<div style="margin-top:8px"><button id="rep-diag-${esc(id)}">${t('contrib_report')}</button> <span id="repstat-${esc(id)}" class="muted" style="font-size:12px"></span></div>`;
+  }
   el.innerHTML += `<div style="margin-top:8px"><textarea id="rep-${esc(id)}" rows="2" style="width:100%;box-sizing:border-box" placeholder="${t('contrib_reply_ph')}"></textarea>
     <button class="primary" data-send="${esc(id)}">${t('contrib_reply')}</button></div>`;
+  if (diag && diag.error) {
+    const rb = document.getElementById('rep-diag-' + id);
+    if (rb) rb.onclick = async () => {
+      rb.disabled = true;
+      try { await replyHandoff(id, sub.id, t('contrib_report_prefix') + ' ' + scrubText(diag.error).slice(0, 500)); await chrome.storage.local.remove('habeas:diag:' + data.sourceId); const st = document.getElementById('repstat-' + id); if (st) st.textContent = t('contrib_report_sent'); await renderContributions(); }
+      catch (e) { rb.disabled = false; }
+    };
+  }
   if (data.source && data.source.id) {
     const ib = document.getElementById('inst-' + id);
     if (ib) ib.onclick = async () => { ib.disabled = true; const ok = await installContribSource(data.source); const st = document.getElementById('inststat-' + id); if (st) st.textContent = ok ? t('contrib_installed') : t('contrib_install_fail'); ib.disabled = false; };

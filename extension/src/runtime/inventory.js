@@ -1151,7 +1151,9 @@ async function fetchList(adapter, auth, params, net, group) {
   }
   if (referer) init.referrer = referer; // same-origin referer set from the tab; DNR is the fallback
   const res = await withReferer(url, referer, () => NET(url, init));
-  if (!res.ok) throw new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160));
+  // On failure, include which header NAMES we sent (never values) — so a diagnostic report shows whether
+  // e.g. `authorization` reached the request, without the contributor needing DevTools.
+  if (!res.ok) throw new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160) + ' [sent: ' + Object.keys(init.headers || {}).join(',') + ']');
   // Server-rendered list (no JSON API): parse the items out of the page HTML.
   if (html) return { __items: extractListItems(await res.text(), list) };
   return await res.json();
