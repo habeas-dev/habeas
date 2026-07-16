@@ -27,8 +27,8 @@ test('mtop transport: extracts component-keyed orders across pages, maps to rece
   let cfg = null;
   const net = async () => ({ ok: false });
   net.mtop = async (c) => { cfg = c; return { pages: [
-    pageResp([order('A1', '24 may, 2026', '2,28€', 'QH Store'), order('A2', '10 jun, 2026', '15,99€', 'DOMRAEM Store')], true),
-    pageResp([order('A3', '6 jun, 2026', '3,97€', 'Shop Store')], false),
+    pageResp([order('A1', '05 may, 2020', '9,99€', 'Demo Store'), order('A2', '11 jun, 2020', '12,50€', 'Sample Store')], true),
+    pageResp([order('A3', '07 jun, 2020', '4,00€', 'Test Store')], false),
   ] }; };
   const docs = await listInventory(EFF, { merged: {}, byPath: {}, ctx: {} }, net, {});
   // the runtime hands the executor the mtop api + pagination config
@@ -36,12 +36,12 @@ test('mtop transport: extracts component-keyed orders across pages, maps to rece
   assert.equal(cfg.pagePath, 'params~.data~.pc_om_list_body_*.fields.pageIndex');
   assert.equal(docs.length, 3);
   const byId = Object.fromEntries(docs.map((d) => [d.internalId, d.record]));
-  assert.equal(byId.A1.date, '2026-05-24');            // "24 may, 2026" → ISO, no off-by-one
-  assert.equal(byId.A1.total, 2.28);                    // "2,28€" parsed
+  assert.equal(byId.A1.date, '2020-05-05');            // "05 may, 2020" → ISO, no off-by-one
+  assert.equal(byId.A1.total, 9.99);                    // "9,99€" parsed
   assert.equal(byId.A1.currency, 'EUR');
-  assert.equal(byId.A1.store.name, 'QH Store');         // storeName → receipt store.name
-  assert.equal(byId.A2.total, 15.99);
-  assert.equal(byId.A3.date, '2026-06-06');
+  assert.equal(byId.A1.store.name, 'Demo Store');       // storeName → receipt store.name
+  assert.equal(byId.A2.total, 12.50);
+  assert.equal(byId.A3.date, '2020-06-07');
   assert.ok(byId.A1.extra, 'keepRaw kept the full order fields');
 });
 
@@ -51,16 +51,16 @@ test('receipt: mtop detail → self-contained HTML invoice from the declarative 
     mcms: { mainTitle: 'Receipt', orderSummary: 'Order summary', orderIdTitle: 'Order ID', orderTimeTitle: 'Order date',
       shippingAddressTitle: 'Shipping address', paymentTitle: 'Payment', itemsDetailTitle: 'Items',
       allDiscountTitle: 'Discount', shippingFeeTitle: 'Shipping', includedTax: 'Incl. tax', orderTotal: 'Total' },
-    orderId: 'A1', orderTime: '24 may, 2026',
-    deliveryAddress: { contactName: 'TEST BUYER', addressSummaryInfoDisplay: '1 Test St, Testville', fullPhoneNo: '+00 000000000' },
-    paymentInfo: { methodName: 'Visa', cardNo: '**** 0000', paymentAmountStr: '2,28€', paymentDate: '24 may, 2026' },
-    subOrders: [{ itemTitle: 'Widget', amount: '2,28€' }],
-    allDiscount: '0,05€', shippingFee: '0,00€', includedTaxDisplay: '0,43€', orderTotal: '2,28€',
+    orderId: 'A1', orderTime: '05 may, 2020',
+    deliveryAddress: { contactName: 'TEST BUYER', addressSummaryInfoDisplay: '1 Test St, Testville', fullPhoneNo: '+1 555 000 0000' },
+    paymentInfo: { methodName: 'Visa', cardNo: '**** 0000', paymentAmountStr: '9,99€', paymentDate: '05 may, 2020' },
+    subOrders: [{ itemTitle: 'Widget', amount: '9,99€' }],
+    allDiscount: '0,05€', shippingFee: '0,00€', includedTaxDisplay: '0,43€', orderTotal: '9,99€',
   };
   let cfg = null;
   const net = async () => ({ ok: false });
   net.mtop = async (c) => { cfg = c; return { pages: [{ api: 'mtop.global.finance.taxation.invoice.queryorderreceiptinfo', data: { data: receipt } }] }; };
-  const doc = { internalId: 'A1', record: { internalId: 'A1', total: 2.28, currency: 'EUR' } };
+  const doc = { internalId: 'A1', record: { internalId: 'A1', total: 9.99, currency: 'EUR' } };
 
   const kinds = artifactKinds(EFF, doc);
   assert.ok(kinds.some((k) => k.kind === 'document' && k.ext === 'html'), 'produces an html document artifact');
@@ -76,14 +76,14 @@ test('receipt: mtop detail → self-contained HTML invoice from the declarative 
   assert.match(html, /Widget/);                          // item row
   assert.match(html, /TEST BUYER/);                      // address block
   assert.match(html, /Incl\. tax/);                      // mcms label used
-  assert.match(html, /2,28€/);                           // total value
+  assert.match(html, /9,99€/);                           // total value
   assert.doesNotMatch(html, /mainTitle|deliveryAddress/); // raw keys never leak (template, not flatten)
 });
 
 test('mtop transport: surfaces an executor error, dedupes by orderId', async () => {
   const errNet = async () => ({ ok: false }); errNet.mtop = async () => ({ pages: [], error: 'no seed request captured' });
   await assert.rejects(listInventory(EFF, { merged: {}, byPath: {}, ctx: {} }, errNet, {}), /list mtop/);
-  const dupNet = async () => ({ ok: false }); dupNet.mtop = async () => ({ pages: [pageResp([order('A1', '24 may, 2026', '1€', 'S')], true), pageResp([order('A1', '24 may, 2026', '1€', 'S')], false)] });
+  const dupNet = async () => ({ ok: false }); dupNet.mtop = async () => ({ pages: [pageResp([order('A1', '05 may, 2020', '1€', 'S')], true), pageResp([order('A1', '05 may, 2020', '1€', 'S')], false)] });
   const docs = await listInventory(EFF, { merged: {}, byPath: {}, ctx: {} }, dupNet, {});
   assert.equal(docs.length, 1);
 });

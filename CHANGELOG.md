@@ -58,7 +58,7 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   falls back to the account default — no hardcoded country/language.
 
 ### Fixed
-- `normalizeDate` handles `DD Mon, YYYY` (e.g. AliExpress `24 may, 2026`) — was shifting a day via the
+- `normalizeDate` handles `DD Mon, YYYY` (e.g. AliExpress `15 jun, 2025`) — was shifting a day via the
   `Date()` fallback + UTC conversion.
 
 ## [0.2.0] — 2026-07-15

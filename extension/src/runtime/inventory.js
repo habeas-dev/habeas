@@ -1304,7 +1304,7 @@ export function normalizeDate(v) {
   const low = s.toLowerCase();
   m = low.match(/\b([a-záéíóúñ]{3,})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b/); // Month DD, YYYY
   if (m && MONTHS[m[1]]) return `${m[3]}-${pad2(MONTHS[m[1]])}-${pad2(m[2])}`;
-  m = low.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:de\s+)?([a-záéíóúñ]{3,})\.?,?\s+(?:de\s+)?(\d{4})\b/); // DD [de] Month[,] [de] YYYY (AliExpress "24 may, 2026")
+  m = low.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:de\s+)?([a-záéíóúñ]{3,})\.?,?\s+(?:de\s+)?(\d{4})\b/); // DD [de] Month[,] [de] YYYY (AliExpress "15 jun, 2025")
   if (m && MONTHS[m[2]]) return `${m[3]}-${pad2(MONTHS[m[2]])}-${pad2(m[1])}`;
   m = s.match(/^(\d{1,4})[/.-](\d{1,2})[/.-](\d{1,4})$/); // numeric D/M/Y, M/D/Y or Y/M/D
   if (m) {
