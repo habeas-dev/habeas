@@ -22,7 +22,49 @@ function luhn(n) { let sum = 0, alt = false; for (let i = n.length - 1; i >= 0; 
 // standalone redaction (generic placeholders).
 export function makeRefs() {
   const map = new Map(); let n = 0;
-  return (val) => { const k = String(val); if (!map.has(k)) map.set(k, ++n); return '[id#' + map.get(k) + ']'; };
+  const tag = (val) => { const k = String(val); if (!map.has(k)) map.set(k, ++n); return '[id#' + map.get(k) + ']'; };
+  tag.map = map; // value → N, so buildHandoff can invert tags back to values for the orphan review
+  return tag;
+}
+
+// An "orphan" id appears only in REQUESTS (a URL/header/body) and in NO source (response, JWT claim, or
+// client storage) — so a maintainer can't trace where its value comes from, and it's exactly what blocks
+// authoring. These are the ONLY ids worth asking the user about ("is this a shareable system/entity id, or
+// personal?"). Returns { tag, value, where } for each; value is the real value (shown to its OWNER to decide).
+export function findOrphans(bundle) {
+  const map = bundle && bundle.__refs; if (!map) return [];
+  const valOf = new Map(); for (const [v, n] of map) valOf.set('[id#' + n + ']', v);
+  const req = new Set(), src = new Set();
+  const scan = (node, set) => {
+    if (typeof node === 'string') { for (const m of node.matchAll(/\[id#\d+\]/g)) set.add(m[0]); }
+    else if (Array.isArray(node)) node.forEach((x) => scan(x, set));
+    else if (node && typeof node === 'object') for (const k of Object.keys(node)) { scan(k, set); scan(node[k], set); }
+  };
+  for (const s of bundle.samples || []) { scan(s.url, req); scan(s.reqHeaders, req); scan(s.reqBody, req); scan(s.json, src); scan(s.frame, src); }
+  scan(bundle.tokenClaims, src); scan(bundle.storage, src);
+  const orphans = [];
+  for (const tag of req) {
+    if (src.has(tag) || !valOf.has(tag)) continue;
+    const where = [];
+    for (const s of bundle.samples || []) if (String(s.url || '').includes(tag)) { const ep = String(s.url).split('?')[0]; if (!where.includes(ep)) where.push(ep); }
+    orphans.push({ tag, value: valOf.get(tag), where });
+  }
+  return orphans;
+}
+
+// Return a copy of the bundle with the chosen orphan tags replaced by their REAL value (the user opted to
+// share these — non-personal system/entity ids). Drops the non-enumerable __refs. Everything else stays redacted.
+export function revealOrphans(bundle, tags) {
+  const map = (bundle && bundle.__refs) || new Map();
+  const keep = {}; const valOf = new Map(); for (const [v, n] of map) valOf.set('[id#' + n + ']', v);
+  for (const t of tags || []) if (valOf.has(t)) keep[t] = valOf.get(t);
+  const walk = (node) => {
+    if (typeof node === 'string') { let s = node; for (const t of Object.keys(keep)) if (s.includes(t)) s = s.split(t).join(keep[t]); return s; }
+    if (Array.isArray(node)) return node.map(walk);
+    if (node && typeof node === 'object') { const o = {}; for (const k of Object.keys(node)) o[walk(k)] = walk(node[k]); return o; }
+    return node;
+  };
+  return walk(JSON.parse(JSON.stringify(bundle)));
 }
 
 // A single leaf string → a type-classified placeholder that reveals the KIND (so a maintainer can
@@ -227,5 +269,6 @@ export function buildHandoff({ domain, samples, wsframes, assets, storage }) {
   // JWT-derived path/query ids even when the bearer is opaque.
   const claims = collectJwtClaims(samples, storage, refs);
   if (claims.length) out.tokenClaims = claims;
+  Object.defineProperty(out, '__refs', { value: refs.map, enumerable: false }); // for findOrphans/revealOrphans; never serialized
   return out;
 }

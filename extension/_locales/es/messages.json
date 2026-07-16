@@ -1096,6 +1096,9 @@
     "message": "No se pudo enviar ($E$). Puedes usar «Descargar una copia» y enviarlo por otra vía.",
     "placeholders": { "E": { "content": "$1" } }
   },
+  "author_orphan_intro": { "message": "Algunos ids no se han podido relacionar con nada más de tu sesión. Probablemente son ids de sistema/entidad (no personales) que el mantenedor necesita para crear la fuente — pero podrían ser personales. Marca solo los que te parezca bien compartir con su valor real; el resto se quedan ocultos." },
+  "author_orphan_send": { "message": "Enviar compartiendo los marcados" },
+  "author_orphan_cancel": { "message": "Cancelar" },
   "contrib_title": { "message": "Mis contribuciones" },
   "contrib_help": { "message": "Grabaciones que enviaste al equipo de Habeas. Sigue su estado y responde a las preguntas para que se pueda crear la fuente — se te acredita cuando se publique." },
   "contrib_empty": { "message": "Aún no has enviado ninguna grabación. Graba un sitio (Crear una fuente) y pulsa «Enviar al equipo de Habeas»." },

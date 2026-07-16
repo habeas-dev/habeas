@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { redactString, redactUrl, redactJson, redactBody, redactFrame, redactHeaders, redactHtml, buildHandoff, makeRefs } from '../src/lib/redact.js';
+import { redactString, redactUrl, redactJson, redactBody, redactFrame, redactHeaders, redactHtml, buildHandoff, makeRefs, findOrphans, revealOrphans } from '../src/lib/redact.js';
 
 // Fully synthetic, PII-SHAPED values — NEVER copied from any real capture. The redactor must remove
 // every one of these from any output.
@@ -120,6 +120,30 @@ test('handoff: client-storage snapshot redacted + correlated (traces a client-si
   assert.ok(bundle.samples[0].url.includes('/payments/' + tag + '/'), 'movements path id == localStorage entityId — client-side id traced');
   assert.equal(bundle.storage.local['app.user'].name, '[text]'); // PII inside a JSON storage value still redacted
   assert.equal(bundle.storage.local['app.user'].id, tag);        // same id inside a JSON value → same tag
+});
+
+test('orphan ids: detect un-derivable ids; reveal only the ones the owner opts to share', () => {
+  const ORPHAN = '555000111222';   // appears ONLY in the movements URL → un-derivable (blocks authoring)
+  const SOURCED = '987654321098';  // appears in a URL AND a response field → derivable, not an orphan
+  const bundle = buildHandoff({
+    domain: 'bank.test',
+    samples: [
+      { url: `https://bank.test/api/payments/${ORPHAN}/v3/movements?accountNumber=${SOURCED}`, method: 'GET' },
+      { url: 'https://bank.test/dashboard/user', method: 'GET', json: { contract_number: SOURCED, name: 'Jane' } },
+    ],
+  });
+  const orphans = findOrphans(bundle);
+  assert.equal(orphans.length, 1, 'only the un-sourced id is flagged');
+  assert.equal(orphans[0].value, ORPHAN);
+  assert.ok(orphans[0].where.some((w) => w.includes('/payments/')));
+  assert.ok(!orphans.some((o) => o.value === SOURCED), 'a sourced id is NOT an orphan');
+
+  const revealed = revealOrphans(bundle, [orphans[0].tag]); // owner shares the orphan
+  const blob = JSON.stringify(revealed);
+  assert.ok(blob.includes(ORPHAN), 'chosen orphan value revealed');
+  assert.ok(!blob.includes(SOURCED), 'a non-chosen id stays redacted');
+  assert.ok(!blob.includes('Jane'), 'PII is never in the reveal set');
+  assert.equal(revealed.__refs, undefined, 'refs map never serialized');
 });
 
 test('redactJson: keeps keys + shape, strips every value (real receipt shape)', () => {

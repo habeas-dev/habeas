@@ -5,9 +5,10 @@ import { draftAdapterFromSamples, draftStreamsFromSamples, draftWithGroups, list
 import { listInventory, artifactKinds, fetchArtifact } from '../runtime/inventory.js';
 import { ensureSiteFetch } from '../lib/pagefetch.js';
 import { editJson } from './jsoneditor.js';
-import { buildHandoff } from '../lib/redact.js';
+import { buildHandoff, findOrphans, revealOrphans } from '../lib/redact.js';
 import { getSubmitter, setHandle } from '../lib/submitter.js';
 import { submitHandoff } from '../registry/client.js';
+import { esc } from '../lib/esc.js';
 import { renderPage } from '../lib/render.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { saveSource, getAdapters } from '../adapters/index.js';
@@ -56,6 +57,8 @@ async function init() {
   $('#stop').onclick = onStop;
   $('#analyze').onclick = onAnalyze;
   $('#sendteam').onclick = onSendTeam;
+  $('#orphansend').onclick = onOrphanSend;
+  $('#orphancancel').onclick = () => { $('#orphanpanel').hidden = true; PENDING_BUNDLE = null; };
   $('#share').onclick = onShare;
   $('#sharepreview').onclick = onSharePreview;
   $('#test').onclick = onTest;
@@ -134,10 +137,33 @@ async function onSharePreview() {
   if (!LEARN) return;
   await editJson(await buildBundle()); // let the helper SEE it's redacted ([text]/[id]/… everywhere) before sharing
 }
+let PENDING_BUNDLE = null;
 async function onSendTeam() {
   if (!LEARN) return;
+  const bundle = await buildBundle();
+  const orphans = findOrphans(bundle);
+  if (orphans.length) { PENDING_BUNDLE = bundle; renderOrphans(orphans); return; } // ask before sending
+  await submitBundle(bundle);
+}
+// Ids we couldn't trace to any other session data. Ask the OWNER whether each is a shareable system/entity
+// id (opt-in to send its real value) or personal (leave redacted). Unchecked by default = stays hidden.
+function renderOrphans(orphans) {
+  $('#orphanpanel').hidden = false;
+  const shortPath = (w) => String(w).replace(/^https?:\/\/[^/]+/, '');
+  $('#orphanlist').innerHTML = orphans.map((o) =>
+    `<label style="display:block;margin:5px 0"><input type="checkbox" data-orphan="${esc(o.tag)}"> <code>${esc(o.value)}</code>`
+    + `<span class="muted" style="font-size:11px"> — ${esc(o.where.map(shortPath).join(', '))}</span></label>`).join('');
+}
+async function onOrphanSend() {
+  if (!PENDING_BUNDLE) return;
+  const chosen = [...document.querySelectorAll('#orphanlist input:checked')].map((c) => c.dataset.orphan);
+  const bundle = chosen.length ? revealOrphans(PENDING_BUNDLE, chosen) : PENDING_BUNDLE;
+  $('#orphanpanel').hidden = true; PENDING_BUNDLE = null;
+  await submitBundle(bundle);
+}
+async function submitBundle(bundle) {
   const handle = ($('#handle').value || '').trim();
-  const [bundle, sub] = await Promise.all([buildBundle(), getSubmitter()]);
+  const sub = await getSubmitter();
   if (handle && handle !== sub.handle) await setHandle(handle);
   $('#sharestatus').textContent = t('author_sending');
   try {

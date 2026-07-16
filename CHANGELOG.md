@@ -69,6 +69,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
     there that never hit the network, so a path/query id can now be traced to the storage key it comes
     from. Values are redacted (JSON deep-redacted, JWTs decoded to claims); keys keep their names with
     id-runs redacted.
+  - **Orphan-id review (ask-before-redact)** — an id that appears ONLY in requests and in no source
+    (response / JWT claim / storage) can't be traced, so it blocks authoring. Before sending, the author
+    panel now surfaces just those un-derivable ids (`findOrphans`) and lets the owner opt in to share the
+    real value of the ones that are non-personal system/entity ids (`revealOrphans`) — everything else
+    stays redacted. Only the handful of orphans are ever shown, never the hundreds of traceable ids.
 
 ## [0.3.0] — 2026-07-16
 

@@ -1096,6 +1096,9 @@
     "message": "Couldn't send ($E$). You can use “Download a copy” and send it another way.",
     "placeholders": { "E": { "content": "$1" } }
   },
+  "author_orphan_intro": { "message": "A few ids couldn't be traced to anything else in your session. They're likely non-personal system/entity ids the maintainer needs to build the source — but they could be personal. Tick only the ones you're OK sharing the real value of; the rest stay hidden." },
+  "author_orphan_send": { "message": "Send with the ticked shared" },
+  "author_orphan_cancel": { "message": "Cancel" },
   "contrib_title": { "message": "My contributions" },
   "contrib_help": { "message": "Recordings you sent to the Habeas team. Follow their status and answer any questions so your source can be built — you're credited when it ships." },
   "contrib_empty": { "message": "You haven't sent any recordings yet. Record a site (Author a source) and press “Send to the Habeas team”." },
