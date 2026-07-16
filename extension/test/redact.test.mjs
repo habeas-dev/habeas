@@ -83,6 +83,23 @@ test('handoff correlation: same id → stable [id#N] across path/query/header/fi
   assert.ok(s.url.includes('operationType=A'));                        // enum kept
 });
 
+test('handoff includes redacted JWT claims (traces JWT-derived ids), never the raw token', () => {
+  const payload = { sub: '123456789012', name: 'Jane', email: EMAIL, entityId: '0001', exp: 1999999999 };
+  const jwt = 'eyJhbGciOiJIUzI1NiJ9.' + Buffer.from(JSON.stringify(payload)).toString('base64url') + '.SIGabc';
+  const bundle = buildHandoff({
+    domain: 'bank.test',
+    samples: [{ url: 'https://bank.test/api/payments/123456789012/v3/movements', method: 'GET', reqHeaders: { authorization: 'Bearer ' + jwt } }],
+  });
+  assertClean(bundle, 'jwt-claims');
+  assert.ok(bundle.tokenClaims, 'decoded claims present');
+  assert.match(bundle.tokenClaims.sub, /^\[id#\d+\]$/);                          // an id claim → correlatable
+  assert.ok(bundle.samples[0].url.includes('/payments/' + bundle.tokenClaims.sub + '/'), 'the path id == the sub claim tag — JWT-derived id traced');
+  assert.equal(bundle.tokenClaims.name, '[text]');
+  assert.equal(bundle.tokenClaims.email, '[email]');
+  assert.equal(bundle.tokenClaims.entityId, '0001');                            // short system code kept
+  assert.equal(bundle.samples[0].reqHeaders.authorization, '[redacted]');       // raw token NEVER included
+});
+
 test('redactJson: keeps keys + shape, strips every value (real receipt shape)', () => {
   const receipt = { data: { data: {
     ['pc_om_list_order_' + ORDERID]: { fields: { orderId: ORDERID, orderDateText: '05 may, 2020', totalPriceText: '9,99€', currencyCode: 'EUR', storeName: NAME } },

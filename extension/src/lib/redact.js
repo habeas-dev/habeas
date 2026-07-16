@@ -155,13 +155,36 @@ export function redactSample(s, refs = null) {
   return out;
 }
 
+// SPAs often derive a path/query id from a CLAIM inside the session JWT (not from any response), which
+// makes that id untraceable in a handoff. So we include the JWT's decoded PAYLOAD claims — claim NAMES +
+// value-redacted (correlated) — so a maintainer can see e.g. the movements path [id#9] == claim
+// `entityId: [id#9]`. NEVER the raw token, header, or signature; claim values are redacted like any JSON
+// (ids → [id#N], name/email → [text]/[email]).
+function b64urlToJson(seg) {
+  let s = String(seg).replace(/-/g, '+').replace(/_/g, '/');
+  s += '='.repeat((4 - (s.length % 4)) % 4);
+  return JSON.parse(atob(s));
+}
+function firstJwtClaims(samples, refs) {
+  for (const s of samples || []) {
+    const h = (s && s.reqHeaders) || {};
+    for (const k of Object.keys(h)) {
+      if (k.toLowerCase() !== 'authorization') continue;
+      const m = /eyJ[A-Za-z0-9_-]+\.([A-Za-z0-9_-]+)\.[A-Za-z0-9_-]*/.exec(String(h[k]));
+      if (!m) continue;
+      try { const c = b64urlToJson(m[1]); if (c && typeof c === 'object') return redactJson(c, '', 0, refs); } catch (e) {}
+    }
+  }
+  return null;
+}
+
 // Build the shareable handoff bundle. DELIBERATELY excludes auth (live tokens) and dom page text (full
 // of PII, low authoring value). Everything included is value-redacted, and id values are correlated with a
 // bundle-scoped `refs` tagger: the SAME real id → the same [id#N] everywhere (path, header, field), so a
 // maintainer can trace provenance without any technical questions and without seeing a single value.
 export function buildHandoff({ domain, samples, wsframes, assets }) {
   const refs = makeRefs();
-  return {
+  const out = {
     habeasHandoff: 1,
     kind: 'redacted-recording',
     domain: domain || '',
@@ -171,4 +194,7 @@ export function buildHandoff({ domain, samples, wsframes, assets }) {
     wsframes: (wsframes || []).map((f) => ({ event: f.event, url: f.url ? redactUrl(f.url, refs) : f.url, frame: f.frame != null ? redactFrame(f.frame, refs) : f.frame })),
     assets: (assets || []).map((a) => ({ method: a.method, url: a.url ? redactUrl(a.url, refs) : a.url, reqType: a.reqType })),
   };
+  const claims = firstJwtClaims(samples, refs); // redacted JWT payload claims (names + correlated ids) — traces JWT-derived path/query ids
+  if (claims) out.tokenClaims = claims;
+  return out;
 }
