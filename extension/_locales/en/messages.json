@@ -1064,6 +1064,19 @@
     "message": "Captured $N$ realtime frames from $S$ WebSocket/SSE connection(s). This site streams its data (not plain HTTP) — auto-drafting isn't available yet, but the recording holds what a maintainer needs to build the source. Share it.",
     "placeholders": { "N": { "content": "$1" }, "S": { "content": "$2" } }
   },
+  "author_live_recording": { "message": "Recording — just browse your orders / invoices as usual" },
+  "author_live_documents": { "message": "documents" },
+  "author_live_lists": { "message": "data lists" },
+  "author_live_frames": { "message": "realtime frames" },
+  "author_live_hint_empty": { "message": "No data yet. Open your orders / invoices page so the site loads it — and scroll down to load them all." },
+  "author_live_hint_draft": {
+    "message": "✅ Found your data ($D$ documents). Press “Analyze” to build the draft — or just open one document so we learn how to download it.",
+    "placeholders": { "D": { "content": "$1" } }
+  },
+  "author_live_hint_maintainer": {
+    "message": "✅ Captured your data ($D$ documents) over a special transport ($T$). This can't be auto-built here, but the recording is complete — share it and a maintainer will turn it into a source.",
+    "placeholders": { "D": { "content": "$1" }, "T": { "content": "$2" } }
+  },
   "author_no_list_seen": {
     "message": "Saw $N$ requests (from: $HOSTS$) but none returned a document list. Open your orders/invoices page so it loads the data, then retry — or tell us these hosts.",
     "placeholders": {

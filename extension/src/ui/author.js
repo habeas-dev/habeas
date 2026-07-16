@@ -1,7 +1,7 @@
 import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen, getAssets, getDomTexts, getWsFrames } from '../lib/learn.js';
-import { draftAdapterFromSamples, draftStreamsFromSamples, draftWithGroups, listCandidates, matchCandidates, augmentSource, flatToStream } from '../runtime/infer.js';
+import { draftAdapterFromSamples, draftStreamsFromSamples, draftWithGroups, listCandidates, matchCandidates, augmentSource, flatToStream, summarizeCapture } from '../runtime/infer.js';
 import { listInventory, artifactKinds, fetchArtifact } from '../runtime/inventory.js';
 import { ensureSiteFetch } from '../lib/pagefetch.js';
 import { editJson } from './jsoneditor.js';
@@ -86,8 +86,36 @@ async function onStart() {
 function showLearning() {
   $('#start').hidden = true; $('#stop').hidden = false;
   $('#learnstatus').textContent = t('author_learning', [LEARN.domain]);
+  startLiveMonitor();
 }
-async function onStop() { await stopLearning(); $('#start').hidden = false; $('#stop').hidden = true; $('#learnstatus').textContent = ''; }
+async function onStop() { stopLiveMonitor(); await stopLearning(); $('#start').hidden = false; $('#stop').hidden = true; $('#learnstatus').textContent = ''; $('#live').hidden = true; }
+
+// Live recorder monitor — while the helper browses (in the site tab), poll the capture and show, in
+// plain language, what we're seeing: documents found, data lists, realtime frames, which transport, and
+// whether it's ready to draft here or needs a maintainer. So a non-technical helper KNOWS it's working.
+let LIVE_TIMER = null;
+function stopLiveMonitor() { if (LIVE_TIMER) { clearInterval(LIVE_TIMER); LIVE_TIMER = null; } }
+async function refreshLive() {
+  if (!LEARN) return;
+  const [samples, ws] = await Promise.all([getSamples(LEARN.domain), getWsFrames(LEARN.domain)]);
+  const s = summarizeCapture(samples, ws);
+  $('#live').hidden = false;
+  $('#livecounts').innerHTML = ''; // built from escaped numbers below
+  const count = (n, label) => { const d = document.createElement('span'); d.textContent = String(n); const sm = document.createElement('span'); sm.style.cssText = 'font-size:12px;font-weight:400;color:#888;margin-left:4px'; sm.textContent = label; d.appendChild(sm); return d; };
+  $('#livecounts').append(count(s.documents, t('author_live_documents')), count(s.lists, t('author_live_lists')), count(s.wsFrames, t('author_live_frames')));
+  const badges = [];
+  if (s.transports.http) badges.push('HTTP');
+  if (s.transports.mtop) badges.push('mtop');
+  if (s.transports.ws) badges.push('WebSocket');
+  if (s.transports.sse) badges.push('SSE');
+  $('#livebadges').innerHTML = '';
+  for (const b of badges) { const el = document.createElement('span'); el.textContent = b; el.style.cssText = 'font-size:11px;background:#2a2a2a;color:#ddd;border-radius:10px;padding:2px 9px'; $('#livebadges').append(el); }
+  const transportLabel = badges.filter((b) => b !== 'HTTP').join(' / ') || 'HTTP';
+  if (s.autoDraftable) $('#livehint').textContent = t('author_live_hint_draft', [String(s.documents)]);
+  else if (s.needsMaintainer) $('#livehint').textContent = t('author_live_hint_maintainer', [String(s.documents), transportLabel]);
+  else $('#livehint').textContent = t('author_live_hint_empty');
+}
+function startLiveMonitor() { stopLiveMonitor(); $('#live').hidden = false; refreshLive(); LIVE_TIMER = setInterval(refreshLive, 1800); }
 
 async function onAnalyze() {
   if (!LEARN) { $('#learnstatus').textContent = t('author_start_first'); return; }

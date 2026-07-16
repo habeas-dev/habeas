@@ -1064,6 +1064,19 @@
     "message": "Capturados $N$ frames en tiempo real de $S$ conexión(es) WebSocket/SSE. Esta web transmite sus datos en streaming (no HTTP normal) — todavía no hay borrador automático, pero la grabación contiene lo que un mantenedor necesita para crear la fuente. Compártela.",
     "placeholders": { "N": { "content": "$1" }, "S": { "content": "$2" } }
   },
+  "author_live_recording": { "message": "Grabando — navega tus pedidos / facturas con normalidad" },
+  "author_live_documents": { "message": "documentos" },
+  "author_live_lists": { "message": "listas de datos" },
+  "author_live_frames": { "message": "frames en tiempo real" },
+  "author_live_hint_empty": { "message": "Aún no veo datos. Abre tu página de pedidos / facturas para que la web los cargue — y baja para cargarlos todos." },
+  "author_live_hint_draft": {
+    "message": "✅ Encontré tus datos ($D$ documentos). Pulsa «Analizar» para crear el borrador — o abre un documento para aprender a descargarlo.",
+    "placeholders": { "D": { "content": "$1" } }
+  },
+  "author_live_hint_maintainer": {
+    "message": "✅ Capturé tus datos ($D$ documentos) mediante un transporte especial ($T$). No se puede crear automáticamente aquí, pero la grabación está completa — compártela y un mantenedor la convertirá en una fuente.",
+    "placeholders": { "D": { "content": "$1" }, "T": { "content": "$2" } }
+  },
   "author_no_list_seen": {
     "message": "Vi $N$ peticiones (de: $HOSTS$) pero ninguna devolvió un listado de documentos. Abre tu página de pedidos/facturas para que cargue los datos y reinténtalo — o dime estos hosts.",
     "placeholders": {

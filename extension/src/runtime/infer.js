@@ -46,6 +46,24 @@ function findArrays(node, path, acc) {
   return acc;
 }
 
+// Component-keyed lists: sibling OBJECT keys sharing a prefix (mtop/DIDA: pc_om_list_order_<id>), i.e.
+// a list encoded as keys rather than an array. Detect ≥2 siblings with a common `prefix_` whose values
+// are record-like objects. Used for classification (these ride signed transports like mtop → not
+// auto-draftable offline, but they mean "we found the user's data").
+export function findComponentGroups(node, path = '', acc = [], depth = 0) {
+  if (node == null || typeof node !== 'object' || Array.isArray(node) || depth > 6) return acc;
+  const groups = {};
+  for (const k of Object.keys(node)) {
+    const v = node[k];
+    if (!v || typeof v !== 'object' || Array.isArray(v) || !Object.keys(v).length) continue; // record-like object
+    const m = /^(.*?_)[^_]+$/.exec(k); // prefix_ + a trailing token (id/version)
+    if (m) (groups[m[1]] = groups[m[1]] || []).push(k);
+  }
+  for (const pre of Object.keys(groups)) if (groups[pre].length >= 2) acc.push({ path, prefix: pre, count: groups[pre].length, sample: node[groups[pre][0]] });
+  for (const k of Object.keys(node)) findComponentGroups(node[k], path ? path + '.' + k : k, acc, depth + 1);
+  return acc;
+}
+
 // Does any leaf value in `node` contain the (lowercased) needle?
 function deepIncludes(node, needle, depth = 6) {
   if (node == null || depth < 0) return false;
@@ -307,6 +325,32 @@ function collectHtml(samples) {
     out.push({ isHtml: true, key: keyOf(s.url, '#html'), s, host, path, info, len: info.items.length, item: info.items[0], items: info.items });
   }
   return out.sort((a, b) => b.len - a.len);
+}
+
+// A plain-language summary of what a recording captured — powers the live recorder UX (and tells a
+// non-technical helper whether they've captured enough). Classifies transports and counts data, and
+// says whether the source can be auto-drafted here or needs a maintainer (signed/streamed transports).
+export function summarizeCapture(samples, wsframes) {
+  samples = samples || []; wsframes = wsframes || [];
+  const arrays = collect(samples);                                   // JSON-array lists (auto-draftable)
+  const htmls = collectHtml(samples);                               // HTML-table lists (auto-draftable)
+  const comps = [];
+  for (const s of samples) { if (s && s.json) for (const g of findComponentGroups(s.json)) comps.push(g); }
+  const isMtop = (u) => /\/h5\/mtop\./i.test(String(u || ''));
+  const mtop = samples.some((s) => s && isMtop(s.url));
+  const ws = wsframes.some((f) => f && f.event !== 'sse');
+  const sse = wsframes.some((f) => f && f.event === 'sse');
+  const httpDraftable = arrays.length + htmls.length > 0;
+  const listCount = Math.max(0, ...arrays.map((a) => a.len), ...htmls.map((h) => h.len), ...comps.map((c) => c.count));
+  return {
+    lists: arrays.length + htmls.length + comps.length,
+    documents: listCount,
+    arrays: arrays.length, htmls: htmls.length, components: comps.length,
+    transports: { http: httpDraftable, mtop, ws, sse },
+    wsFrames: wsframes.length,
+    autoDraftable: httpDraftable && !mtop,        // signed mtop replies can't be replayed from offline samples
+    needsMaintainer: (mtop || ws || sse || comps.length > 0) && !(httpDraftable && !mtop),
+  };
 }
 
 // Build an adapter draft from a chosen HTML candidate. Same return shape as the JSON path.

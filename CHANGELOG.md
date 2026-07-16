@@ -18,6 +18,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   nothing usable. Now a plain browse session captures what a maintainer needs to author the transport, and
   the author panel reports the frame/socket count instead of "no requests". (First step toward making
   recording practical for non-technical helpers; auto-drafting realtime/mtop sources is still manual.)
+- **Live recorder monitor** — while recording, the author panel now shows, in plain language and updated
+  every ~2s, what the capture is seeing: documents found, data lists, realtime frames, which transport(s)
+  detected, and whether it's ready to auto-draft here or needs a maintainer. A non-technical helper can
+  tell it's working without pressing Analyze or understanding fields.
+- **Capture classification** (`infer.js#summarizeCapture` + `findComponentGroups`) — the inference now
+  recognizes **component-keyed lists** (sibling-key responses like mtop/DIDA `pc_om_list_order_*`, not just
+  JSON arrays / HTML tables) and classifies the transport (HTTP / mtop / WebSocket / SSE), counting the
+  user's data and honestly flagging signed/streamed sources as "needs a maintainer" rather than
+  mis-drafting them.
 
 ## [0.3.0] — 2026-07-16
 
