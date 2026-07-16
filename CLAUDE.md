@@ -230,6 +230,11 @@ access — documented, user's responsibility. Full write-up in `README.md` (Lega
 **Commits.** Conventional-commits, English, **no `Co-Authored-By` / `Claude-Session` trailers**, manifest
 version bumped in the same commit. Commits are pushed to `main` as they land.
 
+**Update `CHANGELOG.md` (root) on every version bump** — add the change under `## [Unreleased]` in the same
+commit as the manifest bump (Keep a Changelog: Added / Changed / Fixed / Removed). At a milestone release,
+rename `[Unreleased]` → `[X.Y.Z] — YYYY-MM-DD` and start a fresh `[Unreleased]`. (Older 0.1.x beta detail
+stays in `docs/CHANGELOG.md`.)
+
 **Before every commit:** `npm test` green (node:test); `node --check` each touched JS; en/es locale-key
 **parity** (both files same key set); `npm run lint` (web-ext) → **0 errors** (expected warnings: `innerHTML`
 UNSAFE_VAR_ASSIGNMENT; and `identity.getAuthToken/removeCachedAuthToken not supported by Firefox` — guarded).
