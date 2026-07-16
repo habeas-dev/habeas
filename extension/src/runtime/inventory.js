@@ -1131,7 +1131,9 @@ async function fetchList(adapter, auth, params, net, group) {
   // full browser navigation Accept so the server serves the real SSR page.
   const htmlAccept = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
   const method = (list.method || 'GET').toUpperCase();
-  const init = { method, headers: { accept: html ? htmlAccept : 'application/json', ...(list.headers || {}), ...headersFor(auth, path.split('?')[0], true /*allow captured replay headers (cookie sources only ever capture replayHeaders like x-device-id, never a token)*/) }, credentials: credOf(adapter) };
+  // Per-group header values: {group.*} templated so e.g. a card's own encrypted-PAN header rides its list.
+  const gheaders = {}; for (const k of Object.keys(list.headers || {})) gheaders[k] = tmplGroup(list.headers[k], group);
+  const init = { method, headers: { accept: html ? htmlAccept : 'application/json', ...gheaders, ...headersFor(auth, path.split('?')[0], true /*allow captured replay headers (cookie sources only ever capture replayHeaders like x-device-id, never a token)*/) }, credentials: credOf(adapter) };
   // POST list (AEM/WiZink send params in the body; CaixaBank posts a JSON body with a date window):
   // fill {group.*} + {ctx.*} + {csrf} + {paramName} + the {fromDate}/{toDate} window (from list.window).
   if (method === 'POST' && list.body != null) {

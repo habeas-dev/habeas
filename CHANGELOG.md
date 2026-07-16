@@ -77,6 +77,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   - A submission now carries the contributor's **browser locale** so the team knows which language to reply
     in (shown in the team list / record).
 
+- Runtime: **per-group header templating** — `api.list.headers` values now resolve `{group.*}` (e.g. a
+  card's own `eci-custom-encrypted-pan` header rides that card's movements list).
+- **Financiera El Corte Inglés** (`financiera-elcorteingles-es`) — authored end-to-end from a redacted
+  handoff recording (the first source built this way): multi-card (grouped by contract) **card movements**,
+  **aplazamientos/financing purchases**, and monthly **statement PDFs** (per-month, base64). Cookie session
+  + replayed bearer + per-card header. Staged pending the contributor's live verification.
+
 ### Fixed
 - Author page no longer fails to load — a duplicate `esc` import (added with the orphan review) was a
   `SyntaxError` that broke the whole module.

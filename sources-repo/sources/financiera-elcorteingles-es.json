@@ -1,0 +1,91 @@
+{
+  "id": "financiera-elcorteingles-es",
+  "name": "Financiera El Corte Inglés",
+  "service": "financiera-elcorteingles",
+  "trust": "community",
+  "domain": "financieraelcorteingles.es",
+  "country": "ES",
+  "categories": ["card", "loan"],
+  "version": "2026-07-16",
+  "minVersion": "0.3.0.15",
+  "keepRaw": true,
+  "contributors": ["David Marín"],
+  "match": ["https://www.financieraelcorteingles.es/*"],
+  "openUrl": "https://www.financieraelcorteingles.es/dashboard/",
+  "auth": { "mode": "cookie", "replayHeaders": ["authorization"] },
+  "api": {
+    "host": "https://www.financieraelcorteingles.es",
+    "groups": {
+      "path": "/dashboard/user",
+      "itemsPath": "userEciCardList",
+      "fields": { "id": "contract_number", "label": "cardLabel", "mask": "masked_pan", "pan": "encryptedPan" }
+    }
+  },
+  "streams": [
+    {
+      "id": "movimientos",
+      "schema": "transaction@1",
+      "categories": ["card"],
+      "api": {
+        "list": {
+          "path": "/dashboard/api/payments/ms-evolve-cards-transactions/v3/cards/transactions-global/movements-close",
+          "params": { "monthFilter": "A", "paginationType": "A", "operationType": "A", "accountNumber": "{group.id}" },
+          "itemsPath": "movements",
+          "paging": "none",
+          "headers": { "eci-custom-encrypted-pan": "{group.pan}" }
+        }
+      },
+      "fields": {
+        "internalId": "invoiceNumber",
+        "date": "operationDate",
+        "amount": "amount",
+        "description": "company",
+        "counterparty": "center",
+        "type": "type"
+      }
+    },
+    {
+      "id": "aplazamientos",
+      "schema": "transaction@1",
+      "categories": ["loan"],
+      "api": {
+        "list": {
+          "path": "/dashboard/api/payments/ms-evolve-customers-contracts/v2/card-contracts/{group.id}/financing-purchases",
+          "itemsPath": "financing_data",
+          "paging": "none"
+        }
+      },
+      "fields": {
+        "internalId": "identifier",
+        "date": "start_date",
+        "type": "financing_type"
+      }
+    },
+    {
+      "id": "extractos",
+      "schema": "invoice@1",
+      "categories": ["card"],
+      "api": {
+        "list": {
+          "path": "/dashboard/api/payments/ms-evolve-documents/v1/contracts/{group.id}/shopping-summaries",
+          "itemsPath": "previous_months_shopping_summaries",
+          "paging": "none"
+        },
+        "pdf": {
+          "path": "/dashboard/api/payments/ms-evolve-documents/v1/contracts/{group.id}/shopping-summaries/generate-file?datePurchase={date}",
+          "method": "POST",
+          "base64Field": "file",
+          "ext": "pdf"
+        }
+      },
+      "fields": {
+        "internalId": "date",
+        "date": "date",
+        "number": "description"
+      }
+    }
+  ],
+  "changelog": [
+    { "version": "2026-07-16", "changes": "Initial (authored from a redacted handoff recording, verified live by the contributor). Multi-card (grouped by contract): card movements (transactions), aplazamientos/financing purchases, and monthly statement PDFs (generated per month, base64). Cookie session + replayed bearer + per-card eci-custom-encrypted-pan header." }
+  ]
+}
