@@ -215,7 +215,7 @@ async function fetchGroupItems(adapter, auth, net) {
   if (method === 'POST' && g.body != null) { init.body = fillTmpl(g.body, null, auth, g.params || {}); init.headers['content-type'] = g.contentType || 'application/x-www-form-urlencoded'; }
   if (g.referer) init.referrer = g.referer;
   const res = await withReferer(url, g.referer || null, () => NET(url, init));
-  if (!res.ok) throw new Error('groups ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
+  if (!res.ok) throw new Error('groups ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120) + ' [sent: ' + Object.keys(init.headers || {}).join(',') + ']');
   if (isHtml) return extractListItems(await res.text(), g); // embedded state → itemsPath
   return get(await res.json(), g.itemsPath) || [];
 }
