@@ -33,8 +33,23 @@ export function redactString(s, key = '') {
   return '[text]';                                                     // any other free text (names, addresses…)
 }
 
+// A query-param VALUE. Unlike JSON leaves (always redacted), query params are mostly non-PII filters an
+// author NEEDS (paginationType=CLOSE, monthFilter=202506, from=2026-06-01), so keep short single-token
+// enums/codes/dates/flags — but still redact anything PII-shaped, a long numeric id/account, a long
+// opaque token, or a multi-word value (a name/address could hide there).
+export function redactParam(v) {
+  const s = String(v == null ? '' : v);
+  if (!s) return s;
+  const c = redactString(s);
+  if (c === '[email]' || c === '[jwt]' || c === '[iban]' || c === '[card]' || c === '[phone]' || c === '[token]') return '[v]';
+  if (/^\d{7,}$/.test(s)) return '[v]';                                   // long numeric id / account number
+  if (s.length > 24 || /\s/.test(s) || !/^[\w.:=+/-]+$/.test(s)) return '[v]'; // multi-word / long / odd → could be a name/address
+  return s;                                                                // short single-token enum/code/date/flag — kept
+}
+
 // Keep the endpoint SHAPE (scheme+host+path template, param names) but redact id-like path segments and
-// ALL query VALUES. e.g. /tickets/3073.../pdf?token=abc → /tickets/[id]/pdf?token=[v]
+// PII/id query VALUES (enum values kept — see redactParam). e.g.
+// /tickets/3073…/pdf?type=CLOSE&token=abc… → /tickets/[id]/pdf?type=CLOSE&token=[v]
 export function redactUrl(u) {
   try {
     const url = new URL(u);
@@ -42,7 +57,7 @@ export function redactUrl(u) {
     // /tickets/3073…, /inv/3073….pdf (digits + extension), /doc/aZ9…hash/ alike; keeps stable path words.
     const path = url.pathname.split('/').map((seg) => seg.replace(/[A-Za-z0-9_-]{20,}/g, '[id]').replace(/\d{5,}/g, '[id]')).join('/');
     const names = [...new Set([...url.searchParams.keys()])];
-    const q = names.length ? '?' + names.map((k) => k + '=[v]').join('&') : '';
+    const q = names.length ? '?' + names.map((k) => k + '=' + redactParam(url.searchParams.get(k))).join('&') : '';
     return url.protocol + '//' + url.host + path + q;
   } catch (e) { return '[url]'; }
 }

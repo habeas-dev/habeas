@@ -40,6 +40,17 @@ test('redactUrl keeps the endpoint template, redacts ids + query values', () => 
   assert.equal(redactUrl(`https://x.com/tickets/${ORDERID}/pdf`), 'https://x.com/tickets/[id]/pdf');
 });
 
+test('redactUrl keeps non-PII enum/date query values, redacts ids/tokens/PII', () => {
+  const r = redactUrl(`https://x.com/api/movements?paginationType=CLOSE&monthFilter=202506&from=2026-06-01&accountNumber=12345678&sig=aB3xaB3xaB3xaB3xaB3xaB3x&email=${EMAIL}`);
+  assert.match(r, /paginationType=CLOSE/);   // enum value kept (needed to author pagination)
+  assert.match(r, /monthFilter=202506/);     // short numeric filter kept
+  assert.match(r, /from=2026-06-01/);        // date kept
+  assert.match(r, /accountNumber=\[v\]/);    // long numeric id → redacted
+  assert.match(r, /sig=\[v\]/);              // opaque token → redacted
+  assert.match(r, /email=\[v\]/);            // PII → redacted
+  assertClean(r, 'url-params');
+});
+
 test('redactJson: keeps keys + shape, strips every value (real receipt shape)', () => {
   const receipt = { data: { data: {
     ['pc_om_list_order_' + ORDERID]: { fields: { orderId: ORDERID, orderDateText: '05 may, 2020', totalPriceText: '9,99€', currencyCode: 'EUR', storeName: NAME } },

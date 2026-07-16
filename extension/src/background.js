@@ -39,12 +39,14 @@ chrome.action.onClicked.addListener(() => {
   // One-time: encrypt any pairing-token headers left plaintext in config by older versions.
   migrateSinkHeaders().catch(() => {});
   syncWebRequestCapture();
+  syncLearnAssetCapture().catch(() => {}); // (re)arm record-mode document capture if a recording is in progress
   syncSchedules().catch(() => {}); // (re)arm the download planner's alarms; overdue ones fire the catch-up
 })();
 // Re-sync the webRequest capture filter + the schedule alarms when the config changes.
 chrome.storage.onChanged.addListener((ch, area) => {
   if (area === 'local' && (ch['habeas:config'] || ch['habeas:sources'])) syncWebRequestCapture();
   if (area === 'local' && ch['habeas:config']) syncSchedules().catch(() => {});
+  if (area === 'local' && ch['habeas:learn']) syncLearnAssetCapture().catch(() => {});
 });
 // The download planner: chrome.alarms wakes the SW at each schedule's fire time (a browser that was closed
 // fires the overdue alarm on next start → catch-up). onAlarm runs the schedule, then re-arms next / retry.
@@ -133,6 +135,42 @@ async function syncWebRequestCapture() {
   if (!urls.length) return;
   try { chrome.webRequest.onSendHeaders.addListener(onWebRequestHeaders, { urls }, ['requestHeaders', 'extraHeaders']); }
   catch (e) { try { chrome.webRequest.onSendHeaders.addListener(onWebRequestHeaders, { urls }, ['requestHeaders']); } catch (e2) {} }
+}
+
+// ---- record-mode document capture --------------------------------------------------------------------
+// The page fetch/XHR hook only sees XHR/fetch requests; a PDF/Excel opened by a link, a navigation, or a
+// browser download is invisible to it (that's why a recorded session can show 0 documents). During LEARN
+// mode we ALSO watch RESPONSES (webRequest) on the recorded domain and record any document-like one
+// (content-type pdf/octet-stream/spreadsheet, or a Content-Disposition attachment, or a .pdf URL) into the
+// same `assets:<domain>` buffer the author reads. Learn-mode only; only the URL/method are stored.
+let LEARN_ASSET = null; // { domain } while recording, else null
+function isDocResponse(details) {
+  const h = details.responseHeaders || [];
+  const g = (n) => { const x = h.find((e) => e.name.toLowerCase() === n); return x ? String(x.value || '') : ''; };
+  const ct = g('content-type').toLowerCase(), cd = g('content-disposition').toLowerCase();
+  return /application\/pdf|application\/octet-stream|application\/vnd\.|spreadsheet|ms-?excel|\bcsv\b/.test(ct) || /attachment/.test(cd) || /\.(pdf|xlsx?|csv)(\?|$)/i.test(details.url);
+}
+function onLearnHeaders(details) {
+  try {
+    if (!LEARN_ASSET || !isDocResponse(details)) return;
+    const key = 'assets:' + LEARN_ASSET.domain;
+    chrome.storage.session.get(key).then((o) => {
+      const arr = (o[key] || []).filter((x) => x.url !== details.url);
+      arr.unshift({ url: details.url, method: details.method, status: details.statusCode, via: 'webRequest' });
+      chrome.storage.session.set({ [key]: arr.slice(0, 60) });
+    });
+  } catch (e) {}
+}
+async function syncLearnAssetCapture() {
+  if (!(chrome.webRequest && chrome.webRequest.onHeadersReceived)) return;
+  const o = await chrome.storage.local.get('habeas:learn');
+  const l = o['habeas:learn'];
+  try { chrome.webRequest.onHeadersReceived.removeListener(onLearnHeaders); } catch (e) {}
+  if (l && l.active && l.domain) {
+    LEARN_ASSET = { domain: l.domain };
+    const urls = [`*://*.${l.domain}/*`, `*://${l.domain}/*`];
+    try { chrome.webRequest.onHeadersReceived.addListener(onLearnHeaders, { urls }, ['responseHeaders']); } catch (e) {}
+  } else { LEARN_ASSET = null; }
 }
 
 // Auto-sync trigger for cookie sources (and any source): when the user lands on the source's own

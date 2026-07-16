@@ -34,6 +34,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   tokens, cookies, and page text are never included at all. The author panel's live monitor offers
   “Share recording (anonymized)” (with a “See what will be shared” preview) → downloads a redacted JSON
   bundle to send. Backed by a dedicated security test asserting no PII of any shape survives.
+  - Handoff **keeps non-PII query-param values** (`redactParam`): filter/enum/date values an author needs
+    for pagination (`paginationType=CLOSE`, `monthFilter=202506`, `from=2026-06-01`) are preserved, while
+    ids, tokens, long numbers, emails, and multi-word values are still redacted.
+  - Record mode now **captures document (PDF/Excel/CSV) downloads** via a learn-mode `webRequest` watcher
+    — a PDF opened by a link/navigation/download bypasses the fetch/XHR hook (so recordings showed 0
+    documents); the watcher records document-type responses on the recorded domain into the assets buffer.
 
 ## [0.3.0] — 2026-07-16
 
