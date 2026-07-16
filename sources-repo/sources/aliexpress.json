@@ -1,0 +1,39 @@
+{
+  "id": "aliexpress",
+  "name": "AliExpress",
+  "service": "aliexpress",
+  "trust": "community",
+  "domain": "aliexpress.com",
+  "country": "global",
+  "categories": ["marketplace", "retail"],
+  "version": "2026-07-16",
+  "minVersion": "0.2.1",
+  "keepRaw": true,
+  "schema": "receipt@1",
+  "match": ["https://www.aliexpress.com/*"],
+  "openUrl": "https://www.aliexpress.com/p/order/index.html",
+  "auth": { "mode": "cookie", "replayHeaders": [] },
+  "api": {
+    "host": "https://acs.aliexpress.com",
+    "mtop": {
+      "api": "mtop.aliexpress.trade.buyer.order.list",
+      "v": "1.0",
+      "pageInner": "pc_om_list_body_*.fields.pageIndex",
+      "morePath": "data.data.pc_om_list_body_*.fields.hasMore",
+      "startPage": 1,
+      "maxPages": 100
+    },
+    "itemsFromKeys": { "at": "data.data", "prefix": "pc_om_list_order_", "sub": "fields" }
+  },
+  "fields": {
+    "internalId": "orderId",
+    "date": "orderDateText",
+    "total": "totalPriceText",
+    "currency": "currencyCode",
+    "storeName": "storeName",
+    "type": "statusText"
+  },
+  "changelog": [
+    { "version": "2026-07-16", "changes": "Initial: order history via Alibaba's mtop gateway. Runs in the site tab and reuses the app's own live request payload (hook stashes it) + its lib.mtop signing (no hardcoded blob, no forged signature); paginates by bumping the component pageIndex. Orders extracted from the DIDA component response (itemsFromKeys)." }
+  ]
+}

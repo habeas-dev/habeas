@@ -76,6 +76,51 @@ export function makePageWs(tabId) {
   };
 }
 
+// A page-context mtop lister (Alibaba's gateway — AliExpress/Taobao/Tmall/Lazada/1688…). mtop requests are
+// signed (`sign` from the `_m_h5_tk` cookie) — anti-bot. Instead of replaying/forging the signature or the
+// framework payload, we run in the site tab (MAIN world) and reuse the PAGE's own machinery: hook.js has
+// stashed the SPA's live request body on `window.__habeas_mtop[api]`, and the page's `lib.mtop.request`
+// re-signs each call. Pagination bumps a page field inside the (stringified) payload. Returns each page's
+// raw response; the runtime extracts items (itemsFromKeys) from them.
+export function makePageMtop(tabId) {
+  return async (cfg) => {
+    let out;
+    try {
+      const [res] = await chrome.scripting.executeScript({
+        target: { tabId }, world: 'MAIN', args: [cfg],
+        func: async (c) => {
+          // dotted get/set with a trailing-`*` wildcard segment (component keys like pc_om_list_body_109702).
+          const wildKey = (obj, seg) => seg.endsWith('*') ? Object.keys(obj || {}).find((k) => k.startsWith(seg.slice(0, -1))) : seg;
+          const get = (o, p) => { let c2 = o; for (const s of String(p).split('.')) { if (c2 == null) return undefined; c2 = c2[wildKey(c2, s)]; } return c2; };
+          const setIn = (o, p, v) => { const segs = String(p).split('.'); let c2 = o; for (let i = 0; i < segs.length - 1; i++) { if (c2 == null) return; c2 = c2[wildKey(c2, segs[i])]; } if (c2 != null) c2[wildKey(c2, segs[segs.length - 1])] = v; };
+          const key = String(c.api).toLowerCase();
+          const t0 = Date.now(); let raw = null;
+          while (Date.now() - t0 < (c.seedTimeoutMs || 15000)) { raw = window.__habeas_mtop && window.__habeas_mtop[key]; if (raw) break; await new Promise((r) => setTimeout(r, 300)); }
+          if (!raw) return { pages: [], error: 'no seed request captured — open the orders page so the app fetches it' };
+          const mtop = (window.lib && window.lib.mtop) || window.mtop;
+          if (!mtop || !mtop.request) return { pages: [], error: 'mtop lib not found on the page' };
+          let payload; try { payload = JSON.parse(new URLSearchParams(raw).get('data')); } catch (e) { return { pages: [], error: 'seed payload parse failed' }; }
+          // The page field lives inside payload.params.data, which is itself a STRINGIFIED component tree.
+          const bump = (n) => { try { const inner = JSON.parse(payload.params.data); setIn(inner, c.pageInner, n); payload.params.data = JSON.stringify(inner); } catch (e) {} };
+          const pages = [];
+          let page = c.startPage || 1;
+          for (let i = 0; i < (c.maxPages || 100); i++) {
+            if (c.pageInner) bump(page);
+            let resp; try { resp = await mtop.request({ api: c.api, v: c.v || '1.0', data: payload, type: 'originaljson', dataType: 'json', ...(c.request || {}) }); } catch (e) { if (!pages.length) return { pages: [], error: 'mtop.request threw: ' + ((e && e.message) || e) }; break; }
+            pages.push(resp);
+            const more = c.morePath ? String(get(resp, c.morePath)) === 'true' : false;
+            if (!more) break;
+            page++;
+          }
+          return { pages };
+        },
+      });
+      out = res && res.result;
+    } catch (e) { out = { pages: [], error: String((e && e.message) || e) }; }
+    return out || { pages: [] };
+  };
+}
+
 export function makePageFetch(tabId) {
   const pf = async (url, init = {}) => {
     const arg = {
@@ -123,6 +168,7 @@ export function makePageFetch(tabId) {
     };
   };
   pf.ws = makePageWs(tabId); // WebSocket-API sources (Trade Republic) list through this same tab
+  pf.mtop = makePageMtop(tabId); // Alibaba mtop-API sources (AliExpress…) list through this same tab
   return pf;
 }
 

@@ -114,7 +114,12 @@ function checkExtraction(a, req, label) {
   req(typeof a.schema === 'string' && SCHEMA_RE.test(a.schema), p + 'schema like "receipt@1" required');
   const list = (a.api && a.api.list) || {};
   const ws = a.api && a.api.ws;
-  if (ws) {
+  const mtop = a.api && a.api.mtop;
+  if (mtop) {
+    // Alibaba mtop-API source (AliExpress…): no HTTP list — declares the mtop api + a component-key extractor.
+    req(typeof mtop.api === 'string' && mtop.api, p + 'api.mtop.api required');
+    req(a.api.itemsFromKeys && typeof a.api.itemsFromKeys.prefix === 'string' && a.api.itemsFromKeys.prefix, p + 'api.itemsFromKeys.prefix required for an mtop source');
+  } else if (ws) {
     // WebSocket-API source (Trade Republic): no HTTP list — declares a ws(s):// endpoint + a subscription.
     req(typeof ws.url === 'string' && /^wss?:\/\//.test(ws.url), p + 'api.ws.url must be a ws:// or wss:// URL');
     req(ws.sub && typeof ws.sub.type === 'string' && ws.sub.type, p + 'api.ws.sub.type required');

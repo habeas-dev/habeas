@@ -127,6 +127,17 @@
   // adapter then declares it via crossDomainHosts + off-site consent).
   const cap = (url) => sameDomain(url) || LEARN || hostAllowed(url);
 
+  // mtop (Alibaba's gateway — Taobao/Tmall/AliExpress/Lazada/1688…): stash the page's OWN request body per
+  // api on a page global, so Habeas's same-world (MAIN) executor can reuse the live, correctly-built payload
+  // (no hardcoded blob) + let the page re-sign for pagination. Cheap: only POSTs to /h5/mtop.<api>/.
+  function stashMtop(url, method, body) {
+    try {
+      if (String(method || 'GET').toUpperCase() !== 'POST' || typeof body !== 'string' || !body) return;
+      const m = String(url).match(/\/h5\/(mtop\.[^/]+)\//i);
+      if (m) (window.__habeas_mtop = window.__habeas_mtop || {})[m[1].toLowerCase()] = body;
+    } catch (e) {}
+  }
+
   const of = window.fetch;
   window.fetch = function (input, init) {
     let url, headers, method;
@@ -136,6 +147,7 @@
       method = (init && init.method) || (input && input.method) || 'GET';
       if (url && cap(url)) { postAuth(url, headers); postContext(url); }
       if (url) postSeen(url);
+      stashMtop(url, method, init && init.body);
     } catch (e) {}
     const p = of.apply(this, arguments);
     if (url && LEARN) {
@@ -175,7 +187,7 @@
     } catch (e) {}
     return os.apply(this, arguments);
   };
-  XP.send = function (b) { try { if (typeof b === 'string') this.__body = b; } catch (e) {} return osend.apply(this, arguments); };
+  XP.send = function (b) { try { if (typeof b === 'string') this.__body = b; stashMtop(this.__u, this.__m, b); } catch (e) {} return osend.apply(this, arguments); };
 
   // Tell the isolated bridge we're live, so it (re)sends the current learn-mode arm state — the
   // hook loads as an async script and may miss the bridge's initial one-shot arm message.

@@ -107,6 +107,27 @@ export async function listInventory(adapter, auth, net, opts) {
     all.sort(byDate);
     return capAge(all);
   }
+  // mtop-API source (AliExpress…): the page-context executor returns each page's raw response; extract the
+  // component-keyed items (itemsFromKeys) from every page and map each like a list row.
+  if (adapter.api && adapter.api.mtop) {
+    const mtopFn = net && net.mtop;
+    if (!mtopFn) throw new Error('list mtop — no mtop transport (open the site tab first)');
+    const res = await mtopFn({ ...adapter.api.mtop });
+    if (res && res.error) throw new Error('list mtop — ' + res.error);
+    const listCfg = { itemsFromKeys: adapter.api.itemsFromKeys };
+    const seen = new Set(opts && opts.knownIds ? opts.knownIds : []), all = [];
+    for (const page of (res && res.pages) || []) {
+      for (const it of getItems(page, listCfg)) {
+        const doc = mapDoc(adapter, it, null);
+        const id = doc.internalId;
+        if (id != null && seen.has(id)) continue;
+        if (id != null) seen.add(id);
+        all.push(doc);
+      }
+    }
+    all.sort(byDate);
+    return capAge(all);
+  }
   // CSRF prelude (AEM/WiZink): fetch a page, extract the securityToken, expose it as {csrf} in every
   // subsequent list/group/pdf template via auth.__csrf.
   const a = adapter.api.csrf ? { ...(auth || {}), __csrf: await fetchCsrf(adapter, auth, net) } : auth;
@@ -1202,6 +1223,16 @@ const itemsPathOf = (list) => (list.from === 'html' ? '__items' : list.itemsPath
 // page nests it under `methodResult.movimientos`). Try each; take the first that yields a non-empty array,
 // else the first that is at least an array, else [].
 function getItems(data, list) {
+  // Component-keyed responses (AliExpress mtop): the items aren't an array but sibling OBJECT keys sharing a
+  // prefix (data.data.pc_om_list_order_<id>). `itemsFromKeys {at, prefix, sub?}` collects each such value
+  // (optionally its `sub` field) into an array, in insertion order.
+  const kp = list.itemsFromKeys;
+  if (kp && kp.prefix) {
+    const parent = get(data, kp.at) || {};
+    const out = [];
+    for (const [k, v] of Object.entries(parent)) if (String(k).startsWith(kp.prefix)) out.push(kp.sub ? get(v, kp.sub) : v);
+    return out.filter((x) => x != null);
+  }
   const p = itemsPathOf(list);
   if (Array.isArray(p)) {
     let firstArr = null;
@@ -1230,7 +1261,7 @@ export function normalizeDate(v) {
   const low = s.toLowerCase();
   m = low.match(/\b([a-záéíóúñ]{3,})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b/); // Month DD, YYYY
   if (m && MONTHS[m[1]]) return `${m[3]}-${pad2(MONTHS[m[1]])}-${pad2(m[2])}`;
-  m = low.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:de\s+)?([a-záéíóúñ]{3,})\.?\s+(?:de\s+)?(\d{4})\b/); // DD [de] Month [de] YYYY
+  m = low.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:de\s+)?([a-záéíóúñ]{3,})\.?,?\s+(?:de\s+)?(\d{4})\b/); // DD [de] Month[,] [de] YYYY (AliExpress "24 may, 2026")
   if (m && MONTHS[m[2]]) return `${m[3]}-${pad2(MONTHS[m[2]])}-${pad2(m[1])}`;
   m = s.match(/^(\d{1,4})[/.-](\d{1,2})[/.-](\d{1,4})$/); // numeric D/M/Y, M/D/Y or Y/M/D
   if (m) {
