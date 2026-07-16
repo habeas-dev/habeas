@@ -165,17 +165,23 @@ function b64urlToJson(seg) {
   s += '='.repeat((4 - (s.length % 4)) % 4);
   return JSON.parse(atob(s));
 }
-function firstJwtClaims(samples, refs) {
-  for (const s of samples || []) {
-    const h = (s && s.reqHeaders) || {};
-    for (const k of Object.keys(h)) {
-      if (k.toLowerCase() !== 'authorization') continue;
-      const m = /eyJ[A-Za-z0-9_-]+\.([A-Za-z0-9_-]+)\.[A-Za-z0-9_-]*/.exec(String(h[k]));
-      if (!m) continue;
-      try { const c = b64urlToJson(m[1]); if (c && typeof c === 'object') return redactJson(c, '', 0, refs); } catch (e) {}
-    }
-  }
-  return null;
+// Collect the decoded, redacted PAYLOAD claims of EVERY JWT in the recording — auth headers AND response
+// bodies (an SPA often reads an entity/user id out of a JWT the login endpoint RETURNS, and uses it in a
+// later path/query; the bearer header itself may be an opaque token). Claim NAMES + value-redacted
+// (correlated), so a token-derived id traces to its claim. Never the raw token/signature. Deduped, capped.
+const JWT_ANY = /eyJ[A-Za-z0-9_-]+\.([A-Za-z0-9_-]+)\.[A-Za-z0-9_-]*/g;
+function collectJwtClaims(samples, refs) {
+  const payloads = new Set();
+  const scan = (v, depth = 0) => {
+    if (depth > 12 || v == null) return;
+    if (typeof v === 'string') { let m; JWT_ANY.lastIndex = 0; while ((m = JWT_ANY.exec(v))) payloads.add(m[1]); }
+    else if (Array.isArray(v)) v.slice(0, 3).forEach((x) => scan(x, depth + 1));
+    else if (typeof v === 'object') Object.values(v).forEach((x) => scan(x, depth + 1));
+  };
+  for (const s of samples || []) { scan(s && s.reqHeaders); scan(s && s.json); scan(s && s.reqBody); }
+  const out = [];
+  for (const p of [...payloads].slice(0, 8)) { try { const c = b64urlToJson(p); if (c && typeof c === 'object') out.push(redactJson(c, '', 0, refs)); } catch (e) {} }
+  return out;
 }
 
 // Build the shareable handoff bundle. DELIBERATELY excludes auth (live tokens) and dom page text (full
@@ -194,7 +200,7 @@ export function buildHandoff({ domain, samples, wsframes, assets }) {
     wsframes: (wsframes || []).map((f) => ({ event: f.event, url: f.url ? redactUrl(f.url, refs) : f.url, frame: f.frame != null ? redactFrame(f.frame, refs) : f.frame })),
     assets: (assets || []).map((a) => ({ method: a.method, url: a.url ? redactUrl(a.url, refs) : a.url, reqType: a.reqType })),
   };
-  const claims = firstJwtClaims(samples, refs); // redacted JWT payload claims (names + correlated ids) — traces JWT-derived path/query ids
-  if (claims) out.tokenClaims = claims;
+  const claims = collectJwtClaims(samples, refs); // redacted claims of every JWT (header + response body) — traces JWT-derived path/query ids
+  if (claims.length) out.tokenClaims = claims;
   return out;
 }

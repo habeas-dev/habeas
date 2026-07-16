@@ -83,21 +83,27 @@ test('handoff correlation: same id → stable [id#N] across path/query/header/fi
   assert.ok(s.url.includes('operationType=A'));                        // enum kept
 });
 
-test('handoff includes redacted JWT claims (traces JWT-derived ids), never the raw token', () => {
-  const payload = { sub: '123456789012', name: 'Jane', email: EMAIL, entityId: '0001', exp: 1999999999 };
-  const jwt = 'eyJhbGciOiJIUzI1NiJ9.' + Buffer.from(JSON.stringify(payload)).toString('base64url') + '.SIGabc';
+const mkJwt = (payload) => 'eyJhbGciOiJIUzI1NiJ9.' + Buffer.from(JSON.stringify(payload)).toString('base64url') + '.SIGabc';
+
+test('handoff decodes JWT claims from BOTH auth header and response body (traces token-derived ids)', () => {
   const bundle = buildHandoff({
     domain: 'bank.test',
-    samples: [{ url: 'https://bank.test/api/payments/123456789012/v3/movements', method: 'GET', reqHeaders: { authorization: 'Bearer ' + jwt } }],
+    samples: [
+      // opaque bearer (not a JWT) — like FECI's tokenWSO2 — the header carries no claims…
+      { url: 'https://bank.test/dashboard/auth', method: 'GET', reqHeaders: { authorization: 'Bearer OPAQUEtokenWSO2xxxx' }, json: { token: mkJwt({ entityId: '123456789012', name: 'Jane', email: EMAIL, code: '0001' }), tokenWSO2: 'OPAQUEtokenWSO2xxxx' } },
+      // …but the SPA reads entityId out of the JWT the login RETURNED and uses it in this path
+      { url: 'https://bank.test/api/payments/123456789012/v3/movements', method: 'GET', reqHeaders: { authorization: 'Bearer OPAQUEtokenWSO2xxxx' } },
+    ],
   });
-  assertClean(bundle, 'jwt-claims');
-  assert.ok(bundle.tokenClaims, 'decoded claims present');
-  assert.match(bundle.tokenClaims.sub, /^\[id#\d+\]$/);                          // an id claim → correlatable
-  assert.ok(bundle.samples[0].url.includes('/payments/' + bundle.tokenClaims.sub + '/'), 'the path id == the sub claim tag — JWT-derived id traced');
-  assert.equal(bundle.tokenClaims.name, '[text]');
-  assert.equal(bundle.tokenClaims.email, '[email]');
-  assert.equal(bundle.tokenClaims.entityId, '0001');                            // short system code kept
-  assert.equal(bundle.samples[0].reqHeaders.authorization, '[redacted]');       // raw token NEVER included
+  assertClean(bundle, 'jwt-body-claims');
+  assert.ok(Array.isArray(bundle.tokenClaims) && bundle.tokenClaims.length >= 1, 'claims decoded from the response-body JWT');
+  const claims = bundle.tokenClaims[0];
+  assert.match(claims.entityId, /^\[id#\d+\]$/);
+  assert.ok(bundle.samples[1].url.includes('/payments/' + claims.entityId + '/'), 'movements path id == the entityId claim tag — traced');
+  assert.equal(claims.name, '[text]');
+  assert.equal(claims.email, '[email]');
+  assert.equal(claims.code, '0001');
+  assert.equal(bundle.samples[0].reqHeaders.authorization, '[redacted]'); // raw token never included
 });
 
 test('redactJson: keeps keys + shape, strips every value (real receipt shape)', () => {
