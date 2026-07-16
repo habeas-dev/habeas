@@ -13,7 +13,7 @@ const ADP = JSON.parse(readFileSync(join(here, '../../sources-repo/sources/finan
 const okJson = (o) => ({ ok: true, status: 200, json: async () => o, text: async () => JSON.stringify(o) });
 const miss = { ok: false, status: 404, json: async () => ({}), text: async () => '' };
 // All fictional — mirrors the shape (grouped by card): /dashboard/user → cards; per-card movements list.
-const CARD = { contract_number: 'C0001', encryptedPan: 'ENCPAN0001', cardLabel: 'ECI Visa', masked_pan: '**** 0000' };
+const CARD = { contract_number: 'C0001', encryptedPan: 'AbC+dEf/gHi012=', cardLabel: 'ECI Visa', masked_pan: '**** 0000' }; // base64 pan (with +/=)
 
 test('Financiera ECI adapter validates (all streams)', () => {
   const v = validateAdapter(ADP);
@@ -39,7 +39,7 @@ test('movimientos: per-group accountNumber + eci-custom-encrypted-pan header, ma
 
   assert.ok(movUrl.includes('accountNumber=C0001'), 'accountNumber templated from {group.id}');
   assert.ok(movUrl.includes('operationType=A'), 'enum params sent');
-  assert.equal(movInit.headers['eci-custom-encrypted-pan'], 'ENCPAN0001', 'per-group header templated from {group.pan}'); // the new runtime feature
+  assert.equal(movInit.headers['eci-custom-encrypted-pan'], 'AbC+dEf/gHi012=', 'per-group header sent VERBATIM (base64 not URL-encoded)'); // regression: tid() would corrupt +/=
   assert.equal(docs.length, 2);
   const byId = Object.fromEntries(docs.map((d) => [d.internalId, d.record]));
   assert.equal(byId.INV1.date, '2020-05-05');

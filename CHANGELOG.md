@@ -93,6 +93,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   + replayed bearer + per-card header. Staged pending the contributor's live verification.
 
 ### Fixed
+- Per-group header values are sent **verbatim** — `tmplGroup` URL-encoded the value (via `tid`),
+  which corrupted a base64 header like a card's encrypted-PAN (`+`/`=` → `%2B`/`%3D` → server base64 error).
+  Headers now use a raw templater.
 - Author page no longer fails to load — a duplicate `esc` import (added with the orphan review) was a
   `SyntaxError` that broke the whole module.
 

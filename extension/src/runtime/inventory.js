@@ -541,6 +541,9 @@ const applyTmpl = (str, doc, id) => String(str).replace(/\{([^}]+)\}/g, (m, k) =
 });
 // {group.field} → the current group's (e.g. bank account's) value. Templates the per-group list URL.
 const tmplGroup = (str, group) => (group ? String(str).replace(/\{group\.([^}]+)\}/g, (m, k) => { const v = get(group, k); return v == null ? m : tid(v); }) : String(str));
+// RAW variant for HEADER values: no URL-encoding — a header carries the value verbatim (e.g. a base64
+// encrypted-PAN with +/=; tid()'s encodeURIComponent would corrupt it → the server can't base64-decode).
+const tmplGroupRaw = (str, group) => (group ? String(str).replace(/\{group\.([^}]+)\}/g, (m, k) => { const v = get(group, k); return v == null ? m : String(v); }) : String(str));
 // A CAPTURED CONTEXT value (e.g. a DNI observed in a request URL), stored alongside auth in
 // storage.session and exposed to templates as {ctx.<name>}. Mirrors {csrf}/{group.*}. Never on disk.
 const ctxOf = (auth) => (auth && (auth.__ctx || auth.ctx)) || {};
@@ -1132,7 +1135,7 @@ async function fetchList(adapter, auth, params, net, group) {
   const htmlAccept = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
   const method = (list.method || 'GET').toUpperCase();
   // Per-group header values: {group.*} templated so e.g. a card's own encrypted-PAN header rides its list.
-  const gheaders = {}; for (const k of Object.keys(list.headers || {})) gheaders[k] = tmplGroup(list.headers[k], group);
+  const gheaders = {}; for (const k of Object.keys(list.headers || {})) gheaders[k] = tmplGroupRaw(list.headers[k], group);
   const init = { method, headers: { accept: html ? htmlAccept : 'application/json', ...gheaders, ...headersFor(auth, path.split('?')[0], true /*allow captured replay headers (cookie sources only ever capture replayHeaders like x-device-id, never a token)*/) }, credentials: credOf(adapter) };
   // POST list (AEM/WiZink send params in the body; CaixaBank posts a JSON body with a date window):
   // fill {group.*} + {ctx.*} + {csrf} + {paramName} + the {fromDate}/{toDate} window (from list.window).
