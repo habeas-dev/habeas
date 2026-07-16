@@ -61,7 +61,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   - **Redacted JWT claims** — SPAs often build a path/query id from a claim in the session token, which
     made that id untraceable. The handoff now includes the JWT's decoded PAYLOAD claims (claim names +
     value-redacted, correlated) as `tokenClaims` — so a JWT-derived path id (e.g. `[id#9]`) is traced to
-    its claim structurally. The raw token, header, and signature are never included.
+    its claim structurally (decoded from JWTs in both auth headers and response bodies — an SPA often reads
+    an id from a JWT the login returns even when the bearer header is opaque). The raw token/signature are
+    never included.
+  - **Client-storage capture** — record mode now snapshots `localStorage`/`sessionStorage` (learn-mode
+    only, debounced), included in the handoff **redacted + correlated**. SPAs stash session/entity ids
+    there that never hit the network, so a path/query id can now be traced to the storage key it comes
+    from. Values are redacted (JSON deep-redacted, JWTs decoded to claims); keys keep their names with
+    id-runs redacted.
 
 ## [0.3.0] — 2026-07-16
 

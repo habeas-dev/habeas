@@ -106,6 +106,22 @@ test('handoff decodes JWT claims from BOTH auth header and response body (traces
   assert.equal(bundle.samples[0].reqHeaders.authorization, '[redacted]'); // raw token never included
 });
 
+test('handoff: client-storage snapshot redacted + correlated (traces a client-side id)', () => {
+  const CID = '987654321098'; // an entity id that lives ONLY in localStorage + the URL (not in any response)
+  const bundle = buildHandoff({
+    domain: 'bank.test',
+    samples: [{ url: `https://bank.test/api/payments/${CID}/v3/movements`, method: 'GET' }],
+    storage: { local: { 'app.entityId': CID, 'app.user': JSON.stringify({ name: 'Jane', email: EMAIL, id: CID }) }, session: {} },
+  });
+  assertClean(bundle, 'storage');
+  assert.ok(bundle.storage, 'storage included');
+  const tag = bundle.storage.local['app.entityId'];
+  assert.match(tag, /^\[id#\d+\]$/);
+  assert.ok(bundle.samples[0].url.includes('/payments/' + tag + '/'), 'movements path id == localStorage entityId — client-side id traced');
+  assert.equal(bundle.storage.local['app.user'].name, '[text]'); // PII inside a JSON storage value still redacted
+  assert.equal(bundle.storage.local['app.user'].id, tag);        // same id inside a JSON value → same tag
+});
+
 test('redactJson: keeps keys + shape, strips every value (real receipt shape)', () => {
   const receipt = { data: { data: {
     ['pc_om_list_order_' + ORDERID]: { fields: { orderId: ORDERID, orderDateText: '05 may, 2020', totalPriceText: '9,99€', currencyCode: 'EUR', storeName: NAME } },

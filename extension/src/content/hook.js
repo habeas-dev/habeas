@@ -98,6 +98,20 @@
   }
   // Lightweight "we saw a request" ping (host only) — powers the record-mode diagnostic.
   function postSeen(url) { if (LEARN) try { window.postMessage({ __habeas: true, type: 'seen', host: hostOf(url) }, '*'); } catch (e) {} }
+  // Client-side storage snapshot. SPAs stash session/entity ids in localStorage/sessionStorage that never
+  // appear in any network response — so a redacted, CORRELATED snapshot lets a maintainer trace a path/query
+  // id to the storage key it comes from. LEARN-mode only; values are redacted at handoff (never sent raw off
+  // the box beyond the same in-session buffer as everything else). Debounced after activity so it catches the
+  // post-login state.
+  function snapshotStorage() {
+    if (!LEARN) return;
+    try {
+      const grab = (st) => { const o = {}; try { for (let i = 0; i < st.length && i < 300; i++) { const k = st.key(i); const v = st.getItem(k); if (typeof v === 'string' && v.length <= 20000) o[k] = v; } } catch (e) {} return o; };
+      window.postMessage({ __habeas: true, type: 'storage', local: grab(window.localStorage), session: grab(window.sessionStorage) }, '*');
+    } catch (e) {}
+  }
+  let stTimer = 0;
+  function maybeSnapshot() { if (!LEARN) return; try { clearTimeout(stTimer); stTimer = setTimeout(snapshotStorage, 1500); } catch (e) {} }
   // A document asset (PDF/binary). We record the REQUEST (method, url, content-type, body) — never
   // the response bytes — so we can infer the PDF path AND replay POST-generated PDFs (some services,
   // e.g. Decathlon, generate the PDF from posted invoice data rather than a simple GET).
@@ -155,6 +169,7 @@
       method = (init && init.method) || (input && input.method) || 'GET';
       if (url && cap(url)) { postAuth(url, headers); postContext(url); }
       if (url) postSeen(url);
+      maybeSnapshot();
       stashMtop(url, method, init && init.body);
     } catch (e) {}
     const p = of.apply(this, arguments);
@@ -180,6 +195,7 @@
       this.addEventListener('load', function () {
         try {
           postSeen(this.__u);
+          maybeSnapshot();
           if (!LEARN) return;
           const ct = ((this.getResponseHeader && this.getResponseHeader('content-type')) || '').toLowerCase();
           if (isPdfLike(ct, this.__u)) postAsset(this.__u, { method: this.__m, reqType: this.__h['content-type'], reqBody: this.__body, status: this.status });

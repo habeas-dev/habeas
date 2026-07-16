@@ -58,6 +58,13 @@ export async function clearWsFrames(domain) {
   await chrome.storage.session.remove('wsframes:' + domain);
 }
 
+// Latest client-storage snapshot (localStorage + sessionStorage) captured during learn mode — where SPAs
+// stash ids that never hit the network. Redacted at handoff time.
+export async function getStorage(domain) {
+  const o = await chrome.storage.session.get('storage:' + domain);
+  return o['storage:' + domain] || { local: {}, session: {} };
+}
+
 // Diagnostic: how many requests the recorder observed, and from which hosts.
 export async function getSeen(domain) {
   const o = await chrome.storage.session.get('seen:' + domain);

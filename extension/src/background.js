@@ -249,6 +249,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       if (msg.host) seen.hosts[msg.host] = (seen.hosts[msg.host] || 0) + 1;
       chrome.storage.session.set({ [key]: seen });
     });
+  } else if (msg.type === 'habeas:storage' && msg.domain) {
+    // Record-mode: keep the LATEST client-storage snapshot (local + session). SPAs stash session/entity
+    // ids here that never hit the network; a redacted, correlated copy in the handoff traces them.
+    chrome.storage.session.set({ ['storage:' + msg.domain]: { local: msg.local || {}, session: msg.session || {} } });
   }
 });
 

@@ -170,7 +170,7 @@ function b64urlToJson(seg) {
 // later path/query; the bearer header itself may be an opaque token). Claim NAMES + value-redacted
 // (correlated), so a token-derived id traces to its claim. Never the raw token/signature. Deduped, capped.
 const JWT_ANY = /eyJ[A-Za-z0-9_-]+\.([A-Za-z0-9_-]+)\.[A-Za-z0-9_-]*/g;
-function collectJwtClaims(samples, refs) {
+function collectJwtClaims(samples, storage, refs) {
   const payloads = new Set();
   const scan = (v, depth = 0) => {
     if (depth > 12 || v == null) return;
@@ -179,16 +179,35 @@ function collectJwtClaims(samples, refs) {
     else if (typeof v === 'object') Object.values(v).forEach((x) => scan(x, depth + 1));
   };
   for (const s of samples || []) { scan(s && s.reqHeaders); scan(s && s.json); scan(s && s.reqBody); }
+  if (storage) { scan(storage.local); scan(storage.session); }
   const out = [];
   for (const p of [...payloads].slice(0, 8)) { try { const c = b64urlToJson(p); if (c && typeof c === 'object') out.push(redactJson(c, '', 0, refs)); } catch (e) {} }
   return out;
+}
+
+// A localStorage/sessionStorage snapshot: keep KEY names (redacting embedded id-runs) and redact each
+// value (JSON → deep-redact, else classify) with the shared refs, so an id in storage correlates with the
+// same id in a path/header/field. This is how a client-side id (never in any response) gets traced.
+function redactStorageKey(k, refs) { return String(k).replace(/[A-Za-z0-9_-]{20,}/g, (m) => (refs ? refs(m) : '[id]')).replace(/\d{5,}/g, (m) => (refs ? refs(m) : '[id]')); }
+function redactStorageBag(bag, refs) {
+  const o = {};
+  for (const k of Object.keys(bag || {})) {
+    const v = String(bag[k]);
+    const t = v.trim();
+    let rv;
+    // Only parse actual JSON objects/arrays; a bare numeric string is an id, not a number to zero out.
+    if (t[0] === '{' || t[0] === '[') { try { rv = redactJson(JSON.parse(v), '', 0, refs); } catch (e) { rv = redactString(v, k, refs); } }
+    else rv = redactString(v, k, refs);
+    o[redactStorageKey(k, refs)] = rv;
+  }
+  return o;
 }
 
 // Build the shareable handoff bundle. DELIBERATELY excludes auth (live tokens) and dom page text (full
 // of PII, low authoring value). Everything included is value-redacted, and id values are correlated with a
 // bundle-scoped `refs` tagger: the SAME real id → the same [id#N] everywhere (path, header, field), so a
 // maintainer can trace provenance without any technical questions and without seeing a single value.
-export function buildHandoff({ domain, samples, wsframes, assets }) {
+export function buildHandoff({ domain, samples, wsframes, assets, storage }) {
   const refs = makeRefs();
   const out = {
     habeasHandoff: 1,
@@ -200,7 +219,13 @@ export function buildHandoff({ domain, samples, wsframes, assets }) {
     wsframes: (wsframes || []).map((f) => ({ event: f.event, url: f.url ? redactUrl(f.url, refs) : f.url, frame: f.frame != null ? redactFrame(f.frame, refs) : f.frame })),
     assets: (assets || []).map((a) => ({ method: a.method, url: a.url ? redactUrl(a.url, refs) : a.url, reqType: a.reqType })),
   };
-  const claims = collectJwtClaims(samples, refs); // redacted claims of every JWT (header + response body) — traces JWT-derived path/query ids
+  // Client-side storage (localStorage/sessionStorage) — where SPAs stash ids that never hit the network.
+  if (storage && (Object.keys(storage.local || {}).length || Object.keys(storage.session || {}).length)) {
+    out.storage = { local: redactStorageBag(storage.local, refs), session: redactStorageBag(storage.session, refs) };
+  }
+  // Redacted claims of every JWT found in the recording (headers, response bodies, AND storage) — traces
+  // JWT-derived path/query ids even when the bearer is opaque.
+  const claims = collectJwtClaims(samples, storage, refs);
   if (claims.length) out.tokenClaims = claims;
   return out;
 }

@@ -1,6 +1,6 @@
 import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
-import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen, getAssets, getDomTexts, getWsFrames } from '../lib/learn.js';
+import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen, getAssets, getDomTexts, getWsFrames, getStorage } from '../lib/learn.js';
 import { draftAdapterFromSamples, draftStreamsFromSamples, draftWithGroups, listCandidates, matchCandidates, augmentSource, flatToStream, summarizeCapture } from '../runtime/infer.js';
 import { listInventory, artifactKinds, fetchArtifact } from '../runtime/inventory.js';
 import { ensureSiteFetch } from '../lib/pagefetch.js';
@@ -127,8 +127,8 @@ async function refreshLive() {
 // Build the redacted handoff bundle from the current recording (see lib/redact.js — values stripped,
 // no auth/tokens/page-text). Excludes nothing structural a maintainer needs.
 async function buildBundle() {
-  const [samples, ws, assets] = await Promise.all([getSamples(LEARN.domain), getWsFrames(LEARN.domain), getAssets(LEARN.domain)]);
-  return buildHandoff({ domain: LEARN.domain, samples, wsframes: ws, assets });
+  const [samples, ws, assets, storage] = await Promise.all([getSamples(LEARN.domain), getWsFrames(LEARN.domain), getAssets(LEARN.domain), getStorage(LEARN.domain)]);
+  return buildHandoff({ domain: LEARN.domain, samples, wsframes: ws, assets, storage });
 }
 async function onSharePreview() {
   if (!LEARN) return;
