@@ -144,7 +144,10 @@ export function makePageMtop(tabId) {
           let page = c.startPage || 1;
           for (let i = 0; i < (c.maxPages || 100); i++) {
             const bumped = c.pagePath ? bump(page) : false; // false = flat/init seed → one page only
-            let resp; try { resp = await mtop.request({ api: c.api, v: c.v || '1.0', data: payload, type: 'originaljson', dataType: 'json', ...(c.request || {}) }); } catch (e) { if (!pages.length) return { pages: [], error: 'mtop.request rejected: ' + errStr(e) }; break; }
+            // lib-mtop derives its transport from `type`+`dataType`: type:'post' → postJSON, and the H5/XHR
+            // path needs H5Request:true. (An input type of 'originaljson' matches neither get nor post and
+            // throws UNEXCEPT_REQUEST — that value is the SERIALIZED query type, not a valid input.)
+            let resp; try { resp = await mtop.request({ api: c.api, v: c.v || '1.0', data: payload, H5Request: true, type: 'post', dataType: 'originaljson', ecode: 1, ...(c.request || {}) }); } catch (e) { if (!pages.length) return { pages: [], error: 'mtop.request rejected: ' + errStr(e) }; break; }
             pages.push(resp);
             const more = c.morePath ? String(get(resp, c.morePath)) === 'true' : false;
             if (!bumped || !more) break;

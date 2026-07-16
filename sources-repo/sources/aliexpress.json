@@ -18,7 +18,7 @@
     "mtop": {
       "api": "mtop.aliexpress.trade.buyer.order.list",
       "v": "1.0",
-      "request": { "type": "originaljson", "dataType": "originaljsonp", "ecode": 1, "isSec": 1, "post": 1, "needLogin": true, "timeout": 15000 },
+      "request": { "H5Request": true, "type": "post", "dataType": "originaljson", "ecode": 1, "isSec": 1, "needLogin": true, "timeout": 15000 },
       "pagePath": "params~.data~.pc_om_list_body_*.fields.pageIndex",
       "morePath": "data.data.pc_om_list_body_*.fields.hasMore",
       "startPage": 1,
