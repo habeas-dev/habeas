@@ -51,6 +51,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   - **Marketplace attribution** — a source can carry a `contributors` handle list (in the adapter, carried
     into the catalog index); the marketplace card credits them (“🙌 Contributed by …”). Closes the loop:
     record → send → collaborate → published & credited.
+  - **Correlation-preserving redaction** — an id VALUE now redacts to a stable `[id#N]` per distinct real
+    value across the whole bundle, so a maintainer can trace that a path segment, a header, and a response
+    field hold the SAME id (answering “where does this come from?” structurally, no questions, no value
+    revealed). Personal values (names/IBANs/cards/emails/phones) are never correlated.
+  - **System/operation codes preserved** — short numeric codes (≤4 digits, e.g. an operation-type code
+    `0006`/`0019`, a center/department code) are kept verbatim since they identify the system, not the
+    person; longer numbers (postcodes, accounts) are still redacted.
 
 ## [0.3.0] — 2026-07-16
 

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { redactString, redactUrl, redactJson, redactBody, redactFrame, redactHeaders, redactHtml, buildHandoff } from '../src/lib/redact.js';
+import { redactString, redactUrl, redactJson, redactBody, redactFrame, redactHeaders, redactHtml, buildHandoff, makeRefs } from '../src/lib/redact.js';
 
 // Fully synthetic, PII-SHAPED values — NEVER copied from any real capture. The redactor must remove
 // every one of these from any output.
@@ -49,6 +49,38 @@ test('redactUrl keeps non-PII enum/date query values, redacts ids/tokens/PII', (
   assert.match(r, /sig=\[v\]/);              // opaque token → redacted
   assert.match(r, /email=\[v\]/);            // PII → redacted
   assertClean(r, 'url-params');
+});
+
+test('redactString keeps short system/operation codes, redacts longer numbers', () => {
+  assert.equal(redactString('0006'), '0006');   // e.g. card-purchase operation code
+  assert.equal(redactString('0019'), '0019');   // e.g. transfer operation code
+  assert.equal(redactString('1234'), '1234');   // 4-digit center/department code
+  assert.equal(redactString('99999'), '[num:5]'); // 5-digit (postcode-length) → still redacted
+});
+
+test('handoff correlation: same id → stable [id#N] across path/query/header/field; codes kept; PII not correlated', () => {
+  const CID = '123456789012'; // synthetic 12-digit id (client-ish → redacted + correlated)
+  const bundle = buildHandoff({
+    domain: 'bank.test',
+    samples: [{
+      url: `https://bank.test/api/payments/${CID}/v3/movements?accountNumber=${CID}&operationType=A`,
+      method: 'GET',
+      reqHeaders: { 'x-entity': CID, authorization: 'Bearer eyJx.y.z' },
+      json: { cards: [{ contractId: CID, opCode: '0006', centerCode: '1234', holder: NAME }] },
+    }],
+  });
+  assertClean(bundle, 'corr');
+  const s = bundle.samples[0];
+  const tag = s.json.cards[0].contractId;
+  assert.match(tag, /^\[id#\d+\]$/);                                   // a client id → correlatable tag
+  assert.ok(s.url.includes('/payments/' + tag + '/'), 'path shares the tag');
+  assert.ok(s.url.includes('accountNumber=' + tag), 'query shares the tag');
+  assert.equal(s.reqHeaders['x-entity'], tag);                         // header shares it → answers "same id?" structurally
+  assert.equal(s.reqHeaders.authorization, '[redacted]');              // auth dropped, never correlated
+  assert.equal(s.json.cards[0].opCode, '0006');                        // operation code (system) kept
+  assert.equal(s.json.cards[0].centerCode, '1234');                    // 4-digit code kept
+  assert.equal(s.json.cards[0].holder, '[text]');                      // a name is NOT kept/correlated
+  assert.ok(s.url.includes('operationType=A'));                        // enum kept
 });
 
 test('redactJson: keeps keys + shape, strips every value (real receipt shape)', () => {
