@@ -78,8 +78,16 @@ function acctObj(record) {
   const str = typeof raw === 'string' ? raw : '';
   const compact = str.replace(/\s+/g, '').toUpperCase();
   const iban = /^[A-Z]{2}\d{2}[A-Z0-9]*$/.test(compact) ? compact : undefined;
-  const digits = str.replace(/\D+/g, '');
-  const last4 = digits.length >= 4 ? digits.slice(-4) : undefined;
+  // last4, most-reliable first: (1) the IBAN's own last digits; (2) the group label's trailing 4 digits —
+  // a grouped card/bank label renders "<name> <last4>" from the group mask, i.e. the number the user
+  // recognizes (a card's last four, not an opaque internal account id); (3) the account string's own last
+  // 4 digits (a masked PAN like "**** 8765", or a plain account number when it IS the account).
+  const digitsOf = (s) => String(s || '').replace(/\D+/g, '');
+  const labelTail = String(record.group || '').match(/(\d{4})\s*$/);
+  const acctDigits = digitsOf(str);
+  const last4 = (iban ? digitsOf(iban).slice(-4) : undefined)
+    || (labelTail ? labelTail[1] : undefined)
+    || (acctDigits.length >= 4 ? acctDigits.slice(-4) : undefined);
   const groupId = record.group != null && record.group !== '' ? String(record.group) : undefined;
   const o = {};
   if (iban) o.iban = iban;

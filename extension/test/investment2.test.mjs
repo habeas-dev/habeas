@@ -102,6 +102,32 @@ test('canonicalize keeps the historical string account when nothing structured c
   assert.equal(none.account, ''); // receipt with no account/group → empty string, as before
 });
 
+// Grouped bank/card sources: the canonical account.last4 must be the number the user recognizes (the card's
+// last four from the group label), never the last 4 of an opaque internal account id. Shapes mirror the real
+// adapters (WiZink account = internal id; FECI = group only; Openbank = real account number). Values synthetic.
+test('canonicalize grouped card: last4 comes from the group label, not the opaque account id (WiZink-shape)', () => {
+  const c = canonicalize({ internalId: 'x', date: '2026-03-01', amount: -9, currency: 'EUR', account: '0090000123', group: 'Demo Oro 8765', source: 'wizink-es' });
+  assert.equal(c.account.last4, '8765'); // the card last4 from the label, NOT '0123' from the internal id
+  assert.equal(c.account.groupId, 'Demo Oro 8765');
+});
+
+test('canonicalize grouped card: last4 from the group label when no account is mapped (FECI-shape)', () => {
+  const c = canonicalize({ internalId: 'x', date: '2026-03-01', amount: -9, currency: 'EUR', group: 'ECI Visa 4321', source: 'financiera-elcorteingles-es' });
+  assert.deepEqual(c.account, { last4: '4321', groupId: 'ECI Visa 4321', currency: 'EUR' });
+});
+
+test('canonicalize grouped bank: last4 from a real account number when the label has none (Openbank-shape)', () => {
+  const c = canonicalize({ internalId: 'x', date: '2026-03-01', amount: -9, currency: 'EUR', account: '0001234567', group: 'Cuenta Corriente', source: 'openbank-es' });
+  assert.equal(c.account.last4, '4567'); // the account number's own last 4 (label carries no trailing digits)
+  assert.equal(c.account.groupId, 'Cuenta Corriente');
+});
+
+test('canonicalize currency wallet: groupId only, no last4 (Revolut-shape pocket)', () => {
+  const c = canonicalize({ internalId: 'x', date: '2026-03-01', amount: -9, currency: 'USD', group: 'USD', source: 'revolut' });
+  assert.deepEqual(c.account, { groupId: 'USD', currency: 'USD' });
+  assert.ok(!('last4' in c.account));
+});
+
 test('canonicalize of an investment@2 trade uses netAmount for amount and instrument name as counterparty', () => {
   const rec = buildRecord({ internalId: 'T1', date: '2026-02-03', recordType: 'trade', side: 'buy', isin: 'XX0000000001', instrumentName: 'Demo Index ETF', units: 10, price: 25.5, netAmount: 256.2 }, BROKER);
   const c = canonicalize(rec);

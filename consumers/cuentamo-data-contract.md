@@ -317,5 +317,27 @@ Pasos (1) y (2) del camino recomendado **implementados** (v0.3.0.22):
   `amount`, `description`, `account`, `direction` (cash). Un `side`/`kind` no reconocido se conserva verbatim.
   `investment@1` mantiene su forma plana histórica.
 
-Cobertura de tests: `extension/test/investment2.test.mjs` (12 casos, datos 100% sintéticos). Pendiente
+Cobertura de tests: `extension/test/investment2.test.mjs` (datos 100% sintéticos). Pendiente
 del lado Habeas: **paso (3)** — autor de fuentes de bróker reales (`investment@2`) por grabación.
+
+### G. Cobertura por fuente financiera (2026-07-16)
+
+El `account` estructurado se deriva en el **camino compartido** `canonicalize` (ninguna fuente necesita
+cambios): `last4` sale, por orden de fiabilidad, del IBAN → de los 4 dígitos finales de la etiqueta de grupo
+("`<nombre> <last4>`", que es el número que el usuario reconoce) → de los dígitos del propio número de cuenta.
+Esto corrige tarjetas cuyo campo `account` es un id interno opaco (WiZink) o que no mapean `account` (FECI).
+
+| Fuente | Tipo | Schema (movimientos) | `account` canónico | Pendiente (requiere captura) |
+|---|---|---|---|---|
+| **ING España** | banco | `transaction@1` | `{iban,last4,currency}` ✅ | `valueDate`, `balanceAfter` (nombres de campo en el raw) |
+| **Openbank** | banco | `transaction@1` | `{last4,groupId,currency}` ✅ | `valueDate`, `balanceAfter` |
+| **Revolut** | banco | `transaction@1` | `{groupId=divisa,currency}` ✅ | `balanceAfter` (monedero por divisa; sin IBAN por diseño) |
+| **WiZink** | tarjeta | `transaction@1` | `{last4,groupId,currency}` ✅ (corregido) | `balanceAfter` |
+| **Financiera ECI** | tarjeta/crédito | `transaction@1` | `{last4,groupId,currency}` ✅ (corregido) | `valueDate`, `aplazamientos` como `loan` |
+| **CaixaBank Consumer** | tarjeta | `invoice@1` (solo extractos) | n/a (documentos) | movimientos de tarjeta (`transaction@1`) por grabación |
+| **Trade Republic** | banco+bróker | `transaction@1` (+`isin`) | — | **`investment@2`**: `side` (mapa `eventType`→enum), `units`/`price`/`commission` (viven en `timelineDetailV2`, texto localizado "1,47 × 8,13 €") — **bloqueado por captura completa** (solo 3 `eventType` muestreados) |
+
+**No fabricado a propósito.** `valueDate`/`balanceAfter` y el `side`/`units`/`price` de Trade Republic no se
+mapean "a ojo": dependen de nombres de campo del raw que sólo una grabación real verifica (regla del proyecto:
+*resolver desde capturas, no adivinar*). El schema `investment@2` y el `canonicalize` enriquecido ya están
+listos; en cuanto haya una captura de bróker se conecta la fuente sin tocar el runtime.

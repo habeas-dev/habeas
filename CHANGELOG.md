@@ -10,6 +10,16 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **Canonical `account.last4` for grouped card sources** (`lib/normalize.js#acctObj`) — the last-4 is now taken,
+  most-reliable first, from the IBAN → the group label's trailing 4 digits (the card number the user
+  recognizes) → the account string's own digits. Cards whose `account` field is an opaque internal id
+  (WiZink) or is unmapped (Financiera ECI) previously produced a wrong or missing `last4`; now every bank/card
+  source derives a correct structured `account` through the shared `canonicalize` path with no per-source
+  change. Coverage of every financial source (and precisely what remains capture-gated: bank
+  `valueDate`/`balanceAfter`, Trade Republic `investment@2` `side`/`units`/`price`) is tabulated in
+  `consumers/cuentamo-data-contract.md` (§G).
+
 ### Added
 - **Broker schema `investment@2`** (`sinks/format.js`) — a richer investment record for the Cuéntamo data
   contract: a `recordType` `"trade"|"cash"` discriminator (inferred when absent), a structured
