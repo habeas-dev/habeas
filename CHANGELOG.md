@@ -27,7 +27,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   nested stringified-JSON layers (`pagePath` with `~` markers: `params~.data~.…pageIndex`). The seed is
   acquired **automatically**: the transport nudges the orders tab (scroll to the sentinel + click any
   "load more") until the app fires its own signed request — no manual scroll — preferring the POST pager
-  body and falling back to the init GET payload for single-page accounts.
+  body and falling back to the init GET payload for single-page accounts. Per-order **receipt** as a
+  self-contained printable **HTML invoice**, generated from the `queryorderreceiptinfo` mtop call (a known
+  flat payload — no seed) via a declarative receipt template that uses AliExpress's own field labels.
+- Runtime: **mtop detail calls** (`api.detail.mtop` with an explicit `params` payload) and a **declarative
+  receipt template** for `renderInvoiceHtml` (`api.detail.template`: title/meta/blocks/items/totals with
+  `{dotted.path}` tokens resolved against the detail JSON) — a reusable HTML-invoice layer, data not code.
 
 ### Fixed
 - `normalizeDate` handles `DD Mon, YYYY` (e.g. AliExpress `24 may, 2026`) — was shifting a day via the

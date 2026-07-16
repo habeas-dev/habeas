@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { listInventory } from '../src/runtime/inventory.js';
+import { listInventory, artifactKinds, fetchArtifact } from '../src/runtime/inventory.js';
 import { validateAdapter } from '../src/adapters/validate.js';
 import { resolveOutput } from '../src/lib/outputs.js';
 
@@ -43,6 +43,40 @@ test('mtop transport: extracts component-keyed orders across pages, maps to rece
   assert.equal(byId.A2.total, 15.99);
   assert.equal(byId.A3.date, '2026-06-06');
   assert.ok(byId.A1.extra, 'keepRaw kept the full order fields');
+});
+
+test('receipt: mtop detail → self-contained HTML invoice from the declarative template', async () => {
+  // Fictional receipt (NO real data) mirroring queryorderreceiptinfo's shape: labels under mcms, values alongside.
+  const receipt = {
+    mcms: { mainTitle: 'Receipt', orderSummary: 'Order summary', orderIdTitle: 'Order ID', orderTimeTitle: 'Order date',
+      shippingAddressTitle: 'Shipping address', paymentTitle: 'Payment', itemsDetailTitle: 'Items',
+      allDiscountTitle: 'Discount', shippingFeeTitle: 'Shipping', includedTax: 'Incl. tax', orderTotal: 'Total' },
+    orderId: 'A1', orderTime: '24 may, 2026',
+    deliveryAddress: { contactName: 'TEST BUYER', addressSummaryInfoDisplay: '1 Test St, Testville', fullPhoneNo: '+00 000000000' },
+    paymentInfo: { methodName: 'Visa', cardNo: '**** 0000', paymentAmountStr: '2,28€', paymentDate: '24 may, 2026' },
+    subOrders: [{ itemTitle: 'Widget', amount: '2,28€' }],
+    allDiscount: '0,05€', shippingFee: '0,00€', includedTaxDisplay: '0,43€', orderTotal: '2,28€',
+  };
+  let cfg = null;
+  const net = async () => ({ ok: false });
+  net.mtop = async (c) => { cfg = c; return { pages: [{ api: 'mtop.global.finance.taxation.invoice.queryorderreceiptinfo', data: { data: receipt } }] }; };
+  const doc = { internalId: 'A1', record: { internalId: 'A1', total: 2.28, currency: 'EUR' } };
+
+  const kinds = artifactKinds(EFF, doc);
+  assert.ok(kinds.some((k) => k.kind === 'document' && k.ext === 'html'), 'produces an html document artifact');
+
+  const art = await fetchArtifact(EFF, {}, doc, net, null, 'document');
+  assert.equal(cfg.api, 'mtop.global.finance.taxation.invoice.queryorderreceiptinfo');
+  assert.equal(cfg.data.orderId, 'A1');                 // params.orderId built from {internalId}
+  assert.equal(cfg.data.shipToCountry, 'ES');           // literal params passed through
+  const html = await art.blob.text();
+  assert.equal(art.ext, 'html');
+  assert.match(html, /<!doctype html>/i);
+  assert.match(html, /Widget/);                          // item row
+  assert.match(html, /TEST BUYER/);                      // address block
+  assert.match(html, /Incl\. tax/);                      // mcms label used
+  assert.match(html, /2,28€/);                           // total value
+  assert.doesNotMatch(html, /mainTitle|deliveryAddress/); // raw keys never leak (template, not flatten)
 });
 
 test('mtop transport: surfaces an executor error, dedupes by orderId', async () => {

@@ -125,17 +125,22 @@ export function makePageMtop(tabId) {
             for (const b of document.querySelectorAll('button,a,[role=button]')) { if (b.offsetParent !== null && loadMoreRe.test((b.textContent || '').trim())) { b.click(); break; } }
           } catch (e) {} };
           const key = String(c.api).toLowerCase();
-          const t0 = Date.now(); let raw = null;
-          while (Date.now() - t0 < (c.seedTimeoutMs || 20000)) {
-            raw = window.__habeas_mtop && window.__habeas_mtop[key];
-            if (raw) break;
-            nudge();
-            await new Promise((r) => setTimeout(r, 400));
-          }
-          if (!raw) return { pages: [], error: 'no seed request captured — open the orders page (the app must fetch at least once)' };
           const mtop = (window.lib && window.lib.mtop) || window.mtop;
           if (!mtop || !mtop.request) return { pages: [], error: 'mtop lib not found on the page' };
-          let payload; try { payload = JSON.parse(new URLSearchParams(raw).get('data')); } catch (e) { return { pages: [], error: 'seed payload parse failed' }; }
+          let payload;
+          if (c.data && typeof c.data === 'object') {
+            payload = c.data; // explicit payload (a detail call, e.g. a receipt) — no seed/scroll needed
+          } else {
+            const t0 = Date.now(); let raw = null;
+            while (Date.now() - t0 < (c.seedTimeoutMs || 20000)) {
+              raw = window.__habeas_mtop && window.__habeas_mtop[key];
+              if (raw) break;
+              nudge();
+              await new Promise((r) => setTimeout(r, 400));
+            }
+            if (!raw) return { pages: [], error: 'no seed request captured — open the orders page (the app must fetch at least once)' };
+            try { payload = JSON.parse(new URLSearchParams(raw).get('data')); } catch (e) { return { pages: [], error: 'seed payload parse failed' }; }
+          }
           // The page field lives several stringified layers deep (c.pagePath uses `~` to mark each one).
           const bump = (n) => { try { return setDeep(payload, String(c.pagePath).split('.'), n); } catch (e) { return false; } };
           // mtop rejects with its response object ({ret:['FAIL_…'], …}) — surface the ret code, not [object Object].

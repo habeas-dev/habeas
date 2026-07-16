@@ -624,16 +624,46 @@ function flattenRows(obj, prefix, depth, rows) {
   }
   return rows;
 }
+// Resolve {dotted.path} tokens in a template string against the detail JSON (missing → empty).
+function resolveTpl(str, data) {
+  return String(str == null ? '' : str).replace(/\{([\w.]+)\}/g, (_, p) => { const v = get(data, p); return v == null ? '' : String(v); });
+}
+const INVOICE_CSS = `body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:720px;margin:40px auto;color:#1a1a1a;padding:0 20px;font-size:14px}
+h1{font-size:20px;margin:0 0 2px} h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#888;margin:22px 0 6px;font-weight:600}
+.brand{color:#888;font-size:12px;margin-bottom:14px} .meta{color:#555;margin-bottom:6px;display:flex;gap:18px;flex-wrap:wrap} .meta .k{color:#999}
+.block div{line-height:1.5} table{border-collapse:collapse;width:100%} td{padding:6px 4px;vertical-align:top}
+table.items td{border-bottom:1px solid #eee} table.totals td{padding:4px} .num{text-align:right;white-space:nowrap}
+table.totals tr.grand td{border-top:2px solid #222;font-weight:700;font-size:16px;padding-top:8px} td.k{color:#888;width:38%}
+@media print{body{margin:0}}`;
 export function renderInvoiceHtml(doc, detail, adapter) {
   const r = (doc && doc.record) || doc || {};
+  const brand = escH(adapter.name || adapter.service || '');
+  const tmpl = adapter && adapter.api && adapter.api.detail && adapter.api.detail.template;
+  if (tmpl) {
+    // Declarative receipt: layout lives in the adapter (data), values + labels resolved from the detail JSON
+    // (the source's own i18n labels, e.g. AliExpress mcms.*). All values HTML-escaped.
+    const T = (s) => escH(resolveTpl(s, detail));
+    const lines = (arr) => (arr || []).map((s) => resolveTpl(s, detail)).filter((x) => x && x.trim());
+    const meta = (tmpl.meta || []).map((m) => resolveTpl(m.value, detail) ? `<div><span class="k">${T(m.label)}</span> ${T(m.value)}</div>` : '').join('');
+    const blocks = (tmpl.blocks || []).map((b) => { const ls = lines(b.lines).map((x) => `<div>${escH(x)}</div>`).join(''); return ls ? `<section class="block"><h2>${T(b.title)}</h2>${ls}</section>` : ''; }).join('');
+    let items = '';
+    if (tmpl.items) {
+      const arr = get(detail, tmpl.items.from);
+      const rows = (Array.isArray(arr) ? arr : []).map((it) => `<tr>${(tmpl.items.cols || []).map((c, i) => `<td${i ? ' class="num"' : ''}>${escH(resolveTpl(c.value, it))}</td>`).join('')}</tr>`).join('');
+      if (rows) items = `<section class="block"><h2>${T(tmpl.items.title)}</h2><table class="items">${rows}</table></section>`;
+    }
+    const totals = (tmpl.totals || []).map((t, i, a) => { const v = resolveTpl(t.value, detail); return v ? `<tr class="${i === a.length - 1 ? 'grand' : ''}"><td>${T(t.label)}</td><td class="num">${escH(v)}</td></tr>` : ''; }).join('');
+    const title = T(tmpl.title) || brand;
+    return `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>${INVOICE_CSS}</style></head><body>
+      <h1>${title}</h1><div class="brand">${brand}${tmpl.subtitle ? ' · ' + T(tmpl.subtitle) : ''}</div>
+      <div class="meta">${meta}</div>${blocks}${items}
+      ${totals ? `<section class="block"><table class="totals">${totals}</table></section>` : ''}
+    </body></html>`;
+  }
+  // Generic fallback: a flat key/value table of the whole detail JSON.
   const rows = flattenRows(detail).slice(0, 200).map(([k, v]) => `<tr><td class="k">${escH(k)}</td><td>${escH(v)}</td></tr>`).join('');
   const title = `${adapter.name || adapter.service} — ${r.number || (doc && doc.internalId) || ''}`;
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${escH(title)}</title><style>
-    body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:720px;margin:40px auto;color:#1a1a1a;padding:0 16px}
-    h1{font-size:20px;margin:0 0 4px} .meta{color:#666;margin-bottom:10px} .total{font-size:18px;font-weight:700;margin:10px 0 18px}
-    table{border-collapse:collapse;width:100%;font-size:13px} td{border-bottom:1px solid #eee;padding:6px 8px;vertical-align:top} td.k{color:#666;width:38%}
-    @media print{body{margin:0}}
-  </style></head><body>
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${escH(title)}</title><style>${INVOICE_CSS}</style></head><body>
     <h1>${escH(adapter.name || adapter.service)}</h1>
     <div class="meta">${r.number ? 'Nº ' + escH(r.number) : ''}${r.date ? ' · ' + escH(r.date) : ''}</div>
     ${r.total != null && r.total !== '' ? `<div class="total">${escH(r.total)} ${escH(r.currency || '')}</div>` : ''}
@@ -1003,6 +1033,19 @@ export async function fetchDetail(adapter, auth, docOrId, net) {
   const internalId = doc ? doc.internalId : docOrId;
   const d = adapter.api.detail;
   if (!d) throw new Error('no detail for this source');
+  // mtop detail (AliExpress receipt): a single component call with a KNOWN flat payload built from the
+  // doc — no captured seed needed (unlike the list). The page's lib.mtop signs it.
+  if (d.mtop) {
+    const mtopFn = net && net.mtop;
+    if (!mtopFn) throw new Error('detail mtop — no mtop transport (open the site tab first)');
+    const params = {};
+    for (const k of Object.keys(d.params || {})) params[k] = applyTmpl(String(d.params[k]), doc, internalId);
+    const res = await mtopFn({ ...d.mtop, data: params });
+    if (res && res.error) throw new Error('detail mtop — ' + res.error);
+    const page = (res && res.pages && res.pages[0]) || {};
+    const data = d.dataPath ? get(page, d.dataPath) : page;
+    return { blob: new Blob([JSON.stringify(data == null ? {} : data)], { type: 'application/json' }), via: 'mtop' };
+  }
   const host = d.host ? absHost(d.host) : adapter.api.host;
   const path = applyTmpl(d.path, doc, internalId); // {internalId} + {field.path} from the list item
   const url = host + path;
