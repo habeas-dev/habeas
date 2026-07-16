@@ -51,6 +51,8 @@ async function init() {
   applyI18n();
   try { const v = $('#version'); if (v) v.textContent = 'v' + chrome.runtime.getManifest().version; } catch (e) {}
   $('#opts').onclick = () => chrome.runtime.openOptionsPage();
+  // A team reply to one of the user's handoffs arrived → surface it here too (the background poll set the count).
+  try { const c = (await chrome.storage.local.get('habeas:contribunread'))['habeas:contribunread'] || 0; const el = $('#contribnotice'); if (el && c > 0) { el.hidden = false; el.onclick = () => chrome.runtime.openOptionsPage(); } } catch (e) {}
   $('#sync-all').onclick = onSyncAll;
   ADAPTERS = await getAdapters();
   const cfg = await getConfig();

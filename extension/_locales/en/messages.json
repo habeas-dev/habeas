@@ -1128,6 +1128,8 @@
   "contrib_report": { "message": "Report a problem (send diagnostics)" },
   "contrib_report_prefix": { "message": "⚠️ It didn't work when listing —" },
   "contrib_report_sent": { "message": "✓ Sent to the team" },
+  "contrib_notify": { "message": "The Habeas team replied to one of your contributions — see Settings → My contributions." },
+  "contrib_popup_notice": { "message": "💬 The Habeas team replied to your contribution(s) — open Settings → My contributions." },
   "author_no_list_seen": {
     "message": "Saw $N$ requests (from: $HOSTS$) but none returned a document list. Open your orders/invoices page so it loads the data, then retry — or tell us these hosts.",
     "placeholders": {

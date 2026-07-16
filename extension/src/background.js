@@ -19,6 +19,8 @@ import { getAdapters } from './adapters/index.js';
 import { hasConsent } from './lib/consent.js';
 import { badgeWorking, badgeCount, badgeError, badgeClear, setStatus } from './lib/badge.js';
 import { t } from './lib/i18n.js';
+import { getSubmitter } from './lib/submitter.js';
+import { getMyHandoffs } from './registry/client.js';
 import { validateProposal, originHost } from './lib/exthooks.js';
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
@@ -41,6 +43,8 @@ chrome.action.onClicked.addListener(() => {
   syncWebRequestCapture();
   syncLearnAssetCapture().catch(() => {}); // (re)arm record-mode document capture if a recording is in progress
   syncSchedules().catch(() => {}); // (re)arm the download planner's alarms; overdue ones fire the catch-up
+  try { chrome.alarms.create('contrib:poll', { periodInMinutes: 20 }); } catch (e) {} // poll for team replies to the user's handoffs
+  checkContribReplies(); // check once on startup so a reply that arrived while closed notifies promptly
 })();
 // Re-sync the webRequest capture filter + the schedule alarms when the config changes.
 chrome.storage.onChanged.addListener((ch, area) => {
@@ -50,7 +54,10 @@ chrome.storage.onChanged.addListener((ch, area) => {
 });
 // The download planner: chrome.alarms wakes the SW at each schedule's fire time (a browser that was closed
 // fires the overdue alarm on next start → catch-up). onAlarm runs the schedule, then re-arms next / retry.
-chrome.alarms.onAlarm.addListener((alarm) => { if (alarm && String(alarm.name).startsWith('sched:')) onScheduleAlarm(alarm.name.slice(6)).catch(() => {}); });
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm && String(alarm.name).startsWith('sched:')) onScheduleAlarm(alarm.name.slice(6)).catch(() => {});
+  else if (alarm && alarm.name === 'contrib:poll') checkContribReplies();
+});
 
 // ---- auth/context capture (shared by the page hook messages AND the webRequest observer) ----------
 async function saveAuth(host, path, headers) {
@@ -681,4 +688,26 @@ async function runPendingExternalCollects(host) {
 function notify(message) {
   try { chrome.notifications.create({ type: 'basic', iconUrl: 'icon-128.png', title: 'Habeas', message }); }
   catch (e) {}
+}
+
+// Let a contributor know — without opening Settings — when the Habeas team replies to one of their
+// handoffs. Polls their own submissions (by pseudonymous id), notifies ONCE per new team reply, and
+// stashes the unread count so the popup can surface it too. Silent if the API is unreachable.
+async function checkContribReplies() {
+  try {
+    const sub = await getSubmitter();
+    if (!sub || !sub.id) return;
+    const list = await getMyHandoffs(sub.id);
+    const seen = sub.seen || {};
+    const unread = list.filter((h) => h.lastFrom === 'team' && h.lastAt && (!seen[h.id] || seen[h.id] < h.lastAt));
+    await chrome.storage.local.set({ 'habeas:contribunread': unread.length }); // popup reads this
+    const o = await chrome.storage.local.get('habeas:contribnotified');
+    const notified = o['habeas:contribnotified'] || {};
+    const fresh = unread.filter((h) => !notified[h.id] || notified[h.id] < h.lastAt);
+    if (fresh.length) {
+      notify(t('contrib_notify') || 'The Habeas team replied to your contribution');
+      const next = { ...notified }; for (const h of unread) next[h.id] = h.lastAt;
+      await chrome.storage.local.set({ 'habeas:contribnotified': next });
+    }
+  } catch (e) {}
 }

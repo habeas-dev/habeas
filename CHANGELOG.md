@@ -80,6 +80,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
     /handoff/:id {sourceJson}`); the contributor's *My contributions* inbox then shows an **Install & test**
     button that installs + enables the source (consent + capture perms) with no manual JSON import. So a
     non-technical contributor can test what the team built.
+  - **Knowing you have pending messages** — a background poll (every ~20 min + on startup) notifies the
+    contributor when the Habeas team replies to one of their handoffs, and the popup shows a notice — no
+    need to open Settings. Team side: the admin handoff list now flags `waitingForTeam` + `lastFrom`, so a
+    maintainer sees at a glance which submissions need attention.
   - **One-click problem report** — when a List test fails, Habeas remembers the failure (status + the
     server's response snippet + which header NAMES were sent — never values); *My contributions* shows a
     **Report a problem** button that posts that diagnostic (scrubbed) to the team thread. A non-technical
