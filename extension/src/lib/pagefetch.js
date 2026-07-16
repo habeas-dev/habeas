@@ -138,11 +138,13 @@ export function makePageMtop(tabId) {
           let payload; try { payload = JSON.parse(new URLSearchParams(raw).get('data')); } catch (e) { return { pages: [], error: 'seed payload parse failed' }; }
           // The page field lives several stringified layers deep (c.pagePath uses `~` to mark each one).
           const bump = (n) => { try { return setDeep(payload, String(c.pagePath).split('.'), n); } catch (e) { return false; } };
+          // mtop rejects with its response object ({ret:['FAIL_…'], …}) — surface the ret code, not [object Object].
+          const errStr = (e) => { if (typeof e === 'string') return e; if (e && e.ret) return [].concat(e.ret).join(','); if (e && e.message) return e.message; try { return JSON.stringify(e).slice(0, 300); } catch (_) { return String(e); } };
           const pages = [];
           let page = c.startPage || 1;
           for (let i = 0; i < (c.maxPages || 100); i++) {
             const bumped = c.pagePath ? bump(page) : false; // false = flat/init seed → one page only
-            let resp; try { resp = await mtop.request({ api: c.api, v: c.v || '1.0', data: payload, type: 'originaljson', dataType: 'json', ...(c.request || {}) }); } catch (e) { if (!pages.length) return { pages: [], error: 'mtop.request threw: ' + ((e && e.message) || e) }; break; }
+            let resp; try { resp = await mtop.request({ api: c.api, v: c.v || '1.0', data: payload, type: 'originaljson', dataType: 'json', ...(c.request || {}) }); } catch (e) { if (!pages.length) return { pages: [], error: 'mtop.request rejected: ' + errStr(e) }; break; }
             pages.push(resp);
             const more = c.morePath ? String(get(resp, c.morePath)) === 'true' : false;
             if (!bumped || !more) break;
