@@ -1116,6 +1116,7 @@
   "contrib_status_authored": { "message": "being built" },
   "contrib_status_published": { "message": "published" },
   "contrib_status_declined": { "message": "not used" },
+  "contrib_status_superseded": { "message": "replaced by a newer send" },
   "author_no_list_seen": {
     "message": "Saw $N$ requests (from: $HOSTS$) but none returned a document list. Open your orders/invoices page so it loads the data, then retry — or tell us these hosts.",
     "placeholders": {
