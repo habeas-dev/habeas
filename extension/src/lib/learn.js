@@ -46,6 +46,18 @@ export async function clearSamples(domain) {
   await chrome.storage.session.remove('samples:' + domain);
 }
 
+// WebSocket/SSE frames captured during learn mode (Trade Republic-style wss:// + SSE sources), in
+// chronological order: {event:'open'|'send'|'recv'|'sse', url, frame}. The subscription frames (send)
+// + a few data frames (recv) are what a maintainer needs to author the transport.
+export async function getWsFrames(domain) {
+  const o = await chrome.storage.session.get('wsframes:' + domain);
+  return o['wsframes:' + domain] || [];
+}
+
+export async function clearWsFrames(domain) {
+  await chrome.storage.session.remove('wsframes:' + domain);
+}
+
 // Diagnostic: how many requests the recorder observed, and from which hosts.
 export async function getSeen(domain) {
   const o = await chrome.storage.session.get('seen:' + domain);

@@ -145,6 +145,7 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
 });
 
 const SAMPLE_CAP = 60;
+const WS_FRAME_CAP = 200; // WebSocket/SSE frames (own buffer) — enough for the handshake + a data sample
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg) return;
@@ -166,6 +167,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     // A captured CONTEXT value (e.g. a DNI seen in a request URL), stored alongside auth in
     // storage.session (never on disk) and later templated as {ctx.<name>} by the runtime.
     saveContext(msg.host, msg.name, msg.value);
+  } else if (msg.type === 'habeas:sample' && msg.domain && msg.sample && msg.sample.kind === 'ws') {
+    // Record-mode: WebSocket/SSE frames go in their OWN buffer — they share one wss:// URL (so the
+    // by-url dedupe would keep only the last frame) and shouldn't crowd the HTTP sample cap. Dedupe
+    // exact-duplicate frames (url+event+frame); keep a generous cap so the protocol + data are visible.
+    const key = 'wsframes:' + msg.domain;
+    chrome.storage.session.get(key).then((o) => {
+      const s = msg.sample;
+      const arr = (o[key] || []).filter((x) => !(x.url === s.url && x.event === s.event && x.frame === s.frame));
+      arr.push(s); // chronological — the subscription/handshake order matters for authoring
+      chrome.storage.session.set({ [key]: arr.slice(-WS_FRAME_CAP) });
+    });
   } else if (msg.type === 'habeas:sample' && msg.domain && msg.sample) {
     // Record-mode: keep a rolling, de-duplicated (by path) buffer of observed responses.
     const key = 'samples:' + msg.domain;

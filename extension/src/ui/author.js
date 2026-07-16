@@ -1,6 +1,6 @@
 import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
-import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen, getAssets, getDomTexts } from '../lib/learn.js';
+import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen, getAssets, getDomTexts, getWsFrames } from '../lib/learn.js';
 import { draftAdapterFromSamples, draftStreamsFromSamples, draftWithGroups, listCandidates, matchCandidates, augmentSource, flatToStream } from '../runtime/infer.js';
 import { listInventory, artifactKinds, fetchArtifact } from '../runtime/inventory.js';
 import { ensureSiteFetch } from '../lib/pagefetch.js';
@@ -92,8 +92,14 @@ async function onStop() { await stopLearning(); $('#start').hidden = false; $('#
 async function onAnalyze() {
   if (!LEARN) { $('#learnstatus').textContent = t('author_start_first'); return; }
   const samples = await getSamples(LEARN.domain);
-  $('#samplecount').textContent = String(samples.length);
+  const ws = await getWsFrames(LEARN.domain);
+  $('#samplecount').textContent = String(samples.length) + (ws.length ? ' + ' + ws.length + ' ws' : '');
   if (!samples.length) {
+    if (ws.length) { // realtime transport (WebSocket/SSE): captured, but not auto-draftable — share the recording
+      const socks = new Set(ws.map((f) => f.url)).size;
+      $('#status').textContent = t('author_ws_captured', [String(ws.length), String(socks)]);
+      return;
+    }
     const seen = await getSeen(LEARN.domain);
     const hosts = Object.keys(seen.hosts || {});
     $('#status').textContent = seen.total

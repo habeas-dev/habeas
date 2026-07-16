@@ -197,6 +197,51 @@
   };
   XP.send = function (b) { try { if (typeof b === 'string') this.__body = b; stashMtop(this.__u, this.__m, b); } catch (e) {} return osend.apply(this, arguments); };
 
+  // WebSocket / EventSource (Trade Republic-style wss:// + SSE sources) are invisible to fetch/XHR. In
+  // LEARN mode, wrap them and record the connect URL + a CAPPED sample of sent (subscription) and
+  // received (data) text frames, so a maintainer can author the transport from a plain browse session.
+  // Never records outside LEARN. Frames are gated + counted per socket so a chatty app can't flood.
+  const WS_SEND_MAX = 20, WS_RECV_MAX = 40, FRAME_MAX = 100000;
+  function postWs(event, url, frame) {
+    if (!LEARN) return;
+    try {
+      let abs = String(url); try { abs = new URL(url, location.href).href; } catch (e) {}
+      const f = typeof frame === 'string' ? frame.slice(0, FRAME_MAX) : (frame == null ? null : '[binary]');
+      window.postMessage({ __habeas: true, type: 'sample', kind: 'ws', event, host: hostOf(url), url: abs, frame: f }, '*');
+    } catch (e) {}
+  }
+  const OWS = window.WebSocket;
+  if (OWS && OWS.prototype) {
+    const HWS = function (url, protocols) {
+      const ws = protocols !== undefined ? new OWS(url, protocols) : new OWS(url);
+      try {
+        let sent = 0, recd = 0;
+        const osendws = ws.send;
+        ws.send = function (data) { try { if (LEARN && sent < WS_SEND_MAX && typeof data === 'string') { sent++; postWs('send', url, data); } } catch (e) {} return osendws.apply(this, arguments); };
+        ws.addEventListener('message', (ev) => { try { if (LEARN && recd < WS_RECV_MAX && typeof ev.data === 'string') { recd++; postWs('recv', url, ev.data); } } catch (e) {} });
+        postWs('open', url, null);
+      } catch (e) {}
+      return ws;
+    };
+    HWS.prototype = OWS.prototype;
+    ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'].forEach((k) => { try { HWS[k] = OWS[k]; } catch (e) {} });
+    try { window.WebSocket = HWS; } catch (e) {}
+  }
+  const OES = window.EventSource;
+  if (OES && OES.prototype) {
+    const HES = function (url, cfg) {
+      const es = cfg !== undefined ? new OES(url, cfg) : new OES(url);
+      try {
+        let recd = 0;
+        es.addEventListener('message', (ev) => { try { if (LEARN && recd < WS_RECV_MAX && typeof ev.data === 'string') { recd++; postWs('sse', url, ev.data); } } catch (e) {} });
+        postWs('open', url, null);
+      } catch (e) {}
+      return es;
+    };
+    HES.prototype = OES.prototype;
+    try { window.EventSource = HES; } catch (e) {}
+  }
+
   // Tell the isolated bridge we're live, so it (re)sends the current learn-mode arm state — the
   // hook loads as an async script and may miss the bridge's initial one-shot arm message.
   window.postMessage({ __habeas: true, type: 'hook-ready' }, '*');

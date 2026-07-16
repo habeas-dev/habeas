@@ -10,6 +10,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **Record mode captures realtime transports** — the in-session recorder now wraps `WebSocket` and
+  `EventSource` (in learn mode only) and records the connect URL + a capped, chronological sample of sent
+  (subscription) and received (data) frames into their own buffer. Recording was fetch/XHR-only, so
+  `wss://` sources (Trade Republic-style) were **invisible** to it — a helper browsing such a site captured
+  nothing usable. Now a plain browse session captures what a maintainer needs to author the transport, and
+  the author panel reports the frame/socket count instead of "no requests". (First step toward making
+  recording practical for non-technical helpers; auto-drafting realtime/mtop sources is still manual.)
+
 ## [0.3.0] — 2026-07-16
 
 ### Added

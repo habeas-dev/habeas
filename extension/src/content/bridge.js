@@ -95,7 +95,7 @@
     if (d.type === 'hook-ready') { syncLearn(); syncCapture(); } // (re)send arm state + capture config
     else if (d.type === 'auth') chrome.runtime.sendMessage({ type: 'habeas:auth', host: d.host, path: d.path, headers: d.headers });
     else if (d.type === 'context') chrome.runtime.sendMessage({ type: 'habeas:context', host: d.host, name: d.name, value: d.value });
-    else if (d.type === 'sample') chrome.runtime.sendMessage({ type: 'habeas:sample', domain: PAGE_DOMAIN, sample: { url: d.url, method: d.method, status: d.status, reqHeaders: d.reqHeaders, json: d.json, kind: d.kind, html: d.html, reqBody: d.reqBody, fromHtml: d.fromHtml } });
+    else if (d.type === 'sample') chrome.runtime.sendMessage({ type: 'habeas:sample', domain: PAGE_DOMAIN, sample: { url: d.url, method: d.method, status: d.status, reqHeaders: d.reqHeaders, json: d.json, kind: d.kind, html: d.html, reqBody: d.reqBody, fromHtml: d.fromHtml, event: d.event, frame: d.frame } });
     else if (d.type === 'asset') chrome.runtime.sendMessage({ type: 'habeas:asset', domain: PAGE_DOMAIN, asset: { url: d.url, method: d.method, reqType: d.reqType, reqBody: d.reqBody, referer: d.referer, status: d.status } });
     else if (d.type === 'seen') chrome.runtime.sendMessage({ type: 'habeas:seen', domain: PAGE_DOMAIN, host: d.host });
   });

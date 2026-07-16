@@ -1060,6 +1060,10 @@
   "author_no_requests": {
     "message": "The recorder didn't see any requests. Reload the extension, re-open the site, accept the access prompt, then browse your orders and retry."
   },
+  "author_ws_captured": {
+    "message": "Captured $N$ realtime frames from $S$ WebSocket/SSE connection(s). This site streams its data (not plain HTTP) — auto-drafting isn't available yet, but the recording holds what a maintainer needs to build the source. Share it.",
+    "placeholders": { "N": { "content": "$1" }, "S": { "content": "$2" } }
+  },
   "author_no_list_seen": {
     "message": "Saw $N$ requests (from: $HOSTS$) but none returned a document list. Open your orders/invoices page so it loads the data, then retry — or tell us these hosts.",
     "placeholders": {
