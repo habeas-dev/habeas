@@ -11,5 +11,5 @@ async function clientId(request) {
 }
 
 export default {
-  fetch: (request, env) => handleRequest(request, { store: d1Store(env.DB), now: () => Date.now(), clientId }),
+  fetch: (request, env) => handleRequest(request, { store: d1Store(env.DB), now: () => Date.now(), clientId, adminToken: env.ADMIN_TOKEN }),
 };

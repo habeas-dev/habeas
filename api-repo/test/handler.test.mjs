@@ -4,7 +4,7 @@ import { handleRequest } from '../src/handler.mjs';
 import { memoryStore } from '../src/store-memory.mjs';
 
 const T0 = 1_000_000;
-const env = (store, client = 'c1', now = T0) => ({ store, now: () => now, clientId: async () => client });
+const env = (store, client = 'c1', now = T0) => ({ store, now: () => now, clientId: async () => client, adminToken: 'ADMIN' });
 const req = (method, path, body) => new Request('https://api.habeas.dev' + path, {
   method, headers: body ? { 'content-type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined,
 });
@@ -68,4 +68,58 @@ test('rate limit kicks in after the hourly cap', async () => {
   assert.equal((await call(s, 'POST', '/sources/x/comments', { text: 'one more' }, 'spammer')).status, 429);
   // a different client is unaffected
   assert.equal((await call(s, 'POST', '/sources/x/comments', { text: 'hello' }, 'other')).status, 200);
+});
+
+// ---- handoff collaboration workflow ----
+const BUNDLE = { habeasHandoff: 1, kind: 'redacted-recording', domain: 'financieraelcorteingles.es', counts: { samples: 2 }, samples: [{ url: 'https://x/api?type=CLOSE', json: { movements: [{ amount: '[amount:EUR]' }] } }] };
+
+test('handoff: submit validates the bundle + submitter', async () => {
+  const s = memoryStore();
+  assert.equal((await call(s, 'POST', '/handoff', { submitter: 'sub1', bundle: { nope: 1 } })).status, 400);
+  assert.equal((await call(s, 'POST', '/handoff', { bundle: BUNDLE })).status, 400); // no submitter
+  const r = await call(s, 'POST', '/handoff', { submitter: 'sub1', handle: 'Dave', bundle: BUNDLE });
+  const body = await r.json();
+  assert.equal(r.status, 200); assert.ok(body.id); assert.equal(body.status, 'new');
+});
+
+test('handoff: team list is token-gated; submitter reads only its own', async () => {
+  const s = memoryStore();
+  const { id } = await (await call(s, 'POST', '/handoff', { submitter: 'sub1', bundle: BUNDLE })).json();
+  assert.equal((await call(s, 'GET', '/handoff')).status, 401);                       // no token
+  const list = await (await call(s, 'GET', '/handoff?token=ADMIN')).json();
+  assert.equal(list.length, 1); assert.equal(list[0].domain, 'financieraelcorteingles.es');
+  assert.equal((await call(s, 'GET', `/handoff/${id}?submitter=WRONG`)).status, 401);  // wrong submitter
+  const mine = await (await call(s, 'GET', `/handoff/${id}?submitter=sub1`)).json();
+  assert.equal(mine.status, 'new'); assert.deepEqual(mine.messages, []);
+  assert.equal(mine.bundle, undefined);                                                // submitter view omits the bundle
+});
+
+test('handoff: two-way thread + status transitions + attribution', async () => {
+  const s = memoryStore();
+  const { id } = await (await call(s, 'POST', '/handoff', { submitter: 'sub1', handle: 'Dave', bundle: BUNDLE })).json();
+
+  // team asks a question → needs_info
+  const q = await call(s, 'POST', `/handoff/${id}/messages?token=ADMIN`, { text: 'What is monthFilter?' });
+  assert.equal((await q.json()).from, 'team');
+  assert.equal((await (await call(s, 'GET', `/handoff/${id}?submitter=sub1`)).json()).status, 'needs_info');
+
+  // a stranger cannot post to the thread
+  assert.equal((await call(s, 'POST', `/handoff/${id}/messages`, { submitter: 'WRONG', text: 'hi' })).status, 401);
+
+  // submitter replies → in_review
+  await call(s, 'POST', `/handoff/${id}/messages`, { submitter: 'sub1', text: 'monthFilter=202506' });
+  const view = await (await call(s, 'GET', `/handoff/${id}?submitter=sub1`)).json();
+  assert.equal(view.status, 'in_review');
+  assert.deepEqual(view.messages.map((m) => m.from), ['team', 'submitter']);
+
+  // team publishes + links the created source (attribution)
+  await call(s, 'POST', `/handoff/${id}?token=ADMIN`, { status: 'published', sourceId: 'financiera-elcorteingles-es' });
+  const full = await (await call(s, 'GET', `/handoff/${id}?token=ADMIN`)).json();
+  assert.equal(full.status, 'published'); assert.equal(full.sourceId, 'financiera-elcorteingles-es'); assert.equal(full.handle, 'Dave');
+
+  // submitter inbox reflects it
+  const inbox = await (await call(s, 'GET', '/submitter/sub1/handoffs')).json();
+  assert.equal(inbox.length, 1);
+  assert.equal(inbox[0].status, 'published'); assert.equal(inbox[0].sourceId, 'financiera-elcorteingles-es');
+  assert.equal(inbox[0].teamMessages, 1);
 });

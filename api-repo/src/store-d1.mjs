@@ -27,5 +27,53 @@ export function d1Store(DB) {
       await DB.prepare('INSERT INTO writes (client, created_at) VALUES (?, ?)').bind(client, now).run();
       return { author, text, at: new Date(now).toISOString() };
     },
+
+    // --- handoff collaboration workflow ---
+    async addHandoff({ domain, bundle, submitter, handle, client, now }) {
+      const id = crypto.randomUUID();
+      await DB.prepare('INSERT INTO handoffs (id, domain, bundle, submitter, handle, client, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .bind(id, domain, bundle, submitter, handle || '', client, 'new', now, now).run();
+      await DB.prepare('INSERT INTO writes (client, created_at) VALUES (?, ?)').bind(client, now).run();
+      return id;
+    },
+    async listHandoffs(limit) {
+      const r = await DB.prepare('SELECT h.id, h.domain, h.handle, h.status, h.source_id, h.created_at, h.updated_at, LENGTH(h.bundle) AS bytes, (SELECT COUNT(*) FROM handoff_messages m WHERE m.handoff_id = h.id) AS messages FROM handoffs h ORDER BY h.updated_at DESC LIMIT ?').bind(limit).all();
+      return (r.results || []).map((h) => ({ id: h.id, domain: h.domain, handle: h.handle || '', status: h.status, sourceId: h.source_id || null, at: new Date(h.created_at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(), bytes: h.bytes, messages: h.messages }));
+    },
+    async getHandoffMeta(id) {
+      return (await DB.prepare('SELECT id, domain, status, submitter, handle, source_id FROM handoffs WHERE id = ?').bind(id).first()) || null;
+    },
+    async getHandoff(id) {
+      const h = await DB.prepare('SELECT id, domain, handle, submitter, status, source_id, bundle, created_at, updated_at FROM handoffs WHERE id = ?').bind(id).first();
+      if (!h) return null;
+      return { id: h.id, domain: h.domain, handle: h.handle || '', submitter: h.submitter, status: h.status, sourceId: h.source_id || null, at: new Date(h.created_at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(), bundle: JSON.parse(h.bundle), messages: await this.getMessages(id) };
+    },
+    async setHandoff(id, patch) {
+      const sets = [], vals = [];
+      if (patch.status != null) { sets.push('status = ?'); vals.push(patch.status); }
+      if (patch.source_id != null) { sets.push('source_id = ?'); vals.push(patch.source_id); }
+      if (patch.updated_at != null) { sets.push('updated_at = ?'); vals.push(patch.updated_at); }
+      if (sets.length) { vals.push(id); await DB.prepare(`UPDATE handoffs SET ${sets.join(', ')} WHERE id = ?`).bind(...vals).run(); }
+      const h = await this.getHandoffMeta(id);
+      return h ? { id: h.id, domain: h.domain, status: h.status, sourceId: h.source_id || null } : null;
+    },
+    async addMessage(id, from, text, client, now) {
+      await DB.prepare('INSERT INTO handoff_messages (handoff_id, sender, text, created_at) VALUES (?, ?, ?, ?)').bind(id, from, text, now).run();
+      await DB.prepare('INSERT INTO writes (client, created_at) VALUES (?, ?)').bind(client, now).run();
+      return { from, text, at: new Date(now).toISOString() };
+    },
+    async getMessages(id) {
+      const r = await DB.prepare('SELECT sender, text, created_at FROM handoff_messages WHERE handoff_id = ? ORDER BY created_at ASC').bind(id).all();
+      return (r.results || []).map((m) => ({ from: m.sender, text: m.text, at: new Date(m.created_at).toISOString() }));
+    },
+    async listSubmitterHandoffs(sid, limit) {
+      const r = await DB.prepare(`SELECT h.id, h.domain, h.status, h.source_id, h.created_at, h.updated_at,
+          (SELECT COUNT(*) FROM handoff_messages m WHERE m.handoff_id = h.id) AS messages,
+          (SELECT COUNT(*) FROM handoff_messages m WHERE m.handoff_id = h.id AND m.sender = 'team') AS team_messages,
+          (SELECT sender FROM handoff_messages m WHERE m.handoff_id = h.id ORDER BY m.created_at DESC LIMIT 1) AS last_from,
+          (SELECT created_at FROM handoff_messages m WHERE m.handoff_id = h.id ORDER BY m.created_at DESC LIMIT 1) AS last_at
+        FROM handoffs h WHERE h.submitter = ? ORDER BY h.updated_at DESC LIMIT ?`).bind(sid, limit).all();
+      return (r.results || []).map((h) => ({ id: h.id, domain: h.domain, status: h.status, sourceId: h.source_id || null, at: new Date(h.created_at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(), messages: h.messages, teamMessages: h.team_messages, lastFrom: h.last_from || null, lastAt: h.last_at ? new Date(h.last_at).toISOString() : null }));
+    },
   };
 }

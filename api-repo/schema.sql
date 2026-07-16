@@ -27,3 +27,29 @@ CREATE TABLE IF NOT EXISTS writes (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_writes_client ON writes (client, created_at);
+
+-- Handoff collaboration workflow: a helper submits a REDACTED recording so the Habeas team can author a
+-- source, with a two-way Q&A thread + attribution. `submitter` is the extension's pseudonymous id (no PII).
+CREATE TABLE IF NOT EXISTS handoffs (
+  id         TEXT    PRIMARY KEY,          -- crypto.randomUUID()
+  domain     TEXT    NOT NULL,
+  bundle     TEXT    NOT NULL,             -- the redacted recording JSON
+  submitter  TEXT    NOT NULL,             -- pseudonymous extension id
+  handle     TEXT    NOT NULL DEFAULT '',  -- optional display name to credit
+  client     TEXT    NOT NULL,             -- rate-limit fingerprint
+  status     TEXT    NOT NULL DEFAULT 'new', -- new | in_review | needs_info | authored | published | declined
+  source_id  TEXT,                          -- the source once authored/published (attribution link)
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_handoffs_submitter ON handoffs (submitter, updated_at);
+CREATE INDEX IF NOT EXISTS idx_handoffs_updated ON handoffs (updated_at);
+
+CREATE TABLE IF NOT EXISTS handoff_messages (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  handoff_id TEXT    NOT NULL,
+  sender     TEXT    NOT NULL,             -- 'team' | 'submitter'
+  text       TEXT    NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_hmsgs_handoff ON handoff_messages (handoff_id, created_at);

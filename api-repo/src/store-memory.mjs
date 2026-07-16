@@ -6,6 +6,9 @@ export function memoryStore() {
   const ratings = [];   // { id, stars, client }
   const comments = [];   // { id, text, author, client, at, status }
   const writes = [];     // { client, at }
+  const handoffs = [];   // { id, domain, bundle, submitter, handle, client, at, updated_at, status, source_id }
+  const hmsgs = [];      // { handoff_id, from, text, at }
+  let hseq = 0;
 
   return {
     async getRatings(id) {
@@ -33,6 +36,62 @@ export function memoryStore() {
       comments.push({ id, text, author, client, at: now, status: 'visible' });
       writes.push({ client, at: now });
       return { author, text, at: new Date(now).toISOString() };
+    },
+
+    // --- handoff collaboration workflow ---
+    async addHandoff({ domain, bundle, submitter, handle, client, now }) {
+      const id = 'h' + (++hseq);
+      handoffs.push({ id, domain, bundle, submitter, handle: handle || '', client, at: now, updated_at: now, status: 'new', source_id: null });
+      writes.push({ client, at: now });
+      return id;
+    },
+    async listHandoffs(limit) {
+      return handoffs.slice().sort((a, b) => b.updated_at - a.updated_at).slice(0, limit).map((h) => ({
+        id: h.id, domain: h.domain, handle: h.handle || '', status: h.status, sourceId: h.source_id || null,
+        at: new Date(h.at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(),
+        bytes: h.bundle.length, messages: hmsgs.filter((m) => m.handoff_id === h.id).length,
+      }));
+    },
+    async getHandoffMeta(id) {
+      const h = handoffs.find((x) => x.id === id);
+      return h ? { id: h.id, domain: h.domain, status: h.status, submitter: h.submitter, handle: h.handle, source_id: h.source_id } : null;
+    },
+    async getHandoff(id) {
+      const h = handoffs.find((x) => x.id === id);
+      if (!h) return null;
+      return {
+        id: h.id, domain: h.domain, handle: h.handle || '', submitter: h.submitter, status: h.status, sourceId: h.source_id || null,
+        at: new Date(h.at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(),
+        bundle: JSON.parse(h.bundle), messages: await this.getMessages(id),
+      };
+    },
+    async setHandoff(id, patch) {
+      const h = handoffs.find((x) => x.id === id);
+      if (!h) return null;
+      if (patch.status != null) h.status = patch.status;
+      if (patch.source_id != null) h.source_id = patch.source_id;
+      if (patch.updated_at != null) h.updated_at = patch.updated_at;
+      return { id: h.id, domain: h.domain, status: h.status, sourceId: h.source_id || null };
+    },
+    async addMessage(id, from, text, client, now) {
+      hmsgs.push({ handoff_id: id, from, text, at: now });
+      writes.push({ client, at: now });
+      return { from, text, at: new Date(now).toISOString() };
+    },
+    async getMessages(id) {
+      return hmsgs.filter((m) => m.handoff_id === id).sort((a, b) => a.at - b.at).map((m) => ({ from: m.from, text: m.text, at: new Date(m.at).toISOString() }));
+    },
+    async listSubmitterHandoffs(sid, limit) {
+      return handoffs.filter((h) => h.submitter === sid).sort((a, b) => b.updated_at - a.updated_at).slice(0, limit).map((h) => {
+        const ms = hmsgs.filter((m) => m.handoff_id === h.id).sort((a, b) => a.at - b.at);
+        const last = ms[ms.length - 1];
+        return {
+          id: h.id, domain: h.domain, status: h.status, sourceId: h.source_id || null,
+          at: new Date(h.at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(),
+          messages: ms.length, teamMessages: ms.filter((m) => m.from === 'team').length,
+          lastFrom: last ? last.from : null, lastAt: last ? new Date(last.at).toISOString() : null,
+        };
+      });
     },
   };
 }
