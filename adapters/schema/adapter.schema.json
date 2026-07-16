@@ -249,9 +249,9 @@
       "type": "object",
       "required": ["internalId", "date"],
       "additionalProperties": { "type": "string" },
-      "description": "Map of normalized field name -> source field (dotted path). Recognized keys depend on `schema`: receipt (total, storeName, storeAddress, type, source), invoice (total, issuer, issuerAddress, number, type, source), transaction (amount, description, counterparty, direction, type, source), investment (instrument, isin, units, price, amount, operation, type)."
+      "description": "Map of normalized field name -> source field (dotted path). Recognized keys depend on `schema`: receipt (total, storeName, storeAddress, type, source), invoice (total, issuer, issuerAddress, number, type, source), transaction (amount, description, counterparty, direction, type, source, plus account/valueDate/balanceAfter for bank movements), investment@1 (instrument, isin, units, price, amount, operation, type), investment@2 (recordType 'trade'|'cash'; trade: side, isin, ticker, mic, instrumentName, assetClass, units, price, grossAmount, commission, taxWithheld, netAmount, exchangeRate, settlementAccount; cash: kind, amount, description, account, direction)."
     },
-    "schema": { "type": "string", "pattern": "^[a-z_]+@\\d+$", "description": "Target normalized schema: receipt@1 | invoice@1 | transaction@1 | investment@1." },
+    "schema": { "type": "string", "pattern": "^[a-z_]+@\\d+$", "description": "Target normalized schema: receipt@1 | invoice@1 | transaction@1 | investment@1 | investment@2 (broker trade/cash, Cuéntamo contract)." },
     "itemLabel": { "type": "string", "description": "Fallback display label template when a list row has no store/issuer/etc (e.g. a source whose list encrypts everything but the id). Templated with {internalId} / {field.path}, e.g. \"Pedido {internalId}\"." }
   },
   "$defs": {

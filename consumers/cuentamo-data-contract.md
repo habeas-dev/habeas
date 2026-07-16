@@ -299,3 +299,23 @@ source, extra }`.
 `bookedDate`/`valueDate`/`balanceAfter` (desbloquea Banco completo, la parte de mayor ROI); (2) definir el
 canónico de bróker `trade/cash` de este contrato como schema nuevo; (3) autor de las fuentes de bróker
 (Trade Republic ya tiene ISIN; DeGiro/otros por grabación).
+
+### F. Estado de implementación (2026-07-16) — brecha del lado Habeas CERRADA
+
+Pasos (1) y (2) del camino recomendado **implementados** (v0.3.0.22):
+
+- **Banco.** `lib/normalize.js#canonicalize` ahora emite `account` como **objeto**
+  `{iban?, last4?, groupId?, currency?}` (deriva `last4` de un IBAN o PAN enmascarado, `groupId` del grupo de
+  la fuente; pasa un objeto ya estructurado tal cual; si no puede derivar nada mantiene el string histórico).
+  `date` canónico **es** la fecha contable (`bookedDate` en §A). `valueDate` y `balanceAfter` se promocionan de
+  `extra` a campos canónicos de primer nivel cuando la fuente los captura. En `sinks/format.js`, `transaction@1`
+  añade `account`/`valueDate`/`balanceAfter` solo si la fuente los mapea (registros byte-idénticos si no).
+- **Bróker.** Nuevo schema **`investment@2`** en `sinks/format.js#buildRecord`: discriminador
+  `recordType:"trade"|"cash"` (inferido si falta), `side` enum (buy/sell/dividend/split/transfer_in/transfer_out),
+  `instrument{isin,ticker,mic,name,assetClass}` estructurado, y `grossAmount/commission/taxWithheld/netAmount/
+  exchangeRate/assetClass/settlementAccount` (trade) · `kind` enum (interest/deposit/withdrawal/fee/tax/other),
+  `amount`, `description`, `account`, `direction` (cash). Un `side`/`kind` no reconocido se conserva verbatim.
+  `investment@1` mantiene su forma plana histórica.
+
+Cobertura de tests: `extension/test/investment2.test.mjs` (12 casos, datos 100% sintéticos). Pendiente
+del lado Habeas: **paso (3)** — autor de fuentes de bróker reales (`investment@2`) por grabación.

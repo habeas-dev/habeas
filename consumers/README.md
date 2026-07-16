@@ -14,7 +14,7 @@ authors agree on the contract.
 ## Reference consumers
 
 - [`tiquetera.md`](tiquetera.md) — receipts (`receipt@1`). First consumer.
-- **Cuéntamo** (planned) — finance (`transaction@1`, `investment@1`). Data contract:
+- **Cuéntamo** (planned) — finance (`transaction@1`, `investment@1`/`investment@2`). Data contract:
   [`cuentamo-data-contract.md`](cuentamo-data-contract.md) — the field-level *what* Cuéntamo needs from a
   bank/broker source (bank movements + broker trade/cash), with a Habeas-side gap analysis (§E).
   Strategy: PSD2 AIS for SEPA current accounts; Habeas as a first-class source for
@@ -47,12 +47,18 @@ every source:
 
 ```
 { id, date, amount, currency, direction, description, counterparty,
-  category, type, account, number, source, extra }
+  category, type, account, number, source, extra,
+  valueDate?, balanceAfter? }
 ```
 
 - `direction` — `debit` / `credit` sign of the movement.
-- `account` / `number` — the group/account (see external-hooks `list-groups`) and
-  document number when the source exposes them.
+- `date` — the **booked** date of the movement (a consumer maps it to its `bookedDate`).
+- `account` — a **structured object** `{ iban?, last4?, groupId?, currency? }` for bank/card
+  sources (Habeas derives `last4` from an IBAN or masked PAN, `groupId` from the group; see
+  external-hooks `list-groups`). Falls back to the historical string when nothing structured can
+  be derived; an empty string for sources with no account (receipts).
+- `valueDate` / `balanceAfter` — added only when the bank source captured them.
+- `number` — the document number when the source exposes it.
 - `source` — the adapter id (e.g. `ing-es`).
 - `extra` — the untouched raw source fields (same as `record.extra` above).
 

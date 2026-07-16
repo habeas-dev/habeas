@@ -11,6 +11,20 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Broker schema `investment@2`** (`sinks/format.js`) — a richer investment record for the Cuéntamo data
+  contract: a `recordType` `"trade"|"cash"` discriminator (inferred when absent), a structured
+  `instrument{isin,ticker,mic,name,assetClass}`, `side` enum (buy/sell/dividend/split/transfer_in/
+  transfer_out) and settlement breakdown (`grossAmount/commission/taxWithheld/netAmount/exchangeRate/
+  assetClass/settlementAccount`) for trades, and a `kind` enum (interest/deposit/withdrawal/fee/tax/other)
+  with `amount`/`description`/`account`/`direction` for cash movements. An unrecognized `side`/`kind` is
+  kept verbatim. `investment@1` keeps its historical flat shape.
+- **Bank canonical enrichment** (`lib/normalize.js#canonicalize`) — the uniform canonical `account` is now a
+  **structured object** `{iban?,last4?,groupId?,currency?}` (derives `last4` from an IBAN / masked PAN and
+  `groupId` from the source group; passes a pre-structured account through; falls back to the historical
+  string when nothing can be derived). `valueDate`/`balanceAfter` are promoted from `record.extra` to
+  first-class canonical fields when a bank source captures them, and `transaction@1` records now carry
+  `account`/`valueDate`/`balanceAfter` when mapped (byte-identical when absent). Closes the Habeas-side gap
+  in `consumers/cuentamo-data-contract.md` (§F).
 - **Record mode captures realtime transports** — the in-session recorder now wraps `WebSocket` and
   `EventSource` (in learn mode only) and records the connect URL + a capped, chronological sample of sent
   (subscription) and received (data) frames into their own buffer. Recording was fetch/XHR-only, so

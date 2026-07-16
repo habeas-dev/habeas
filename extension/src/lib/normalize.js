@@ -43,11 +43,11 @@ const nameOf = (v) => (v && typeof v === 'object') ? (v.name || v.nombre || '') 
 // collapses account/group. Keeps `extra` (the raw passthrough) so nothing captured is lost.
 export function canonicalize(record) {
   if (!record || typeof record !== 'object') return record;
-  const amount = record.amount != null ? num(record.amount) : num(record.total);
-  const counterparty = record.counterparty || nameOf(record.store) || nameOf(record.issuer) || nameOf(record.party) || record.storeName || record.instrument || '';
+  const amount = record.amount != null ? num(record.amount) : (record.total != null ? num(record.total) : num(record.netAmount));
+  const counterparty = record.counterparty || nameOf(record.store) || nameOf(record.issuer) || nameOf(record.party) || record.storeName || nameOf(record.instrument) || record.instrument || '';
   const out = {
     id: record.internalId,
-    date: record.date,
+    date: record.date, // the booked date — Cuéntamo maps this to Transaction.bookedDate
     amount,
     currency: record.currency || 'EUR',
     direction: record.direction || (typeof amount === 'number' ? (amount < 0 ? 'debit' : 'credit') : undefined),
@@ -55,10 +55,38 @@ export function canonicalize(record) {
     counterparty,
     category: record.category,
     type: record.type,
-    account: record.account || record.group || '',
+    account: acctObj(record),
     number: record.number,
     source: record.source,
   };
+  // Bank movement extras (Cuéntamo contract) — added only when the source captured them, so canonical
+  // records that don't carry them keep the same key set.
+  if (record.valueDate != null && record.valueDate !== '') out.valueDate = record.valueDate;
+  if (record.balanceAfter != null && record.balanceAfter !== '') out.balanceAfter = num(record.balanceAfter);
   if (record.extra != null) out.extra = record.extra;
   return out;
+}
+
+// Structured account for the canonical finance shape (Cuéntamo): { iban?, last4?, groupId?, currency? }.
+// Derives `last4` from an IBAN / masked-PAN string and `groupId` from the source's group id. A record that
+// already carries a structured account object is passed through untouched. When nothing structured can be
+// derived it falls back to the historical string (`account || group`), so non-bank canonical records are
+// unaffected.
+function acctObj(record) {
+  const raw = record.account;
+  if (raw && typeof raw === 'object') return raw;
+  const str = typeof raw === 'string' ? raw : '';
+  const compact = str.replace(/\s+/g, '').toUpperCase();
+  const iban = /^[A-Z]{2}\d{2}[A-Z0-9]*$/.test(compact) ? compact : undefined;
+  const digits = str.replace(/\D+/g, '');
+  const last4 = digits.length >= 4 ? digits.slice(-4) : undefined;
+  const groupId = record.group != null && record.group !== '' ? String(record.group) : undefined;
+  const o = {};
+  if (iban) o.iban = iban;
+  if (last4) o.last4 = last4;
+  if (groupId) o.groupId = groupId;
+  // currency qualifies the account only once we actually have an identifier — it never alone turns a
+  // receipt (no account/group) into a structured account.
+  if (Object.keys(o).length && record.currency) o.currency = record.currency;
+  return Object.keys(o).length ? o : (raw || record.group || '');
 }

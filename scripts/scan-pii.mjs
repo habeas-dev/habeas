@@ -37,6 +37,8 @@ const ALLOWLIST = new Set([
   '4111111111111111',          // canonical test Visa
   '9121000418450200051332',    // ES9121000418450200051332 — canonical ES example IBAN
   '9900000000000000000001',    // ikea-graphql-pdf.test.mjs — fake receipt id
+  '0000000000000000000000',    // investment2.test.mjs — fictitious broker settlement IBAN (all zeros)
+  '0000000000000000000001',    // investment2.test.mjs — fictitious broker cash IBAN (all zeros + 1)
 ]);
 
 // Path fragments that mean "this is a raw capture" and must never be committed anywhere.

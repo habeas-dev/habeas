@@ -49,11 +49,17 @@ const RESERVED = new Set([
   'direction', 'type', 'number', 'group', 'storeName', 'storeAddress', 'issuer', 'issuerAddress', 'instrument',
   'isin', 'units', 'price', 'operation', 'location', 'card', 'source', 'account', 'pdfUrl', 'returnStatus',
   'refundTotal', 'paymentMethod', 'paymentLast4',
+  // bank movement extras promoted to first-class canonical fields (transaction@1)
+  'valueDate', 'balanceAfter',
+  // broker (investment@2) trade/cash fields
+  'recordType', 'side', 'kind', 'ticker', 'mic', 'instrumentName', 'assetClass', 'grossAmount', 'commission',
+  'taxWithheld', 'netAmount', 'exchangeRate', 'settlementAccount',
 ]);
 
 export function buildRecord(d, adapter) {
   const schema = (adapter && adapter.schema) || 'receipt@1';
   const kind = String(schema).split('@')[0];
+  const ver = Number(String(schema).split('@')[1]) || 1;
   // Currency, most-authoritative first: a symbol/ISO code embedded in the amount itself (e.g. Hover's
   // "$9.00" → USD), then a per-document currency the source mapped, then the adapter default, then EUR.
   // Never force EUR onto a source that bills in another currency.
@@ -106,9 +112,20 @@ export function buildRecord(d, adapter) {
     // A traded instrument's ISIN when the source has one (Trade Republic's timeline mixes transfers with
     // ETF/stock trades) — added only when present, so records without it stay byte-identical.
     if (d.isin != null && d.isin !== '') r.isin = d.isin;
+    // Bank movement detail promoted to first-class fields for the canonical finance shape (Cuéntamo): the
+    // account/card the row belongs to (structured downstream in canonicalize), and value date / running
+    // balance when the source captures them. All added only when present, so records without them stay
+    // byte-identical.
+    if (d.account != null && d.account !== '') r.account = d.account;
+    if (d.valueDate != null && d.valueDate !== '') r.valueDate = d.valueDate;
+    if (d.balanceAfter != null && d.balanceAfter !== '') r.balanceAfter = money(d.balanceAfter);
     return done(r);
   }
   if (kind === 'investment') {
+    // investment@2 — broker trade/cash records (Cuéntamo broker contract): a `recordType` discriminator,
+    // a structured `instrument`, and settlement breakdown (gross/commission/tax/net). investment@1 keeps
+    // its historical flat shape.
+    if (ver >= 2) return done(buildInvestment2(d, currency));
     return done({ internalId: d.internalId, date: d.date, instrument: d.instrument ?? d.label ?? '', isin: d.isin ?? '', units: num(d.units), price: money(d.price), amount: money(d.amount ?? d.total), currency, category: d.category, operation: d.operation ?? d.type, source: d.source });
   }
   if (kind === 'invoice') {
@@ -145,6 +162,51 @@ function curOf(v) {
   return null;
 }
 function dirOf(v) { const n = typeof v === 'number' ? v : Number(money(v)); return Number.isFinite(n) ? (n < 0 ? 'debit' : 'credit') : undefined; }
+
+// investment@2 — a broker record is either a `trade` (buy/sell/dividend/split/transfer of an instrument) or a
+// `cash` movement (interest/deposit/withdrawal/fee/tax on the settlement account). The discriminator is the
+// adapter's `recordType`; when absent it is inferred (an instrument/units/isin present ⇒ trade, else cash).
+// `side`/`kind` are normalized to the contract enums when they match (spaces/hyphens → underscore, lower-cased);
+// an unrecognized value is kept verbatim so nothing captured is silently dropped.
+const TRADE_SIDES = new Set(['buy', 'sell', 'dividend', 'split', 'transfer_in', 'transfer_out']);
+const CASH_KINDS = new Set(['interest', 'deposit', 'withdrawal', 'fee', 'tax', 'other']);
+const enumOf = (set, v) => { if (v == null || v === '') return undefined; const s = String(v).toLowerCase().replace(/[\s-]+/g, '_'); return set.has(s) ? s : v; };
+function pruneScalars(o) { const r = {}; for (const [k, v] of Object.entries(o)) if (v != null && v !== '') r[k] = v; return r; }
+function instrumentOf(d) {
+  const base = d.instrument && typeof d.instrument === 'object' ? d.instrument : {};
+  const name = base.name ?? d.instrumentName ?? (typeof d.instrument === 'string' ? d.instrument : undefined) ?? d.label;
+  return pruneScalars({ isin: base.isin ?? d.isin, ticker: base.ticker ?? d.ticker, mic: base.mic ?? d.mic, name, assetClass: base.assetClass ?? d.assetClass });
+}
+function buildInvestment2(d, currency) {
+  const declared = String(d.recordType ?? '').toLowerCase();
+  const rt = declared === 'cash' ? 'cash' : declared === 'trade' ? 'trade'
+    : (d.isin != null || d.units != null || d.instrument != null || d.ticker != null || d.side != null ? 'trade' : 'cash');
+  if (rt === 'cash') {
+    return pruneScalars({
+      internalId: d.internalId, recordType: 'cash', date: d.date,
+      amount: money(d.amount ?? d.total), currency,
+      kind: enumOf(CASH_KINDS, d.kind ?? d.operation ?? d.type),
+      direction: d.direction ?? dirOf(d.amount ?? d.total),
+      description: d.description ?? d.label ?? '',
+      counterparty: d.counterparty ?? d.party,
+      account: d.account ?? d.settlementAccount,
+      category: d.category, source: d.source,
+    });
+  }
+  const out = pruneScalars({
+    internalId: d.internalId, recordType: 'trade', date: d.date,
+    side: enumOf(TRADE_SIDES, d.side ?? d.operation ?? d.type), currency,
+    units: num(d.units), price: money(d.price),
+    grossAmount: money(d.grossAmount ?? d.gross), commission: money(d.commission ?? d.fee),
+    taxWithheld: money(d.taxWithheld ?? d.tax), netAmount: money(d.netAmount ?? d.net ?? d.amount ?? d.total),
+    exchangeRate: num(d.exchangeRate ?? d.fxRate), assetClass: d.assetClass,
+    settlementAccount: d.settlementAccount ?? d.account,
+    category: d.category, source: d.source,
+  });
+  const instrument = instrumentOf(d);
+  if (Object.keys(instrument).length) out.instrument = instrument;
+  return out;
+}
 
 // Source-level compatibility: does this sink accept documents from this source at all?
 // A sink with no `accepts` takes everything (download/local/drive). A sink may restrict by
