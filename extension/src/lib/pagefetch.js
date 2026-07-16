@@ -95,33 +95,57 @@ export function makePageMtop(tabId) {
           // Deep-set through STRINGIFIED-JSON layers: a segment ending in `~` means that key's value is a
           // JSON string (parse before descending, re-stringify on unwind). mtop/DIDA nests the page field
           // several strings deep: payload.params (string) → .data (string) → pc_om_list_body_*.fields.pageIndex.
+          // Returns true iff the page field was found & set (a paginable seed); false for a flat/init seed.
           const setDeep = (node, segs, v) => {
-            if (node == null || !segs.length) return;
+            if (node == null || !segs.length) return false;
             let seg = segs[0]; const str = seg.endsWith('~'); if (str) seg = seg.slice(0, -1);
-            const k = wildKey(node, seg); if (k == null) return;
-            if (segs.length === 1) { node[k] = v; return; }
+            const k = wildKey(node, seg); if (k == null) return false;
+            if (segs.length === 1) { node[k] = v; return true; }
             let child = node[k]; const parse = str && typeof child === 'string';
-            if (parse) { try { child = JSON.parse(child); } catch (e) { return; } }
-            setDeep(child, segs.slice(1), v);
-            if (parse) node[k] = JSON.stringify(child);
+            if (parse) { try { child = JSON.parse(child); } catch (e) { return false; } }
+            const ok = setDeep(child, segs.slice(1), v);
+            if (parse && ok) node[k] = JSON.stringify(child);
+            return ok;
           };
+          // Automate the seed: run in the source tab and provoke the SPA to fetch, instead of asking the
+          // user to scroll. hook.js stashes the app's own signed request (POST pager body preferred; the
+          // init GET query as a single-page fallback). We nudge the page (scroll to the sentinel + click any
+          // "load more") until that stash appears — the app does the fetch + signing, we never forge one.
+          const scrollers = () => {
+            const out = [document.scrollingElement || document.documentElement]; let n = 0;
+            try { for (const el of document.querySelectorAll('div,main,section,ul')) { if (n >= 3) break; if (el.scrollHeight > el.clientHeight + 300 && el.clientHeight > 300) { out.push(el); n++; } } } catch (e) {}
+            return out;
+          };
+          const loadMoreRe = /ver m[aá]s|cargar m[aá]s|load more|show more|see more|more orders/i;
+          let dir = 1;
+          const nudge = () => { try {
+            for (const el of scrollers()) { const max = el.scrollHeight - el.clientHeight; el.scrollTop = dir > 0 ? max : Math.max(0, max - el.clientHeight); }
+            window.scrollTo(0, dir > 0 ? document.documentElement.scrollHeight : 0);
+            window.dispatchEvent(new Event('scroll')); dir = -dir;
+            for (const b of document.querySelectorAll('button,a,[role=button]')) { if (b.offsetParent !== null && loadMoreRe.test((b.textContent || '').trim())) { b.click(); break; } }
+          } catch (e) {} };
           const key = String(c.api).toLowerCase();
           const t0 = Date.now(); let raw = null;
-          while (Date.now() - t0 < (c.seedTimeoutMs || 15000)) { raw = window.__habeas_mtop && window.__habeas_mtop[key]; if (raw) break; await new Promise((r) => setTimeout(r, 300)); }
-          if (!raw) return { pages: [], error: 'no seed request captured — open the orders page so the app fetches it' };
+          while (Date.now() - t0 < (c.seedTimeoutMs || 20000)) {
+            raw = window.__habeas_mtop && window.__habeas_mtop[key];
+            if (raw) break;
+            nudge();
+            await new Promise((r) => setTimeout(r, 400));
+          }
+          if (!raw) return { pages: [], error: 'no seed request captured — open the orders page (the app must fetch at least once)' };
           const mtop = (window.lib && window.lib.mtop) || window.mtop;
           if (!mtop || !mtop.request) return { pages: [], error: 'mtop lib not found on the page' };
           let payload; try { payload = JSON.parse(new URLSearchParams(raw).get('data')); } catch (e) { return { pages: [], error: 'seed payload parse failed' }; }
           // The page field lives several stringified layers deep (c.pagePath uses `~` to mark each one).
-          const bump = (n) => { try { setDeep(payload, String(c.pagePath).split('.'), n); } catch (e) {} };
+          const bump = (n) => { try { return setDeep(payload, String(c.pagePath).split('.'), n); } catch (e) { return false; } };
           const pages = [];
           let page = c.startPage || 1;
           for (let i = 0; i < (c.maxPages || 100); i++) {
-            if (c.pagePath) bump(page);
+            const bumped = c.pagePath ? bump(page) : false; // false = flat/init seed → one page only
             let resp; try { resp = await mtop.request({ api: c.api, v: c.v || '1.0', data: payload, type: 'originaljson', dataType: 'json', ...(c.request || {}) }); } catch (e) { if (!pages.length) return { pages: [], error: 'mtop.request threw: ' + ((e && e.message) || e) }; break; }
             pages.push(resp);
             const more = c.morePath ? String(get(resp, c.morePath)) === 'true' : false;
-            if (!more) break;
+            if (!bumped || !more) break;
             page++;
           }
           return { pages };

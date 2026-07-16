@@ -127,14 +127,22 @@
   // adapter then declares it via crossDomainHosts + off-site consent).
   const cap = (url) => sameDomain(url) || LEARN || hostAllowed(url);
 
-  // mtop (Alibaba's gateway — Taobao/Tmall/AliExpress/Lazada/1688…): stash the page's OWN request body per
-  // api on a page global, so Habeas's same-world (MAIN) executor can reuse the live, correctly-built payload
-  // (no hardcoded blob) + let the page re-sign for pagination. Cheap: only POSTs to /h5/mtop.<api>/.
+  // mtop (Alibaba's gateway — Taobao/Tmall/AliExpress/Lazada/1688…): stash the page's OWN request per api on
+  // a page global, so Habeas's same-world (MAIN) executor can reuse the live, correctly-built payload (no
+  // hardcoded blob) + let the page re-sign for pagination. The POST pager body is the preferred seed; the
+  // init GET's query `data` is kept as a single-page fallback (accounts with one page never fire a POST).
   function stashMtop(url, method, body) {
     try {
-      if (String(method || 'GET').toUpperCase() !== 'POST' || typeof body !== 'string' || !body) return;
       const m = String(url).match(/\/h5\/(mtop\.[^/]+)\//i);
-      if (m) (window.__habeas_mtop = window.__habeas_mtop || {})[m[1].toLowerCase()] = body;
+      if (!m) return;
+      const key = m[1].toLowerCase();
+      const store = (window.__habeas_mtop = window.__habeas_mtop || {});
+      if (String(method || 'GET').toUpperCase() === 'POST' && typeof body === 'string' && body) {
+        store[key] = body; store['post:' + key] = 1; return; // pager seed (preferred) — form-encoded data=…
+      }
+      if (store['post:' + key]) return; // keep a POST seed; don't let the init GET clobber it
+      const qd = new URL(url, location.href).searchParams.get('data'); // GET: reuse the query payload
+      if (qd != null) store[key] = 'data=' + encodeURIComponent(qd);
     } catch (e) {}
   }
 

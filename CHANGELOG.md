@@ -24,7 +24,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   hook) + its `lib.mtop` signing — no hardcoded payload, no forged anti-bot signature. Orders are
   extracted from the DIDA component response via `itemsFromKeys` (a `pc_om_list_order_*` key prefix,
   wildcard-tolerant to component-version bumps). Pagination bumps the page field through the seed's
-  nested stringified-JSON layers (`pagePath` with `~` markers: `params~.data~.…pageIndex`).
+  nested stringified-JSON layers (`pagePath` with `~` markers: `params~.data~.…pageIndex`). The seed is
+  acquired **automatically**: the transport nudges the orders tab (scroll to the sentinel + click any
+  "load more") until the app fires its own signed request — no manual scroll — preferring the POST pager
+  body and falling back to the init GET payload for single-page accounts.
 
 ### Fixed
 - `normalizeDate` handles `DD Mon, YYYY` (e.g. AliExpress `24 may, 2026`) — was shifting a day via the
