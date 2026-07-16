@@ -5,6 +5,7 @@ import { draftAdapterFromSamples, draftStreamsFromSamples, draftWithGroups, list
 import { listInventory, artifactKinds, fetchArtifact } from '../runtime/inventory.js';
 import { ensureSiteFetch } from '../lib/pagefetch.js';
 import { editJson } from './jsoneditor.js';
+import { buildHandoff } from '../lib/redact.js';
 import { renderPage } from '../lib/render.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { saveSource, getAdapters } from '../adapters/index.js';
@@ -51,6 +52,8 @@ async function init() {
   $('#start').onclick = onStart;
   $('#stop').onclick = onStop;
   $('#analyze').onclick = onAnalyze;
+  $('#share').onclick = onShare;
+  $('#sharepreview').onclick = onSharePreview;
   $('#test').onclick = onTest;
   $('#save').onclick = onSave;
   $('#augment').onclick = onAugment;
@@ -114,6 +117,29 @@ async function refreshLive() {
   if (s.autoDraftable) $('#livehint').textContent = t('author_live_hint_draft', [String(s.documents)]);
   else if (s.needsMaintainer) $('#livehint').textContent = t('author_live_hint_maintainer', [String(s.documents), transportLabel]);
   else $('#livehint').textContent = t('author_live_hint_empty');
+  $('#sharerow').hidden = !(s.lists > 0 || s.wsFrames > 0); // offer sharing once something was captured
+}
+
+// Build the redacted handoff bundle from the current recording (see lib/redact.js — values stripped,
+// no auth/tokens/page-text). Excludes nothing structural a maintainer needs.
+async function buildBundle() {
+  const [samples, ws, assets] = await Promise.all([getSamples(LEARN.domain), getWsFrames(LEARN.domain), getAssets(LEARN.domain)]);
+  return buildHandoff({ domain: LEARN.domain, samples, wsframes: ws, assets });
+}
+async function onSharePreview() {
+  if (!LEARN) return;
+  await editJson(await buildBundle()); // let the helper SEE it's redacted ([text]/[id]/… everywhere) before sharing
+}
+async function onShare() {
+  if (!LEARN) return;
+  const bundle = await buildBundle();
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'habeas-recording-' + LEARN.domain + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  $('#sharestatus').textContent = t('author_share_done', [String(bundle.counts.samples), String(bundle.counts.wsframes)]);
 }
 function startLiveMonitor() { stopLiveMonitor(); $('#live').hidden = false; refreshLive(); LIVE_TIMER = setInterval(refreshLive, 1800); }
 

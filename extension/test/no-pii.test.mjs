@@ -15,7 +15,7 @@ function walk(dir, out = []) {
   for (const n of entries) {
     const p = join(dir, n); let st; try { st = statSync(p); } catch { continue; }
     if (st.isDirectory()) { if (n !== 'node_modules' && n !== 'dist') walk(p, out); }
-    else if (EXT.has(extname(n)) && n !== 'no-pii.test.mjs') out.push(p); // skip our own planted decoys
+    else if (EXT.has(extname(n)) && n !== 'no-pii.test.mjs' && n !== 'redact.test.mjs') out.push(p); // skip self-tests that plant PII-shaped decoys
   }
   return out;
 }

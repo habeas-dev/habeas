@@ -27,6 +27,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   JSON arrays / HTML tables) and classifies the transport (HTTP / mtop / WebSocket / SSE), counting the
   user's data and honestly flagging signed/streamed sources as "needs a maintainer" rather than
   mis-drafting them.
+- **PII-redacted recording handoff** (`lib/redact.js`) — a helper can share a recording with a maintainer
+  without leaking personal data. The redactor keeps the STRUCTURE a maintainer needs (endpoint path
+  templates, field names, response shapes, pagination params, transport) and replaces every VALUE with a
+  type-classified placeholder (`[date]`, `[amount:EUR]`, `[id]`, `[email]`, `[iban]`, `[text]`, …); auth
+  tokens, cookies, and page text are never included at all. The author panel's live monitor offers
+  “Share recording (anonymized)” (with a “See what will be shared” preview) → downloads a redacted JSON
+  bundle to send. Backed by a dedicated security test asserting no PII of any shape survives.
 
 ## [0.3.0] — 2026-07-16
 

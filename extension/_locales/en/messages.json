@@ -1077,6 +1077,13 @@
     "message": "✅ Captured your data ($D$ documents) over a special transport ($T$). This can't be auto-built here, but the recording is complete — share it and a maintainer will turn it into a source.",
     "placeholders": { "D": { "content": "$1" }, "T": { "content": "$2" } }
   },
+  "author_share": { "message": "Share recording (anonymized)" },
+  "author_share_preview": { "message": "See what will be shared" },
+  "author_share_note": { "message": "Personal values (names, addresses, amounts, account/card numbers, tokens) are replaced with placeholders like [text] / [id]. No login tokens, cookies, or page text are included. A file downloads for you to review and send." },
+  "author_share_done": {
+    "message": "Downloaded an anonymized recording ($S$ requests, $W$ realtime frames). Open it to check, then send it — it contains no personal data or credentials.",
+    "placeholders": { "S": { "content": "$1" }, "W": { "content": "$2" } }
+  },
   "author_no_list_seen": {
     "message": "Saw $N$ requests (from: $HOSTS$) but none returned a document list. Open your orders/invoices page so it loads the data, then retry — or tell us these hosts.",
     "placeholders": {

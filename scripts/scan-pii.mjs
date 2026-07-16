@@ -20,8 +20,10 @@ const ROOT = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
 // Directories where a real capture is most likely to leak (fixtures, authored sources, adapters).
 const SCOPE_DIRS = ['extension/test', 'sources-repo/sources', 'extension/src/adapters'];
 const SCAN_EXT = new Set(['.js', '.mjs', '.cjs', '.json', '.ts', '.md', '.html']);
-// The guard's own self-test deliberately plants fake leaks to prove the detector fires — skip it.
-const SELF_TEST = 'no-pii.test.mjs';
+// Self-tests that deliberately plant fake, PII-SHAPED values to prove a detector/redactor fires —
+// skip them (their content is synthetic by construction and asserted to be stripped).
+const SELF_TESTS = new Set(['no-pii.test.mjs', 'redact.test.mjs']);
+const isSelfTest = (name) => [...SELF_TESTS].some((s) => name === s || name.endsWith('/' + s));
 
 // Confirmed-fictitious long digit runs already in the tree (example IBAN tail, IKEA test id,
 // test card, sanitised BBAN, all-repeated placeholders). Grow this ONLY with values you have
@@ -81,7 +83,7 @@ function walk(dir, out = []) {
     const p = join(dir, name);
     let st; try { st = statSync(p); } catch { continue; }
     if (st.isDirectory()) { if (name !== 'node_modules' && name !== 'dist') walk(p, out); }
-    else if (SCAN_EXT.has(extname(name)) && name !== SELF_TEST) out.push(p);
+    else if (SCAN_EXT.has(extname(name)) && !isSelfTest(name)) out.push(p);
   }
   return out;
 }
@@ -103,7 +105,7 @@ function scanStaged() {
       findings.push({ file: f, line: 0, rule: 'capture-file', why: 'raw capture dump must never be committed', sample: '' });
       continue;
     }
-    if (!SCAN_EXT.has(extname(f)) || f.endsWith(SELF_TEST)) continue;
+    if (!SCAN_EXT.has(extname(f)) || isSelfTest(f)) continue;
     let blob = '';
     try { blob = execSync(`git show :"${f}"`, { cwd: ROOT }).toString(); } catch { continue; }
     for (const hit of scanText(blob, f)) findings.push(hit);
