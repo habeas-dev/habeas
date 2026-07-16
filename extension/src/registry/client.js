@@ -65,3 +65,36 @@ export async function postComment(id, text, token) {
   if (!r.ok) throw new Error('comment ' + r.status);
   return await r.json();
 }
+
+// ---- handoff collaboration (submit a redacted recording + follow it up) ----
+// See api-repo (api.habeas.dev). Degrades gracefully when the service is unreachable.
+export async function submitHandoff(bundle, submitter, handle) {
+  const r = await fetch(`${API_BASE}/handoff`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ submitter, handle: handle || '', bundle }),
+  });
+  if (!r.ok) throw new Error('submit ' + r.status);
+  return await r.json(); // { ok, id, status }
+}
+
+export async function getMyHandoffs(submitter) {
+  try {
+    const r = await fetch(`${API_BASE}/submitter/${encodeURIComponent(submitter)}/handoffs`);
+    return r.ok ? await r.json() : [];
+  } catch (e) { return []; }
+}
+
+export async function getHandoffThread(id, submitter) {
+  const r = await fetch(`${API_BASE}/handoff/${encodeURIComponent(id)}?submitter=${encodeURIComponent(submitter)}`);
+  if (!r.ok) throw new Error('thread ' + r.status);
+  return await r.json(); // { id, domain, status, sourceId, handle, messages: [{from,text,at}] }
+}
+
+export async function replyHandoff(id, submitter, text) {
+  const r = await fetch(`${API_BASE}/handoff/${encodeURIComponent(id)}/messages`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ submitter, text }),
+  });
+  if (!r.ok) throw new Error('reply ' + r.status);
+  return await r.json();
+}

@@ -1077,12 +1077,24 @@
     "message": "✅ Capturé tus datos ($D$ documentos) mediante un transporte especial ($T$). No se puede crear automáticamente aquí, pero la grabación está completa — compártela y un mantenedor la convertirá en una fuente.",
     "placeholders": { "D": { "content": "$1" }, "T": { "content": "$2" } }
   },
-  "author_share": { "message": "Compartir grabación (anonimizada)" },
+  "author_share": { "message": "Descargar una copia" },
   "author_share_preview": { "message": "Ver qué se compartirá" },
-  "author_share_note": { "message": "Los valores personales (nombres, direcciones, importes, números de cuenta/tarjeta, tokens) se sustituyen por marcadores tipo [text] / [id]. No se incluye ningún token de sesión, cookie ni el texto de las páginas. Se descarga un archivo para que lo revises y me lo envíes." },
+  "author_share_note": { "message": "Los valores personales (nombres, direcciones, importes, números de cuenta/tarjeta, tokens) se sustituyen por marcadores tipo [text] / [id]. No se incluye ningún token de sesión, cookie ni el texto de las páginas. Al enviar, va al equipo de Habeas, que puede responderte con preguntas en Ajustes → Mis contribuciones." },
   "author_share_done": {
-    "message": "Descargada una grabación anonimizada ($S$ peticiones, $W$ frames en tiempo real). Ábrela para comprobarlo y envíamela — no contiene datos personales ni credenciales.",
+    "message": "Descargada una copia anonimizada ($S$ peticiones, $W$ frames en tiempo real) — no contiene datos personales ni credenciales.",
     "placeholders": { "S": { "content": "$1" }, "W": { "content": "$2" } }
+  },
+  "author_handle_label": { "message": "Tu nombre para créditos (opcional)" },
+  "author_handle_ph": { "message": "un apodo, o déjalo vacío" },
+  "author_send_team": { "message": "Enviar al equipo de Habeas" },
+  "author_sending": { "message": "Enviando…" },
+  "author_sent": {
+    "message": "¡Enviado, gracias! Ref $ID$. Síguelo en Ajustes → Mis contribuciones; el equipo puede responderte con preguntas.",
+    "placeholders": { "ID": { "content": "$1" } }
+  },
+  "author_send_fail": {
+    "message": "No se pudo enviar ($E$). Puedes usar «Descargar una copia» y enviarlo por otra vía.",
+    "placeholders": { "E": { "content": "$1" } }
   },
   "author_no_list_seen": {
     "message": "Vi $N$ peticiones (de: $HOSTS$) pero ninguna devolvió un listado de documentos. Abre tu página de pedidos/facturas para que cargue los datos y reinténtalo — o dime estos hosts.",

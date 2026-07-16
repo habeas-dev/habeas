@@ -40,6 +40,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   - Record mode now **captures document (PDF/Excel/CSV) downloads** via a learn-mode `webRequest` watcher
     — a PDF opened by a link/navigation/download bypasses the fetch/XHR hook (so recordings showed 0
     documents); the watcher records document-type responses on the recorded domain into the assets buffer.
+- **Handoff collaboration workflow** — a helper can now **send a redacted recording to the Habeas team**
+  (not just download it) and collaborate to turn it into a source. The author panel gains a “Send to the
+  Habeas team” button + an optional credit handle; submissions are keyed by a **pseudonymous contributor
+  id** (`lib/submitter.js`, no PII, no account). Backed by the `api.habeas.dev` handoff endpoints
+  (reception, a two-way Q&A thread, status, and attribution) — see the api service. (Contributor inbox +
+  marketplace attribution land next.)
 
 ## [0.3.0] — 2026-07-16
 

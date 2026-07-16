@@ -74,8 +74,12 @@
       <div id="livebadges" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
       <p id="livehint" class="muted" style="margin:0"></p>
       <div id="sharerow" hidden style="margin-top:12px;border-top:1px solid #333;padding-top:10px">
-        <button id="share" class="accent" data-i18n="author_share"></button>
+        <div class="inp" style="margin-bottom:8px"><label data-i18n="author_handle_label"></label>
+          <input id="handle" data-i18n-ph="author_handle_ph" maxlength="60" size="24" />
+        </div>
+        <button id="sendteam" class="primary" data-i18n="author_send_team"></button>
         <button id="sharepreview" data-i18n="author_share_preview"></button>
+        <button id="share" data-i18n="author_share"></button>
         <span id="sharestatus" class="muted"></span>
         <p class="muted" data-i18n="author_share_note" style="margin:8px 0 0;font-size:12px"></p>
       </div>

@@ -1077,12 +1077,24 @@
     "message": "✅ Captured your data ($D$ documents) over a special transport ($T$). This can't be auto-built here, but the recording is complete — share it and a maintainer will turn it into a source.",
     "placeholders": { "D": { "content": "$1" }, "T": { "content": "$2" } }
   },
-  "author_share": { "message": "Share recording (anonymized)" },
+  "author_share": { "message": "Download a copy" },
   "author_share_preview": { "message": "See what will be shared" },
-  "author_share_note": { "message": "Personal values (names, addresses, amounts, account/card numbers, tokens) are replaced with placeholders like [text] / [id]. No login tokens, cookies, or page text are included. A file downloads for you to review and send." },
+  "author_share_note": { "message": "Personal values (names, addresses, amounts, account/card numbers, tokens) are replaced with placeholders like [text] / [id]. No login tokens, cookies, or page text are included. Sending goes to the Habeas team, who may reply with questions in Settings → My contributions." },
   "author_share_done": {
-    "message": "Downloaded an anonymized recording ($S$ requests, $W$ realtime frames). Open it to check, then send it — it contains no personal data or credentials.",
+    "message": "Downloaded an anonymized copy ($S$ requests, $W$ realtime frames) — it contains no personal data or credentials.",
     "placeholders": { "S": { "content": "$1" }, "W": { "content": "$2" } }
+  },
+  "author_handle_label": { "message": "Your name for credit (optional)" },
+  "author_handle_ph": { "message": "a nickname, or leave blank" },
+  "author_send_team": { "message": "Send to the Habeas team" },
+  "author_sending": { "message": "Sending…" },
+  "author_sent": {
+    "message": "Sent — thank you! Ref $ID$. Follow it in Settings → My contributions; the team may reply with questions.",
+    "placeholders": { "ID": { "content": "$1" } }
+  },
+  "author_send_fail": {
+    "message": "Couldn't send ($E$). You can use “Download a copy” and send it another way.",
+    "placeholders": { "E": { "content": "$1" } }
   },
   "author_no_list_seen": {
     "message": "Saw $N$ requests (from: $HOSTS$) but none returned a document list. Open your orders/invoices page so it loads the data, then retry — or tell us these hosts.",

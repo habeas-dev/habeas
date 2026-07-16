@@ -6,6 +6,8 @@ import { listInventory, artifactKinds, fetchArtifact } from '../runtime/inventor
 import { ensureSiteFetch } from '../lib/pagefetch.js';
 import { editJson } from './jsoneditor.js';
 import { buildHandoff } from '../lib/redact.js';
+import { getSubmitter, setHandle } from '../lib/submitter.js';
+import { submitHandoff } from '../registry/client.js';
 import { renderPage } from '../lib/render.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { saveSource, getAdapters } from '../adapters/index.js';
@@ -52,6 +54,7 @@ async function init() {
   $('#start').onclick = onStart;
   $('#stop').onclick = onStop;
   $('#analyze').onclick = onAnalyze;
+  $('#sendteam').onclick = onSendTeam;
   $('#share').onclick = onShare;
   $('#sharepreview').onclick = onSharePreview;
   $('#test').onclick = onTest;
@@ -129,6 +132,19 @@ async function buildBundle() {
 async function onSharePreview() {
   if (!LEARN) return;
   await editJson(await buildBundle()); // let the helper SEE it's redacted ([text]/[id]/… everywhere) before sharing
+}
+async function onSendTeam() {
+  if (!LEARN) return;
+  const handle = ($('#handle').value || '').trim();
+  const [bundle, sub] = await Promise.all([buildBundle(), getSubmitter()]);
+  if (handle && handle !== sub.handle) await setHandle(handle);
+  $('#sharestatus').textContent = t('author_sending');
+  try {
+    const res = await submitHandoff(bundle, sub.id, handle);
+    $('#sharestatus').textContent = t('author_sent', [String(res.id || '')]);
+  } catch (e) {
+    $('#sharestatus').textContent = t('author_send_fail', [String((e && e.message) || e).slice(0, 80)]);
+  }
 }
 async function onShare() {
   if (!LEARN) return;
