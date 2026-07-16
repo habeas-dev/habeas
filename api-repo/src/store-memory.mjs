@@ -46,11 +46,17 @@ export function memoryStore() {
       return id;
     },
     async listHandoffs(limit) {
-      return handoffs.slice().sort((a, b) => b.updated_at - a.updated_at).slice(0, limit).map((h) => ({
-        id: h.id, domain: h.domain, handle: h.handle || '', locale: h.locale || '', status: h.status, sourceId: h.source_id || null,
-        at: new Date(h.at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(),
-        bytes: h.bundle.length, messages: hmsgs.filter((m) => m.handoff_id === h.id).length,
-      }));
+      return handoffs.slice().sort((a, b) => b.updated_at - a.updated_at).slice(0, limit).map((h) => {
+        const ms = hmsgs.filter((m) => m.handoff_id === h.id).sort((a, b) => a.at - b.at);
+        const last = ms[ms.length - 1];
+        // "waiting for the team" = a fresh submission, or the contributor sent the last message (awaiting reply).
+        const waitingForTeam = h.status === 'new' || (last && last.from === 'submitter');
+        return {
+          id: h.id, domain: h.domain, handle: h.handle || '', locale: h.locale || '', status: h.status, sourceId: h.source_id || null,
+          at: new Date(h.at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(),
+          bytes: h.bundle.length, messages: ms.length, lastFrom: last ? last.from : null, waitingForTeam,
+        };
+      });
     },
     async getHandoffMeta(id) {
       const h = handoffs.find((x) => x.id === id);
