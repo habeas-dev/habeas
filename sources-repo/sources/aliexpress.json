@@ -32,7 +32,7 @@
         "v": "1.0",
         "request": { "H5Request": true, "type": "post", "dataType": "originaljson", "ecode": 1, "isSec": 1, "needLogin": true, "timeout": 15000 }
       },
-      "params": { "orderId": "{internalId}", "shipToCountry": "ES", "_lang": "es_ES", "timeZone": "GMT+0200", "clientPlatform": "pc" },
+      "params": { "orderId": "{internalId}", "shipToCountry": "@seed:shipToCountry", "_lang": "@seed:_lang", "timeZone": "@tz", "clientPlatform": "pc" },
       "dataPath": "data.data",
       "template": {
         "title": "{mcms.mainTitle}",

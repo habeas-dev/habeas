@@ -33,6 +33,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 - Runtime: **mtop detail calls** (`api.detail.mtop` with an explicit `params` payload) and a **declarative
   receipt template** for `renderInvoiceHtml` (`api.detail.template`: title/meta/blocks/items/totals with
   `{dotted.path}` tokens resolved against the detail JSON) — a reusable HTML-invoice layer, data not code.
+  The detail call is **locale-global**: params resolve from the user's own session in-page (`@seed:FIELD`
+  reuses the app's own request locale, `@tz` the browser offset), dropping unresolved ones so the server
+  falls back to the account default — no hardcoded country/language.
 
 ### Fixed
 - `normalizeDate` handles `DD Mon, YYYY` (e.g. AliExpress `24 may, 2026`) — was shifting a day via the

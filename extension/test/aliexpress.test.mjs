@@ -67,8 +67,9 @@ test('receipt: mtop detail → self-contained HTML invoice from the declarative 
 
   const art = await fetchArtifact(EFF, {}, doc, net, null, 'document');
   assert.equal(cfg.api, 'mtop.global.finance.taxation.invoice.queryorderreceiptinfo');
-  assert.equal(cfg.data.orderId, 'A1');                 // params.orderId built from {internalId}
-  assert.equal(cfg.data.shipToCountry, 'ES');           // literal params passed through
+  assert.equal(cfg.data.orderId, 'A1');                        // params.orderId built from {internalId}
+  assert.equal(cfg.data.shipToCountry, '@seed:shipToCountry'); // in-session directive (resolved in-page, not hardcoded)
+  assert.equal(cfg.data._lang, '@seed:_lang');                 // global: locale comes from the user's own session
   const html = await art.blob.text();
   assert.equal(art.ext, 'html');
   assert.match(html, /<!doctype html>/i);

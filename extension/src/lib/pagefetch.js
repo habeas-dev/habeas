@@ -129,7 +129,21 @@ export function makePageMtop(tabId) {
           if (!mtop || !mtop.request) return { pages: [], error: 'mtop lib not found on the page' };
           let payload;
           if (c.data && typeof c.data === 'object') {
-            payload = c.data; // explicit payload (a detail call, e.g. a receipt) — no seed/scroll needed
+            // Explicit payload (a detail call, e.g. a receipt) — no seed/scroll needed. Resolve in-session
+            // directives so the call is GLOBAL (locale from the user's own session, not hardcoded):
+            //   @seed:FIELD → a top-level field of any stashed request payload (the app's own shipToCountry/
+            //                 _lang, whatever the account is); @tz → the browser's GMT±HHMM offset.
+            // Unresolved directives are dropped so the server falls back to the account default.
+            const resolveDirective = (d) => {
+              try {
+                if (d === '@tz') { const o = -new Date().getTimezoneOffset(), s = o >= 0 ? '+' : '-', a = Math.abs(o); return 'GMT' + s + String(Math.floor(a / 60)).padStart(2, '0') + String(a % 60).padStart(2, '0'); }
+                const m = /^@seed:(.+)$/.exec(d);
+                if (m) { const store = window.__habeas_mtop || {}; for (const key of Object.keys(store)) { if (key.indexOf('post:') === 0) continue; let pl; try { pl = JSON.parse(new URLSearchParams(store[key]).get('data')); } catch (e) { continue; } if (pl && pl[m[1]] != null) return pl[m[1]]; } return ''; }
+                return d;
+              } catch (e) { return ''; }
+            };
+            payload = {};
+            for (const k of Object.keys(c.data)) { let v = c.data[k]; if (typeof v === 'string' && v[0] === '@') v = resolveDirective(v); if (v != null && v !== '') payload[k] = v; }
           } else {
             const t0 = Date.now(); let raw = null;
             while (Date.now() - t0 < (c.seedTimeoutMs || 20000)) {
