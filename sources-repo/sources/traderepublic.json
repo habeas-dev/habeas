@@ -6,8 +6,8 @@
   "domain": "traderepublic.com",
   "country": "global",
   "categories": ["banking", "investment"],
-  "version": "2026-07-15.3",
-  "minVersion": "0.2.0",
+  "version": "2026-07-16",
+  "minVersion": "0.3.0.24",
   "keepRaw": true,
   "match": ["https://app.traderepublic.com/*"],
   "openUrl": "https://app.traderepublic.com/",
@@ -17,9 +17,21 @@
     {
       "id": "transactions",
       "name": "Transacciones",
-      "schema": "transaction@1",
+      "schema": "investment@2",
       "normalize": {
-        "fields": { "isin": { "from": "icon", "re": ["^logos/([A-Z]{2}[A-Z0-9]{9}[0-9])/"] } }
+        "fields": { "isin": { "from": "icon", "re": ["^logos/([A-Z]{2}[A-Z0-9]{9}[0-9])/"] } },
+        "map": {
+          "side": { "from": "type", "map": {
+            "TRADING_SAVINGSPLAN_EXECUTED": "buy",
+            "SAVINGS_PLAN_EXECUTED": "buy"
+          } },
+          "kind": { "from": "type", "map": {
+            "INTEREST_PAYOUT": "interest",
+            "BANK_TRANSACTION_INCOMING": "deposit",
+            "PAYMENT_INBOUND": "deposit",
+            "PAYMENT_INBOUND_GOOGLE_PAY": "deposit"
+          } }
+        }
       },
       "api": {
         "ws": {
@@ -40,8 +52,10 @@
         "amount": "amount.value",
         "currency": "amount.currency",
         "description": "title",
+        "counterparty": "title",
+        "instrumentName": "title",
         "type": "eventType",
-        "counterparty": "title"
+        "settlementAccount": "cashAccountNumber"
       }
     },
     {
@@ -68,6 +82,7 @@
     }
   ],
   "changelog": [
+    { "version": "2026-07-16", "changes": "Timeline stream now emits investment@2 (broker trade/cash): recordType inferred from the extracted ISIN, side/kind mapped from the timeline eventType, instrument{isin,name}, and the settlement account (cashAccountNumber). Trade quantity/price/fees remain in record.extra.detail (localized text) pending structured parsing. Requires extension >= 0.3.0.24." },
     { "version": "2026-07-15.3", "changes": "Add monthly documents: the account statement PDF (accountstatement/statement?fromDate&toDate) and the monthly transactions CSV (async export job: POST request → poll status → download), per completed month." },
     { "version": "2026-07-15.2", "changes": "Extract the traded instrument ISIN from the timeline icon into record.isin." },
     { "version": "2026-07-15.1", "changes": "Enrich each timeline transaction with its timelineDetailV2 detail in record.extra.detail." },

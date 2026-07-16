@@ -327,17 +327,23 @@ cambios): `last4` sale, por orden de fiabilidad, del IBAN → de los 4 dígitos 
 ("`<nombre> <last4>`", que es el número que el usuario reconoce) → de los dígitos del propio número de cuenta.
 Esto corrige tarjetas cuyo campo `account` es un id interno opaco (WiZink) o que no mapean `account` (FECI).
 
-| Fuente | Tipo | Schema (movimientos) | `account` canónico | Pendiente (requiere captura) |
-|---|---|---|---|---|
-| **ING España** | banco | `transaction@1` | `{iban,last4,currency}` ✅ | `valueDate`, `balanceAfter` (nombres de campo en el raw) |
-| **Openbank** | banco | `transaction@1` | `{last4,groupId,currency}` ✅ | `valueDate`, `balanceAfter` |
-| **Revolut** | banco | `transaction@1` | `{groupId=divisa,currency}` ✅ | `balanceAfter` (monedero por divisa; sin IBAN por diseño) |
-| **WiZink** | tarjeta | `transaction@1` | `{last4,groupId,currency}` ✅ (corregido) | `balanceAfter` |
-| **Financiera ECI** | tarjeta/crédito | `transaction@1` | `{last4,groupId,currency}` ✅ (corregido) | `valueDate`, `aplazamientos` como `loan` |
-| **CaixaBank Consumer** | tarjeta | `invoice@1` (solo extractos) | n/a (documentos) | movimientos de tarjeta (`transaction@1`) por grabación |
-| **Trade Republic** | banco+bróker | `transaction@1` (+`isin`) | — | **`investment@2`**: `side` (mapa `eventType`→enum), `units`/`price`/`commission` (viven en `timelineDetailV2`, texto localizado "1,47 × 8,13 €") — **bloqueado por captura completa** (solo 3 `eventType` muestreados) |
+Los nombres de campo del raw (`balance`, `saldo.importe`, `completedDate`, `eventType`, `cashAccountNumber`) se
+**infirieron del store canónico entregado del propio mantenedor** (datos reales; nunca copiados al repo — sólo
+nombres de campo y códigos de sistema tipo enum). Estado tras esa inferencia (extensión ≥ 0.3.0.24):
 
-**No fabricado a propósito.** `valueDate`/`balanceAfter` y el `side`/`units`/`price` de Trade Republic no se
-mapean "a ojo": dependen de nombres de campo del raw que sólo una grabación real verifica (regla del proyecto:
-*resolver desde capturas, no adivinar*). El schema `investment@2` y el `canonicalize` enriquecido ya están
-listos; en cuanto haya una captura de bróker se conecta la fuente sin tocar el runtime.
+| Fuente | Tipo | Schema (movimientos) | `account` canónico | `valueDate` | `balanceAfter` | Notas |
+|---|---|---|---|---|---|---|
+| **ING España** | banco | `transaction@1` | `{iban,last4,currency}` ✅ | — (no en el feed) | ✅ ← `balance` | |
+| **Openbank** | banco | `transaction@1` | `{last4,groupId,currency}` ✅ | — (no en el feed) | ✅ ← `saldo.importe` | |
+| **Revolut** | banco | `transaction@1` | `{groupId=divisa,currency}` ✅ | ✅ ← `completedDate` | ✅ ← `balance` (escala minor-unit) | monedero por divisa; sin IBAN por diseño |
+| **WiZink** | tarjeta | `transaction@1` | `{last4,groupId,currency}` ✅ | — | — (HTML sin saldo) | |
+| **Financiera ECI** | tarjeta/crédito | `transaction@1` | `{last4,groupId,currency}` ✅ | — | — (feed sin saldo) | |
+| **CaixaBank Consumer** | tarjeta | `invoice@1` (solo extractos) | n/a (documentos) | — | — | movimientos de tarjeta pendientes por grabación |
+| **Trade Republic** | banco+bróker | **`investment@2`** ✅ | `settlementAccount` ← `cashAccountNumber` | — | — | `recordType` por ISIN; `side`/`kind` ← `eventType`; `instrument{isin,name}` |
+
+**Pendiente honesto (sigue requiriendo captura, no fabricado):**
+- **Trade Republic** `units`/`price`/`commission`/`grossAmount`/`taxWithheld`: viven en `record.extra.detail`
+  (`timelineDetailV2`, texto localizado "1,47 × 8,13 €") — se preservan pero aún no se parsean a campos
+  estructurados. `side` sólo mapea los `eventType` de ejecución vistos (savings-plan → `buy`); ventas y
+  dividendos se conservan verbatim hasta muestrear esos `eventType`.
+- **WiZink / FECI / CaixaBank**: sus feeds no exponen saldo por movimiento; `balanceAfter` no aplica.

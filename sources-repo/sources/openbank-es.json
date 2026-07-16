@@ -5,8 +5,8 @@
   "trust": "community",
   "domain": "openbank.es",
   "country": "ES",
-  "version": "2026-07-15.1",
-  "minVersion": "0.1.67",
+  "version": "2026-07-16",
+  "minVersion": "0.3.0.24",
   "categories": [
     "banking"
   ],
@@ -175,7 +175,8 @@
         "amount": "importe.importe",
         "currency": "importe.divisa",
         "description": "conceptoTabla",
-        "account": "{group.numeroCuenta}"
+        "account": "{group.numeroCuenta}",
+        "balanceAfter": "saldo.importe"
       }
     },
     {
@@ -287,6 +288,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-16",
+      "changes": "Map the movement's running balance (saldo.importe) to record.balanceAfter (promoted to a canonical field for the Cuéntamo contract). Requires extension >= 0.3.0.24."
+    },
     {
       "version": "2026-07-15.1",
       "changes": "Fix `movimientos`: the first (non-SCA) page returns a flat `movimientos` array, not `methodResult.movimientos` — itemsPath now accepts both shapes."

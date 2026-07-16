@@ -3,7 +3,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildRecord } from '../src/sinks/format.js';
-import { canonicalize } from '../src/lib/normalize.js';
+import { canonicalize, applyNormalize } from '../src/lib/normalize.js';
+import { listInventory } from '../src/runtime/inventory.js';
 
 const BROKER = { schema: 'investment@2', currency: 'EUR', id: 'demo-broker', service: 'demo' };
 
@@ -126,6 +127,34 @@ test('canonicalize currency wallet: groupId only, no last4 (Revolut-shape pocket
   const c = canonicalize({ internalId: 'x', date: '2026-03-01', amount: -9, currency: 'USD', group: 'USD', source: 'revolut' });
   assert.deepEqual(c.account, { groupId: 'USD', currency: 'USD' });
   assert.ok(!('last4' in c.account));
+});
+
+test('runtime promotes balanceAfter (minor-unit scaled) + valueDate (ISO) to canonical fields', async () => {
+  const ADP = {
+    id: 'demo-bank', service: 'demo', schema: 'transaction@1', minorUnits: true, keepRaw: true, categories: ['banking'],
+    api: { host: 'https://x.test', list: { path: '/tx', itemsPath: 'items', paging: 'none' } },
+    fields: { internalId: 'id', date: 'started', amount: 'amount', currency: 'currency', balanceAfter: 'balance', valueDate: 'completed' },
+  };
+  const item = { id: 't1', started: '2026-05-10T10:00:00Z', completed: '2026-05-11T10:00:00Z', amount: -1234, currency: 'EUR', balance: 250075 };
+  const net = async (u) => (String(u).includes('/tx') ? { ok: true, status: 200, json: async () => ({ items: [item] }), text: async () => '' } : { ok: false, status: 404, json: async () => ({}) });
+  const [doc] = await listInventory(ADP, { merged: {}, byPath: {}, ctx: {} }, net, {});
+  assert.equal(doc.record.amount, -12.34);       // minor units → major
+  assert.equal(doc.record.balanceAfter, 2500.75); // balance scaled the SAME way
+  assert.equal(doc.record.valueDate, '2026-05-11'); // ISO-normalized, distinct from booked date
+  assert.equal(doc.record.date, '2026-05-10');
+});
+
+test('applyNormalize value map fills side/kind from an eventType (unmapped left empty, default honored)', () => {
+  const spec = { normalize: { map: {
+    side: { from: 'type', map: { TRADING_SAVINGSPLAN_EXECUTED: 'buy' } },
+    kind: { from: 'type', map: { INTEREST_PAYOUT: 'interest' }, default: 'other' },
+  } } };
+  const trade = { type: 'TRADING_SAVINGSPLAN_EXECUTED' }; applyNormalize(trade, spec);
+  assert.equal(trade.side, 'buy'); assert.equal(trade.kind, 'other'); // kind default (not an interest event)
+  const cash = { type: 'INTEREST_PAYOUT' }; applyNormalize(cash, spec);
+  assert.equal(cash.kind, 'interest'); assert.equal(cash.side, undefined); // no side for an unmapped trade key
+  const keep = { type: 'TRADING_SAVINGSPLAN_EXECUTED', side: 'sell' }; applyNormalize(keep, spec);
+  assert.equal(keep.side, 'sell'); // a directly-set value is never overridden
 });
 
 test('canonicalize of an investment@2 trade uses netAmount for amount and instrument name as counterparty', () => {

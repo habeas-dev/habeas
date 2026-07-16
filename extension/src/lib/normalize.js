@@ -32,6 +32,16 @@ export function applyNormalize(doc, adapter) {
     const v = extract(spec, doc[name]);
     if (v !== undefined) doc[name] = v;
   }
+  // map: { <name>: { from, map: {rawValue: mappedValue}, default? } } — a declarative value map (e.g. a
+  // broker's `eventType` → the investment@2 `side`/`kind` enum). Only fills when the target is still empty,
+  // so a directly-mapped value always wins; an unmapped source value is left untouched (kept verbatim later).
+  for (const [name, spec] of Object.entries(n.map || {})) {
+    if (!spec || !spec.map || (doc[name] != null && doc[name] !== '')) continue;
+    const src = doc[spec.from] != null ? doc[spec.from] : (doc._raw && doc._raw[spec.from]);
+    const key = src == null ? '' : String(src);
+    if (Object.prototype.hasOwnProperty.call(spec.map, key)) doc[name] = spec.map[key];
+    else if (spec.default != null) doc[name] = spec.default;
+  }
   return doc;
 }
 

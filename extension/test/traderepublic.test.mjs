@@ -37,16 +37,23 @@ test('ws transport: lists timeline via net.ws, maps decimal amounts + direction 
   assert.equal(cap.cfg.cursorPath, 'cursors.after');
   assert.equal(docs.length, 3);
   const byId = Object.fromEntries(docs.map((d) => [d.internalId, d.record]));
-  assert.equal(byId.a1.amount, 50);           // decimal value, no minor-unit scaling
+  // investment@2: an incoming bank transfer is a CASH movement (no instrument), kind mapped from eventType
+  assert.equal(byId.a1.recordType, 'cash');
+  assert.equal(byId.a1.kind, 'deposit');       // BANK_TRANSACTION_INCOMING → deposit
+  assert.equal(byId.a1.amount, 50);            // decimal value, no minor-unit scaling
   assert.equal(byId.a1.currency, 'EUR');
   assert.equal(byId.a1.direction, 'credit');   // +50 incoming
   assert.equal(byId.a1.date, '2026-07-13');    // ISO timestamp → date
-  assert.equal(byId.a1.type, 'BANK_TRANSACTION_INCOMING');
-  assert.equal(byId.a2.amount, -20);
-  assert.equal(byId.a2.direction, 'debit');    // −20 savings-plan buy
-  assert.equal(byId.a2.description, 'NASDAQ100 ETF');
-  assert.equal(byId.a2.isin, 'IE00B53SZB19', 'ISIN extracted from the trade icon path');
-  assert.equal(byId.a1.isin, undefined, 'a transfer has no ISIN');
+  assert.ok(!('instrument' in byId.a1), 'a cash movement has no instrument');
+  // a savings-plan execution is a TRADE: recordType from the extracted ISIN, side from the eventType
+  assert.equal(byId.a2.recordType, 'trade');
+  assert.equal(byId.a2.side, 'buy');           // TRADING_SAVINGSPLAN_EXECUTED → buy
+  assert.equal(byId.a2.instrument.isin, 'IE00B53SZB19', 'ISIN extracted from the trade icon path');
+  assert.equal(byId.a2.instrument.name, 'NASDAQ100 ETF');
+  assert.equal(byId.a2.netAmount, -20);        // cash impact of the buy
+  // interest is a CASH movement
+  assert.equal(byId.a3.recordType, 'cash');
+  assert.equal(byId.a3.kind, 'interest');      // INTEREST_PAYOUT → interest
 });
 
 test('ws transport: surfaces a socket error, and dedupes by id', async () => {

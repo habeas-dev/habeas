@@ -6,8 +6,8 @@
   "domain": "revolut.com",
   "country": "global",
   "categories": ["banking"],
-  "version": "2026-07-15.2",
-  "minVersion": "0.1.68",
+  "version": "2026-07-16",
+  "minVersion": "0.3.0.24",
   "minorUnits": true,
   "keepRaw": true,
   "throttle": { "minMs": 300, "jitterMs": 400 },
@@ -53,7 +53,9 @@
         "currency": "currency",
         "description": "description",
         "type": "type",
-        "counterparty": "merchant.name"
+        "counterparty": "merchant.name",
+        "balanceAfter": "balance",
+        "valueDate": "completedDate"
       }
     },
     {
@@ -77,6 +79,7 @@
     }
   ],
   "changelog": [
+    { "version": "2026-07-16", "changes": "Map the running balance (minor-unit scaled) to record.balanceAfter and the completed date to record.valueDate — promoted to canonical fields for the Cuéntamo contract. Requires extension >= 0.3.0.24." },
     { "version": "2026-07-15.2", "changes": "Add account statements (PDF/CSV) per account × month: async-generated (poll account-statements until READY) then download the signed Google Storage URL (crossDomainHosts + consent). Statements bounded to the last ~12 months." },
     { "version": "2026-07-15.1", "changes": "Add per-account (pocket) filter with a currency-labelled Accounts picker." },
     { "version": "2026-07-15", "changes": "Initial: personal transactions across all accounts, paged by the `to` timestamp cursor; cookie + captured x-device-id; minor-unit amounts scaled per ISO 4217." }

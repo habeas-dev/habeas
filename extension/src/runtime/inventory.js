@@ -1394,13 +1394,17 @@ function mapDoc(adapter, p, group) {
   // per-period index + raw date + raw amount, so re-runs dedupe (same input → same id).
   if ((doc.internalId == null || doc.internalId === '') && adapter.api && adapter.api.list && adapter.api.list.periods)
     doc.internalId = [group && (group.accountNumber != null ? group.accountNumber : group.id), p._period, p._idx, p.date, p.amount].filter((x) => x != null && x !== '').join('|');
-  if (doc.date != null && doc.date !== '') doc.date = normalizeDate(doc.date); // textual/locale → ISO (also epoch ms/s)
-  for (const k of ['total', 'amount']) if (typeof doc[k] === 'string' && doc[k] !== '') doc[k] = normalizeAmount(doc[k]); // "21,00 €" → 21
+  // Date fields → ISO (textual/locale, also epoch ms/s). `valueDate` is the bank movement's value date
+  // (distinct from the booked `date`), promoted to a canonical field when a source maps it.
+  for (const k of ['date', 'valueDate']) if (doc[k] != null && doc[k] !== '') doc[k] = normalizeDate(doc[k]);
+  // Amount fields → Number. `balanceAfter` is the running balance a bank movement leaves behind.
+  for (const k of ['total', 'amount', 'balanceAfter']) if (typeof doc[k] === 'string' && doc[k] !== '') doc[k] = normalizeAmount(doc[k]); // "21,00 €" → 21
   // Minor-unit amounts: some APIs return integer minor units. `amountScale` is a FIXED factor (e.g. 0.01);
   // `minorUnits:true` scales by the transaction's OWN currency exponent (ISO 4217) so a JPY amount (0 decimals)
-  // and a EUR amount (2) both come out right. Raw values stay untouched in record.extra via keepRaw.
+  // and a EUR amount (2) both come out right. Raw values stay untouched in record.extra via keepRaw. The
+  // running balance shares the movement's currency, so it scales the same way.
   const scale = adapter.minorUnits ? Math.pow(10, -minorExp(doc.currency)) : adapter.amountScale;
-  if (scale) for (const k of ['total', 'amount', 'balance']) if (typeof doc[k] === 'number') doc[k] = doc[k] * scale;
+  if (scale) for (const k of ['total', 'amount', 'balance', 'balanceAfter']) if (typeof doc[k] === 'number') doc[k] = doc[k] * scale;
   doc.category = categorize(adapter, p);
   // A generic display label across schemas (store / issuer / counterparty / instrument / …). When none
   // resolve (e.g. a source whose list encrypts everything but the id, like Amazon), fall back to the

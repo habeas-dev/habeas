@@ -54,9 +54,10 @@ test('ING movimientos: lists transactions; account allow-list filters', async ()
   assert.equal(one.length, 2);
   const rec = buildRecord(one.find((d) => d.internalId === 't-a1-1'), MOV);
   assert.equal(rec.amount, -20); assert.equal(rec.currency, 'EUR'); assert.equal(rec.direction, 'debit');
-  // ALL the movement's detail is preserved under record.extra (concept, balance, subcategory, mode…).
+  // the running balance is promoted to a first-class canonical field (Cuéntamo contract)
+  assert.equal(rec.balanceAfter, 980.5);
+  // ALL the rest of the movement's detail is preserved under record.extra (concept, subcategory, mode…).
   assert.equal(rec.extra.concept, 'Compra');
-  assert.equal(rec.extra.balance, 980.5);
   assert.equal(rec.extra.subcategoryId, '42');
   assert.equal(rec.extra.mode, 'P');
 });

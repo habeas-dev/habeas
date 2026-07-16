@@ -10,6 +10,20 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **Bank movements now emit `balanceAfter` / `valueDate`; Trade Republic emits `investment@2`.** Field names
+  were inferred from the maintainer's own delivered canonical store (real data, never copied into the repo):
+  - Runtime: `runtime/inventory.js` promotes a mapped `valueDate` (ISO-normalized) and `balanceAfter`
+    (amount-normalized **and** minor-unit scaled like `amount`) to first-class fields; `lib/normalize.js`
+    gains a declarative `normalize.map` value map (`{ field: { from, map, default? } }`) so a source can map,
+    e.g., a broker `eventType` to the `side`/`kind` enum without code.
+  - Sources (staged): **ING** (`balanceAfter` ← `balance`), **Openbank** (`balanceAfter` ← `saldo.importe`),
+    **Revolut** (`balanceAfter` ← `balance`, `valueDate` ← `completedDate`), all `minVersion` 0.3.0.24.
+  - **Trade Republic** `transactions` → **`investment@2`**: `recordType` inferred from the extracted ISIN,
+    `side`/`kind` mapped from the real `eventType` values, structured `instrument{isin,name}`, and
+    `settlementAccount` ← `cashAccountNumber`. Quantity/price/fees stay in `record.extra.detail` (localized
+    text) pending structured parsing. `minVersion` 0.3.0.24.
+
 ### Fixed
 - **Canonical `account.last4` for grouped card sources** (`lib/normalize.js#acctObj`) — the last-4 is now taken,
   most-reliable first, from the IBAN → the group label's trailing 4 digits (the card number the user
