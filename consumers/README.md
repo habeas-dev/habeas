@@ -14,7 +14,9 @@ authors agree on the contract.
 ## Reference consumers
 
 - [`tiquetera.md`](tiquetera.md) — receipts (`receipt@1`). First consumer.
-- **Cuéntamo** (planned) — finance (`transaction@1`, `investment_position@1`).
+- **Cuéntamo** (planned) — finance (`transaction@1`, `investment@1`). Data contract:
+  [`cuentamo-data-contract.md`](cuentamo-data-contract.md) — the field-level *what* Cuéntamo needs from a
+  bank/broker source (bank movements + broker trade/cash), with a Habeas-side gap analysis (§E).
   Strategy: PSD2 AIS for SEPA current accounts; Habeas as a first-class source for
   what PSD2 does not cover (credit cards, investments, pensions, long history).
   Financial adapters are **allowed from the community**, not first-party-only: the
