@@ -52,28 +52,27 @@ export function renormalizeRecord(record, eff) {
   for (const [k, v] of Object.entries(record)) if (k !== 'extra') doc[k] = v;
   if (record.group) doc._group = { name: record.group }; // let buildRecord re-emit the group label
   const fields = eff.fields || {};
-  const backfilled = [];
+  const fromRaw = []; // ONLY the fields pulled from record.extra (raw) — these still need normalizing/scaling
   for (const [norm, spec] of Object.entries(fields)) {
     if (doc[norm] != null && doc[norm] !== '') continue;
     if (typeof spec !== 'string' || /[{[]/.test(spec)) continue; // templated/selector path: not invertible offline
-    let v = getPath(extra, spec);
-    if (v == null || v === '') {
-      // consumed & deduped out of extra → reuse a sibling field mapping the SAME raw path that the record kept
-      // (e.g. instrumentName ↔ description, both ← "title" for Trade Republic).
-      const sib = Object.entries(fields).find(([n2, s2]) => n2 !== norm && s2 === spec && record[n2] != null && record[n2] !== '');
-      if (sib) v = record[sib[0]];
-    }
-    if (v == null || v === '') continue;
-    doc[norm] = v; backfilled.push(norm);
+    const raw = getPath(extra, spec);
+    if (raw != null && raw !== '') { doc[norm] = raw; fromRaw.push(norm); continue; }
+    // consumed & deduped out of extra → reuse a sibling field mapping the SAME raw path that the record kept
+    // (e.g. instrumentName ↔ description, both ← "title" for Trade Republic). This value is ALREADY normalized,
+    // so it is NOT added to fromRaw — re-normalizing/re-scaling it would corrupt it (double-scale a money field).
+    const sib = Object.entries(fields).find(([n2, s2]) => n2 !== norm && s2 === spec && record[n2] != null && record[n2] !== '');
+    if (sib) doc[norm] = record[sib[0]];
   }
-  // Normalize the FRESHLY-backfilled fields exactly like the runtime does (mapDoc). Fields the record ALREADY
-  // carried are left untouched — they were normalized/scaled at store time, so re-scaling would double-count.
-  for (const k of backfilled) {
+  // Normalize/scale ONLY the raw-sourced backfills, exactly like the runtime does (mapDoc). Fields the record
+  // ALREADY carried (and sibling-sourced ones) are left untouched — they were normalized/scaled at store time,
+  // so re-scaling would double-count.
+  for (const k of fromRaw) {
     if (MONEY.has(k) && typeof doc[k] === 'string') doc[k] = normalizeAmount(doc[k]);
     if (DATES.has(k) && doc[k] != null && doc[k] !== '') doc[k] = normalizeDate(doc[k]);
   }
   const scale = eff.minorUnits ? Math.pow(10, -minorExp(doc.currency)) : eff.amountScale;
-  if (scale) for (const k of backfilled) if (MONEY.has(k) && typeof doc[k] === 'number') doc[k] = doc[k] * scale;
+  if (scale) for (const k of fromRaw) if (MONEY.has(k) && typeof doc[k] === 'number') doc[k] = doc[k] * scale;
   applyNormalize(doc, eff); // declarative value maps (side/kind) + regex fields (isin) — fill-empty-only
   const rebuilt = buildRecord(doc, eff);
   return { record: rebuilt, changed: stable(rebuilt) !== stable(record) };

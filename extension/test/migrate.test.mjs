@@ -74,6 +74,15 @@ test('idempotent: a record already in the new shape is unchanged', () => {
   assert.equal(second.changed, false);
 });
 
+test('sibling-backfilled money field is NOT re-scaled (already normalized), even on a minorUnits source', () => {
+  // netAmount and amount both map the same raw path "v"; extra lacks it (deduped), so netAmount is filled from
+  // the sibling amount, which is ALREADY the scaled value. It must be carried as-is, never scaled again.
+  const eff = { id: 'x', schema: 'investment@2', minorUnits: true, categories: ['investment'], fields: { internalId: 'id', date: 'd', currency: 'c', amount: 'v', netAmount: 'v', side: 'side', isin: 'isin' } };
+  const old = { internalId: 'T', date: '2026-01-01', currency: 'EUR', amount: -12.34, recordType: 'trade', side: 'buy', isin: 'XX0000000009', extra: {} };
+  const { record } = renormalizeRecord(old, eff);
+  assert.equal(record.netAmount, -12.34); // NOT -0.1234 (would be the double-scale bug)
+});
+
 // --- store-level walk with an in-memory backend + a stubbed config/state ---
 import * as store from '../src/lib/store.js';
 

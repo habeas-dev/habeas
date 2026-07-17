@@ -21,6 +21,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   ledgers (the cumulative-manifest, overwrite-safe ones: local-folder/drive/dropbox/webdav/s3) are reset for
   the changed sources so the next Sync re-pushes the corrected records — ephemeral/one-way sinks (download,
   http) are deliberately left alone. Adds a small `normalize.map` recognized by the migration and the runtime.
+  Scaling/normalization is applied **only** to fields pulled from raw `record.extra`; a field filled from a
+  sibling record field (already normalized) is carried as-is, so a money field is never double-scaled.
 - **Bank movements now emit `balanceAfter` / `valueDate`; Trade Republic emits `investment@2`.** Field names
   were inferred from the maintainer's own delivered canonical store (real data, never copied into the repo):
   - Runtime: `runtime/inventory.js` promotes a mapped `valueDate` (ISO-normalized) and `balanceAfter`
