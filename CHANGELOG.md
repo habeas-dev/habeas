@@ -11,6 +11,16 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **One-time canonical-store migration** (`lib/migrate.js`, run once on background startup) — re-normalizes
+  already-stored records to the current schema so pre-existing data matches the new normalization: bank
+  movements gain `balanceAfter`/`valueDate` (backfilled from `record.extra`, minor-unit scaled where the
+  source is), and Trade Republic records stored as `transaction@1` are upgraded in place to `investment@2`.
+  Offline and best-effort (rebuilds from the record + its `keepRaw` `extra`, no re-fetch), idempotent, and
+  gated by a marker so it runs once. The store is the source of truth, so this IS the conversion; a re-list
+  also re-normalizes re-fetchable items via last-write-wins. After converting, only **read/write** sink
+  ledgers (the cumulative-manifest, overwrite-safe ones: local-folder/drive/dropbox/webdav/s3) are reset for
+  the changed sources so the next Sync re-pushes the corrected records — ephemeral/one-way sinks (download,
+  http) are deliberately left alone. Adds a small `normalize.map` recognized by the migration and the runtime.
 - **Bank movements now emit `balanceAfter` / `valueDate`; Trade Republic emits `investment@2`.** Field names
   were inferred from the maintainer's own delivered canonical store (real data, never copied into the repo):
   - Runtime: `runtime/inventory.js` promotes a mapped `valueDate` (ISO-normalized) and `balanceAfter`

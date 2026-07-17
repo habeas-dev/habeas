@@ -1349,7 +1349,7 @@ export function normalizeDate(v) {
 // to turn an integer minor-unit amount into a real value per the transaction's OWN currency.
 const CCY_EXP0 = new Set(['BIF', 'CLP', 'DJF', 'GNF', 'ISK', 'JPY', 'KMF', 'KRW', 'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF']);
 const CCY_EXP3 = new Set(['BHD', 'IQD', 'JOD', 'KWD', 'LYD', 'OMR', 'TND']);
-function minorExp(ccy) {
+export function minorExp(ccy) {
   const c = String(ccy || '').toUpperCase();
   return CCY_EXP0.has(c) ? 0 : CCY_EXP3.has(c) ? 3 : 2;
 }

@@ -24,6 +24,7 @@ import { getMyHandoffs } from './registry/client.js';
 import { validateProposal, originHost } from './lib/exthooks.js';
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
+import { runStoreMigration } from './lib/migrate.js';
 import { autoDebounced, retainAutoDebounce, isLoginNavigation, needsTabEscalation, sweepSinkId } from './lib/autosync.js';
 
 chrome.action.onClicked.addListener(() => {
@@ -37,6 +38,11 @@ chrome.action.onClicked.addListener(() => {
     const cfg = await getConfig();
     const adapters = await getAdapters();
     for (const d of (cfg.datasources || []).filter((x) => x.enabled)) { const a = adapters[d.adapter]; if (a) await registerCapture(a); }
+    // One-time: re-normalize stored records to the current schema (bank balanceAfter/valueDate; Trade Republic
+    // investment@2) and reset read/write sink ledgers so the next Sync re-pushes the corrected records.
+    runStoreMigration(adapters).then((r) => {
+      if (r && r.records) appendLog({ kind: 'migrate', ok: true, msg: `Re-normalized ${r.records} stored record(s) across ${r.changed.length} source(s); reset ${r.resets} delivery ledger(s).` });
+    }).catch(() => {});
   } catch (e) {}
   // One-time: encrypt any pairing-token headers left plaintext in config by older versions.
   migrateSinkHeaders().catch(() => {});
