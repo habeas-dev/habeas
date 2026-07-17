@@ -15,6 +15,10 @@ function cleanEntry(e) {
   const o = { record: e.record, at: e.at || '' };
   if (e.docAvailable != null) o.docAvailable = !!e.docAvailable;
   if (e.gone) { o.gone = true; o.goneReason = e.goneReason || 'unknown'; o.goneAt = e.goneAt || e.at || ''; }
+  // srcVersion: the SOURCE (adapter) version that last built/re-processed this record. Store metadata (NOT part
+  // of the delivered record), so a future migration knows what normalization each record was last touched with
+  // — e.g. whether a field is in an older scale — without re-deriving. Absent = unknown/legacy (treat as oldest).
+  if (e.srcVersion != null && e.srcVersion !== '') o.srcVersion = String(e.srcVersion);
   return o;
 }
 

@@ -436,7 +436,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
       await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, source: sk, ext: documentExt(eff) || 'pdf', interactive: !!opts.interactive });
       await markDelivered(ds.id, sink.id, eligible.map((d) => d.internalId));
       for (const d of eligible) d.record = bakeLearned(d); // persist the real date/amount learned from the detail
-      try { await recordDelivered(sk, eligible, { source: adapter.id, schema: eff.schema }); } catch (e) { /* store is best-effort */ } // write-through to the canonical store
+      try { await recordDelivered(sk, eligible, { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store is best-effort */ } // write-through to the canonical store
       try { await rememberDocMeta(adapter.id, eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, returnStatus: d.returnStatus || undefined }))); } catch (e) { /* best-effort */ }
       totalNew += eligible.length;
     }

@@ -11,6 +11,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Per-record source-version stamp in the canonical store** (`entry.srcVersion`) — every store entry now
+  records the SOURCE (adapter) version that last built or re-normalized its record (store metadata, never
+  inside the delivered `record`, so consumer manifests are unchanged). Written on every capture/delivery and
+  by the store migration. Lets a future migration tell what normalization/scale each item carries (e.g. re-scale
+  only records older than a version that changed a field's scaling) instead of blanket-trusting or re-deriving.
+  Absent = unknown/legacy (treated as oldest). Documented in `docs/canonical-store.md`.
 - **One-time canonical-store migration** (`lib/migrate.js`, run once on background startup) — re-normalizes
   already-stored records to the current schema so pre-existing data matches the new normalization: bank
   movements gain `balanceAfter`/`valueDate` (backfilled from `record.extra`, minor-unit scaled where the

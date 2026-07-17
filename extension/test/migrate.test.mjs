@@ -17,7 +17,7 @@ const TR = {
   },
   fields: { internalId: 'id', date: 'timestamp', amount: 'amount.value', currency: 'amount.currency', description: 'title', counterparty: 'title', instrumentName: 'title', type: 'eventType', settlementAccount: 'cashAccountNumber' },
 };
-const ING = { id: 'ing-es', service: 'ing', schema: 'transaction@1', keepRaw: true, currency: 'EUR', categories: ['banking'], fields: { internalId: 'transactionLocalUUID', date: 'transactionDate', amount: 'amount', description: 'description', type: 'transactionCode', account: '{group.iban}', balanceAfter: 'balance' } };
+const ING = { id: 'ing-es', service: 'ing', schema: 'transaction@1', version: '2026-07-16', keepRaw: true, currency: 'EUR', categories: ['banking'], fields: { internalId: 'transactionLocalUUID', date: 'transactionDate', amount: 'amount', description: 'description', type: 'transactionCode', account: '{group.iban}', balanceAfter: 'balance' } };
 const REV = { id: 'revolut', service: 'revolut', schema: 'transaction@1', keepRaw: true, minorUnits: true, categories: ['banking'], fields: { internalId: 'id', date: 'startedDate', amount: 'amount', currency: 'currency', description: 'description', type: 'type', balanceAfter: 'balance', valueDate: 'completedDate' } };
 const RECEIPT = { id: 'demo-shop', service: 'demo', schema: 'receipt@1', fields: { internalId: 'id', date: 'date', total: 'total', storeName: 'store' } };
 
@@ -98,7 +98,20 @@ test('renormalizeStore rewrites affected sources in place and leaves others alon
     assert.equal(records, 1);
     assert.deepEqual([...changedAdapters], ['ing-es']);
     assert.equal(sources['ing-es:movimientos'].items.M1.record.balanceAfter, 100.25);
+    assert.equal(sources['ing-es:movimientos'].items.M1.srcVersion, '2026-07-16', 'rewritten entry stamped with the source version');
     assert.ok(!('balanceAfter' in sources['demo-shop'].items.r1.record), 'receipt source untouched');
+    assert.ok(!('srcVersion' in sources['demo-shop'].items.r1), 'untouched entry not restamped');
+  } finally { store.setBackend(null); }
+});
+
+test('putItems stamps each entry with meta.srcVersion (store metadata, not inside the record)', async () => {
+  const mem = {};
+  store.setBackend({ async listSources() { return Object.keys(mem); }, async loadSource(id) { return mem[id] || null; }, async saveSource(id, d) { mem[id] = d; } });
+  try {
+    await store.putItems('demo:s', [{ internalId: 'a', record: { internalId: 'a', date: '2026-01-01' } }], { source: 'demo', srcVersion: '2026-07-16' });
+    const e = mem['demo:s'].items.a;
+    assert.equal(e.srcVersion, '2026-07-16');
+    assert.ok(!('srcVersion' in e.record), 'stamp lives on the entry, never in the delivered record');
   } finally { store.setBackend(null); }
 });
 

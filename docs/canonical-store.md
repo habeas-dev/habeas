@@ -34,7 +34,10 @@ store[sourceId] = {
                               //   optional `record.extra` (every raw field the schema didn't consume — nothing lost)
       docAvailable?: bool,    // whether a document artifact exists for it
       gone?: bool, goneReason?: 'retention'|'404'|'rescan', goneAt?: ISO,  // tombstone (never hard-deleted)
-      at: ISO                 // provenance: when this item was last captured/confirmed
+      at: ISO,                // provenance: when this item was last captured/confirmed
+      srcVersion?: string     // the SOURCE (adapter) version that last built/re-normalized this record — store
+                              //   metadata (NOT in `record`), so a migration knows what normalization/scale each
+                              //   item carries. Absent = unknown/legacy (treated as oldest). See lib/migrate.js.
     }
   }
 }

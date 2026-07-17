@@ -97,11 +97,12 @@ export async function renormalizeStore(adapters) {
     if (!needsMigration(eff)) continue;
     let data; try { data = await backend.loadSource(storeKey); } catch (e) { continue; }
     if (!data || !data.items) continue;
+    const ver = base.version || eff.version || '';
     let dirty = false;
     for (const entry of Object.values(data.items)) {
       if (!entry || !entry.record || entry.gone) continue;
       let out; try { out = renormalizeRecord(entry.record, eff); } catch (e) { continue; }
-      if (out.changed) { entry.record = out.record; dirty = true; records++; }
+      if (out.changed) { entry.record = out.record; if (ver) entry.srcVersion = ver; dirty = true; records++; }
     }
     if (dirty) {
       data.meta = { ...(data.meta || {}), adapterVersion: base.version || '', renormalizedAt: new Date().toISOString() };

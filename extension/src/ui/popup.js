@@ -434,7 +434,7 @@ async function onList(mode, opts = {}) {
       // as existing files. They still show in THIS list (to pick + download); a successful download/delivery
       // is what proves a month exists and puts it in the store.
       const synthetic = eff.api && eff.api.list && eff.api.list.paging === 'synthetic';
-      if (!synthetic) try { await putItems(sk, fresh.filter((d) => d.internalId != null).map((d) => ({ internalId: d.internalId, record: d.record })), { source: adapter.id, schema: eff.schema }); } catch (e) { /* store best-effort */ }
+      if (!synthetic) try { await putItems(sk, fresh.filter((d) => d.internalId != null).map((d) => ({ internalId: d.internalId, record: d.record })), { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store best-effort */ }
     }
     rebuild(); await render(delivered); bars();
     $('#status').textContent = aborted() ? t('stopped_n', [String(inventory.length)]) : t('n_listed', [String(inventory.length), String(newTotal)]);
@@ -651,7 +651,7 @@ async function onSend() {
     try {
       const byStore = new Map();
       for (const d of eligible) { const sk = d._storeKey || adapter.id; d.record = bakeLearned(d); (byStore.get(sk) || byStore.set(sk, []).get(sk)).push(d); }
-      for (const [sk, docs] of byStore) await recordDelivered(sk, docs, { source: adapter.id, schema: outFor(docs[0], '').schema });
+      for (const [sk, docs] of byStore) await recordDelivered(sk, docs, { source: adapter.id, schema: outFor(docs[0], '').schema, srcVersion: adapter.version });
     } catch (e) { /* store is best-effort */ }
     // Does this delivery involve documents at all? A transactions/records-only stream has none BY DESIGN —
     // so "0 PDF, N without PDF" would wrongly read as a failure. Only mention missing documents when the

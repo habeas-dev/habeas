@@ -40,7 +40,10 @@ const now = () => new Date().toISOString();
 // (or tombstones { internalId, gone, goneReason }). Each is stamped `at` now unless given.
 export async function putItems(sourceId, entries, meta) {
   if (!entries || !entries.length) return;
-  const stamped = entries.map((e) => ({ ...e, at: e.at || now(), ...(e.gone ? { goneAt: e.goneAt || now() } : {}) }));
+  // Stamp each entry with the source version that produced it (from meta.srcVersion) so the store records what
+  // normalization each item was last built with — used by migrations to decide what needs reprocessing.
+  const sv = meta && meta.srcVersion;
+  const stamped = entries.map((e) => ({ ...e, at: e.at || now(), ...(e.gone ? { goneAt: e.goneAt || now() } : {}), ...(e.srcVersion || sv ? { srcVersion: e.srcVersion || sv } : {}) }));
   const backend = await backendFor();
   const cur = (await backend.loadSource(sourceId)) || emptySource(meta);
   await backend.saveSource(sourceId, mergeItems(cur, stamped, meta));
