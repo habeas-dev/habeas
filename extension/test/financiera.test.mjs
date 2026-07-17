@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { listInventory } from '../src/runtime/inventory.js';
+import { listInventory, tmplDates } from '../src/runtime/inventory.js';
 import { validateAdapter } from '../src/adapters/validate.js';
 import { resolveOutput, outputsOf } from '../src/lib/outputs.js';
 
@@ -49,4 +49,44 @@ test('movimientos: unions the monthFilter views (paramSets), per-group header ve
   assert.equal(byId.INV1.amount, 9.99);
   assert.equal(byId.INV1.currency, 'EUR');
   assert.ok(byId.INV1.extra, 'keepRaw kept the full movement');
+});
+
+test('tmplDates: computed calendar-date tokens, ISO by default and formatted with :FORMAT', () => {
+  const now = new Date();
+  const me = new Date(now.getFullYear(), now.getMonth() + 1, 0); // last day of the current month
+  const DD = String(me.getDate()).padStart(2, '0'), MM = String(me.getMonth() + 1).padStart(2, '0'), YYYY = String(me.getFullYear());
+  assert.equal(tmplDates('date_bill={monthEnd:DD/MM/YYYY}'), `date_bill=${DD}/${MM}/${YYYY}`);
+  assert.equal(tmplDates('{monthStart:DD/MM/YYYY}'), `01/${MM}/${YYYY}`);
+  assert.match(tmplDates('{today}'), /^\d{4}-\d{2}-\d{2}$/); // ISO by default
+  assert.equal(tmplDates('no tokens here'), 'no tokens here');
+});
+
+test('aplazamientos: sends the SPA pagination params (page_number/page_size)', async () => {
+  let url = '';
+  const net = async (u) => {
+    if (u.endsWith('/dashboard/user')) return okJson({ userEciCardList: [CARD] });
+    if (u.includes('/financing-purchases')) { url = u; return okJson({ financing_data: [{ identifier: 'F1', start_date: '2020-01-01', financing_type: 'STANDARD' }] }); }
+    return miss;
+  };
+  const docs = await listInventory(resolveOutput(ADP, 'aplazamientos'), { merged: {}, byPath: {}, ctx: {} }, net, {});
+  assert.ok(url.includes('/card-contracts/C0001/financing-purchases'), url);
+  assert.ok(url.includes('page_number=0') && url.includes('page_size=100'), 'paged params sent: ' + url);
+  assert.equal(docs.length, 1);
+  assert.equal(docs[0].internalId, 'F1');
+});
+
+test('extractos: sends date_bill as the current month-end in DD/MM/YYYY', async () => {
+  const now = new Date();
+  const me = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const expect = `${String(me.getDate()).padStart(2, '0')}/${String(me.getMonth() + 1).padStart(2, '0')}/${me.getFullYear()}`;
+  let url = '';
+  const net = async (u) => {
+    if (u.endsWith('/dashboard/user')) return okJson({ userEciCardList: [CARD] });
+    if (u.includes('/shopping-summaries')) { url = u; return okJson({ previous_months_shopping_summaries: [{ date: '2020-05', description: 'Extracto mayo' }] }); }
+    return miss;
+  };
+  const docs = await listInventory(resolveOutput(ADP, 'extractos'), { merged: {}, byPath: {}, ctx: {} }, net, {});
+  assert.ok(url.includes('date_bill='), 'date_bill present: ' + url);
+  assert.ok(url.includes('date_bill=' + encodeURIComponent(expect)), 'date_bill is the current month-end DD/MM/YYYY: ' + url);
+  assert.equal(docs.length, 1);
 });

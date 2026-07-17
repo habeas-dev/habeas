@@ -9,8 +9,8 @@
     "card",
     "loan"
   ],
-  "version": "2026-07-16.1",
-  "minVersion": "0.3.0.21",
+  "version": "2026-07-17",
+  "minVersion": "0.4.1.1",
   "keepRaw": true,
   "contributors": [
     "David Marín"
@@ -86,6 +86,10 @@
       "api": {
         "list": {
           "path": "/dashboard/api/payments/ms-evolve-customers-contracts/v2/card-contracts/{group.id}/financing-purchases",
+          "params": {
+            "page_number": "0",
+            "page_size": "100"
+          },
           "itemsPath": "financing_data",
           "paging": "none"
         }
@@ -105,6 +109,9 @@
       "api": {
         "list": {
           "path": "/dashboard/api/payments/ms-evolve-documents/v1/contracts/{group.id}/shopping-summaries",
+          "params": {
+            "date_bill": "{monthEnd:DD/MM/YYYY}"
+          },
           "itemsPath": "previous_months_shopping_summaries",
           "paging": "none"
         },
@@ -123,6 +130,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-17",
+      "changes": "Fix empty aplazamientos + extractos lists: send the query params the SPA sends. aplazamientos/financing-purchases now sends page_number=0&page_size=100 (the endpoint is paged); extractos/shopping-summaries now sends date_bill (the current billing date the SPA stamps), via the new {monthEnd:DD/MM/YYYY} computed-date token. Requires extension >= 0.4.1.1."
+    },
     {
       "version": "2026-07-16",
       "changes": "Initial (authored from a redacted handoff recording, verified live by the contributor). Multi-card (grouped by contract): card movements (transactions), aplazamientos/financing purchases, and monthly statement PDFs (generated per month, base64). Cookie session + replayed bearer + per-card eci-custom-encrypted-pan header."

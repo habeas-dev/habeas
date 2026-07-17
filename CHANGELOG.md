@@ -10,6 +10,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **Computed calendar-date tokens for request values** (`runtime/inventory.js#tmplDates`) — a path/param/body
+  value can use `{today}`, `{monthStart}`, `{monthEnd}`, each with an optional `:FORMAT` (e.g.
+  `{monthEnd:DD/MM/YYYY}`, default ISO). For SPAs that stamp the current billing/period date into a request
+  (a statement list that wants `?date_bill=31/07/2026`). Local calendar, date-only, no timezone shift.
+
 ## [0.4.1] — 2026-07-17
 
 ### Added

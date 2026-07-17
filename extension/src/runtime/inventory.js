@@ -557,6 +557,22 @@ const tmplGroup = (str, group) => (group ? String(str).replace(/\{group\.([^}]+)
 // RAW variant for HEADER values: no URL-encoding — a header carries the value verbatim (e.g. a base64
 // encrypted-PAN with +/=; tid()'s encodeURIComponent would corrupt it → the server can't base64-decode).
 const tmplGroupRaw = (str, group) => (group ? String(str).replace(/\{group\.([^}]+)\}/g, (m, k) => { const v = get(group, k); return v == null ? m : String(v); }) : String(str));
+// Computed calendar-date tokens for path/param/body values, with an optional format. Some SPAs stamp the
+// CURRENT billing/period date into a request (e.g. FECI's statement list wants ?date_bill=31/07/2026):
+//   {today} {monthStart} {monthEnd}  → ISO YYYY-MM-DD by default
+//   {monthEnd:DD/MM/YYYY}            → formatted (FORMAT uses YYYY / MM / DD; anything else is literal)
+// Dates use the browser's LOCAL calendar (what the SPA itself computed), date-only, so no timezone shift.
+export function tmplDates(str) {
+  if (typeof str !== 'string' || str.indexOf('{') < 0) return str;
+  return str.replace(/\{(today|monthStart|monthEnd)(?::([^}]+))?\}/g, (m, which, fmt) => {
+    const now = new Date();
+    const d = which === 'monthStart' ? new Date(now.getFullYear(), now.getMonth(), 1)
+      : which === 'monthEnd' ? new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        : now;
+    const Y = String(d.getFullYear()), M = String(d.getMonth() + 1).padStart(2, '0'), D = String(d.getDate()).padStart(2, '0');
+    return fmt ? fmt.replace(/YYYY/g, Y).replace(/MM/g, M).replace(/DD/g, D) : `${Y}-${M}-${D}`;
+  });
+}
 // A CAPTURED CONTEXT value (e.g. a DNI observed in a request URL), stored alongside auth in
 // storage.session and exposed to templates as {ctx.<name>}. Mirrors {csrf}/{group.*}. Never on disk.
 const ctxOf = (auth) => (auth && (auth.__ctx || auth.ctx)) || {};
@@ -1136,8 +1152,9 @@ async function fetchList(adapter, auth, params, net, group) {
   const list = adapter.api.list;
   const html = list.from === 'html';
   // {group.*} in the list path / param values / referer → the account (group) currently being listed.
-  const path = tmplGroup(list.path, group);
-  const gparams = {}; for (const k of Object.keys(params || {})) gparams[k] = tmplGroup(params[k], group);
+  // {today}/{monthStart}/{monthEnd}[:FORMAT] → computed calendar dates (e.g. a statement list's ?date_bill).
+  const path = tmplDates(tmplGroup(list.path, group));
+  const gparams = {}; for (const k of Object.keys(params || {})) gparams[k] = tmplDates(tmplGroup(params[k], group));
   const qs = new URLSearchParams(gparams).toString();
   const url = adapter.api.host + path + (qs ? '?' + qs : '');
   // Run in the site's tab (page context) so cookies + cf_clearance + fingerprint carry through and
