@@ -114,6 +114,8 @@ It returns **public metadata only**: id, name, service, categories, and the `fir
 trust label. Never accounts, documents, routes, sinks, or your data. The list is not origin-specific;
 it is the same set the user sees in Habeas. Revocable anytime under **Settings → Site integrations**.
 
+Full spec (schema, status semantics, polling helper, security model): [`list-sources.md`](list-sources.md).
+
 ## What Habeas will never do
 
 - Send your users' data anywhere but your own origin.

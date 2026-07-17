@@ -25,6 +25,13 @@ authors agree on the contract.
   makes credential exfiltration structurally impossible regardless of category. `first-party`
   is just an **audited trust label**, not a gate.
 
+## Integration protocol (external hooks)
+
+Any origin (not just the reference consumers) can talk to a user's Habeas over a `postMessage` bridge:
+propose a `source → its-own-origin sink` route, request collection, and **discover which sources the user has
+enabled**. See [`external-hooks.md`](external-hooks.md) for the full protocol, and
+[`list-sources.md`](list-sources.md) for the configured-source discovery spec (`list-sources`).
+
 ## Ingest contract (shared shape)
 
 - `POST` with the pairing token in an `Authorization` header.
