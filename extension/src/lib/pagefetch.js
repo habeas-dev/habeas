@@ -181,7 +181,12 @@ export function makePageMtop(tabId) {
   };
 }
 
-export function makePageFetch(tabId) {
+export function makePageFetch(tabId, adapter) {
+  // Some SPAs (WSO2/Akamai-fronted, e.g. FECI) keep the bearer in the page's localStorage and rotate it, so
+  // CAPTURING it from a seen request is fragile (missing after a browser restart, or if we list before the
+  // SPA made an authed call). `auth.tokenFromStorage {key,field,scheme,header}` reads it FRESH from localStorage
+  // in the page on every request — the reliable path. Read here (background can't see the page's localStorage).
+  const tfs = adapter && adapter.auth && adapter.auth.tokenFromStorage;
   const pf = async (url, init = {}) => {
     const arg = {
       url: String(url),
@@ -191,6 +196,7 @@ export function makePageFetch(tabId) {
       wantBlob: !!init.wantBlob,
       referrer: init.referrer || null, // set from the tab (same-origin) — the reliable way to spoof Referer
       credentials: init.credentials || 'include', // honor a source's cookie opt-out (auth.cookies:false → 'omit')
+      tfs: tfs && tfs.key ? { key: String(tfs.key), field: tfs.field ? String(tfs.field) : '', scheme: tfs.scheme || '', header: (tfs.header || 'authorization').toLowerCase() } : null,
     };
     let out;
     try {
@@ -200,7 +206,16 @@ export function makePageFetch(tabId) {
         args: [arg],
         func: async (o) => {
           try {
-            const r = await fetch(o.url, { method: o.method, headers: o.headers, body: o.body || undefined, credentials: o.credentials || 'include', ...(o.referrer ? { referrer: o.referrer, referrerPolicy: 'unsafe-url' } : {}) });
+            const headers = { ...(o.headers || {}) };
+            if (o.tfs) {
+              try {
+                const raw = localStorage.getItem(o.tfs.key);
+                let val = raw;
+                if (raw != null && o.tfs.field) { let obj = null; try { obj = JSON.parse(raw); } catch (e) {} val = obj ? o.tfs.field.split('.').reduce((x, k) => (x == null ? x : x[k]), obj) : undefined; }
+                if (val) headers[o.tfs.header] = (o.tfs.scheme ? o.tfs.scheme + ' ' : '') + val; // fresh token wins over any captured one
+              } catch (e) {}
+            }
+            const r = await fetch(o.url, { method: o.method, headers, body: o.body || undefined, credentials: o.credentials || 'include', ...(o.referrer ? { referrer: o.referrer, referrerPolicy: 'unsafe-url' } : {}) });
             const d = { ok: r.ok, status: r.status, contentType: r.headers.get('content-type') || '' };
             if (o.wantBlob) {
               const bytes = new Uint8Array(await r.arrayBuffer());
@@ -236,7 +251,7 @@ export function makePageFetch(tabId) {
 // the caller then falls back to a direct extension fetch, which works for non-anti-bot APIs).
 export async function resolveSiteFetch(adapter) {
   const tab = await findSiteTab(adapter);
-  return tab ? makePageFetch(tab.id) : null;
+  return tab ? makePageFetch(tab.id, adapter) : null;
 }
 
 // The open browser tab (if any) sitting on the source's site — the in-session context to fetch through.
@@ -279,7 +294,7 @@ export async function ensureSiteFetch(adapter, { open = false } = {}) {
   let tab; try { tab = await chrome.tabs.create({ url: siteBaseUrl(adapter), active: true }); } catch (e) { return null; }
   if (!tab || tab.id == null) return null;
   await waitTabComplete(tab.id);
-  return makePageFetch(tab.id);
+  return makePageFetch(tab.id, adapter);
 }
 
 const cookieDomain = (adapter) => (adapter.domain || ((adapter.api && adapter.api.host) || '').replace(/^https?:\/\//, '').replace(/[:/].*$/, ''));

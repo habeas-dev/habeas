@@ -155,6 +155,9 @@ export function validateAdapter(adapter) {
     else checkExtraction(adapter, req);
     const auth = adapter.auth || {};
     req(Array.isArray(auth.replayHeaders), 'auth.replayHeaders must be an array (may be empty for cookie auth)');
+    // tokenFromStorage: read the bearer FRESH from the page's localStorage each request (SPAs that keep + rotate
+    // it there — WSO2/Akamai-fronted). Read in the site tab; guarded to the source's own origin like all else.
+    if (auth.tokenFromStorage != null) req(auth.tokenFromStorage && typeof auth.tokenFromStorage.key === 'string' && auth.tokenFromStorage.key, 'auth.tokenFromStorage requires a localStorage key');
     // Optional anti-fingerprinting throttle between API calls.
     if (adapter.throttle != null) {
       const th = adapter.throttle;

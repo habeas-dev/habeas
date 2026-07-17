@@ -24,6 +24,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
     report keeps a "See technical detail" toggle.
 
 ### Added
+- **`auth.tokenFromStorage`** (`lib/pagefetch.js#makePageFetch`) — read the bearer FRESH from the page's
+  `localStorage` on every request (`{key, field, scheme, header}`), for SPAs that keep and rotate the token
+  there (WSO2/Akamai-fronted, e.g. Financiera ECI's `aphishi-lws_at.t`). Capturing the token from a seen
+  request is fragile — it's absent after a browser restart, or if a listing runs before the SPA made an
+  authenticated call — which surfaced as a `groups 401 "User data is empty"` even right after a fresh login.
+  Reading it in the site tab is reliable and always current; a fresh token overrides any captured one.
 - **Per-group templating of `api.pdf.headers`** (`runtime/inventory.js#fetchPdf`) — a document endpoint can now
   carry `{group.*}` in its headers (RAW, like `api.list.headers`, so a base64 value is not URL-encoded), for a
   per-document fetch that needs the account/card's own header (e.g. a statement PDF that requires the card's
