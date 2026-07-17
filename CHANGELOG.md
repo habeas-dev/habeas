@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-07-17
+
 ### Added
 - **`list-sources` external hook** — a website can ask which sources the user currently has enabled, so a
   consumer can offer the relevant ones instead of hardcoding source ids. Consent-gated per origin (a
