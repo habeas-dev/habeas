@@ -9,7 +9,7 @@
     "card",
     "loan"
   ],
-  "version": "2026-07-17",
+  "version": "2026-07-17.1",
   "minVersion": "0.4.1.1",
   "keepRaw": true,
   "contributors": [
@@ -118,6 +118,8 @@
         "pdf": {
           "path": "/dashboard/api/payments/ms-evolve-documents/v1/contracts/{group.id}/shopping-summaries/generate-file?datePurchase={date}",
           "method": "POST",
+          "body": "{}",
+          "contentType": "application/json",
           "base64Field": "file",
           "ext": "pdf"
         }
@@ -130,6 +132,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-17.1",
+      "changes": "Fix extractos statement PDF download: the generate-file POST now sends the {} JSON body + application/json content-type the SPA sends (it returned nothing without them). datePurchase already correct (the raw item date, DD/MM/YYYY)."
+    },
     {
       "version": "2026-07-17",
       "changes": "Fix empty aplazamientos + extractos lists: send the query params the SPA sends. aplazamientos/financing-purchases now sends page_number=0&page_size=100 (the endpoint is paged); extractos/shopping-summaries now sends date_bill (the current billing date the SPA stamps), via the new {monthEnd:DD/MM/YYYY} computed-date token. Requires extension >= 0.4.1.1."
