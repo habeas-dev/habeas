@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-07-17
+
 ### Added
 - **Store migration resolves array-selector field paths** — the one-time canonical-store migration
   (`lib/migrate.js`) now backfills nested/selected raw values (`key[field=value].sub`) from `record.extra`,
