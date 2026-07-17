@@ -1,0 +1,285 @@
+<title>Habeas → Cuéntamo · Informe de progreso</title>
+<style>
+  :root {
+    --bg: #f2f5f4; --surface: #ffffff; --ink: #14201c; --muted: #566a63; --faint: #7d8d86;
+    --accent: #0f766e; --accent-strong: #0b5f58; --accent-soft: #dcece8;
+    --warn: #9a5608; --warn-soft: #f2e6d2; --na: #67736e; --na-soft: #e5eae8;
+    --border: #dce3e0; --hair: #e7ecea;
+    --code-bg: #edf2f0; --code-ink: #1b2926; --code-key: #0b5f58; --code-str: #7a5a12; --code-com: #7d8d86;
+    --shadow: 0 1px 2px rgba(20,32,28,.04), 0 8px 30px rgba(20,32,28,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1210; --surface: #141b18; --ink: #e7ece9; --muted: #95a39c; --faint: #6d7d76;
+      --accent: #5eead4; --accent-strong: #85f0de; --accent-soft: rgba(94,234,212,.13);
+      --warn: #efb44a; --warn-soft: rgba(239,180,74,.13); --na: #8a958f; --na-soft: rgba(255,255,255,.06);
+      --border: #243029; --hair: #1d2621;
+      --code-bg: #0b100e; --code-ink: #d2ded9; --code-key: #7ff0dd; --code-str: #e2c07a; --code-com: #6d7d76;
+      --shadow: none;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f2f5f4; --surface: #ffffff; --ink: #14201c; --muted: #566a63; --faint: #7d8d86;
+    --accent: #0f766e; --accent-strong: #0b5f58; --accent-soft: #dcece8;
+    --warn: #9a5608; --warn-soft: #f2e6d2; --na: #67736e; --na-soft: #e5eae8;
+    --border: #dce3e0; --hair: #e7ecea;
+    --code-bg: #edf2f0; --code-ink: #1b2926; --code-key: #0b5f58; --code-str: #7a5a12; --code-com: #7d8d86;
+    --shadow: 0 1px 2px rgba(20,32,28,.04), 0 8px 30px rgba(20,32,28,.05);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1210; --surface: #141b18; --ink: #e7ece9; --muted: #95a39c; --faint: #6d7d76;
+    --accent: #5eead4; --accent-strong: #85f0de; --accent-soft: rgba(94,234,212,.13);
+    --warn: #efb44a; --warn-soft: rgba(239,180,74,.13); --na: #8a958f; --na-soft: rgba(255,255,255,.06);
+    --border: #243029; --hair: #1d2621;
+    --code-bg: #0b100e; --code-ink: #d2ded9; --code-key: #7ff0dd; --code-str: #e2c07a; --code-com: #6d7d76;
+    --shadow: none;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 17px; line-height: 1.62; -webkit-font-smoothing: antialiased;
+  }
+  .serif { font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, ui-serif, serif; }
+  .mono { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace; }
+
+  .page { max-width: 828px; margin: 0 auto; padding: clamp(28px, 6vw, 76px) clamp(20px, 5vw, 40px) 80px; }
+
+  /* ---- header ---- */
+  header { border-bottom: 1px solid var(--border); padding-bottom: 30px; margin-bottom: 40px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-size: 12.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600;
+    color: var(--accent-strong);
+  }
+  .eyebrow .arrow { color: var(--faint); font-weight: 400; }
+  h1.title {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, ui-serif, serif;
+    font-weight: 600; font-size: clamp(2.1rem, 6vw, 3.05rem); line-height: 1.05; letter-spacing: -.01em;
+    text-wrap: balance; margin: 16px 0 0;
+  }
+  .sub { color: var(--muted); margin: 14px 0 0; max-width: 62ch; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .chip {
+    font-size: 13px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--muted); display: inline-flex; gap: 7px; align-items: baseline;
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip .mono { font-size: 12.5px; }
+
+  /* ---- sections ---- */
+  section { margin-top: 46px; }
+  .kicker {
+    display: flex; align-items: baseline; gap: 12px; margin: 0 0 18px;
+  }
+  .kicker .idx {
+    font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: var(--accent-strong);
+    font-weight: 600; letter-spacing: .04em;
+  }
+  h2 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, ui-serif, serif;
+    font-weight: 600; font-size: 1.62rem; letter-spacing: -.01em; margin: 0; text-wrap: balance;
+  }
+  h3 { font-size: 1.02rem; font-weight: 650; margin: 26px 0 10px; letter-spacing: -.005em; }
+  p { margin: 0 0 14px; }
+  p + p { margin-top: 0; }
+  a { color: var(--accent-strong); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  code:not(pre code) {
+    font-family: ui-monospace, Menlo, monospace; font-size: .86em;
+    background: var(--accent-soft); color: var(--accent-strong); padding: 1px 6px; border-radius: 5px;
+  }
+  strong { font-weight: 650; }
+
+  /* ---- TL;DR callout ---- */
+  .lede {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 24px 26px; box-shadow: var(--shadow); margin-top: 8px;
+  }
+  .lede h2 { font-size: 1.05rem; font-family: inherit; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); font-weight: 650; margin-bottom: 14px; }
+  .lede ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 13px; }
+  .lede li { display: grid; grid-template-columns: auto 1fr; gap: 13px; align-items: start; }
+  .lede li .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 9px; }
+  .lede li.pend .dot { background: var(--warn); }
+
+  /* ---- status legend ---- */
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 16px 0 4px; font-size: 13.5px; color: var(--muted); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600;
+    padding: 3px 10px; border-radius: 999px; letter-spacing: .01em; white-space: nowrap;
+  }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .pill.ready { background: var(--accent-soft); color: var(--accent-strong); }
+  .pill.pending { background: var(--warn-soft); color: var(--warn); }
+  .pill.na { background: var(--na-soft); color: var(--na); }
+
+  /* ---- code ---- */
+  .code {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 12px;
+    overflow-x: auto; margin: 14px 0 6px;
+  }
+  .code pre { margin: 0; padding: 18px 20px; }
+  .code code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13.5px; line-height: 1.65; color: var(--code-ink); }
+  .code .k { color: var(--code-key); }
+  .code .s { color: var(--code-str); }
+  .code .c { color: var(--code-com); font-style: italic; }
+
+  /* ---- table ---- */
+  .tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; margin: 16px 0 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; min-width: 560px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--hair); vertical-align: middle; }
+  thead th {
+    font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); font-weight: 650;
+    background: var(--surface);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.src { font-weight: 600; }
+  td .mono { font-size: 12.5px; color: var(--muted); }
+  .dash { color: var(--faint); }
+
+  ul.notes { margin: 6px 0 0; padding-left: 1.15em; }
+  ul.notes li { margin: 7px 0; }
+  ol.todo { margin: 6px 0 0; padding-left: 1.3em; }
+  ol.todo li { margin: 9px 0; padding-left: 4px; }
+
+  footer { margin-top: 54px; padding-top: 26px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; }
+  footer a { color: var(--accent-strong); }
+  footer .row { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+
+  @media (max-width: 520px) {
+    body { font-size: 16px; }
+    .lede li { grid-template-columns: auto 1fr; }
+  }
+</style>
+
+<div class="page">
+  <header>
+    <div class="eyebrow">Habeas <span class="arrow">→</span> Cuéntamo</div>
+    <h1 class="title">Progreso del contrato de datos</h1>
+    <p class="sub">Estado del lado <strong>Habeas</strong>: qué entrega ya, cómo se mapea al contrato, y qué
+      queda pendiente. Todo lo descrito está implementado y cubierto con tests.</p>
+    <div class="chips">
+      <span class="chip">Informe <b>17 jul 2026</b></span>
+      <span class="chip">Extensión <b class="mono">v0.3.0.27</b></span>
+      <span class="chip">Fuentes <span class="mono">minVersion</span> <b class="mono">0.3.0.24</b></span>
+    </div>
+  </header>
+
+  <div class="lede">
+    <h2>En una línea</h2>
+    <ul>
+      <li><span class="dot"></span><div><strong>Banco: listo.</strong> Los movimientos entregan la forma canónica completa — <code>account</code> estructurado, <code>balanceAfter</code>, <code>valueDate</code>, importe decimal con signo y contraparte normalizada.</div></li>
+      <li><span class="dot"></span><div><strong>Bróker: schema <code>investment@2</code> en producción</strong>, con discriminador <code>trade</code> / <code>cash</code>. Trade Republic ya lo emite.</div></li>
+      <li><span class="dot"></span><div><strong>Datos preexistentes: se convierten solos.</strong> Una migración al arrancar re-normaliza el histórico; el siguiente Sync reenvía lo corregido a los sinks re-escribibles.</div></li>
+      <li class="pend"><span class="dot"></span><div><strong>Podéis empezar la ingesta ya.</strong> La forma canónica e <code>investment@2</code> son estables.</div></li>
+    </ul>
+  </div>
+
+  <div class="legend" aria-label="Leyenda de estado">
+    <span class="pill ready">Listo</span> entregándose ya
+    <span class="pill pending">Pendiente</span> no bloquea la ingesta
+    <span class="pill na">N/A</span> no aplica a esa fuente
+  </div>
+
+  <section>
+    <div class="kicker"><span class="idx">A</span><h2>Banco — canónico (<span class="mono">sink.normalize</span>)</h2></div>
+    <p>Con <code>sink.normalize</code> activo, un consumidor recibe la forma uniforme para todas las fuentes.
+      El campo <code>account</code>, antes un string, es ahora un <strong>objeto</strong>:</p>
+    <div class="code"><pre><code>{
+  <span class="k">"id"</span>: <span class="s">"…"</span>, <span class="k">"date"</span>: <span class="s">"2026-03-01"</span>, <span class="k">"amount"</span>: -12.50, <span class="k">"currency"</span>: <span class="s">"EUR"</span>,
+  <span class="k">"direction"</span>: <span class="s">"debit"</span>, <span class="k">"description"</span>: <span class="s">"…"</span>, <span class="k">"counterparty"</span>: <span class="s">"…"</span>,
+  <span class="k">"category"</span>: <span class="s">"…"</span>, <span class="k">"type"</span>: <span class="s">"…"</span>, <span class="k">"source"</span>: <span class="s">"ing-es"</span>,
+  <span class="k">"account"</span>: { <span class="k">"iban"</span>: <span class="s">"ES…"</span>, <span class="k">"last4"</span>: <span class="s">"1332"</span>, <span class="k">"groupId"</span>: <span class="s">"…"</span>, <span class="k">"currency"</span>: <span class="s">"EUR"</span> },
+  <span class="k">"valueDate"</span>: <span class="s">"2026-03-02"</span>,     <span class="c">// solo si la fuente lo captura</span>
+  <span class="k">"balanceAfter"</span>: 1234.56,       <span class="c">// solo si la fuente lo captura</span>
+  <span class="k">"extra"</span>: { … }                 <span class="c">// todos los campos raw de la fuente</span>
+}</code></pre></div>
+    <ul class="notes">
+      <li><code>date</code> <strong>es</strong> la fecha contable → mapeadla a vuestro <code>bookedDate</code>.</li>
+      <li><code>account.last4</code> es el número que el usuario reconoce (últimos 4 de la tarjeta/cuenta), no un id interno.</li>
+      <li><code>amount</code> siempre decimal-mayor con signo; <code>direction</code> = <code>debit</code>/<code>credit</code>.</li>
+    </ul>
+
+    <h3>Cobertura por fuente</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Fuente</th><th><code class="mono">account</code></th><th><code class="mono">valueDate</code></th><th><code class="mono">balanceAfter</code></th></tr></thead>
+        <tbody>
+          <tr><td class="src">ING España</td><td><span class="mono">{iban, last4, currency}</span></td><td><span class="dash">— no en el feed</span></td><td><span class="pill ready">Listo</span></td></tr>
+          <tr><td class="src">Openbank</td><td><span class="mono">{last4, groupId, currency}</span></td><td><span class="dash">— no en el feed</span></td><td><span class="pill ready">Listo</span></td></tr>
+          <tr><td class="src">Revolut</td><td><span class="mono">{groupId=divisa, currency}</span></td><td><span class="pill ready">Listo</span></td><td><span class="pill ready">Listo</span> <span class="mono">·escala minor-unit</span></td></tr>
+          <tr><td class="src">WiZink</td><td><span class="mono">{last4, groupId, currency}</span></td><td><span class="dash">—</span></td><td><span class="pill na">N/A</span></td></tr>
+          <tr><td class="src">Financiera ECI</td><td><span class="mono">{last4, groupId, currency}</span></td><td><span class="dash">—</span></td><td><span class="pill na">N/A</span></td></tr>
+          <tr><td class="src">CaixaBank Consumer</td><td><span class="dash">solo extractos (<span class="mono">invoice@1</span>)</span></td><td><span class="dash">—</span></td><td><span class="pill na">N/A</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="kicker"><span class="idx">B</span><h2>Bróker — <span class="mono">investment@2</span></h2></div>
+    <p>Cada registro es <strong>una</strong> operación, discriminada por <code>recordType</code>. Los campos
+      opcionales se omiten cuando no existen (no van a <code>null</code>); un <code>side</code>/<code>kind</code>
+      no reconocido se conserva verbatim.</p>
+
+    <h3>Operación de valores — <span class="mono">trade</span></h3>
+    <div class="code"><pre><code>{
+  <span class="k">"recordType"</span>: <span class="s">"trade"</span>, <span class="k">"date"</span>: <span class="s">"…"</span>, <span class="k">"currency"</span>: <span class="s">"EUR"</span>,
+  <span class="k">"side"</span>: <span class="s">"buy | sell | dividend | split | transfer_in | transfer_out"</span>,
+  <span class="k">"instrument"</span>: { <span class="k">"isin"</span>: <span class="s">"…"</span>, <span class="k">"ticker"</span>: <span class="s">"…"</span>, <span class="k">"mic"</span>: <span class="s">"…"</span>, <span class="k">"name"</span>: <span class="s">"…"</span>, <span class="k">"assetClass"</span>: <span class="s">"…"</span> },
+  <span class="k">"units"</span>: 10, <span class="k">"price"</span>: 25.5,
+  <span class="k">"grossAmount"</span>: 255, <span class="k">"commission"</span>: 1.2, <span class="k">"taxWithheld"</span>: 0, <span class="k">"netAmount"</span>: 256.2,
+  <span class="k">"exchangeRate"</span>: 1, <span class="k">"settlementAccount"</span>: <span class="s">"…"</span>
+}</code></pre></div>
+
+    <h3>Movimiento de efectivo — <span class="mono">cash</span></h3>
+    <div class="code"><pre><code>{
+  <span class="k">"recordType"</span>: <span class="s">"cash"</span>, <span class="k">"date"</span>: <span class="s">"…"</span>, <span class="k">"currency"</span>: <span class="s">"EUR"</span>,
+  <span class="k">"kind"</span>: <span class="s">"interest | deposit | withdrawal | fee | tax | other"</span>,
+  <span class="k">"amount"</span>: 4.20, <span class="k">"direction"</span>: <span class="s">"credit"</span>, <span class="k">"description"</span>: <span class="s">"…"</span>, <span class="k">"account"</span>: <span class="s">"…"</span>
+}</code></pre></div>
+
+    <p style="margin-top:18px"><strong>Trade Republic</strong> <span class="pill ready">Listo</span> emite ya
+      <code>investment@2</code>: <code>recordType</code> inferido por ISIN, <code>side</code>/<code>kind</code>
+      desde el <code>eventType</code>, <code>instrument{isin,name}</code> y <code>settlementAccount</code>.</p>
+    <p><span class="pill pending">Pendiente</span> <code>units</code>/<code>price</code>/<code>commission</code>/<code>grossAmount</code>/<code>taxWithheld</code>
+      viven en <code>extra.detail</code> como texto localizado (<span class="mono">"1,47 × 8,13 €"</span>): se
+      conservan, pero aún no se parsean a campos estructurados.</p>
+  </section>
+
+  <section>
+    <div class="kicker"><span class="idx">C</span><h2>Conversión de datos ya existentes</h2></div>
+    <ul class="notes">
+      <li><strong>Migración única al arrancar</strong> — re-normaliza en el sitio el histórico ya guardado: los bancos ganan <code>balanceAfter</code>/<code>valueDate</code>; los registros de Trade Republic guardados como <code>transaction@1</code> se promueven a <code>investment@2</code>. Idempotente y sellada para correr una sola vez.</li>
+      <li><strong>Sello por registro</strong> (<code>srcVersion</code>) — cada registro guarda la versión del source con la que se procesó por última vez. Es metadato del store; <strong>no</strong> viaja en el record que os llega.</li>
+      <li><strong>Reenvío a sinks</strong> — tras convertir, se resetea el ledger de entrega solo de los sinks <strong>read/write</strong> (carpeta / Drive / Dropbox / WebDAV / S3) → el siguiente Sync reescribe el manifiesto con la forma nueva. Los sinks de una vía (descarga, HTTP push) no se tocan.</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="kicker"><span class="idx">D</span><h2>Qué podéis hacer ya en Cuéntamo</h2></div>
+    <ol class="todo">
+      <li>Implementar <strong>una</strong> ingesta contra la forma canónica (banco) + <code>investment@2</code> (bróker) — misma forma para todas las fuentes.</li>
+      <li>Idempotencia por <code>internalId</code> (Habeas ya deduplica, pero toleradlo por si hay reenvíos tras la migración).</li>
+      <li>Mapear <code>date → bookedDate</code>, <code>account.last4</code>/<code>account.iban</code> a vuestra identidad de cuenta, y <code>direction</code> al signo.</li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="kicker"><span class="idx">E</span><h2>Pendiente conocido <span class="pill pending" style="margin-left:2px">no bloquea</span></h2></div>
+    <ul class="notes">
+      <li>Trade Republic: parseo estructurado de <code>units</code>/<code>price</code>/<code>commission</code> desde <code>extra.detail</code>.</li>
+      <li><code>valueDate</code>/<code>balanceAfter</code> no existen en algunos feeds (WiZink / FECI / CaixaBank) — es esperado, no un fallo.</li>
+      <li>Más fuentes de bróker (<code>investment@2</code>) por grabación.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <div class="row">
+      <span>Contrato + brecha por fuente: <code>cuentamo-data-contract.md</code> (§F, §G)</span>
+      <span>Forma canónica: <code>consumers/README.md</code></span>
+    </div>
+    <p style="margin:14px 0 0">Extensión <strong class="mono">v0.3.0.27</strong> · fuentes financieras <span class="mono">minVersion</span> <strong class="mono">0.3.0.24</strong>.</p>
+  </footer>
+</div>
