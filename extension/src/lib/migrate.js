@@ -18,7 +18,7 @@ import { applyNormalize } from './normalize.js';
 import { normalizeDate, normalizeAmount, minorExp } from '../runtime/inventory.js';
 
 const MARK_KEY = 'habeas:storeMigration';
-const CURRENT = 'renormalize-1'; // bump to force a re-run when normalization changes again
+const CURRENT = 'renormalize-2'; // bump to force a re-run when normalization changes again (2: Trade Republic units/price/commission)
 
 // Read/write sinks: cumulative-manifest, re-projectable, overwrite-safe. NOT download (ephemeral ZIP) / http
 // (POST-only push) — those are one-way, so re-delivering would spam downloads / duplicate ingest POSTs.
@@ -26,7 +26,21 @@ export const RW_SINK_TYPES = new Set(['local-folder', 'drive', 'dropbox', 'webda
 
 const MONEY = new Set(['total', 'amount', 'balanceAfter', 'price', 'grossAmount', 'commission', 'taxWithheld', 'netAmount', 'units']);
 const DATES = new Set(['date', 'valueDate']);
-const getPath = (o, p) => String(p).split('.').reduce((x, k) => (x == null ? x : x[k]), o);
+// Resolve a dotted path with optional array selectors `key[field=value].sub` — mirrors the runtime's get()
+// so migration backfills can read nested/selected raw values (e.g. Trade Republic's units/price out of
+// record.extra.detail.sections[title=Transaction].data[title=Shares].detail.text).
+function getPath(obj, path) {
+  if (obj == null || path == null) return undefined;
+  const s = String(path);
+  if (s.indexOf('.') < 0 && s.indexOf('[') < 0) return obj[s];
+  return s.split('.').reduce((o, k) => {
+    if (o == null) return undefined;
+    const m = k.match(/^([^[]+)\[([^=\]]+)=([^\]]*)\]$/);
+    if (!m) return o[k];
+    const arr = o[m[1]];
+    return Array.isArray(arr) ? arr.find((e) => e != null && String(getPath(e, m[2])) === m[3]) : undefined;
+  }, obj);
+}
 
 // A source needs re-normalization only if its CURRENT adapter emits fields/schema that older stored records
 // couldn't have carried: the investment@2 broker schema, or the new bank/broker mappings.
@@ -55,7 +69,7 @@ export function renormalizeRecord(record, eff) {
   const fromRaw = []; // ONLY the fields pulled from record.extra (raw) — these still need normalizing/scaling
   for (const [norm, spec] of Object.entries(fields)) {
     if (doc[norm] != null && doc[norm] !== '') continue;
-    if (typeof spec !== 'string' || /[{[]/.test(spec)) continue; // templated/selector path: not invertible offline
+    if (typeof spec !== 'string' || spec.indexOf('{') >= 0) continue; // templated path ({group.*}): not invertible offline
     const raw = getPath(extra, spec);
     if (raw != null && raw !== '') { doc[norm] = raw; fromRaw.push(norm); continue; }
     // consumed & deduped out of extra → reuse a sibling field mapping the SAME raw path that the record kept

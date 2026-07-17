@@ -11,6 +11,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Trade Republic trades now carry structured `units` / `price` / `commission`** — parsed from the
+  timelineDetailV2 "Transaction" table (Shares / Share price / Fee) via the existing array-selector field
+  paths; the labels are stable because the WS connect requests `locale: "en"`, and a "Free" fee resolves to 0.
+  The store migration's path resolver gained the same array-selector support (and no longer skips `[...]`
+  paths), and its marker was bumped (`renormalize-2`) so already-stored Trade Republic records backfill the
+  breakdown offline from `record.extra.detail` — no re-sync needed.
 - **Per-record source-version stamp in the canonical store** (`entry.srcVersion`) — every store entry now
   records the SOURCE (adapter) version that last built or re-normalized its record (store metadata, never
   inside the delivered `record`, so consumer manifests are unchanged). Written on every capture/delivery and

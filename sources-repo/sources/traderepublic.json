@@ -6,7 +6,7 @@
   "domain": "traderepublic.com",
   "country": "global",
   "categories": ["banking", "investment"],
-  "version": "2026-07-16",
+  "version": "2026-07-17",
   "minVersion": "0.3.0.24",
   "keepRaw": true,
   "match": ["https://app.traderepublic.com/*"],
@@ -55,7 +55,10 @@
         "counterparty": "title",
         "instrumentName": "title",
         "type": "eventType",
-        "settlementAccount": "cashAccountNumber"
+        "settlementAccount": "cashAccountNumber",
+        "units": "detail.sections[title=Transaction].data[title=Shares].detail.text",
+        "price": "detail.sections[title=Transaction].data[title=Share price].detail.text",
+        "commission": "detail.sections[title=Transaction].data[title=Fee].detail.text"
       }
     },
     {
@@ -82,6 +85,7 @@
     }
   ],
   "changelog": [
+    { "version": "2026-07-17", "changes": "Parse the trade breakdown into structured fields: units (Shares), price (Share price) and commission (Fee) from the timelineDetailV2 'Transaction' table (English labels — the WS connect requests locale 'en'). 'Free' fees resolve to 0. Requires extension >= 0.3.0.24." },
     { "version": "2026-07-16", "changes": "Timeline stream now emits investment@2 (broker trade/cash): recordType inferred from the extracted ISIN, side/kind mapped from the timeline eventType, instrument{isin,name}, and the settlement account (cashAccountNumber). Trade quantity/price/fees remain in record.extra.detail (localized text) pending structured parsing. Requires extension >= 0.3.0.24." },
     { "version": "2026-07-15.3", "changes": "Add monthly documents: the account statement PDF (accountstatement/statement?fromDate&toDate) and the monthly transactions CSV (async export job: POST request → poll status → download), per completed month." },
     { "version": "2026-07-15.2", "changes": "Extract the traded instrument ISIN from the timeline icon into record.isin." },

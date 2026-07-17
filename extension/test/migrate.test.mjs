@@ -15,7 +15,7 @@ const TR = {
       kind: { from: 'type', map: { INTEREST_PAYOUT: 'interest', BANK_TRANSACTION_INCOMING: 'deposit' } },
     },
   },
-  fields: { internalId: 'id', date: 'timestamp', amount: 'amount.value', currency: 'amount.currency', description: 'title', counterparty: 'title', instrumentName: 'title', type: 'eventType', settlementAccount: 'cashAccountNumber' },
+  fields: { internalId: 'id', date: 'timestamp', amount: 'amount.value', currency: 'amount.currency', description: 'title', counterparty: 'title', instrumentName: 'title', type: 'eventType', settlementAccount: 'cashAccountNumber', units: 'detail.sections[title=Transaction].data[title=Shares].detail.text', price: 'detail.sections[title=Transaction].data[title=Share price].detail.text', commission: 'detail.sections[title=Transaction].data[title=Fee].detail.text' },
 };
 const ING = { id: 'ing-es', service: 'ing', schema: 'transaction@1', version: '2026-07-16', keepRaw: true, currency: 'EUR', categories: ['banking'], fields: { internalId: 'transactionLocalUUID', date: 'transactionDate', amount: 'amount', description: 'description', type: 'transactionCode', account: '{group.iban}', balanceAfter: 'balance' } };
 const REV = { id: 'revolut', service: 'revolut', schema: 'transaction@1', keepRaw: true, minorUnits: true, categories: ['banking'], fields: { internalId: 'id', date: 'startedDate', amount: 'amount', currency: 'currency', description: 'description', type: 'type', balanceAfter: 'balance', valueDate: 'completedDate' } };
@@ -38,6 +38,26 @@ test('TR: an old transaction@1 record is upgraded to an investment@2 TRADE', () 
   assert.equal(record.netAmount, -20);
   assert.equal(record.settlementAccount, 'ACC-DEMO'); // pulled from extra by the adapter's field mapping
   assert.ok(!('type' in record), 'transaction@1-only fields are dropped in the investment@2 shape');
+});
+
+test('TR: units/price/commission are backfilled OFFLINE from extra.detail (array-selector path)', () => {
+  // an already-investment@2 record (e.g. from an earlier migration) whose extra.detail holds the breakdown
+  const stored = {
+    internalId: 'T9', recordType: 'trade', date: '2026-06-16', currency: 'EUR', side: 'buy', netAmount: -25,
+    instrument: { isin: 'XX0000000009', name: 'Demo ETF' },
+    extra: { detail: { sections: [
+      { type: 'table', title: 'Transaction', data: [
+        { title: 'Shares', detail: { text: '2.5' } },
+        { title: 'Share price', detail: { text: '€10.00' } },
+        { title: 'Fee', detail: { text: 'Free' } },
+      ] },
+    ] } },
+  };
+  const { record, changed } = renormalizeRecord(stored, TR);
+  assert.equal(changed, true);
+  assert.equal(record.units, 2.5);
+  assert.equal(record.price, 10);
+  assert.equal(record.commission, 0);
 });
 
 test('TR: an old transfer/interest record becomes an investment@2 CASH movement', () => {

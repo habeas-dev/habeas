@@ -161,7 +161,7 @@
       queda pendiente. Todo lo descrito está implementado y cubierto con tests.</p>
     <div class="chips">
       <span class="chip">Informe <b>17 jul 2026</b></span>
-      <span class="chip">Extensión <b class="mono">v0.3.0.27</b></span>
+      <span class="chip">Extensión <b class="mono">v0.3.0.28</b></span>
       <span class="chip">Fuentes <span class="mono">minVersion</span> <b class="mono">0.3.0.24</b></span>
     </div>
   </header>
@@ -242,10 +242,13 @@
 
     <p style="margin-top:18px"><strong>Trade Republic</strong> <span class="pill ready">Listo</span> emite ya
       <code>investment@2</code>: <code>recordType</code> inferido por ISIN, <code>side</code>/<code>kind</code>
-      desde el <code>eventType</code>, <code>instrument{isin,name}</code> y <code>settlementAccount</code>.</p>
-    <p><span class="pill pending">Pendiente</span> <code>units</code>/<code>price</code>/<code>commission</code>/<code>grossAmount</code>/<code>taxWithheld</code>
-      viven en <code>extra.detail</code> como texto localizado (<span class="mono">"1,47 × 8,13 €"</span>): se
-      conservan, pero aún no se parsean a campos estructurados.</p>
+      desde el <code>eventType</code>, <code>instrument{isin,name}</code>, <code>settlementAccount</code>, y
+      <strong><code>units</code>/<code>price</code>/<code>commission</code></strong> parseados de la tabla
+      "Transaction" de <code>timelineDetailV2</code> (etiquetas estables porque pedimos <code>locale:&nbsp;"en"</code>;
+      comisión "Free" → 0). Los registros ya guardados backfillean el desglose <strong>offline</strong> en la
+      migración — sin re-sync.</p>
+    <p><span class="pill pending">Pendiente menor</span> <code>grossAmount</code>/<code>taxWithheld</code> solo
+      cuando la operación los expone (ventas / dividendos).</p>
   </section>
 
   <section>
@@ -269,7 +272,7 @@
   <section>
     <div class="kicker"><span class="idx">E</span><h2>Pendiente conocido <span class="pill pending" style="margin-left:2px">no bloquea</span></h2></div>
     <ul class="notes">
-      <li>Trade Republic: parseo estructurado de <code>units</code>/<code>price</code>/<code>commission</code> desde <code>extra.detail</code>.</li>
+      <li>Trade Republic: <code>grossAmount</code>/<code>taxWithheld</code> solo cuando la operación los expone (ventas / dividendos).</li>
       <li><code>valueDate</code>/<code>balanceAfter</code> no existen en algunos feeds (WiZink / FECI / CaixaBank) — es esperado, no un fallo.</li>
       <li>Más fuentes de bróker (<code>investment@2</code>) por grabación.</li>
     </ul>
@@ -280,6 +283,6 @@
       <span>Contrato + brecha por fuente: <code>cuentamo-data-contract.md</code> (§F, §G)</span>
       <span>Forma canónica: <code>consumers/README.md</code></span>
     </div>
-    <p style="margin:14px 0 0">Extensión <strong class="mono">v0.3.0.27</strong> · fuentes financieras <span class="mono">minVersion</span> <strong class="mono">0.3.0.24</strong>.</p>
+    <p style="margin:14px 0 0">Extensión <strong class="mono">v0.3.0.28</strong> · fuentes financieras <span class="mono">minVersion</span> <strong class="mono">0.3.0.24</strong>.</p>
   </footer>
 </div>

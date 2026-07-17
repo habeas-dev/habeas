@@ -78,6 +78,40 @@ test('ws transport: keepRaw keeps the full timeline item + attached detail in re
   assert.equal(d2.record.extra.detail.sections[0].title, 'Resumen');
 });
 
+test('trade breakdown: units/price/commission parsed from the timelineDetailV2 Transaction table', async () => {
+  // synthetic detail mirroring the real shape (English labels — the WS connect requests locale 'en')
+  const detail = { id: 't-detail', sections: [
+    { type: 'header', title: 'You saved', data: { status: 'executed' } },
+    { type: 'table', title: 'Overview', data: [ { title: 'Order Type', detail: { text: 'Savings plan' } }, { title: 'Asset', detail: { text: 'Demo ETF' } } ] },
+    { type: 'table', title: 'Transaction', data: [
+      { title: 'Shares', detail: { text: '2.5' } },
+      { title: 'Share price', detail: { text: '€10.00' } },
+      { title: 'Fee', detail: { text: 'Free' } },
+      { title: 'Total', detail: { text: '€25.00' } },
+    ] },
+  ] };
+  const trade = { ...item('tb1', '2026-06-16T09:00:00.000+0000', -25, 'EUR', 'Demo ETF', 'TRADING_SAVINGSPLAN_EXECUTED', 'logos/IE00B53SZB19/v2'), detail };
+  const [d] = await listInventory(EFF, auth, mkNet({ items: [trade] }), {});
+  assert.equal(d.record.recordType, 'trade');
+  assert.equal(d.record.units, 2.5);
+  assert.equal(d.record.price, 10);
+  assert.equal(d.record.commission, 0);        // "Free" → 0
+  assert.equal(d.record.netAmount, -25);
+  assert.equal(d.record.instrument.isin, 'IE00B53SZB19');
+});
+
+// a paid-fee trade parses the euro fee amount
+test('trade breakdown: a euro fee is parsed to a number', async () => {
+  const detail = { sections: [ { type: 'table', title: 'Transaction', data: [
+    { title: 'Shares', detail: { text: '1' } }, { title: 'Share price', detail: { text: '€1,234.56' } },
+    { title: 'Fee', detail: { text: '€1.20' } }, { title: 'Total', detail: { text: '€1,235.76' } },
+  ] } ] };
+  const trade = { ...item('tb2', '2026-06-17T09:00:00.000+0000', -1235.76, 'EUR', 'Demo Stock', 'SAVINGS_PLAN_EXECUTED', 'logos/IE00B53SZB19/v2'), detail };
+  const [d] = await listInventory(EFF, auth, mkNet({ items: [trade] }), {});
+  assert.equal(d.record.price, 1234.56); // grouped thousands parsed
+  assert.equal(d.record.commission, 1.2);
+});
+
 // Monthly documents (invoice stream): the account statement PDF (direct GET, per month) and the monthly
 // transactions CSV (async export job: POST → poll status → download). Synthetic per-completed-month items.
 test('statements: account statement PDF is a direct per-month GET', async () => {

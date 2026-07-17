@@ -1,7 +1,7 @@
 # Habeas → Cuéntamo — Informe de progreso (2026-07-17)
 
 > Estado del **lado Habeas** del contrato de datos ([`cuentamo-data-contract.md`](cuentamo-data-contract.md)).
-> Todo lo descrito está implementado y verificado con tests; se entrega en la extensión **v0.3.0.27**.
+> Todo lo descrito está implementado y verificado con tests; se entrega en la extensión **v0.3.0.28**.
 > Las fuentes financieras actualizadas requieren extensión **≥ 0.3.0.24** (`minVersion`).
 
 ## TL;DR
@@ -75,9 +75,10 @@ Cada registro es **una** operación, discriminada por `recordType`:
 - Campos opcionales se omiten cuando no existen (no van a `null`).
 
 **Trade Republic** emite ya `investment@2`: `recordType` inferido por ISIN, `side`/`kind` mapeados desde el
-`eventType`, `instrument{isin,name}`, y `settlementAccount`. **Pendiente (no bloqueante):** `units`/`price`/
-`commission`/`grossAmount`/`taxWithheld` viven en `record.extra.detail` como texto localizado
-("1,47 × 8,13 €"); se conservan, pero aún no se parsean a campos estructurados.
+`eventType`, `instrument{isin,name}`, `settlementAccount`, y **`units`/`price`/`commission`** parseados de la
+tabla "Transaction" de `timelineDetailV2` (etiquetas estables porque pedimos `locale: "en"`; comisión "Free" →
+0). Los registros ya guardados backfillean el desglose **offline** en la migración (sin re-sync).
+_Pendiente menor:_ `grossAmount`/`taxWithheld` solo cuando la operación los expone.
 
 ## C. Conversión de datos ya existentes
 
@@ -100,7 +101,7 @@ Cada registro es **una** operación, discriminada por `recordType`:
 
 ## E. Pendiente conocido (no bloquea la ingesta)
 
-- Trade Republic: parseo estructurado de `units`/`price`/`commission` desde `extra.detail`.
+- Trade Republic: `grossAmount`/`taxWithheld` solo cuando la operación los expone (ventas/dividendos).
 - `valueDate`/`balanceAfter` no existen en algunos feeds (WiZink/FECI/CaixaBank) — es esperado, no un fallo.
 - Más fuentes de bróker (`investment@2`) por grabación.
 
@@ -108,4 +109,4 @@ Cada registro es **una** operación, discriminada por `recordType`:
 
 - Contrato + análisis de brecha por fuente: [`cuentamo-data-contract.md`](cuentamo-data-contract.md) (§F, §G).
 - Forma canónica y `sink.normalize`: [`README.md`](README.md).
-- Extensión: **v0.3.0.27** · fuentes financieras `minVersion` **0.3.0.24**.
+- Extensión: **v0.3.0.28** · fuentes financieras `minVersion` **0.3.0.24**.
