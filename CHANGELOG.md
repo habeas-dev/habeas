@@ -11,11 +11,17 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Changed
-- **Clearer contribution conversation** (Settings → My contributions) — messages now render as separated
-  bubbles sided by sender (team vs you) instead of a run-on list, and the source the team attached shows its
-  **version** with an unmistakable state: a highlighted "New version" until that exact version has been
-  installed here (then "This version installed", with a Reinstall button). So a collaborating contributor can
-  tell at a glance whether the team generated a new source version.
+- **Clearer, less technical contribution conversation** (Settings → My contributions):
+  - Messages render as separated bubbles sided by sender (team vs you) instead of a run-on list.
+  - The source the team attached shows its version with an unmistakable state: a highlighted "New version"
+    until that exact version has been installed here (then "This version installed", with a Reinstall button),
+    so a collaborating contributor can tell at a glance whether the team built a new version.
+  - **"Report a problem" is always available** (it no longer vanishes after one report), so the contributor
+    can flag each new failure; each report sends the freshest technical trace.
+  - **A contributor is no longer bombarded with technical detail.** A report shows them only a plain "it didn't
+    work"; the raw diagnostic (server errors, header/param names) rides hidden for the team. For transparency
+    it is not secret: a **"See what's sent"** button reveals the exact payload before sending, and each sent
+    report keeps a "See technical detail" toggle.
 
 ### Added
 - **Per-group templating of `api.pdf.headers`** (`runtime/inventory.js#fetchPdf`) — a document endpoint can now

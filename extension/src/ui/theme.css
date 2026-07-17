@@ -160,6 +160,9 @@ td.files .pill.file { margin-right: 3px; }
 .srcbox { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .srcbox.newver { border-color: var(--accent); background: var(--accent-100); }
 .srcbox .ver { font-size: 12px; color: var(--muted); font-weight: 600; }
+/* The exact technical detail a "report a problem" sends — hidden by default, revealed behind a button so the
+   contributor can see what leaves their machine (transparency), without being bombarded by it. */
+.diagbox { margin-top: 6px; padding: 8px 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; font-size: 11px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; color: var(--muted); max-height: 150px; overflow: auto; }
 /* Group/account column: hidden unless the source spans ≥2 groups (render() toggles #tbl.has-groups). */
 .col-group { display: none; }
 #tbl.has-groups .col-group { display: table-cell; white-space: nowrap; }

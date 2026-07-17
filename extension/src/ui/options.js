@@ -504,6 +504,12 @@ async function installContribSource(adapter) {
   await upsert('datasources', { id: adapter.id, adapter: adapter.id, enabled: true, options: {} });
   return true;
 }
+// A "Report a problem" message shows the contributor ONLY a plain sentence; the raw technical diagnostic (a
+// server error, header names…) rides after this marker — kept for the team (who read the thread raw) and
+// hidden from the contributor, who can't act on it and shouldn't be bombarded with it.
+const TEAM_DIAG = '\n\n⟦for the Habeas team⟧ ';
+const TEAM_DIAG_SPLIT = '⟦for the Habeas team⟧';
+
 async function openThread(id) {
   const el = document.getElementById('thr-' + id); if (!el) return;
   if (!el.hidden) { el.hidden = true; return; }
@@ -514,11 +520,18 @@ async function openThread(id) {
   if (last) await markSeen(id, last.at);
   // Messages as clearly-separated bubbles, sided by sender (team left, you right).
   el.innerHTML = data.messages.length
-    ? `<div class="thread">${data.messages.map((m) => {
+    ? `<div class="thread">${data.messages.map((m, mi) => {
       const mine = m.from !== 'team';
-      return `<div class="msg ${mine ? 'you' : 'team'}"><div><span class="who">${mine ? t('contrib_you') : t('contrib_team')}</span><span class="when">${esc(String(m.at || '').slice(0, 16))}</span></div><div class="body">${esc(m.text)}</div></div>`;
+      const parts = String(m.text || '').split(TEAM_DIAG_SPLIT);
+      const shown = parts[0].trim();                          // the plain message the contributor reads
+      const detail = parts.length > 1 ? parts.slice(1).join(TEAM_DIAG_SPLIT).trim() : ''; // the technical trace, if any
+      return `<div class="msg ${mine ? 'you' : 'team'}"><div><span class="who">${mine ? t('contrib_you') : t('contrib_team')}</span><span class="when">${esc(String(m.at || '').slice(0, 16))}</span></div>`
+        + `<div class="body">${esc(shown)}</div>`
+        + (detail ? `<button class="link" data-peek="${mi}">${t('contrib_show_detail')}</button><pre class="diagbox" hidden data-detail="${mi}">${esc(detail)}</pre>` : '')
+        + `</div>`;
     }).join('')}</div>`
     : `<div class="muted">${t('contrib_no_msgs')}</div>`;
+  el.querySelectorAll('[data-peek]').forEach((b) => { b.onclick = () => { const d = el.querySelector(`[data-detail="${b.dataset.peek}"]`); if (d) d.hidden = !d.hidden; }; });
   // The team attached a source built from this recording → let the contributor install + test it in one click.
   // Show its VERSION and whether it's a version they haven't installed yet, so "did they build a new one?" is
   // unambiguous (the box highlights + says "New version" until this exact version has been installed here).
@@ -527,6 +540,8 @@ async function openThread(id) {
     let installedVer = '';
     try { const o = await chrome.storage.local.get('habeas:contribVer:' + id); installedVer = o['habeas:contribVer:' + id] || ''; } catch (e) {}
     const isNew = ver !== installedVer;
+    // The service name the contributor recognizes, a small version label, and a plain "new / installed" state.
+    // (No technical detail about WHAT changed — never "missing field/param/header": they can't act on it.)
     el.innerHTML += `<div class="srcbox${isNew ? ' newver' : ''}" id="srcbox-${esc(id)}">
       <div><b>${esc(data.source.name || data.source.id)}</b> ${ver ? `<span class="ver">v${esc(ver)}</span>` : ''}
         ${isNew ? `<span class="pill new">${t('contrib_new_version')}</span>` : `<span class="pill sent">✓ ${t('contrib_installed_ver')}</span>`}</div>
@@ -534,20 +549,40 @@ async function openThread(id) {
       <button class="accent" id="inst-${esc(id)}" style="margin-top:8px">${isNew ? t('contrib_install') : t('contrib_reinstall')}</button>
       <span id="inststat-${esc(id)}" class="muted" style="font-size:12px"></span></div>`;
   }
-  // If a List test for this source failed, offer to report the (redacted) diagnostic to the team — no DevTools.
-  let diag = null;
-  if (data.sourceId) { try { const o = await chrome.storage.local.get('habeas:diag:' + data.sourceId); diag = o['habeas:diag:' + data.sourceId]; } catch (e) {} }
-  if (diag && diag.error) {
-    el.innerHTML += `<div style="margin-top:8px"><button id="rep-diag-${esc(id)}">${t('contrib_report')}</button> <span id="repstat-${esc(id)}" class="muted" style="font-size:12px"></span></div>`;
+  // Report a problem — ALWAYS available while a source is installed to test, so it never vanishes after one
+  // report and the contributor can flag EACH new failure. The plain "it didn't work" goes to the thread; the
+  // latest technical trace (read at click time, so it's the newest) rides hidden for the team.
+  if (data.source && data.source.id) {
+    el.innerHTML += `<div style="margin-top:8px"><button id="rep-diag-${esc(id)}">${t('contrib_report')}</button>
+      <button class="link" id="rep-peek-${esc(id)}">${t('contrib_report_peek')}</button>
+      <span id="repstat-${esc(id)}" class="muted" style="font-size:12px"></span>
+      <pre id="rep-detail-${esc(id)}" class="diagbox" hidden></pre></div>`;
   }
   el.innerHTML += `<div style="margin-top:8px"><textarea id="rep-${esc(id)}" rows="2" style="width:100%;box-sizing:border-box" placeholder="${t('contrib_reply_ph')}"></textarea>
     <button class="primary" data-send="${esc(id)}">${t('contrib_reply')}</button></div>`;
-  if (diag && diag.error) {
+  if (data.source && data.source.id) {
+    // Read the CURRENT technical trace (freshest failure) — used both to preview and to send.
+    const readDiag = async () => { if (!data.sourceId) return null; try { const o = await chrome.storage.local.get('habeas:diag:' + data.sourceId); return o['habeas:diag:' + data.sourceId] || null; } catch (e) { return null; } };
+    // "See what's sent": full transparency, behind a button — the exact message (plain line + the technical
+    // trace) that would go to the team, so the contributor is never suspicious about what leaves their machine.
+    const pk = document.getElementById('rep-peek-' + id);
+    if (pk) pk.onclick = async () => {
+      const box = document.getElementById('rep-detail-' + id); if (!box) return;
+      if (!box.hidden) { box.hidden = true; return; }
+      const d = await readDiag();
+      box.textContent = t('contrib_report_prefix') + (d && d.error ? '\n\n' + scrubText(d.error).slice(0, 500) : '\n\n(' + t('contrib_report_none') + ')');
+      box.hidden = false;
+    };
     const rb = document.getElementById('rep-diag-' + id);
     if (rb) rb.onclick = async () => {
       rb.disabled = true;
-      try { await replyHandoff(id, sub.id, t('contrib_report_prefix') + ' ' + scrubText(diag.error).slice(0, 500)); await chrome.storage.local.remove('habeas:diag:' + data.sourceId); const st = document.getElementById('repstat-' + id); if (st) st.textContent = t('contrib_report_sent'); await renderContributions(); }
-      catch (e) { rb.disabled = false; }
+      const d = await readDiag();
+      const tail = d && d.error ? TEAM_DIAG + scrubText(d.error).slice(0, 500) : '';
+      try {
+        await replyHandoff(id, sub.id, t('contrib_report_prefix') + tail);
+        if (d && data.sourceId) await chrome.storage.local.remove('habeas:diag:' + data.sourceId);
+        el.hidden = true; await openThread(id); // re-render: the report appears + the button stays for the next one
+      } catch (e) { rb.disabled = false; }
     };
   }
   if (data.source && data.source.id) {
