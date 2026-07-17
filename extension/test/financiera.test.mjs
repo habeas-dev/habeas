@@ -98,7 +98,7 @@ test('extractos: statement PDF is a POST generate-file with {} body + json, base
   let url = null, sent = null;
   globalThis.fetch = async (u, i) => { url = String(u); sent = i; return { ok: true, status: 200, text: async () => JSON.stringify({ file: B64 }) }; };
   // a listed statement doc: {date} comes from the RAW item (DD/MM/YYYY, as the API returns it), not the ISO record
-  const doc = { internalId: '01/08/2022', _raw: { date: '01/08/2022', description: 'Extracto' }, _group: { id: 'C0001' } };
+  const doc = { internalId: '01/08/2022', _raw: { date: '01/08/2022', description: 'Extracto' }, _group: { id: 'C0001', pan: 'AbC+dEf/gHi012=' } };
   const blob = await fetchPdf(EFF, { merged: {}, byPath: {}, ctx: {} }, doc);
   assert.equal(Buffer.from(await blob.arrayBuffer()).toString(), REAL, 'base64 file decoded round-trip');
   assert.ok(url.includes('/contracts/C0001/shopping-summaries/generate-file'), url);
@@ -106,4 +106,5 @@ test('extractos: statement PDF is a POST generate-file with {} body + json, base
   assert.equal(sent.method, 'POST');
   assert.equal(sent.body, '{}');
   assert.match(String(sent.headers['content-type']), /application\/json/);
+  assert.equal(sent.headers['eci-custom-encrypted-pan'], 'AbC+dEf/gHi012=', 'per-card PAN header sent VERBATIM (base64 not URL-encoded)');
 });

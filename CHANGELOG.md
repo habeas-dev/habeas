@@ -11,6 +11,17 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Per-group templating of `api.pdf.headers`** (`runtime/inventory.js#fetchPdf`) — a document endpoint can now
+  carry `{group.*}` in its headers (RAW, like `api.list.headers`, so a base64 value is not URL-encoded), for a
+  per-document fetch that needs the account/card's own header (e.g. a statement PDF that requires the card's
+  encrypted-PAN header, not just the list).
+- **Capture-replay harness** (`scripts/replay-capture.mjs`) — runs an authored adapter's runtime against a
+  handoff's captured samples and reports, per output, whether it lists + fetches documents. Catches requests
+  the adapter builds that the SPA never made: a missing/wrong query param or POST body is a hard failure with
+  the exact field named; a header the SPA also sent is a warning (a header can't be proven required from a
+  capture); redaction artifacts (truncated arrays, redacted base64) are tolerated (the request is verified
+  even when the bytes can't be). Run it before shipping a source so the contributor's live test is the final
+  confirmation, not the debugging loop. `node scripts/replay-capture.mjs --handoff <id> [--source <file>]`.
 - **Computed calendar-date tokens for request values** (`runtime/inventory.js#tmplDates`) — a path/param/body
   value can use `{today}`, `{monthStart}`, `{monthEnd}`, each with an optional `:FORMAT` (e.g.
   `{monthEnd:DD/MM/YYYY}`, default ISO). For SPAs that stamp the current billing/period date into a request

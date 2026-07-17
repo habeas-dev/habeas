@@ -907,7 +907,10 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
   // base64Field: the document comes back INSIDE a JSON response (e.g. IKEA's GraphQL
   // `data.receipt.receiptPdf` holds the PDF base64-encoded) — read JSON, not a blob.
   const wantBlob = !pdf.base64Field;
-  const init = { method: pdf.method || 'GET', headers: { accept: wantBlob ? '*/*' : 'application/json', ...(pdf.headers || {}), ...headersFor(auth, path.split('?')[0]) }, credentials: credOf(adapter), wantBlob };
+  // pdf.headers may carry {group.*} (RAW, like list.headers — a per-card encrypted-PAN header must not be
+  // URL-encoded), so a document endpoint that needs the card's own header (FECI statements) can send it.
+  const phdr = {}; for (const k of Object.keys(pdf.headers || {})) phdr[k] = tmplGroupRaw(pdf.headers[k], doc && doc._group);
+  const init = { method: pdf.method || 'GET', headers: { accept: wantBlob ? '*/*' : 'application/json', ...phdr, ...headersFor(auth, path.split('?')[0]) }, credentials: credOf(adapter), wantBlob };
   if (init.method !== 'GET' && pdf.body != null) {
     init.body = fillDocTmpl(pdf.body, doc, internalId, csrf, auth);
     init.headers['content-type'] = pdf.contentType || 'application/json';

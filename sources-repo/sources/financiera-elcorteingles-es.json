@@ -9,8 +9,8 @@
     "card",
     "loan"
   ],
-  "version": "2026-07-17.1",
-  "minVersion": "0.4.1.1",
+  "version": "2026-07-17.2",
+  "minVersion": "0.4.1.2",
   "keepRaw": true,
   "contributors": [
     "David Marín"
@@ -120,6 +120,9 @@
           "method": "POST",
           "body": "{}",
           "contentType": "application/json",
+          "headers": {
+            "eci-custom-encrypted-pan": "{group.pan}"
+          },
           "base64Field": "file",
           "ext": "pdf"
         }
@@ -133,8 +136,12 @@
   ],
   "changelog": [
     {
+      "version": "2026-07-17.2",
+      "changes": "Fix extractos statement PDF download (the real cause): the generate-file POST also needs the per-card eci-custom-encrypted-pan header (same as movements), which the server requires to return the file. Sent via api.pdf.headers {group.pan}. Requires extension >= 0.4.1.2."
+    },
+    {
       "version": "2026-07-17.1",
-      "changes": "Fix extractos statement PDF download: the generate-file POST now sends the {} JSON body + application/json content-type the SPA sends (it returned nothing without them). datePurchase already correct (the raw item date, DD/MM/YYYY)."
+      "changes": "extractos generate-file POST sends the {} JSON body + application/json content-type the SPA sends. datePurchase correct (the raw item date, DD/MM/YYYY)."
     },
     {
       "version": "2026-07-17",
