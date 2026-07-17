@@ -90,7 +90,7 @@ section .lead { color: var(--muted); font-size: 17px; max-width: 640px; margin-b
 .card h3 { font-size: 18px; margin-bottom: 8px; }
 .card p { color: var(--muted); margin: 0; font-size: 15px; }
 .card .ic { font-size: 22px; margin-bottom: 10px; }
-.card .trust-note { font-size: 13px; line-height: 1.55; color: var(--muted); text-align: left; margin-top: 14px; }
+.card .trust-note { font-size: 13px; line-height: 1.55; color: var(--muted); text-align: left; margin-top: 26px; }
 .card .trust-note + .trust-note { margin-top: 10px; }
 .section-badge {
   display: inline-flex;
