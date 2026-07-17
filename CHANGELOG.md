@@ -11,12 +11,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
-- **Trade Republic trades now carry structured `units` / `price` / `commission`** — parsed from the
-  timelineDetailV2 "Transaction" table (Shares / Share price / Fee) via the existing array-selector field
-  paths; the labels are stable because the WS connect requests `locale: "en"`, and a "Free" fee resolves to 0.
-  The store migration's path resolver gained the same array-selector support (and no longer skips `[...]`
-  paths), and its marker was bumped (`renormalize-2`) so already-stored Trade Republic records backfill the
-  breakdown offline from `record.extra.detail` — no re-sync needed.
+- **Store migration resolves array-selector field paths** — the one-time canonical-store migration
+  (`lib/migrate.js`) now backfills nested/selected raw values (`key[field=value].sub`) from `record.extra`,
+  mirroring the runtime's field resolver, and no longer skips `[...]` paths. Its marker was bumped
+  (`renormalize-2`) so already-stored records pick up newly-mapped nested fields **offline** — no re-sync.
 - **Per-record source-version stamp in the canonical store** (`entry.srcVersion`) — every store entry now
   records the SOURCE (adapter) version that last built or re-normalized its record (store metadata, never
   inside the delivered `record`, so consumer manifests are unchanged). Written on every capture/delivery and
@@ -35,30 +33,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   http) are deliberately left alone. Adds a small `normalize.map` recognized by the migration and the runtime.
   Scaling/normalization is applied **only** to fields pulled from raw `record.extra`; a field filled from a
   sibling record field (already normalized) is carried as-is, so a money field is never double-scaled.
-- **Bank movements now emit `balanceAfter` / `valueDate`; Trade Republic emits `investment@2`.** Field names
-  were inferred from the maintainer's own delivered canonical store (real data, never copied into the repo):
-  - Runtime: `runtime/inventory.js` promotes a mapped `valueDate` (ISO-normalized) and `balanceAfter`
-    (amount-normalized **and** minor-unit scaled like `amount`) to first-class fields; `lib/normalize.js`
-    gains a declarative `normalize.map` value map (`{ field: { from, map, default? } }`) so a source can map,
-    e.g., a broker `eventType` to the `side`/`kind` enum without code.
-  - Sources (staged): **ING** (`balanceAfter` ← `balance`), **Openbank** (`balanceAfter` ← `saldo.importe`),
-    **Revolut** (`balanceAfter` ← `balance`, `valueDate` ← `completedDate`), all `minVersion` 0.3.0.24.
-  - **Trade Republic** `transactions` → **`investment@2`**: `recordType` inferred from the extracted ISIN,
-    `side`/`kind` mapped from the real `eventType` values, structured `instrument{isin,name}`, and
-    `settlementAccount` ← `cashAccountNumber`. Quantity/price/fees stay in `record.extra.detail` (localized
-    text) pending structured parsing. `minVersion` 0.3.0.24.
-
-### Fixed
-- **Canonical `account.last4` for grouped card sources** (`lib/normalize.js#acctObj`) — the last-4 is now taken,
-  most-reliable first, from the IBAN → the group label's trailing 4 digits (the card number the user
-  recognizes) → the account string's own digits. Cards whose `account` field is an opaque internal id
-  (WiZink) or is unmapped (Financiera ECI) previously produced a wrong or missing `last4`; now every bank/card
-  source derives a correct structured `account` through the shared `canonicalize` path with no per-source
-  change. Coverage of every financial source (and precisely what remains capture-gated: bank
-  `valueDate`/`balanceAfter`, Trade Republic `investment@2` `side`/`units`/`price`) is tabulated in
-  `consumers/cuentamo-data-contract.md` (§G).
-
-### Added
+- **Runtime support for `valueDate` / `balanceAfter` and a declarative value map** — `runtime/inventory.js`
+  promotes a mapped `valueDate` (ISO-normalized) and `balanceAfter` (amount-normalized **and** minor-unit
+  scaled like `amount`) to first-class record/canonical fields; `lib/normalize.js` gains a declarative
+  `normalize.map` value map (`{ field: { from, map, default? } }`) so a source can map, e.g., a code to an
+  enum without imperative code. (Which sources use these — and how — lives in each source's own definition.)
 - **Broker schema `investment@2`** (`sinks/format.js`) — a richer investment record for the Cuéntamo data
   contract: a `recordType` `"trade"|"cash"` discriminator (inferred when absent), a structured
   `instrument{isin,ticker,mic,name,assetClass}`, `side` enum (buy/sell/dividend/split/transfer_in/
@@ -156,12 +135,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   straight from the recording (the exact param sets the app fetched — no guessing).
 - Runtime: **per-group header templating** — `api.list.headers` values now resolve `{group.*}` (e.g. a
   card's own `eci-custom-encrypted-pan` header rides that card's movements list).
-- **Financiera El Corte Inglés** (`financiera-elcorteingles-es`) — authored end-to-end from a redacted
-  handoff recording (the first source built this way): multi-card (grouped by contract) **card movements**,
-  **aplazamientos/financing purchases**, and monthly **statement PDFs** (per-month, base64). Cookie session
-  + replayed bearer + per-card header. Staged pending the contributor's live verification.
 
 ### Fixed
+- **Canonical `account.last4` for grouped card sources** (`lib/normalize.js#acctObj`) — the last-4 is now taken,
+  most-reliable first, from the IBAN → the group label's trailing 4 digits (the card number the user
+  recognizes) → the account string's own digits. Cards whose `account` field is an opaque internal id, or is
+  unmapped, previously produced a wrong or missing `last4`; now every bank/card source derives a correct
+  structured `account` through the shared `canonicalize` path with no per-source change.
 - Per-group header values are sent **verbatim** — `tmplGroup` URL-encoded the value (via `tid`),
   which corrupted a base64 header like a card's encrypted-PAN (`+`/`=` → `%2B`/`%3D` → server base64 error).
   Headers now use a raw templater.
