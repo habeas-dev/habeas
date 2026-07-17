@@ -10,6 +10,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Changed
+- **Clearer contribution conversation** (Settings → My contributions) — messages now render as separated
+  bubbles sided by sender (team vs you) instead of a run-on list, and the source the team attached shows its
+  **version** with an unmistakable state: a highlighted "New version" until that exact version has been
+  installed here (then "This version installed", with a Reinstall button). So a collaborating contributor can
+  tell at a glance whether the team generated a new source version.
+
 ### Added
 - **Per-group templating of `api.pdf.headers`** (`runtime/inventory.js#fetchPdf`) — a document endpoint can now
   carry `{group.*}` in its headers (RAW, like `api.list.headers`, so a base64 value is not URL-encoded), for a

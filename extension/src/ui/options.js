@@ -512,14 +512,27 @@ async function openThread(id) {
   let data; try { data = await getHandoffThread(id, sub.id); } catch (e) { el.textContent = t('contrib_load_fail'); return; }
   const last = data.messages[data.messages.length - 1];
   if (last) await markSeen(id, last.at);
-  el.innerHTML = (data.messages.length ? data.messages : []).map((m) =>
-    `<div style="margin:4px 0"><b>${m.from === 'team' ? t('contrib_team') : t('contrib_you')}:</b> ${esc(m.text)} <span class="muted" style="font-size:11px">${esc(String(m.at || '').slice(0, 16))}</span></div>`).join('')
-    || `<div class="muted">${t('contrib_no_msgs')}</div>`;
+  // Messages as clearly-separated bubbles, sided by sender (team left, you right).
+  el.innerHTML = data.messages.length
+    ? `<div class="thread">${data.messages.map((m) => {
+      const mine = m.from !== 'team';
+      return `<div class="msg ${mine ? 'you' : 'team'}"><div><span class="who">${mine ? t('contrib_you') : t('contrib_team')}</span><span class="when">${esc(String(m.at || '').slice(0, 16))}</span></div><div class="body">${esc(m.text)}</div></div>`;
+    }).join('')}</div>`
+    : `<div class="muted">${t('contrib_no_msgs')}</div>`;
   // The team attached a source built from this recording → let the contributor install + test it in one click.
+  // Show its VERSION and whether it's a version they haven't installed yet, so "did they build a new one?" is
+  // unambiguous (the box highlights + says "New version" until this exact version has been installed here).
   if (data.source && data.source.id) {
-    el.innerHTML += `<div style="margin-top:8px;padding:8px;border:1px solid #2e7d32;border-radius:6px"><b>${esc(data.source.name || data.source.id)}</b>
-      <span class="muted" style="font-size:12px"> — ${t('contrib_install_hint')}</span><br>
-      <button class="accent" id="inst-${esc(id)}" style="margin-top:6px">${t('contrib_install')}</button> <span id="inststat-${esc(id)}" class="muted" style="font-size:12px"></span></div>`;
+    const ver = String(data.source.version || '');
+    let installedVer = '';
+    try { const o = await chrome.storage.local.get('habeas:contribVer:' + id); installedVer = o['habeas:contribVer:' + id] || ''; } catch (e) {}
+    const isNew = ver !== installedVer;
+    el.innerHTML += `<div class="srcbox${isNew ? ' newver' : ''}" id="srcbox-${esc(id)}">
+      <div><b>${esc(data.source.name || data.source.id)}</b> ${ver ? `<span class="ver">v${esc(ver)}</span>` : ''}
+        ${isNew ? `<span class="pill new">${t('contrib_new_version')}</span>` : `<span class="pill sent">✓ ${t('contrib_installed_ver')}</span>`}</div>
+      <div class="muted" style="font-size:12px;margin-top:4px">${t('contrib_install_hint')}</div>
+      <button class="accent" id="inst-${esc(id)}" style="margin-top:8px">${isNew ? t('contrib_install') : t('contrib_reinstall')}</button>
+      <span id="inststat-${esc(id)}" class="muted" style="font-size:12px"></span></div>`;
   }
   // If a List test for this source failed, offer to report the (redacted) diagnostic to the team — no DevTools.
   let diag = null;
@@ -539,7 +552,17 @@ async function openThread(id) {
   }
   if (data.source && data.source.id) {
     const ib = document.getElementById('inst-' + id);
-    if (ib) ib.onclick = async () => { ib.disabled = true; const ok = await installContribSource(data.source); const st = document.getElementById('inststat-' + id); if (st) st.textContent = ok ? t('contrib_installed') : t('contrib_install_fail'); ib.disabled = false; };
+    if (ib) ib.onclick = async () => {
+      ib.disabled = true;
+      const ok = await installContribSource(data.source);
+      const st = document.getElementById('inststat-' + id);
+      if (st) st.textContent = ok ? t('contrib_installed') : t('contrib_install_fail');
+      if (ok) {
+        try { await chrome.storage.local.set({ ['habeas:contribVer:' + id]: String(data.source.version || '') }); } catch (e) {}
+        const box = document.getElementById('srcbox-' + id); if (box) box.classList.remove('newver'); // no longer a pending new version
+      }
+      ib.disabled = false;
+    };
   }
   el.querySelector('[data-send]').onclick = async () => {
     const txt = (document.getElementById('rep-' + id).value || '').trim(); if (!txt) return;

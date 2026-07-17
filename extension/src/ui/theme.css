@@ -147,6 +147,19 @@ label { font-size: 12.5px; color: var(--muted); }
 .pill.file.faint { opacity: .38; } /* format exists but not attached to this item */
 td.files { white-space: nowrap; }
 td.files .pill.file { margin-right: 3px; }
+/* Handoff conversation (My contributions): message bubbles, clearly separated + sided by sender. */
+.thread { display: flex; flex-direction: column; gap: 10px; margin: 8px 0; }
+.msg { padding: 8px 11px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); max-width: 88%; }
+.msg.team { align-self: flex-start; background: var(--brand-50); border-color: var(--brand-100); border-bottom-left-radius: 4px; }
+.msg.you { align-self: flex-end; border-bottom-right-radius: 4px; }
+.msg .who { font-size: 11px; font-weight: 700; color: var(--brand-500); }
+.msg.you .who { color: var(--muted); }
+.msg .when { font-size: 10px; color: var(--muted); font-weight: 400; margin-left: 6px; }
+.msg .body { margin-top: 4px; white-space: pre-wrap; word-break: break-word; }
+/* The source the team attached from this recording: highlighted when it's a version not yet installed. */
+.srcbox { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.srcbox.newver { border-color: var(--accent); background: var(--accent-100); }
+.srcbox .ver { font-size: 12px; color: var(--muted); font-weight: 600; }
 /* Group/account column: hidden unless the source spans ≥2 groups (render() toggles #tbl.has-groups). */
 .col-group { display: none; }
 #tbl.has-groups .col-group { display: table-cell; white-space: nowrap; }
