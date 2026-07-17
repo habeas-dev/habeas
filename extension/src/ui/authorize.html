@@ -13,12 +13,12 @@
   </div>
   <div class="app">
     <div class="card">
-      <p data-i18n="authz_intro"></p>
+      <p id="intro" data-i18n="authz_intro"></p>
       <div class="kv"><b data-i18n="authz_origin"></b><span id="origin" class="warn"></span></div>
-      <div class="kv"><b data-i18n="authz_source"></b><span id="source"></span></div>
-      <div class="kv"><b data-i18n="authz_dest"></b><span id="dest"></span></div>
-      <div class="kv"><b data-i18n="authz_scope"></b><span id="scope"></span></div>
-      <p class="muted" data-i18n="authz_note" style="margin-top:10px"></p>
+      <div class="kv" id="row-source"><b data-i18n="authz_source"></b><span id="source"></span></div>
+      <div class="kv" id="row-dest"><b data-i18n="authz_dest"></b><span id="dest"></span></div>
+      <div class="kv" id="row-scope"><b data-i18n="authz_scope"></b><span id="scope"></span></div>
+      <p class="muted" id="note" data-i18n="authz_note" style="margin-top:10px"></p>
       <div class="row" style="margin-top:14px;justify-content:flex-end;gap:8px">
         <button id="deny" data-i18n="authz_deny"></button>
         <button id="allow" class="primary" data-i18n="authz_allow"></button>

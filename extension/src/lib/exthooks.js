@@ -32,3 +32,23 @@ export function validateProposal(origin, msg) {
 export function sinkIdForOrigin(origin) {
   return 'ext-' + originHost(origin).replace(/[^a-z0-9]/gi, '-');
 }
+
+// PUBLIC metadata of the user's currently-enabled sources — the payload of the `list-sources` hook. Only
+// non-sensitive descriptive fields (id, name, service, categories, trust label); never accounts, routes,
+// sinks, credentials or the user's data. Pure so it's trivially testable.
+export function enabledSources(cfg, adapters) {
+  const out = [];
+  for (const d of ((cfg && cfg.datasources) || [])) {
+    if (!d || !d.enabled) continue;
+    const a = adapters && adapters[d.adapter];
+    if (!a) continue;
+    out.push({
+      source: a.id,
+      name: a.name || a.id,
+      service: a.service || a.id,
+      categories: Array.isArray(a.categories) ? a.categories.slice() : [],
+      trust: a.trust || 'community',
+    });
+  }
+  return out;
+}

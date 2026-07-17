@@ -4,7 +4,7 @@
 // and every action is origin-bound + consent-gated on the extension side.
 (function () {
   const chrome = globalThis.browser ?? globalThis.chrome;
-  const API = { 'propose-workflow': 1, collect: 1, 'list-groups': 1, status: 1 };
+  const API = { 'propose-workflow': 1, collect: 1, 'list-groups': 1, 'list-sources': 1, status: 1 };
   window.addEventListener('message', (ev) => {
     const d = ev.data;
     if (ev.source !== window || !d || d.__habeasExt !== 'req' || !API[d.api] || typeof d.id !== 'string') return;

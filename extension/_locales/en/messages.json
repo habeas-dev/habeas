@@ -900,6 +900,12 @@
   "authz_note": {
     "message": "The destination is on the requesting site's own domain — your data can only go back to it. You can revoke this anytime in Settings."
   },
+  "authz_ls_intro": {
+    "message": "A website wants to see which data sources you currently have enabled in Habeas. It will receive only the source names and categories, never your accounts, documents, or data."
+  },
+  "authz_ls_note": {
+    "message": "This reveals the list of enabled sources to the requesting site. You can revoke it anytime in Settings, Site integrations."
+  },
   "authz_allow": {
     "message": "Allow"
   },
@@ -938,6 +944,14 @@
       },
       "source": {
         "content": "$2"
+      }
+    }
+  },
+  "grant_line_listsources": {
+    "message": "$ORIGIN$ · can see your enabled sources",
+    "placeholders": {
+      "origin": {
+        "content": "$1"
       }
     }
   },

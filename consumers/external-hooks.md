@@ -97,6 +97,23 @@ own tab** (in-session) and returns **metadata only** — never the items, never 
 source with no groups returns `groups: []` (use plain `collect`). Omitting `group` in `collect`
 delivers **all** groups.
 
+## D. List enabled sources (discovery)
+
+Ask which sources the user currently has **enabled**, so your app can offer the relevant ones instead
+of hardcoding source ids. Consent-gated per origin: the first call opens Habeas's consent screen and
+returns `pending`; retry once the user allows it (the approval is remembered, so later calls are silent).
+
+```js
+let res = await habeas('list-sources');
+// first time   → { ok:true, status:'pending' }   (Habeas opened its consent screen; retry shortly)
+// once allowed → { ok:true, status:'ok', sources: [
+//   { source:'ing-es', name:'ING España', service:'ing', categories:['banking'], trust:'community' }, … ] }
+```
+
+It returns **public metadata only**: id, name, service, categories, and the `first-party` / `community`
+trust label. Never accounts, documents, routes, sinks, or your data. The list is not origin-specific;
+it is the same set the user sees in Habeas. Revocable anytime under **Settings → Site integrations**.
+
 ## What Habeas will never do
 
 - Send your users' data anywhere but your own origin.

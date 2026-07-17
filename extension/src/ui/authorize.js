@@ -15,9 +15,18 @@ async function init() {
   const o = await chrome.storage.session.get('extreq:' + reqId);
   const req = o['extreq:' + reqId];
   if (!req) { $('#status').textContent = t('authz_expired'); $('#allow').disabled = true; return; }
+  $('#origin').textContent = req.origin;
+  if (req.kind === 'list-sources') {
+    // Consent to reveal WHICH sources are enabled (public metadata only) — no source/dest/scope to show.
+    $('#intro').textContent = t('authz_ls_intro');
+    $('#note').textContent = t('authz_ls_note');
+    for (const id of ['row-source', 'row-dest', 'row-scope']) { const el = document.getElementById(id); if (el) el.hidden = true; }
+    $('#deny').onclick = () => resolve(false, req);
+    $('#allow').onclick = () => resolve(true, req);
+    return;
+  }
   const adapters = await getAdapters();
   const adapter = adapters[req.source];
-  $('#origin').textContent = req.origin;
   $('#source').textContent = (adapter && adapter.name) || req.source;
   $('#dest').textContent = req.sink.url;
   $('#scope').textContent = req.filter && req.filter.categories && req.filter.categories.length ? req.filter.categories.join(', ') : t('authz_scope_all');
@@ -26,11 +35,21 @@ async function init() {
 }
 
 async function resolve(allow, req, adapter) {
+  const cleanup = () => chrome.storage.session.remove(['extreq:' + reqId, 'extls:' + req.origin]);
   if (!allow) {
-    await appendLog({ kind: 'authz', origin: req.origin, source: req.source, status: 'denied' });
-    await chrome.storage.session.remove('extreq:' + reqId);
+    await appendLog({ kind: req.kind === 'list-sources' ? 'authz-listsources' : 'authz', origin: req.origin, source: req.source, status: 'denied' });
+    await cleanup();
     $('#status').textContent = t('authz_denied'); disable();
     setTimeout(() => window.close(), 800);
+    return;
+  }
+  if (req.kind === 'list-sources') {
+    // A capability grant to see the enabled-source list — origin only, no route/sink/datasource.
+    await addGrant({ id: 'g_' + crypto.randomUUID(), origin: req.origin, kind: 'list-sources', createdAt: new Date().toISOString(), lastUsedAt: null });
+    await appendLog({ kind: 'authz-listsources', origin: req.origin, status: 'granted' });
+    await cleanup();
+    $('#status').textContent = t('authz_granted'); disable();
+    setTimeout(() => window.close(), 900);
     return;
   }
   if (!adapter) { $('#status').textContent = t('authz_unknown_source'); return; }

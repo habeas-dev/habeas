@@ -900,6 +900,12 @@
   "authz_note": {
     "message": "El destino está en el propio dominio del sitio que lo pide — tus datos solo pueden volver a él. Podrás revocarlo cuando quieras en Ajustes."
   },
+  "authz_ls_intro": {
+    "message": "Una web quiere ver qué sources tienes habilitados ahora mismo en Habeas. Recibirá solo los nombres y categorías de los sources, nunca tus cuentas, documentos ni datos."
+  },
+  "authz_ls_note": {
+    "message": "Esto revela la lista de sources habilitados al sitio que lo pide. Podrás revocarlo cuando quieras en Ajustes, Integraciones de sitios."
+  },
   "authz_allow": {
     "message": "Permitir"
   },
@@ -938,6 +944,14 @@
       },
       "source": {
         "content": "$2"
+      }
+    }
+  },
+  "grant_line_listsources": {
+    "message": "$ORIGIN$ · puede ver tus sources habilitados",
+    "placeholders": {
+      "origin": {
+        "content": "$1"
       }
     }
   },

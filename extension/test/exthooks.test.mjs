@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sinkIsOriginBound, validateProposal, sinkIdForOrigin } from '../src/lib/exthooks.js';
+import { sinkIsOriginBound, validateProposal, sinkIdForOrigin, enabledSources } from '../src/lib/exthooks.js';
 
 test('origin-bound: the sink URL host must equal the requesting origin (https only)', () => {
   assert.ok(sinkIsOriginBound('https://tiquetera.app', 'https://tiquetera.app/ingest'));
@@ -32,4 +32,22 @@ test('validateProposal accepts an origin-bound http sink, rejects the rest', () 
 test('sinkIdForOrigin is stable and host-derived', () => {
   assert.equal(sinkIdForOrigin('https://tiquetera.app'), 'ext-tiquetera-app');
   assert.equal(sinkIdForOrigin('https://tiquetera.app'), sinkIdForOrigin('https://tiquetera.app/other-path'));
+});
+
+test('enabledSources returns only enabled datasources, as public metadata (no accounts/data)', () => {
+  const adapters = {
+    'ing-es': { id: 'ing-es', name: 'ING España', service: 'ing', categories: ['banking'], trust: 'community', api: { host: 'x' } },
+    'demo-shop': { id: 'demo-shop', name: 'Demo Shop', service: 'demo', categories: ['retail'] },
+  };
+  const cfg = { datasources: [
+    { id: 'ing-es', adapter: 'ing-es', enabled: true },
+    { id: 'demo-shop', adapter: 'demo-shop', enabled: false },   // disabled → excluded
+    { id: 'ghost', adapter: 'not-installed', enabled: true },    // adapter missing → excluded
+  ] };
+  const out = enabledSources(cfg, adapters);
+  assert.deepEqual(out, [{ source: 'ing-es', name: 'ING España', service: 'ing', categories: ['banking'], trust: 'community' }]);
+  // defaults + no leakage of non-metadata fields (api/host never surface)
+  assert.ok(!('api' in out[0]) && !('host' in out[0]));
+  assert.equal(enabledSources({}, adapters).length, 0);
+  assert.equal(enabledSources(null, null).length, 0);
 });

@@ -223,7 +223,8 @@ async function render() {
     ? grants.map((g) => {
       let originHost = g.origin; try { originHost = new URL(g.origin).host; } catch (e) {}
       const used = g.lastUsedAt ? `<span class="muted">${esc(String(g.lastUsedAt).slice(0, 10))}</span>` : '';
-      return `<div class="card row"><b style="flex:1">${esc(t('grant_line', [originHost, g.datasourceId]))}</b>${used}<button data-revoke="${esc(g.id)}">${t('grant_revoke')}</button></div>`;
+      const label = g.kind === 'list-sources' ? t('grant_line_listsources', [originHost]) : t('grant_line', [originHost, g.datasourceId]);
+      return `<div class="card row"><b style="flex:1">${esc(label)}</b>${used}<button data-revoke="${esc(g.id)}">${t('grant_revoke')}</button></div>`;
     }).join('')
     : `<p class="muted">${t('no_grants')}</p>`;
   $('#grants').querySelectorAll('[data-revoke]').forEach((b) => b.onclick = async () => { await revokeGrant(b.dataset.revoke); render(); });

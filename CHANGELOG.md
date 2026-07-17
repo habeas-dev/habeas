@@ -10,6 +10,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **`list-sources` external hook** — a website can ask which sources the user currently has enabled, so a
+  consumer can offer the relevant ones instead of hardcoding source ids. Consent-gated per origin (a
+  lightweight `list-sources` grant, no route; the first ask opens the consent screen and returns `pending`,
+  then the approval is remembered so later calls are silent). Returns **public metadata only** (id, name,
+  service, categories, `first-party`/`community` trust label), never accounts, routes, sinks, or data.
+  Shown and revocable in Settings, Site integrations. See `consumers/external-hooks.md` (§D).
+
 ## [0.4.0] — 2026-07-17
 
 ### Added

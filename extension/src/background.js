@@ -21,7 +21,7 @@ import { badgeWorking, badgeCount, badgeError, badgeClear, setStatus } from './l
 import { t } from './lib/i18n.js';
 import { getSubmitter } from './lib/submitter.js';
 import { getMyHandoffs } from './registry/client.js';
-import { validateProposal, originHost } from './lib/exthooks.js';
+import { validateProposal, originHost, enabledSources } from './lib/exthooks.js';
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
 import { runStoreMigration } from './lib/migrate.js';
@@ -562,8 +562,32 @@ async function handleExt(api, payload, origin) {
   if (api === 'propose-workflow') return proposeWorkflow(origin, payload);
   if (api === 'collect') return collectForGrant(origin, payload);
   if (api === 'list-groups') return listGroupsForGrant(origin, payload);
+  if (api === 'list-sources') return listSourcesForOrigin(origin);
   if (api === 'status') return extStatus(origin);
   return { ok: false, status: 'error', error: 'unknown api' };
+}
+
+// A site asks which sources the user currently has enabled. Consent-gated per origin (a lightweight
+// `kind:'list-sources'` grant, no route), returning PUBLIC metadata only — never accounts or data. First ask
+// opens the consent screen and returns `pending`; the site retries once approved. Re-prompts are deduped per
+// origin so polling can't spawn a stack of consent windows.
+async function listSourcesForOrigin(origin) {
+  const grant = (await grantsForOrigin(origin)).find((g) => g.kind === 'list-sources');
+  if (grant) {
+    await touchGrant(grant.id, new Date().toISOString());
+    const [cfg, adapters] = await Promise.all([getConfig(), getAdapters()]);
+    return { ok: true, status: 'ok', sources: enabledSources(cfg, adapters) };
+  }
+  const pendKey = 'extls:' + origin;
+  const o = await chrome.storage.session.get(pendKey);
+  if (o[pendKey] && Date.now() - o[pendKey].at < 5 * 60 * 1000) return { ok: true, status: 'pending' };
+  const reqId = 'ls_' + crypto.randomUUID();
+  await chrome.storage.session.set({ ['extreq:' + reqId]: { kind: 'list-sources', origin, at: Date.now() }, [pendKey]: { reqId, at: Date.now() } });
+  const url = chrome.runtime.getURL('src/ui/authorize.html?req=' + reqId);
+  try { await chrome.windows.create({ url, type: 'popup', width: 540, height: 520 }); }
+  catch (e) { try { await chrome.tabs.create({ url }); } catch (e2) {} }
+  await appendLog({ kind: 'authz-listsources', origin, status: 'pending' });
+  return { ok: true, status: 'pending' };
 }
 
 // Mask a sensitive group value (IBAN, card number) before exposing it to a consumer that only needs
