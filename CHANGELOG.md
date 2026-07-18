@@ -23,6 +23,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
     it is not secret: a **"See what's sent"** button reveals the exact payload before sending, and each sent
     report keeps a "See technical detail" toggle.
 
+### Fixed
+- **Accurate `[sent: …]` in list/groups error diagnostics** — the page-side fetch now reports the headers it
+  ACTUALLY sent (including a `tokenFromStorage`-injected `authorization`), and the runtime's error uses them.
+  Before, the diagnostic listed the headers the runtime passed BEFORE page-side injection, so it always read
+  `[sent: accept]` and couldn't reveal whether the token actually rode the request.
+- **Document-fetch failures are no longer swallowed silently** — a failed per-document fetch during delivery
+  (and a stream that lists items but produces no document at all) now records the reason to the report
+  diagnostic, so "Report a problem" surfaces WHY a statement/PDF didn't download instead of a bare "0 documents".
+
 ### Added
 - **`auth.tokenFromStorage`** (`lib/pagefetch.js#makePageFetch`) — read the bearer FRESH from the page's
   `localStorage` on every request (`{key, field, scheme, header}`), for SPAs that keep and rotate the token

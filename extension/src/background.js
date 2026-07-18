@@ -427,10 +427,16 @@ async function runRoute(ds, adapter, sink, opts = {}) {
           const avail = artifactKinds(oeff, d); // per-doc: drops the document (e.g. invoice PDF) if this doc lacks it
           for (const k of kinds) {
             if (!avail.some((a) => a.kind === k.kind)) continue; // this ticket has no such artifact (no invoice) → skip cleanly
-            try { arts.push(await fetchArtifact(oeff, auth, d, net, renderPage, k.kind)); } catch (e) { /* artifact unavailable */ }
+            try { arts.push(await fetchArtifact(oeff, auth, d, net, renderPage, k.kind)); }
+            catch (e) { try { await chrome.storage.local.set({ ['habeas:diag:' + adapter.id]: { error: 'documento (' + sid + '): ' + String((e && e.message) || e), at: new Date().toISOString() } }); } catch (_) {} } // was silently swallowed; keep the last doc error so the contributor can report it
           }
         }
         if (arts.length) files.set(d.internalId, arts);
+      }
+      // A stream that HAS a document (a statement PDF) but produced none from any eligible item — a silent
+      // "0 documents" the contributor can't explain. Record it so "Report a problem" surfaces it.
+      if (!files.size && eligible.length && documentExt(eff)) {
+        try { await chrome.storage.local.set({ ['habeas:diag:' + adapter.id]: { error: 'listó ' + eligible.length + ' de ' + sid + ' pero ninguno generó documento (descarga fallida o plantilla del documento sin resolver)', at: new Date().toISOString() } }); } catch (_) {}
       }
       setStatus(t('status_sending', [String(eligible.length), sink.id]));
       await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, source: sk, ext: documentExt(eff) || 'pdf', interactive: !!opts.interactive });

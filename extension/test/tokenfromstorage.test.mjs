@@ -16,9 +16,10 @@ test('reads the bearer from a JSON localStorage field and injects Authorization:
   globalThis.localStorage.setItem('aphishi-lws_at', JSON.stringify({ tt: 0, t: 'eyJHDR.eyPAYLOAD.SIG', u: 'user' }));
   const adapter = { auth: { mode: 'cookie', tokenFromStorage: { key: 'aphishi-lws_at', field: 't', scheme: 'Bearer' } } };
   const pf = makePageFetch(1, adapter);
-  await pf('https://x.test/dashboard/user', { headers: { accept: 'application/json' } });
+  const resp = await pf('https://x.test/dashboard/user', { headers: { accept: 'application/json' } });
   assert.equal(lastFetch.init.headers.authorization, 'Bearer eyJHDR.eyPAYLOAD.SIG', 'fresh token injected');
   assert.equal(lastFetch.init.headers.accept, 'application/json', 'existing headers preserved');
+  assert.ok(resp.sentHeaders.includes('authorization'), 'the response reports the REAL sent headers for accurate diagnostics');
 });
 
 test('a fresh storage token overrides a stale captured one', async () => {

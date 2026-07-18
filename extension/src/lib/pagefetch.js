@@ -216,7 +216,7 @@ export function makePageFetch(tabId, adapter) {
               } catch (e) {}
             }
             const r = await fetch(o.url, { method: o.method, headers, body: o.body || undefined, credentials: o.credentials || 'include', ...(o.referrer ? { referrer: o.referrer, referrerPolicy: 'unsafe-url' } : {}) });
-            const d = { ok: r.ok, status: r.status, contentType: r.headers.get('content-type') || '' };
+            const d = { ok: r.ok, status: r.status, contentType: r.headers.get('content-type') || '', sentHeaders: Object.keys(headers) }; // real headers (incl. a tokenFromStorage-injected one) for accurate diagnostics
             if (o.wantBlob) {
               const bytes = new Uint8Array(await r.arrayBuffer());
               let s = ''; const chunk = 0x8000;
@@ -231,7 +231,7 @@ export function makePageFetch(tabId, adapter) {
     } catch (e) { out = { ok: false, status: 0, error: String(e && e.message || e) }; }
     out = out || { ok: false, status: 0, error: 'no result' };
     return {
-      ok: out.ok, status: out.status,
+      ok: out.ok, status: out.status, sentHeaders: out.sentHeaders,
       text: async () => out.text || out.error || '',
       json: async () => JSON.parse(out.text || 'null'),
       blob: async () => {
