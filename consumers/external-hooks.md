@@ -17,8 +17,11 @@ log in — Habeas never handles credentials), and is rate-limited and logged.
 
 ## Talking to the extension
 
-Habeas injects a small bridge on every https page. You communicate with `window.postMessage`; the
-bridge relays to the extension and posts the reply back to your page (same-origin only).
+Habeas injects a small bridge on every https page (and on `http://localhost` / `http://127.0.0.1` for local
+development). You communicate with `window.postMessage`; the bridge relays to the extension and posts the reply
+back to your page (same-origin only). Note: `propose-workflow`/`collect` still require an **https** sink URL
+(the origin-bound rule), so a plain-http localhost app can `list-sources` (discovery) but must serve its
+ingest sink over https to receive data.
 
 ```js
 function habeas(api, payload) {

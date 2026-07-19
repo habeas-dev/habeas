@@ -24,6 +24,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
     report keeps a "See technical detail" toggle.
 
 ### Fixed
+- **External-hooks bridge now runs on `http://localhost` / `http://127.0.0.1` too** (was https-only), so a
+  consumer app in local development can talk to Habeas — `list-sources` ("detect sources") never appeared
+  because the bridge wasn't injected on a plain-http localhost page. (`propose-workflow`/`collect` still
+  require an https sink under the origin-bound rule.)
+- **`list-sources` consent dialog no longer gets stuck** — a per-origin re-prompt was locked out for 5
+  minutes, so if the user closed the consent window without deciding, clicking "detect sources" again did
+  nothing. It now suppresses a re-open only while the window is actually still open, and re-opens otherwise.
 - **Accurate `[sent: …]` in list/groups error diagnostics** — the page-side fetch now reports the headers it
   ACTUALLY sent (including a `tokenFromStorage`-injected `authorization`), and the runtime's error uses them.
   Before, the diagnostic listed the headers the runtime passed BEFORE page-side injection, so it always read

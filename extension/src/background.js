@@ -586,12 +586,20 @@ async function listSourcesForOrigin(origin) {
   }
   const pendKey = 'extls:' + origin;
   const o = await chrome.storage.session.get(pendKey);
-  if (o[pendKey] && Date.now() - o[pendKey].at < 5 * 60 * 1000) return { ok: true, status: 'pending' };
+  const pend = o[pendKey];
+  // Only suppress a re-open while the consent window is STILL open (so polling can't stack windows). If the
+  // user closed it without deciding, a fresh click re-opens it — no 5-minute lockout that made the button
+  // silently do nothing. (authorize.js clears pendKey on allow/deny.)
+  if (pend && pend.windowId != null) {
+    try { await chrome.windows.get(pend.windowId); return { ok: true, status: 'pending' }; } catch (e) { /* window gone → open a new one */ }
+  }
   const reqId = 'ls_' + crypto.randomUUID();
-  await chrome.storage.session.set({ ['extreq:' + reqId]: { kind: 'list-sources', origin, at: Date.now() }, [pendKey]: { reqId, at: Date.now() } });
+  await chrome.storage.session.set({ ['extreq:' + reqId]: { kind: 'list-sources', origin, at: Date.now() } });
   const url = chrome.runtime.getURL('src/ui/authorize.html?req=' + reqId);
-  try { await chrome.windows.create({ url, type: 'popup', width: 540, height: 520 }); }
+  let win = null;
+  try { win = await chrome.windows.create({ url, type: 'popup', width: 540, height: 520 }); }
   catch (e) { try { await chrome.tabs.create({ url }); } catch (e2) {} }
+  await chrome.storage.session.set({ [pendKey]: { reqId, at: Date.now(), windowId: (win && win.id != null) ? win.id : null } });
   await appendLog({ kind: 'authz-listsources', origin, status: 'pending' });
   return { ok: true, status: 'pending' };
 }

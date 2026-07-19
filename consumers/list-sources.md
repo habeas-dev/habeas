@@ -9,7 +9,8 @@ returns **no user data**, only public descriptive metadata about the sources.
 
 ## 1. Transport
 
-Habeas injects a bridge on every `https` page. You talk to it with `window.postMessage` (same-origin replies).
+Habeas injects a bridge on every `https` page (and on `http://localhost` / `http://127.0.0.1` for local dev).
+You talk to it with `window.postMessage` (same-origin replies).
 Reuse the helper from [external-hooks.md](external-hooks.md):
 
 ```js
