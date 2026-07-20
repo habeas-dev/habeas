@@ -163,6 +163,29 @@ test('handoff: team attaches the authored source; the submitter can retrieve it 
   assert.equal(inbox[0].hasSource, true);
 });
 
+test('handoff: the team is notified on a new submission and on a contributor reply, but not on its own', async () => {
+  const s = memoryStore();
+  const events = [];
+  const envN = (store, client = 'c1', now = T0) => ({ store, now: () => now, clientId: async () => client, adminToken: 'ADMIN', notify: (e) => { events.push(e); } });
+  const callN = (m, p, b, c, n) => handleRequest(req(m, p, b), envN(s, c, n));
+
+  const { id } = await (await callN('POST', '/handoff', { submitter: 'sub1', bundle: BUNDLE })).json();
+  assert.equal(events.length, 1, 'a new recording pings the team');
+  assert.equal(events[0].kind, 'new');
+  assert.equal(events[0].domain, BUNDLE.domain);
+
+  // the team's OWN reply must NOT notify the team
+  await callN('POST', `/handoff/${id}/messages?token=ADMIN`, { text: 'a question' });
+  assert.equal(events.length, 1, 'team reply does not notify the team');
+
+  // a contributor reply DOES notify, carrying the domain + text
+  await callN('POST', `/handoff/${id}/messages`, { submitter: 'sub1', text: 'it failed again' });
+  assert.equal(events.length, 2);
+  assert.equal(events[1].kind, 'reply');
+  assert.equal(events[1].domain, BUNDLE.domain);
+  assert.equal(events[1].text, 'it failed again');
+});
+
 test('handoff: each attached version is a timeline message, and history is preserved', async () => {
   const s = memoryStore();
   const { id } = await (await call(s, 'POST', '/handoff', { submitter: 'sub1', bundle: BUNDLE })).json();

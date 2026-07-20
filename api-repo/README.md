@@ -20,6 +20,23 @@ plus a daily-salted hash of the caller IP (never the raw IP) for rate limiting.
 Anonymous, with a per-client rate limit (30 writes/hour) and a `status` moderation flag on
 comments (`visible` / `hidden` / `pending`). CORS is open (`*`) so the extension can call it.
 
+## Team notifications (optional)
+
+When a contributor submits a **new recording** (`POST /handoff`) or **replies** in a thread
+(`POST /handoff/{id}/messages`), the Worker pushes a **Telegram** message to the team so nobody has
+to poll the queue. It's best-effort (a failed send never fails the request) and off unless
+configured. To enable: create a bot with [@BotFather](https://t.me/BotFather), get your chat id, and
+set two Worker secrets — `deploy.sh` picks them up from files:
+
+```
+echo -n '<bot-token>' > ~/.habeas-telegram-bot-token
+echo -n '<chat-id>'   > ~/.habeas-telegram-chat-id
+./deploy.sh                # sets TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID and deploys
+```
+
+Absent those secrets, notifications are simply off. (Email via a provider is a drop-in second channel
+in `notifyTeam` if ever wanted.)
+
 ## Layout
 
 ```

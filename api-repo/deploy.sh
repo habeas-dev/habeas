@@ -25,6 +25,18 @@ if [ ! -s "$TOKENFILE" ]; then
 fi
 tr -d '\n' < "$TOKENFILE" | "$WR" secret put ADMIN_TOKEN
 
+# Optional team push notifications (Telegram) — a new recording or a contributor reply pings the team.
+# Provide a bot token (from @BotFather) + your chat id in these files to enable; absent → notifications off.
+TG_TOKEN_FILE="$HOME/.habeas-telegram-bot-token"
+TG_CHAT_FILE="$HOME/.habeas-telegram-chat-id"
+if [ -s "$TG_TOKEN_FILE" ] && [ -s "$TG_CHAT_FILE" ]; then
+  echo "▶ Telegram notification secrets"
+  tr -d '\n' < "$TG_TOKEN_FILE" | "$WR" secret put TELEGRAM_BOT_TOKEN
+  tr -d '\n' < "$TG_CHAT_FILE"  | "$WR" secret put TELEGRAM_CHAT_ID
+else
+  echo "▷ Telegram notifications OFF (create $TG_TOKEN_FILE + $TG_CHAT_FILE to enable)"
+fi
+
 echo "▶ deploy"
 "$WR" deploy
 

@@ -26,6 +26,33 @@ const MAX_HANDOFFS_PER_HOUR = 20;
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', ...CORS } });
 const err = (status, message) => json({ error: message }, status);
 
+// Best-effort push to the team when a handoff needs attention: a NEW recording, or a contributor REPLY.
+// Channel-agnostic — tests inject env.notify; in production it sends a Telegram message when the bot secrets
+// are configured (TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID in env.telegram), else it is a silent no-op. Never
+// throws: a failed notification must not fail the underlying request.
+async function notifyTeam(env, event) {
+  try {
+    if (env && typeof env.notify === 'function') return await env.notify(event);
+    const tg = env && env.telegram;
+    if (!tg || !tg.token || !tg.chatId) return;
+    const icon = event.kind === 'new' ? '🆕' : '💬';
+    const head = event.kind === 'new' ? `Nueva grabación de ${event.domain}` : `Respuesta de un colaborador (${event.domain})`;
+    const body = event.text ? '\n\n' + String(event.text).slice(0, 500) : '';
+    const text = `${icon} ${head}${body}\n\nhandoff: ${event.id}`;
+    await fetch(`https://api.telegram.org/bot${tg.token}/sendMessage`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ chat_id: tg.chatId, text, disable_web_page_preview: true }),
+    });
+  } catch (e) { /* best-effort — never break the request */ }
+}
+// Fire the notification WITHOUT delaying the response: on Cloudflare, ctx.waitUntil runs it after the
+// response is sent; in tests (no waitUntil) it is awaited so assertions observe it.
+function fireNotify(env, event) {
+  const p = notifyTeam(env, event);
+  if (env && typeof env.waitUntil === 'function') { try { env.waitUntil(p); } catch (e) {} return; }
+  return p;
+}
+
 export async function handleRequest(request, env) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
 
@@ -111,6 +138,7 @@ async function handleHandoff(request, env, url, parts) {
     // A newer submission for the same source (submitter + domain) supersedes the sender's earlier OPEN
     // ones — the team reviews only the most complete recording, and the contributor's inbox reflects it.
     const superseded = await store.supersedePrior(submitter, domain, id, now);
+    await fireNotify(env, { kind: 'new', domain, id }); // ping the team: a new recording is waiting
     return json({ ok: true, id, status: 'new', superseded });
   }
 
@@ -139,6 +167,7 @@ async function handleHandoff(request, env, url, parts) {
       if (await store.recentWriteCount(client, now - 3600_000) >= MAX_HANDOFFS_PER_HOUR) return err(429, 'rate limit — try again later');
       const msg = await store.addMessage(id, from, text, client, now);
       await store.setHandoff(id, { status: from === 'team' ? 'needs_info' : 'in_review', updated_at: now });
+      if (from === 'submitter') await fireNotify(env, { kind: 'reply', domain: meta.domain, id, text }); // ping the team
       return json(msg);
     }
 

@@ -11,5 +11,10 @@ async function clientId(request) {
 }
 
 export default {
-  fetch: (request, env) => handleRequest(request, { store: d1Store(env.DB), now: () => Date.now(), clientId, adminToken: env.ADMIN_TOKEN }),
+  fetch: (request, env, ctx) => handleRequest(request, {
+    store: d1Store(env.DB), now: () => Date.now(), clientId, adminToken: env.ADMIN_TOKEN,
+    // Team push notifications (a new recording or a contributor reply). Optional: no secrets → no-op.
+    telegram: { token: env.TELEGRAM_BOT_TOKEN, chatId: env.TELEGRAM_CHAT_ID },
+    waitUntil: ctx && ctx.waitUntil ? ctx.waitUntil.bind(ctx) : undefined,
+  }),
 };
