@@ -10,6 +10,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **Record mode no longer lets analytics beacons crowd out the real API calls.** Third-party telemetry /
+  consent / tag-manager / feature-flag traffic (Datadog RUM, LaunchDarkly, Usercentrics, Transifex, Exponea,
+  Cookielaw, …) fires constantly and was filling the capped sample buffer, evicting the endpoints a source
+  actually needs (a Raisin recording came back 72% Datadog noise, having lost the deposits list and several
+  account details). Those hosts are now skipped at the page hook, and the sample buffer cap is raised
+  (60 → 120) for a thorough multi-account/-document session.
+
 ## [0.5.0] — 2026-07-20
 
 ### Added

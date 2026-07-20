@@ -10,6 +10,11 @@
   // draft can replay them. Skip standard headers the browser sets itself (and can't be replayed).
   const HDR_SKIP = /^(accept|accept-language|accept-encoding|user-agent|referer|referrer|origin|cookie|content-length|host|connection|cache-control|pragma|priority|dnt|te|range|if-[a-z-]+|sec-[a-z-]+|upgrade-insecure-requests|traceparent|tracestate)$/i;
   const HDR_SAMPLE = { test: (k) => !HDR_SKIP.test(k) };
+  // Third-party analytics / telemetry / consent / tag-manager / feature-flag beacons. These fire constantly
+  // (a Datadog RUM beacon on nearly every interaction) and, unfiltered, crowd the capped sample buffer out —
+  // evicting the real API calls a source needs (a Raisin recording came back 72% Datadog noise, having lost
+  // the deposits list + several account details). A source NEVER talks to these, so never sample them.
+  const NOISE = /datadoghq|browser-intake|launchdarkly|usercentrics|\btransifex|exponea|cookielaw|onetrust|google-analytics|googletagmanager|doubleclick|gstatic\.com|\.segment\.(io|com)|sentry\.io|ingest\.sentry|hotjar|mixpanel|amplitude|nr-data|newrelic|bugsnag|fullstory|optimizely|clarity\.ms|hcaptcha|recaptcha|privacy-proxy|\.exponea\./i;
   const MULTI = new Set(['co.uk', 'org.uk', 'com.es', 'com.br', 'com.mx', 'com.ar', 'co.jp', 'com.au']);
   function regDomain(host) {
     const p = String(host || '').toLowerCase().split(':')[0].split('.').filter(Boolean);
@@ -81,6 +86,7 @@
   // (e.g. a POST `pagina=1`). Cookies/secrets are never sent (only allow-listed request headers).
   function postSample(url, method, status, reqHeaders, bodyText, contentType, reqBody) {
     if (!LEARN || !bodyText || bodyText.length > 600000) return;
+    if (NOISE.test(String(url))) return; // don't let an analytics beacon evict a real API call from the buffer
     const rh = {}; Object.keys(reqHeaders || {}).forEach((k) => { if (HDR_SAMPLE.test(k)) rh[k] = reqHeaders[k]; });
     let abs = String(url), path = '';
     try { const u = new URL(url, location.href); abs = u.href; path = u.pathname; } catch (e) {}

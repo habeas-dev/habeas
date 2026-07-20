@@ -213,7 +213,7 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
   maybeAutoRunForSite(host, tabId, tab.url).catch(() => {});
 });
 
-const SAMPLE_CAP = 60;
+const SAMPLE_CAP = 120; // room for a thorough multi-account session (analytics beacons are filtered at the hook, so this holds real API calls + documents)
 const WS_FRAME_CAP = 200; // WebSocket/SSE frames (own buffer) — enough for the handshake + a data sample
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
