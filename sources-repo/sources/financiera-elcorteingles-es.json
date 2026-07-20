@@ -9,7 +9,7 @@
     "card",
     "loan"
   ],
-  "version": "2026-07-17.4",
+  "version": "2026-07-20",
   "minVersion": "0.4.1.2",
   "keepRaw": true,
   "contributors": [
@@ -90,6 +90,9 @@
             "page_number": "0",
             "page_size": "100"
           },
+          "headers": {
+            "eci-custom-encrypted-pan": "{group.pan}"
+          },
           "itemsPath": "financing_data",
           "paging": "none"
         }
@@ -111,6 +114,9 @@
           "path": "/dashboard/api/payments/ms-evolve-documents/v1/contracts/{group.id}/shopping-summaries",
           "params": {
             "date_bill": "{monthEnd:DD/MM/YYYY}"
+          },
+          "headers": {
+            "eci-custom-encrypted-pan": "{group.pan}"
           },
           "itemsPath": "previous_months_shopping_summaries",
           "paging": "none"
@@ -135,6 +141,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20",
+      "changes": "Send the per-card eci-custom-encrypted-pan header on the aplazamientos (financing-purchases) and extractos (shopping-summaries) LIST requests too — the SPA sends it on every card-scoped call (as movements already does), so the server needs it to return those lists per card, not just for movements + the statement PDF."
+    },
     {
       "version": "2026-07-17.4",
       "changes": "Revert tokenFromStorage: FECI's API bearer is a WSO2 OAuth JWT held in memory (obtained via /api/accessTokenTransmit), NOT in localStorage — aphishi-lws_at.t is a session id, so injecting it gave WSO2 900901 'Invalid Credentials'. Back to capturing the bearer from the SPA's own requests (auth.replayHeaders)."
