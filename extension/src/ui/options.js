@@ -518,9 +518,38 @@ async function openThread(id) {
   let data; try { data = await getHandoffThread(id, sub.id); } catch (e) { el.textContent = t('contrib_load_fail'); return; }
   const last = data.messages[data.messages.length - 1];
   if (last) await markSeen(id, last.at);
-  // Messages as clearly-separated bubbles, sided by sender (team left, you right).
+  // Latest version + which version is installed here, so the newest build card reads "New version" until it
+  // is installed. A version send is just a team message that carries a source, so it rides the timeline.
+  const latestVer = data.source ? String(data.source.version || '') : '';
+  let installedVer = '';
+  try { const o = await chrome.storage.local.get('habeas:contribVer:' + id); installedVer = o['habeas:contribVer:' + id] || ''; } catch (e) {}
+  let lastVerIdx = -1; data.messages.forEach((m, i) => { if (m.source && m.source.id) lastVerIdx = i; });
+  // A build the team sent, shown inline in the conversation: service name + version + install/reinstall, with a
+  // plain state pill (no technical "what changed" — the contributor can't act on it). The NEWEST build is
+  // highlighted "New version" until this exact version is installed here; earlier ones are "Previous version"
+  // and stay reinstallable, so current AND previous builds are visible and re-testable.
+  const versionCard = (src, mi, isLatest) => {
+    const ver = String(src.version || '');
+    const isNew = isLatest && ver !== installedVer;
+    const pill = isLatest
+      ? (isNew ? `<span class="pill new">${t('contrib_new_version')}</span>` : `<span class="pill sent">✓ ${t('contrib_installed_ver')}</span>`)
+      : `<span class="pill type">${t('contrib_prev_version')}</span>`;
+    return `<div class="srcbox${isNew ? ' newver' : ''}" data-vcard="${esc(String(mi))}">
+      <div><b>${esc(src.name || src.id)}</b> ${ver ? `<span class="ver">v${esc(ver)}</span>` : ''} ${pill}</div>
+      <button class="${isLatest ? 'accent' : ''}" data-vinst="${esc(String(mi))}" style="margin-top:8px">${isNew ? t('contrib_install') : t('contrib_reinstall')}</button>
+      <span class="muted" data-vstat="${esc(String(mi))}" style="font-size:12px"></span></div>`;
+  };
+  // Messages as clearly-separated bubbles, sided by sender (team left, you right); a version send renders as a
+  // team bubble with its build card inline.
   el.innerHTML = data.messages.length
     ? `<div class="thread">${data.messages.map((m, mi) => {
+      if (m.source && m.source.id) {                          // a version the team sent → a build card in the timeline
+        const note = String(m.text || '').trim();
+        return `<div class="msg team"><div><span class="who">${t('contrib_team')}</span><span class="when">${esc(String(m.at || '').slice(0, 16))}</span></div>`
+          + (note ? `<div class="body">${esc(note)}</div>` : '')
+          + versionCard(m.source, mi, mi === lastVerIdx)
+          + `</div>`;
+      }
       const mine = m.from !== 'team';
       const parts = String(m.text || '').split(TEAM_DIAG_SPLIT);
       const shown = parts[0].trim();                          // the plain message the contributor reads
@@ -532,22 +561,10 @@ async function openThread(id) {
     }).join('')}</div>`
     : `<div class="muted">${t('contrib_no_msgs')}</div>`;
   el.querySelectorAll('[data-peek]').forEach((b) => { b.onclick = () => { const d = el.querySelector(`[data-detail="${b.dataset.peek}"]`); if (d) d.hidden = !d.hidden; }; });
-  // The team attached a source built from this recording → let the contributor install + test it in one click.
-  // Show its VERSION and whether it's a version they haven't installed yet, so "did they build a new one?" is
-  // unambiguous (the box highlights + says "New version" until this exact version has been installed here).
-  if (data.source && data.source.id) {
-    const ver = String(data.source.version || '');
-    let installedVer = '';
-    try { const o = await chrome.storage.local.get('habeas:contribVer:' + id); installedVer = o['habeas:contribVer:' + id] || ''; } catch (e) {}
-    const isNew = ver !== installedVer;
-    // The service name the contributor recognizes, a small version label, and a plain "new / installed" state.
-    // (No technical detail about WHAT changed — never "missing field/param/header": they can't act on it.)
-    el.innerHTML += `<div class="srcbox${isNew ? ' newver' : ''}" id="srcbox-${esc(id)}">
-      <div><b>${esc(data.source.name || data.source.id)}</b> ${ver ? `<span class="ver">v${esc(ver)}</span>` : ''}
-        ${isNew ? `<span class="pill new">${t('contrib_new_version')}</span>` : `<span class="pill sent">✓ ${t('contrib_installed_ver')}</span>`}</div>
-      <div class="muted" style="font-size:12px;margin-top:4px">${t('contrib_install_hint')}</div>
-      <button class="accent" id="inst-${esc(id)}" style="margin-top:8px">${isNew ? t('contrib_install') : t('contrib_reinstall')}</button>
-      <span id="inststat-${esc(id)}" class="muted" style="font-size:12px"></span></div>`;
+  // Backward compatibility: a source attached BEFORE version messages existed has no timeline card — show the
+  // latest as a single build card so it can still be installed (no history existed for it either way).
+  if (data.source && data.source.id && lastVerIdx === -1) {
+    el.innerHTML += `<div class="thread"><div class="msg team">${versionCard(data.source, 'latest', true)}</div></div>`;
   }
   // Report a problem — ALWAYS available while a source is installed to test, so it never vanishes after one
   // report and the contributor can flag EACH new failure. The plain "it didn't work" goes to the thread; the
@@ -585,20 +602,24 @@ async function openThread(id) {
       } catch (e) { rb.disabled = false; }
     };
   }
-  if (data.source && data.source.id) {
-    const ib = document.getElementById('inst-' + id);
-    if (ib) ib.onclick = async () => {
-      ib.disabled = true;
-      const ok = await installContribSource(data.source);
-      const st = document.getElementById('inststat-' + id);
+  // Install any build in the timeline (the latest OR a previous one). Tracks the installed version so the
+  // newest card flips from "New version" to "installed", and older cards stay reinstallable.
+  el.querySelectorAll('[data-vinst]').forEach((b) => {
+    b.onclick = async () => {
+      const mi = b.dataset.vinst;
+      const src = mi === 'latest' ? data.source : (data.messages[mi] && data.messages[mi].source);
+      if (!src) return;
+      b.disabled = true;
+      const ok = await installContribSource(src);
+      const st = el.querySelector(`[data-vstat="${mi}"]`);
       if (st) st.textContent = ok ? t('contrib_installed') : t('contrib_install_fail');
       if (ok) {
-        try { await chrome.storage.local.set({ ['habeas:contribVer:' + id]: String(data.source.version || '') }); } catch (e) {}
-        const box = document.getElementById('srcbox-' + id); if (box) box.classList.remove('newver'); // no longer a pending new version
+        try { await chrome.storage.local.set({ ['habeas:contribVer:' + id]: String(src.version || '') }); } catch (e) {}
+        const card = el.querySelector(`[data-vcard="${mi}"]`); if (card) card.classList.remove('newver');
       }
-      ib.disabled = false;
+      b.disabled = false;
     };
-  }
+  });
   el.querySelector('[data-send]').onclick = async () => {
     const txt = (document.getElementById('rep-' + id).value || '').trim(); if (!txt) return;
     try { await replyHandoff(id, sub.id, txt); el.hidden = true; await openThread(id); tabBadge('contributions', unreadCount(await getMyHandoffs(sub.id), (await getSubmitter()).seen)); } catch (e) { $('#status') && ($('#status').textContent = t('contrib_reply_fail')); }

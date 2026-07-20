@@ -1140,6 +1140,7 @@
   "contrib_install_fail": { "message": "no se pudo instalar" },
   "contrib_has_source": { "message": "fuente lista para instalar" },
   "contrib_new_version": { "message": "Nueva versión" },
+  "contrib_prev_version": { "message": "Versión anterior" },
   "contrib_installed_ver": { "message": "Esta versión instalada" },
   "contrib_reinstall": { "message": "Reinstalar" },
   "contrib_report": { "message": "Reportar un problema" },

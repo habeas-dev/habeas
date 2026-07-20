@@ -1140,6 +1140,7 @@
   "contrib_install_fail": { "message": "couldn't install" },
   "contrib_has_source": { "message": "source ready to install" },
   "contrib_new_version": { "message": "New version" },
+  "contrib_prev_version": { "message": "Previous version" },
   "contrib_installed_ver": { "message": "This version installed" },
   "contrib_reinstall": { "message": "Reinstall" },
   "contrib_report": { "message": "Report a problem" },

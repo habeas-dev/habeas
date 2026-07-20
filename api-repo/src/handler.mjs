@@ -164,7 +164,13 @@ async function handleHandoff(request, env, url, parts) {
       if (body && body.sourceJson !== undefined) {
         const s = typeof body.sourceJson === 'string' ? body.sourceJson : JSON.stringify(body.sourceJson);
         if (s.length > 100000) return err(413, 'sourceJson too large');
-        patch.source_json = s;
+        patch.source_json = s; // the LATEST version (backward-compatible one-click install + registry link)
+        // Also record THIS version as a message in the conversation, so a version send shows up in the
+        // timeline like any reply and previous versions stay visible (history). An optional `message` is
+        // the plain note that rides with it (e.g. "this fixes the statement download").
+        const note = String((body && body.message) || '').slice(0, MAX_COMMENT);
+        const client = env.clientId ? await env.clientId(request) : 'team';
+        await store.addMessage(id, 'team', note, client, now, s);
       }
       return json(await store.setHandoff(id, patch));
     }

@@ -19,6 +19,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   involved (a reload could interrupt an in-progress login).
 
 ### Changed
+- **Version sends are part of the contribution conversation, with history** (Settings → My contributions):
+  each build the team sends now appears **inline in the timeline** as a build card (service name + version +
+  Install/Reinstall), in order, next to the accompanying note — instead of a single box pinned below that was
+  overwritten on every new build. The newest build is highlighted "New version" until it is installed here;
+  **previous builds stay visible and reinstallable** ("Previous version"), so the contributor can see and
+  re-test current and earlier versions.
 - **Clearer, less technical contribution conversation** (Settings → My contributions):
   - Messages render as separated bubbles sided by sender (team vs you) instead of a run-on list.
   - The source the team attached shows its version with an unmistakable state: a highlighted "New version"

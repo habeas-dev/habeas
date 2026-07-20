@@ -80,13 +80,19 @@ export function memoryStore() {
       if (patch.updated_at != null) h.updated_at = patch.updated_at;
       return { id: h.id, domain: h.domain, status: h.status, sourceId: h.source_id || null };
     },
-    async addMessage(id, from, text, client, now) {
-      hmsgs.push({ handoff_id: id, from, text, at: now });
+    // sourceJson (optional) turns this into a VERSION message: it delivers an authored source version and
+    // rides the same timeline as text, so the conversation shows each build in order (history preserved).
+    async addMessage(id, from, text, client, now, sourceJson = '') {
+      hmsgs.push({ handoff_id: id, from, text, at: now, source_json: sourceJson || '' });
       writes.push({ client, at: now });
       return { from, text, at: new Date(now).toISOString() };
     },
     async getMessages(id) {
-      return hmsgs.filter((m) => m.handoff_id === id).sort((a, b) => a.at - b.at).map((m) => ({ from: m.from, text: m.text, at: new Date(m.at).toISOString() }));
+      return hmsgs.filter((m) => m.handoff_id === id).sort((a, b) => a.at - b.at).map((m) => {
+        const out = { from: m.from, text: m.text, at: new Date(m.at).toISOString() };
+        if (m.source_json) { try { out.source = JSON.parse(m.source_json); } catch (e) {} }
+        return out;
+      });
     },
     async supersedePrior(submitter, domain, exceptId, now) {
       const OPEN = new Set(['new', 'in_review', 'needs_info']);

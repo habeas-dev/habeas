@@ -162,3 +162,30 @@ test('handoff: team attaches the authored source; the submitter can retrieve it 
   const inbox = await (await call(s, 'GET', '/submitter/sub1/handoffs')).json();
   assert.equal(inbox[0].hasSource, true);
 });
+
+test('handoff: each attached version is a timeline message, and history is preserved', async () => {
+  const s = memoryStore();
+  const { id } = await (await call(s, 'POST', '/handoff', { submitter: 'sub1', bundle: BUNDLE })).json();
+  const V1 = { id: 'x-es', name: 'X', schema: 'transaction@1', version: '2026-07-19' };
+  const V2 = { id: 'x-es', name: 'X', schema: 'transaction@1', version: '2026-07-20' };
+  // two successive version sends, each with an accompanying plain note
+  await call(s, 'POST', `/handoff/${id}?token=ADMIN`, { status: 'authored', sourceJson: V1, message: 'First build to test' });
+  await call(s, 'POST', `/handoff/${id}?token=ADMIN`, { sourceJson: V2, message: 'This fixes the statement download' });
+
+  const view = await (await call(s, 'GET', `/handoff/${id}?submitter=sub1`)).json();
+  // both versions ride the conversation timeline, in order, each carrying its own source + note
+  const vmsgs = view.messages.filter((m) => m.source);
+  assert.equal(vmsgs.length, 2, 'both versions are timeline messages');
+  assert.equal(vmsgs[0].from, 'team');
+  assert.equal(vmsgs[0].source.version, '2026-07-19');
+  assert.equal(vmsgs[0].text, 'First build to test');
+  assert.equal(vmsgs[1].source.version, '2026-07-20');
+  // the latest source stays available for the backward-compatible one-click install
+  assert.deepEqual(view.source, V2);
+  // a plain text reply is NOT a version message
+  await call(s, 'POST', `/handoff/${id}/messages`, { submitter: 'sub1', text: 'ok, testing' });
+  const view2 = await (await call(s, 'GET', `/handoff/${id}?submitter=sub1`)).json();
+  assert.equal(view2.messages.filter((m) => m.source).length, 2);
+  assert.equal(view2.messages[view2.messages.length - 1].text, 'ok, testing');
+  assert.ok(!view2.messages[view2.messages.length - 1].source);
+});

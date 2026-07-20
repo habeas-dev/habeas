@@ -62,14 +62,20 @@ export function d1Store(DB) {
       const h = await this.getHandoffMeta(id);
       return h ? { id: h.id, domain: h.domain, status: h.status, sourceId: h.source_id || null } : null;
     },
-    async addMessage(id, from, text, client, now) {
-      await DB.prepare('INSERT INTO handoff_messages (handoff_id, sender, text, created_at) VALUES (?, ?, ?, ?)').bind(id, from, text, now).run();
+    // sourceJson (optional) turns this into a VERSION message: it delivers an authored source version and
+    // rides the same timeline as text, so the conversation shows each build in order (history preserved).
+    async addMessage(id, from, text, client, now, sourceJson = '') {
+      await DB.prepare('INSERT INTO handoff_messages (handoff_id, sender, text, source_json, created_at) VALUES (?, ?, ?, ?, ?)').bind(id, from, text, sourceJson || '', now).run();
       await DB.prepare('INSERT INTO writes (client, created_at) VALUES (?, ?)').bind(client, now).run();
       return { from, text, at: new Date(now).toISOString() };
     },
     async getMessages(id) {
-      const r = await DB.prepare('SELECT sender, text, created_at FROM handoff_messages WHERE handoff_id = ? ORDER BY created_at ASC').bind(id).all();
-      return (r.results || []).map((m) => ({ from: m.sender, text: m.text, at: new Date(m.created_at).toISOString() }));
+      const r = await DB.prepare('SELECT sender, text, source_json, created_at FROM handoff_messages WHERE handoff_id = ? ORDER BY created_at ASC').bind(id).all();
+      return (r.results || []).map((m) => {
+        const out = { from: m.sender, text: m.text, at: new Date(m.created_at).toISOString() };
+        if (m.source_json) { try { out.source = JSON.parse(m.source_json); } catch (e) {} }
+        return out;
+      });
     },
     async supersedePrior(submitter, domain, exceptId, now) {
       const r = await DB.prepare("UPDATE handoffs SET status = 'superseded', updated_at = ? WHERE submitter = ? AND domain = ? AND id != ? AND status IN ('new', 'in_review', 'needs_info')")

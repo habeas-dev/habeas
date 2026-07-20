@@ -48,10 +48,11 @@ CREATE INDEX IF NOT EXISTS idx_handoffs_submitter ON handoffs (submitter, update
 CREATE INDEX IF NOT EXISTS idx_handoffs_updated ON handoffs (updated_at);
 
 CREATE TABLE IF NOT EXISTS handoff_messages (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  handoff_id TEXT    NOT NULL,
-  sender     TEXT    NOT NULL,             -- 'team' | 'submitter'
-  text       TEXT    NOT NULL,
-  created_at INTEGER NOT NULL
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  handoff_id  TEXT    NOT NULL,
+  sender      TEXT    NOT NULL,             -- 'team' | 'submitter'
+  text        TEXT    NOT NULL,
+  source_json TEXT    NOT NULL DEFAULT '',  -- non-empty → a VERSION message (delivers an authored source build)
+  created_at  INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_hmsgs_handoff ON handoff_messages (handoff_id, created_at);
