@@ -9,8 +9,8 @@
     "card",
     "loan"
   ],
-  "version": "2026-07-17.3",
-  "minVersion": "0.4.1.5",
+  "version": "2026-07-17.4",
+  "minVersion": "0.4.1.2",
   "keepRaw": true,
   "contributors": [
     "David Marín"
@@ -23,12 +23,7 @@
     "mode": "cookie",
     "replayHeaders": [
       "authorization"
-    ],
-    "tokenFromStorage": {
-      "key": "aphishi-lws_at",
-      "field": "t",
-      "scheme": "Bearer"
-    }
+    ]
   },
   "api": {
     "host": "https://www.financieraelcorteingles.es",
@@ -141,8 +136,12 @@
   ],
   "changelog": [
     {
+      "version": "2026-07-17.4",
+      "changes": "Revert tokenFromStorage: FECI's API bearer is a WSO2 OAuth JWT held in memory (obtained via /api/accessTokenTransmit), NOT in localStorage — aphishi-lws_at.t is a session id, so injecting it gave WSO2 900901 'Invalid Credentials'. Back to capturing the bearer from the SPA's own requests (auth.replayHeaders)."
+    },
+    {
       "version": "2026-07-17.3",
-      "changes": "Robust auth: read the bearer FRESH from the page's localStorage (aphishi-lws_at.t) on every request via auth.tokenFromStorage, instead of relying on capturing it from a seen request (which could be absent → groups 401 'User data is empty' even with a fresh login). Requires extension >= 0.4.1.5."
+      "changes": "(reverted) read the bearer from localStorage via auth.tokenFromStorage — wrong field for FECI (the token isn't in localStorage)."
     },
     {
       "version": "2026-07-17.2",
