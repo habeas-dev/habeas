@@ -23,9 +23,12 @@ operate. Every decision must preserve this.
 
 ## Status — working beta (published on Chrome Web Store + Firefox AMO)
 
-**11 sources published** to the community registry (Carrefour, Dia, Hover, Decathlon, Bip&Drive,
-Leroy Merlín, WiZink, CaixaBank Consumer, IKEA, Amazon, and **ING España** — a 3-output bank source:
-movements + per-account monthly statements PDF/Excel + integrated monthly statement PDF). Implemented:
+**16 sources published** to the community registry (Carrefour, Dia, Hover, Decathlon, Bip&Drive,
+Leroy Merlín, WiZink, CaixaBank Consumer, IKEA, Amazon, AliExpress, Openbank, Revolut, Trade Republic,
+**ING España** — a 3-output bank source: movements + per-account monthly statements PDF/Excel + integrated
+monthly statement PDF — and **Financiera El Corte Inglés** — a 3-output store-card source: movements +
+aplazamientos + monthly statement PDFs, cookie session + a rotating WSO2 bearer scoped to `/dashboard/*` via
+`auth.capturePaths`). Implemented:
 capture → inventory → sinks (download / local-folder / **native Google Drive** / http / **WebDAV** /
 **S3 (+compatible)** / **Dropbox**), per-sink dedupe, **automatic mode** (sync new docs on login) +
 **Sync all** (sweep every source), activity log + badge + notifications, **source categories + sink
@@ -43,7 +46,7 @@ mints a **grant** (`storage.local habeas:grants`, one origin→one route) revoca
 Site integrations. `collect` always runs in a **dedicated tab** (foregrounded only for manual login;
 never handles credentials), debounced + logged, no notification. See `consumers/external-hooks.md`.
 
-**Community sources system** (LIVE — 11 sources published): a **generalized runtime**
+**Community sources system** (LIVE — 16 sources published): a **generalized runtime**
 (declarative pager `offsets|offset|page|cursor|none|years|synthetic`, dotted field paths **+ array
 selectors** `key[field=value].sub`, schemas `receipt|invoice|transaction|investment`, optional PDF/Excel;
 `synthetic` = documents that exist once per period/account, e.g. monthly statements); an **adapter loader

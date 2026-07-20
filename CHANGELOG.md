@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-07-20
+
 ### Added
 - **Computed-date FORMAT on document tokens** (`runtime/inventory.js#fillDocTmpl`) — a document endpoint value
   can now format a date field, e.g. `{date:DD/MM/YYYY}`, parsing ISO / `DD/MM/YYYY` / `YYYY/MM/DD`. Needed

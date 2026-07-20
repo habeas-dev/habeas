@@ -9,8 +9,8 @@
     "card",
     "loan"
   ],
-  "version": "2026-07-20.2",
-  "minVersion": "0.4.1.15",
+  "version": "2026-07-20.3",
+  "minVersion": "0.5.0",
   "keepRaw": true,
   "contributors": [
     "David Marín"
@@ -144,6 +144,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20.3",
+      "changes": "First publish to the live registry. Requires extension >= 0.5.0 (the milestone that ships declarative capturePaths, the login-safe scoped token observer, and the {date:FORMAT} document token this source relies on). Verified end-to-end by the contributor."
+    },
     {
       "version": "2026-07-20.2",
       "changes": "Fix the statement PDF datePurchase format: the generate-file endpoint wants DD/MM/YYYY (e.g. 01/09/2025), but on a store re-download the date falls back to the normalized ISO value (2025-09-01), which the server rejected with HTTP 400. Now formatted explicitly via {date:DD/MM/YYYY}. Requires extension >= 0.4.1.15."
