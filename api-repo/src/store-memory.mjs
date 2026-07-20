@@ -1,6 +1,8 @@
 // In-memory store — used by the unit tests (and handy for local runs). Same interface as the
 // D1-backed store in store-d1.mjs.
 const round1 = (v) => Math.round(v * 10) / 10;
+// Finished handoff sessions — never "open" for supersede, never "waiting for the team".
+const TERMINAL = new Set(['published', 'completed', 'declined', 'superseded']);
 
 export function memoryStore() {
   const ratings = [];   // { id, stars, client }
@@ -52,7 +54,8 @@ export function memoryStore() {
         const ms = hmsgs.filter((m) => m.handoff_id === h.id).sort((a, b) => a.at - b.at);
         const last = ms[ms.length - 1];
         // "waiting for the team" = a fresh submission, or the contributor sent the last message (awaiting reply).
-        const waitingForTeam = h.status === 'new' || (last && last.from === 'submitter');
+        // A finished session (published / completed / declined / superseded) never waits for the team.
+        const waitingForTeam = !TERMINAL.has(h.status) && (h.status === 'new' || (last && last.from === 'submitter'));
         return {
           id: h.id, domain: h.domain, handle: h.handle || '', locale: h.locale || '', status: h.status, sourceId: h.source_id || null,
           at: new Date(h.at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(),

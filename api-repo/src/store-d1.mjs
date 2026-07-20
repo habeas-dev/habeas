@@ -42,7 +42,7 @@ export function d1Store(DB) {
           (SELECT COUNT(*) FROM handoff_messages m WHERE m.handoff_id = h.id) AS messages,
           (SELECT sender FROM handoff_messages m WHERE m.handoff_id = h.id ORDER BY m.created_at DESC LIMIT 1) AS last_from
         FROM handoffs h ORDER BY h.updated_at DESC LIMIT ?`).bind(limit).all();
-      return (r.results || []).map((h) => ({ id: h.id, domain: h.domain, handle: h.handle || '', locale: h.locale || '', status: h.status, sourceId: h.source_id || null, at: new Date(h.created_at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(), bytes: h.bytes, messages: h.messages, lastFrom: h.last_from || null, waitingForTeam: h.status === 'new' || h.last_from === 'submitter' }));
+      return (r.results || []).map((h) => ({ id: h.id, domain: h.domain, handle: h.handle || '', locale: h.locale || '', status: h.status, sourceId: h.source_id || null, at: new Date(h.created_at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(), bytes: h.bytes, messages: h.messages, lastFrom: h.last_from || null, waitingForTeam: !['published', 'completed', 'declined', 'superseded'].includes(h.status) && (h.status === 'new' || h.last_from === 'submitter') }));
     },
     async getHandoffMeta(id) {
       return (await DB.prepare('SELECT id, domain, status, submitter, handle, locale, source_id, source_json FROM handoffs WHERE id = ?').bind(id).first()) || null;

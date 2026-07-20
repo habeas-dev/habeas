@@ -1,0 +1,83 @@
+{
+  "id": "raisin-es",
+  "name": "Raisin",
+  "service": "raisin",
+  "trust": "community",
+  "domain": "raisin.com",
+  "country": "ES",
+  "categories": [
+    "banking",
+    "investment"
+  ],
+  "version": "2026-07-20",
+  "minVersion": "0.5.0.2",
+  "keepRaw": true,
+  "contributors": [
+    "David Marín Carreño"
+  ],
+  "match": [
+    "https://www.raisin.com/*"
+  ],
+  "crossDomainHosts": [
+    "api2.weltsparen.de"
+  ],
+  "auth": {
+    "mode": "bearer",
+    "replayHeaders": [
+      "authorization"
+    ],
+    "context": [
+      {
+        "name": "customer_id",
+        "from": "url",
+        "match": "customer_id=(BAC_[0-9_]+)"
+      }
+    ]
+  },
+  "api": {
+    "host": "https://api2.weltsparen.de",
+    "groups": {
+      "path": "/tams/v1/accounts",
+      "itemsPath": "$",
+      "params": {
+        "filter": "all"
+      },
+      "fields": {
+        "id": "id",
+        "name": "accountNumber",
+        "iban": "iban",
+        "currency": "currencyCode",
+        "type": "type"
+      },
+      "mask": [
+        "iban"
+      ]
+    },
+    "list": {
+      "path": "/tams/v1/accounts/{group.id}/transactions",
+      "paging": "offset",
+      "offsetParam": "offset",
+      "offsetStep": 10,
+      "itemsPath": "$",
+      "params": {
+        "limit": 10,
+        "date_from": "{daysAgo:90}"
+      }
+    }
+  },
+  "schema": "transaction@1",
+  "fields": {
+    "internalId": "id",
+    "date": "bookingDate",
+    "amount": "amount",
+    "currency": "currencyCode",
+    "counterparty": "counterpartyName",
+    "description": "referenceText"
+  },
+  "changelog": [
+    {
+      "version": "2026-07-20",
+      "changes": "Initial: Raisin (WeltSparen) — the Raisin transaction account movements (tams). Cross-domain login raisin.com -> API api2.weltsparen.de (Keycloak bearer), 90-day window to stay inside the SCA-free range, customer_id captured as context. More outputs (savings, deposits, documents) to follow."
+    }
+  ]
+}

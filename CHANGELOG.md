@@ -11,6 +11,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **"Completed" handoff status** — a collaboration session that finished with a complete source is marked
+  completed (shown as "✓ completed" in My contributions). Completed/published/declined/superseded sessions no
+  longer count as "waiting for the team", so a finished collaboration drops out of the active queue.
 - **Targeted capture requests** — the team can ask a contributor to record one specific thing, in plain
   language, without any technical back-and-forth. A capture request appears in the contribution conversation
   as a guided card ("The team needs one more recording" + the plain instruction); tapping it opens the

@@ -1135,6 +1135,7 @@
   "contrib_status_needs_info": { "message": "requiere tu respuesta" },
   "contrib_status_authored": { "message": "en construcción" },
   "contrib_status_published": { "message": "publicada" },
+  "contrib_status_completed": { "message": "✓ completada" },
   "contrib_status_declined": { "message": "no utilizada" },
   "contrib_status_superseded": { "message": "reemplazada por un envío posterior" },
   "contrib_install": { "message": "Instalar y probar" },

@@ -1135,6 +1135,7 @@
   "contrib_status_needs_info": { "message": "needs your reply" },
   "contrib_status_authored": { "message": "being built" },
   "contrib_status_published": { "message": "published" },
+  "contrib_status_completed": { "message": "✓ completed" },
   "contrib_status_declined": { "message": "not used" },
   "contrib_status_superseded": { "message": "replaced by a newer send" },
   "contrib_install": { "message": "Install & test" },
