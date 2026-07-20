@@ -597,12 +597,15 @@ async function openThread(id) {
       rb.disabled = true;
       const d = await readDiag();
       const trace = formatDiag(d);
-      const tail = trace ? TEAM_DIAG + scrubText(trace).slice(0, 1800) : '';
+      const tail = trace ? TEAM_DIAG + scrubText(trace).slice(0, 10000) : ''; // fits the server's handoff-message limit
       try {
         await replyHandoff(id, sub.id, t('contrib_report_prefix') + tail);
         if (trace && data.sourceId) await clearDiag(data.sourceId);
         el.hidden = true; await openThread(id); // re-render: the report appears + the button stays for the next one
-      } catch (e) { rb.disabled = false; }
+      } catch (e) {
+        rb.disabled = false; // let the contributor retry, and SAY it failed instead of doing nothing
+        const st = document.getElementById('repstat-' + id); if (st) st.textContent = t('contrib_report_fail');
+      }
     };
   }
   // Install any build in the timeline (the latest OR a previous one). Tracks the installed version so the

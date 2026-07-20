@@ -10,7 +10,17 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **Computed-date FORMAT on document tokens** (`runtime/inventory.js#fillDocTmpl`) — a document endpoint value
+  can now format a date field, e.g. `{date:DD/MM/YYYY}`, parsing ISO / `DD/MM/YYYY` / `YYYY/MM/DD`. Needed
+  when the API wants a specific date shape but the stored/record date is normalized to ISO (a store
+  re-download has no raw item, so `{date}` falls back to the ISO `record.date`).
+
 ### Fixed
+- **"Report a problem" sends again, with a timestamp per line.** The richer multi-line diagnostic exceeded the
+  server's message length limit (1000 chars) and the send failed silently; the handoff-message limit is raised
+  (diagnostics are team-facing, not public comments) and a failed send now says so instead of doing nothing.
+  Each failure line is prefixed with its timestamp.
 - **"Report a problem" now captures every failed request, and names which one.** The diagnostic used to keep
   a single overwritten error (so only the first/last failure survived) and didn't say where it happened —
   and a failed document/PDF fetch during a manual send was swallowed silently, so it looked like "no

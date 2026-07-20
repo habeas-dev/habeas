@@ -19,6 +19,9 @@ const CORS = {
 const ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const MAX_WRITES_PER_HOUR = 30;
 const MAX_COMMENT = 1000;
+// Handoff thread messages carry a full failure diagnostic (one line per failed request), so they need much
+// more room than a public source comment. Still bounded to keep a single row sane.
+const MAX_HANDOFF_MSG = 12000;
 const MAX_AUTHOR = 60;
 const MAX_HANDOFF_BYTES = 2_000_000;   // a redacted recording is ~300KB; cap generously
 const MAX_HANDOFFS_PER_HOUR = 20;
@@ -158,7 +161,7 @@ async function handleHandoff(request, env, url, parts) {
       let body; try { body = await request.json(); } catch (e) { return err(400, 'invalid JSON body'); }
       const text = String((body && body.text) || '').trim();
       if (!text) return err(400, 'text required');
-      if (text.length > MAX_COMMENT) return err(400, `text too long (max ${MAX_COMMENT})`);
+      if (text.length > MAX_HANDOFF_MSG) return err(400, `text too long (max ${MAX_HANDOFF_MSG})`);
       let from;
       if (admin) from = 'team';
       else if (body && body.submitter && body.submitter === meta.submitter) from = 'submitter';

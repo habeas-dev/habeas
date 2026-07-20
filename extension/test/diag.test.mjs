@@ -23,10 +23,11 @@ test('pushDiag accumulates multiple failures (does not overwrite) and clearDiag 
   assert.equal(await readDiag('feci'), null);
 });
 
-test('formatDiag renders which request failed (output, item, HTTP status, method + url)', () => {
+test('formatDiag renders which request failed (timestamp, output, item, HTTP status, method + url)', () => {
   const txt = formatDiag({ entries: [
-    { phase: 'document', output: 'extractos', kind: 'document', item: '01/09/2025', message: 'statement 500 internal error', status: 500, method: 'POST', url: 'https://x.test/dashboard/.../generate-file?datePurchase=01/09/2025' },
+    { at: '2026-07-20T10:04:52.123Z', phase: 'document', output: 'extractos', kind: 'document', item: '01/09/2025', message: 'statement 500 internal error', status: 500, method: 'POST', url: 'https://x.test/dashboard/.../generate-file?datePurchase=01/09/2025' },
   ] });
+  assert.match(txt, /\[2026-07-20 10:04:52\]/, 'each line is timestamped');
   assert.match(txt, /output=extractos/);
   assert.match(txt, /item=01\/09\/2025/);
   assert.match(txt, /HTTP 500/);

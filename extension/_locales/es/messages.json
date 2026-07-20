@@ -1147,6 +1147,7 @@
   "contrib_report_prefix": { "message": "⚠️ No funcionó al probar la fuente." },
   "contrib_report_peek": { "message": "Ver qué se envía" },
   "contrib_report_none": { "message": "ahora mismo no hay detalles técnicos; el equipo solo sabrá que no funcionó" },
+  "contrib_report_fail": { "message": "no se pudo enviar; revisa tu conexión e inténtalo otra vez" },
   "contrib_show_detail": { "message": "Ver detalle técnico" },
   "contrib_report_sent": { "message": "✓ Enviado al equipo" },
   "contrib_notify": { "message": "El equipo de Habeas ha respondido a una de tus contribuciones — míralo en Ajustes → Mis contribuciones." },

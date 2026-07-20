@@ -37,10 +37,11 @@ export function formatDiag(diag) {
   const es = Array.isArray(diag.entries) ? diag.entries : [];
   if (!es.length) return '';
   return es.map((e) => {
+    const ts = e.at ? '[' + String(e.at).slice(0, 19).replace('T', ' ') + '] ' : ''; // YYYY-MM-DD HH:MM:SS
     const where = [e.phase, e.output && ('output=' + e.output), e.kind && ('kind=' + e.kind), e.item != null && e.item !== '' && ('item=' + e.item)].filter(Boolean).join(' ');
     const status = e.status ? ' → HTTP ' + e.status : '';
     const req = e.url ? '\n    ' + ((e.method || 'GET') + ' ' + e.url) : '';
-    return '• ' + (where ? where + ' — ' : '') + (e.message || '') + status + req;
+    return '• ' + ts + (where ? where + ' — ' : '') + (e.message || '') + status + req;
   }).join('\n');
 }
 

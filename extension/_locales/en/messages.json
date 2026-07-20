@@ -1147,6 +1147,7 @@
   "contrib_report_prefix": { "message": "⚠️ It didn't work when I tried the source." },
   "contrib_report_peek": { "message": "See what's sent" },
   "contrib_report_none": { "message": "no technical details right now — the team will just know it didn't work" },
+  "contrib_report_fail": { "message": "couldn't send — check your connection and try again" },
   "contrib_show_detail": { "message": "See technical detail" },
   "contrib_report_sent": { "message": "✓ Sent to the team" },
   "contrib_notify": { "message": "The Habeas team replied to one of your contributions — see Settings → My contributions." },

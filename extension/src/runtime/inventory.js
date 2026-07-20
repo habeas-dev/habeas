@@ -589,11 +589,25 @@ function fillTmpl(str, group, auth, params) {
 }
 // Unified document-URL/body templater for a doc: {internalId} + {csrf} + {group.*} (doc._group, e.g. the
 // card) + {field.path} (doc._raw, e.g. the statement's statementDate). Values are URL-encoded.
+// Reformat a date value to a template's FORMAT (YYYY/MM/DD tokens). Parses ISO (2025-09-01), DD/MM/YYYY and
+// YYYY/MM/DD; anything unrecognized is returned as-is. Lets a document endpoint state the exact shape it
+// wants ({date:DD/MM/YYYY}) even though the stored/record date is normalized to ISO (a store re-download has
+// no _raw, so {date} falls back to record.date = ISO — which some APIs reject as a validation error).
+function fmtDateStr(v, fmt) {
+  const s = String(v); let m;
+  let y, mo, d;
+  if ((m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s))) { y = m[1]; mo = m[2]; d = m[3]; }
+  else if ((m = /^(\d{2})\/(\d{2})\/(\d{4})/.exec(s))) { d = m[1]; mo = m[2]; y = m[3]; }
+  else if ((m = /^(\d{4})\/(\d{2})\/(\d{2})/.exec(s))) { y = m[1]; mo = m[2]; d = m[3]; }
+  else return s;
+  return fmt.replace(/YYYY/g, y).replace(/MM/g, mo).replace(/DD/g, d);
+}
 function fillDocTmpl(str, doc, id, csrf, auth) {
   const ctx = ctxOf(auth);
-  // Only {word.word} tokens (internalId, csrf, ctx.*, group.*, field paths) — NOT arbitrary braces, so a
-  // GraphQL POST body (`{ receipt(x) { receiptPdf } }`) keeps its own braces and only {internalId} fills.
-  return String(str).replace(/\{([\w.]+)\}/g, (m, k) => {
+  // Only {word.word} tokens (internalId, csrf, ctx.*, group.*, field paths), each with an optional :FORMAT
+  // (e.g. {date:DD/MM/YYYY}) — NOT arbitrary braces, so a GraphQL POST body (`{ receipt(x) { receiptPdf } }`)
+  // keeps its own braces (they have spaces) and only real tokens fill.
+  return String(str).replace(/\{([\w.]+)(?::([^}]+))?\}/g, (m, k, fmt) => {
     if (k === 'internalId') return tid(id);
     if (k === 'csrf') return csrf == null ? '' : String(csrf);
     if (k.indexOf('ctx.') === 0) { const v = ctx[k.slice(4)]; return v == null ? m : tid(v); }
@@ -603,7 +617,7 @@ function fillDocTmpl(str, doc, id, csrf, auth) {
     // Store re-download of a synthetic doc: the transient _group/_raw are gone — recover the value from the
     // persisted record (and its keepRaw `extra`, which captured the group's derived fields + the period window).
     if (v == null && doc && doc.record) { v = get(doc.record, rk); if (v == null && doc.record.extra) v = get(doc.record.extra, rk); }
-    return v == null ? m : tid(v);
+    return v == null ? m : tid(fmt ? fmtDateStr(v, fmt) : v);
   });
 }
 // Resolve a field mapping: a plain dotted path into the item, OR a template referencing {group.*}
