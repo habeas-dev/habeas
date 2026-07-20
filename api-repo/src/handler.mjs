@@ -174,6 +174,34 @@ async function handleHandoff(request, env, url, parts) {
       return json(msg);
     }
 
+    // POST /handoff/:id/recording — a TARGETED re-recording attaches to THIS handoff (same thread, no new
+    // handoff, no supersede), so the guided capture the team asked for lands in the existing conversation.
+    if (parts.length === 3 && parts[2] === 'recording' && request.method === 'POST') {
+      if (!meta) return err(404, 'not found');
+      let body; try { body = await request.json(); } catch (e) { return err(400, 'invalid JSON body'); }
+      if (!body || !body.submitter || body.submitter !== meta.submitter) return err(401, 'unauthorized');
+      const bundle = body.bundle;
+      if (!bundle || bundle.habeasHandoff !== 1) return err(400, 'not a Habeas handoff bundle');
+      const serialized = JSON.stringify(bundle);
+      if (serialized.length > MAX_HANDOFF_BYTES) return err(413, 'recording too large');
+      const client = env.clientId ? await env.clientId(request) : 'anon';
+      if (await store.recentWriteCount(client, now - 3600_000) >= MAX_HANDOFFS_PER_HOUR) return err(429, 'rate limit — try again later');
+      const note = String((body.note) || '').slice(0, MAX_COMMENT);
+      await store.addRecording(id, serialized, note, now);
+      await store.addMessage(id, 'submitter', note || 'Sent the recording you asked for.', client, now);
+      await store.setHandoff(id, { status: 'in_review', updated_at: now });
+      await fireNotify(env, { kind: 'reply', domain: meta.domain, id, text: note || 'sent the requested recording' });
+      return json({ ok: true, at: new Date(now).toISOString() });
+    }
+
+    // GET /handoff/:id/recording/:seq — the team reads a supplementary recording's bundle (admin only).
+    if (parts.length === 4 && parts[2] === 'recording' && request.method === 'GET') {
+      if (!admin) return err(401, 'unauthorized');
+      if (!meta) return err(404, 'not found');
+      const rec = await store.getRecording(id, parts[3]);
+      return rec ? json(rec) : err(404, 'not found');
+    }
+
     // GET /handoff/:id — full record + thread (team) OR status + thread scoped to the submitter.
     if (parts.length === 2 && request.method === 'GET') {
       if (!meta) return err(404, 'not found');

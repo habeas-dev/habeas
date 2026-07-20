@@ -186,6 +186,29 @@ test('handoff: the team is notified on a new submission and on a contributor rep
   assert.equal(events[1].text, 'it failed again');
 });
 
+test('handoff: a targeted re-recording attaches to the SAME handoff (no new handoff, no supersede)', async () => {
+  const s = memoryStore();
+  const { id } = await (await call(s, 'POST', '/handoff', { submitter: 'sub1', bundle: BUNDLE })).json();
+  await call(s, 'POST', `/handoff/${id}?token=ADMIN`, { captureRequest: { instruction: 'record the deposits list' } });
+  // the contributor's guided re-recording goes to THIS handoff, not a new one
+  const r = await call(s, 'POST', `/handoff/${id}/recording`, { submitter: 'sub1', bundle: { ...BUNDLE, counts: { samples: 5 } }, note: 'here it is' });
+  assert.equal(r.status, 200);
+  // still exactly ONE handoff for this submitter (nothing was superseded / spawned)
+  const inbox = await (await call(s, 'GET', '/submitter/sub1/handoffs')).json();
+  assert.equal(inbox.length, 1);
+  assert.equal(inbox[0].id, id);
+  // the recording is attached + a submitter message landed in the SAME thread, status back to in_review
+  const full = await (await call(s, 'GET', `/handoff/${id}?token=ADMIN`)).json();
+  assert.equal(full.status, 'in_review');
+  assert.equal(full.recordings.length, 1);
+  assert.equal(full.recordings[0].note, 'here it is');
+  assert.equal(full.messages[full.messages.length - 1].from, 'submitter');
+  // the team can fetch the supplementary bundle; a stranger cannot post one
+  const rec = await (await call(s, 'GET', `/handoff/${id}/recording/${full.recordings[0].seq}?token=ADMIN`)).json();
+  assert.equal(rec.bundle.counts.samples, 5);
+  assert.equal((await call(s, 'POST', `/handoff/${id}/recording`, { submitter: 'WRONG', bundle: BUNDLE })).status, 401);
+});
+
 test('handoff: a targeted capture request rides the timeline with its instruction + endpoint hint', async () => {
   const s = memoryStore();
   const { id } = await (await call(s, 'POST', '/handoff', { submitter: 'sub1', bundle: BUNDLE })).json();

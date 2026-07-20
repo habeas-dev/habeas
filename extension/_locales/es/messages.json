@@ -1108,6 +1108,7 @@
     "message": "¡Enviado, gracias! Ref $ID$. Síguelo en Ajustes → Mis contribuciones; el equipo puede responderte con preguntas.",
     "placeholders": { "ID": { "content": "$1" } }
   },
+  "author_sent_recording": { "message": "Enviado al equipo, ¡gracias! Se ha añadido a tu conversación existente; ya puedes cerrar esta pestaña." },
   "author_send_fail": {
     "message": "No se pudo enviar ($E$). Puedes usar «Descargar una copia» y enviarlo por otra vía.",
     "placeholders": { "E": { "content": "$1" } }

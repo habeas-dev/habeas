@@ -57,3 +57,15 @@ CREATE TABLE IF NOT EXISTS handoff_messages (
   created_at  INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_hmsgs_handoff ON handoff_messages (handoff_id, created_at);
+
+-- Supplementary recordings: when the team asks for a targeted capture, the contributor's guided re-recording
+-- attaches to the SAME handoff (keeping one conversation), instead of spawning a new handoff. The team reads
+-- these alongside the original bundle.
+CREATE TABLE IF NOT EXISTS handoff_recordings (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  handoff_id TEXT    NOT NULL,
+  bundle     TEXT    NOT NULL,             -- the redacted recording JSON
+  note       TEXT    NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_hrec_handoff ON handoff_recordings (handoff_id, created_at);

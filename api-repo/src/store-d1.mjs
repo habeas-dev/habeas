@@ -50,7 +50,20 @@ export function d1Store(DB) {
     async getHandoff(id) {
       const h = await DB.prepare('SELECT id, domain, handle, locale, submitter, status, source_id, bundle, created_at, updated_at FROM handoffs WHERE id = ?').bind(id).first();
       if (!h) return null;
-      return { id: h.id, domain: h.domain, handle: h.handle || '', locale: h.locale || '', submitter: h.submitter, status: h.status, sourceId: h.source_id || null, at: new Date(h.created_at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(), bundle: JSON.parse(h.bundle), messages: await this.getMessages(id) };
+      return { id: h.id, domain: h.domain, handle: h.handle || '', locale: h.locale || '', submitter: h.submitter, status: h.status, sourceId: h.source_id || null, at: new Date(h.created_at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(), bundle: JSON.parse(h.bundle), messages: await this.getMessages(id), recordings: await this.listRecordings(id) };
+    },
+    // A targeted re-recording attached to an EXISTING handoff (stays in the same thread; never supersedes).
+    async addRecording(handoffId, bundle, note, now) {
+      await DB.prepare('INSERT INTO handoff_recordings (handoff_id, bundle, note, created_at) VALUES (?, ?, ?, ?)').bind(handoffId, bundle, note || '', now).run();
+      return { at: new Date(now).toISOString() };
+    },
+    async listRecordings(handoffId) {
+      const r = await DB.prepare('SELECT id, LENGTH(bundle) AS bytes, note, created_at FROM handoff_recordings WHERE handoff_id = ? ORDER BY created_at ASC').bind(handoffId).all();
+      return (r.results || []).map((x) => ({ seq: x.id, at: new Date(x.created_at).toISOString(), bytes: x.bytes, note: x.note || '' }));
+    },
+    async getRecording(handoffId, seq) {
+      const x = await DB.prepare('SELECT id, bundle, note, created_at FROM handoff_recordings WHERE handoff_id = ? AND id = ?').bind(handoffId, Number(seq)).first();
+      return x ? { seq: x.id, at: new Date(x.created_at).toISOString(), note: x.note || '', bundle: JSON.parse(x.bundle) } : null;
     },
     async setHandoff(id, patch) {
       const sets = [], vals = [];

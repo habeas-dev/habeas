@@ -7,7 +7,7 @@ import { ensureSiteFetch } from '../lib/pagefetch.js';
 import { editJson } from './jsoneditor.js';
 import { buildHandoff, findOrphans, revealOrphans } from '../lib/redact.js';
 import { getSubmitter, setHandle } from '../lib/submitter.js';
-import { submitHandoff } from '../registry/client.js';
+import { submitHandoff, submitRecording } from '../registry/client.js';
 import { renderPage } from '../lib/render.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { saveSource, getAdapters } from '../adapters/index.js';
@@ -59,7 +59,7 @@ async function init() {
   try {
     const p = new URLSearchParams(location.search); const g = p.get('guide');
     if (g) {
-      GUIDE = { instruction: g, endpoint: p.get('endpoint') || '' };
+      GUIDE = { instruction: g, endpoint: p.get('endpoint') || '', handoff: p.get('handoff') || '' };
       const box = document.createElement('div');
       box.style.cssText = 'margin:10px 0;padding:12px 14px;border:2px solid var(--accent,#c9792b);border-radius:10px;background:var(--accent-100,#fff3e6)';
       const h = document.createElement('b'); h.textContent = '🎯 ' + t('author_guide_title');
@@ -186,8 +186,15 @@ async function submitBundle(bundle) {
   if (handle && handle !== sub.handle) await setHandle(handle);
   $('#sharestatus').textContent = t('author_sending');
   try {
-    const res = await submitHandoff(bundle, sub.id, handle, (navigator.languages && navigator.languages[0]) || navigator.language || '');
-    $('#sharestatus').textContent = t('author_sent', [String(res.id || '')]);
+    if (GUIDE && GUIDE.handoff) {
+      // A guided re-capture the team asked for → attach it to the SAME handoff (one conversation), instead
+      // of submitting a brand-new handoff that would supersede the thread.
+      await submitRecording(GUIDE.handoff, bundle, sub.id, GUIDE.instruction || '');
+      $('#sharestatus').textContent = t('author_sent_recording');
+    } else {
+      const res = await submitHandoff(bundle, sub.id, handle, (navigator.languages && navigator.languages[0]) || navigator.language || '');
+      $('#sharestatus').textContent = t('author_sent', [String(res.id || '')]);
+    }
   } catch (e) {
     $('#sharestatus').textContent = t('author_send_fail', [String((e && e.message) || e).slice(0, 80)]);
   }

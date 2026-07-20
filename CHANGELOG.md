@@ -16,8 +16,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   as a guided card ("The team needs one more recording" + the plain instruction); tapping it opens the
   recorder prefilled with the source site and the instruction, and — given an endpoint hint — the recorder
   lights up "✓ got what the team needs" the moment that request is captured, so a non-technical contributor
-  knows they did it right before sending. (Backend: a capture-request message on the handoff, alongside the
-  version messages.)
+  knows they did it right before sending. **The guided recording attaches to the SAME handoff** (it lands in
+  the existing conversation as a supplementary recording), instead of spawning a new, disconnected handoff.
+  (Backend: a capture-request message + a handoff_recordings table, alongside the version messages.)
 - **Rolling relative-date token** (`runtime/inventory.js#tmplDates`) — `{daysAgo:N}` resolves to the ISO date
   N days before today, for a request that caps itself to a rolling window (e.g. Raisin sends
   `date_from=today-90d` to stay inside its SCA-free window).

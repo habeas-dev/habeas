@@ -580,7 +580,8 @@ async function openThread(id) {
       if (!cr) return;
       const site = 'https://www.' + (data.domain || '') + '/';
       const url = chrome.runtime.getURL('src/ui/author.html') + '?url=' + encodeURIComponent(site)
-        + '&guide=' + encodeURIComponent(cr.instruction) + (cr.endpoint ? '&endpoint=' + encodeURIComponent(cr.endpoint) : '');
+        + '&guide=' + encodeURIComponent(cr.instruction) + (cr.endpoint ? '&endpoint=' + encodeURIComponent(cr.endpoint) : '')
+        + '&handoff=' + encodeURIComponent(id); // attach the recording back to THIS handoff (same thread)
       try { chrome.tabs.create({ url }); } catch (e) { location.href = url; }
     }
   };

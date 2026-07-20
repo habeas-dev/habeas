@@ -1108,6 +1108,7 @@
     "message": "Sent — thank you! Ref $ID$. Follow it in Settings → My contributions; the team may reply with questions.",
     "placeholders": { "ID": { "content": "$1" } }
   },
+  "author_sent_recording": { "message": "Sent to the team — thank you! It's added to your existing conversation; you can close this tab." },
   "author_send_fail": {
     "message": "Couldn't send ($E$). You can use “Download a copy” and send it another way.",
     "placeholders": { "E": { "content": "$1" } }

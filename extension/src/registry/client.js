@@ -77,6 +77,17 @@ export async function submitHandoff(bundle, submitter, handle, locale) {
   return await r.json(); // { ok, id, status }
 }
 
+// A TARGETED re-recording attaches to an EXISTING handoff (the one the team asked about), so it lands in the
+// same conversation instead of spawning a new handoff. Used by the guided recorder (author page ?handoff=).
+export async function submitRecording(handoffId, bundle, submitter, note) {
+  const r = await fetch(`${API_BASE}/handoff/${encodeURIComponent(handoffId)}/recording`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ submitter, bundle, note: note || '' }),
+  });
+  if (!r.ok) throw new Error('recording ' + r.status);
+  return await r.json(); // { ok, at }
+}
+
 export async function getMyHandoffs(submitter) {
   try {
     const r = await fetch(`${API_BASE}/submitter/${encodeURIComponent(submitter)}/handoffs`);

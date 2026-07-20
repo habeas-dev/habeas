@@ -8,7 +8,9 @@ export function memoryStore() {
   const writes = [];     // { client, at }
   const handoffs = [];   // { id, domain, bundle, submitter, handle, client, at, updated_at, status, source_id }
   const hmsgs = [];      // { handoff_id, from, text, at }
+  const hrecs = [];      // { id, handoff_id, bundle, note, at } — supplementary targeted recordings
   let hseq = 0;
+  let hrecSeq = 0;
 
   return {
     async getRatings(id) {
@@ -68,7 +70,7 @@ export function memoryStore() {
       return {
         id: h.id, domain: h.domain, handle: h.handle || '', locale: h.locale || '', submitter: h.submitter, status: h.status, sourceId: h.source_id || null,
         at: new Date(h.at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(),
-        bundle: JSON.parse(h.bundle), messages: await this.getMessages(id),
+        bundle: JSON.parse(h.bundle), messages: await this.getMessages(id), recordings: await this.listRecordings(id),
       };
     },
     async setHandoff(id, patch) {
@@ -95,6 +97,19 @@ export function memoryStore() {
         if (m.capture_request) { try { out.captureRequest = JSON.parse(m.capture_request); } catch (e) {} }
         return out;
       });
+    },
+    // A targeted re-recording attached to an EXISTING handoff (stays in the same thread; never supersedes).
+    async addRecording(handoffId, bundle, note, now) {
+      hrecs.push({ id: ++hrecSeq, handoff_id: handoffId, bundle, note: note || '', at: now });
+      return { seq: hrecSeq, at: new Date(now).toISOString() };
+    },
+    async listRecordings(handoffId) {
+      return hrecs.filter((r) => r.handoff_id === handoffId).sort((a, b) => a.at - b.at)
+        .map((r) => ({ seq: r.id, at: new Date(r.at).toISOString(), bytes: r.bundle.length, note: r.note || '' }));
+    },
+    async getRecording(handoffId, seq) {
+      const r = hrecs.find((x) => x.handoff_id === handoffId && x.id === Number(seq));
+      return r ? { seq: r.id, at: new Date(r.at).toISOString(), note: r.note || '', bundle: JSON.parse(r.bundle) } : null;
     },
     async supersedePrior(submitter, domain, exceptId, now) {
       const OPEN = new Set(['new', 'in_review', 'needs_info']);
