@@ -567,19 +567,23 @@ async function openThread(id) {
         + `</div>`;
     }).join('')}</div>`
     : `<div class="muted">${t('contrib_no_msgs')}</div>`;
-  el.querySelectorAll('[data-peek]').forEach((b) => { b.onclick = () => { const d = el.querySelector(`[data-detail="${b.dataset.peek}"]`); if (d) d.hidden = !d.hidden; }; });
-  // A targeted capture request → open the guided recorder (the author page) prefilled with the source site,
-  // the plain instruction, and the endpoint hint so it confirms when the contributor captured what's needed.
-  el.querySelectorAll('[data-capreq]').forEach((b) => {
-    b.onclick = () => {
-      const cr = data.messages[b.dataset.capreq] && data.messages[b.dataset.capreq].captureRequest;
+  // Delegate on `el` (single handler, survives the later el.innerHTML += rebuilds and doesn't stack on
+  // re-render): "See technical detail" toggles + a targeted capture request opens the guided recorder
+  // (the author page) prefilled with the source site, the plain instruction, and the endpoint hint so it
+  // confirms when the contributor captured what's needed.
+  el.onclick = (ev) => {
+    const pk = ev.target.closest && ev.target.closest('[data-peek]');
+    if (pk) { const d = el.querySelector(`[data-detail="${pk.dataset.peek}"]`); if (d) d.hidden = !d.hidden; return; }
+    const cq = ev.target.closest && ev.target.closest('[data-capreq]');
+    if (cq) {
+      const cr = data.messages[cq.dataset.capreq] && data.messages[cq.dataset.capreq].captureRequest;
       if (!cr) return;
       const site = 'https://www.' + (data.domain || '') + '/';
       const url = chrome.runtime.getURL('src/ui/author.html') + '?url=' + encodeURIComponent(site)
         + '&guide=' + encodeURIComponent(cr.instruction) + (cr.endpoint ? '&endpoint=' + encodeURIComponent(cr.endpoint) : '');
       try { chrome.tabs.create({ url }); } catch (e) { location.href = url; }
-    };
-  });
+    }
+  };
   // Backward compatibility: a source attached BEFORE version messages existed has no timeline card — show the
   // latest as a single build card so it can still be installed (no history existed for it either way).
   if (data.source && data.source.id && lastVerIdx === -1) {

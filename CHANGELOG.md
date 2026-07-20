@@ -23,6 +23,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   `date_from=today-90d` to stay inside its SCA-free window).
 
 ### Fixed
+- **Contribution thread buttons work again after a source is attached.** "Start guided recording" (capture
+  requests) and "See technical detail" were wired to their buttons before later `innerHTML` updates rebuilt
+  the thread DOM, silently discarding the handlers whenever a source version was present. Both now use a
+  single delegated handler on the thread container, which survives the rebuilds.
 - **Record mode no longer lets analytics beacons crowd out the real API calls.** Third-party telemetry /
   consent / tag-manager / feature-flag traffic (Datadog RUM, LaunchDarkly, Usercentrics, Transifex, Exponea,
   Cookielaw, …) fires constantly and was filling the capped sample buffer, evicting the endpoints a source
