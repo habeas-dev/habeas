@@ -2,6 +2,7 @@ import { chrome } from '../lib/ext.js';
 import { getConfig, saveConfig } from '../lib/config.js';
 import { manageAccounts } from './accountpicker.js';
 import { listInventory, artifactKinds, fetchArtifact, documentExt } from '../runtime/inventory.js';
+import { pushDiag, recordingNet } from '../lib/diag.js';
 import { ensureSiteFetch, recoverSession, siteBaseUrl } from '../lib/pagefetch.js';
 import { pickGroup } from './grouppicker.js';
 import { renderPage, challengeUrlOf } from '../lib/render.js';
@@ -409,10 +410,12 @@ async function onList(mode, opts = {}) {
   aborter = new AbortController();
   busy(true);
   let newTotal = 0;
+  let listSid = null; // which stream was listing when a failure was thrown (for the diagnostic)
   try {
     const net = await ensureSiteFetch(adapter, { open: true });
     for (const sid of streamIds) {
       if (aborted()) break;
+      listSid = sid;
       const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(adapter.id, sid);
       // A saved account filter (ds.groups) takes over: list ALL selected accounts, no per-list picker.
       // Without one, keep the transient "which account this time?" picker.
@@ -442,7 +445,7 @@ async function onList(mode, opts = {}) {
   } catch (e) {
     // Remember the last list failure so the contributor can report it to the Habeas team in one click
     // (My contributions → Report a problem) without touching DevTools. Redacted before it's ever sent.
-    try { await chrome.storage.local.set({ ['habeas:diag:' + adapter.id]: { error: String((e && e.message) || e), at: new Date().toISOString() } }); } catch (_) {}
+    pushDiag(adapter.id, { phase: 'list', output: listSid || undefined, message: String((e && e.message) || e) });
     // Anti-bot CAPTCHA (DataDome/Cloudflare/Akamai) on the API → SHOW it to the user so they solve it live
     // (the interstitial URL comes back in the response body). Solving it sets the anti-bot cookie; then List
     // again. Checked first, before the generic 4xx/login branch (a challenge is a 403 too).
@@ -573,7 +576,17 @@ async function onSend() {
     const avail = artifactKinds(eff, d);
     for (const k of kinds) {
       if (!avail.some((a) => a.kind === k.kind)) continue;
-      try { arts.push(await fetchArtifact(eff, auth, d, net, renderPage, k.kind)); } catch (e) { /* artifact unavailable */ }
+      const rec = recordingNet(net); // remember the exact request so a failure names which one
+      try { arts.push(await fetchArtifact(eff, auth, d, rec.net, renderPage, k.kind)); }
+      catch (e) {
+        const msg = (e && e.message) || String(e);
+        // "no document/PDF for this item" is a normal skip (a ticket with no invoice, an optimistic month
+        // that doesn't exist) — not a failure. Anything else (a 4xx/5xx, an empty file) WAS being swallowed
+        // silently, so a failed PDF looked like "no document"; record it so "Report a problem" shows it.
+        if (!/no document for this (item|source)|no PDF for this source/i.test(msg)) {
+          pushDiag(adapter.id, { phase: 'document', output: d._stream || eff.id, kind: k.kind, item: d.date || d.internalId, message: msg, method: rec.ref.last && rec.ref.last.method, url: rec.ref.last && rec.ref.last.url, status: rec.ref.last && rec.ref.last.status });
+        }
+      }
     }
     // A JSON detail carries the real date + amount that the list may encrypt (Amazon). Adopt them (only
     // over a missing/year-only value) — so file NAMES, the manifest record, and the live table are right.

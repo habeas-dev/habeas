@@ -6,6 +6,7 @@ import { chrome } from './lib/ext.js';
 import { getConfig } from './lib/config.js';
 import { registerCapture } from './lib/capture.js';
 import { loadAuth, hasAuth, capturePathAllowed } from './lib/authstore.js';
+import { pushDiag, recordingNet } from './lib/diag.js';
 import { deliveredSet, markDelivered, appendLog, rememberDocMeta } from './lib/state.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
 import { resolveSiteFetch, ensureSiteFetch, recoverSession } from './lib/pagefetch.js';
@@ -480,8 +481,14 @@ async function runRoute(ds, adapter, sink, opts = {}) {
           const avail = artifactKinds(oeff, d); // per-doc: drops the document (e.g. invoice PDF) if this doc lacks it
           for (const k of kinds) {
             if (!avail.some((a) => a.kind === k.kind)) continue; // this ticket has no such artifact (no invoice) → skip cleanly
-            try { arts.push(await fetchArtifact(oeff, auth, d, net, renderPage, k.kind)); }
-            catch (e) { try { await chrome.storage.local.set({ ['habeas:diag:' + adapter.id]: { error: 'documento (' + sid + '): ' + String((e && e.message) || e), at: new Date().toISOString() } }); } catch (_) {} } // was silently swallowed; keep the last doc error so the contributor can report it
+            const rec = recordingNet(net); // remember which request fails inside a multi-step fetch
+            try { arts.push(await fetchArtifact(oeff, auth, d, rec.net, renderPage, k.kind)); }
+            catch (e) {
+              const msg = (e && e.message) || String(e);
+              if (!/no document for this (item|source)|no PDF for this source/i.test(msg)) { // benign skip → not a failure
+                pushDiag(adapter.id, { phase: 'document', output: sid, kind: k.kind, item: d.date || d.internalId, message: msg, method: rec.ref.last && rec.ref.last.method, url: rec.ref.last && rec.ref.last.url, status: rec.ref.last && rec.ref.last.status });
+              }
+            }
           }
         }
         if (arts.length) files.set(d.internalId, arts);
@@ -489,7 +496,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
       // A stream that HAS a document (a statement PDF) but produced none from any eligible item — a silent
       // "0 documents" the contributor can't explain. Record it so "Report a problem" surfaces it.
       if (!files.size && eligible.length && documentExt(eff)) {
-        try { await chrome.storage.local.set({ ['habeas:diag:' + adapter.id]: { error: 'listó ' + eligible.length + ' de ' + sid + ' pero ninguno generó documento (descarga fallida o plantilla del documento sin resolver)', at: new Date().toISOString() } }); } catch (_) {}
+        pushDiag(adapter.id, { phase: 'document', output: sid, message: 'listed ' + eligible.length + ' item(s) but none produced a document (download failed or the document template did not resolve)' });
       }
       setStatus(t('status_sending', [String(eligible.length), sink.id]));
       await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, source: sk, ext: documentExt(eff) || 'pdf', interactive: !!opts.interactive });

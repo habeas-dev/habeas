@@ -11,6 +11,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Fixed
+- **"Report a problem" now captures every failed request, and names which one.** The diagnostic used to keep
+  a single overwritten error (so only the first/last failure survived) and didn't say where it happened —
+  and a failed document/PDF fetch during a manual send was swallowed silently, so it looked like "no
+  document". Now each failure appends a structured entry (phase, output/stream, document, method + URL, HTTP
+  status, message), so a report shows the team **all** the failures and exactly which request produced each
+  (e.g. `output=extractos … POST …/generate-file → HTTP 500`). Still shown to the contributor only as a plain
+  line, with the full trace behind "See what's sent".
 - **Auto-sync never runs during a login, and waits for the session to settle.** A captured token no longer
   launches an auto-run immediately: it now waits a short settle window after the last capture (coalescing the
   burst of authenticated requests a freshly loaded dashboard fires into a single run). And a source with an

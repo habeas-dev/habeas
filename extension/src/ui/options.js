@@ -20,6 +20,7 @@ import { esc } from '../lib/esc.js';
 import { nextOccurrence, describeSchedule, validateSpec } from '../lib/schedule.js';
 import { getSubmitter, markSeen, unreadCount } from '../lib/submitter.js';
 import { getMyHandoffs, getHandoffThread, replyHandoff } from '../registry/client.js';
+import { formatDiag, clearDiag } from '../lib/diag.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { scrubText } from '../lib/redact.js';
 
@@ -587,17 +588,19 @@ async function openThread(id) {
       const box = document.getElementById('rep-detail-' + id); if (!box) return;
       if (!box.hidden) { box.hidden = true; return; }
       const d = await readDiag();
-      box.textContent = t('contrib_report_prefix') + (d && d.error ? '\n\n' + scrubText(d.error).slice(0, 500) : '\n\n(' + t('contrib_report_none') + ')');
+      const trace = formatDiag(d);
+      box.textContent = t('contrib_report_prefix') + (trace ? '\n\n' + scrubText(trace).slice(0, 1800) : '\n\n(' + t('contrib_report_none') + ')');
       box.hidden = false;
     };
     const rb = document.getElementById('rep-diag-' + id);
     if (rb) rb.onclick = async () => {
       rb.disabled = true;
       const d = await readDiag();
-      const tail = d && d.error ? TEAM_DIAG + scrubText(d.error).slice(0, 500) : '';
+      const trace = formatDiag(d);
+      const tail = trace ? TEAM_DIAG + scrubText(trace).slice(0, 1800) : '';
       try {
         await replyHandoff(id, sub.id, t('contrib_report_prefix') + tail);
-        if (d && data.sourceId) await chrome.storage.local.remove('habeas:diag:' + data.sourceId);
+        if (trace && data.sourceId) await clearDiag(data.sourceId);
         el.hidden = true; await openThread(id); // re-render: the report appears + the button stays for the next one
       } catch (e) { rb.disabled = false; }
     };
