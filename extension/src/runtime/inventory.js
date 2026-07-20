@@ -179,15 +179,7 @@ export async function listGroups(adapter, auth, net) {
   // the group picker or the external listGroups hook), run the prelude here. listInventory passes an
   // auth that already has __csrf, so it isn't fetched twice.
   const a = adapter.api.csrf && !(auth && auth.__csrf) ? { ...(auth || {}), __csrf: await fetchCsrf(adapter, auth, net) } : auth;
-  let items = await fetchGroupItems(adapter, a, net);
-  // Optional group filter (`groups.keep {field, values|present}`, like `list.keep`): a groups list that mixes
-  // product kinds distinguished by a value or by whether a field exists (Raisin: OMA flexible accounts have no
-  // `maturity_date`, FDA fixed deposits do) → route each kind to its own stream.
-  if (g.keep && g.keep.field) {
-    const k = g.keep;
-    if (Array.isArray(k.values)) { const vals = new Set(k.values.map(String)); items = items.filter((p) => vals.has(String(get(p, k.field)))); }
-    if (typeof k.present === 'boolean') { items = items.filter((p) => { const v = get(p, k.field); return (v != null && v !== '') === k.present; }); }
-  }
+  let items = keepFilter(await fetchGroupItems(adapter, a, net), g.keep); // route product kinds to their own stream
   const seen = new Set(), out = [];
   for (const item of (items || [])) {
     const grp = { _raw: item };
@@ -1332,6 +1324,21 @@ const itemsPathOf = (list) => (list.from === 'html' ? '__items' : list.itemsPath
 // different keys depending on the call (Openbank's first page is flat `movimientos`; a paginated/continuation
 // page nests it under `methodResult.movimientos`). Try each; take the first that yields a non-empty array,
 // else the first that is at least an array, else [].
+// Optional item/group filter (`keep {field, ...}`, dotted field path) — combine any of:
+//   • values[]        keep only items whose field is in this set (ONLINE vs IN_STORE orders)
+//   • present:bool    keep by whether the field exists (drop malformed/id-less entries; split by a field that
+//                     only one kind has)
+//   • prefix          keep only items whose field starts with this string (or any of an array) — routes
+//                     id-namespaced product kinds to their own stream (Raisin: OMA_… flexible vs FDA_… fixed)
+export function keepFilter(items, keep) {
+  if (!keep || !keep.field) return items;
+  const val = (p) => get(p, keep.field);
+  let out = items;
+  if (Array.isArray(keep.values)) { const vals = new Set(keep.values.map(String)); out = out.filter((p) => vals.has(String(val(p)))); }
+  if (typeof keep.present === 'boolean') out = out.filter((p) => { const v = val(p); return (v != null && v !== '') === keep.present; });
+  if (keep.prefix) { const pre = Array.isArray(keep.prefix) ? keep.prefix : [keep.prefix]; out = out.filter((p) => { const v = String(val(p) ?? ''); return pre.some((x) => v.startsWith(x)); }); }
+  return out;
+}
 function getItems(data, list) {
   // Component-keyed responses (AliExpress mtop): the items aren't an array but sibling OBJECT keys sharing a
   // prefix (data.data.pc_om_list_order_<id>). `itemsFromKeys {at, prefix, sub?}` collects each such value
@@ -1415,15 +1422,7 @@ export function normalizeAmount(v) {
 function collect(adapter, data, seen, all, group) {
   const list = adapter.api.list;
   let items = getItems(data, list);
-  // Optional item filter (`keep {field, ...}`, dotted field path): keep only items whose `field`
-  //   • is in `values` (a list that mixes ONLINE and IN_STORE orders → keep the online ones), or
-  //   • is present / absent (`present: true|false`) — for a list that mixes product kinds distinguished only
-  //     by whether a field exists (Raisin: a fixed deposit has a `maturity_date`, a flexible one doesn't).
-  if (list.keep && list.keep.field) {
-    const k = list.keep;
-    if (Array.isArray(k.values)) { const vals = new Set(k.values.map(String)); items = items.filter((p) => vals.has(String(get(p, k.field)))); }
-    if (typeof k.present === 'boolean') { const has = (p) => { const v = get(p, k.field); return v != null && v !== ''; }; items = items.filter((p) => has(p) === k.present); }
-  }
+  items = keepFilter(items, list.keep);
   let added = 0;
   for (const p of items) {
     const doc = mapDoc(adapter, p, group); // carries doc.internalId (templated {group.*}, or synthesized for periods)

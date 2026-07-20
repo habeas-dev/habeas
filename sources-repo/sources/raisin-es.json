@@ -86,8 +86,8 @@
       }
     },
     {
-      "id": "ahorro",
-      "name": "Ahorro (posiciones)",
+      "id": "depositos",
+      "name": "Depósitos a plazo",
       "schema": "investment@2",
       "categories": [
         "investment"
@@ -103,6 +103,10 @@
             "locale": "es-ES",
             "sort_by": "availability",
             "order_by": "asc"
+          },
+          "keep": {
+            "field": "accounting.deposit_id",
+            "prefix": "FDA_"
           }
         }
       },
@@ -115,8 +119,8 @@
       }
     },
     {
-      "id": "ahorro-mov",
-      "name": "Movimientos (ahorro)",
+      "id": "ahorro",
+      "name": "Movimientos (cuentas de ahorro)",
       "schema": "transaction@1",
       "categories": [
         "banking"
@@ -134,7 +138,7 @@
           },
           "keep": {
             "field": "accounting.deposit_id",
-            "present": true
+            "prefix": "OMA_"
           },
           "fields": {
             "id": "accounting.deposit_id",
@@ -212,7 +216,7 @@
   "changelog": [
     {
       "version": "2026-07-20",
-      "changes": "Initial: Raisin (WeltSparen). Cross-domain login raisin.com -> API api2.weltsparen.de (Keycloak bearer), customer_id captured as context, 90-day window (SCA-free). Four outputs: movimientos (Raisin transaction account, tams), depósitos (fixed-term deposits, investment@2 with keepRaw), ahorro (flexible savings-account movements from the deposit detail's embedded transactions), documentos (terms/condiciones via dds). OMA (flexible) vs FDA (fixed) split by presence of deposit.maturity_date."
+      "changes": "Initial: Raisin (WeltSparen). Cross-domain login raisin.com -> API api2.weltsparen.de (Keycloak bearer), customer_id captured as context, 90-day window (SCA-free). Four outputs: movimientos (Raisin transaction account, tams), depósitos (fixed-term deposits FDA_, investment@2 with keepRaw), ahorro (flexible savings-account movements OMA_, from the deposit detail's embedded transactions), documentos (terms/condiciones via dds). OMA (flexible cuenta corriente) vs FDA (fixed deposit) split by the product-id prefix (auth.keep prefix on accounting.deposit_id)."
     }
   ]
 }
