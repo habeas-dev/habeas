@@ -9,7 +9,7 @@
     "banking",
     "investment"
   ],
-  "version": "2026-07-20",
+  "version": "2026-07-20.1",
   "minVersion": "0.5.0.8",
   "keepRaw": true,
   "contributors": [
@@ -25,6 +25,12 @@
     "mode": "bearer",
     "replayHeaders": [
       "authorization"
+    ],
+    "capturePaths": [
+      "/tams/",
+      "/dbff/",
+      "/dds/",
+      "/cas/"
     ],
     "context": [
       {
@@ -214,6 +220,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20.1",
+      "changes": "Scope token capture to the user-data endpoints (auth.capturePaths /tams/ /dbff/ /dds/ /cas/) so the replayed bearer is the logged-in user's token, not a client/anonymous token the public catalog (/dcms) may carry — which caused a 401 UNAUTHORIZED on /tams/v1/accounts even with an authorization sent."
+    },
     {
       "version": "2026-07-20",
       "changes": "Initial: Raisin (WeltSparen). Cross-domain login raisin.com -> API api2.weltsparen.de (Keycloak bearer), customer_id captured as context, 90-day window (SCA-free). Four outputs: movimientos (Raisin transaction account, tams), depósitos (fixed-term deposits FDA_, investment@2 with keepRaw), ahorro (flexible savings-account movements OMA_, from the deposit detail's embedded transactions), documentos (terms/condiciones via dds). OMA (flexible cuenta corriente) vs FDA (fixed deposit) split by the product-id prefix (auth.keep prefix on accounting.deposit_id)."
