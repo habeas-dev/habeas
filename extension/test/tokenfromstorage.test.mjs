@@ -7,10 +7,33 @@ import assert from 'node:assert/strict';
 
 // chrome must exist BEFORE lib/ext.js binds it → set the mock, then dynamic-import.
 let lastFetch = null;
+const rec = { tokenReady: false, reloaded: 0 }; // controls the recoverAndReauth mock (a token appears after a reload)
 globalThis.localStorage = { _v: {}, getItem(k) { return k in this._v ? this._v[k] : null; }, setItem(k, v) { this._v[k] = v; } };
 globalThis.fetch = async (url, init) => { lastFetch = { url, init }; return { ok: true, status: 200, headers: { get: () => 'application/json' }, text: async () => '{}', arrayBuffer: async () => new ArrayBuffer(0) }; };
-globalThis.chrome = { scripting: { executeScript: async ({ func, args }) => [{ result: await func(args[0]) }] } };
-const { makePageFetch } = await import('../src/lib/pagefetch.js');
+globalThis.chrome = {
+  scripting: { executeScript: async ({ func, args }) => [{ result: await func(args[0]) }] },
+  tabs: { query: async () => [{ id: 1, url: 'https://api.example.com/dashboard' }], update: async () => { rec.reloaded++; return {}; }, create: async () => ({ id: 2 }), get: async () => ({ status: 'complete' }) },
+  storage: { session: { get: async () => ({ 'auth:api.example.com': { merged: rec.tokenReady ? { authorization: 'Bearer FRESH' } : {}, byPath: {}, ctx: {} } }) } },
+};
+const { makePageFetch, recoverAndReauth } = await import('../src/lib/pagefetch.js');
+
+const FECI_LIKE = { domain: 'example.com', match: ['https://api.example.com/*'], api: { host: 'https://api.example.com' }, auth: { mode: 'cookie', replayHeaders: ['authorization'] } };
+
+test('recoverAndReauth reloads the tab and returns a refreshed auth + net once the token is re-captured', async () => {
+  rec.tokenReady = false; rec.reloaded = 0;
+  setTimeout(() => { rec.tokenReady = true; }, 15); // the SPA re-auths shortly after the reload → token captured
+  const r = await recoverAndReauth(FECI_LIKE, { timeoutMs: 300, pollMs: 10 });
+  assert.ok(rec.reloaded > 0, 'it reloaded the site tab');
+  assert.ok(r && r.auth && r.auth.merged.authorization === 'Bearer FRESH', 'returns the freshly-captured token');
+  assert.equal(typeof r.net, 'function', 'returns a fresh page-fetch');
+});
+
+test('recoverAndReauth returns best-effort (not null) when the token never re-appears', async () => {
+  rec.tokenReady = false; rec.reloaded = 0;
+  const r = await recoverAndReauth(FECI_LIKE, { timeoutMs: 60, pollMs: 10 });
+  assert.ok(rec.reloaded > 0);
+  assert.ok(r && typeof r.net === 'function', 'a cookie-only source can still serve on the reload'); // best-effort net
+});
 
 test('reads the bearer from a JSON localStorage field and injects Authorization: Bearer', async () => {
   globalThis.localStorage.setItem('aphishi-lws_at', JSON.stringify({ tt: 0, t: 'eyJHDR.eyPAYLOAD.SIG', u: 'user' }));

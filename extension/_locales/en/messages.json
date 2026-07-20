@@ -653,6 +653,14 @@
       }
     }
   },
+  "status_reauth": {
+    "message": "Refreshing your $NAME$ session…",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
   "status_listing_page": {
     "message": "Listing $NAME$… page $P$ ($N$)",
     "placeholders": {

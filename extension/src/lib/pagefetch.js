@@ -4,6 +4,7 @@
 // fingerprint — so Cloudflare/Akamai let it through. A fetch from a chrome-extension:// page looks
 // different and gets challenged (HTTP 403 "Just a moment…").
 import { chrome } from './ext.js';
+import { loadAuth } from './authstore.js';
 
 // Returns a fetch-like function bound to a tab, yielding a minimal Response ({ ok, status, text,
 // json, blob }). Binary bodies (PDFs) are marshalled as base64 across the executeScript boundary.
@@ -315,6 +316,27 @@ export async function recoverSession(adapter) {
     else await chrome.tabs.create({ url, active: true });
   } catch (e) {}
   return cleared;
+}
+
+// Auto-recover a stale/absent captured session on an auth failure (401/403): reload the site tab so the SPA
+// re-runs its own auth flow — for an in-memory, rotating OAuth bearer (WSO2/Akamai, e.g. FECI) the token
+// lives only in the SPA's memory, so the reliable way to get a FRESH one is to let the SPA fetch it again;
+// the webRequest/page capture grabs it, and we hand back a refreshed auth + a fresh page-fetch to retry with.
+// Returns { auth, net } once the token is (re)captured, or best-effort after the timeout, or null.
+export async function recoverAndReauth(adapter, { timeoutMs = 12000, pollMs = 500 } = {}) {
+  const th = ((adapter.auth && adapter.auth.tokenHeader) || 'authorization').toLowerCase();
+  const wantsToken = !!(adapter.auth && Array.isArray(adapter.auth.replayHeaders) && adapter.auth.replayHeaders.some((h) => h.toLowerCase() === th)) || (adapter.auth && adapter.auth.mode === 'bearer');
+  const hasTok = (a) => { if (!a) return false; const has = (h) => h && Object.keys(h).some((k) => k.toLowerCase() === th && h[k]); if (has(a.merged)) return true; if (a.byPath) for (const p of Object.keys(a.byPath)) if (has(a.byPath[p])) return true; return false; };
+  try { await recoverSession(adapter); } catch (e) { return null; } // reload the dashboard so the SPA re-auths
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, pollMs));
+    const a = await loadAuth(adapter).catch(() => null);
+    if (a && (!wantsToken || hasTok(a))) { const net = await resolveSiteFetch(adapter); if (net) return { auth: a, net }; }
+  }
+  // Timed out waiting for the token — return best-effort (a cookie-only source may still serve on the reload).
+  const a = await loadAuth(adapter).catch(() => null); const net = await resolveSiteFetch(adapter);
+  return net ? { auth: a, net } : null;
 }
 
 // Remove every cookie for a registrable domain (and its subdomains). Needs the `cookies` permission +
