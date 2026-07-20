@@ -10,6 +10,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **Rolling relative-date token** (`runtime/inventory.js#tmplDates`) — `{daysAgo:N}` resolves to the ISO date
+  N days before today, for a request that caps itself to a rolling window (e.g. Raisin sends
+  `date_from=today-90d` to stay inside its SCA-free window).
+
 ### Fixed
 - **Record mode no longer lets analytics beacons crowd out the real API calls.** Third-party telemetry /
   consent / tag-manager / feature-flag traffic (Datadog RUM, LaunchDarkly, Usercentrics, Transifex, Exponea,

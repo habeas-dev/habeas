@@ -561,15 +561,20 @@ const tmplGroupRaw = (str, group) => (group ? String(str).replace(/\{group\.([^}
 // CURRENT billing/period date into a request (e.g. FECI's statement list wants ?date_bill=31/07/2026):
 //   {today} {monthStart} {monthEnd}  → ISO YYYY-MM-DD by default
 //   {monthEnd:DD/MM/YYYY}            → formatted (FORMAT uses YYYY / MM / DD; anything else is literal)
+//   {daysAgo:90}                     → ISO date 90 days before today (a rolling window, e.g. Raisin caps the
+//                                      transactions request at date_from=today-90d to stay inside the SCA-free
+//                                      window). The arg is the day count; the result is ISO (date-only).
 // Dates use the browser's LOCAL calendar (what the SPA itself computed), date-only, so no timezone shift.
 export function tmplDates(str) {
   if (typeof str !== 'string' || str.indexOf('{') < 0) return str;
-  return str.replace(/\{(today|monthStart|monthEnd)(?::([^}]+))?\}/g, (m, which, fmt) => {
+  return str.replace(/\{(today|monthStart|monthEnd|daysAgo)(?::([^}]+))?\}/g, (m, which, arg) => {
     const now = new Date();
     const d = which === 'monthStart' ? new Date(now.getFullYear(), now.getMonth(), 1)
       : which === 'monthEnd' ? new Date(now.getFullYear(), now.getMonth() + 1, 0)
-        : now;
+        : which === 'daysAgo' ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - (parseInt(arg, 10) || 0))
+          : now;
     const Y = String(d.getFullYear()), M = String(d.getMonth() + 1).padStart(2, '0'), D = String(d.getDate()).padStart(2, '0');
+    const fmt = which === 'daysAgo' ? null : arg; // for daysAgo the arg is the day count, not a format
     return fmt ? fmt.replace(/YYYY/g, Y).replace(/MM/g, M).replace(/DD/g, D) : `${Y}-${M}-${D}`;
   });
 }
