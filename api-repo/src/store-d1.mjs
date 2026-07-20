@@ -102,7 +102,7 @@ export function d1Store(DB) {
           (SELECT COUNT(*) FROM handoff_messages m WHERE m.handoff_id = h.id AND m.sender = 'team') AS team_messages,
           (SELECT sender FROM handoff_messages m WHERE m.handoff_id = h.id ORDER BY m.created_at DESC LIMIT 1) AS last_from,
           (SELECT created_at FROM handoff_messages m WHERE m.handoff_id = h.id ORDER BY m.created_at DESC LIMIT 1) AS last_at
-        FROM handoffs h WHERE h.submitter = ? ORDER BY h.updated_at DESC LIMIT ?`).bind(sid, limit).all();
+        FROM handoffs h WHERE h.submitter = ? AND h.status != 'superseded' ORDER BY h.updated_at DESC LIMIT ?`).bind(sid, limit).all();
       return (r.results || []).map((h) => ({ id: h.id, domain: h.domain, status: h.status, sourceId: h.source_id || null, hasSource: !!h.has_source, at: new Date(h.created_at).toISOString(), updatedAt: new Date(h.updated_at).toISOString(), messages: h.messages, teamMessages: h.team_messages, lastFrom: h.last_from || null, lastAt: h.last_at ? new Date(h.last_at).toISOString() : null }));
     },
   };

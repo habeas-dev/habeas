@@ -134,10 +134,11 @@ test('handoff: a newer submission supersedes the sender prior OPEN ones for the 
   const b = await call(s, 'POST', '/handoff', { submitter: 'sub1', bundle: bundle('feci.es') });
   assert.equal((await b.clone().json()).superseded, 1);
   const bid = (await b.json()).id;
-  // the first is now superseded; the second is new
+  // the first is now superseded (hidden from the contributor's inbox — the newer one represents it); the
+  // second is new and shown.
   const inbox = await (await call(s, 'GET', '/submitter/sub1/handoffs')).json();
   const byId = Object.fromEntries(inbox.map((h) => [h.id, h.status]));
-  assert.equal(byId[a.id], 'superseded');
+  assert.equal(byId[a.id], undefined, 'superseded submission is hidden from the inbox');
   assert.equal(byId[bid], 'new');
   // a DIFFERENT domain from the same submitter is untouched; a terminal status is not re-opened
   const other = await (await call(s, 'POST', '/handoff', { submitter: 'sub1', bundle: bundle('other.es') })).json();

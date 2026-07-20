@@ -27,6 +27,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   `date_from=today-90d` to stay inside its SCA-free window).
 
 ### Fixed
+- **Superseded submissions no longer clutter My contributions.** When a contributor re-records and replaces
+  an earlier submission, the old (superseded) one is now hidden from their inbox — the live submission
+  represents it. (Completed/published stay visible so the contributor sees their finished sources.)
 - **Contribution thread buttons work again after a source is attached.** "Start guided recording" (capture
   requests) and "See technical detail" were wired to their buttons before later `innerHTML` updates rebuilt
   the thread DOM, silently discarding the handlers whenever a source version was present. Both now use a

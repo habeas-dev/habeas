@@ -121,7 +121,9 @@ export function memoryStore() {
       return n;
     },
     async listSubmitterHandoffs(sid, limit) {
-      return handoffs.filter((h) => h.submitter === sid).sort((a, b) => b.updated_at - a.updated_at).slice(0, limit).map((h) => {
+      // Hide superseded submissions: a later re-recording replaced them, so the contributor's inbox shows the
+      // live one, not the dead duplicate. (Completed/published stay — the contributor sees their success.)
+      return handoffs.filter((h) => h.submitter === sid && h.status !== 'superseded').sort((a, b) => b.updated_at - a.updated_at).slice(0, limit).map((h) => {
         const ms = hmsgs.filter((m) => m.handoff_id === h.id).sort((a, b) => a.at - b.at);
         const last = ms[ms.length - 1];
         return {
