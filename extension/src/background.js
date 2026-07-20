@@ -5,7 +5,7 @@
 import { chrome } from './lib/ext.js';
 import { getConfig } from './lib/config.js';
 import { registerCapture } from './lib/capture.js';
-import { loadAuth, hasAuth } from './lib/authstore.js';
+import { loadAuth, hasAuth, capturePathAllowed } from './lib/authstore.js';
 import { deliveredSet, markDelivered, appendLog, rememberDocMeta } from './lib/state.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
 import { resolveSiteFetch, ensureSiteFetch, recoverSession } from './lib/pagefetch.js';
@@ -87,28 +87,23 @@ async function saveContext(host, name, value) {
 // background, before the SPA runs) and can't be seen by the page — needed for SPAs that fetch their
 // token/ids before the injected hook is ready. Only headers/URLs are read; never response bodies/cookies.
 let WR_MAP = {};
-let WR_LOADING = false; // a syncWebRequestCapture() rebuild is in flight
-let WR_SYNCED = false;  // WR_MAP has been built at least once this SW lifetime
 function onWebRequestHeaders(details) {
   try {
     const u = new URL(details.url);
     const adapters = WR_MAP[u.host];
-    if (!adapters || !adapters.length) {
-      // Cold service-worker wake: the top-level (synchronous) listener fired for a request BEFORE
-      // syncWebRequestCapture() finished rebuilding WR_MAP (its config load is async). We can't classify
-      // THIS request in time, but a dashboard sends many — kick one rebuild so the next requests (still
-      // carrying the same token) are matched and captured. No reload; nothing is stored for unknown hosts.
-      if (!WR_SYNCED && !WR_LOADING) { WR_LOADING = true; syncWebRequestCapture().catch(() => {}).finally(() => { WR_LOADING = false; }); }
-      return;
-    }
+    if (!adapters || !adapters.length) return;
     const reqH = details.requestHeaders || [];
     for (const a of adapters) {
+      // The source can declare WHERE its token lives (auth.capturePaths / ignorePaths). The observer's URL
+      // filter is already scoped to those paths, but gate here too so a shared-host sibling can't store from
+      // a path outside its own capture area. Context values (below) still capture from any observed request.
+      const onCapturePath = capturePathAllowed(a, u.pathname);
       // The token can live in a header OTHER than Authorization (e.g. Openbank's `openbankauthtoken`) —
       // a source declares `auth.tokenHeader`. Gate on that header + tokenMatch, then capture it and every
       // companion header the source replays (e.g. ING's x-ing-extendedsessioncontext).
       const tokenHeader = ((a.auth && a.auth.tokenHeader) || 'authorization').toLowerCase();
       const tok = reqH.find((h) => h.name.toLowerCase() === tokenHeader);
-      if (tok && tok.value) {
+      if (onCapturePath && tok && tok.value) {
         const tm = (a.auth && a.auth.tokenMatch) || 'eyJ';
         let ok; try { ok = new RegExp(tm).test(tok.value); } catch (e) { ok = tok.value.indexOf(tm) >= 0; }
         if (ok) {
@@ -120,7 +115,7 @@ function onWebRequestHeaders(details) {
       }
       // Cookie source (no token to gate on): capture the declared non-cookie headers it needs replayed
       // alongside the session cookies (Revolut's `x-device-id`). Store like auth so headersFor replays them.
-      if (a.auth && a.auth.mode === 'cookie' && Array.isArray(a.auth.replayHeaders) && a.auth.replayHeaders.length) {
+      if (onCapturePath && a.auth && a.auth.mode === 'cookie' && Array.isArray(a.auth.replayHeaders) && a.auth.replayHeaders.length) {
         const want = new Set(a.auth.replayHeaders.map((h) => h.toLowerCase()));
         const hdrs = {};
         for (const h of reqH) { const ln = h.name.toLowerCase(); if (want.has(ln) && h.value) hdrs[ln] = h.value; }
@@ -133,16 +128,25 @@ function onWebRequestHeaders(details) {
     }
   } catch (e) {}
 }
-// Rebuild the allow-list (WR_MAP) the top-level observer gates on. The observer itself is registered ONCE,
-// synchronously, at the SW top level (see below) — re-adding it here (after this async config load) is what
-// used to make capture unreliable: an async-registered webRequest listener cannot wake a terminated service
-// worker, so any token a source sent while the SW slept was silently missed. Keeping registration at the top
-// level and only refreshing WR_MAP here fixes that without any tab reload.
+// (Re)build the capture map + register the header observer scoped to EXACTLY the paths each source captures
+// its token from. Using a NARROW, per-source URL filter (host + auth.capturePaths, else the whole host) keeps
+// the observer off the login flow entirely — a broad `https://*/*` observer with `extraHeaders` engaged with a
+// bank's sensitive sign-in requests (Transmit Security) and broke the user's login. The observer is best-effort
+// (only while the SW is alive); the in-page hook is the primary, SW-waking capture. No tab reload.
 async function syncWebRequestCapture() {
+  if (!(chrome.webRequest && chrome.webRequest.onSendHeaders)) return;
   const cfg = await getConfig();
   const adapters = await getAdapters();
   const map = {};
-  const add = (h, a) => { const host = bareHost(h); if (host) (map[host] = map[host] || []).push(a); };
+  const urlSet = new Set();
+  const norm = (p) => (String(p).startsWith('/') ? String(p) : '/' + String(p));
+  const add = (h, a) => {
+    const host = bareHost(h); if (!host) return;
+    (map[host] = map[host] || []).push(a);
+    // Scope observed URLs to the source's declared capture paths (auth.capturePaths); no list → the whole host.
+    const paths = (a.auth && Array.isArray(a.auth.capturePaths) && a.auth.capturePaths.length) ? a.auth.capturePaths.map(norm) : ['/'];
+    for (const p of paths) urlSet.add(`*://${host}${p}*`);
+  };
   for (const d of (cfg.datasources || []).filter((x) => x.enabled)) {
     const a = adapters[d.adapter];
     // Bearer sources capture their token; cookie sources normally carry the session in cookies alone — BUT a
@@ -156,16 +160,11 @@ async function syncWebRequestCapture() {
     for (const m of a.match || []) add(m, a);
   }
   WR_MAP = map;
-  WR_SYNCED = true;
-}
-// Register the header observer SYNCHRONOUSLY at the service-worker top level. MV3 only wakes a terminated SW
-// for events whose listeners were added at the top level of the initial evaluation — a listener added later
-// (async) observes requests only while the SW happens to be alive, so a token sent while it slept is lost.
-// The broad filter still delivers events ONLY for hosts we hold permission for (the enabled sources), and
-// onWebRequestHeaders gates again on WR_MAP. This is the "listen to every request" path — no reload needed.
-if (chrome.webRequest && chrome.webRequest.onSendHeaders) {
-  try { chrome.webRequest.onSendHeaders.addListener(onWebRequestHeaders, { urls: ['https://*/*'] }, ['requestHeaders', 'extraHeaders']); }
-  catch (e) { try { chrome.webRequest.onSendHeaders.addListener(onWebRequestHeaders, { urls: ['https://*/*'] }, ['requestHeaders']); } catch (e2) {} }
+  try { chrome.webRequest.onSendHeaders.removeListener(onWebRequestHeaders); } catch (e) {}
+  const urls = [...urlSet];
+  if (!urls.length) return;
+  try { chrome.webRequest.onSendHeaders.addListener(onWebRequestHeaders, { urls }, ['requestHeaders', 'extraHeaders']); }
+  catch (e) { try { chrome.webRequest.onSendHeaders.addListener(onWebRequestHeaders, { urls }, ['requestHeaders']); } catch (e2) {} }
 }
 
 // ---- record-mode document capture --------------------------------------------------------------------
@@ -231,7 +230,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'habeas:sync-stop') { stopSweep(); sendResponse({ ok: true }); return; } // stop a running sweep
   if (msg.type === 'habeas:sched-run' && msg.id) { onScheduleAlarm(msg.id).then(() => sendResponse({ ok: true }), (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) })); return true; } // run a schedule now
   if (msg.type === 'habeas:auth' && msg.host) {
-    saveAuth(msg.host, msg.path, msg.headers).then(() => { scheduleAutoRun(msg.host); runPendingExternalCollects(msg.host); });
+    // The in-page hook captures from ANY fetch/XHR (no URL filter), so honor the source's declared capture
+    // paths here: don't store a token seen on a path the source excludes (its login flow / anonymous calls).
+    const ads = WR_MAP[msg.host] || [];
+    const allowed = !ads.length || ads.some((a) => capturePathAllowed(a, msg.path));
+    if (allowed) saveAuth(msg.host, msg.path, msg.headers).then(() => { scheduleAutoRun(msg.host); runPendingExternalCollects(msg.host); });
   } else if (msg.type === 'habeas:context' && msg.host && msg.name) {
     // A captured CONTEXT value (e.g. a DNI seen in a request URL), stored alongside auth in
     // storage.session (never on disk) and later templated as {ctx.<name>} by the runtime.

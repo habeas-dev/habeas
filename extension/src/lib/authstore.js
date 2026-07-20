@@ -35,6 +35,24 @@ export async function loadAuth(adapter, all) {
   return { byPath: (primary && primary.byPath) || {}, merged, ctx };
 }
 
+// May the source's token be captured from a request to this path? A source can DECLARE where its token
+// lives, so capture (and the webRequest observer's URL filter) stays off the login flow and any anonymous
+// endpoint — keeping the extension's footprint off the sensitive sign-in requests and ensuring the token is
+// only ever taken from the authenticated area (e.g. FECI's `/dashboard/*`, which only appears after login):
+//   auth.capturePaths — an ALLOWLIST of path prefixes; capture ONLY from these (nothing else).
+//   auth.ignorePaths  — a DENYLIST of path prefixes; never capture from these.
+// A denylist hit always wins; with a capturePaths allowlist, a path must match it. No lists → capture anywhere
+// (unchanged behavior). Prefixes (not regex) so the same list can build a webRequest URL filter.
+export function capturePathAllowed(adapter, path) {
+  const au = adapter && adapter.auth; if (!au) return true;
+  const p = String(path || '');
+  const norm = (x) => (String(x).startsWith('/') ? String(x) : '/' + String(x));
+  const hit = (list) => Array.isArray(list) && list.some((x) => p.startsWith(norm(x)));
+  if (hit(au.ignorePaths)) return false;
+  if (Array.isArray(au.capturePaths) && au.capturePaths.length) return hit(au.capturePaths);
+  return true;
+}
+
 // True if a usable session was captured for this source (any sibling host counts).
 export async function hasAuth(adapter, all) {
   const a = await loadAuth(adapter, all);

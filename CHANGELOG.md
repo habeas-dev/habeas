@@ -18,12 +18,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   robust "the user is logged in" signal, since the token does not exist until after login. Together these stop
   auto-sync from firing in the middle of a fragile bank login (which could disturb the sign-in), regardless of
   whether a page navigation or a capture triggered it.
-- **Reliable auth-token capture without reloading the tab.** The request-header observer used to capture a
-  source's rotating bearer (e.g. a bank's in-memory token) is now registered synchronously at the service
-  worker's top level, so it wakes a suspended worker and observes **every** request the site makes — instead
-  of only those sent while the worker happened to be awake. Previously a token sent while the worker slept was
-  silently missed, so listing failed with no token even though the site had just used one. No tab reload is
-  involved (a reload could interrupt an in-progress login).
+- **The token observer stays off the login flow (declarative capture paths).** A source can now declare where
+  its token lives — `auth.capturePaths` (an allowlist of path prefixes) / `auth.ignorePaths` (a denylist) — and
+  the request-header observer's URL filter is scoped to exactly those paths. So for a bank whose token only
+  appears in its authenticated area (e.g. `/dashboard/*`, after login), the observer never engages with the
+  sensitive sign-in requests. This replaces a broad observer that watched every request on the site and could
+  interfere with a Transmit-Security/anti-bot login. Capture is also gated to those paths in the in-page hook,
+  so a token is only ever taken from the area the source declares. No tab reload.
 
 ### Changed
 - **Version sends are part of the contribution conversation, with history** (Settings → My contributions):

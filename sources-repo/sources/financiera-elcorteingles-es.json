@@ -9,7 +9,7 @@
     "card",
     "loan"
   ],
-  "version": "2026-07-20",
+  "version": "2026-07-20.1",
   "minVersion": "0.4.1.2",
   "keepRaw": true,
   "contributors": [
@@ -23,6 +23,9 @@
     "mode": "cookie",
     "replayHeaders": [
       "authorization"
+    ],
+    "capturePaths": [
+      "/dashboard/"
     ]
   },
   "api": {
@@ -141,6 +144,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20.1",
+      "changes": "Declare auth.capturePaths = ['/dashboard/'] so the token is only captured from the authenticated dashboard area (where it first appears, after login) and the header observer never engages with the sign-in flow — this keeps the extension from interfering with the bank's Transmit Security login."
+    },
     {
       "version": "2026-07-20",
       "changes": "Send the per-card eci-custom-encrypted-pan header on the aplazamientos (financing-purchases) and extractos (shopping-summaries) LIST requests too — the SPA sends it on every card-scoped call (as movements already does), so the server needs it to return those lists per card, not just for movements + the statement PDF."
