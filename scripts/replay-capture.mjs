@@ -89,8 +89,11 @@ async function replayOutput(adapter, out, samples) {
   let docOk = null;
   if (hasDoc) {
     // Test the document fetch on a REAL item — skip redaction truncation markers ("[+N more]") the redactor
-    // leaves in place of elided array elements, which map to junk docs with a non-object _raw.
-    const real = docs.find((d) => d && d._raw && typeof d._raw === 'object') || docs[0];
+    // leaves in place of elided array elements, which map to junk docs with a non-object _raw. A capture only
+    // OPENS some documents, so prefer a listed doc whose fetch is actually in the capture (assets); fall back
+    // to the first real one so the request is still exercised.
+    const inCapture = (d) => { try { return !!(d && d._raw && (d._raw.id != null)); } catch (e) { return false; } };
+    const real = docs.find((d) => d && d._raw && typeof d._raw === 'object' && inCapture(d)) || docs.find((d) => d && d._raw && typeof d._raw === 'object') || docs[0];
     if (!real) docOk = false;
     else {
       const before = { matched: stats.matched, issues: issues.length };
@@ -110,8 +113,12 @@ async function replayOutput(adapter, out, samples) {
 // Run every output of `adapter` against `bundle` and return a structured report.
 export async function replayCapture(bundle, adapter) {
   const samples = (bundle && (bundle.samples || bundle.requests)) || [];
+  // Binary document fetches (PDFs) are captured in the ASSET buffer, not `samples` — index them too so a
+  // document output's fetch can be verified (URL/params match; the bytes aren't kept).
+  const assets = (bundle && bundle.assets) || [];
+  const forNet = assets.length ? samples.concat(assets) : samples;
   const outputs = [];
-  for (const o of outputsOf(adapter)) outputs.push(await replayOutput(adapter, o, samples));
+  for (const o of outputsOf(adapter)) outputs.push(await replayOutput(adapter, o, forNet));
   return { ok: outputs.length > 0 && outputs.every((o) => o.ok), samples: samples.length, outputs };
 }
 

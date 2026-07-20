@@ -11,6 +11,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **`keep` item/group filter by field presence** (`runtime/inventory.js`) — `keep {field, present: true|false}`
+  keeps items (or groups) by whether a field exists, not only by exact value. For a list that mixes product
+  kinds distinguished by a field's presence, or to drop malformed entries missing an id.
 - **"Completed" handoff status** — a collaboration session that finished with a complete source is marked
   completed (shown as "✓ completed" in My contributions). Completed/published/declined/superseded sessions no
   longer count as "waiting for the team", so a finished collaboration drops out of the active queue.

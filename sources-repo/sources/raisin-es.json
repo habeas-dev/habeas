@@ -10,7 +10,7 @@
     "investment"
   ],
   "version": "2026-07-20",
-  "minVersion": "0.5.0.2",
+  "minVersion": "0.5.0.6",
   "keepRaw": true,
   "contributors": [
     "David Marín Carreño"
@@ -35,49 +35,184 @@
     ]
   },
   "api": {
-    "host": "https://api2.weltsparen.de",
-    "groups": {
-      "path": "/tams/v1/accounts",
-      "itemsPath": "$",
-      "params": {
-        "filter": "all"
+    "host": "https://api2.weltsparen.de"
+  },
+  "streams": [
+    {
+      "id": "movimientos",
+      "name": "Movimientos (cuenta Raisin)",
+      "schema": "transaction@1",
+      "categories": [
+        "banking"
+      ],
+      "keepRaw": true,
+      "api": {
+        "groups": {
+          "path": "/tams/v1/accounts",
+          "itemsPath": "$",
+          "params": {
+            "filter": "all"
+          },
+          "fields": {
+            "id": "id",
+            "name": "accountNumber",
+            "iban": "iban",
+            "currency": "currencyCode",
+            "type": "type"
+          },
+          "mask": [
+            "iban"
+          ]
+        },
+        "list": {
+          "path": "/tams/v1/accounts/{group.id}/transactions",
+          "paging": "offset",
+          "offsetParam": "offset",
+          "offsetStep": 10,
+          "itemsPath": "$",
+          "params": {
+            "limit": 10,
+            "date_from": "{daysAgo:90}"
+          }
+        }
       },
       "fields": {
-        "id": "id",
-        "name": "accountNumber",
-        "iban": "iban",
+        "internalId": "id",
+        "date": "bookingDate",
+        "amount": "amount",
         "currency": "currencyCode",
-        "type": "type"
-      },
-      "mask": [
-        "iban"
-      ]
+        "counterparty": "counterpartyName",
+        "description": "referenceText"
+      }
     },
-    "list": {
-      "path": "/tams/v1/accounts/{group.id}/transactions",
-      "paging": "offset",
-      "offsetParam": "offset",
-      "offsetStep": 10,
-      "itemsPath": "$",
-      "params": {
-        "limit": 10,
-        "date_from": "{daysAgo:90}"
+    {
+      "id": "ahorro",
+      "name": "Ahorro (posiciones)",
+      "schema": "investment@2",
+      "categories": [
+        "investment"
+      ],
+      "keepRaw": true,
+      "api": {
+        "list": {
+          "path": "/dbff/v1/public/deposits/dashboard/active",
+          "paging": "none",
+          "itemsPath": "entries",
+          "params": {
+            "customer_id": "{ctx.customer_id}",
+            "locale": "es-ES",
+            "sort_by": "availability",
+            "order_by": "asc"
+          }
+        }
+      },
+      "fields": {
+        "internalId": "accounting.deposit_id",
+        "date": "accounting.opening_date",
+        "amount": "accounting.balance.amount.denomination",
+        "currency": "accounting.balance.amount.currency",
+        "description": "accounting.partner_bank"
+      }
+    },
+    {
+      "id": "ahorro-mov",
+      "name": "Movimientos (ahorro)",
+      "schema": "transaction@1",
+      "categories": [
+        "banking"
+      ],
+      "keepRaw": true,
+      "api": {
+        "groups": {
+          "path": "/dbff/v1/public/deposits/dashboard/active",
+          "itemsPath": "entries",
+          "params": {
+            "customer_id": "{ctx.customer_id}",
+            "locale": "es-ES",
+            "sort_by": "availability",
+            "order_by": "asc"
+          },
+          "keep": {
+            "field": "accounting.deposit_id",
+            "present": true
+          },
+          "fields": {
+            "id": "accounting.deposit_id",
+            "currency": "accounting.balance.amount.currency"
+          }
+        },
+        "list": {
+          "path": "/dbff/v1/public/deposits/{group.id}",
+          "paging": "none",
+          "itemsPath": "accounting.transactions",
+          "params": {
+            "customer_id": "{ctx.customer_id}",
+            "locale": "es-es"
+          }
+        }
+      },
+      "fields": {
+        "internalId": "transaction_id",
+        "date": "value_date",
+        "amount": "amount.denomination",
+        "currency": "amount.currency",
+        "description": "type"
+      }
+    },
+    {
+      "id": "documentos",
+      "name": "Documentos (condiciones)",
+      "schema": "invoice@1",
+      "categories": [
+        "banking"
+      ],
+      "keepRaw": true,
+      "api": {
+        "groups": {
+          "path": "/dbff/v1/public/deposits/dashboard/active",
+          "itemsPath": "entries",
+          "params": {
+            "customer_id": "{ctx.customer_id}",
+            "locale": "es-ES",
+            "sort_by": "availability",
+            "order_by": "asc"
+          },
+          "keep": {
+            "field": "accounting.deposit_id",
+            "present": true
+          },
+          "fields": {
+            "id": "accounting.deposit_id"
+          }
+        },
+        "list": {
+          "path": "/dds/api/v2/public/documents",
+          "paging": "none",
+          "itemsPath": "documents",
+          "params": {
+            "customer_id": "{ctx.customer_id}",
+            "deposit_id": "{group.id}"
+          }
+        },
+        "pdf": {
+          "path": "/dds/api/v2/public/documents/{internalId}",
+          "params": {
+            "preview": "true"
+          }
+        }
+      },
+      "fields": {
+        "internalId": "id",
+        "date": "created",
+        "description": "title",
+        "type": "document_type"
       }
     }
-  },
-  "schema": "transaction@1",
-  "fields": {
-    "internalId": "id",
-    "date": "bookingDate",
-    "amount": "amount",
-    "currency": "currencyCode",
-    "counterparty": "counterpartyName",
-    "description": "referenceText"
-  },
+  ],
   "changelog": [
     {
       "version": "2026-07-20",
-      "changes": "Initial: Raisin (WeltSparen) — the Raisin transaction account movements (tams). Cross-domain login raisin.com -> API api2.weltsparen.de (Keycloak bearer), 90-day window to stay inside the SCA-free range, customer_id captured as context. More outputs (savings, deposits, documents) to follow."
+      "changes": "Initial: Raisin (WeltSparen). Cross-domain login raisin.com -> API api2.weltsparen.de (Keycloak bearer), customer_id captured as context, 90-day window (SCA-free). Four outputs: movimientos (Raisin transaction account, tams), depósitos (fixed-term deposits, investment@2 with keepRaw), ahorro (flexible savings-account movements from the deposit detail's embedded transactions), documentos (terms/condiciones via dds). OMA (flexible) vs FDA (fixed) split by presence of deposit.maturity_date."
     }
   ]
 }

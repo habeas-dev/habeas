@@ -179,7 +179,15 @@ export async function listGroups(adapter, auth, net) {
   // the group picker or the external listGroups hook), run the prelude here. listInventory passes an
   // auth that already has __csrf, so it isn't fetched twice.
   const a = adapter.api.csrf && !(auth && auth.__csrf) ? { ...(auth || {}), __csrf: await fetchCsrf(adapter, auth, net) } : auth;
-  const items = await fetchGroupItems(adapter, a, net);
+  let items = await fetchGroupItems(adapter, a, net);
+  // Optional group filter (`groups.keep {field, values|present}`, like `list.keep`): a groups list that mixes
+  // product kinds distinguished by a value or by whether a field exists (Raisin: OMA flexible accounts have no
+  // `maturity_date`, FDA fixed deposits do) → route each kind to its own stream.
+  if (g.keep && g.keep.field) {
+    const k = g.keep;
+    if (Array.isArray(k.values)) { const vals = new Set(k.values.map(String)); items = items.filter((p) => vals.has(String(get(p, k.field)))); }
+    if (typeof k.present === 'boolean') { items = items.filter((p) => { const v = get(p, k.field); return (v != null && v !== '') === k.present; }); }
+  }
   const seen = new Set(), out = [];
   for (const item of (items || [])) {
     const grp = { _raw: item };
@@ -1407,11 +1415,14 @@ export function normalizeAmount(v) {
 function collect(adapter, data, seen, all, group) {
   const list = adapter.api.list;
   let items = getItems(data, list);
-  // Optional item filter: keep only items whose `field` value is in `values` (e.g. a list that mixes ONLINE
-  // and IN_STORE orders → keep the online ones). dotted field path supported.
-  if (list.keep && list.keep.field && Array.isArray(list.keep.values)) {
-    const vals = new Set(list.keep.values.map(String));
-    items = items.filter((p) => vals.has(String(get(p, list.keep.field))));
+  // Optional item filter (`keep {field, ...}`, dotted field path): keep only items whose `field`
+  //   • is in `values` (a list that mixes ONLINE and IN_STORE orders → keep the online ones), or
+  //   • is present / absent (`present: true|false`) — for a list that mixes product kinds distinguished only
+  //     by whether a field exists (Raisin: a fixed deposit has a `maturity_date`, a flexible one doesn't).
+  if (list.keep && list.keep.field) {
+    const k = list.keep;
+    if (Array.isArray(k.values)) { const vals = new Set(k.values.map(String)); items = items.filter((p) => vals.has(String(get(p, k.field)))); }
+    if (typeof k.present === 'boolean') { const has = (p) => { const v = get(p, k.field); return v != null && v !== ''; }; items = items.filter((p) => has(p) === k.present); }
   }
   let added = 0;
   for (const p of items) {
