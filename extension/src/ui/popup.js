@@ -2,7 +2,7 @@ import { chrome } from '../lib/ext.js';
 import { getConfig, saveConfig } from '../lib/config.js';
 import { manageAccounts } from './accountpicker.js';
 import { listInventory, artifactKinds, fetchArtifact, documentExt } from '../runtime/inventory.js';
-import { ensureSiteFetch, recoverSession, recoverAndReauth, siteBaseUrl } from '../lib/pagefetch.js';
+import { ensureSiteFetch, recoverSession, siteBaseUrl } from '../lib/pagefetch.js';
 import { pickGroup } from './grouppicker.js';
 import { renderPage, challengeUrlOf } from '../lib/render.js';
 import { writeToSink } from '../sinks/sinks.js';
@@ -23,9 +23,6 @@ import { inventoryView, distinctBy } from '../lib/inventoryview.js';
 
 let ADAPTERS = {};
 const $ = (s) => document.querySelector(s);
-// A list/groups error meaning "the session was rejected" — the recoverable case (reload the tab, re-auth,
-// retry). A plain 401/403 or WSO2's 200-body-code 900901 "Invalid Credentials".
-const isAuthFail = (e) => { const m = String((e && e.message) || e); return /\b(groups|list)\s+(401|403)\b/.test(m) || /invalid credentials|\b900901\b/i.test(m); };
 let inventory = [];
 // Inventory view state: filter by group/type (''=all) and sort by a column. Grouped sources (banks with
 // several cards/accounts) can narrow to one account; entries can be narrowed/ordered by type too.
@@ -413,32 +410,16 @@ async function onList(mode, opts = {}) {
   busy(true);
   let newTotal = 0;
   try {
-    let net = await ensureSiteFetch(adapter, { open: true });
-    let curAuth = auth; // swapped for a freshly-recaptured one after an auth-failure recovery
-    let recovered = false; // recover at most once per List
-    // On a session-rejected list (401/403, WSO2 900901), reload the tab so the SPA re-auths, re-capture the
-    // fresh token, and retry immediately — before falling back to the deferred login flow in catch{}.
-    const listOne = async (eff, listOpts) => {
-      try { return await listInventory(eff, curAuth, net, listOpts); }
-      catch (e) {
-        if (recovered || !isAuthFail(e)) throw e;
-        recovered = true;
-        $('#status').textContent = t('status_reauth', [adapter.name || adapter.id]);
-        const r = await recoverAndReauth(adapter);
-        if (!r) throw e;
-        curAuth = r.auth || curAuth; net = r.net;
-        return listInventory(eff, curAuth, net, listOpts);
-      }
-    };
+    const net = await ensureSiteFetch(adapter, { open: true });
     for (const sid of streamIds) {
       if (aborted()) break;
       const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(adapter.id, sid);
       // A saved account filter (ds.groups) takes over: list ALL selected accounts, no per-list picker.
       // Without one, keep the transient "which account this time?" picker.
       const filter = (ds && ds.groups && ds.groups.length) ? ds.groups : null;
-      const groupId = filter ? undefined : await pickGroup(eff, curAuth, net);
+      const groupId = filter ? undefined : await pickGroup(eff, auth, net);
       const baseIds = new Set([...acc.values()].filter((d) => d._stream === sid).map((d) => d.internalId));
-      const fresh = await listOne(eff, {
+      const fresh = await listInventory(eff, auth, net, {
         groupId, groups: filter, signal: aborter.signal, knownIds: mode === 'full' ? null : baseIds,
         onProgress: ({ year, page, docs }) => {
           $('#status').textContent = year != null ? t('listing_year_page', [String(year), String(page), String(docs.length)]) : t('listing_page', [String(page), String(docs.length)]);

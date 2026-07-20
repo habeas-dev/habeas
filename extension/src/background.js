@@ -8,7 +8,7 @@ import { registerCapture } from './lib/capture.js';
 import { loadAuth, hasAuth } from './lib/authstore.js';
 import { deliveredSet, markDelivered, appendLog, rememberDocMeta } from './lib/state.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
-import { resolveSiteFetch, ensureSiteFetch, recoverSession, recoverAndReauth } from './lib/pagefetch.js';
+import { resolveSiteFetch, ensureSiteFetch, recoverSession } from './lib/pagefetch.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
 import { recordDelivered } from './lib/store.js';
@@ -381,10 +381,6 @@ function siteMatches(adapter, host) {
 // sharing the source's registrable domain. Cookie sources proceed with an empty store (cookies carry it).
 const authFor = (adapter) => loadAuth(adapter);
 
-// A list/groups error that means "the session was rejected" — the recoverable case (reload the tab, re-auth,
-// retry). Covers a plain 401/403 and WSO2's 200-body-code 900901 "Invalid Credentials".
-const isAuthFail = (e) => { const m = String((e && e.message) || e); return /\b(groups|list)\s+(401|403)\b/.test(m) || /invalid credentials|\b900901\b/i.test(m); };
-
 async function runRoute(ds, adapter, sink, opts = {}) {
   const kind = opts.kind || 'auto';
   const base = { kind, datasource: ds.id, sink: sink.id, ...(opts.origin ? { origin: opts.origin } : {}) };
@@ -399,24 +395,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     // incorrecto"). Treat it as no-session → the sweep opens the login page; retries once fully logged in.
     const ctxMissing = ((adapter.auth && adapter.auth.context) || []).some((c) => !(auth && auth.ctx && auth.ctx[c.name] != null && auth.ctx[c.name] !== ''));
     if (!auth || ctxMissing) { await appendLog({ ...base, status: 'nosession' }); await badgeClear(); setStatus(t('status_nosession', [name])); return { status: 'nosession' }; }
-    let net = opts.net || await resolveSiteFetch(adapter); // fetch from the user's tab → inherits the session
-    let curAuth = auth; // may be swapped for a freshly-recaptured one after an auth-failure recovery
-    let recovered = false; // recover at most once per route (a reload → re-auth → retry)
-    const listWithRecovery = async (eff, listOpts) => {
-      try { return await listInventory(eff, curAuth, net, listOpts); }
-      catch (e) {
-        // In-memory rotating OAuth tokens (FECI) go stale/absent → the session gets rejected. Reload the tab
-        // so the SPA re-auths, re-capture the fresh token, and retry once. Skipped when a caller supplied the
-        // net (external collect manages its own tab) or after we've already recovered this route.
-        if (opts.net || recovered || !isAuthFail(e)) throw e;
-        recovered = true;
-        setStatus(t('status_reauth', [name]));
-        const r = await recoverAndReauth(adapter);
-        if (!r) throw e;
-        curAuth = r.auth || curAuth; net = r.net;
-        return listInventory(eff, curAuth, net, listOpts);
-      }
-    };
+    const net = opts.net || await resolveSiteFetch(adapter); // fetch from the user's tab → inherits the session
     const delivered = await deliveredSet(ds.id, sink.id);
     // A source may expose several outputs (streams×formats). Auto-mode delivers the outputs THIS sink accepts
     // (a typed consumer that wants only `transaction` gets just that stream). List once per stream (formats
@@ -430,7 +409,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
       const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(adapter.id, sid); const fmts = fmtsFor(sid);
       // onProgress → live per-page status (visible in an open popup during a Sync-all sweep). signal → stop.
       // ds.groups = the user's saved account allow-list (grouped sources): auto/sweep only ever touch those.
-      const all = await listWithRecovery(eff, { groupId: opts.groupId, groups: (ds.groups && ds.groups.length) ? ds.groups : undefined, signal: opts.signal, onProgress: (p) => setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])) }); // opts.groupId → one account; opts.groups → allow-list
+      const all = await listInventory(eff, auth, net, { groupId: opts.groupId, groups: (ds.groups && ds.groups.length) ? ds.groups : undefined, signal: opts.signal, onProgress: (p) => setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])) }); // opts.groupId → one account; opts.groups → allow-list
       const fresh = all.filter((d) => !delivered[d.internalId]);
       // Deliver oldest → newest (the list comes newest-first) — files written + manifest appended + store
       // recorded chronologically, matching the manual send. Covers auto, sweep and external collect.
@@ -448,7 +427,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
           const avail = artifactKinds(oeff, d); // per-doc: drops the document (e.g. invoice PDF) if this doc lacks it
           for (const k of kinds) {
             if (!avail.some((a) => a.kind === k.kind)) continue; // this ticket has no such artifact (no invoice) → skip cleanly
-            try { arts.push(await fetchArtifact(oeff, curAuth, d, net, renderPage, k.kind)); }
+            try { arts.push(await fetchArtifact(oeff, auth, d, net, renderPage, k.kind)); }
             catch (e) { try { await chrome.storage.local.set({ ['habeas:diag:' + adapter.id]: { error: 'documento (' + sid + '): ' + String((e && e.message) || e), at: new Date().toISOString() } }); } catch (_) {} } // was silently swallowed; keep the last doc error so the contributor can report it
           }
         }

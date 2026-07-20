@@ -40,14 +40,6 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   diagnostic, so "Report a problem" surfaces WHY a statement/PDF didn't download instead of a bare "0 documents".
 
 ### Added
-- **Session auto-recovery on an auth failure** (`lib/pagefetch.js#recoverAndReauth`) — when a list/groups
-  request is rejected (401/403, or WSO2's 200-body `900901 "Invalid Credentials"`), Habeas reloads the
-  source's tab so the SPA re-runs its own auth flow, waits (best-effort) for the fresh token to be
-  re-captured, then retries the list once with the refreshed session. Makes sources whose bearer is an
-  in-memory, rotating OAuth token (WSO2/Akamai-fronted, e.g. Financiera ECI) reliable without storing the
-  token: instead of failing when the captured token is stale/absent, the extension refreshes it in place.
-  Wired into both the delivery/Sync flow (`background.js#runRoute`, once per route) and the popup's List
-  (before the deferred login fallback). External `collect` (which manages its own tab) is unaffected.
 - **`auth.tokenFromStorage`** (`lib/pagefetch.js#makePageFetch`) — read the bearer FRESH from the page's
   `localStorage` on every request (`{key, field, scheme, header}`), for SPAs that keep and rotate the token
   there (WSO2/Akamai-fronted, e.g. Financiera ECI's `aphishi-lws_at.t`). Capturing the token from a seen
