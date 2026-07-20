@@ -551,6 +551,12 @@ async function openThread(id) {
           + versionCard(m.source, mi, mi === lastVerIdx)
           + `</div>`;
       }
+      if (m.captureRequest && m.captureRequest.instruction) {  // the team asked for a specific, guided capture
+        return `<div class="msg team"><div><span class="who">${t('contrib_team')}</span><span class="when">${esc(String(m.at || '').slice(0, 16))}</span></div>`
+          + `<div class="srcbox newver"><div><b>🎯 ${t('contrib_capreq_title')}</b></div>`
+          + `<div class="body" style="margin-top:4px">${esc(m.captureRequest.instruction)}</div>`
+          + `<button class="accent" data-capreq="${mi}" style="margin-top:8px">${t('contrib_capreq_start')}</button></div></div>`;
+      }
       const mine = m.from !== 'team';
       const parts = String(m.text || '').split(TEAM_DIAG_SPLIT);
       const shown = parts[0].trim();                          // the plain message the contributor reads
@@ -562,6 +568,18 @@ async function openThread(id) {
     }).join('')}</div>`
     : `<div class="muted">${t('contrib_no_msgs')}</div>`;
   el.querySelectorAll('[data-peek]').forEach((b) => { b.onclick = () => { const d = el.querySelector(`[data-detail="${b.dataset.peek}"]`); if (d) d.hidden = !d.hidden; }; });
+  // A targeted capture request → open the guided recorder (the author page) prefilled with the source site,
+  // the plain instruction, and the endpoint hint so it confirms when the contributor captured what's needed.
+  el.querySelectorAll('[data-capreq]').forEach((b) => {
+    b.onclick = () => {
+      const cr = data.messages[b.dataset.capreq] && data.messages[b.dataset.capreq].captureRequest;
+      if (!cr) return;
+      const site = 'https://www.' + (data.domain || '') + '/';
+      const url = chrome.runtime.getURL('src/ui/author.html') + '?url=' + encodeURIComponent(site)
+        + '&guide=' + encodeURIComponent(cr.instruction) + (cr.endpoint ? '&endpoint=' + encodeURIComponent(cr.endpoint) : '');
+      try { chrome.tabs.create({ url }); } catch (e) { location.href = url; }
+    };
+  });
   // Backward compatibility: a source attached BEFORE version messages existed has no timeline card — show the
   // latest as a single build card so it can still be installed (no history existed for it either way).
   if (data.source && data.source.id && lastVerIdx === -1) {

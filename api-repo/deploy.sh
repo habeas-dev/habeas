@@ -17,6 +17,7 @@ echo "▶ D1 schema migration (idempotent)"
 # Additive column migrations for tables that already exist on prod (CREATE ... IF NOT EXISTS won't alter
 # them). SQLite has no ADD COLUMN IF NOT EXISTS, so ignore the "duplicate column" error on re-runs.
 "$WR" d1 execute habeas-api --remote --command "ALTER TABLE handoff_messages ADD COLUMN source_json TEXT NOT NULL DEFAULT ''" 2>/dev/null || true
+"$WR" d1 execute habeas-api --remote --command "ALTER TABLE handoff_messages ADD COLUMN capture_request TEXT NOT NULL DEFAULT ''" 2>/dev/null || true
 
 echo "▶ ADMIN_TOKEN secret"
 if [ ! -s "$TOKENFILE" ]; then

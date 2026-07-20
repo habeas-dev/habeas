@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS handoff_messages (
   sender      TEXT    NOT NULL,             -- 'team' | 'submitter'
   text        TEXT    NOT NULL,
   source_json TEXT    NOT NULL DEFAULT '',  -- non-empty → a VERSION message (delivers an authored source build)
+  capture_request TEXT NOT NULL DEFAULT '', -- non-empty → a TARGETED CAPTURE REQUEST (instruction + endpoint hint)
   created_at  INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_hmsgs_handoff ON handoff_messages (handoff_id, created_at);

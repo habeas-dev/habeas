@@ -80,10 +80,11 @@ export function memoryStore() {
       if (patch.updated_at != null) h.updated_at = patch.updated_at;
       return { id: h.id, domain: h.domain, status: h.status, sourceId: h.source_id || null };
     },
-    // sourceJson (optional) turns this into a VERSION message: it delivers an authored source version and
-    // rides the same timeline as text, so the conversation shows each build in order (history preserved).
-    async addMessage(id, from, text, client, now, sourceJson = '') {
-      hmsgs.push({ handoff_id: id, from, text, at: now, source_json: sourceJson || '' });
+    // A message can carry a structured payload: `sourceJson` → a VERSION message (delivers an authored source
+    // build); `captureRequest` → a TARGETED CAPTURE REQUEST (a plain instruction + endpoint hint the team asks
+    // the contributor to record). Both ride the same timeline as text, in order.
+    async addMessage(id, from, text, client, now, sourceJson = '', captureRequest = '') {
+      hmsgs.push({ handoff_id: id, from, text, at: now, source_json: sourceJson || '', capture_request: captureRequest || '' });
       writes.push({ client, at: now });
       return { from, text, at: new Date(now).toISOString() };
     },
@@ -91,6 +92,7 @@ export function memoryStore() {
       return hmsgs.filter((m) => m.handoff_id === id).sort((a, b) => a.at - b.at).map((m) => {
         const out = { from: m.from, text: m.text, at: new Date(m.at).toISOString() };
         if (m.source_json) { try { out.source = JSON.parse(m.source_json); } catch (e) {} }
+        if (m.capture_request) { try { out.captureRequest = JSON.parse(m.capture_request); } catch (e) {} }
         return out;
       });
     },

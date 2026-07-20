@@ -64,16 +64,17 @@ export function d1Store(DB) {
     },
     // sourceJson (optional) turns this into a VERSION message: it delivers an authored source version and
     // rides the same timeline as text, so the conversation shows each build in order (history preserved).
-    async addMessage(id, from, text, client, now, sourceJson = '') {
-      await DB.prepare('INSERT INTO handoff_messages (handoff_id, sender, text, source_json, created_at) VALUES (?, ?, ?, ?, ?)').bind(id, from, text, sourceJson || '', now).run();
+    async addMessage(id, from, text, client, now, sourceJson = '', captureRequest = '') {
+      await DB.prepare('INSERT INTO handoff_messages (handoff_id, sender, text, source_json, capture_request, created_at) VALUES (?, ?, ?, ?, ?, ?)').bind(id, from, text, sourceJson || '', captureRequest || '', now).run();
       await DB.prepare('INSERT INTO writes (client, created_at) VALUES (?, ?)').bind(client, now).run();
       return { from, text, at: new Date(now).toISOString() };
     },
     async getMessages(id) {
-      const r = await DB.prepare('SELECT sender, text, source_json, created_at FROM handoff_messages WHERE handoff_id = ? ORDER BY created_at ASC').bind(id).all();
+      const r = await DB.prepare('SELECT sender, text, source_json, capture_request, created_at FROM handoff_messages WHERE handoff_id = ? ORDER BY created_at ASC').bind(id).all();
       return (r.results || []).map((m) => {
         const out = { from: m.sender, text: m.text, at: new Date(m.created_at).toISOString() };
         if (m.source_json) { try { out.source = JSON.parse(m.source_json); } catch (e) {} }
+        if (m.capture_request) { try { out.captureRequest = JSON.parse(m.capture_request); } catch (e) {} }
         return out;
       });
     },

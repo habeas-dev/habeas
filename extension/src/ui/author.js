@@ -48,9 +48,27 @@ const FIELD_LABEL = {
 const REQUIRED = new Set(['internalId', 'date']);
 const sampleOf = (v) => { const s = String(v ?? ''); return s.length > 26 ? s.slice(0, 26) + '…' : s; };
 
+let GUIDE = null; // a targeted capture request from the team: { instruction, endpoint }
+
 async function init() {
   applyI18n();
   try { const pre = new URLSearchParams(location.search).get('url'); if (pre && /^https?:\/\//.test(pre)) $('#url').value = pre; } catch (e) {} // ?url= prefill (e.g. re-record from My contributions)
+  // Guided capture request (?guide=<instruction>[&endpoint=<hint>]): show the plain instruction prominently
+  // and, once the hinted endpoint appears in the capture, confirm it — so a non-technical contributor knows
+  // they did exactly what the team needs before sending. Built with textContent (team text is never HTML).
+  try {
+    const p = new URLSearchParams(location.search); const g = p.get('guide');
+    if (g) {
+      GUIDE = { instruction: g, endpoint: p.get('endpoint') || '' };
+      const box = document.createElement('div');
+      box.style.cssText = 'margin:10px 0;padding:12px 14px;border:2px solid var(--accent,#c9792b);border-radius:10px;background:var(--accent-100,#fff3e6)';
+      const h = document.createElement('b'); h.textContent = '🎯 ' + t('author_guide_title');
+      const inst = document.createElement('div'); inst.style.marginTop = '4px'; inst.textContent = g;
+      const done = document.createElement('div'); done.id = 'guidedone'; done.hidden = true; done.style.cssText = 'margin-top:6px;font-weight:600;color:var(--brand-600,#2a7d6d)'; done.textContent = '✓ ' + t('author_guide_done');
+      box.append(h, inst, done);
+      document.body.insertBefore(box, document.body.firstChild);
+    }
+  } catch (e) {}
   $('#opts').onclick = () => chrome.runtime.openOptionsPage();
   $('#start').onclick = onStart;
   $('#stop').onclick = onStop;
@@ -108,6 +126,8 @@ async function refreshLive() {
   if (!LEARN) return;
   const [samples, ws] = await Promise.all([getSamples(LEARN.domain), getWsFrames(LEARN.domain)]);
   const s = summarizeCapture(samples, ws);
+  // Guided capture: light up "✓ got what the team needs" as soon as the hinted endpoint is captured.
+  if (GUIDE && GUIDE.endpoint) { const done = document.getElementById('guidedone'); if (done) done.hidden = !samples.some((x) => String(x.url || '').includes(GUIDE.endpoint)); }
   $('#live').hidden = false;
   $('#livecounts').innerHTML = ''; // built from escaped numbers below
   const count = (n, label) => { const d = document.createElement('span'); d.textContent = String(n); const sm = document.createElement('span'); sm.style.cssText = 'font-size:12px;font-weight:400;color:#888;margin-left:4px'; sm.textContent = label; d.appendChild(sm); return d; };

@@ -204,6 +204,18 @@ async function handleHandoff(request, env, url, parts) {
         const client = env.clientId ? await env.clientId(request) : 'team';
         await store.addMessage(id, 'team', note, client, now, s);
       }
+      // A TARGETED CAPTURE REQUEST: a plain instruction the contributor follows, plus an optional endpoint
+      // hint the extension watches for (so a non-technical contributor is guided, and the extension confirms
+      // it captured what the team needs). Rides the timeline as a team message.
+      if (body && body.captureRequest && typeof body.captureRequest === 'object') {
+        const cr = { instruction: String(body.captureRequest.instruction || '').slice(0, MAX_COMMENT), endpoint: String(body.captureRequest.endpoint || '').slice(0, 300), reveal: String(body.captureRequest.reveal || '').slice(0, 120) };
+        if (!cr.instruction) return err(400, 'captureRequest.instruction required');
+        const s = JSON.stringify(cr);
+        if (s.length > MAX_HANDOFF_MSG) return err(413, 'captureRequest too large');
+        const client = env.clientId ? await env.clientId(request) : 'team';
+        await store.addMessage(id, 'team', cr.instruction, client, now, '', s);
+        patch.status = patch.status || 'needs_info';
+      }
       return json(await store.setHandoff(id, patch));
     }
   }

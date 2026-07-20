@@ -186,6 +186,24 @@ test('handoff: the team is notified on a new submission and on a contributor rep
   assert.equal(events[1].text, 'it failed again');
 });
 
+test('handoff: a targeted capture request rides the timeline with its instruction + endpoint hint', async () => {
+  const s = memoryStore();
+  const { id } = await (await call(s, 'POST', '/handoff', { submitter: 'sub1', bundle: BUNDLE })).json();
+  // team asks for a specific, guided capture (plain instruction + endpoint hint + a value to reveal)
+  const r = await call(s, 'POST', `/handoff/${id}?token=ADMIN`, { captureRequest: { instruction: 'Open your list of accounts and go to the deposits section.', endpoint: '/tams/v1/accounts', reveal: 'filter' } });
+  assert.equal(r.status, 200);
+  const view = await (await call(s, 'GET', `/handoff/${id}?submitter=sub1`)).json();
+  assert.equal(view.status, 'needs_info', 'a capture request awaits the contributor');
+  const cr = view.messages.filter((m) => m.captureRequest);
+  assert.equal(cr.length, 1);
+  assert.equal(cr[0].from, 'team');
+  assert.equal(cr[0].text, 'Open your list of accounts and go to the deposits section.', 'the plain instruction is the message body');
+  assert.equal(cr[0].captureRequest.endpoint, '/tams/v1/accounts');
+  assert.equal(cr[0].captureRequest.reveal, 'filter');
+  // instruction is required
+  assert.equal((await call(s, 'POST', `/handoff/${id}?token=ADMIN`, { captureRequest: { endpoint: '/x' } })).status, 400);
+});
+
 test('handoff: each attached version is a timeline message, and history is preserved', async () => {
   const s = memoryStore();
   const { id } = await (await call(s, 'POST', '/handoff', { submitter: 'sub1', bundle: BUNDLE })).json();
