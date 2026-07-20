@@ -87,11 +87,20 @@ async function saveContext(host, name, value) {
 // background, before the SPA runs) and can't be seen by the page — needed for SPAs that fetch their
 // token/ids before the injected hook is ready. Only headers/URLs are read; never response bodies/cookies.
 let WR_MAP = {};
+let WR_LOADING = false; // a syncWebRequestCapture() rebuild is in flight
+let WR_SYNCED = false;  // WR_MAP has been built at least once this SW lifetime
 function onWebRequestHeaders(details) {
   try {
     const u = new URL(details.url);
     const adapters = WR_MAP[u.host];
-    if (!adapters || !adapters.length) return;
+    if (!adapters || !adapters.length) {
+      // Cold service-worker wake: the top-level (synchronous) listener fired for a request BEFORE
+      // syncWebRequestCapture() finished rebuilding WR_MAP (its config load is async). We can't classify
+      // THIS request in time, but a dashboard sends many — kick one rebuild so the next requests (still
+      // carrying the same token) are matched and captured. No reload; nothing is stored for unknown hosts.
+      if (!WR_SYNCED && !WR_LOADING) { WR_LOADING = true; syncWebRequestCapture().catch(() => {}).finally(() => { WR_LOADING = false; }); }
+      return;
+    }
     const reqH = details.requestHeaders || [];
     for (const a of adapters) {
       // The token can live in a header OTHER than Authorization (e.g. Openbank's `openbankauthtoken`) —
@@ -124,8 +133,12 @@ function onWebRequestHeaders(details) {
     }
   } catch (e) {}
 }
+// Rebuild the allow-list (WR_MAP) the top-level observer gates on. The observer itself is registered ONCE,
+// synchronously, at the SW top level (see below) — re-adding it here (after this async config load) is what
+// used to make capture unreliable: an async-registered webRequest listener cannot wake a terminated service
+// worker, so any token a source sent while the SW slept was silently missed. Keeping registration at the top
+// level and only refreshing WR_MAP here fixes that without any tab reload.
 async function syncWebRequestCapture() {
-  if (!(chrome.webRequest && chrome.webRequest.onSendHeaders)) return;
   const cfg = await getConfig();
   const adapters = await getAdapters();
   const map = {};
@@ -133,8 +146,8 @@ async function syncWebRequestCapture() {
   for (const d of (cfg.datasources || []).filter((x) => x.enabled)) {
     const a = adapters[d.adapter];
     // Bearer sources capture their token; cookie sources normally carry the session in cookies alone — BUT a
-    // cookie source can still need a non-cookie header replayed (Revolut's `x-device-id`). Capture when it
-    // declares replayHeaders or a context to grab, else skip.
+    // cookie source can still need a non-cookie header replayed (Revolut's `x-device-id`) or a rotating bearer
+    // observed (FECI's authorization). Capture when it declares replayHeaders or a context to grab, else skip.
     const bearer = a && a.auth && a.auth.mode === 'bearer';
     const grabsHeaders = a && a.auth && ((Array.isArray(a.auth.replayHeaders) && a.auth.replayHeaders.length) || (Array.isArray(a.auth.context) && a.auth.context.length));
     if (!a || !(bearer || grabsHeaders)) continue;
@@ -143,11 +156,16 @@ async function syncWebRequestCapture() {
     for (const m of a.match || []) add(m, a);
   }
   WR_MAP = map;
-  try { chrome.webRequest.onSendHeaders.removeListener(onWebRequestHeaders); } catch (e) {}
-  const urls = Object.keys(map).map((h) => `*://${h}/*`);
-  if (!urls.length) return;
-  try { chrome.webRequest.onSendHeaders.addListener(onWebRequestHeaders, { urls }, ['requestHeaders', 'extraHeaders']); }
-  catch (e) { try { chrome.webRequest.onSendHeaders.addListener(onWebRequestHeaders, { urls }, ['requestHeaders']); } catch (e2) {} }
+  WR_SYNCED = true;
+}
+// Register the header observer SYNCHRONOUSLY at the service-worker top level. MV3 only wakes a terminated SW
+// for events whose listeners were added at the top level of the initial evaluation — a listener added later
+// (async) observes requests only while the SW happens to be alive, so a token sent while it slept is lost.
+// The broad filter still delivers events ONLY for hosts we hold permission for (the enabled sources), and
+// onWebRequestHeaders gates again on WR_MAP. This is the "listen to every request" path — no reload needed.
+if (chrome.webRequest && chrome.webRequest.onSendHeaders) {
+  try { chrome.webRequest.onSendHeaders.addListener(onWebRequestHeaders, { urls: ['https://*/*'] }, ['requestHeaders', 'extraHeaders']); }
+  catch (e) { try { chrome.webRequest.onSendHeaders.addListener(onWebRequestHeaders, { urls: ['https://*/*'] }, ['requestHeaders']); } catch (e2) {} }
 }
 
 // ---- record-mode document capture --------------------------------------------------------------------

@@ -10,6 +10,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **Reliable auth-token capture without reloading the tab.** The request-header observer used to capture a
+  source's rotating bearer (e.g. a bank's in-memory token) is now registered synchronously at the service
+  worker's top level, so it wakes a suspended worker and observes **every** request the site makes — instead
+  of only those sent while the worker happened to be awake. Previously a token sent while the worker slept was
+  silently missed, so listing failed with no token even though the site had just used one. No tab reload is
+  involved (a reload could interrupt an in-progress login).
+
 ### Changed
 - **Clearer, less technical contribution conversation** (Settings → My contributions):
   - Messages render as separated bubbles sided by sender (team vs you) instead of a run-on list.
