@@ -6,6 +6,13 @@
 // re-list on every page. Only a COMPLETED run holds it — see retainAutoDebounce.
 export const AUTO_DEBOUNCE_MS = 10 * 60 * 1000;
 
+// After a token/header CAPTURE, wait this long (coalescing the burst of authenticated requests a freshly
+// loaded dashboard fires) before launching the auto-run. A capture only happens AFTER login completes (the
+// bearer doesn't exist until the SPA's first authenticated call — e.g. FECI's `/dashboard/user`), so this
+// settle window keeps auto-run from firing in the middle of a fragile bank login and folds many rapid
+// captures into a single run once activity quiets.
+export const AUTO_CAPTURE_SETTLE_MS = 6 * 1000;
+
 // May a route run now? `lastAt` is the epoch-ms of its last held run, or null/undefined when it never
 // ran (or the debounce was released). Returns true while still inside the debounce window.
 export function autoDebounced(lastAt, now, debounceMs = AUTO_DEBOUNCE_MS) {

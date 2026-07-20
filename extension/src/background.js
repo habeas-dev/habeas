@@ -25,7 +25,7 @@ import { validateProposal, originHost, enabledSources } from './lib/exthooks.js'
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
 import { runStoreMigration } from './lib/migrate.js';
-import { autoDebounced, retainAutoDebounce, isLoginNavigation, needsTabEscalation, sweepSinkId } from './lib/autosync.js';
+import { autoDebounced, retainAutoDebounce, isLoginNavigation, needsTabEscalation, sweepSinkId, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
 
 chrome.action.onClicked.addListener(() => {
   chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/popup.html') });
@@ -115,7 +115,7 @@ function onWebRequestHeaders(details) {
           const want = new Set(((a.auth && a.auth.replayHeaders) || [tokenHeader]).map((h) => h.toLowerCase()));
           const hdrs = { [tokenHeader]: tok.value };
           for (const h of reqH) { const ln = h.name.toLowerCase(); if (want.has(ln) && h.value) hdrs[ln] = h.value; }
-          saveAuth(u.host, u.pathname, hdrs).then(() => { maybeAutoRun(u.host); runPendingExternalCollects(u.host); });
+          saveAuth(u.host, u.pathname, hdrs).then(() => { scheduleAutoRun(u.host); runPendingExternalCollects(u.host); });
         }
       }
       // Cookie source (no token to gate on): capture the declared non-cookie headers it needs replayed
@@ -124,7 +124,7 @@ function onWebRequestHeaders(details) {
         const want = new Set(a.auth.replayHeaders.map((h) => h.toLowerCase()));
         const hdrs = {};
         for (const h of reqH) { const ln = h.name.toLowerCase(); if (want.has(ln) && h.value) hdrs[ln] = h.value; }
-        if (Object.keys(hdrs).length) saveAuth(u.host, u.pathname, hdrs).then(() => { maybeAutoRun(u.host); runPendingExternalCollects(u.host); });
+        if (Object.keys(hdrs).length) saveAuth(u.host, u.pathname, hdrs).then(() => { scheduleAutoRun(u.host); runPendingExternalCollects(u.host); });
       }
       for (const c of (a.auth && a.auth.context) || []) {
         let m; try { m = new RegExp(c.match).exec(details.url); } catch (e) { continue; }
@@ -231,7 +231,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'habeas:sync-stop') { stopSweep(); sendResponse({ ok: true }); return; } // stop a running sweep
   if (msg.type === 'habeas:sched-run' && msg.id) { onScheduleAlarm(msg.id).then(() => sendResponse({ ok: true }), (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) })); return true; } // run a schedule now
   if (msg.type === 'habeas:auth' && msg.host) {
-    saveAuth(msg.host, msg.path, msg.headers).then(() => { maybeAutoRun(msg.host); runPendingExternalCollects(msg.host); });
+    saveAuth(msg.host, msg.path, msg.headers).then(() => { scheduleAutoRun(msg.host); runPendingExternalCollects(msg.host); });
   } else if (msg.type === 'habeas:context' && msg.host && msg.name) {
     // A captured CONTEXT value (e.g. a DNI seen in a request URL), stored alongside auth in
     // storage.session (never on disk) and later templated as {ctx.<name>} by the runtime.
@@ -303,6 +303,11 @@ async function runAutoRoutes(matches, tabId, triggerUrl) {
     // Skip (a session-gated prelude would 400) and wait for the post-login navigation to fire us again.
     if (triggerUrl && isLoginNavigation(adapter, triggerUrl)) continue;
     if (!(await hasConsent(adapter))) continue; // community/cross-domain source not yet consented
+    // For a source with an observable bearer, require that the token has actually been captured before
+    // running: the bearer only exists after login, so this is the robust "the user is logged in" signal —
+    // it keeps auto-run (from EITHER trigger) from firing mid-login and disturbing a fragile bank session,
+    // even when the source declares no loginUrl for the page-based guard above.
+    if (hasObservableBearer(adapter) && !(await hasAuth(adapter))) continue;
     const sink = cfg.sinks.find((s) => s.id === route.sink);
     if (!sink || sink.type === 'download' || sink.type === 'local-folder') continue; // need a page
     const dk = 'autoLast:' + route.id;
@@ -322,10 +327,37 @@ async function runAutoRoutes(matches, tabId, triggerUrl) {
       .finally(() => running.delete(route.id));
   }
 }
-// Trigger A: captured auth (a bearer source's JWT was seen). host = the API host.
-const maybeAutoRun = (host) => runAutoRoutes((a) => hostOf(a) === host);
 // Trigger B: the user navigated to the source's site — works for cookie sources too (no JWT to capture).
 const maybeAutoRunForSite = (host, tabId, url) => runAutoRoutes((a) => siteMatches(a, host), tabId, url);
+
+// Trigger A: captured auth (a bearer source's JWT was seen). Capture-triggered auto-run, SETTLE-DELAYED. A freshly loaded dashboard fires a burst of authenticated
+// requests (each a capture); rather than launch on the first one, wait AUTO_CAPTURE_SETTLE_MS after the
+// LAST capture for that host, then run once. The capture itself only happens after login is complete (the
+// bearer doesn't exist before the SPA's first authenticated call), so this never fires mid-login; the delay
+// also lets the session fully settle. We fire on the source's own tab so runAutoRoutes' login-page guard
+// applies. If the service worker is torn down before the timer fires, no run happens (fail-safe — the next
+// capture reschedules) and nothing interferes with the user's session.
+const autoRunTimers = new Map();
+function scheduleAutoRun(host) {
+  const prev = autoRunTimers.get(host); if (prev) clearTimeout(prev);
+  autoRunTimers.set(host, setTimeout(async () => {
+    autoRunTimers.delete(host);
+    let tab = null;
+    try { const ts = await chrome.tabs.query({ url: `*://${host}/*` }); tab = ts.find((x) => x.active) || ts[0] || null; } catch (e) {}
+    runAutoRoutes((a) => hostOf(a) === host, tab && tab.id, tab && tab.url);
+  }, AUTO_CAPTURE_SETTLE_MS));
+}
+// A source whose auth carries an OBSERVABLE bearer (a `bearer` source, or a cookie source that also replays
+// an `authorization` header — FECI's rotating API token) is only truly logged in once that bearer has been
+// captured: the token does not exist until AFTER login. Gating auto-run on a captured token (below) makes
+// "never run during login" robust regardless of what triggered the run, even for a source with no declared
+// loginUrl. Pure-cookie sources (session in cookies alone, no bearer to observe) are not gated here.
+function hasObservableBearer(adapter) {
+  const au = adapter && adapter.auth; if (!au) return false;
+  if (au.mode === 'bearer') return true;
+  return au.mode === 'cookie' && Array.isArray(au.replayHeaders)
+    && au.replayHeaders.some((h) => String(h).toLowerCase() === ((au.tokenHeader || 'authorization').toLowerCase()));
+}
 
 // User-initiated "Sync all now": sweep EVERY configured auto route sequentially, extracting new docs.
 // Each source is tried UNATTENDED first (no tab opened — an existing tab if any, else a direct fetch);

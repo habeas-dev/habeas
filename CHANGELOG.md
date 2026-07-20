@@ -11,6 +11,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Fixed
+- **Auto-sync never runs during a login, and waits for the session to settle.** A captured token no longer
+  launches an auto-run immediately: it now waits a short settle window after the last capture (coalescing the
+  burst of authenticated requests a freshly loaded dashboard fires into a single run). And a source with an
+  observable bearer (a bank's rotating token) only auto-runs once that token has actually been captured — the
+  robust "the user is logged in" signal, since the token does not exist until after login. Together these stop
+  auto-sync from firing in the middle of a fragile bank login (which could disturb the sign-in), regardless of
+  whether a page navigation or a capture triggered it.
 - **Reliable auth-token capture without reloading the tab.** The request-header observer used to capture a
   source's rotating bearer (e.g. a bank's in-memory token) is now registered synchronously at the service
   worker's top level, so it wakes a suspended worker and observes **every** request the site makes — instead
