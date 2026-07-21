@@ -2385,5 +2385,23 @@
   },
   "quick_sub_empty": {
     "message": "Aquí viven tus documentos recuperados. Abre el Archivo para añadir una fuente y traer tus datos."
+  },
+  "archive_refresh_more": {
+    "message": "Más opciones de actualización"
+  },
+  "archive_refresh_full": {
+    "message": "Actualizar todo el historial"
+  },
+  "archive_refresh_full_hint": {
+    "message": "Re-escanear todo el historial, no solo lo nuevo"
+  },
+  "archive_rescanning": {
+    "message": "Re-escaneando todo el historial…"
+  },
+  "archive_load_store": {
+    "message": "Cargar desde almacén"
+  },
+  "archive_load_store_hint": {
+    "message": "Recargar desde el almacén local — sin conexión"
   }
 }

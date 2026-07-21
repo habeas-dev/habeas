@@ -99,6 +99,18 @@
     .refbtn .ic{display:inline-block;font-size:13px;line-height:1}
     .refbtn.spin .ic{animation:hb-spin .7s linear infinite}
     @media (prefers-reduced-motion:reduce){.refbtn.spin .ic{animation:none}}
+    /* split button: Refresh + a caret that opens the alternative refresh modes */
+    .refwrap{position:relative;display:inline-flex;align-items:stretch}
+    .refwrap #refresh{border-radius:100px 0 0 100px}
+    .refwrap .caret{border-radius:0 100px 100px 0;border-left:0;padding:6px 9px}
+    .refmenu{position:absolute;top:calc(100% + 5px);right:0;z-index:30;min-width:230px;padding:5px;
+      background:var(--surface);border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow-lg);
+      display:flex;flex-direction:column;gap:2px}
+    .refmenu[hidden]{display:none}
+    .refmenu button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;border:0;background:none;
+      color:var(--ink);font-family:var(--font-body);font-size:12.5px;font-weight:600;padding:9px 10px;border-radius:8px;cursor:pointer}
+    .refmenu button:hover{background:var(--brand-50)}
+    .refmenu .ic{font-size:13px}
     .docbar-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
     .savegrp{display:inline-flex;align-items:center;gap:7px;flex-wrap:wrap}
     .savegrp .sl{font-size:12px;color:var(--muted);font-weight:600}

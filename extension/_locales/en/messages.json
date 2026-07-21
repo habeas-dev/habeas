@@ -2385,5 +2385,23 @@
   },
   "quick_sub_empty": {
     "message": "Your recovered documents live here. Open the Archive to add a source and pull your data."
+  },
+  "archive_refresh_more": {
+    "message": "More refresh options"
+  },
+  "archive_refresh_full": {
+    "message": "Update full history"
+  },
+  "archive_refresh_full_hint": {
+    "message": "Re-scan the entire history, not just new documents"
+  },
+  "archive_rescanning": {
+    "message": "Re-scanning full history…"
+  },
+  "archive_load_store": {
+    "message": "Load from store"
+  },
+  "archive_load_store_hint": {
+    "message": "Reload from the local store — no network request"
   }
 }

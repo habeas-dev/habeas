@@ -320,7 +320,15 @@ async function renderDocs() {
   const gb = (mode, label) => `<button data-gb="${mode}" class="${GROUPMODE === mode ? 'on' : ''}">${esc(label)}</button>`;
   const sinks = compatibleSinks(entry.adapter);
   const saveGrp = sinks.length ? `<span class="savegrp"><span class="sl">${esc(t('archive_save_to'))}</span>${sinks.map((s) => `<button class="savebtn" data-save="${esc(s.id)}" title="${esc(t('archive_save_hint', [sinkLabel(s)]))}">${sinkIcon(s)} ${esc(sinkLabel(s))}</button>`).join('')}</span>` : '';
-  const refreshBtn = (entry.ds ? `<button id="refresh" class="refbtn" title="${esc(t('archive_refresh_hint', [entry.name || CUR]))}"><span class="ic">↻</span> ${esc(t('archive_refresh'))}</button>` : '');
+  // "Refresh" = the old "List documents": incremental list into the store (delta only). Its caret opens the
+  // two alternative modes — a full-history re-scan and a no-network reload from the store.
+  const refreshBtn = (entry.ds ? `<span class="refwrap">
+      <button id="refresh" class="refbtn" title="${esc(t('archive_refresh_hint', [entry.name || CUR]))}"><span class="ic">↻</span> ${esc(t('archive_refresh'))}</button>
+      <button id="refresh-more" class="refbtn caret" aria-haspopup="menu" aria-label="${esc(t('archive_refresh_more'))}" title="${esc(t('archive_refresh_more'))}">▾</button>
+      <div id="refmenu" class="refmenu" hidden role="menu">
+        <button data-refmode="full" title="${esc(t('archive_refresh_full_hint'))}"><span class="ic">↻</span> ${esc(t('archive_refresh_full'))}</button>
+        <button data-refmode="store" title="${esc(t('archive_load_store_hint'))}"><span class="ic">📦</span> ${esc(t('archive_load_store'))}</button>
+      </div></span>` : '');
   // Accounts (allow-list) manager — grouped sources only. Lets the user choose which accounts to track from
   // the Archive, so the popup's account picker isn't needed.
   const acctBtn = (entry.ds && groupedAdapterOf(entry.adapter)) ? `<button id="accts" class="refbtn" title="${esc(t('archive_accounts_hint'))}"><span class="ic">👤</span> ${esc(t('archive_accounts'))}</button>` : '';
@@ -433,15 +441,15 @@ async function deliver(sinkId) {
 }
 // Pull NEW documents for the current source into the store — no destination. The Archive becomes self-sufficient:
 // the user lists/refreshes in place (session/login/challenges handled by the background) before deciding where to send.
-async function refreshSource() {
+async function refreshSource(mode) {
   const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds) return;
   document.body.classList.add('saving');
   const btn = $('#refresh'); if (btn) { btn.disabled = true; btn.classList.add('spin'); }
-  $('#astatus').textContent = t('archive_refreshing');
+  $('#astatus').textContent = mode === 'full' ? t('archive_rescanning') : t('archive_refreshing');
   const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#astatus').textContent = v.msg; };
   chrome.storage.onChanged.addListener(onStatus);
   try {
-    const r = await chrome.runtime.sendMessage({ type: 'habeas:list', datasource: entry.ds.id });
+    const r = await chrome.runtime.sendMessage({ type: 'habeas:list', datasource: entry.ds.id, mode: mode || undefined });
     if (r && r.ok && r.status === 'done') $('#astatus').textContent = r.new ? t('archive_refresh_ok', [String(r.new)]) : t('archive_refresh_none');
     else if (r && r.status === 'nosession') $('#astatus').textContent = t('archive_refresh_nosession', [entry.name]);
     else if (r && r.status === 'challenged') $('#astatus').textContent = t('archive_refresh_challenge', [entry.name]);
@@ -454,6 +462,16 @@ async function refreshSource() {
     await reloadCurrent(); // just this source — not a full-tree re-hydrate
   }
 }
+// "Load from store": re-read the current source from the local canonical store and re-render — no network.
+// Picks up documents that arrived via background auto-sync while this tab was open.
+async function reloadFromStore() {
+  if (!CUR) return;
+  $('#astatus').textContent = t('archive_loading');
+  await reloadCurrent();
+  $('#astatus').textContent = '';
+}
+function toggleRefMenu() { const m = $('#refmenu'); if (m) m.hidden = !m.hidden; }
+function closeRefMenu() { const m = $('#refmenu'); if (m && !m.hidden) m.hidden = true; }
 function openFile(r, sinkId, ext) {
   const url = chrome.runtime.getURL(`src/ui/docview.html?sink=${encodeURIComponent(sinkId)}&src=${encodeURIComponent(r.base)}&id=${encodeURIComponent(r.internalId)}${ext ? '&ext=' + encodeURIComponent(ext) : ''}`);
   chrome.tabs.create({ url });
@@ -549,8 +567,10 @@ function wire() {
     const gb = ev.target.closest('[data-gb]'); if (gb) { GROUPMODE = gb.dataset.gb; renderDocs(); return; }
     const sv = ev.target.closest('[data-save]'); if (sv) { deliver(sv.dataset.save); return; }
     const ss = ev.target.closest('[data-sendsel]'); if (ss) { sendSelected(ss.dataset.sendsel); return; }
+    const rm = ev.target.closest('[data-refmode]'); if (rm) { closeRefMenu(); if (rm.dataset.refmode === 'full') refreshSource('full'); else reloadFromStore(); return; }
+    if (ev.target.closest('#refresh-more')) { toggleRefMenu(); return; }
     if (ev.target.closest('#accts')) { onManageAccounts(); return; }
-    if (ev.target.closest('#refresh')) { refreshSource(); return; }
+    if (ev.target.closest('#refresh')) { closeRefMenu(); refreshSource(); return; }
     if (ev.target.closest('#seltoggle')) { toggleSelecting(); return; }
     if (ev.target.closest('#selclear')) { PICKED.clear(); SELECTING = false; renderDocs(); return; }
     if (ev.target.closest('#selopen')) { batchOpen(); return; }
@@ -560,7 +580,10 @@ function wire() {
       else openDrawer(r);
     }
   };
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeDrawer(); closeRefMenu(); } });
+  // Dismiss the refresh-options menu on any click outside the split button (the #main handler keeps it open
+  // for clicks on the caret / a menu item; this catches everything else).
+  document.addEventListener('click', (e) => { if (!e.target.closest('.refwrap')) closeRefMenu(); });
   // A source was (re)installed → drop our cached adapters and re-read, so the Archive reflects the NEW
   // definition instead of the copy loaded when this tab opened.
   chrome.storage.onChanged.addListener((ch, area) => {

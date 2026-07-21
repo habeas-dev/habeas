@@ -307,7 +307,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const adapter = ds && adapters[ds.adapter];
       if (!ds || !adapter) return { ok: false, error: 'unknown source' };
       // List every output → persist listed records to the canonical store. No delivery, no ledger writes.
-      const r = await listSourceIntoStore(ds, adapter, { groups: msg.groups });
+      // mode:'full' re-enumerates the whole history (reconcile); default is incremental (delta only).
+      const r = await listSourceIntoStore(ds, adapter, { groups: msg.groups, mode: msg.mode });
       return { ok: true, ...r };
     })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true; // async response
@@ -560,15 +561,20 @@ async function listSourceIntoStore(ds, adapter, opts = {}) {
       const eff = resolveOutput(adapter, sid);
       const sk = storeKeyOf(adapter.id, sid);
       const known = (await getRecords(sk)).map((r) => r.internalId).filter((x) => x != null);
+      const knownSet = new Set(known.map(String));
       const docs = await listInventory(eff, auth, net, {
-        groups: filter, knownIds: known, // incremental → returned docs are the NEW ones only
+        // incremental (default) seeds known ids → returned docs are the NEW ones only + paging stops early.
+        // 'full' seeds nothing → re-enumerates the whole history (reconcile); putItems upserts, so it's safe.
+        groups: filter, knownIds: opts.mode === 'full' ? null : known,
         onProgress: (p) => setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])),
       });
       const items = docs.filter((d) => d.internalId != null);
       if (items.length) {
         try { await putItems(sk, items.map((d) => ({ internalId: d.internalId, record: d.record })), { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store best-effort */ }
       }
-      added += items.length;
+      // "new" = genuinely-unknown items. Incremental already returns only those; full returns everything, so
+      // subtract what the store already had — the count means the same thing in both modes.
+      added += opts.mode === 'full' ? items.filter((d) => !knownSet.has(String(d.internalId))).length : items.length;
     }
     await badgeClear();
     setStatus(t('status_done', [name, String(added)]));

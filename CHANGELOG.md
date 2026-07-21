@@ -16,6 +16,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   auto/manual list pipeline (incremental: seeds known ids so a refresh only pulls what's new) and honors the same
   no-session / anti-bot-challenge contract (opens the site to sign in or solve the check, then the user retries).
   This makes the Archive self-sufficient: browse and pull fresh documents in place before deciding where to send.
+  It's the Archive equivalent of the old "List documents". A **caret** on the button opens the two alternative
+  modes the old UI had: **Update full history** (re-scan the whole history, not just the delta; `habeas:list`
+  `mode:'full'`) and **Load from store** (re-read the local store with no network request).
 - **Archive — send hand-picked documents** (`ui/archive.js`, `background.js` `habeas:send` → `sendStoredDocs`).
   Selection mode now offers "Send to <destination>" for every compatible sink: the chosen documents are delivered
   from the store (each record's manifest, plus its file re-fetched when the source can still produce it).
