@@ -9,7 +9,19 @@ globalThis.chrome = { storage: { local: {
   set: async (o) => { Object.assign(LOCAL, o); },
   remove: async (k) => { delete LOCAL[k]; },
 } } };
-const { pushDiag, readDiag, clearDiag, formatDiag, recordingNet, pushReqCtx, readReqCtx, clearReqCtx, formatReqCtx } = await import('../src/lib/diag.js');
+const { pushDiag, readDiag, clearDiag, formatDiag, recordingNet, pushReqCtx, readReqCtx, clearReqCtx, formatReqCtx, redactReqVal } = await import('../src/lib/diag.js');
+
+test('redactReqVal strips ids from a query value/path but keeps the filter STRUCTURE + enums', () => {
+  // The privacy bug: an earlier build revealed filter=customerId eq BAC_111_929_601_280 verbatim. Synthetic id.
+  assert.equal(redactReqVal('customerId eq BAC_222_333_444_555 & type eq TA_INTERNAL'), 'customerId eq [id] & type eq TA_INTERNAL');
+  assert.equal(redactReqVal('/tams/v1/accounts/TRA_900_800_700_600/transactions'), '/tams/v1/accounts/[id]/transactions');
+  assert.equal(redactReqVal('/cas/public/v1/customers/BAC_222_333_444_555'), '/cas/public/v1/customers/[id]');
+  assert.equal(redactReqVal('12345678'), '[id]');            // long numeric account id
+  assert.equal(redactReqVal('ES9121000418450200051332'), '[iban]');
+  assert.equal(redactReqVal('someone@example.com'), '[email]');
+  // enums / paging / dates / short numbers are NOT touched — the team still sees them
+  for (const keep of ['all', 'es-ES', 'availability', 'asc', '10', 'TA_INTERNAL', 'active']) assert.equal(redactReqVal(keep), keep);
+});
 
 test('pushDiag accumulates multiple failures (does not overwrite) and clearDiag removes them', async () => {
   for (const k of Object.keys(LOCAL)) delete LOCAL[k];

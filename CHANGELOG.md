@@ -15,7 +15,19 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   recording is now a plain "📎 recording sent" note instead of echoing the team's instruction verbatim (which
   looked like a duplicate of the team's message).
 
+### Fixed
+- **Request-context reports never reveal a private id.** An earlier iteration showed a query value verbatim for
+  an allowlist of "safe" param names — which leaked a private id when the value was e.g.
+  `filter=customerId eq BAC_… & type eq TA_INTERNAL`, and the request path likewise showed account ids. Both the
+  path and every query value now pass through id/PII redaction (`lib/diag.js#redactReqVal`): ids (`BAC_/TRA_`
+  style, IBAN, email, JWT, long numerics) become `[id]`/`[iban]`/… while structure and enums stay readable
+  (`filter=customerId eq [id] & type eq TA_INTERNAL`). The redacted structure is still enough to author from —
+  a private id is always templated from captured context (`{ctx.*}`), never needed verbatim.
+
 ### Added
+- **Group-request query params support `{ctx.*}` templating** (`runtime/inventory.js`) — a captured context id
+  (e.g. a customerId) can be injected into a list filter, not just the path. A no-op for any param without a
+  `{ctx.*}` token, so existing sources are unaffected.
 - **Every problem report is stamped with the Habeas build + installed source version** (`ui/options.js`). The
   team section of a report now always opens with `Habeas <version> · source <id> v<source-version>` — sent even
   when there's no failure trace — so a result is never ambiguous about WHICH extension build and WHICH source

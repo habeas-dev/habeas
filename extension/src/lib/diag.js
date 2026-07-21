@@ -68,6 +68,21 @@ export function recordingNet(net) {
 // stores header VALUES, cookies, tokens, or query strings. storage.local (non-sensitive), capped, best-effort.
 const RCKEY = (id) => 'habeas:reqctx:' + id;
 const RCCAP = 24;
+
+// Redact ids/PII from a request path or query VALUE before it goes in a report, keeping only structure/enums. A
+// `filter` param or a path segment can carry a private id (Raisin's customerId BAC_… / account TRA_…) — so never
+// reveal a value verbatim; replace id-shaped tokens with a placeholder. Enums/keywords/short numbers stay
+// readable, which is all the team needs (e.g. `customerId eq [id] & type eq TA_INTERNAL` — enough to author,
+// nothing private). Deliberately conservative: when unsure, redact.
+export function redactReqVal(v) {
+  return String(v == null ? '' : v)
+    .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, '[jwt]')   // JWT
+    .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '[email]')     // email
+    .replace(/\b[A-Z]{2}\d{2}[A-Z0-9]{10,30}\b/g, '[iban]')                    // IBAN
+    .replace(/\b[A-Z]{2,5}_[0-9][0-9_]{3,}\b/g, '[id]')                        // BAC_/TRA_/FDA_/OMA_-style ids
+    .replace(/\b\d{7,}\b/g, '[id]')                                            // long numeric id / account number
+    .slice(0, 120);
+}
 export async function pushReqCtx(sourceId, entry) {
   if (!sourceId || !entry) return;
   const k = RCKEY(sourceId);

@@ -9,8 +9,8 @@
     "banking",
     "investment"
   ],
-  "version": "2026-07-20.7",
-  "minVersion": "0.5.0.8",
+  "version": "2026-07-20.8",
+  "minVersion": "0.5.0.19",
   "keepRaw": true,
   "contributors": [
     "David Marín Carreño"
@@ -63,7 +63,7 @@
           "path": "/tams/v1/accounts",
           "itemsPath": "$",
           "params": {
-            "filter": "all"
+            "filter": "customerId eq {ctx.customer_id} & type eq TA_INTERNAL"
           },
           "fields": {
             "id": "id",
@@ -247,6 +247,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20.8",
+      "changes": "Account list uses the real OData filter customerId eq {ctx.customer_id} & type eq TA_INTERNAL (was the invalid filter=all → 401). The customerId is templated from captured context, never hardcoded. Requires group-param ctx templating (minVersion 0.5.0.19)."
+    },
     {
       "version": "2026-07-20.7",
       "changes": "Send the browser-style Accept header (application/json, text/plain, */*) on every list/groups request. Instrumentation proved the ONLY difference between the SPA’s working request and our 401 was the Accept value (bare application/json); the API gateway rejects it. Same token, same everything else."

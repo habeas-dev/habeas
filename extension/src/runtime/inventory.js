@@ -205,7 +205,11 @@ async function fetchGroupItems(adapter, auth, net) {
   const g = adapter.api.groups;
   const host = g.host ? absHost(g.host) : adapter.api.host;
   const path = fillCtx(g.path, auth); // {ctx.*} — e.g. a captured DNI in /posicionGlobal/es/{ctx.dni}
-  const qs = g.params ? new URLSearchParams(g.params).toString() : '';
+  // Template param VALUES too (not just the path) so a query filter can carry a captured id — e.g. Raisin's
+  // account list needs `filter=customerId eq {ctx.customer_id} & type eq TA_INTERNAL`. A no-op for any param
+  // without a {ctx.*} token, so other sources are unaffected.
+  const gparams = {}; for (const k of Object.keys(g.params || {})) gparams[k] = fillCtx(g.params[k], auth);
+  const qs = Object.keys(gparams).length ? new URLSearchParams(gparams).toString() : '';
   const url = host + path + (qs ? '?' + qs : '');
   const isHtml = g.from === 'html';
   const cookie = adapter.auth && adapter.auth.mode === 'cookie';
