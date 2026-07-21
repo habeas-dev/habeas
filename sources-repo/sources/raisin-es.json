@@ -9,7 +9,7 @@
     "banking",
     "investment"
   ],
-  "version": "2026-07-20.11",
+  "version": "2026-07-20.12",
   "minVersion": "0.5.0.26",
   "keepRaw": true,
   "contributors": [
@@ -136,10 +136,11 @@
       },
       "fields": {
         "internalId": "accounting.deposit_id",
-        "date": "accounting.opening_date",
+        "date": "deposit.opening_date",
         "amount": "accounting.balance.amount.denomination",
         "currency": "accounting.balance.amount.currency",
-        "description": "accounting.partner_bank"
+        "description": "Depósito {product.deposit_taking_bank.name} {accounting.effective_interest_rate}% TAE - {deposit.opening_date}",
+        "counterparty": "{product.deposit_taking_bank.name}"
       }
     },
     {
@@ -166,8 +167,7 @@
           "fields": {
             "id": "accounting.deposit_id",
             "currency": "accounting.balance.amount.currency",
-            "name": "accounting.partner_bank",
-            "type": "product.marketed_as_product_type"
+            "name": "Cuenta {product.deposit_taking_bank.name}"
           },
           "headers": {
             "accept": "application/json, text/plain, */*"
@@ -221,8 +221,7 @@
           },
           "fields": {
             "id": "accounting.deposit_id",
-            "name": "accounting.partner_bank",
-            "type": "product.marketed_as_product_type"
+            "name": "Depósito {product.deposit_taking_bank.name} {accounting.effective_interest_rate}% TAE - {deposit.opening_date}"
           },
           "headers": {
             "accept": "application/json, text/plain, */*"
@@ -260,6 +259,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20.12",
+      "changes": "Readable account/deposit names: savings show \"Cuenta <bank>\", deposits \"Depósito <bank> <rate>% TAE - <opening date>\" using the real bank name (deposit_taking_bank.name). Deposit date is now the opening date (deposit.opening_date). (Term wording and decimal comma still pending a formatting helper.)"
+    },
     {
       "version": "2026-07-20.11",
       "changes": "Deposits, savings and documents now enumerate BOTH dashboard/active AND dashboard/inactive (api paths[]), so inactive/cancelled deposits and ALL their documents are captured (documents come from /dds per deposit). Requires runtime 0.5.0.26 (paths[] support)."
