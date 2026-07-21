@@ -9,7 +9,7 @@ Adapters (aka **sources**) are **declarative data, not code** — plain JS objec
 fixed runtime (`extension/src/runtime/inventory.js`), never `eval`'d. There are **three ways** to add
 one — see **[docs/ADDING-SOURCES.md](docs/ADDING-SOURCES.md)** for the overview:
 
-- 🔒 **Local only** — record it in the extension, keep it private (below).
+- 🔒 **Local only** — record it in the extension, keep it private (below) — or **Share** it later if you want.
 - 🤝 **Assisted** — record it and let the Habeas team finish & publish it: **[docs/ASSISTED-AUTHORING.md](docs/ASSISTED-AUTHORING.md)**.
 - 🛠️ **Advanced (AI + proxy)** — capture with mitmproxy and hand-author with an AI, for *any* service:
   **[docs/AUTHORING-SOURCES.md](docs/AUTHORING-SOURCES.md)** (the complete adapter reference lives here).

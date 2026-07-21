@@ -11,8 +11,8 @@ There are three ways to do it, for three kinds of contributor. Pick the one that
 |---|---|---|---|
 | **For** | Anyone | Anyone who wants to contribute back | Technical contributors |
 | **Tools** | Just the extension | The extension | mitmproxy + any AI agent + this repo |
-| **Leaves your machine?** | No, ever | A **redacted** capture (you review it) | Nothing, unless you open a PR |
-| **Result** | A private source only you use | The Habeas team authors & publishes it | You hand-author & submit a PR |
+| **Leaves your machine?** | No — unless *you* later choose to share it | A **redacted** capture (you review it) | Nothing, unless you open a PR |
+| **Result** | A private source only you use — **shareable later if you want** | The Habeas team authors & publishes it | You hand-author & submit a PR |
 | **Effort** | Minutes, no code | Minutes, no code | An afternoon, some JSON |
 | **Handles any service?** | Simple/medium | Simple/medium | **Any complexity** |
 
@@ -24,7 +24,9 @@ The extension has a built-in **record mode**. You browse the service and sign in
 watches the session, infers a draft source, and lets you review it in a visual mapper. Save it and
 it works **only for you** — the definition never leaves your machine, and neither does your data.
 
-This is the private, zero-trust path: your source, your browser, your disk.
+This is the private, zero-trust path: your source, your browser, your disk. And it's **not a dead
+end** — if you later decide the source is worth sharing, the extension's **Share** button contributes
+it (as a prefilled PR) at any time. Local-first by default, yours to publish if you choose.
 
 > In the extension: **Settings → Create source → Record**. Follow the on-screen steps. See the
 > assisted guide below for how the recorder/mapper works — the mechanics are the same; you just
@@ -60,9 +62,11 @@ verification harness, and submission) is **[docs/AUTHORING-SOURCES.md](AUTHORING
 
 ## Which produces a "published" source?
 
-Only paths **2** and **3** put a source in the shared catalogue (`habeas-dev/sources`). Path **1**
-stays private. All three produce the *same kind* of definition — so a local source can later be
-shared, and a captured one can be refined by hand.
+Paths **2** and **3** are the contribution paths — they put a source in the shared catalogue
+(`habeas-dev/sources`). Path **1** keeps it private *by default*, but that's a choice, not a wall: a
+local source can be **shared at any time** with the same Share button. All three produce the *same
+kind* of definition — so a local source can later be contributed, and a captured one refined by hand.
+Nothing is one-way.
 
 ## Ground rules (all paths)
 
