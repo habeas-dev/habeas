@@ -217,7 +217,7 @@ async function fetchGroupItems(adapter, auth, net) {
   for (const rawPath of paths) {
     const path = fillCtx(rawPath, auth); // {ctx.*} — e.g. a captured DNI / customerId
     // Template param VALUES too (not just the path) so a query filter can carry a captured id. No-op without {ctx.*}.
-    const gparams = {}; for (const k of Object.keys(g.params || {})) gparams[k] = fillCtx(g.params[k], auth);
+    const gparams = {}; for (const k of Object.keys(g.params || {})) gparams[k] = fillLocale(fillCtx(g.params[k], auth));
     const qs = Object.keys(gparams).length ? new URLSearchParams(gparams).toString() : '';
     const url = host + path + (qs ? '?' + qs : '');
     const init = { method, headers: { accept, ...(g.headers || {}), ...headersFor(auth, path, true /*allow captured replay headers (cookie sources only ever capture replayHeaders like x-device-id, never a token)*/) }, credentials: credOf(adapter) };
@@ -663,6 +663,14 @@ function fillDocTmpl(str, doc, id, csrf, auth) {
 // {x} preserves the raw value's type; a template with surrounding text interpolates to a string.
 // The UI language, for locale-aware value formatting (a comma decimal in es, "6 meses" vs "6 months").
 function uiLocale() { try { return chrome.i18n.getUILanguage() || 'en'; } catch (e) { try { return (globalThis.navigator && navigator.language) || 'en'; } catch (e2) { return 'en'; } } }
+// Multi-market sources: `{locale}` in a path/param resolves to the browser locale (BCP-47, e.g. "es-ES"),
+// `{locale:lower}` to its lowercase form ("es-es"). So one source serves every market a platform runs in
+// (Raisin: the API is shared across countries; only the response-language `locale` param differs).
+export function fillLocale(str) {
+  if (typeof str !== 'string' || str.indexOf('{locale') < 0) return str;
+  const loc = uiLocale();
+  return str.split('{locale:lower}').join(String(loc).toLowerCase()).split('{locale}').join(loc);
+}
 const FMT_UNIT = { day: 'day', d: 'day', week: 'week', w: 'week', month: 'month', m: 'month', quarter: 'month', year: 'year', y: 'year', a: 'year' };
 const FMT_KEYS = /^(num|pct|duration|date)$/;
 // Format a mapped VALUE for a `{field:fmt}` directive (used only when the suffix is a known format keyword,
@@ -1253,7 +1261,7 @@ async function fetchList(adapter, auth, params, net, group) {
   // params. Without fillCtx a list param like `customer_id={ctx.customer_id}` was sent LITERALLY → the upstream
   // rejected it (Raisin's dbff/dbs returned 403). A no-op for any string without a {ctx.*} token.
   const path = fillCtx(tmplDates(tmplGroup(list.path, group)), auth);
-  const gparams = {}; for (const k of Object.keys(params || {})) gparams[k] = fillCtx(tmplDates(tmplGroup(params[k], group)), auth);
+  const gparams = {}; for (const k of Object.keys(params || {})) gparams[k] = fillLocale(fillCtx(tmplDates(tmplGroup(params[k], group)), auth));
   const qs = new URLSearchParams(gparams).toString();
   const url = adapter.api.host + path + (qs ? '?' + qs : '');
   // Run in the site's tab (page context) so cookies + cf_clearance + fingerprint carry through and

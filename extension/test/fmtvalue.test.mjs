@@ -2,7 +2,19 @@
 // human duration ("6 meses" / "1 año"), so a deposit label reads like the bank's own UI. All values synthetic.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fmtValue } from '../src/runtime/inventory.js';
+import { fmtValue, fillLocale } from '../src/runtime/inventory.js';
+
+test('{locale} resolves to the browser locale (multi-market); {locale:lower} lowercases it', () => {
+  const out = fillLocale('locale={locale}&l2={locale:lower}');
+  assert.doesNotMatch(out, /\{locale/, 'no literal {locale} left to be sent to the API');
+  const up = out.match(/locale=([^&]+)/)[1];
+  const lo = out.match(/l2=([^&]+)/)[1];
+  assert.match(up, /^[A-Za-z]{2}([-_][A-Za-z0-9]+)?$/, 'a BCP-47-ish locale');
+  assert.equal(lo, up.toLowerCase());
+});
+test('fillLocale leaves a string without the token untouched', () => {
+  assert.equal(fillLocale('customer_id={ctx.customer_id}'), 'customer_id={ctx.customer_id}');
+});
 
 test(':num formats a number in the given locale', () => {
   assert.equal(fmtValue('2.45', 'num', 'es-ES'), '2,45');

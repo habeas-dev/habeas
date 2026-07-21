@@ -64,6 +64,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   progressively instead of freezing the tab.
 
 ### Added
+- **`{locale}` templating token for multi-market sources** (`runtime/inventory.js`: `fillLocale`). A path or
+  query param can carry `{locale}` (the browser locale, BCP-47, e.g. `es-ES`) or `{locale:lower}` (`es-es`), so
+  one source serves every market a platform runs in when the API is shared and only the response-language param
+  differs. (Raisin's `api2.weltsparen.de` backend is common across countries; the source is now `raisin`, not
+  `raisin-es`, and its `locale` param follows the browser instead of a hardcoded `es-ES`.)
 - **Browser-locale value formatting in field templates** (`runtime/inventory.js`: `fmtValue`). A field/label
   template can now format a value with `{path:num}` (a number in the UI locale — `2.45` → `2,45` in Spanish),
   `{path:pct}` (a fraction ×100), `{path:duration}` (`{period,units}` → `6 meses` / `1 año`, auto-pluralized via

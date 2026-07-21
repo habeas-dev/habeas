@@ -1,16 +1,15 @@
 {
-  "id": "raisin-es",
+  "id": "raisin",
   "name": "Raisin",
   "service": "raisin",
   "trust": "community",
   "domain": "raisin.com",
-  "country": "ES",
   "categories": [
     "banking",
     "investment"
   ],
-  "version": "2026-07-20.16",
-  "minVersion": "0.5.0.29",
+  "version": "2026-07-20.17",
+  "minVersion": "0.5.0.30",
   "keepRaw": true,
   "contributors": [
     "David Marín Carreño"
@@ -117,7 +116,7 @@
           "itemsPath": "entries",
           "params": {
             "customer_id": "{ctx.customer_id}",
-            "locale": "es-ES",
+            "locale": "{locale}",
             "sort_by": "availability",
             "order_by": "asc"
           },
@@ -157,7 +156,7 @@
           "itemsPath": "entries",
           "params": {
             "customer_id": "{ctx.customer_id}",
-            "locale": "es-ES",
+            "locale": "{locale}",
             "sort_by": "availability",
             "order_by": "asc"
           },
@@ -184,7 +183,7 @@
           "itemsPath": "accounting.transactions",
           "params": {
             "customer_id": "{ctx.customer_id}",
-            "locale": "es-es"
+            "locale": "{locale:lower}"
           },
           "headers": {
             "accept": "application/json, text/plain, */*"
@@ -212,7 +211,7 @@
           "itemsPath": "entries",
           "params": {
             "customer_id": "{ctx.customer_id}",
-            "locale": "es-ES",
+            "locale": "{locale}",
             "sort_by": "availability",
             "order_by": "asc"
           },
@@ -271,7 +270,7 @@
           "itemsPath": "entries",
           "params": {
             "customer_id": "{ctx.customer_id}",
-            "locale": "es-ES",
+            "locale": "{locale}",
             "sort_by": "availability",
             "order_by": "asc"
           },
@@ -319,6 +318,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20.17",
+      "changes": "Multi-market: renamed raisin-es -> raisin (the API api2.weltsparen.de is shared across all Raisin countries); the response-language `locale` param now follows the browser locale via {locale}/{locale:lower} instead of a hardcoded es-ES. Requires 0.5.0.30. (Account-label WORDS Depósito/Cuenta/TAE remain Spanish for now.)"
+    },
     {
       "version": "2026-07-20.16",
       "changes": "A deposit account now shows the SAME name everywhere: its own record, its documents, and the account picker all use the full \"Depósito <bank> <rate>% TAE <term> - <opening>\" label (the record previously showed a shorter \"Depósito <bank>\"). The bank moved to the store/counterparty column."
