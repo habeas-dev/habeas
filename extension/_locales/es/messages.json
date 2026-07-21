@@ -2174,7 +2174,7 @@
     "message": "Guardado"
   },
   "archive_status_local": {
-    "message": "En tu archivo"
+    "message": "Solo en tu archivo"
   },
   "archive_empty_title": {
     "message": "Aún no hay nada aquí"
@@ -2426,5 +2426,19 @@
   },
   "archive_select_none": {
     "message": "Ninguno"
+  },
+  "archive_status_local_hint": {
+    "message": "Recuperado y guardado en tu archivo. Aún no copiado a un destino externo."
+  },
+  "archive_status_saved_hint": {
+    "message": "Copiado además a: $DEST$",
+    "placeholders": {
+      "dest": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_legend": {
+    "message": "«En tu archivo» = recuperado en tu archivo local. «Guardado» = copiado además a un destino externo."
   }
 }

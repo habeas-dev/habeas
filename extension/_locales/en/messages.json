@@ -2174,7 +2174,7 @@
     "message": "Saved"
   },
   "archive_status_local": {
-    "message": "In archive"
+    "message": "Only in your archive"
   },
   "archive_empty_title": {
     "message": "Nothing here yet"
@@ -2426,5 +2426,19 @@
   },
   "archive_select_none": {
     "message": "None"
+  },
+  "archive_status_local_hint": {
+    "message": "Recovered and kept in your archive. Not yet copied to an external destination."
+  },
+  "archive_status_saved_hint": {
+    "message": "Also copied to: $DEST$",
+    "placeholders": {
+      "dest": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_legend": {
+    "message": "“In your archive” = recovered into your local archive. “Saved” = also copied to an external destination."
   }
 }

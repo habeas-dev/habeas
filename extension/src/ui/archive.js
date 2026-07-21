@@ -327,6 +327,7 @@ async function renderDocs() {
   let head = `<div class="crumbs"><span class="tile ${catOf(entry.primaryCat).f}" style="width:26px;height:26px;font-size:14px;border-radius:7px">${catOf(entry.primaryCat).i}</span> <b>${esc(entry.name || CUR)}</b>${ACCOUNT ? ' <span>›</span> ' + esc(accLabel(ACCOUNT)) : ''}</div>`;
   head += `<div class="summ"><span class="chip">📄 <b>${gate ? CURDOCS.length : docs.length}</b> ${esc(t('archive_docs_word'))}</span>`;
   if (delivered) head += `<span class="chip">${esc(t('archive_saved_n', [String(delivered)]))}</span>`;
+  head += `<span class="chip legend" title="${esc(t('archive_legend'))}" tabindex="0" aria-label="${esc(t('archive_legend'))}">ℹ</span>`;
   head += '</div>';
   const gb = (mode, label) => `<button data-gb="${mode}" class="${GROUPMODE === mode ? 'on' : ''}">${esc(label)}</button>`;
   const sinks = compatibleSinks(entry.adapter);
@@ -378,8 +379,8 @@ function cardHtml(r) {
   const mv = money(r.record);
   const fmts = r.formats.length ? r.formats.map((f) => `<span class="fmt">${esc((f.ext || '').toUpperCase())}</span>`).join('') : '';
   const st = r.delivered.length
-    ? `<span class="status sent"><span class="d"></span>${esc(t('archive_status_saved'))}</span>`
-    : `<span class="status new"><span class="d"></span>${esc(t('archive_status_local'))}</span>`;
+    ? `<span class="status sent" title="${esc(t('archive_status_saved_hint', [r.delivered.map(sinkLabel).join(', ')]))}"><span class="d"></span>${esc(t('archive_status_saved'))}</span>`
+    : `<span class="status new" title="${esc(t('archive_status_local_hint'))}"><span class="d"></span>${esc(t('archive_status_local'))}</span>`;
   const sub = [dateShort(r.record.date), r.record.group && ACCOUNT === '' ? esc(r.record.group) : ''].filter(Boolean).join(' · ');
   return `<button class="dcard${PICKED.has(r.internalId) ? ' picked' : ''}" data-i="${i}">
     <span class="chk">✓</span>
