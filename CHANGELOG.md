@@ -25,6 +25,18 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   a private id is always templated from captured context (`{ctx.*}`), never needed verbatim.
 
 ### Added
+- **A visual document archive** (`ui/archive.html` / `archive.js`), opened from the popup's Documents tab
+  ("Open full archive"). A full-tab, friendly view of everything recovered — the counterpart to the popup's
+  quick "sync + see new". Left rail is a **source → account tree**; the root "Everything" is an **index of
+  sources** (counts + last activity). A source opens its documents as **cards grouped by month** (banks, with a
+  running net) or **by category / store** (everything else) — switchable — each card carrying a colour-coded
+  category tile+icon, title, date, signed amount, and a saved/in-archive status. Clicking a card opens a
+  **details drawer** with the record and clear actions: **open each delivered file** by destination (real, via
+  `docview.html`), an honest note for record-only movements or not-yet-saved documents, and a raw view. A
+  **selection mode** enables batch open. Wired entirely to the real canonical store, delivery ledger, account
+  filter, and adapter metadata; nothing hardcoded. Reuses `theme.css` (palette + fonts), theme-aware, and is
+  additive — the popup and options pages are unchanged. (First step of the UI redesign; popup quick-view and
+  in-archive send come next.)
 - **Group-request query params support `{ctx.*}` templating** (`runtime/inventory.js`) — a captured context id
   (e.g. a customerId) can be injected into a list filter, not just the path. A no-op for any param without a
   `{ctx.*}` token, so existing sources are unaffected.

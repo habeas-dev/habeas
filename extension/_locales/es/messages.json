@@ -2116,5 +2116,114 @@
         "content": "$1"
       }
     }
+  },
+  "archive_tag": {
+    "message": "tu archivo personal"
+  },
+  "archive_search": {
+    "message": "Buscar un documento…"
+  },
+  "archive_sources": {
+    "message": "Fuentes"
+  },
+  "archive_all": {
+    "message": "Todo"
+  },
+  "archive_index_title": {
+    "message": "Tu archivo"
+  },
+  "archive_index_sub": {
+    "message": "Todos los documentos que has recuperado, organizados por fuente."
+  },
+  "archive_docs_word": {
+    "message": "documentos"
+  },
+  "archive_saved_n": {
+    "message": "$N$ guardados en un destino",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "group_month": {
+    "message": "Mes"
+  },
+  "group_category": {
+    "message": "Categoría"
+  },
+  "group_store": {
+    "message": "Comercio"
+  },
+  "archive_select": {
+    "message": "Seleccionar"
+  },
+  "archive_sel_done": {
+    "message": "Hecho"
+  },
+  "archive_selected_suffix": {
+    "message": "seleccionados"
+  },
+  "archive_open_saved": {
+    "message": "Abrir los guardados"
+  },
+  "archive_clear": {
+    "message": "Cancelar"
+  },
+  "archive_status_saved": {
+    "message": "Guardado"
+  },
+  "archive_status_local": {
+    "message": "En tu archivo"
+  },
+  "archive_empty_title": {
+    "message": "Aún no hay nada aquí"
+  },
+  "archive_empty_sub": {
+    "message": "Recupera documentos de una fuente desde el popup y aparecerán aquí."
+  },
+  "archive_empty_source": {
+    "message": "Ningún documento coincide."
+  },
+  "archive_no_dest": {
+    "message": "Este documento está en tu archivo. Para copiarlo a un destino (Drive, una carpeta…), usa Sincronizar o Enviar desde el popup."
+  },
+  "archive_raw_show": {
+    "message": "Ver datos completos"
+  },
+  "archive_field_amount": {
+    "message": "Importe"
+  },
+  "archive_field_category": {
+    "message": "Categoría"
+  },
+  "archive_field_account": {
+    "message": "Cuenta"
+  },
+  "archive_field_concept": {
+    "message": "Concepto"
+  },
+  "archive_field_type": {
+    "message": "Tipo"
+  },
+  "archive_field_files": {
+    "message": "Archivos"
+  },
+  "archive_open_capped": {
+    "message": "Abiertos $N$ de $TOTAL$ (límite)",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
+    }
+  },
+  "open_archive": {
+    "message": "Ver todo mi archivo"
+  },
+  "archive_delivered_data": {
+    "message": "Es un movimiento — sus datos se entregaron dentro del manifiesto, así que no hay un archivo propio que abrir."
   }
 }

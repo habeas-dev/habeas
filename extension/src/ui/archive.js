@@ -1,0 +1,406 @@
+// Habeas — the ARCHIVE: a visual, friendly view of everything you've recovered. Additive to the popup
+// (which stays the quick "sync + see new" surface). Reads the canonical store, groups documents into cards
+// under a source→account tree, and opens any delivered file. Design decisions baked in:
+//   A  a full-tab surface (this page), opened from the popup
+//   B  grouping defaults to the source type — banks by month, the rest by category (switchable)
+//   C  the root "Everything" is an INDEX of sources, not a merged timeline
+//   D  a selection mode for batch actions
+import { chrome } from '../lib/ext.js';
+import { getConfig } from '../lib/config.js';
+import { getAdapters } from '../adapters/index.js';
+import { listSources, getSource } from '../lib/store.js';
+import { deliveredSet, getDocMeta } from '../lib/state.js';
+import { isRetrievable } from '../lib/retrieve.js';
+import { resolveOutput } from '../lib/outputs.js';
+import { artifactKinds } from '../runtime/inventory.js';
+import { applyI18n, t } from '../lib/i18n.js';
+import { esc } from '../lib/esc.js';
+
+const $ = (s) => document.querySelector(s);
+let ADAPTERS = {}, CFG = {}, RETRIEVABLE = [];
+let LANG = 'en', ESLANG = false;
+let INDEX = [];       // [{ base, ds, adapter, name, count, lastDate, primaryCat }]
+let CUR = null;       // current source base, or null = the index
+let CURDOCS = [];     // [{ base, dsId, adapter, internalId, record, delivered[], formats[] }]
+let ACCOUNT = '';     // account (record.group) filter
+let GROUPMODE = 'month';
+let SELECTING = false;
+const PICKED = new Set();
+
+// ---- category → colour family + icon + label (self-contained; keeps 30 category strings out of the locales) ----
+const F_RETAIL = 'retail', F_SERVICE = 'service', F_FINANCE = 'finance', F_OTHER = 'other';
+const CAT = {
+  grocery:{f:F_RETAIL,i:'🛒',es:'Supermercado',en:'Groceries'}, fuel:{f:F_RETAIL,i:'⛽',es:'Combustible',en:'Fuel'},
+  sports:{f:F_RETAIL,i:'🏅',es:'Deporte',en:'Sports'}, fashion:{f:F_RETAIL,i:'👕',es:'Moda',en:'Fashion'},
+  electronics:{f:F_RETAIL,i:'💻',es:'Electrónica',en:'Electronics'}, home:{f:F_RETAIL,i:'🏠',es:'Hogar',en:'Home'},
+  diy:{f:F_RETAIL,i:'🔧',es:'Bricolaje',en:'DIY'}, pharmacy:{f:F_RETAIL,i:'💊',es:'Farmacia',en:'Pharmacy'},
+  restaurant:{f:F_RETAIL,i:'🍽️',es:'Restaurante',en:'Restaurant'}, marketplace:{f:F_RETAIL,i:'📦',es:'Marketplace',en:'Marketplace'},
+  travel:{f:F_RETAIL,i:'✈️',es:'Viajes',en:'Travel'}, entertainment:{f:F_RETAIL,i:'🎬',es:'Ocio',en:'Entertainment'},
+  retail:{f:F_RETAIL,i:'🛍️',es:'Compras',en:'Retail'},
+  energy:{f:F_SERVICE,i:'⚡',es:'Luz',en:'Energy'}, water:{f:F_SERVICE,i:'💧',es:'Agua',en:'Water'},
+  telecom:{f:F_SERVICE,i:'📱',es:'Telefonía',en:'Telecom'}, utility:{f:F_SERVICE,i:'🔌',es:'Suministros',en:'Utilities'},
+  tolls:{f:F_SERVICE,i:'🛣️',es:'Peajes',en:'Tolls'}, transport:{f:F_SERVICE,i:'🚆',es:'Transporte',en:'Transport'},
+  insurance:{f:F_SERVICE,i:'🛡️',es:'Seguros',en:'Insurance'}, subscription:{f:F_SERVICE,i:'🔁',es:'Suscripción',en:'Subscription'},
+  domains:{f:F_SERVICE,i:'🌐',es:'Dominios',en:'Domains'}, education:{f:F_SERVICE,i:'🎓',es:'Educación',en:'Education'},
+  healthcare:{f:F_SERVICE,i:'🩺',es:'Salud',en:'Healthcare'}, government:{f:F_SERVICE,i:'🏛️',es:'Administración',en:'Government'},
+  card:{f:F_FINANCE,i:'💳',es:'Tarjeta',en:'Card'}, cash:{f:F_FINANCE,i:'💵',es:'Efectivo',en:'Cash'},
+  banking:{f:F_FINANCE,i:'🏦',es:'Banco',en:'Banking'}, investment:{f:F_FINANCE,i:'📈',es:'Inversión',en:'Investment'},
+  pension:{f:F_FINANCE,i:'👴',es:'Pensión',en:'Pension'}, crypto:{f:F_FINANCE,i:'🪙',es:'Cripto',en:'Crypto'},
+  loan:{f:F_FINANCE,i:'🏷️',es:'Préstamo',en:'Loan'},
+  other:{f:F_OTHER,i:'📄',es:'Otros',en:'Other'},
+};
+const catOf = (c) => CAT[c] || CAT.other;
+const catLabel = (c) => { const x = catOf(c); return ESLANG ? x.es : x.en; };
+
+// ---- small helpers ----
+const nameOf = (v) => (v && typeof v === 'object') ? (v.name || v.nombre || v.descripcion || '') : (v == null ? '' : String(v));
+const storeOf = (r) => nameOf(r.store && r.store.name) || nameOf(r.storeName) || nameOf(r.issuer) || nameOf(r.counterparty) || nameOf(r.description) || '';
+function titleOf(r) { return storeOf(r) || catLabel(r.category) || (r.type ? String(r.type) : '—'); }
+function fmtMoney(n, cur) { try { return new Intl.NumberFormat(ESLANG ? 'es-ES' : 'en-US', { style: 'currency', currency: cur || 'EUR' }).format(n); } catch (e) { return (typeof n === 'number' ? n.toFixed(2) : n) + ' ' + (cur || 'EUR'); } }
+function money(r) {
+  let n = (typeof r.total === 'number') ? r.total : (typeof r.amount === 'number' ? r.amount : null);
+  if (n == null) return { txt: '', cls: '' };
+  const dir = r.direction; let cls = '';
+  if (dir === 'out') { cls = 'neg'; n = -Math.abs(n); }
+  else if (dir === 'in') { cls = 'pos'; n = Math.abs(n); }
+  else if (n < 0) { cls = 'neg'; }
+  const txt = (cls === 'pos' ? '+' : '') + fmtMoney(n, r.currency);
+  return { txt, cls };
+}
+function dateShort(iso) { const d = new Date(iso); if (isNaN(d.getTime())) return String(iso || '').slice(0, 10); return d.toLocaleDateString(ESLANG ? 'es-ES' : 'en-US', { day: 'numeric', month: 'short' }); }
+function dateLong(iso) { const d = new Date(iso); if (isNaN(d.getTime())) return String(iso || '').slice(0, 10); return d.toLocaleDateString(ESLANG ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }); }
+function monthLabel(key) { const d = new Date(key + '-01T00:00:00'); if (isNaN(d.getTime())) return key; return d.toLocaleDateString(ESLANG ? 'es-ES' : 'en-US', { month: 'long', year: 'numeric' }); }
+
+// A source with per-account groups (a bank) — or transaction/investment schema — defaults to month grouping.
+function isBankish(adapter) {
+  if (!adapter) return false;
+  const schema = String(adapter.schema || '');
+  if (/^(transaction|investment)/.test(schema)) return true;
+  if (adapter.api && adapter.api.groups) return true;
+  for (const s of adapter.streams || []) { const eff = resolveOutput(adapter, s.id); if (eff.api && eff.api.groups) return true; }
+  return false;
+}
+function primaryCatOf(adapter) { return (adapter && adapter.categories && adapter.categories[0]) || (adapter && adapter.category) || 'other'; }
+function groupAllowed(ds, group) { const labels = ds && ds.groupLabels; return !(labels && labels.length) || !group || labels.includes(group); }
+
+// Deliverable file formats for a store-key's stream: [{ id, ext, name }] — empty = record-only (no per-item file).
+function fileFormatsFor(adapter, streamId) {
+  if (!adapter) return [];
+  if (!adapter.streams || !adapter.streams.length) {
+    return artifactKinds(adapter).filter((k) => k.kind === 'document').map((k) => ({ id: '', ext: k.ext, name: (k.ext || 'file').toUpperCase() }));
+  }
+  const s = adapter.streams.find((x) => x.id === streamId); if (!s) return [];
+  const formats = (s.formats && s.formats.length) ? s.formats : [{ id: '', name: '' }];
+  const out = [];
+  for (const f of formats) {
+    const eff = resolveOutput(adapter, s.id + (f.id ? '/' + f.id : ''));
+    const doc = artifactKinds(eff).find((k) => k.kind === 'document');
+    if (doc) out.push({ id: f.id, ext: doc.ext, name: f.name || (doc.ext || 'file').toUpperCase() });
+  }
+  return out;
+}
+
+// ---- data load ----
+async function loadIndex() {
+  const keys = await listSources();
+  const bases = [...new Set(keys.map((k) => String(k).split(':')[0]))];
+  const idx = [];
+  for (const base of bases) {
+    const ds = (CFG.datasources || []).find((d) => d.adapter === base) || (CFG.datasources || []).find((d) => d.id === base) || null;
+    const adapter = (ds && ADAPTERS[ds.adapter]) || ADAPTERS[base] || null;
+    let count = 0, lastDate = '';
+    for (const key of keys.filter((k) => String(k).split(':')[0] === base)) {
+      const src = await getSource(key).catch(() => null); if (!src || !src.items) continue;
+      for (const e of Object.values(src.items)) {
+        if (e.gone) continue;
+        if (!groupAllowed(ds, e.record && e.record.group)) continue;
+        count++;
+        const dt = (e.record && e.record.date) || ''; if (dt > lastDate) lastDate = dt;
+      }
+    }
+    if (!count) continue;
+    idx.push({ base, ds, adapter, name: (adapter && adapter.name) || base, count, lastDate, primaryCat: primaryCatOf(adapter) });
+  }
+  idx.sort((a, b) => (b.lastDate || '').localeCompare(a.lastDate || '') || b.count - a.count);
+  INDEX = idx;
+}
+
+async function loadDocs(base) {
+  const keys = (await listSources()).filter((k) => String(k).split(':')[0] === base);
+  const entry = INDEX.find((x) => x.base === base) || {};
+  const ds = entry.ds, adapter = entry.adapter;
+  const dsId = (ds && ds.id) || base;
+  const known = await getDocMeta(base).catch(() => ({}));
+  const deliveredCache = {};
+  const rows = [];
+  for (const key of keys) {
+    const src = await getSource(key).catch(() => null); if (!src || !src.items) continue;
+    const stream = String(key).split(':')[1] || '';
+    const formats = fileFormatsFor(adapter, stream);
+    for (const [internalId, e] of Object.entries(src.items)) {
+      if (e.gone) continue;
+      const record = enrich(e.record || {}, known[internalId]);
+      if (!groupAllowed(ds, record.group)) continue;
+      const delivered = [];
+      for (const sink of RETRIEVABLE) {
+        const ck = dsId + '::' + sink.id;
+        const set = deliveredCache[ck] || (deliveredCache[ck] = await deliveredSet(dsId, sink.id).catch(() => ({})));
+        if (set[internalId]) delivered.push(sink);
+      }
+      rows.push({ base, dsId, adapter, internalId, record, delivered, formats });
+    }
+  }
+  rows.sort((a, b) => ((a.record.date || '') < (b.record.date || '') ? 1 : -1));
+  CURDOCS = rows;
+}
+function enrich(r, k) {
+  if (!k) return r;
+  const out = { ...r };
+  if (k.date && !/^\d{4}-\d{2}-\d{2}/.test(out.date || '')) out.date = k.date;
+  if (typeof k.total === 'number' && out.total == null) out.total = k.total;
+  return out;
+}
+
+// ---- rendering: rail ----
+function accountsOf(base) { return [...new Set(CURDOCS.filter((r) => r.base === base).map((r) => r.record.group).filter(Boolean))].sort(); }
+function renderRail() {
+  const rail = $('#rail');
+  let html = `<div class="rlabel">${esc(t('archive_sources'))}</div>`;
+  const total = INDEX.reduce((a, x) => a + x.count, 0);
+  html += node('__all__', '🗂️', t('archive_all'), total, CUR === null, F_OTHER);
+  for (const s of INDEX) {
+    const on = CUR === s.base;
+    html += node(s.base, catOf(s.primaryCat).i, s.name, s.count, on, catOf(s.primaryCat).f);
+    if (on) {
+      const accs = accountsOf(s.base);
+      if (accs.length > 1) {
+        html += '<div class="subtree">';
+        html += `<button class="subnode${ACCOUNT === '' ? ' on' : ''}" data-acc=""><span class="sd"></span>${esc(t('all_accounts'))}</button>`;
+        for (const a of accs) html += `<button class="subnode${ACCOUNT === a ? ' on' : ''}" data-acc="${esc(a)}"><span class="sd"></span>${esc(a)}</button>`;
+        html += '</div>';
+      }
+    }
+  }
+  rail.innerHTML = html;
+}
+function node(id, icon, name, count, on, fam) {
+  return `<button class="node${on ? ' on' : ''}" data-src="${esc(id)}">
+    <span class="av tile ${fam}" style="width:27px;height:27px;font-size:15px">${icon}</span>
+    <span class="nm">${esc(name)}</span><span class="cnt">${count}</span></button>`;
+}
+
+// ---- rendering: index (Everything) ----
+function renderIndex() {
+  CUR = null; ACCOUNT = ''; SELECTING = false; PICKED.clear();
+  $('#main').classList.remove('selecting');
+  const m = $('#main');
+  if (!INDEX.length) { m.innerHTML = emptyState(t('archive_empty_title'), t('archive_empty_sub')); return; }
+  let html = `<div class="idx-head"><h1>${esc(t('archive_index_title'))}</h1><p>${esc(t('archive_index_sub'))}</p></div>`;
+  html += '<div class="idx-grid">';
+  for (const s of INDEX) {
+    const c = catOf(s.primaryCat);
+    const sub = t('n_documents', [String(s.count)]) + (s.lastDate ? ' · ' + dateLong(s.lastDate) : '');
+    html += `<button class="srccard" data-src="${esc(s.base)}">
+      <span class="tile ${c.f}">${c.i}</span>
+      <span class="sc-m"><span class="sc-t">${esc(s.name)}</span><span class="sc-s">${esc(sub)}</span></span></button>`;
+  }
+  html += '</div>';
+  m.innerHTML = html;
+}
+function emptyState(title, sub) { return `<div class="empty"><div class="big">🗂️</div><div style="font-family:var(--font-head);font-weight:600;font-size:17px;color:var(--ink)">${esc(title)}</div><p style="margin-top:6px">${esc(sub)}</p></div>`; }
+
+// ---- rendering: one source's documents ----
+function visibleDocs() {
+  const q = ($('#q').value || '').trim().toLowerCase();
+  return CURDOCS.filter((r) => {
+    if (ACCOUNT && r.record.group !== ACCOUNT) return false;
+    if (!q) return true;
+    return [titleOf(r.record), r.record.date, r.record.type, catLabel(r.record.category), r.record.group].join(' ').toLowerCase().includes(q);
+  });
+}
+function groupDocs(docs) {
+  const map = new Map();
+  const keyOf = (r) => {
+    if (GROUPMODE === 'category') return { k: r.record.category || 'other', label: catLabel(r.record.category) };
+    if (GROUPMODE === 'store') { const s = storeOf(r.record) || '—'; return { k: s, label: s }; }
+    const mk = String(r.record.date || '').slice(0, 7) || '0000-00'; return { k: mk, label: monthLabel(mk) };
+  };
+  for (const r of docs) { const { k, label } = keyOf(r); if (!map.has(k)) map.set(k, { k, label, items: [] }); map.get(k).items.push(r); }
+  const groups = [...map.values()];
+  groups.sort((a, b) => (GROUPMODE === 'month') ? b.k.localeCompare(a.k) : b.items.length - a.items.length);
+  return groups;
+}
+function renderDocs() {
+  const m = $('#main');
+  const entry = INDEX.find((x) => x.base === CUR) || {};
+  const docs = visibleDocs();
+  const anyFormats = CURDOCS.some((r) => r.formats.length);
+  const delivered = CURDOCS.filter((r) => r.delivered.length).length;
+  let html = `<div class="crumbs"><span class="tile ${catOf(entry.primaryCat).f}" style="width:26px;height:26px;font-size:14px;border-radius:7px">${catOf(entry.primaryCat).i}</span> <b>${esc(entry.name || CUR)}</b>${ACCOUNT ? ' <span>›</span> ' + esc(ACCOUNT) : ''}</div>`;
+  html += `<div class="summ"><span class="chip">📄 <b>${docs.length}</b> ${esc(t('archive_docs_word'))}</span>`;
+  if (delivered) html += `<span class="chip">${esc(t('archive_saved_n', [String(delivered)]))}</span>`;
+  html += '</div>';
+  // group-by + selection controls
+  const gb = (mode, label) => `<button data-gb="${mode}" class="${GROUPMODE === mode ? 'on' : ''}">${esc(label)}</button>`;
+  html += `<div class="docbar"><div class="groupby">${gb('month', t('group_month'))}${gb('category', t('group_category'))}${gb('store', t('group_store'))}</div>
+    <button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div>`;
+  if (!docs.length) { html += emptyState(t('no_documents'), t('archive_empty_source')); m.innerHTML = html; return; }
+  for (const g of groupDocs(docs)) {
+    const net = g.items.reduce((a, r) => { const v = (typeof r.record.total === 'number' ? r.record.total : r.record.amount); if (typeof v !== 'number') return a; const dir = r.record.direction; return a + (dir === 'out' ? -Math.abs(v) : dir === 'in' ? Math.abs(v) : v); }, 0);
+    const showNet = GROUPMODE === 'month' && isBankish(entry.adapter);
+    html += `<div class="mgroup"><div class="mhead"><h4>${esc(g.label)}</h4><span class="line"></span><span class="mtot">${showNet ? esc(fmtMoney(net, currencyOf(g.items))) : t('n_documents', [String(g.items.length)])}</span></div><div class="cards">`;
+    for (const r of g.items) html += cardHtml(r);
+    html += '</div></div>';
+  }
+  html += `<div class="selbar"><b id="selcount">0</b> <span>${esc(t('archive_selected_suffix'))}</span>
+    <button class="go" id="selopen">${esc(t('archive_open_saved'))}</button>
+    <button class="clr" id="selclear">${esc(t('archive_clear'))}</button></div>`;
+  m.innerHTML = html;
+  m.classList.toggle('selecting', SELECTING);
+  updateSelCount();
+}
+function currencyOf(items) { const r = items.find((x) => x.record.currency); return (r && r.record.currency) || 'EUR'; }
+function cardHtml(r) {
+  const i = CURDOCS.indexOf(r);
+  const c = catOf(r.record.category);
+  const mv = money(r.record);
+  const fmts = r.formats.length ? r.formats.map((f) => `<span class="fmt">${esc((f.ext || '').toUpperCase())}</span>`).join('') : '';
+  const st = r.delivered.length
+    ? `<span class="status sent"><span class="d"></span>${esc(t('archive_status_saved'))}</span>`
+    : `<span class="status new"><span class="d"></span>${esc(t('archive_status_local'))}</span>`;
+  const sub = [dateShort(r.record.date), r.record.group && ACCOUNT === '' ? esc(r.record.group) : ''].filter(Boolean).join(' · ');
+  return `<button class="dcard${PICKED.has(r.internalId) ? ' picked' : ''}" data-i="${i}">
+    <span class="chk">✓</span>
+    <span class="tile ${c.f}">${c.i}</span>
+    <span class="dmeta"><span class="dtitle">${esc(titleOf(r.record))}</span>
+      <span class="dsub">${esc(sub)} ${fmts}</span></span>
+    <span class="damt"><span class="v ${mv.cls} tnum">${esc(mv.txt)}</span>${st}</span></button>`;
+}
+
+// ---- drawer ----
+function openDrawer(r) {
+  if (!r) return;
+  const c = catOf(r.record.category);
+  $('#dw-tile').className = 'tile ' + c.f; $('#dw-tile').textContent = c.i;
+  $('#dw-title').textContent = titleOf(r.record);
+  $('#dw-sub').textContent = [dateLong(r.record.date), r.record.group].filter(Boolean).join(' · ');
+  const mv = money(r.record);
+  const rows = [];
+  if (mv.txt) rows.push([t('archive_field_amount'), mv.txt, mv.cls]);
+  if (r.record.category) rows.push([t('archive_field_category'), catLabel(r.record.category)]);
+  if (r.record.group) rows.push([t('archive_field_account'), r.record.group]);
+  const cp = nameOf(r.record.counterparty) || nameOf(r.record.description); if (cp) rows.push([t('archive_field_concept'), cp]);
+  if (r.record.type) rows.push([t('archive_field_type'), String(r.record.type)]);
+  if (r.formats.length) rows.push([t('archive_field_files'), r.formats.map((f) => (f.ext || '').toUpperCase()).join(' · ')]);
+  let body = `<dl class="kvx">${rows.map(([k, v, cls]) => `<dt>${esc(k)}</dt><dd${cls ? ` style="color:var(--${cls === 'neg' ? 'neg' : 'pos'})"` : ''}>${esc(String(v))}</dd>`).join('')}</dl>`;
+  // actions: open each delivered FILE (real). A record-only movement (a bank line) has no file — its data
+  // rode the manifest — so it gets an honest note, not a broken "open". Nothing delivered → the sync note.
+  const acts = [];
+  if (r.formats.length) for (const sink of r.delivered) for (const f of r.formats) acts.push(actBtn('⬇', t('open_from', [sinkLabel(sink)]), (r.formats.length > 1 ? f.name : f.ext.toUpperCase()), `open:${sink.id}:${f.ext}`, true));
+  if (acts.length) body += `<div class="actions">${acts.join('')}</div>`;
+  else if (r.delivered.length) body += `<div class="actions-note">${esc(t('archive_delivered_data'))}</div>`;
+  else body += `<div class="actions-note">${esc(t('archive_no_dest'))}</div>`;
+  body += `<button class="rawtoggle" id="rawtoggle">${esc(t('archive_raw_show'))}</button><pre class="raw" id="rawbox" hidden></pre>`;
+  const b = $('#dw-body'); b.innerHTML = body;
+  b.dataset.i = String(CURDOCS.indexOf(r));
+  const rb = $('#rawbox'); rb.textContent = JSON.stringify(r.record, null, 2);
+  $('#rawtoggle').onclick = () => { rb.hidden = !rb.hidden; };
+  b.querySelectorAll('[data-act]').forEach((el) => { el.onclick = () => { const [, sinkId, ext] = el.dataset.act.split(':'); openFile(r, sinkId, ext); }; });
+  $('#drawer').classList.add('on'); $('#scrim').classList.add('on'); $('#drawer').setAttribute('aria-hidden', 'false');
+}
+function actBtn(icon, label, sub, act, primary) {
+  return `<button class="abtn ${primary ? 'primary' : ''}" data-act="${esc(act)}"><span class="ai">${icon}</span><span class="grow">${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ''}</span></button>`;
+}
+function closeDrawer() { $('#drawer').classList.remove('on'); $('#scrim').classList.remove('on'); $('#drawer').setAttribute('aria-hidden', 'true'); }
+const sinkLabel = (s) => s.name || s.id || s.type;
+function openFile(r, sinkId, ext) {
+  const url = chrome.runtime.getURL(`src/ui/docview.html?sink=${encodeURIComponent(sinkId)}&src=${encodeURIComponent(r.base)}&id=${encodeURIComponent(r.internalId)}${ext ? '&ext=' + encodeURIComponent(ext) : ''}`);
+  chrome.tabs.create({ url });
+}
+
+// ---- selection (batch) ----
+function updateSelCount() { const el = $('#selcount'); if (el) el.textContent = String(PICKED.size); }
+function toggleSelecting() {
+  SELECTING = !SELECTING; if (!SELECTING) PICKED.clear();
+  renderDocs();
+}
+
+// ---- navigation ----
+async function openSource(base) {
+  CUR = base; ACCOUNT = ''; SELECTING = false; PICKED.clear();
+  $('#astatus').textContent = t('docs_loading');
+  await loadDocs(base);
+  const entry = INDEX.find((x) => x.base === base);
+  GROUPMODE = isBankish(entry && entry.adapter) ? 'month' : 'category';
+  $('#astatus').textContent = '';
+  renderRail(); renderDocs();
+}
+function goIndex() { CUR = null; renderRail(); renderIndex(); }
+
+// ---- events ----
+function wire() {
+  $('#opts').onclick = () => chrome.runtime.openOptionsPage();
+  $('#dw-close').onclick = closeDrawer;
+  $('#scrim').onclick = closeDrawer;
+  $('#q').oninput = () => { if (CUR) renderDocs(); else renderIndex(); };
+  $('#sync').onclick = onSync;
+  // rail delegation
+  $('#rail').onclick = (ev) => {
+    const acc = ev.target.closest('[data-acc]'); if (acc) { ACCOUNT = acc.dataset.acc; renderRail(); renderDocs(); return; }
+    const src = ev.target.closest('[data-src]'); if (src) { const s = src.dataset.src; if (s === '__all__') goIndex(); else openSource(s); }
+  };
+  // main delegation (index cards, group-by, select toggle, doc cards)
+  $('#main').onclick = (ev) => {
+    const sc = ev.target.closest('.srccard'); if (sc) { openSource(sc.dataset.src); return; }
+    const gb = ev.target.closest('[data-gb]'); if (gb) { GROUPMODE = gb.dataset.gb; renderDocs(); return; }
+    if (ev.target.closest('#seltoggle')) { toggleSelecting(); return; }
+    if (ev.target.closest('#selclear')) { PICKED.clear(); SELECTING = false; renderDocs(); return; }
+    if (ev.target.closest('#selopen')) { batchOpen(); return; }
+    const card = ev.target.closest('.dcard'); if (card) {
+      const r = CURDOCS[+card.dataset.i]; if (!r) return;
+      if (SELECTING) { if (PICKED.has(r.internalId)) PICKED.delete(r.internalId); else PICKED.add(r.internalId); card.classList.toggle('picked'); updateSelCount(); }
+      else openDrawer(r);
+    }
+  };
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+}
+function batchOpen() {
+  const picks = CURDOCS.filter((r) => PICKED.has(r.internalId) && r.delivered.length && r.formats.length);
+  const CAP = 12;
+  picks.slice(0, CAP).forEach((r) => openFile(r, r.delivered[0].id, r.formats[0].ext));
+  $('#astatus').textContent = picks.length > CAP ? t('archive_open_capped', [String(CAP), String(picks.length)]) : '';
+}
+
+async function onSync() {
+  const b = $('#sync');
+  b.disabled = true; $('#astatus').textContent = t('sync_all_running');
+  const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#astatus').textContent = v.msg; };
+  chrome.storage.onChanged.addListener(onStatus);
+  try {
+    const r = await chrome.runtime.sendMessage({ type: 'habeas:sync-all' });
+    if (r && r.ok && (r.status === 'done' || r.status === 'stopped')) $('#astatus').textContent = t('sync_all_done', [String(r.new || 0), String(r.sources || 0)]);
+    else if (r && r.status === 'busy') $('#astatus').textContent = t('sync_all_running');
+    else $('#astatus').textContent = t('sync_all_err', [(r && r.error) || 'error']);
+  } catch (e) { $('#astatus').textContent = t('sync_all_err', [(e && e.message) || String(e)]); }
+  finally {
+    chrome.storage.onChanged.removeListener(onStatus);
+    b.disabled = false;
+    await loadIndex(); if (CUR) { await loadDocs(CUR); renderRail(); renderDocs(); } else { renderRail(); renderIndex(); }
+  }
+}
+
+async function init() {
+  applyI18n();
+  try { LANG = chrome.i18n.getUILanguage() || 'en'; } catch (e) { LANG = 'en'; }
+  ESLANG = LANG.toLowerCase().startsWith('es');
+  ADAPTERS = await getAdapters();
+  CFG = await getConfig();
+  RETRIEVABLE = (CFG.sinks || []).filter((s) => isRetrievable(s));
+  wire();
+  await loadIndex();
+  // deep-link ?src=<base> opens a source directly (used by the popup entry point)
+  const want = new URLSearchParams(location.search).get('src');
+  if (want && INDEX.some((x) => x.base === want)) { renderRail(); await openSource(want); }
+  else { renderRail(); renderIndex(); }
+}
+init();

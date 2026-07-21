@@ -2116,5 +2116,114 @@
         "content": "$1"
       }
     }
+  },
+  "archive_tag": {
+    "message": "your personal archive"
+  },
+  "archive_search": {
+    "message": "Search a document…"
+  },
+  "archive_sources": {
+    "message": "Sources"
+  },
+  "archive_all": {
+    "message": "Everything"
+  },
+  "archive_index_title": {
+    "message": "Your archive"
+  },
+  "archive_index_sub": {
+    "message": "Every document you have recovered, organised by source."
+  },
+  "archive_docs_word": {
+    "message": "documents"
+  },
+  "archive_saved_n": {
+    "message": "$N$ saved to a destination",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "group_month": {
+    "message": "Month"
+  },
+  "group_category": {
+    "message": "Category"
+  },
+  "group_store": {
+    "message": "Store"
+  },
+  "archive_select": {
+    "message": "Select"
+  },
+  "archive_sel_done": {
+    "message": "Done"
+  },
+  "archive_selected_suffix": {
+    "message": "selected"
+  },
+  "archive_open_saved": {
+    "message": "Open the saved ones"
+  },
+  "archive_clear": {
+    "message": "Clear"
+  },
+  "archive_status_saved": {
+    "message": "Saved"
+  },
+  "archive_status_local": {
+    "message": "In archive"
+  },
+  "archive_empty_title": {
+    "message": "Nothing here yet"
+  },
+  "archive_empty_sub": {
+    "message": "Recover documents from a source in the popup and they will appear here."
+  },
+  "archive_empty_source": {
+    "message": "No documents match."
+  },
+  "archive_no_dest": {
+    "message": "This document is in your archive. To copy it to a destination (Drive, a folder…), use Sync or Send from the popup."
+  },
+  "archive_raw_show": {
+    "message": "Show full data"
+  },
+  "archive_field_amount": {
+    "message": "Amount"
+  },
+  "archive_field_category": {
+    "message": "Category"
+  },
+  "archive_field_account": {
+    "message": "Account"
+  },
+  "archive_field_concept": {
+    "message": "Concept"
+  },
+  "archive_field_type": {
+    "message": "Type"
+  },
+  "archive_field_files": {
+    "message": "Files"
+  },
+  "archive_open_capped": {
+    "message": "Opened $N$ of $TOTAL$ (limit)",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
+    }
+  },
+  "open_archive": {
+    "message": "Open full archive"
+  },
+  "archive_delivered_data": {
+    "message": "This is a movement — its data was delivered inside the manifest, so there is no separate file to open."
   }
 }

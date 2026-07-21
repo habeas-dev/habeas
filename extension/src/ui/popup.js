@@ -716,6 +716,7 @@ function wireDocsTab() {
   $('#tab-sources').onclick = () => switchTab('sources');
   $('#tab-docs').onclick = () => switchTab('docs');
   $('#docs-refresh').onclick = () => renderDocuments();
+  { const oa = $('#open-archive'); if (oa) oa.onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/archive.html') }); }
   $('#docs-search').oninput = renderDocsTable;
   $('#docs-source').onchange = () => { const v = $('#docs-source').value; if (v) loadSourceDocs(v); else clearDocs(); };
   $('#docs-group').onchange = renderDocsTable;
