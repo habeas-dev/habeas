@@ -10,6 +10,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **A guided re-recording reads clearly in the conversation.** The message that accompanies an attached
+  recording is now a plain "📎 recording sent" note instead of echoing the team's instruction verbatim (which
+  looked like a duplicate of the team's message).
+
 ### Added
 - **Tokens are correlated in a recording, like ids** (`lib/redact.js`) — the same token value now gets the same
   `[jwt#N]` tag across a **sent `Authorization` header** and **client storage/memory** (kept in a separate map

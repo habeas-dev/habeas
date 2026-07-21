@@ -1076,88 +1076,249 @@
   },
   "author_ws_captured": {
     "message": "Captured $N$ realtime frames from $S$ WebSocket/SSE connection(s). This site streams its data (not plain HTTP) — auto-drafting isn't available yet, but the recording holds what a maintainer needs to build the source. Share it.",
-    "placeholders": { "N": { "content": "$1" }, "S": { "content": "$2" } }
+    "placeholders": {
+      "N": {
+        "content": "$1"
+      },
+      "S": {
+        "content": "$2"
+      }
+    }
   },
-  "author_live_recording": { "message": "Recording — just browse your orders / invoices as usual" },
-  "author_live_documents": { "message": "documents" },
-  "author_guide_title": { "message": "The team asked you to record this" },
-  "author_guide_done": { "message": "Got what the team needs — you can send now" },
-  "author_live_lists": { "message": "data lists" },
-  "author_live_frames": { "message": "realtime frames" },
-  "author_live_hint_empty": { "message": "No data yet. Open your orders / invoices page so the site loads it — and scroll down to load them all." },
+  "author_live_recording": {
+    "message": "Recording — just browse your orders / invoices as usual"
+  },
+  "author_live_documents": {
+    "message": "documents"
+  },
+  "author_guide_title": {
+    "message": "The team asked you to record this"
+  },
+  "author_guide_done": {
+    "message": "Got what the team needs — you can send now"
+  },
+  "author_live_lists": {
+    "message": "data lists"
+  },
+  "author_live_frames": {
+    "message": "realtime frames"
+  },
+  "author_live_hint_empty": {
+    "message": "No data yet. Open your orders / invoices page so the site loads it — and scroll down to load them all."
+  },
   "author_live_hint_draft": {
     "message": "✅ Found your data ($D$ documents). Press “Analyze” to build the draft — or just open one document so we learn how to download it.",
-    "placeholders": { "D": { "content": "$1" } }
+    "placeholders": {
+      "D": {
+        "content": "$1"
+      }
+    }
   },
   "author_live_hint_maintainer": {
     "message": "✅ Captured your data ($D$ documents) over a special transport ($T$). This can't be auto-built here, but the recording is complete — share it and a maintainer will turn it into a source.",
-    "placeholders": { "D": { "content": "$1" }, "T": { "content": "$2" } }
+    "placeholders": {
+      "D": {
+        "content": "$1"
+      },
+      "T": {
+        "content": "$2"
+      }
+    }
   },
-  "author_share": { "message": "Download a copy" },
-  "author_share_preview": { "message": "See what will be shared" },
-  "author_share_note": { "message": "Personal values (names, addresses, amounts, account/card numbers, tokens) are replaced with placeholders like [text] / [id]. No login tokens, cookies, or page text are included. Sending goes to the Habeas team, who may reply with questions in Settings → My contributions." },
+  "author_share": {
+    "message": "Download a copy"
+  },
+  "author_share_preview": {
+    "message": "See what will be shared"
+  },
+  "author_share_note": {
+    "message": "Personal values (names, addresses, amounts, account/card numbers, tokens) are replaced with placeholders like [text] / [id]. No login tokens, cookies, or page text are included. Sending goes to the Habeas team, who may reply with questions in Settings → My contributions."
+  },
   "author_share_done": {
     "message": "Downloaded an anonymized copy ($S$ requests, $W$ realtime frames) — it contains no personal data or credentials.",
-    "placeholders": { "S": { "content": "$1" }, "W": { "content": "$2" } }
+    "placeholders": {
+      "S": {
+        "content": "$1"
+      },
+      "W": {
+        "content": "$2"
+      }
+    }
   },
-  "author_handle_label": { "message": "Your name for credit (optional)" },
-  "author_handle_ph": { "message": "a nickname, or leave blank" },
-  "author_send_team": { "message": "Send to the Habeas team" },
-  "author_sending": { "message": "Sending…" },
+  "author_handle_label": {
+    "message": "Your name for credit (optional)"
+  },
+  "author_handle_ph": {
+    "message": "a nickname, or leave blank"
+  },
+  "author_send_team": {
+    "message": "Send to the Habeas team"
+  },
+  "author_sending": {
+    "message": "Sending…"
+  },
   "author_sent": {
     "message": "Sent — thank you! Ref $ID$. Follow it in Settings → My contributions; the team may reply with questions.",
-    "placeholders": { "ID": { "content": "$1" } }
+    "placeholders": {
+      "ID": {
+        "content": "$1"
+      }
+    }
   },
-  "author_sent_recording": { "message": "Sent to the team — thank you! It's added to your existing conversation; you can close this tab." },
+  "author_sent_recording": {
+    "message": "Sent to the team — thank you! It's added to your existing conversation; you can close this tab."
+  },
+  "author_recording_note": {
+    "message": "📎 Recording sent to the team — for the requested capture."
+  },
   "author_send_fail": {
     "message": "Couldn't send ($E$). You can use “Download a copy” and send it another way.",
-    "placeholders": { "E": { "content": "$1" } }
+    "placeholders": {
+      "E": {
+        "content": "$1"
+      }
+    }
   },
-  "author_orphan_intro": { "message": "A few ids couldn't be traced to anything else in your session. They're likely non-personal system/entity ids the maintainer needs to build the source — but they could be personal. Tick only the ones you're OK sharing the real value of; the rest stay hidden." },
-  "author_orphan_send": { "message": "Send with the ticked shared" },
-  "author_orphan_cancel": { "message": "Cancel" },
-  "contrib_title": { "message": "My contributions" },
-  "contrib_help": { "message": "Recordings you sent to the Habeas team. Follow their status and answer any questions so your source can be built — you're credited when it ships." },
-  "contrib_empty": { "message": "You haven't sent any recordings yet. Record a site (Author a source) and press “Send to the Habeas team”." },
-  "contrib_new": { "message": "new reply" },
-  "contrib_view": { "message": "View conversation" },
-  "contrib_rerecord": { "message": "Record again" },
-  "contrib_team": { "message": "Habeas team" },
-  "contrib_you": { "message": "You" },
-  "contrib_no_msgs": { "message": "No messages yet." },
-  "contrib_load_fail": { "message": "Couldn't load the conversation." },
-  "contrib_reply_ph": { "message": "Write your reply…" },
-  "contrib_reply": { "message": "Reply" },
-  "contrib_reply_fail": { "message": "Couldn't send the reply." },
-  "contrib_published_as": { "message": "Published as $S$ — thank you!", "placeholders": { "S": { "content": "$1" } } },
-  "contrib_status_new": { "message": "sent" },
-  "contrib_status_in_review": { "message": "in review" },
-  "contrib_status_needs_info": { "message": "needs your reply" },
-  "contrib_status_authored": { "message": "being built" },
-  "contrib_status_published": { "message": "published" },
-  "contrib_status_completed": { "message": "✓ completed" },
-  "contrib_status_declined": { "message": "not used" },
-  "contrib_status_superseded": { "message": "replaced by a newer send" },
-  "contrib_install": { "message": "Install & test" },
-  "contrib_install_hint": { "message": "the team built this source from your recording — install it to test" },
-  "contrib_installed": { "message": "✓ Installed — open the Habeas popup and press List" },
-  "contrib_install_fail": { "message": "couldn't install" },
-  "contrib_has_source": { "message": "source ready to install" },
-  "contrib_new_version": { "message": "New version" },
-  "contrib_prev_version": { "message": "Previous version" },
-  "contrib_installed_ver": { "message": "This version installed" },
-  "contrib_reinstall": { "message": "Reinstall" },
-  "contrib_report": { "message": "Report a problem" },
-  "contrib_capreq_title": { "message": "The team needs one more recording" },
-  "contrib_capreq_start": { "message": "Start guided recording" },
-  "contrib_report_prefix": { "message": "⚠️ It didn't work when I tried the source." },
-  "contrib_report_peek": { "message": "See what's sent" },
-  "contrib_report_none": { "message": "no technical details right now — the team will just know it didn't work" },
-  "contrib_report_fail": { "message": "couldn't send — check your connection and try again" },
-  "contrib_show_detail": { "message": "See technical detail" },
-  "contrib_report_sent": { "message": "✓ Sent to the team" },
-  "contrib_notify": { "message": "The Habeas team replied to one of your contributions — see Settings → My contributions." },
-  "contrib_popup_notice": { "message": "💬 The Habeas team replied to your contribution(s) — open Settings → My contributions." },
+  "author_orphan_intro": {
+    "message": "A few ids couldn't be traced to anything else in your session. They're likely non-personal system/entity ids the maintainer needs to build the source — but they could be personal. Tick only the ones you're OK sharing the real value of; the rest stay hidden."
+  },
+  "author_orphan_send": {
+    "message": "Send with the ticked shared"
+  },
+  "author_orphan_cancel": {
+    "message": "Cancel"
+  },
+  "contrib_title": {
+    "message": "My contributions"
+  },
+  "contrib_help": {
+    "message": "Recordings you sent to the Habeas team. Follow their status and answer any questions so your source can be built — you're credited when it ships."
+  },
+  "contrib_empty": {
+    "message": "You haven't sent any recordings yet. Record a site (Author a source) and press “Send to the Habeas team”."
+  },
+  "contrib_new": {
+    "message": "new reply"
+  },
+  "contrib_view": {
+    "message": "View conversation"
+  },
+  "contrib_rerecord": {
+    "message": "Record again"
+  },
+  "contrib_team": {
+    "message": "Habeas team"
+  },
+  "contrib_you": {
+    "message": "You"
+  },
+  "contrib_no_msgs": {
+    "message": "No messages yet."
+  },
+  "contrib_load_fail": {
+    "message": "Couldn't load the conversation."
+  },
+  "contrib_reply_ph": {
+    "message": "Write your reply…"
+  },
+  "contrib_reply": {
+    "message": "Reply"
+  },
+  "contrib_reply_fail": {
+    "message": "Couldn't send the reply."
+  },
+  "contrib_published_as": {
+    "message": "Published as $S$ — thank you!",
+    "placeholders": {
+      "S": {
+        "content": "$1"
+      }
+    }
+  },
+  "contrib_status_new": {
+    "message": "sent"
+  },
+  "contrib_status_in_review": {
+    "message": "in review"
+  },
+  "contrib_status_needs_info": {
+    "message": "needs your reply"
+  },
+  "contrib_status_authored": {
+    "message": "being built"
+  },
+  "contrib_status_published": {
+    "message": "published"
+  },
+  "contrib_status_completed": {
+    "message": "✓ completed"
+  },
+  "contrib_status_declined": {
+    "message": "not used"
+  },
+  "contrib_status_superseded": {
+    "message": "replaced by a newer send"
+  },
+  "contrib_install": {
+    "message": "Install & test"
+  },
+  "contrib_install_hint": {
+    "message": "the team built this source from your recording — install it to test"
+  },
+  "contrib_installed": {
+    "message": "✓ Installed — open the Habeas popup and press List"
+  },
+  "contrib_install_fail": {
+    "message": "couldn't install"
+  },
+  "contrib_has_source": {
+    "message": "source ready to install"
+  },
+  "contrib_new_version": {
+    "message": "New version"
+  },
+  "contrib_prev_version": {
+    "message": "Previous version"
+  },
+  "contrib_installed_ver": {
+    "message": "This version installed"
+  },
+  "contrib_reinstall": {
+    "message": "Reinstall"
+  },
+  "contrib_report": {
+    "message": "Report a problem"
+  },
+  "contrib_capreq_title": {
+    "message": "The team needs one more recording"
+  },
+  "contrib_capreq_start": {
+    "message": "Start guided recording"
+  },
+  "contrib_report_prefix": {
+    "message": "⚠️ It didn't work when I tried the source."
+  },
+  "contrib_report_peek": {
+    "message": "See what's sent"
+  },
+  "contrib_report_none": {
+    "message": "no technical details right now — the team will just know it didn't work"
+  },
+  "contrib_report_fail": {
+    "message": "couldn't send — check your connection and try again"
+  },
+  "contrib_show_detail": {
+    "message": "See technical detail"
+  },
+  "contrib_report_sent": {
+    "message": "✓ Sent to the team"
+  },
+  "contrib_notify": {
+    "message": "The Habeas team replied to one of your contributions — see Settings → My contributions."
+  },
+  "contrib_popup_notice": {
+    "message": "💬 The Habeas team replied to your contribution(s) — open Settings → My contributions."
+  },
   "author_no_list_seen": {
     "message": "Saw $N$ requests (from: $HOSTS$) but none returned a document list. Open your orders/invoices page so it loads the data, then retry — or tell us these hosts.",
     "placeholders": {
@@ -1546,7 +1707,11 @@
   },
   "market_contributed_by": {
     "message": "🙌 Contributed by $WHO$",
-    "placeholders": { "WHO": { "content": "$1" } }
+    "placeholders": {
+      "WHO": {
+        "content": "$1"
+      }
+    }
   },
   "market_update": {
     "message": "Update ($V1$ → $V2$)",

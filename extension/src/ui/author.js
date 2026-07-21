@@ -189,7 +189,7 @@ async function submitBundle(bundle) {
     if (GUIDE && GUIDE.handoff) {
       // A guided re-capture the team asked for → attach it to the SAME handoff (one conversation), instead
       // of submitting a brand-new handoff that would supersede the thread.
-      await submitRecording(GUIDE.handoff, bundle, sub.id, GUIDE.instruction || '');
+      await submitRecording(GUIDE.handoff, bundle, sub.id, t('author_recording_note'));
       $('#sharestatus').textContent = t('author_sent_recording');
     } else {
       const res = await submitHandoff(bundle, sub.id, handle, (navigator.languages && navigator.languages[0]) || navigator.language || '');

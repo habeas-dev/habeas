@@ -1076,88 +1076,249 @@
   },
   "author_ws_captured": {
     "message": "Capturados $N$ frames en tiempo real de $S$ conexión(es) WebSocket/SSE. Esta web transmite sus datos en streaming (no HTTP normal) — todavía no hay borrador automático, pero la grabación contiene lo que un mantenedor necesita para crear la fuente. Compártela.",
-    "placeholders": { "N": { "content": "$1" }, "S": { "content": "$2" } }
+    "placeholders": {
+      "N": {
+        "content": "$1"
+      },
+      "S": {
+        "content": "$2"
+      }
+    }
   },
-  "author_live_recording": { "message": "Grabando — navega tus pedidos / facturas con normalidad" },
-  "author_live_documents": { "message": "documentos" },
-  "author_guide_title": { "message": "El equipo te pidió grabar esto" },
-  "author_guide_done": { "message": "Capturado lo que el equipo necesita — ya puedes enviar" },
-  "author_live_lists": { "message": "listas de datos" },
-  "author_live_frames": { "message": "frames en tiempo real" },
-  "author_live_hint_empty": { "message": "Aún no veo datos. Abre tu página de pedidos / facturas para que la web los cargue — y baja para cargarlos todos." },
+  "author_live_recording": {
+    "message": "Grabando — navega tus pedidos / facturas con normalidad"
+  },
+  "author_live_documents": {
+    "message": "documentos"
+  },
+  "author_guide_title": {
+    "message": "El equipo te pidió grabar esto"
+  },
+  "author_guide_done": {
+    "message": "Capturado lo que el equipo necesita — ya puedes enviar"
+  },
+  "author_live_lists": {
+    "message": "listas de datos"
+  },
+  "author_live_frames": {
+    "message": "frames en tiempo real"
+  },
+  "author_live_hint_empty": {
+    "message": "Aún no veo datos. Abre tu página de pedidos / facturas para que la web los cargue — y baja para cargarlos todos."
+  },
   "author_live_hint_draft": {
     "message": "✅ Encontré tus datos ($D$ documentos). Pulsa «Analizar» para crear el borrador — o abre un documento para aprender a descargarlo.",
-    "placeholders": { "D": { "content": "$1" } }
+    "placeholders": {
+      "D": {
+        "content": "$1"
+      }
+    }
   },
   "author_live_hint_maintainer": {
     "message": "✅ Capturé tus datos ($D$ documentos) mediante un transporte especial ($T$). No se puede crear automáticamente aquí, pero la grabación está completa — compártela y un mantenedor la convertirá en una fuente.",
-    "placeholders": { "D": { "content": "$1" }, "T": { "content": "$2" } }
+    "placeholders": {
+      "D": {
+        "content": "$1"
+      },
+      "T": {
+        "content": "$2"
+      }
+    }
   },
-  "author_share": { "message": "Descargar una copia" },
-  "author_share_preview": { "message": "Ver qué se compartirá" },
-  "author_share_note": { "message": "Los valores personales (nombres, direcciones, importes, números de cuenta/tarjeta, tokens) se sustituyen por marcadores tipo [text] / [id]. No se incluye ningún token de sesión, cookie ni el texto de las páginas. Al enviar, va al equipo de Habeas, que puede responderte con preguntas en Ajustes → Mis contribuciones." },
+  "author_share": {
+    "message": "Descargar una copia"
+  },
+  "author_share_preview": {
+    "message": "Ver qué se compartirá"
+  },
+  "author_share_note": {
+    "message": "Los valores personales (nombres, direcciones, importes, números de cuenta/tarjeta, tokens) se sustituyen por marcadores tipo [text] / [id]. No se incluye ningún token de sesión, cookie ni el texto de las páginas. Al enviar, va al equipo de Habeas, que puede responderte con preguntas en Ajustes → Mis contribuciones."
+  },
   "author_share_done": {
     "message": "Descargada una copia anonimizada ($S$ peticiones, $W$ frames en tiempo real) — no contiene datos personales ni credenciales.",
-    "placeholders": { "S": { "content": "$1" }, "W": { "content": "$2" } }
+    "placeholders": {
+      "S": {
+        "content": "$1"
+      },
+      "W": {
+        "content": "$2"
+      }
+    }
   },
-  "author_handle_label": { "message": "Tu nombre para créditos (opcional)" },
-  "author_handle_ph": { "message": "un apodo, o déjalo vacío" },
-  "author_send_team": { "message": "Enviar al equipo de Habeas" },
-  "author_sending": { "message": "Enviando…" },
+  "author_handle_label": {
+    "message": "Tu nombre para créditos (opcional)"
+  },
+  "author_handle_ph": {
+    "message": "un apodo, o déjalo vacío"
+  },
+  "author_send_team": {
+    "message": "Enviar al equipo de Habeas"
+  },
+  "author_sending": {
+    "message": "Enviando…"
+  },
   "author_sent": {
     "message": "¡Enviado, gracias! Ref $ID$. Síguelo en Ajustes → Mis contribuciones; el equipo puede responderte con preguntas.",
-    "placeholders": { "ID": { "content": "$1" } }
+    "placeholders": {
+      "ID": {
+        "content": "$1"
+      }
+    }
   },
-  "author_sent_recording": { "message": "Enviado al equipo, ¡gracias! Se ha añadido a tu conversación existente; ya puedes cerrar esta pestaña." },
+  "author_sent_recording": {
+    "message": "Enviado al equipo, ¡gracias! Se ha añadido a tu conversación existente; ya puedes cerrar esta pestaña."
+  },
+  "author_recording_note": {
+    "message": "📎 Grabación enviada al equipo — para la captura solicitada."
+  },
   "author_send_fail": {
     "message": "No se pudo enviar ($E$). Puedes usar «Descargar una copia» y enviarlo por otra vía.",
-    "placeholders": { "E": { "content": "$1" } }
+    "placeholders": {
+      "E": {
+        "content": "$1"
+      }
+    }
   },
-  "author_orphan_intro": { "message": "Algunos ids no se han podido relacionar con nada más de tu sesión. Probablemente son ids de sistema/entidad (no personales) que el mantenedor necesita para crear la fuente — pero podrían ser personales. Marca solo los que te parezca bien compartir con su valor real; el resto se quedan ocultos." },
-  "author_orphan_send": { "message": "Enviar compartiendo los marcados" },
-  "author_orphan_cancel": { "message": "Cancelar" },
-  "contrib_title": { "message": "Mis contribuciones" },
-  "contrib_help": { "message": "Grabaciones que enviaste al equipo de Habeas. Sigue su estado y responde a las preguntas para que se pueda crear la fuente — se te acredita cuando se publique." },
-  "contrib_empty": { "message": "Aún no has enviado ninguna grabación. Graba un sitio (Crear una fuente) y pulsa «Enviar al equipo de Habeas»." },
-  "contrib_new": { "message": "respuesta nueva" },
-  "contrib_view": { "message": "Ver conversación" },
-  "contrib_rerecord": { "message": "Volver a grabar" },
-  "contrib_team": { "message": "Equipo Habeas" },
-  "contrib_you": { "message": "Tú" },
-  "contrib_no_msgs": { "message": "Aún no hay mensajes." },
-  "contrib_load_fail": { "message": "No se pudo cargar la conversación." },
-  "contrib_reply_ph": { "message": "Escribe tu respuesta…" },
-  "contrib_reply": { "message": "Responder" },
-  "contrib_reply_fail": { "message": "No se pudo enviar la respuesta." },
-  "contrib_published_as": { "message": "Publicada como $S$ — ¡gracias!", "placeholders": { "S": { "content": "$1" } } },
-  "contrib_status_new": { "message": "enviada" },
-  "contrib_status_in_review": { "message": "en revisión" },
-  "contrib_status_needs_info": { "message": "requiere tu respuesta" },
-  "contrib_status_authored": { "message": "en construcción" },
-  "contrib_status_published": { "message": "publicada" },
-  "contrib_status_completed": { "message": "✓ completada" },
-  "contrib_status_declined": { "message": "no utilizada" },
-  "contrib_status_superseded": { "message": "reemplazada por un envío posterior" },
-  "contrib_install": { "message": "Instalar y probar" },
-  "contrib_install_hint": { "message": "el equipo construyó esta fuente con tu grabación — instálala para probarla" },
-  "contrib_installed": { "message": "✓ Instalada — abre el popup de Habeas y pulsa Listar" },
-  "contrib_install_fail": { "message": "no se pudo instalar" },
-  "contrib_has_source": { "message": "fuente lista para instalar" },
-  "contrib_new_version": { "message": "Nueva versión" },
-  "contrib_prev_version": { "message": "Versión anterior" },
-  "contrib_installed_ver": { "message": "Esta versión instalada" },
-  "contrib_reinstall": { "message": "Reinstalar" },
-  "contrib_report": { "message": "Reportar un problema" },
-  "contrib_capreq_title": { "message": "El equipo necesita una grabación más" },
-  "contrib_capreq_start": { "message": "Empezar grabación guiada" },
-  "contrib_report_prefix": { "message": "⚠️ No funcionó al probar la fuente." },
-  "contrib_report_peek": { "message": "Ver qué se envía" },
-  "contrib_report_none": { "message": "ahora mismo no hay detalles técnicos; el equipo solo sabrá que no funcionó" },
-  "contrib_report_fail": { "message": "no se pudo enviar; revisa tu conexión e inténtalo otra vez" },
-  "contrib_show_detail": { "message": "Ver detalle técnico" },
-  "contrib_report_sent": { "message": "✓ Enviado al equipo" },
-  "contrib_notify": { "message": "El equipo de Habeas ha respondido a una de tus contribuciones — míralo en Ajustes → Mis contribuciones." },
-  "contrib_popup_notice": { "message": "💬 El equipo de Habeas ha respondido a tu(s) contribución(es) — abre Ajustes → Mis contribuciones." },
+  "author_orphan_intro": {
+    "message": "Algunos ids no se han podido relacionar con nada más de tu sesión. Probablemente son ids de sistema/entidad (no personales) que el mantenedor necesita para crear la fuente — pero podrían ser personales. Marca solo los que te parezca bien compartir con su valor real; el resto se quedan ocultos."
+  },
+  "author_orphan_send": {
+    "message": "Enviar compartiendo los marcados"
+  },
+  "author_orphan_cancel": {
+    "message": "Cancelar"
+  },
+  "contrib_title": {
+    "message": "Mis contribuciones"
+  },
+  "contrib_help": {
+    "message": "Grabaciones que enviaste al equipo de Habeas. Sigue su estado y responde a las preguntas para que se pueda crear la fuente — se te acredita cuando se publique."
+  },
+  "contrib_empty": {
+    "message": "Aún no has enviado ninguna grabación. Graba un sitio (Crear una fuente) y pulsa «Enviar al equipo de Habeas»."
+  },
+  "contrib_new": {
+    "message": "respuesta nueva"
+  },
+  "contrib_view": {
+    "message": "Ver conversación"
+  },
+  "contrib_rerecord": {
+    "message": "Volver a grabar"
+  },
+  "contrib_team": {
+    "message": "Equipo Habeas"
+  },
+  "contrib_you": {
+    "message": "Tú"
+  },
+  "contrib_no_msgs": {
+    "message": "Aún no hay mensajes."
+  },
+  "contrib_load_fail": {
+    "message": "No se pudo cargar la conversación."
+  },
+  "contrib_reply_ph": {
+    "message": "Escribe tu respuesta…"
+  },
+  "contrib_reply": {
+    "message": "Responder"
+  },
+  "contrib_reply_fail": {
+    "message": "No se pudo enviar la respuesta."
+  },
+  "contrib_published_as": {
+    "message": "Publicada como $S$ — ¡gracias!",
+    "placeholders": {
+      "S": {
+        "content": "$1"
+      }
+    }
+  },
+  "contrib_status_new": {
+    "message": "enviada"
+  },
+  "contrib_status_in_review": {
+    "message": "en revisión"
+  },
+  "contrib_status_needs_info": {
+    "message": "requiere tu respuesta"
+  },
+  "contrib_status_authored": {
+    "message": "en construcción"
+  },
+  "contrib_status_published": {
+    "message": "publicada"
+  },
+  "contrib_status_completed": {
+    "message": "✓ completada"
+  },
+  "contrib_status_declined": {
+    "message": "no utilizada"
+  },
+  "contrib_status_superseded": {
+    "message": "reemplazada por un envío posterior"
+  },
+  "contrib_install": {
+    "message": "Instalar y probar"
+  },
+  "contrib_install_hint": {
+    "message": "el equipo construyó esta fuente con tu grabación — instálala para probarla"
+  },
+  "contrib_installed": {
+    "message": "✓ Instalada — abre el popup de Habeas y pulsa Listar"
+  },
+  "contrib_install_fail": {
+    "message": "no se pudo instalar"
+  },
+  "contrib_has_source": {
+    "message": "fuente lista para instalar"
+  },
+  "contrib_new_version": {
+    "message": "Nueva versión"
+  },
+  "contrib_prev_version": {
+    "message": "Versión anterior"
+  },
+  "contrib_installed_ver": {
+    "message": "Esta versión instalada"
+  },
+  "contrib_reinstall": {
+    "message": "Reinstalar"
+  },
+  "contrib_report": {
+    "message": "Reportar un problema"
+  },
+  "contrib_capreq_title": {
+    "message": "El equipo necesita una grabación más"
+  },
+  "contrib_capreq_start": {
+    "message": "Empezar grabación guiada"
+  },
+  "contrib_report_prefix": {
+    "message": "⚠️ No funcionó al probar la fuente."
+  },
+  "contrib_report_peek": {
+    "message": "Ver qué se envía"
+  },
+  "contrib_report_none": {
+    "message": "ahora mismo no hay detalles técnicos; el equipo solo sabrá que no funcionó"
+  },
+  "contrib_report_fail": {
+    "message": "no se pudo enviar; revisa tu conexión e inténtalo otra vez"
+  },
+  "contrib_show_detail": {
+    "message": "Ver detalle técnico"
+  },
+  "contrib_report_sent": {
+    "message": "✓ Enviado al equipo"
+  },
+  "contrib_notify": {
+    "message": "El equipo de Habeas ha respondido a una de tus contribuciones — míralo en Ajustes → Mis contribuciones."
+  },
+  "contrib_popup_notice": {
+    "message": "💬 El equipo de Habeas ha respondido a tu(s) contribución(es) — abre Ajustes → Mis contribuciones."
+  },
   "author_no_list_seen": {
     "message": "Vi $N$ peticiones (de: $HOSTS$) pero ninguna devolvió un listado de documentos. Abre tu página de pedidos/facturas para que cargue los datos y reinténtalo — o dime estos hosts.",
     "placeholders": {
@@ -1546,7 +1707,11 @@
   },
   "market_contributed_by": {
     "message": "🙌 Aportado por $WHO$",
-    "placeholders": { "WHO": { "content": "$1" } }
+    "placeholders": {
+      "WHO": {
+        "content": "$1"
+      }
+    }
   },
   "market_update": {
     "message": "Actualizar ($V1$ → $V2$)",
