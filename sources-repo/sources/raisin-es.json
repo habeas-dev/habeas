@@ -9,7 +9,7 @@
     "banking",
     "investment"
   ],
-  "version": "2026-07-20.15",
+  "version": "2026-07-20.16",
   "minVersion": "0.5.0.29",
   "keepRaw": true,
   "contributors": [
@@ -139,9 +139,9 @@
         "date": "deposit.opening_date",
         "amount": "accounting.balance.amount.denomination",
         "currency": "accounting.balance.amount.currency",
-        "description": "Depósito {product.deposit_taking_bank.name} {accounting.effective_interest_rate:num}% TAE {accounting.term:duration} - {deposit.opening_date:date}",
+        "description": "{product.deposit_taking_bank.name}",
         "counterparty": "{product.deposit_taking_bank.name}",
-        "group": "Depósito {product.deposit_taking_bank.name}"
+        "group": "Depósito {product.deposit_taking_bank.name} {accounting.effective_interest_rate:num}% TAE {accounting.term:duration} - {deposit.opening_date:date}"
       }
     },
     {
@@ -319,6 +319,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20.16",
+      "changes": "A deposit account now shows the SAME name everywhere: its own record, its documents, and the account picker all use the full \"Depósito <bank> <rate>% TAE <term> - <opening>\" label (the record previously showed a shorter \"Depósito <bank>\"). The bank moved to the store/counterparty column."
+    },
     {
       "version": "2026-07-20.15",
       "changes": "Split documents by product: FDA_ deposits keep the \"Depósito … % TAE … plazo\" label; OMA_ savings accounts now show \"Cuenta <bank>\" (no rate/term — variable). Deposit records carry their own account label. Requires 0.5.0.29 (ungrouped-stream account label)."
