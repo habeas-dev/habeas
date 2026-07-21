@@ -68,6 +68,6 @@
   <text x="746" y="79" text-anchor="middle" font-size="13" font-weight="700" class="h-mid" letter-spacing=".4">DESTINOS</text>
   <line x1="648" y1="89" x2="844" y2="89" class="div"/>
   <text x="746" y="126" text-anchor="middle" font-size="13" font-weight="600" class="ink">Carpeta local</text>
-  <text x="746" y="166" text-anchor="middle" font-size="13" font-weight="600" class="ink">Google Drive</text>
+  <text x="746" y="166" text-anchor="middle" font-size="13" font-weight="600" class="ink">Almacenamiento en nube</text>
   <text x="746" y="206" text-anchor="middle" font-size="13" font-weight="600" class="ink">Apps y endpoints HTTP</text>
 </svg>
