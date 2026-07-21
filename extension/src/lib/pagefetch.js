@@ -231,6 +231,13 @@ export function makePageFetch(tabId, adapter) {
             }
             const r = await fetch(o.url, { method: o.method, headers, body: o.body || undefined, credentials: o.credentials || 'include', ...(o.referrer ? { referrer: o.referrer, referrerPolicy: 'unsafe-url' } : {}) });
             const d = { ok: r.ok, status: r.status, contentType: r.headers.get('content-type') || '', sentHeaders: Object.keys(headers) }; // real headers (incl. a tokenFromStorage-injected one) for accurate diagnostics
+            // Decode the SENT bearer's claims (exp / iss / aud only — NEVER the raw token) so a failed auth
+            // request can say in the diagnostic whether the token was expired or fresh, without DevTools.
+            try {
+              const ak = Object.keys(headers).find((k) => k.toLowerCase() === 'authorization');
+              const m = ak && String(headers[ak]).match(/eyJ[A-Za-z0-9_-]+\.([A-Za-z0-9_-]+)\./);
+              if (m) { const b = m[1].replace(/-/g, '+').replace(/_/g, '/'); const p = JSON.parse(atob(b + '==='.slice((b.length + 3) % 4))); d.sentToken = { exp: p.exp, iss: p.iss, aud: p.aud, now: Math.floor(Date.now() / 1000) }; }
+            } catch (e) {}
             if (o.wantBlob) {
               const bytes = new Uint8Array(await r.arrayBuffer());
               let s = ''; const chunk = 0x8000;
@@ -245,7 +252,7 @@ export function makePageFetch(tabId, adapter) {
     } catch (e) { out = { ok: false, status: 0, error: String(e && e.message || e) }; }
     out = out || { ok: false, status: 0, error: 'no result' };
     return {
-      ok: out.ok, status: out.status, sentHeaders: out.sentHeaders,
+      ok: out.ok, status: out.status, sentHeaders: out.sentHeaders, sentToken: out.sentToken,
       text: async () => out.text || out.error || '',
       json: async () => JSON.parse(out.text || 'null'),
       blob: async () => {

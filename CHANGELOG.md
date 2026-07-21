@@ -16,6 +16,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   looked like a duplicate of the team's message).
 
 ### Added
+- **A failed auth request says whether the token was expired.** The in-session page fetch decodes the SENT
+  bearer's own claims (exp / iss — never the raw token), and the list/groups diagnostic appends its status,
+  e.g. `[token EXPIRED 13min ago iss=auth.weltsparen.de]` or `[token valid 600s]`. So "Report a problem"
+  answers "was the token stale?" from the report alone — no DevTools. (This is the gap that made a
+  short-lived-token source like Raisin so hard to diagnose.)
 - **Tokens are correlated in a recording, like ids** (`lib/redact.js`) — the same token value now gets the same
   `[jwt#N]` tag across a **sent `Authorization` header** and **client storage/memory** (kept in a separate map
   the orphan review never reveals, so a live token is never exposed). A sent bearer is redacted to its scheme +
