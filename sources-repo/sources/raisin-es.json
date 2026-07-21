@@ -9,7 +9,7 @@
     "banking",
     "investment"
   ],
-  "version": "2026-07-20.6",
+  "version": "2026-07-20.7",
   "minVersion": "0.5.0.8",
   "keepRaw": true,
   "contributors": [
@@ -74,7 +74,10 @@
           },
           "mask": [
             "iban"
-          ]
+          ],
+          "headers": {
+            "accept": "application/json, text/plain, */*"
+          }
         },
         "list": {
           "path": "/tams/v1/accounts/{group.id}/transactions",
@@ -85,6 +88,9 @@
           "params": {
             "limit": 10,
             "date_from": "{daysAgo:90}"
+          },
+          "headers": {
+            "accept": "application/json, text/plain, */*"
           }
         }
       },
@@ -119,6 +125,9 @@
           "keep": {
             "field": "accounting.deposit_id",
             "prefix": "FDA_"
+          },
+          "headers": {
+            "accept": "application/json, text/plain, */*"
           }
         }
       },
@@ -155,6 +164,9 @@
           "fields": {
             "id": "accounting.deposit_id",
             "currency": "accounting.balance.amount.currency"
+          },
+          "headers": {
+            "accept": "application/json, text/plain, */*"
           }
         },
         "list": {
@@ -164,6 +176,9 @@
           "params": {
             "customer_id": "{ctx.customer_id}",
             "locale": "es-es"
+          },
+          "headers": {
+            "accept": "application/json, text/plain, */*"
           }
         }
       },
@@ -199,6 +214,9 @@
           },
           "fields": {
             "id": "accounting.deposit_id"
+          },
+          "headers": {
+            "accept": "application/json, text/plain, */*"
           }
         },
         "list": {
@@ -208,6 +226,9 @@
           "params": {
             "customer_id": "{ctx.customer_id}",
             "deposit_id": "{group.id}"
+          },
+          "headers": {
+            "accept": "application/json, text/plain, */*"
           }
         },
         "pdf": {
@@ -226,6 +247,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20.7",
+      "changes": "Send the browser-style Accept header (application/json, text/plain, */*) on every list/groups request. Instrumentation proved the ONLY difference between the SPA’s working request and our 401 was the Accept value (bare application/json); the API gateway rejects it. Same token, same everything else."
+    },
     {
       "version": "2026-07-20.6",
       "changes": "auth.cookies:false — send the bearer WITHOUT cookies. Instrumentation proved the token is valid (not expired), so the 401 Authorization-required on a valid token points to a weltsparen.de session cookie interfering with the bearer on the cross-domain call (like Openbank 413). Bearer-only request."
