@@ -9,8 +9,8 @@
     "banking",
     "investment"
   ],
-  "version": "2026-07-20.10",
-  "minVersion": "0.5.0.25",
+  "version": "2026-07-20.11",
+  "minVersion": "0.5.0.26",
   "keepRaw": true,
   "contributors": [
     "David Marín Carreño"
@@ -113,7 +113,6 @@
       "keepRaw": true,
       "api": {
         "list": {
-          "path": "/dbff/v1/public/deposits/dashboard/active",
           "paging": "none",
           "itemsPath": "entries",
           "params": {
@@ -128,7 +127,11 @@
           },
           "headers": {
             "accept": "application/json, text/plain, */*"
-          }
+          },
+          "paths": [
+            "/dbff/v1/public/deposits/dashboard/active",
+            "/dbff/v1/public/deposits/dashboard/inactive"
+          ]
         }
       },
       "fields": {
@@ -149,7 +152,6 @@
       "keepRaw": true,
       "api": {
         "groups": {
-          "path": "/dbff/v1/public/deposits/dashboard/active",
           "itemsPath": "entries",
           "params": {
             "customer_id": "{ctx.customer_id}",
@@ -169,7 +171,11 @@
           },
           "headers": {
             "accept": "application/json, text/plain, */*"
-          }
+          },
+          "paths": [
+            "/dbff/v1/public/deposits/dashboard/active",
+            "/dbff/v1/public/deposits/dashboard/inactive"
+          ]
         },
         "list": {
           "path": "/dbff/v1/public/deposits/{group.id}",
@@ -202,7 +208,6 @@
       "keepRaw": true,
       "api": {
         "groups": {
-          "path": "/dbff/v1/public/deposits/dashboard/active",
           "itemsPath": "entries",
           "params": {
             "customer_id": "{ctx.customer_id}",
@@ -221,7 +226,11 @@
           },
           "headers": {
             "accept": "application/json, text/plain, */*"
-          }
+          },
+          "paths": [
+            "/dbff/v1/public/deposits/dashboard/active",
+            "/dbff/v1/public/deposits/dashboard/inactive"
+          ]
         },
         "list": {
           "path": "/dds/api/v2/public/documents",
@@ -251,6 +260,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20.11",
+      "changes": "Deposits, savings and documents now enumerate BOTH dashboard/active AND dashboard/inactive (api paths[]), so inactive/cancelled deposits and ALL their documents are captured (documents come from /dds per deposit). Requires runtime 0.5.0.26 (paths[] support)."
+    },
     {
       "version": "2026-07-20.10",
       "changes": "Savings/deposit accounts now carry a readable name (the deposit-taking bank) + type, so the account list and per-account labels show a bank name instead of a raw id. Requires 0.5.0.25 (account picker enumerates every grouped stream: current account + savings + deposits)."

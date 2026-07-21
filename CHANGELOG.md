@@ -55,6 +55,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   progressively instead of freezing the tab.
 
 ### Added
+- **A list/account enumeration can span several endpoints** (`runtime/inventory.js`: `api.list.paths[]` and
+  `api.groups.paths[]`). When a source's items live behind more than one URL — Raisin keeps deposits in BOTH
+  `/dashboard/active` and `/dashboard/inactive` — the runtime fetches each and merges. Without it, inactive
+  (cancelled/matured) deposits and all of their documents were silently missed. Validation accepts `paths[]` as
+  an alternative to a single `path`; regression-tested.
 - **Save to a destination from the Archive** (`archive.js` + a new `habeas:deliver` background message reusing
   `runRoute`). A source's document view now has a **"Save to …"** control listing the compatible software
   destinations (Drive / HTTP / WebDAV / S3 / Dropbox that accept the source); clicking it delivers every

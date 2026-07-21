@@ -204,24 +204,28 @@ async function fetchGroupItems(adapter, auth, net) {
   const NET = netFetch(net, adapter && adapter.throttle);
   const g = adapter.api.groups;
   const host = g.host ? absHost(g.host) : adapter.api.host;
-  const path = fillCtx(g.path, auth); // {ctx.*} — e.g. a captured DNI in /posicionGlobal/es/{ctx.dni}
-  // Template param VALUES too (not just the path) so a query filter can carry a captured id — e.g. Raisin's
-  // account list needs `filter=customerId eq {ctx.customer_id} & type eq TA_INTERNAL`. A no-op for any param
-  // without a {ctx.*} token, so other sources are unaffected.
-  const gparams = {}; for (const k of Object.keys(g.params || {})) gparams[k] = fillCtx(g.params[k], auth);
-  const qs = Object.keys(gparams).length ? new URLSearchParams(gparams).toString() : '';
-  const url = host + path + (qs ? '?' + qs : '');
   const isHtml = g.from === 'html';
-  const cookie = adapter.auth && adapter.auth.mode === 'cookie';
   const accept = isHtml ? 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' : 'application/json';
   const method = (g.method || 'GET').toUpperCase();
-  const init = { method, headers: { accept, ...(g.headers || {}), ...headersFor(auth, path, true /*allow captured replay headers (cookie sources only ever capture replayHeaders like x-device-id, never a token)*/) }, credentials: credOf(adapter) };
-  if (method === 'POST' && g.body != null) { init.body = fillTmpl(g.body, null, auth, g.params || {}); init.headers['content-type'] = g.contentType || 'application/x-www-form-urlencoded'; }
-  if (g.referer) init.referrer = g.referer;
-  const res = await withReferer(url, g.referer || null, () => NET(url, init));
-  if (!res.ok) throw new Error('groups ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120) + ' [sent: ' + (res.sentHeaders || Object.keys(init.headers || {})).join(',') + ']' + tokenStatus(res));
-  if (isHtml) return extractListItems(await res.text(), g); // embedded state → itemsPath
-  return get(await res.json(), g.itemsPath) || [];
+  // Several endpoints merged into one account list: Raisin keeps deposits in `dashboard/active` AND
+  // `dashboard/inactive`, so `groups.paths` lists both and concatenates. Falls back to the single `groups.path`.
+  const paths = (Array.isArray(g.paths) && g.paths.length) ? g.paths : [g.path];
+  const out = [];
+  for (const rawPath of paths) {
+    const path = fillCtx(rawPath, auth); // {ctx.*} — e.g. a captured DNI / customerId
+    // Template param VALUES too (not just the path) so a query filter can carry a captured id. No-op without {ctx.*}.
+    const gparams = {}; for (const k of Object.keys(g.params || {})) gparams[k] = fillCtx(g.params[k], auth);
+    const qs = Object.keys(gparams).length ? new URLSearchParams(gparams).toString() : '';
+    const url = host + path + (qs ? '?' + qs : '');
+    const init = { method, headers: { accept, ...(g.headers || {}), ...headersFor(auth, path, true /*allow captured replay headers (cookie sources only ever capture replayHeaders like x-device-id, never a token)*/) }, credentials: credOf(adapter) };
+    if (method === 'POST' && g.body != null) { init.body = fillTmpl(g.body, null, auth, g.params || {}); init.headers['content-type'] = g.contentType || 'application/x-www-form-urlencoded'; }
+    if (g.referer) init.referrer = g.referer;
+    const res = await withReferer(url, g.referer || null, () => NET(url, init));
+    if (!res.ok) throw new Error('groups ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120) + ' [sent: ' + (res.sentHeaders || Object.keys(init.headers || {})).join(',') + ']' + tokenStatus(res));
+    const items = isHtml ? extractListItems(await res.text(), g) : (get(await res.json(), g.itemsPath) || []);
+    for (const it of items) out.push(it);
+  }
+  return out;
 }
 
 async function pageList(adapter, auth, net, group, opts) {
@@ -244,6 +248,18 @@ async function pageList(adapter, auth, net, group, opts) {
   const maxPages = list.maxPages || 100;
   const seen = new Set(opts && opts.knownIds ? opts.knownIds : []), all = []; // incremental: seed with store ids → known items dedup out + paging stops early
   const call = (params) => fetchList(adapter, auth, params, net, group);
+
+  // list.paths: the items come from SEVERAL endpoints merged (Raisin's deposits live in dashboard/active AND
+  // dashboard/inactive). Fetch each with the base params and union — analogous to paramSets but varying the PATH.
+  if (Array.isArray(list.paths) && list.paths.length) {
+    for (const p of list.paths) {
+      if (stop()) break;
+      const a2 = { ...adapter, api: { ...adapter.api, list: { ...list, path: p, paths: undefined } } };
+      const data = await fetchList(a2, auth, { ...range, ...baseParams }, net, group);
+      collect(adapter, data, seen, all, group);
+    }
+    return all.sort((x, y) => ((x.date || '') < (y.date || '') ? 1 : -1));
+  }
 
   // paramSets: some UIs split "all" into a FIXED set of disjoint filter-views rather than pages (FECI's
   // movements arrive as monthFilter=N/A/S tabs). Replay each set the SPA uses and UNION them, deduped by
