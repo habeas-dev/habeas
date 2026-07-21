@@ -12,10 +12,10 @@ import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } 
 import { resolveSiteFetch, ensureSiteFetch, recoverSession } from './lib/pagefetch.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
-import { recordDelivered } from './lib/store.js';
+import { recordDelivered, putItems, getRecords } from './lib/store.js';
 import { nextOccurrence } from './lib/schedule.js';
 import { acceptsDoc, sinkAcceptsArtifact, sinkAcceptsSource, bakeLearned } from './sinks/format.js';
-import { outputsForSink, resolveOutput, storeKeyOf } from './lib/outputs.js';
+import { outputsForSink, outputsOf, resolveOutput, storeKeyOf } from './lib/outputs.js';
 import { getAdapters } from './adapters/index.js';
 import { hasConsent } from './lib/consent.js';
 import { badgeWorking, badgeCount, badgeError, badgeClear, setStatus } from './lib/badge.js';
@@ -303,6 +303,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true; // async response
   }
+  if (msg.type === 'habeas:list' && msg.datasource) { // on-demand "list this source into the store" (from the Archive) — NO sink
+    (async () => {
+      const cfg = await getConfig();
+      const adapters = await getAdapters();
+      const ds = (cfg.datasources || []).find((d) => d.id === msg.datasource);
+      const adapter = ds && adapters[ds.adapter];
+      if (!ds || !adapter) return { ok: false, error: 'unknown source' };
+      // List every output → persist listed records to the canonical store. No delivery, no ledger writes.
+      const r = await listSourceIntoStore(ds, adapter, { groups: msg.groups });
+      return { ok: true, ...r };
+    })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
+    return true; // async response
+  }
   if (msg.type === 'habeas:sched-run' && msg.id) { onScheduleAlarm(msg.id).then(() => sendResponse({ ok: true }), (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) })); return true; } // run a schedule now
   if (msg.type === 'habeas:auth' && msg.host) {
     // The in-page hook captures from ANY fetch/XHR (no URL filter), so honor the source's declared capture
@@ -508,6 +521,63 @@ function siteMatches(adapter, host) {
 // Whole store → each endpoint resolves its own auth (mixed cookie+bearer), merged across sibling hosts
 // sharing the source's registrable domain. Cookie sources proceed with an empty store (cookies carry it).
 const authFor = (adapter) => loadAuth(adapter);
+
+// List every output of a source into the canonical store — NO sink, NO ledger. Powers the Archive's per-source
+// "Refresh" button: the same list pipeline auto/manual delivery uses, but it stops at the store (write-through)
+// so the user browses fresh documents in place without first choosing a destination. Incremental (seeds
+// knownIds from the store → known items dedup out + paging stops early), so a refresh only pulls what's new.
+async function listSourceIntoStore(ds, adapter, opts = {}) {
+  const name = adapter.name || ds.adapter;
+  await badgeWorking();
+  setStatus(t('status_listing', [name]));
+  try {
+    const auth = await authFor(adapter);
+    // Same no-session contract as runRoute: no live session (or a required captured context value still
+    // missing) → open the site so the user signs in and the token is captured, then bail cleanly. The Archive
+    // surfaces "sign in and retry"; nothing is written.
+    const ctxMissing = ((adapter.auth && adapter.auth.context) || []).some((c) => !(auth && auth.ctx && auth.ctx[c.name] != null && auth.ctx[c.name] !== ''));
+    if (!auth || ctxMissing) {
+      try { await ensureSiteFetch(adapter, { open: true }); } catch (e) { /* best-effort: open the login tab */ }
+      await badgeClear(); setStatus(t('status_nosession', [name]));
+      return { status: 'nosession' };
+    }
+    const net = opts.net || await resolveSiteFetch(adapter); // fetch from the user's tab → inherits the session
+    if (!net) { await badgeClear(); setStatus(t('status_nosession', [name])); return { status: 'nosession' }; }
+    // Saved per-account allow-list (grouped sources) — or an explicit subset the Archive asked for.
+    const filter = (opts.groups && opts.groups.length) ? opts.groups : ((ds.groups && ds.groups.length) ? ds.groups : null);
+    const streamIds = [...new Set(outputsOf(adapter).map((o) => o.stream))]; // formats share a stream's items → list once per stream
+    let added = 0;
+    for (const sid of streamIds) {
+      const eff = resolveOutput(adapter, sid);
+      const sk = storeKeyOf(adapter.id, sid);
+      const known = (await getRecords(sk)).map((r) => r.internalId).filter((x) => x != null);
+      const docs = await listInventory(eff, auth, net, {
+        groups: filter, knownIds: known, // incremental → returned docs are the NEW ones only
+        onProgress: (p) => setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])),
+      });
+      const items = docs.filter((d) => d.internalId != null);
+      if (items.length) {
+        try { await putItems(sk, items.map((d) => ({ internalId: d.internalId, record: d.record })), { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store best-effort */ }
+      }
+      added += items.length;
+    }
+    await badgeClear();
+    setStatus(t('status_done', [name, String(added)]));
+    return { status: 'done', new: added };
+  } catch (e) {
+    const msg = (e && e.message) || String(e);
+    // Anti-bot challenge → show it to the user (core thesis: they resolve it live), not a hard error.
+    if (/captcha-delivery|datadome|geo\.captcha|interstitial|challenge-platform|__cf_chl|cf-browser-verification|just a moment|akam[ai]/i.test(msg)) {
+      const curl = challengeUrlOf(msg);
+      try { await chrome.tabs.create({ url: curl || siteBaseUrl(adapter), active: true }); } catch (e2) {}
+      await badgeClear(); setStatus(t('status_challenged', [name]));
+      return { status: 'challenged' };
+    }
+    pushDiag(adapter.id, { phase: 'list', message: msg });
+    await badgeError(); setStatus(t('status_error', [name, msg.slice(0, 80)]));
+    return { status: 'error', error: msg };
+  }
+}
 
 async function runRoute(ds, adapter, sink, opts = {}) {
   const kind = opts.kind || 'auto';

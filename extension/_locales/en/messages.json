@@ -2280,5 +2280,65 @@
   },
   "archive_loading": {
     "message": "Loading…"
+  },
+  "archive_pick_account": {
+    "message": "Pick an account"
+  },
+  "archive_pick_account_sub": {
+    "message": "This source has $N$ accounts — choose one in the left panel to see its documents.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_refresh": {
+    "message": "Refresh"
+  },
+  "archive_refresh_hint": {
+    "message": "Fetch new documents from $NAME$",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_refreshing": {
+    "message": "Checking for new documents…"
+  },
+  "archive_refresh_ok": {
+    "message": "$N$ new document(s) added",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_refresh_none": {
+    "message": "No new documents"
+  },
+  "archive_refresh_nosession": {
+    "message": "Sign in to $NAME$ in the tab that opened, then refresh again",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_refresh_challenge": {
+    "message": "$NAME$ needs a quick verification — complete it in the open tab, then retry",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_refresh_err": {
+    "message": "Couldn’t refresh: $E$",
+    "placeholders": {
+      "e": {
+        "content": "$1"
+      }
+    }
   }
 }

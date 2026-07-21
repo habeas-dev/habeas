@@ -2280,5 +2280,65 @@
   },
   "archive_loading": {
     "message": "Cargando…"
+  },
+  "archive_pick_account": {
+    "message": "Elige una cuenta"
+  },
+  "archive_pick_account_sub": {
+    "message": "Esta fuente tiene $N$ cuentas — elige una en el panel de la izquierda para ver sus documentos.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_refresh": {
+    "message": "Actualizar"
+  },
+  "archive_refresh_hint": {
+    "message": "Buscar documentos nuevos en $NAME$",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_refreshing": {
+    "message": "Buscando documentos nuevos…"
+  },
+  "archive_refresh_ok": {
+    "message": "$N$ documento(s) nuevo(s) añadidos",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_refresh_none": {
+    "message": "Sin documentos nuevos"
+  },
+  "archive_refresh_nosession": {
+    "message": "Inicia sesión en $NAME$ en la pestaña que se abrió y vuelve a actualizar",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_refresh_challenge": {
+    "message": "$NAME$ necesita una verificación — complétala en la pestaña abierta y reintenta",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_refresh_err": {
+    "message": "No se pudo actualizar: $E$",
+    "placeholders": {
+      "e": {
+        "content": "$1"
+      }
+    }
   }
 }

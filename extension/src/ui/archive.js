@@ -258,6 +258,13 @@ async function renderDocs() {
   const seq = ++docsSeq;
   const m = $('#main');
   const entry = INDEX.find((x) => x.base === CUR) || {};
+  // Multi-account source: don't mix accounts — wait for the user to pick one in the tree before showing rows.
+  const accs = accountsOf(CUR);
+  if (accs.length > 1 && !ACCOUNT) {
+    m.innerHTML = `<div class="crumbs"><span class="tile ${catOf(entry.primaryCat).f}" style="width:26px;height:26px;font-size:14px;border-radius:7px">${catOf(entry.primaryCat).i}</span> <b>${esc(entry.name || CUR)}</b></div>`
+      + `<div class="empty"><div class="big">👈</div><div style="font-family:var(--font-head);font-weight:600;font-size:17px;color:var(--ink)">${esc(t('archive_pick_account'))}</div><p style="margin-top:6px">${esc(t('archive_pick_account_sub', [String(accs.length)]))}</p></div>`;
+    return;
+  }
   const docs = visibleDocs();
   const delivered = CURDOCS.filter((r) => r.delivered.length).length;
   let head = `<div class="crumbs"><span class="tile ${catOf(entry.primaryCat).f}" style="width:26px;height:26px;font-size:14px;border-radius:7px">${catOf(entry.primaryCat).i}</span> <b>${esc(entry.name || CUR)}</b>${ACCOUNT ? ' <span>›</span> ' + esc(ACCOUNT) : ''}</div>`;
@@ -267,8 +274,9 @@ async function renderDocs() {
   const gb = (mode, label) => `<button data-gb="${mode}" class="${GROUPMODE === mode ? 'on' : ''}">${esc(label)}</button>`;
   const sinks = compatibleSinks(entry.adapter);
   const saveGrp = sinks.length ? `<span class="savegrp"><span class="sl">${esc(t('archive_save_to'))}</span>${sinks.map((s) => `<button class="savebtn" data-save="${esc(s.id)}" title="${esc(t('archive_save_hint', [sinkLabel(s)]))}">${sinkIcon(s)} ${esc(sinkLabel(s))}</button>`).join('')}</span>` : '';
+  const refreshBtn = (entry.ds ? `<button id="refresh" class="refbtn" title="${esc(t('archive_refresh_hint', [entry.name || CUR]))}"><span class="ic">↻</span> ${esc(t('archive_refresh'))}</button>` : '');
   head += `<div class="docbar"><div class="groupby">${gb('month', t('group_month'))}${gb('category', t('group_category'))}${gb('store', t('group_store'))}</div>
-    <div class="docbar-r">${saveGrp}<button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div></div>`;
+    <div class="docbar-r">${refreshBtn}${saveGrp}<button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div></div>`;
   const selbar = `<div class="selbar"><b id="selcount">0</b> <span>${esc(t('archive_selected_suffix'))}</span>
     <button class="go" id="selopen">${esc(t('archive_open_saved'))}</button>
     <button class="clr" id="selclear">${esc(t('archive_clear'))}</button></div>`;
@@ -370,6 +378,29 @@ async function deliver(sinkId) {
     await buildIndex(); if (CUR) { await loadDocs(CUR); renderRail(); renderDocs(); } hydrateIndex();
   }
 }
+// Pull NEW documents for the current source into the store — no destination. The Archive becomes self-sufficient:
+// the user lists/refreshes in place (session/login/challenges handled by the background) before deciding where to send.
+async function refreshSource() {
+  const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds) return;
+  document.body.classList.add('saving');
+  const btn = $('#refresh'); if (btn) { btn.disabled = true; btn.classList.add('spin'); }
+  $('#astatus').textContent = t('archive_refreshing');
+  const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#astatus').textContent = v.msg; };
+  chrome.storage.onChanged.addListener(onStatus);
+  try {
+    const r = await chrome.runtime.sendMessage({ type: 'habeas:list', datasource: entry.ds.id });
+    if (r && r.ok && r.status === 'done') $('#astatus').textContent = r.new ? t('archive_refresh_ok', [String(r.new)]) : t('archive_refresh_none');
+    else if (r && r.status === 'nosession') $('#astatus').textContent = t('archive_refresh_nosession', [entry.name]);
+    else if (r && r.status === 'challenged') $('#astatus').textContent = t('archive_refresh_challenge', [entry.name]);
+    else $('#astatus').textContent = t('archive_refresh_err', [(r && r.error) || 'error']);
+  } catch (e) { $('#astatus').textContent = t('archive_refresh_err', [(e && e.message) || String(e)]); }
+  finally {
+    chrome.storage.onChanged.removeListener(onStatus);
+    document.body.classList.remove('saving');
+    const b = $('#refresh'); if (b) { b.disabled = false; b.classList.remove('spin'); }
+    await buildIndex(); if (CUR) { await loadDocs(CUR); renderRail(); renderDocs(); } hydrateIndex();
+  }
+}
 function openFile(r, sinkId, ext) {
   const url = chrome.runtime.getURL(`src/ui/docview.html?sink=${encodeURIComponent(sinkId)}&src=${encodeURIComponent(r.base)}&id=${encodeURIComponent(r.internalId)}${ext ? '&ext=' + encodeURIComponent(ext) : ''}`);
   chrome.tabs.create({ url });
@@ -414,6 +445,7 @@ function wire() {
     const sc = ev.target.closest('.srccard'); if (sc) { openSource(sc.dataset.src); return; }
     const gb = ev.target.closest('[data-gb]'); if (gb) { GROUPMODE = gb.dataset.gb; renderDocs(); return; }
     const sv = ev.target.closest('[data-save]'); if (sv) { deliver(sv.dataset.save); return; }
+    if (ev.target.closest('#refresh')) { refreshSource(); return; }
     if (ev.target.closest('#seltoggle')) { toggleSelecting(); return; }
     if (ev.target.closest('#selclear')) { PICKED.clear(); SELECTING = false; renderDocs(); return; }
     if (ev.target.closest('#selopen')) { batchOpen(); return; }

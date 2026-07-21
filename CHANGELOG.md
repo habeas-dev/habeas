@@ -10,6 +10,18 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **Archive — per-source "Refresh"** (`ui/archive.js`, `background.js`). A ↻ Refresh button on each source lists
+  every output and writes the new documents straight into the local store — no destination required. It reuses the
+  auto/manual list pipeline (incremental: seeds known ids so a refresh only pulls what's new) and honors the same
+  no-session / anti-bot-challenge contract (opens the site to sign in or solve the check, then the user retries).
+  This makes the Archive self-sufficient: browse and pull fresh documents in place before deciding where to send.
+
+### Changed
+- **Archive — multi-account sources wait for an account pick** (`ui/archive.js`). Selecting a bank/multi-account
+  source no longer mixes every account's documents together; it shows a prompt to choose an account in the tree
+  first, then lists that account's documents. Single-account sources are unaffected.
+
 ### Fixed
 - **An ungrouped source can label a row's account** (`sinks/format.js`). A flat list where each row *is* its own
   account (a deposit) can map a `group` field directly; `buildRecord` uses it when there's no grouped `_group`,
