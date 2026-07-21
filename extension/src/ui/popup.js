@@ -94,9 +94,9 @@ async function init() {
   renderQuick().catch(() => {});
   await renderActivity();
   chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch['habeas:log']) renderActivity(); });
-  // Activity log moved to a topbar popover (🗒️ next to Sync). The topbar shows the LAST status message, fed
-  // live from the background's habeas:status (and seeded from its last stored value on open).
-  wireLogs();
+  // The 🗒️ logs button opens the activity log in its OWN tab (activity.html). The topbar shows the LAST status
+  // message, fed live from the background's habeas:status (seeded from its last stored value on open).
+  { const l = $('#logs'); if (l) l.onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/activity.html') }); }
   try { const s0 = (await chrome.storage.local.get('habeas:status'))['habeas:status']; if (s0 && s0.msg) setTopStatus(s0.msg); } catch (e) {}
   chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch['habeas:status']) { const v = ch['habeas:status'].newValue; if (v && v.msg) setTopStatus(v.msg); } });
   // A source was (re)installed elsewhere → replace our cached adapters so a running list/send uses the NEW
@@ -330,19 +330,8 @@ async function refreshStoreButton() {
   if ($('#full-history')) $('#full-history').hidden = !n;
 }
 
-// The last status message, shown in the topbar (next to the logs icon + Sync).
+// The last status message, shown in the topbar (next to Sync).
 function setTopStatus(msg) { const el = $('#topstatus'); if (el) el.textContent = msg || ''; }
-// The activity log popover (🗒️ in the topbar). Toggles a panel; closes on outside click / Escape.
-function wireLogs() {
-  const btn = $('#logs-btn'), panel = $('#logs-panel'), close = $('#logs-close');
-  if (!btn || !panel) return;
-  const hide = () => { panel.hidden = true; };
-  const show = () => { renderActivity().catch(() => {}); panel.hidden = false; };
-  btn.onclick = (e) => { e.stopPropagation(); panel.hidden ? show() : hide(); };
-  if (close) close.onclick = hide;
-  document.addEventListener('click', (e) => { if (!panel.hidden && !e.target.closest('#logs-panel') && !e.target.closest('#logs-btn')) hide(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hide(); });
-}
 
 // "Sync all now": ask the background to sweep every auto route (unattended first, tab only if a source
 // needs its session). One button for "pull whatever's new across all my sources". Status shows in the topbar;

@@ -5,26 +5,10 @@
   <title>Habeas</title>
   <link rel="stylesheet" href="theme.css" />
   <style>
-    body { min-width: 640px; }
-    .tabs { display: flex; gap: 4px; margin: 14px 0 4px; border-bottom: 1px solid var(--line); }
-    .tab { background: none; border: none; border-bottom: 2px solid transparent; padding: 8px 14px; cursor: pointer; color: var(--muted); font: inherit; }
-    .tab.active { color: var(--fg, inherit); border-bottom-color: var(--accent, #4a7); font-weight: 600; }
-    .badge-sink { display: inline-block; padding: 1px 7px; margin: 0 3px 3px 0; border-radius: 999px; font-size: 11px; border: 1px solid var(--line); cursor: pointer; }
-    .badge-sink:hover { background: var(--accent, #4a7); color: #fff; }
-    .badge-sink.nofile { cursor: default; opacity: .55; }
-    .badge-sink.nofile:hover { background: none; color: inherit; }
-    #doc-modal[hidden] { display: none; }
-    .doc-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); }
-    .doc-modal-panel { position: fixed; inset: 5% 5% auto 5%; max-height: 88vh; overflow: auto; background: var(--bg, #fff); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
-    .doc-modal-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-    .doc-modal-head button { background: none; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; padding: 4px 8px; }
-    .kv { border-collapse: collapse; width: 100%; font-size: 13px; }
-    .kv th, .kv td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
-    .kv th { color: var(--muted); font-weight: 600; white-space: nowrap; width: 1%; }
-    .kv .nested { padding-left: 0; }
-    .kv td.v { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-    .doc-frame { width: 100%; height: 70vh; border: 1px solid var(--line); border-radius: 6px; }
-    /* quick hero (redesigned popup landing → the Archive) */
+    body { min-width: 460px; }
+    .topbar .topstatus { font-size: 12px; color: #ffffffcc; max-width: 170px; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+    /* quick hero — the popup's whole job: jump into the Archive */
     #quick { margin: 14px 0 4px; padding: 15px 16px; border: 1px solid var(--line); border-radius: 12px;
       background: linear-gradient(180deg, var(--brand-50, #eef4f1), var(--surface, #fff)); }
     #quick[hidden] { display: none; }
@@ -36,34 +20,13 @@
     .q-chip { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; padding: 5px 11px;
       border-radius: 100px; background: var(--surface, #fff); border: 1px solid var(--line); cursor: pointer; color: var(--ink, inherit); }
     .q-chip:hover { border-color: var(--brand-500, #2a7d6d); }
-    .q-chip .c { font-variant-numeric: tabular-nums; color: var(--muted); }
-    /* classic Sources/Documents UI is now secondary — tucked behind a disclosure; the Archive is the home */
-    details.adv { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 8px; }
-    details.adv > summary { cursor: pointer; color: var(--muted); font-size: 12.5px; font-weight: 600;
-      list-style: none; padding: 6px 2px; user-select: none; }
-    details.adv > summary::-webkit-details-marker { display: none; }
-    details.adv > summary::before { content: "▸ "; }
-    details.adv[open] > summary::before { content: "▾ "; }
-    details.adv > summary:hover { color: var(--ink, inherit); }
-    .q-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px;
-      margin-top: 14px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 11px; }
-    .q-foot a { color: var(--muted); text-decoration: none; }
-    .q-foot a:hover { color: var(--brand-500, #2a7d6d); text-decoration: underline; }
-    .q-foot #version { font-size: 11px; }
-    /* topbar: last status message + a logs icon that opens the activity popover */
-    .topbar .topstatus { font-size: 12px; color: #ffffffcc; max-width: 210px; overflow: hidden;
-      text-overflow: ellipsis; white-space: nowrap; text-align: right; }
-    .topbar .iconbtn { padding: 6px 9px; line-height: 1; font-size: 15px; }
-    .logs-panel { position: fixed; top: 60px; right: 16px; z-index: 40; width: min(360px, calc(100vw - 32px));
-      max-height: 62vh; overflow: auto; background: var(--surface, #fff); color: var(--ink, inherit);
-      border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 14px 44px rgba(0,0,0,.30); }
-    .logs-panel[hidden] { display: none; }
-    .logs-head { display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      padding: 12px 14px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface, #fff); }
-    .logs-head strong { font-family: var(--font-head); font-size: 14px; }
-    .logs-head button { background: none; border: 1px solid var(--line); border-radius: 7px; cursor: pointer;
-      padding: 3px 9px; color: inherit; font-size: 13px; }
-    #logs-panel #activity { padding: 8px 12px 12px; }
+    .q-foot { display: flex; align-items: center; gap: 14px; margin-top: 14px; padding-top: 10px;
+      border-top: 1px solid var(--line); font-size: 11.5px; }
+    .q-foot a, .q-foot .linkbtn { color: var(--muted); text-decoration: none; background: none; border: 0;
+      cursor: pointer; font: inherit; font-size: 11.5px; padding: 0; }
+    .q-foot .linkbtn { color: var(--brand-500, #2a7d6d); font-weight: 600; }
+    .q-foot a:hover, .q-foot .linkbtn:hover { text-decoration: underline; }
+    .q-foot #version { margin-left: auto; }
   </style>
 </head>
 <body>
@@ -74,14 +37,8 @@
       <span class="tagline" data-i18n="tagline"></span>
     </div>
     <span id="topstatus" class="topstatus"></span>
-    <button id="logs-btn" class="iconbtn" data-i18n-title="activity" aria-label="Activity log" aria-haspopup="dialog">🗒️</button>
     <button id="sync-all" class="primary" data-i18n="sync_all"></button>
     <button id="opts" data-i18n="settings"></button>
-  </div>
-
-  <div id="logs-panel" class="logs-panel" hidden role="dialog" aria-modal="false" aria-label="Activity log">
-    <div class="logs-head"><strong data-i18n="activity"></strong><button id="logs-close" aria-label="Close">✕</button></div>
-    <div id="activity"></div>
   </div>
 
   <div class="app">
@@ -91,110 +48,13 @@
 
     <div id="quick" hidden></div>
 
-    <details class="adv">
-      <summary><span data-i18n="popup_advanced"></span></summary>
-      <p class="muted" data-i18n="popup_advanced_note" style="margin:8px 2px 4px;font-size:12px"></p>
-    <div class="tabs" role="tablist">
-      <button id="tab-sources" class="tab active" data-i18n="tab_sources"></button>
-      <button id="tab-docs" class="tab" data-i18n="tab_documents"></button>
-    </div>
-
-    <div id="view-sources">
-    <div class="section-title"><h2 data-i18n="documents"></h2></div>
-    <div class="card">
-      <div class="row">
-        <select id="ds"></select>
-        <button id="list" class="primary" data-i18n="list_docs"></button>
-        <button id="accounts" hidden data-i18n="manage_accounts" data-i18n-title="manage_accounts_hint"></button>
-        <button id="full-history" hidden data-i18n="full_history" data-i18n-title="full_history_hint"></button>
-        <button id="load-store" hidden data-i18n="load_store"></button>
-        <span id="spin" class="spinner" hidden aria-hidden="true"></span>
-        <span id="status" class="muted"></span>
-        <button id="stop" hidden data-i18n="stop"></button>
-      </div>
-      <div class="row" id="outputs" hidden style="margin-top:8px;gap:12px"></div>
-      <div class="row" id="sendbar" hidden style="margin-top:12px">
-        <span data-i18n="send_to"></span>
-        <select id="sink"></select>
-        <button id="send" class="accent" data-i18n="send_selected"></button>
-        <label style="display:inline-flex;align-items:center;gap:5px" data-i18n-title="force_redownload_hint"><input type="checkbox" id="force-redownload"><span data-i18n="force_redownload"></span></label>
-      </div>
-      <div class="row" id="selbar" hidden style="margin-top:12px">
-        <small data-i18n="select_label"></small>
-        <button id="sel-new" data-i18n="sel_new"></button>
-        <button id="sel-all" data-i18n="sel_all"></button>
-        <button id="sel-none" data-i18n="sel_none"></button>
-      </div>
-      <div class="row" id="filterbar" hidden style="margin-top:10px;gap:8px;align-items:center">
-        <small class="muted" data-i18n="filter_label"></small>
-        <select id="filter-group" hidden></select>
-        <select id="filter-type" hidden></select>
-      </div>
-      <table id="tbl" style="margin-top:14px">
-        <thead><tr>
-          <th></th>
-          <th class="sortable" data-sort="date"><span data-i18n="th_date"></span><span class="sort-ind"></span></th>
-          <th class="sortable col-group" data-sort="group"><span data-i18n="th_group"></span><span class="sort-ind"></span></th>
-          <th class="sortable" data-sort="type"><span data-i18n="th_type"></span><span class="sort-ind"></span></th>
-          <th data-i18n="th_store"></th>
-          <th data-i18n="th_files"></th>
-          <th class="r" data-i18n="th_amount"></th>
-          <th data-i18n="th_status"></th>
-        </tr></thead>
-        <tbody></tbody>
-      </table>
-      <pre id="log" class="log" style="margin-top:14px"></pre>
-    </div>
-    </div><!-- /view-sources -->
-
-    <div id="view-docs" hidden>
-      <div class="section-title"><h2 data-i18n="all_documents"></h2></div>
-      <div class="card">
-        <div class="row">
-          <button id="open-archive" class="primary" data-i18n="open_archive"></button>
-          <button id="docs-refresh" data-i18n="refresh"></button>
-          <span id="docs-status" class="muted"></span>
-        </div>
-        <div class="row" id="docs-filterbar" style="margin-top:10px;gap:8px;align-items:center">
-          <input id="docs-search" type="search" data-i18n-ph="docs_search" style="min-width:200px" />
-          <select id="docs-source"></select>
-          <select id="docs-group" hidden></select>
-        </div>
-        <table id="docs-tbl" style="margin-top:14px">
-          <thead><tr>
-            <th data-i18n="th_source"></th>
-            <th data-i18n="th_date"></th>
-            <th data-i18n="th_store"></th>
-            <th data-i18n="th_type"></th>
-            <th class="r" data-i18n="th_amount"></th>
-            <th data-i18n="th_delivered_to"></th>
-            <th></th>
-          </tr></thead>
-          <tbody id="docs-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-    </details><!-- /advanced -->
-
     <div class="q-foot">
+      <button id="open-advanced" class="linkbtn" data-i18n="open_advanced"></button>
       <a id="repo" href="https://github.com/habeas-dev/habeas" target="_blank" rel="noopener" data-i18n="learn_more"></a>
       <span id="version" class="muted"></span>
     </div>
-
-    <div id="doc-modal" hidden>
-      <div class="doc-modal-backdrop"></div>
-      <div class="doc-modal-panel" role="dialog" aria-modal="true">
-        <div class="doc-modal-head">
-          <strong id="doc-modal-title"></strong>
-          <span style="flex:1"></span>
-          <div id="doc-modal-actions" class="row"></div>
-          <button id="doc-modal-close" aria-label="Close">✕</button>
-        </div>
-        <div id="doc-modal-body"></div>
-      </div>
-    </div>
   </div>
 
-  <script type="module" src="popup.js"></script>
+  <script type="module" src="launcher.js"></script>
 </body>
 </html>

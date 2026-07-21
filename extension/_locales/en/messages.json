@@ -2403,5 +2403,8 @@
   },
   "archive_load_store_hint": {
     "message": "Reload from the local store — no network request"
+  },
+  "open_advanced": {
+    "message": "Advanced tools"
   }
 }

@@ -550,6 +550,7 @@ function goIndex() { CUR = null; renderRail(); renderIndex(); }
 // ---- events ----
 function wire() {
   $('#opts').onclick = () => chrome.runtime.openOptionsPage();
+  { const l = $('#logs'); if (l) l.onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/activity.html') }); }
   $('#dw-close').onclick = closeDrawer;
   $('#scrim').onclick = closeDrawer;
   $('#q').oninput = () => { if (CUR) renderDocs(); else renderIndex(); };

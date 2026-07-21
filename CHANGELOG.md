@@ -28,12 +28,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   with stored documents — so a freshly-installed source appears and can be Refreshed to pull its first documents.
 
 ### Changed
-- **Activity log moved to a topbar popover** (`ui/popup.html`, `ui/popup.js`). The "Recent activity" card is gone
-  from the popup body; a 🗒️ logs icon next to Sync opens the log in a popover, and the topbar shows the last
-  status message (fed live from the background's `habeas:status`). Keeps the launcher clean.
-- **Popup is now a launcher.** The popup opens on the Archive quick-view (recent activity + a chip per source +
-  "Open the Archive"); the classic Sources/Documents tabs move behind an "Advanced tools" disclosure. Everything
-  the tabs did — list, send, accounts, browse — now lives in the Archive.
+- **Popup is a pure launcher; Advanced tools + Activity log are their own tabs.** The popup now shows only the
+  quick hero (a chip per source + "Open the Archive"), Sync-all, and links to Advanced tools / Settings — plus the
+  last status message in the topbar (fed live from the background's `habeas:status`). The classic Sources/Documents
+  UI moved out of the popup into its own page (`advanced.html`, driven by the existing `popup.js`), and the
+  activity log into its own page (`activity.html`, grouped by day). A 🗒️ logs button opens the activity tab from
+  the Archive and the Advanced-tools window (never from the popup). New `launcher.js` drives the slim popup.
 - **Archive — multi-account sources wait for an account pick** (`ui/archive.js`). Selecting a bank/multi-account
   source no longer mixes every account's documents together; it shows a prompt to choose an account in the tree
   first, then lists that account's documents. Single-account sources are unaffected. The source-level controls

@@ -40,6 +40,7 @@
     .abar .search input::placeholder{color:#9fc4ba}
     .abar button{font-family:var(--font-body);font-weight:600;font-size:13px;border:0;border-radius:100px;padding:8px 15px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:7px;color:#eaf4f0;background:rgba(255,255,255,.12)}
     .abar button.sync{background:var(--accent);color:#241206}
+    .abar button.ic{padding:8px 10px;font-size:15px;line-height:1}
     .abar #astatus{font-size:12px;color:#9fc4ba;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
     /* layout */
@@ -204,6 +205,7 @@
     <div class="brand">Habeas<small data-i18n="archive_tag"></small></div>
     <div class="search"><span>🔍</span><input id="q" type="search" data-i18n-ph="archive_search" /></div>
     <span id="astatus"></span>
+    <button id="logs" class="ic" data-i18n-title="activity" aria-label="Activity log">🗒️</button>
     <button id="sync" class="sync" data-i18n="sync_all"></button>
     <button id="opts" data-i18n="settings"></button>
   </div>
