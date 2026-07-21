@@ -2340,5 +2340,50 @@
         "content": "$1"
       }
     }
+  },
+  "archive_accounts": {
+    "message": "Accounts"
+  },
+  "archive_accounts_hint": {
+    "message": "Choose which accounts this source tracks"
+  },
+  "archive_send_to": {
+    "message": "Send to $NAME$",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_sending_n": {
+    "message": "Sending $N$ document(s)…",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_sent_ok": {
+    "message": "$N$ sent to $NAME$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "name": {
+        "content": "$2"
+      }
+    }
+  },
+  "archive_send_none": {
+    "message": "Nothing sent (already delivered or incompatible)"
+  },
+  "popup_advanced": {
+    "message": "Advanced tools (classic view)"
+  },
+  "popup_advanced_note": {
+    "message": "Everything here now lives in the Archive. These controls stay for edge cases and record mode."
+  },
+  "quick_sub_empty": {
+    "message": "Your recovered documents live here. Open the Archive to add a source and pull your data."
   }
 }

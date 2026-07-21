@@ -16,11 +16,26 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   auto/manual list pipeline (incremental: seeds known ids so a refresh only pulls what's new) and honors the same
   no-session / anti-bot-challenge contract (opens the site to sign in or solve the check, then the user retries).
   This makes the Archive self-sufficient: browse and pull fresh documents in place before deciding where to send.
+- **Archive — send hand-picked documents** (`ui/archive.js`, `background.js` `habeas:send` → `sendStoredDocs`).
+  Selection mode now offers "Send to <destination>" for every compatible sink: the chosen documents are delivered
+  from the store (each record's manifest, plus its file re-fetched when the source can still produce it).
+- **Archive — account management** (`ui/archive.js`). Grouped (bank) sources get an 👤 Accounts button that opens
+  the account picker in place, so you choose which accounts a source tracks without the popup.
+- **Archive — a complete source manager.** The index now lists every enabled, installed source, not only those
+  with stored documents — so a freshly-installed source appears and can be Refreshed to pull its first documents.
 
 ### Changed
+- **Popup is now a launcher.** The popup opens on the Archive quick-view (recent activity + a chip per source +
+  "Open the Archive"); the classic Sources/Documents tabs move behind an "Advanced tools" disclosure. Everything
+  the tabs did — list, send, accounts, browse — now lives in the Archive.
 - **Archive — multi-account sources wait for an account pick** (`ui/archive.js`). Selecting a bank/multi-account
   source no longer mixes every account's documents together; it shows a prompt to choose an account in the tree
-  first, then lists that account's documents. Single-account sources are unaffected.
+  first, then lists that account's documents. Single-account sources are unaffected. The source-level controls
+  (Refresh, Accounts) stay available on that prompt.
+
+### Fixed
+- **`runRoute` sync status line had its placeholders swapped** (`background.js`) — the transient "…: N new synced"
+  toast showed the count and source name in the wrong slots. Now renders `<source>: <N> new synced`.
 
 ### Fixed
 - **An ungrouped source can label a row's account** (`sinks/format.js`). A flat list where each row *is* its own

@@ -2340,5 +2340,50 @@
         "content": "$1"
       }
     }
+  },
+  "archive_accounts": {
+    "message": "Cuentas"
+  },
+  "archive_accounts_hint": {
+    "message": "Elige qué cuentas sigue esta fuente"
+  },
+  "archive_send_to": {
+    "message": "Enviar a $NAME$",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_sending_n": {
+    "message": "Enviando $N$ documento(s)…",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_sent_ok": {
+    "message": "$N$ enviados a $NAME$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "name": {
+        "content": "$2"
+      }
+    }
+  },
+  "archive_send_none": {
+    "message": "No se envió nada (ya entregados o incompatibles)"
+  },
+  "popup_advanced": {
+    "message": "Herramientas avanzadas (vista clásica)"
+  },
+  "popup_advanced_note": {
+    "message": "Todo esto vive ahora en el Archivo. Estos controles quedan para casos límite y el modo grabación."
+  },
+  "quick_sub_empty": {
+    "message": "Aquí viven tus documentos recuperados. Abre el Archivo para añadir una fuente y traer tus datos."
   }
 }

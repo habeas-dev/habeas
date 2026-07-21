@@ -37,6 +37,14 @@
       border-radius: 100px; background: var(--surface, #fff); border: 1px solid var(--line); cursor: pointer; color: var(--ink, inherit); }
     .q-chip:hover { border-color: var(--brand-500, #2a7d6d); }
     .q-chip .c { font-variant-numeric: tabular-nums; color: var(--muted); }
+    /* classic Sources/Documents UI is now secondary — tucked behind a disclosure; the Archive is the home */
+    details.adv { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 8px; }
+    details.adv > summary { cursor: pointer; color: var(--muted); font-size: 12.5px; font-weight: 600;
+      list-style: none; padding: 6px 2px; user-select: none; }
+    details.adv > summary::-webkit-details-marker { display: none; }
+    details.adv > summary::before { content: "▸ "; }
+    details.adv[open] > summary::before { content: "▾ "; }
+    details.adv > summary:hover { color: var(--ink, inherit); }
   </style>
 </head>
 <body>
@@ -63,6 +71,12 @@
 
     <div id="quick" hidden></div>
 
+    <div class="section-title"><h2 data-i18n="activity"></h2></div>
+    <div class="card"><div id="activity"></div></div>
+
+    <details class="adv">
+      <summary><span data-i18n="popup_advanced"></span></summary>
+      <p class="muted" data-i18n="popup_advanced_note" style="margin:8px 2px 4px;font-size:12px"></p>
     <div class="tabs" role="tablist">
       <button id="tab-sources" class="tab active" data-i18n="tab_sources"></button>
       <button id="tab-docs" class="tab" data-i18n="tab_documents"></button>
@@ -114,9 +128,6 @@
       </table>
       <pre id="log" class="log" style="margin-top:14px"></pre>
     </div>
-
-    <div class="section-title"><h2 data-i18n="activity"></h2></div>
-    <div class="card"><div id="activity"></div></div>
     </div><!-- /view-sources -->
 
     <div id="view-docs" hidden>
@@ -146,6 +157,7 @@
         </table>
       </div>
     </div>
+    </details><!-- /advanced -->
 
     <div id="doc-modal" hidden>
       <div class="doc-modal-backdrop"></div>

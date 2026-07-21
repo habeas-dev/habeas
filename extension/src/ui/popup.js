@@ -731,11 +731,16 @@ const docStore = (r) => nameOf(r.store && r.store.name) || nameOf(r.storeName) |
 async function renderQuick() {
   const el = $('#quick'); if (!el) return;
   let keys = []; try { keys = await listSources(); } catch (e) {}
-  const bases = [...new Set(keys.map((k) => String(k).split(':')[0]))];
-  if (!bases.length) { el.hidden = true; return; }
+  const cfg = await getConfig().catch(() => ({ datasources: [] }));
+  // Chips reflect every source you can open in the Archive: stored ones + every enabled, installed datasource
+  // (even with no documents yet — you Refresh it there). Mirrors the Archive index so the two stay in step.
+  const storeBases = keys.map((k) => String(k).split(':')[0]);
+  const cfgBases = (cfg.datasources || []).filter((d) => d.enabled !== false && ADAPTERS[d.adapter]).map((d) => d.adapter);
+  const bases = [...new Set([...storeBases, ...cfgBases])];
   const open = (src) => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/archive.html' + (src ? '?src=' + encodeURIComponent(src) : '')) });
-  const chips = bases.slice(0, 10).map((b) => { const a = ADAPTERS[b]; return `<button class="q-chip" data-arch="${esc(b)}">🗂️ ${esc((a && a.name) || b)}</button>`; }).join('');
-  el.innerHTML = `<div class="q-head"><div><div class="q-title">${esc(t('archive_index_title'))}</div><div class="q-sub">${esc(t('quick_sub', [String(bases.length)]))}</div></div><button class="primary q-cta" id="q-open">${esc(t('open_archive'))} →</button></div><div class="q-chips">${chips}</div>`;
+  const chips = bases.slice(0, 12).map((b) => { const a = ADAPTERS[b]; return `<button class="q-chip" data-arch="${esc(b)}">🗂️ ${esc((a && a.name) || b)}</button>`; }).join('');
+  const sub = bases.length ? t('quick_sub', [String(bases.length)]) : t('quick_sub_empty');
+  el.innerHTML = `<div class="q-head"><div><div class="q-title">${esc(t('archive_index_title'))}</div><div class="q-sub">${esc(sub)}</div></div><button class="primary q-cta" id="q-open">${esc(t('open_archive'))} →</button></div>${chips ? `<div class="q-chips">${chips}</div>` : ''}`;
   el.hidden = false;
   $('#q-open').onclick = () => open('');
   el.querySelectorAll('[data-arch]').forEach((x) => { x.onclick = () => open(x.dataset.arch); });

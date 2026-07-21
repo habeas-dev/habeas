@@ -12,7 +12,7 @@ import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } 
 import { resolveSiteFetch, ensureSiteFetch, recoverSession } from './lib/pagefetch.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
-import { recordDelivered, putItems, getRecords } from './lib/store.js';
+import { recordDelivered, putItems, getRecords, getSource } from './lib/store.js';
 import { nextOccurrence } from './lib/schedule.js';
 import { acceptsDoc, sinkAcceptsArtifact, sinkAcceptsSource, bakeLearned } from './sinks/format.js';
 import { outputsForSink, outputsOf, resolveOutput, storeKeyOf } from './lib/outputs.js';
@@ -316,6 +316,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true; // async response
   }
+  if (msg.type === 'habeas:send' && msg.datasource && msg.sink && Array.isArray(msg.ids)) { // send HAND-PICKED stored docs to a destination (from the Archive's selection)
+    (async () => {
+      const cfg = await getConfig();
+      const adapters = await getAdapters();
+      const ds = (cfg.datasources || []).find((d) => d.id === msg.datasource);
+      const adapter = ds && adapters[ds.adapter];
+      const sink = (cfg.sinks || []).find((k) => k.id === msg.sink);
+      if (!ds || !adapter || !sink) return { ok: false, error: 'unknown route' };
+      const r = await sendStoredDocs(ds, adapter, sink, msg.ids);
+      return { ok: true, ...r };
+    })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
+    return true; // async response
+  }
   if (msg.type === 'habeas:sched-run' && msg.id) { onScheduleAlarm(msg.id).then(() => sendResponse({ ok: true }), (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) })); return true; } // run a schedule now
   if (msg.type === 'habeas:auth' && msg.host) {
     // The in-page hook captures from ANY fetch/XHR (no URL filter), so honor the source's declared capture
@@ -579,6 +592,75 @@ async function listSourceIntoStore(ds, adapter, opts = {}) {
   }
 }
 
+// Deliver a SPECIFIC set of already-stored documents (hand-picked in the Archive) to a sink. Unlike runRoute
+// (which LISTS new docs), this works straight from the canonical store — the user chose exact items to push
+// somewhere. The normalized record always delivers (manifest); a per-item file is re-fetched when the source can
+// still produce it and there's a live session (best-effort — old items whose PDF template needs list-only fields
+// just deliver record-only, same contract as the popup's store-loaded send).
+async function sendStoredDocs(ds, adapter, sink, ids) {
+  const name = adapter.name || ds.adapter;
+  const want = new Set((ids || []).map(String));
+  if (!want.size) return { status: 'done', sent: 0 };
+  await badgeWorking();
+  setStatus(t('status_fetching', [String(want.size), name]));
+  try {
+    const auth = await authFor(adapter);
+    const net = auth ? await resolveSiteFetch(adapter).catch(() => null) : null; // null → records-only delivery still works
+    const outs = outputsForSink(adapter, sink, sinkAcceptsSource); // only the outputs THIS sink accepts
+    const streamIds = [...new Set(outs.map((o) => o.stream))];
+    const fmtsFor = (sid) => outs.filter((o) => o.stream === sid).map((o) => o.format);
+    let sent = 0;
+    for (const sid of streamIds) {
+      const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(adapter.id, sid);
+      const src = await getSource(sk); if (!src || !src.items) continue;
+      // Build the chosen docs of this stream from the store.
+      const docs = [];
+      for (const [internalId, e] of Object.entries(src.items)) {
+        if (e.gone || !want.has(String(internalId))) continue;
+        const rec = e.record || {};
+        docs.push({ internalId, record: rec, date: rec.date, total: rec.total ?? rec.amount, currency: rec.currency, type: rec.type, group: rec.group || '', _stream: sid, _storeKey: sk, _fromStore: true });
+      }
+      const eligible = docs.filter((d) => acceptsDoc(sink, d))
+        .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : (a.date || '') > (b.date || '') ? 1 : 0));
+      if (!eligible.length) continue;
+      const fmts = fmtsFor(sid);
+      const files = new Map();
+      if (net) for (const d of eligible) {
+        const arts = [];
+        for (const fmt of (fmts.length ? fmts : [''])) {
+          const oeff = resolveOutput(adapter, sid + (fmt ? '/' + fmt : ''));
+          const kinds = artifactKinds(oeff).filter((k) => sinkAcceptsArtifact(sink, k));
+          const avail = artifactKinds(oeff, d); // per-doc: skip a document kind this item lacks
+          for (const k of kinds) {
+            if (!avail.some((a) => a.kind === k.kind)) continue;
+            const rc = recordingNet(net);
+            try { arts.push(await fetchArtifact(oeff, auth, d, rc.net, renderPage, k.kind)); }
+            catch (e) { const msg = (e && e.message) || String(e); if (!/no document for this (item|source)|no PDF for this source/i.test(msg)) pushDiag(adapter.id, { phase: 'document', output: sid, item: d.date || d.internalId, message: msg, method: rc.ref.last && rc.ref.last.method, url: rc.ref.last && rc.ref.last.url, status: rc.ref.last && rc.ref.last.status }); }
+          }
+        }
+        if (arts.length) files.set(d.internalId, arts);
+      }
+      setStatus(t('status_sending', [String(eligible.length), sink.id]));
+      await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, source: sk, ext: documentExt(eff) || 'pdf', interactive: true });
+      await markDelivered(ds.id, sink.id, eligible.map((d) => d.internalId));
+      for (const d of eligible) d.record = bakeLearned(d);
+      try { await recordDelivered(sk, eligible, { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store best-effort */ }
+      try { await rememberDocMeta(adapter.id, eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined }))); } catch (e) {}
+      sent += eligible.length;
+    }
+    await appendLog({ kind: 'manual', datasource: ds.id, sink: sink.id, status: 'ok', count: sent });
+    await badgeCount(sent);
+    setStatus(t('status_done', [name, String(sent)]));
+    return { status: 'done', sent };
+  } catch (e) {
+    const msg = (e && e.message) || String(e);
+    pushDiag(adapter.id, { phase: 'send', message: msg });
+    await appendLog({ kind: 'manual', datasource: ds.id, sink: sink.id, status: 'error', error: msg });
+    await badgeError(); setStatus(t('status_error', [name, msg.slice(0, 80)]));
+    return { status: 'error', error: msg };
+  }
+}
+
 async function runRoute(ds, adapter, sink, opts = {}) {
   const kind = opts.kind || 'auto';
   const base = { kind, datasource: ds.id, sink: sink.id, ...(opts.origin ? { origin: opts.origin } : {}) };
@@ -655,7 +737,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     await appendLog({ ...base, status: 'ok', new: totalNew });
     if (kind === 'auto') notify(t('notify_new', [String(totalNew), sink.id])); // external collect: the tab + activity log are the surface (no extra notification)
     await badgeCount(totalNew);
-    setStatus(t('status_done', [String(totalNew), name]));
+    setStatus(t('status_done', [name, String(totalNew)])); // $NAME$: $N$ (placeholders are name=$1, n=$2)
     return { status: 'done', new: totalNew };
   } catch (e) {
     const msg = (e && e.message) || String(e);

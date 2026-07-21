@@ -6,14 +6,18 @@
 //   C  the root "Everything" is an INDEX of sources, not a merged timeline
 //   D  a selection mode for batch actions
 import { chrome } from '../lib/ext.js';
-import { getConfig } from '../lib/config.js';
+import { getConfig, saveConfig } from '../lib/config.js';
 import { getAdapters } from '../adapters/index.js';
 import { listSources, getSource } from '../lib/store.js';
 import { deliveredSet, getDocMeta } from '../lib/state.js';
 import { isRetrievable } from '../lib/retrieve.js';
-import { sinkAcceptsSource } from '../sinks/format.js';
+import { sinkAcceptsSource, groupLabelOf } from '../sinks/format.js';
 import { resolveOutput } from '../lib/outputs.js';
 import { artifactKinds } from '../runtime/inventory.js';
+import { manageAccounts } from './accountpicker.js';
+import { hasConsent } from '../lib/consent.js';
+import { loadAuth } from '../lib/authstore.js';
+import { ensureSiteFetch } from '../lib/pagefetch.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { esc } from '../lib/esc.js';
 
@@ -83,6 +87,23 @@ function isBankish(adapter) {
 }
 function primaryCatOf(adapter) { return (adapter && adapter.categories && adapter.categories[0]) || (adapter && adapter.category) || 'other'; }
 function groupAllowed(ds, group) { const labels = ds && ds.groupLabels; return !(labels && labels.length) || !group || labels.includes(group); }
+// The captured session for a source (merged across sibling hosts sharing its registrable domain).
+const getAuth = (adapter) => loadAuth(adapter);
+// The effective GROUPED adapter (a bank with accounts): the base if it declares api.groups, else the first
+// grouped stream. null = not grouped. And EVERY grouped stream (Raisin keeps products across several streams).
+function groupedAdapterOf(adapter) {
+  if (!adapter) return null;
+  if (adapter.api && adapter.api.groups) return adapter;
+  for (const s of adapter.streams || []) { const eff = resolveOutput(adapter, s.id); if (eff.api && eff.api.groups) return eff; }
+  return null;
+}
+function groupedAdaptersOf(adapter) {
+  if (!adapter) return [];
+  const out = [];
+  if (adapter.api && adapter.api.groups) out.push(adapter);
+  for (const s of adapter.streams || []) { const eff = resolveOutput(adapter, s.id); if (eff.api && eff.api.groups) out.push(eff); }
+  return out;
+}
 
 // Deliverable file formats for a store-key's stream: [{ id, ext, name }] — empty = record-only (no per-item file).
 function fileFormatsFor(adapter, streamId) {
@@ -107,7 +128,12 @@ function fileFormatsFor(adapter, streamId) {
 // "the archive takes forever": we no longer load every source fully before showing anything.
 async function buildIndex() {
   const keys = await listSources();
-  const bases = [...new Set(keys.map((k) => String(k).split(':')[0]))];
+  const storeBases = keys.map((k) => String(k).split(':')[0]);
+  // Also list every ENABLED, installed datasource — even with no stored docs yet — so the Archive is a complete
+  // source manager: a freshly-installed source shows up and can be Refreshed to pull its first documents (this is
+  // what lets the Archive replace the popup's Sources list).
+  const cfgBases = (CFG.datasources || []).filter((d) => d.enabled !== false && ADAPTERS[d.adapter]).map((d) => d.adapter);
+  const bases = [...new Set([...storeBases, ...cfgBases])];
   INDEX = bases.map((base) => {
     const ds = (CFG.datasources || []).find((d) => d.adapter === base) || (CFG.datasources || []).find((d) => d.id === base) || null;
     const adapter = (ds && ADAPTERS[ds.adapter]) || ADAPTERS[base] || null;
@@ -134,7 +160,9 @@ async function hydrateIndex() {
     await new Promise((r) => setTimeout(r, 0)); // yield → paint between sources
   }
   if (seq !== hydrateSeq) return;
-  INDEX = INDEX.filter((s) => s.count > 0).sort((a, b) => (b.lastDate || '').localeCompare(a.lastDate || '') || b.count - a.count);
+  // Keep sources with documents AND every configured source (even at 0 docs — the user can Refresh it); drop
+  // only orphan store keys that have no live docs and no datasource. Docs-first by recency, then empties by name.
+  INDEX = INDEX.filter((s) => s.count > 0 || s.ds).sort((a, b) => (b.lastDate || '').localeCompare(a.lastDate || '') || (b.count || 0) - (a.count || 0) || a.name.localeCompare(b.name));
   $('#astatus').textContent = '';
   if (CUR === null) renderIndex(); else renderRail(); // reflect final order (index) / final counts (rail)
 }
@@ -259,30 +287,34 @@ async function renderDocs() {
   const m = $('#main');
   const entry = INDEX.find((x) => x.base === CUR) || {};
   // Multi-account source: don't mix accounts — wait for the user to pick one in the tree before showing rows.
+  // The gate lives INSIDE the doc area so the source-level controls (Refresh, Accounts) stay available.
   const accs = accountsOf(CUR);
-  if (accs.length > 1 && !ACCOUNT) {
-    m.innerHTML = `<div class="crumbs"><span class="tile ${catOf(entry.primaryCat).f}" style="width:26px;height:26px;font-size:14px;border-radius:7px">${catOf(entry.primaryCat).i}</span> <b>${esc(entry.name || CUR)}</b></div>`
-      + `<div class="empty"><div class="big">👈</div><div style="font-family:var(--font-head);font-weight:600;font-size:17px;color:var(--ink)">${esc(t('archive_pick_account'))}</div><p style="margin-top:6px">${esc(t('archive_pick_account_sub', [String(accs.length)]))}</p></div>`;
-    return;
-  }
-  const docs = visibleDocs();
+  const gate = accs.length > 1 && !ACCOUNT;
+  const docs = gate ? [] : visibleDocs();
   const delivered = CURDOCS.filter((r) => r.delivered.length).length;
   let head = `<div class="crumbs"><span class="tile ${catOf(entry.primaryCat).f}" style="width:26px;height:26px;font-size:14px;border-radius:7px">${catOf(entry.primaryCat).i}</span> <b>${esc(entry.name || CUR)}</b>${ACCOUNT ? ' <span>›</span> ' + esc(ACCOUNT) : ''}</div>`;
-  head += `<div class="summ"><span class="chip">📄 <b>${docs.length}</b> ${esc(t('archive_docs_word'))}</span>`;
+  head += `<div class="summ"><span class="chip">📄 <b>${gate ? CURDOCS.length : docs.length}</b> ${esc(t('archive_docs_word'))}</span>`;
   if (delivered) head += `<span class="chip">${esc(t('archive_saved_n', [String(delivered)]))}</span>`;
   head += '</div>';
   const gb = (mode, label) => `<button data-gb="${mode}" class="${GROUPMODE === mode ? 'on' : ''}">${esc(label)}</button>`;
   const sinks = compatibleSinks(entry.adapter);
   const saveGrp = sinks.length ? `<span class="savegrp"><span class="sl">${esc(t('archive_save_to'))}</span>${sinks.map((s) => `<button class="savebtn" data-save="${esc(s.id)}" title="${esc(t('archive_save_hint', [sinkLabel(s)]))}">${sinkIcon(s)} ${esc(sinkLabel(s))}</button>`).join('')}</span>` : '';
   const refreshBtn = (entry.ds ? `<button id="refresh" class="refbtn" title="${esc(t('archive_refresh_hint', [entry.name || CUR]))}"><span class="ic">↻</span> ${esc(t('archive_refresh'))}</button>` : '');
+  // Accounts (allow-list) manager — grouped sources only. Lets the user choose which accounts to track from
+  // the Archive, so the popup's account picker isn't needed.
+  const acctBtn = (entry.ds && groupedAdapterOf(entry.adapter)) ? `<button id="accts" class="refbtn" title="${esc(t('archive_accounts_hint'))}"><span class="ic">👤</span> ${esc(t('archive_accounts'))}</button>` : '';
   head += `<div class="docbar"><div class="groupby">${gb('month', t('group_month'))}${gb('category', t('group_category'))}${gb('store', t('group_store'))}</div>
-    <div class="docbar-r">${refreshBtn}${saveGrp}<button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div></div>`;
+    <div class="docbar-r">${acctBtn}${refreshBtn}${saveGrp}<button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div></div>`;
+  // Selection bar: send the picked documents to any compatible destination, open their saved files, or clear.
+  const sendBtns = sinks.map((s) => `<button class="go" data-sendsel="${esc(s.id)}">${sinkIcon(s)} ${esc(t('archive_send_to', [sinkLabel(s)]))}</button>`).join('');
   const selbar = `<div class="selbar"><b id="selcount">0</b> <span>${esc(t('archive_selected_suffix'))}</span>
+    ${sendBtns}
     <button class="go" id="selopen">${esc(t('archive_open_saved'))}</button>
     <button class="clr" id="selclear">${esc(t('archive_clear'))}</button></div>`;
   m.innerHTML = head + '<div id="arch-groups"></div>' + selbar;
   m.classList.toggle('selecting', SELECTING);
   const container = document.getElementById('arch-groups');
+  if (gate) { container.innerHTML = `<div class="empty"><div class="big">👈</div><div style="font-family:var(--font-head);font-weight:600;font-size:17px;color:var(--ink)">${esc(t('archive_pick_account'))}</div><p style="margin-top:6px">${esc(t('archive_pick_account_sub', [String(accs.length)]))}</p></div>`; return; }
   if (!docs.length) { container.innerHTML = emptyState(t('no_documents'), t('archive_empty_source')); return; }
   const groups = groupDocs(docs);
   for (let gi = 0; gi < groups.length; gi++) {
@@ -405,6 +437,56 @@ function openFile(r, sinkId, ext) {
   const url = chrome.runtime.getURL(`src/ui/docview.html?sink=${encodeURIComponent(sinkId)}&src=${encodeURIComponent(r.base)}&id=${encodeURIComponent(r.internalId)}${ext ? '&ext=' + encodeURIComponent(ext) : ''}`);
   chrome.tabs.create({ url });
 }
+// Manage which accounts a grouped source tracks (the persisted allow-list), straight from the Archive — so
+// the popup's account picker is no longer needed. Enumerates every grouped stream's accounts, saves ds.groups
+// + ds.groupLabels, then reloads (the tree + what's shown honor the new allow-list).
+async function onManageAccounts() {
+  const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds || !entry.adapter) return;
+  const gAdapters = groupedAdaptersOf(entry.adapter); if (!gAdapters.length) return;
+  if (!(await hasConsent(entry.adapter))) { $('#astatus').textContent = t('needs_consent'); return; }
+  const auth = await getAuth(entry.adapter);
+  if (!auth) { try { await ensureSiteFetch(entry.adapter, { open: true }); } catch (e) {} $('#astatus').textContent = t('login_wait'); return; }
+  $('#astatus').textContent = t('accounts_loading');
+  let net; try { net = await ensureSiteFetch(entry.adapter, { open: false }); } catch (e) {}
+  let selected;
+  try { selected = await manageAccounts(gAdapters, auth, net, (entry.ds.groups) || null); }
+  catch (e) { $('#astatus').textContent = t('accounts_failed') + (e && e.message ? ' — ' + e.message : ''); return; }
+  if (selected == null) { $('#astatus').textContent = ''; return; } // cancelled
+  const cfg = await getConfig();
+  const d = (cfg.datasources || []).find((x) => x.id === entry.ds.id);
+  if (d) { d.groups = selected.map((g) => String(g.id)); d.groupLabels = selected.map((g) => groupLabelOf(g)).filter(Boolean); await saveConfig(cfg); }
+  CFG = cfg;
+  $('#astatus').textContent = t('accounts_saved', [String(selected.length)]);
+  // The allow-list changed what's visible → refresh index + docs. If the current account was dropped, reset it.
+  await buildIndex();
+  if (ACCOUNT && d && d.groupLabels && d.groupLabels.length && !d.groupLabels.includes(ACCOUNT)) ACCOUNT = '';
+  if (CUR) { await loadDocs(CUR); renderRail(); renderDocs(); }
+  hydrateIndex();
+}
+// Send the HAND-PICKED documents (selection mode) to a destination, from the store. Delivers each record's
+// manifest and re-fetches its file when the source can still produce it (background sendStoredDocs).
+async function sendSelected(sinkId) {
+  const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds) return;
+  const sink = (CFG.sinks || []).find((s) => s.id === sinkId); if (!sink) return;
+  const ids = [...PICKED];
+  if (!ids.length) { $('#astatus').textContent = t('nothing_selected'); return; }
+  document.body.classList.add('saving');
+  $('#astatus').textContent = t('archive_sending_n', [String(ids.length)]);
+  const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#astatus').textContent = v.msg; };
+  chrome.storage.onChanged.addListener(onStatus);
+  try {
+    const r = await chrome.runtime.sendMessage({ type: 'habeas:send', datasource: entry.ds.id, sink: sinkId, ids });
+    if (r && r.ok && r.status === 'done') $('#astatus').textContent = r.sent ? t('archive_sent_ok', [String(r.sent), sinkLabel(sink)]) : t('archive_send_none');
+    else if (r && r.status === 'nosession') $('#astatus').textContent = t('archive_save_nosession', [entry.name]);
+    else $('#astatus').textContent = t('archive_save_err', [(r && r.error) || 'error']);
+  } catch (e) { $('#astatus').textContent = t('archive_save_err', [(e && e.message) || String(e)]); }
+  finally {
+    chrome.storage.onChanged.removeListener(onStatus);
+    document.body.classList.remove('saving');
+    PICKED.clear(); SELECTING = false;
+    await buildIndex(); if (CUR) { await loadDocs(CUR); renderRail(); renderDocs(); } hydrateIndex();
+  }
+}
 
 // ---- selection (batch) ----
 function updateSelCount() { const el = $('#selcount'); if (el) el.textContent = String(PICKED.size); }
@@ -445,6 +527,8 @@ function wire() {
     const sc = ev.target.closest('.srccard'); if (sc) { openSource(sc.dataset.src); return; }
     const gb = ev.target.closest('[data-gb]'); if (gb) { GROUPMODE = gb.dataset.gb; renderDocs(); return; }
     const sv = ev.target.closest('[data-save]'); if (sv) { deliver(sv.dataset.save); return; }
+    const ss = ev.target.closest('[data-sendsel]'); if (ss) { sendSelected(ss.dataset.sendsel); return; }
+    if (ev.target.closest('#accts')) { onManageAccounts(); return; }
     if (ev.target.closest('#refresh')) { refreshSource(); return; }
     if (ev.target.closest('#seltoggle')) { toggleSelecting(); return; }
     if (ev.target.closest('#selclear')) { PICKED.clear(); SELECTING = false; renderDocs(); return; }
