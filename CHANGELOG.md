@@ -34,6 +34,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   (Refresh, Accounts) stay available on that prompt.
 
 ### Fixed
+- **Refreshing/saving/sending one source no longer reloads the whole tree** (`ui/archive.js`). A single-source
+  action used to call `buildIndex()` + `hydrateIndex()`, re-counting *every* source (throbbers flashing across the
+  entire tree). A new `reloadCurrent()` recomputes only the current source's documents and its own tree count/date;
+  the full re-hydrate stays reserved for Sync-all and reinstalls.
 - **The toolbar button opens the floating popup again** (`manifest.json`, `background.js`). The `action` had lost
   its `default_popup`, and a `chrome.action.onClicked` listener was opening `popup.html` in a full tab instead.
   Restored `default_popup: src/ui/popup.html` and removed the listener — clicking Habeas shows the launcher popup.

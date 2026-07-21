@@ -166,6 +166,27 @@ async function hydrateIndex() {
   $('#astatus').textContent = '';
   if (CUR === null) renderIndex(); else renderRail(); // reflect final order (index) / final counts (rail)
 }
+// Refresh ONLY the current source in place: recompute its stored docs + its own tree count/date and re-render,
+// WITHOUT re-hydrating (re-counting) every other source. A single-source action (Refresh, Save, Send, Accounts)
+// must never make the whole tree flash throbbers. Reserve buildIndex()+hydrateIndex() for Sync-all / reinstalls.
+async function reloadCurrent() {
+  if (!CUR) return;
+  const keys = (await listSources()).filter((k) => String(k).split(':')[0] === CUR);
+  await loadDocs(CUR);
+  const s = INDEX.find((x) => x.base === CUR);
+  if (s) {
+    s.keys = keys;
+    s.ds = (CFG.datasources || []).find((d) => d.adapter === CUR) || (CFG.datasources || []).find((d) => d.id === CUR) || s.ds; // pick up a just-saved account allow-list
+    let count = 0, lastDate = '';
+    for (const key of keys) {
+      const src = await getSource(key).catch(() => null); if (!src || !src.items) continue;
+      for (const e of Object.values(src.items)) { if (e.gone) continue; if (!groupAllowed(s.ds, e.record && e.record.group)) continue; count++; const dt = (e.record && e.record.date) || ''; if (dt > lastDate) lastDate = dt; }
+    }
+    s.count = count; s.lastDate = lastDate;
+    patchMeta(s);
+  }
+  renderRail(); renderDocs();
+}
 function patchMeta(s) {
   const q = '[data-src="' + ((window.CSS && CSS.escape) ? CSS.escape(s.base) : s.base) + '"]';
   document.querySelectorAll('.srccard' + q + ' .sc-s').forEach((el) => { el.textContent = s.count == null ? '' : (t('n_documents', [String(s.count)]) + (s.lastDate ? ' · ' + dateLong(s.lastDate) : '')); });
@@ -407,7 +428,7 @@ async function deliver(sinkId) {
   finally {
     chrome.storage.onChanged.removeListener(onStatus);
     document.body.classList.remove('saving');
-    await buildIndex(); if (CUR) { await loadDocs(CUR); renderRail(); renderDocs(); } hydrateIndex();
+    await reloadCurrent(); // just this source — not a full-tree re-hydrate
   }
 }
 // Pull NEW documents for the current source into the store — no destination. The Archive becomes self-sufficient:
@@ -430,7 +451,7 @@ async function refreshSource() {
     chrome.storage.onChanged.removeListener(onStatus);
     document.body.classList.remove('saving');
     const b = $('#refresh'); if (b) { b.disabled = false; b.classList.remove('spin'); }
-    await buildIndex(); if (CUR) { await loadDocs(CUR); renderRail(); renderDocs(); } hydrateIndex();
+    await reloadCurrent(); // just this source — not a full-tree re-hydrate
   }
 }
 function openFile(r, sinkId, ext) {
@@ -484,7 +505,7 @@ async function sendSelected(sinkId) {
     chrome.storage.onChanged.removeListener(onStatus);
     document.body.classList.remove('saving');
     PICKED.clear(); SELECTING = false;
-    await buildIndex(); if (CUR) { await loadDocs(CUR); renderRail(); renderDocs(); } hydrateIndex();
+    await reloadCurrent(); // just this source — not a full-tree re-hydrate
   }
 }
 
