@@ -33,6 +33,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   (`filter=customerId eq [id] & type eq TA_INTERNAL`). The redacted structure is still enough to author from —
   a private id is always templated from captured context (`{ctx.*}`), never needed verbatim.
 
+### Changed
+- **The Archive loads progressively, with throbbers.** It used to load every source in full before painting
+  anything ("takes forever"). Now it paints the source index instantly and **hydrates each source's count + last
+  activity in the background** (a spinner on each card/rail node until its number arrives), yielding between
+  sources so the page stays responsive. Opening a source shows a **loading spinner** immediately, and its
+  documents render **group-by-group in batches** so even a source with thousands of documents paints
+  progressively instead of freezing the tab.
+
 ### Added
 - **Save to a destination from the Archive** (`archive.js` + a new `habeas:deliver` background message reusing
   `runRoute`). A source's document view now has a **"Save to …"** control listing the compatible software

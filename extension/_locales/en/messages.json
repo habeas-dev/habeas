@@ -2277,5 +2277,8 @@
         "content": "$1"
       }
     }
+  },
+  "archive_loading": {
+    "message": "Loading…"
   }
 }

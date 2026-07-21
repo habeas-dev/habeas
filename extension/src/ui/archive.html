@@ -126,6 +126,13 @@
 
     .empty{padding:60px 20px;text-align:center;color:var(--muted)}
     .empty .big{font-size:34px;margin-bottom:10px}
+    /* throbbers / progressive loading */
+    .thb{display:inline-block;width:13px;height:13px;border:2px solid var(--line);border-top-color:var(--brand-500);border-radius:50%;animation:hb-spin .7s linear infinite;vertical-align:-2px}
+    .thb.big{width:32px;height:32px;border-width:3px}
+    @keyframes hb-spin{to{transform:rotate(360deg)}}
+    .loadpane{display:grid;place-items:center;gap:14px;padding:80px 20px;color:var(--muted);font-size:14px}
+    .idx-grid.hydrating .srccard{opacity:.92}
+    @media (prefers-reduced-motion:reduce){.thb{animation:none;border-top-color:var(--brand-500)}}
 
     /* selection action bar */
     .selbar{position:sticky;bottom:14px;margin-top:20px;display:none;align-items:center;gap:12px;

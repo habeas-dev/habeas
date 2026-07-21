@@ -102,28 +102,47 @@ function fileFormatsFor(adapter, streamId) {
 }
 
 // ---- data load ----
-async function loadIndex() {
+// Build the index SHELL cheaply — just the source keys + adapter metadata, NO per-source item load. So the
+// page paints instantly; counts/dates fill in afterwards (hydrateIndex) with throbbers. This is what fixes
+// "the archive takes forever": we no longer load every source fully before showing anything.
+async function buildIndex() {
   const keys = await listSources();
   const bases = [...new Set(keys.map((k) => String(k).split(':')[0]))];
-  const idx = [];
-  for (const base of bases) {
+  INDEX = bases.map((base) => {
     const ds = (CFG.datasources || []).find((d) => d.adapter === base) || (CFG.datasources || []).find((d) => d.id === base) || null;
     const adapter = (ds && ADAPTERS[ds.adapter]) || ADAPTERS[base] || null;
+    return { base, ds, adapter, name: (adapter && adapter.name) || base, count: null, lastDate: null, primaryCat: primaryCatOf(adapter), keys: keys.filter((k) => String(k).split(':')[0] === base) };
+  }).sort((a, b) => a.name.localeCompare(b.name));
+}
+// Load each source's live count + last date one at a time, yielding between them so the shell stays responsive,
+// and patch that source's card/rail node in place (throbber → value). When all are known, drop empty sources
+// and resort by recency. A sequence guard aborts a run superseded by a reinstall/refresh.
+let hydrateSeq = 0;
+async function hydrateIndex() {
+  const seq = ++hydrateSeq;
+  $('#astatus').textContent = t('archive_loading');
+  const grid = document.querySelector('.idx-grid'); if (grid) grid.classList.add('hydrating');
+  for (const s of INDEX) {
+    if (seq !== hydrateSeq) return; // a newer refresh started
     let count = 0, lastDate = '';
-    for (const key of keys.filter((k) => String(k).split(':')[0] === base)) {
+    for (const key of s.keys) {
       const src = await getSource(key).catch(() => null); if (!src || !src.items) continue;
-      for (const e of Object.values(src.items)) {
-        if (e.gone) continue;
-        if (!groupAllowed(ds, e.record && e.record.group)) continue;
-        count++;
-        const dt = (e.record && e.record.date) || ''; if (dt > lastDate) lastDate = dt;
-      }
+      for (const e of Object.values(src.items)) { if (e.gone) continue; if (!groupAllowed(s.ds, e.record && e.record.group)) continue; count++; const dt = (e.record && e.record.date) || ''; if (dt > lastDate) lastDate = dt; }
     }
-    if (!count) continue;
-    idx.push({ base, ds, adapter, name: (adapter && adapter.name) || base, count, lastDate, primaryCat: primaryCatOf(adapter) });
+    s.count = count; s.lastDate = lastDate;
+    patchMeta(s);
+    await new Promise((r) => setTimeout(r, 0)); // yield → paint between sources
   }
-  idx.sort((a, b) => (b.lastDate || '').localeCompare(a.lastDate || '') || b.count - a.count);
-  INDEX = idx;
+  if (seq !== hydrateSeq) return;
+  INDEX = INDEX.filter((s) => s.count > 0).sort((a, b) => (b.lastDate || '').localeCompare(a.lastDate || '') || b.count - a.count);
+  $('#astatus').textContent = '';
+  if (CUR === null) renderIndex(); else renderRail(); // reflect final order (index) / final counts (rail)
+}
+function patchMeta(s) {
+  const q = '[data-src="' + ((window.CSS && CSS.escape) ? CSS.escape(s.base) : s.base) + '"]';
+  document.querySelectorAll('.srccard' + q + ' .sc-s').forEach((el) => { el.textContent = s.count == null ? '' : (t('n_documents', [String(s.count)]) + (s.lastDate ? ' · ' + dateLong(s.lastDate) : '')); });
+  document.querySelectorAll('.node' + q + ' .cnt').forEach((el) => { el.textContent = s.count == null ? '' : String(s.count); });
+  if (INDEX.every((x) => x.count != null)) { const tot = INDEX.reduce((a, x) => a + x.count, 0); document.querySelectorAll('.node[data-src="__all__"] .cnt').forEach((el) => { el.textContent = String(tot); }); }
 }
 
 async function loadDocs(base) {
@@ -167,7 +186,7 @@ function accountsOf(base) { return [...new Set(CURDOCS.filter((r) => r.base === 
 function renderRail() {
   const rail = $('#rail');
   let html = `<div class="rlabel">${esc(t('archive_sources'))}</div>`;
-  const total = INDEX.reduce((a, x) => a + x.count, 0);
+  const total = INDEX.every((x) => x.count != null) ? INDEX.reduce((a, x) => a + x.count, 0) : null; // null → throbber while hydrating
   html += node('__all__', '🗂️', t('archive_all'), total, CUR === null, F_OTHER);
   for (const s of INDEX) {
     const on = CUR === s.base;
@@ -185,9 +204,10 @@ function renderRail() {
   rail.innerHTML = html;
 }
 function node(id, icon, name, count, on, fam) {
+  const cnt = count == null ? '<span class="thb" style="width:11px;height:11px;border-width:2px"></span>' : String(count);
   return `<button class="node${on ? ' on' : ''}" data-src="${esc(id)}">
     <span class="av tile ${fam}" style="width:27px;height:27px;font-size:15px">${icon}</span>
-    <span class="nm">${esc(name)}</span><span class="cnt">${count}</span></button>`;
+    <span class="nm">${esc(name)}</span><span class="cnt">${cnt}</span></button>`;
 }
 
 // ---- rendering: index (Everything) ----
@@ -200,15 +220,16 @@ function renderIndex() {
   html += '<div class="idx-grid">';
   for (const s of INDEX) {
     const c = catOf(s.primaryCat);
-    const sub = t('n_documents', [String(s.count)]) + (s.lastDate ? ' · ' + dateLong(s.lastDate) : '');
+    const sub = s.count == null ? '<span class="thb"></span>' : esc(t('n_documents', [String(s.count)]) + (s.lastDate ? ' · ' + dateLong(s.lastDate) : ''));
     html += `<button class="srccard" data-src="${esc(s.base)}">
       <span class="tile ${c.f}">${c.i}</span>
-      <span class="sc-m"><span class="sc-t">${esc(s.name)}</span><span class="sc-s">${esc(sub)}</span></span></button>`;
+      <span class="sc-m"><span class="sc-t">${esc(s.name)}</span><span class="sc-s">${sub}</span></span></button>`;
   }
   html += '</div>';
   m.innerHTML = html;
 }
 function emptyState(title, sub) { return `<div class="empty"><div class="big">🗂️</div><div style="font-family:var(--font-head);font-weight:600;font-size:17px;color:var(--ink)">${esc(title)}</div><p style="margin-top:6px">${esc(sub)}</p></div>`; }
+function loadingPane() { return `<div class="loadpane"><span class="thb big"></span><span>${esc(t('archive_loading'))}</span></div>`; }
 
 // ---- rendering: one source's documents ----
 function visibleDocs() {
@@ -231,36 +252,44 @@ function groupDocs(docs) {
   groups.sort((a, b) => (GROUPMODE === 'month') ? b.k.localeCompare(a.k) : b.items.length - a.items.length);
   return groups;
 }
-function renderDocs() {
+// Render the header + controls immediately, then APPEND the month/category groups in batches (yielding between
+// them) so a source with thousands of documents paints progressively instead of freezing the tab. A sequence
+// guard drops a run superseded by a newer one (group-by switch, account change, a keystroke in search).
+let docsSeq = 0;
+async function renderDocs() {
+  const seq = ++docsSeq;
   const m = $('#main');
   const entry = INDEX.find((x) => x.base === CUR) || {};
   const docs = visibleDocs();
-  const anyFormats = CURDOCS.some((r) => r.formats.length);
   const delivered = CURDOCS.filter((r) => r.delivered.length).length;
-  let html = `<div class="crumbs"><span class="tile ${catOf(entry.primaryCat).f}" style="width:26px;height:26px;font-size:14px;border-radius:7px">${catOf(entry.primaryCat).i}</span> <b>${esc(entry.name || CUR)}</b>${ACCOUNT ? ' <span>›</span> ' + esc(ACCOUNT) : ''}</div>`;
-  html += `<div class="summ"><span class="chip">📄 <b>${docs.length}</b> ${esc(t('archive_docs_word'))}</span>`;
-  if (delivered) html += `<span class="chip">${esc(t('archive_saved_n', [String(delivered)]))}</span>`;
-  html += '</div>';
-  // group-by + selection controls
+  let head = `<div class="crumbs"><span class="tile ${catOf(entry.primaryCat).f}" style="width:26px;height:26px;font-size:14px;border-radius:7px">${catOf(entry.primaryCat).i}</span> <b>${esc(entry.name || CUR)}</b>${ACCOUNT ? ' <span>›</span> ' + esc(ACCOUNT) : ''}</div>`;
+  head += `<div class="summ"><span class="chip">📄 <b>${docs.length}</b> ${esc(t('archive_docs_word'))}</span>`;
+  if (delivered) head += `<span class="chip">${esc(t('archive_saved_n', [String(delivered)]))}</span>`;
+  head += '</div>';
   const gb = (mode, label) => `<button data-gb="${mode}" class="${GROUPMODE === mode ? 'on' : ''}">${esc(label)}</button>`;
   const sinks = compatibleSinks(entry.adapter);
   const saveGrp = sinks.length ? `<span class="savegrp"><span class="sl">${esc(t('archive_save_to'))}</span>${sinks.map((s) => `<button class="savebtn" data-save="${esc(s.id)}" title="${esc(t('archive_save_hint', [sinkLabel(s)]))}">${sinkIcon(s)} ${esc(sinkLabel(s))}</button>`).join('')}</span>` : '';
-  html += `<div class="docbar"><div class="groupby">${gb('month', t('group_month'))}${gb('category', t('group_category'))}${gb('store', t('group_store'))}</div>
+  head += `<div class="docbar"><div class="groupby">${gb('month', t('group_month'))}${gb('category', t('group_category'))}${gb('store', t('group_store'))}</div>
     <div class="docbar-r">${saveGrp}<button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div></div>`;
-  if (!docs.length) { html += emptyState(t('no_documents'), t('archive_empty_source')); m.innerHTML = html; return; }
-  for (const g of groupDocs(docs)) {
-    const net = g.items.reduce((a, r) => { const v = (typeof r.record.total === 'number' ? r.record.total : r.record.amount); if (typeof v !== 'number') return a; const dir = r.record.direction; return a + (dir === 'out' ? -Math.abs(v) : dir === 'in' ? Math.abs(v) : v); }, 0);
-    const showNet = GROUPMODE === 'month' && isBankish(entry.adapter);
-    html += `<div class="mgroup"><div class="mhead"><h4>${esc(g.label)}</h4><span class="line"></span><span class="mtot">${showNet ? esc(fmtMoney(net, currencyOf(g.items))) : t('n_documents', [String(g.items.length)])}</span></div><div class="cards">`;
-    for (const r of g.items) html += cardHtml(r);
-    html += '</div></div>';
-  }
-  html += `<div class="selbar"><b id="selcount">0</b> <span>${esc(t('archive_selected_suffix'))}</span>
+  const selbar = `<div class="selbar"><b id="selcount">0</b> <span>${esc(t('archive_selected_suffix'))}</span>
     <button class="go" id="selopen">${esc(t('archive_open_saved'))}</button>
     <button class="clr" id="selclear">${esc(t('archive_clear'))}</button></div>`;
-  m.innerHTML = html;
+  m.innerHTML = head + '<div id="arch-groups"></div>' + selbar;
   m.classList.toggle('selecting', SELECTING);
+  const container = document.getElementById('arch-groups');
+  if (!docs.length) { container.innerHTML = emptyState(t('no_documents'), t('archive_empty_source')); return; }
+  const groups = groupDocs(docs);
+  for (let gi = 0; gi < groups.length; gi++) {
+    if (seq !== docsSeq) return; // superseded → stop appending
+    container.insertAdjacentHTML('beforeend', groupHtml(groups[gi], entry));
+    if (gi % 5 === 4 && gi + 1 < groups.length) await new Promise((r) => setTimeout(r, 0)); // yield every 5 groups
+  }
   updateSelCount();
+}
+function groupHtml(g, entry) {
+  const net = g.items.reduce((a, r) => { const v = (typeof r.record.total === 'number' ? r.record.total : r.record.amount); if (typeof v !== 'number') return a; const dir = r.record.direction; return a + (dir === 'out' ? -Math.abs(v) : dir === 'in' ? Math.abs(v) : v); }, 0);
+  const showNet = GROUPMODE === 'month' && isBankish(entry.adapter);
+  return `<div class="mgroup"><div class="mhead"><h4>${esc(g.label)}</h4><span class="line"></span><span class="mtot">${showNet ? esc(fmtMoney(net, currencyOf(g.items))) : t('n_documents', [String(g.items.length)])}</span></div><div class="cards">${g.items.map(cardHtml).join('')}</div></div>`;
 }
 function currencyOf(items) { const r = items.find((x) => x.record.currency); return (r && r.record.currency) || 'EUR'; }
 function cardHtml(r) {
@@ -340,7 +369,7 @@ async function deliver(sinkId) {
   finally {
     chrome.storage.onChanged.removeListener(onStatus);
     document.body.classList.remove('saving');
-    await loadIndex(); if (CUR) { await loadDocs(CUR); renderRail(); renderDocs(); }
+    await buildIndex(); if (CUR) { await loadDocs(CUR); renderRail(); renderDocs(); } hydrateIndex();
   }
 }
 function openFile(r, sinkId, ext) {
@@ -358,11 +387,12 @@ function toggleSelecting() {
 // ---- navigation ----
 async function openSource(base) {
   CUR = base; ACCOUNT = ''; SELECTING = false; PICKED.clear();
-  $('#astatus').textContent = t('docs_loading');
+  $('#main').innerHTML = loadingPane(); // instant throbber while the source's documents load
+  renderRail();
   await loadDocs(base);
+  if (CUR !== base) return; // navigated away mid-load
   const entry = INDEX.find((x) => x.base === base);
   GROUPMODE = isBankish(entry && entry.adapter) ? 'month' : 'category';
-  $('#astatus').textContent = '';
   renderRail(); renderDocs();
 }
 function goIndex() { CUR = null; renderRail(); renderIndex(); }
@@ -400,8 +430,9 @@ function wire() {
     if (area !== 'local' || !ch['habeas:sources-rev']) return;
     (async () => {
       ADAPTERS = await getAdapters(); CFG = await getConfig(); RETRIEVABLE = (CFG.sinks || []).filter((s) => isRetrievable(s));
-      await loadIndex();
+      await buildIndex();
       if (CUR && INDEX.some((x) => x.base === CUR)) { await loadDocs(CUR); renderRail(); renderDocs(); } else { renderRail(); renderIndex(); }
+      hydrateIndex();
     })().catch(() => {});
   });
 }
@@ -426,7 +457,7 @@ async function onSync() {
   finally {
     chrome.storage.onChanged.removeListener(onStatus);
     b.disabled = false;
-    await loadIndex(); if (CUR) { await loadDocs(CUR); renderRail(); renderDocs(); } else { renderRail(); renderIndex(); }
+    await buildIndex(); if (CUR) { await loadDocs(CUR); renderRail(); renderDocs(); } else { renderRail(); renderIndex(); } hydrateIndex();
   }
 }
 
@@ -438,10 +469,12 @@ async function init() {
   CFG = await getConfig();
   RETRIEVABLE = (CFG.sinks || []).filter((s) => isRetrievable(s));
   wire();
-  await loadIndex();
+  await buildIndex();                 // instant shell (no per-source item load)
+  renderRail();
   // deep-link ?src=<base> opens a source directly (used by the popup entry point)
   const want = new URLSearchParams(location.search).get('src');
-  if (want && INDEX.some((x) => x.base === want)) { renderRail(); await openSource(want); }
-  else { renderRail(); renderIndex(); }
+  if (want && INDEX.some((x) => x.base === want)) await openSource(want);
+  else renderIndex();
+  hydrateIndex();                     // fill counts/dates in the background, with throbbers
 }
 init();
