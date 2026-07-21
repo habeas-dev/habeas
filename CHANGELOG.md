@@ -10,6 +10,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **A recording surfaces where its tokens live** (`lib/redact.js#collectStorageTokens`) — the redacted handoff
+  now includes `tokenLocations`: a safe map of client-storage paths that hold a JWT, tagged access / refresh /
+  id (paths only, never a token value). So the team can wire `auth.tokenFromStorage` at the right field (e.g.
+  `localStorage.auth_token.access_token`) from a non-technical contributor's recording alone — no DevTools.
+
 ### Changed
 - **`auth.tokenFromStorage` can auto-detect the access token.** With no `field`, it parses the stored value
   and picks the ACCESS token from a token object (`{access_token, refresh_token, id_token}` or keycloak-js

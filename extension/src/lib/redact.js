@@ -245,6 +245,26 @@ function redactStorageBag(bag, refs) {
   return o;
 }
 
+// Where the recording found JWTs in client storage — a redaction-SAFE map [{ path, kind }] (NO token value),
+// so the team can point `auth.tokenFromStorage` at the right field WITHOUT anyone opening DevTools. `kind` is
+// inferred from the field name (access / refresh / id); a bare `token` (keycloak-js) is the access token.
+// This is the instrumentation that lets a non-technical contributor surface "the access token lives at
+// localStorage.auth_token.access_token" just by recording.
+export function collectStorageTokens(storage) {
+  const out = [];
+  const isJwt = (v) => typeof v === 'string' && /^eyJ[\w-]+\.[\w-]+\.[\w-]*$/.test(v);
+  const kindOf = (key) => /refresh/i.test(key) ? 'refresh' : /id[_-]?token|idtoken/i.test(key) ? 'id' : (/access/i.test(key) || /^token$/i.test(key)) ? 'access' : 'unknown';
+  const walk = (val, path, key, depth) => {
+    if (depth > 4 || val == null) return;
+    if (isJwt(val)) { out.push({ path, kind: kindOf(key) }); return; }
+    if (typeof val === 'string') { let obj = null; if (val[0] === '{' || val[0] === '[') { try { obj = JSON.parse(val); } catch (e) {} } if (obj) walk(obj, path, key, depth); return; }
+    if (Array.isArray(val)) { val.slice(0, 5).forEach((v, i) => walk(v, path + '[' + i + ']', key, depth + 1)); return; }
+    if (typeof val === 'object') for (const k of Object.keys(val)) walk(val[k], path + '.' + k, k, depth + 1);
+  };
+  for (const area of ['local', 'session']) { const bag = (storage && storage[area]) || {}; for (const k of Object.keys(bag)) walk(bag[k], area + '.' + k, k, 0); }
+  return out;
+}
+
 // Build the shareable handoff bundle. DELIBERATELY excludes auth (live tokens) and dom page text (full
 // of PII, low authoring value). Everything included is value-redacted, and id values are correlated with a
 // bundle-scoped `refs` tagger: the SAME real id → the same [id#N] everywhere (path, header, field), so a
@@ -269,6 +289,9 @@ export function buildHandoff({ domain, samples, wsframes, assets, storage }) {
   // JWT-derived path/query ids even when the bearer is opaque.
   const claims = collectJwtClaims(samples, storage, refs);
   if (claims.length) out.tokenClaims = claims;
+  // Token LOCATIONS in storage (path + kind, no values) — so the team wires tokenFromStorage without DevTools.
+  const tokenLoc = collectStorageTokens(storage);
+  if (tokenLoc.length) out.tokenLocations = tokenLoc;
   Object.defineProperty(out, '__refs', { value: refs.map, enumerable: false }); // for findOrphans/revealOrphans; never serialized
   return out;
 }

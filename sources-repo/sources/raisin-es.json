@@ -9,8 +9,8 @@
     "banking",
     "investment"
   ],
-  "version": "2026-07-20.2",
-  "minVersion": "0.5.0.9",
+  "version": "2026-07-20.3",
+  "minVersion": "0.5.0.8",
   "keepRaw": true,
   "contributors": [
     "David Marín Carreño"
@@ -34,6 +34,7 @@
     ],
     "tokenFromStorage": {
       "key": "auth_token",
+      "field": "access_token",
       "scheme": "Bearer"
     },
     "context": [
@@ -224,6 +225,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20.3",
+      "changes": "Point tokenFromStorage at the explicit field access_token (localStorage.auth_token.access_token) — unambiguous and works without the auto-detect. minVersion 0.5.0.8."
+    },
     {
       "version": "2026-07-20.2",
       "changes": "Read the bearer FRESH from localStorage.auth_token on every request (auth.tokenFromStorage, access-token auto-detected) — Raisin uses a short-lived Keycloak JWT (~5 min) that expired between capture and listing (401 Jwt is expired). This always sends a valid, current user token."
