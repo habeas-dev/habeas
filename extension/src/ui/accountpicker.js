@@ -17,11 +17,19 @@ const accLabel = (g) => {
 
 // Show the checklist. `current` = the saved allow-list (array of ids), or null/undefined = "all offered"
 // (every box checked by default). Only accounts that have an id (are actually listable) are shown.
-export async function manageAccounts(adapter, auth, net, current) {
-  if (!(adapter.api && adapter.api.groups)) return null;
-  let groups = [];
-  try { groups = (await listGroups(adapter, auth, net)).filter((g) => g.id != null && g.id !== ''); } catch (e) { throw e; }
-  if (!groups.length) return null;
+// `gAdapters` is one grouped adapter OR an ARRAY of them — a multi-stream source keeps its accounts in
+// SEVERAL streams (Raisin: the current account in tams, savings + deposits in dbff), so enumerate every
+// grouped stream and merge by id. A single stream failing (e.g. one product type) doesn't kill the picker.
+export async function manageAccounts(gAdapters, auth, net, current) {
+  const adapters = (Array.isArray(gAdapters) ? gAdapters : [gAdapters]).filter((a) => a && a.api && a.api.groups);
+  if (!adapters.length) return null;
+  const byId = new Map(); let lastErr = null;
+  for (const ga of adapters) {
+    try { for (const g of (await listGroups(ga, auth, net)).filter((g) => g.id != null && g.id !== '')) { const k = String(g.id); if (!byId.has(k)) byId.set(k, g); } }
+    catch (e) { lastErr = e; }
+  }
+  const groups = [...byId.values()];
+  if (!groups.length) { if (lastErr) throw lastErr; return null; }
   const checked = (id) => (current == null ? true : current.map(String).includes(String(id)));
   return await new Promise((resolve) => {
     const ov = document.createElement('div');

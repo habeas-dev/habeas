@@ -141,6 +141,15 @@ function groupedAdapterOf(adapter) {
   for (const s of adapter.streams || []) { const eff = resolveOutput(adapter, s.id); if (eff.api && eff.api.groups) return eff; }
   return null;
 }
+// ALL grouped streams of a source (Raisin keeps its current account in one stream, savings + deposits in
+// others) — the account picker enumerates every one so all products appear, not just the first stream's.
+function groupedAdaptersOf(adapter) {
+  if (!adapter) return [];
+  const out = [];
+  if (adapter.api && adapter.api.groups) out.push(adapter);
+  for (const s of adapter.streams || []) { const eff = resolveOutput(adapter, s.id); if (eff.api && eff.api.groups) out.push(eff); }
+  return out;
+}
 
 // The "Accounts" button only makes sense for a grouped source (a bank with several accounts/cards).
 function refreshAccountsBtn(cfg) {
@@ -154,8 +163,8 @@ function refreshAccountsBtn(cfg) {
 async function onManageAccounts() {
   const cfg = await getConfig();
   const { ds, adapter } = adapterFor($('#ds').value, cfg);
-  const gAdapter = groupedAdapterOf(adapter);           // has api.groups (base or a stream) — used to enumerate
-  if (!gAdapter) return;
+  const gAdapters = groupedAdaptersOf(adapter);         // EVERY grouped stream (corriente + savings + deposits…)
+  if (!gAdapters.length) return;
   if (!(await hasConsent(adapter))) { $('#status').textContent = t('needs_consent'); return; }
   const auth = await getAuth(adapter);
   if (!auth) { // no captured session yet → open the login tab so the token is captured, then retry
@@ -169,7 +178,7 @@ async function onManageAccounts() {
   // from the extension (host permission → no CORS; auth.cookies:false → no oversized-cookie 413).
   let net; try { net = await ensureSiteFetch(adapter, { open: false }); } catch (e) {}
   let selected;
-  try { selected = await manageAccounts(gAdapter, auth, net, (ds && ds.groups) || null); }
+  try { selected = await manageAccounts(gAdapters, auth, net, (ds && ds.groups) || null); }
   catch (e) { $('#status').textContent = t('accounts_failed') + (e && e.message ? ' — ' + e.message : ''); return; }
   if (selected == null) { $('#status').textContent = ''; return; } // cancelled
   const c = await getConfig();

@@ -9,8 +9,8 @@
     "banking",
     "investment"
   ],
-  "version": "2026-07-20.9",
-  "minVersion": "0.5.0.24",
+  "version": "2026-07-20.10",
+  "minVersion": "0.5.0.25",
   "keepRaw": true,
   "contributors": [
     "David Marín Carreño"
@@ -163,7 +163,9 @@
           },
           "fields": {
             "id": "accounting.deposit_id",
-            "currency": "accounting.balance.amount.currency"
+            "currency": "accounting.balance.amount.currency",
+            "name": "accounting.partner_bank",
+            "type": "product.marketed_as_product_type"
           },
           "headers": {
             "accept": "application/json, text/plain, */*"
@@ -213,7 +215,9 @@
             "present": true
           },
           "fields": {
-            "id": "accounting.deposit_id"
+            "id": "accounting.deposit_id",
+            "name": "accounting.partner_bank",
+            "type": "product.marketed_as_product_type"
           },
           "headers": {
             "accept": "application/json, text/plain, */*"
@@ -247,6 +251,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20.10",
+      "changes": "Savings/deposit accounts now carry a readable name (the deposit-taking bank) + type, so the account list and per-account labels show a bank name instead of a raw id. Requires 0.5.0.25 (account picker enumerates every grouped stream: current account + savings + deposits)."
+    },
     {
       "version": "2026-07-20.9",
       "changes": "Requires runtime 0.5.0.24: list params now resolve {ctx.*} (depositos/ahorro/documentos send the real customer_id, was literal → dbff/dbs 403) and pdf.params apply to the document fetch (dds ?preview=true). All 4 outputs verified offline against the capture."

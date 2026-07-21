@@ -43,6 +43,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   a private id is always templated from captured context (`{ctx.*}`), never needed verbatim.
 
 ### Changed
+- **The account picker enumerates every grouped stream of a source** (`ui/popup.js` + `ui/accountpicker.js`).
+  A multi-product source keeps its accounts in several streams (Raisin: the current account in one, savings +
+  deposits in another) — the picker used to show only the first stream's accounts. It now enumerates them all
+  and merges by id, so every product appears. A single stream failing doesn't kill the picker.
 - **The Archive loads progressively, with throbbers.** It used to load every source in full before painting
   anything ("takes forever"). Now it paints the source index instantly and **hydrates each source's count + last
   activity in the background** (a spinner on each card/rail node until its number arrives), yielding between
