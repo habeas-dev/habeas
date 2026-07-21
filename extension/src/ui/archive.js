@@ -142,7 +142,6 @@ function patchMeta(s) {
   const q = '[data-src="' + ((window.CSS && CSS.escape) ? CSS.escape(s.base) : s.base) + '"]';
   document.querySelectorAll('.srccard' + q + ' .sc-s').forEach((el) => { el.textContent = s.count == null ? '' : (t('n_documents', [String(s.count)]) + (s.lastDate ? ' · ' + dateLong(s.lastDate) : '')); });
   document.querySelectorAll('.node' + q + ' .cnt').forEach((el) => { el.textContent = s.count == null ? '' : String(s.count); });
-  if (INDEX.every((x) => x.count != null)) { const tot = INDEX.reduce((a, x) => a + x.count, 0); document.querySelectorAll('.node[data-src="__all__"] .cnt').forEach((el) => { el.textContent = String(tot); }); }
 }
 
 async function loadDocs(base) {
@@ -185,9 +184,9 @@ function enrich(r, k) {
 function accountsOf(base) { return [...new Set(CURDOCS.filter((r) => r.base === base).map((r) => r.record.group).filter(Boolean))].sort(); }
 function renderRail() {
   const rail = $('#rail');
+  // No "Everything" root and no "All accounts" subnode: a source node IS its "all accounts" view (clicking it
+  // clears the account filter). Mixing documents across sources isn't meaningful, so there's no aggregate node.
   let html = `<div class="rlabel">${esc(t('archive_sources'))}</div>`;
-  const total = INDEX.every((x) => x.count != null) ? INDEX.reduce((a, x) => a + x.count, 0) : null; // null → throbber while hydrating
-  html += node('__all__', '🗂️', t('archive_all'), total, CUR === null, F_OTHER);
   for (const s of INDEX) {
     const on = CUR === s.base;
     html += node(s.base, catOf(s.primaryCat).i, s.name, s.count, on, catOf(s.primaryCat).f);
@@ -195,7 +194,6 @@ function renderRail() {
       const accs = accountsOf(s.base);
       if (accs.length > 1) {
         html += '<div class="subtree">';
-        html += `<button class="subnode${ACCOUNT === '' ? ' on' : ''}" data-acc=""><span class="sd"></span>${esc(t('all_accounts'))}</button>`;
         for (const a of accs) html += `<button class="subnode${ACCOUNT === a ? ' on' : ''}" data-acc="${esc(a)}"><span class="sd"></span>${esc(a)}</button>`;
         html += '</div>';
       }
@@ -404,10 +402,12 @@ function wire() {
   $('#scrim').onclick = closeDrawer;
   $('#q').oninput = () => { if (CUR) renderDocs(); else renderIndex(); };
   $('#sync').onclick = onSync;
+  // the brand returns to the source index (there's no "Everything" node in the tree anymore)
+  document.querySelectorAll('.abar .logo, .abar .brand').forEach((el) => { el.style.cursor = 'pointer'; el.onclick = goIndex; });
   // rail delegation
   $('#rail').onclick = (ev) => {
     const acc = ev.target.closest('[data-acc]'); if (acc) { ACCOUNT = acc.dataset.acc; renderRail(); renderDocs(); return; }
-    const src = ev.target.closest('[data-src]'); if (src) { const s = src.dataset.src; if (s === '__all__') goIndex(); else openSource(s); }
+    const src = ev.target.closest('[data-src]'); if (src) openSource(src.dataset.src);
   };
   // main delegation (index cards, group-by, select toggle, doc cards)
   $('#main').onclick = (ev) => {

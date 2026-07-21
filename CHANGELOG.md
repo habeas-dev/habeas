@@ -52,6 +52,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   a private id is always templated from captured context (`{ctx.*}`), never needed verbatim.
 
 ### Changed
+- **The Archive tree drops the "Everything" root and the "All accounts" subnode** (`ui/archive.js`). Mixing
+  documents across different sources isn't meaningful, so the tree is just the list of sources; a source node
+  is itself its "all accounts" view (clicking it clears any account filter), and the account subtree lists only
+  the real accounts. The brand returns to the source index.
 - **The account picker enumerates every grouped stream of a source** (`ui/popup.js` + `ui/accountpicker.js`).
   A multi-product source keeps its accounts in several streams (Raisin: the current account in one, savings +
   deposits in another) — the picker used to show only the first stream's accounts. It now enumerates them all
