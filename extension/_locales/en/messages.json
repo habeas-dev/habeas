@@ -2186,7 +2186,7 @@
     "message": "No documents match."
   },
   "archive_no_dest": {
-    "message": "This document is in your archive. To copy it to a destination (Drive, a folder…), use Sync or Send from the popup."
+    "message": "This document is in your archive but not yet copied to a destination. Use “Save to” above to copy this source’s pending documents to Drive, a folder, or an HTTP consumer."
   },
   "archive_raw_show": {
     "message": "Show full data"
@@ -2225,5 +2225,57 @@
   },
   "archive_delivered_data": {
     "message": "This is a movement — its data was delivered inside the manifest, so there is no separate file to open."
+  },
+  "archive_save_to": {
+    "message": "Save to"
+  },
+  "archive_save_hint": {
+    "message": "Save this source’s pending documents to $S$",
+    "placeholders": {
+      "s": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_saving": {
+    "message": "Saving…"
+  },
+  "archive_saved_ok": {
+    "message": "Saved $N$ to $S$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "s": {
+        "content": "$2"
+      }
+    }
+  },
+  "archive_save_none": {
+    "message": "Nothing pending to save there"
+  },
+  "archive_save_nosession": {
+    "message": "Sign in to $S$ (open it) and try again",
+    "placeholders": {
+      "s": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_save_err": {
+    "message": "Could not save: $E$",
+    "placeholders": {
+      "e": {
+        "content": "$1"
+      }
+    }
+  },
+  "quick_sub": {
+    "message": "$N$ sources in your archive · sync to pull whats new",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
   }
 }

@@ -2186,7 +2186,7 @@
     "message": "Ningún documento coincide."
   },
   "archive_no_dest": {
-    "message": "Este documento está en tu archivo. Para copiarlo a un destino (Drive, una carpeta…), usa Sincronizar o Enviar desde el popup."
+    "message": "Este documento está en tu archivo pero aún no se ha copiado a un destino. Usa «Guardar en» arriba para copiar lo pendiente de esta fuente a Drive, una carpeta o un consumidor HTTP."
   },
   "archive_raw_show": {
     "message": "Ver datos completos"
@@ -2225,5 +2225,57 @@
   },
   "archive_delivered_data": {
     "message": "Es un movimiento — sus datos se entregaron dentro del manifiesto, así que no hay un archivo propio que abrir."
+  },
+  "archive_save_to": {
+    "message": "Guardar en"
+  },
+  "archive_save_hint": {
+    "message": "Guarda lo pendiente de esta fuente en $S$",
+    "placeholders": {
+      "s": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_saving": {
+    "message": "Guardando…"
+  },
+  "archive_saved_ok": {
+    "message": "Guardados $N$ en $S$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "s": {
+        "content": "$2"
+      }
+    }
+  },
+  "archive_save_none": {
+    "message": "Nada pendiente que guardar ahí"
+  },
+  "archive_save_nosession": {
+    "message": "Inicia sesión en $S$ (ábrela) y reinténtalo",
+    "placeholders": {
+      "s": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_save_err": {
+    "message": "No se pudo guardar: $E$",
+    "placeholders": {
+      "e": {
+        "content": "$1"
+      }
+    }
+  },
+  "quick_sub": {
+    "message": "$N$ fuentes en tu archivo · sincroniza para traer lo nuevo",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
   }
 }

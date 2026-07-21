@@ -11,6 +11,7 @@ import { getAdapters } from '../adapters/index.js';
 import { listSources, getSource } from '../lib/store.js';
 import { deliveredSet, getDocMeta } from '../lib/state.js';
 import { isRetrievable } from '../lib/retrieve.js';
+import { sinkAcceptsSource } from '../sinks/format.js';
 import { resolveOutput } from '../lib/outputs.js';
 import { artifactKinds } from '../runtime/inventory.js';
 import { applyI18n, t } from '../lib/i18n.js';
@@ -242,8 +243,10 @@ function renderDocs() {
   html += '</div>';
   // group-by + selection controls
   const gb = (mode, label) => `<button data-gb="${mode}" class="${GROUPMODE === mode ? 'on' : ''}">${esc(label)}</button>`;
+  const sinks = compatibleSinks(entry.adapter);
+  const saveGrp = sinks.length ? `<span class="savegrp"><span class="sl">${esc(t('archive_save_to'))}</span>${sinks.map((s) => `<button class="savebtn" data-save="${esc(s.id)}" title="${esc(t('archive_save_hint', [sinkLabel(s)]))}">${sinkIcon(s)} ${esc(sinkLabel(s))}</button>`).join('')}</span>` : '';
   html += `<div class="docbar"><div class="groupby">${gb('month', t('group_month'))}${gb('category', t('group_category'))}${gb('store', t('group_store'))}</div>
-    <button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div>`;
+    <div class="docbar-r">${saveGrp}<button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div></div>`;
   if (!docs.length) { html += emptyState(t('no_documents'), t('archive_empty_source')); m.innerHTML = html; return; }
   for (const g of groupDocs(docs)) {
     const net = g.items.reduce((a, r) => { const v = (typeof r.record.total === 'number' ? r.record.total : r.record.amount); if (typeof v !== 'number') return a; const dir = r.record.direction; return a + (dir === 'out' ? -Math.abs(v) : dir === 'in' ? Math.abs(v) : v); }, 0);
@@ -313,6 +316,33 @@ function actBtn(icon, label, sub, act, primary) {
 }
 function closeDrawer() { $('#drawer').classList.remove('on'); $('#scrim').classList.remove('on'); $('#drawer').setAttribute('aria-hidden', 'true'); }
 const sinkLabel = (s) => s.name || s.id || s.type;
+// Software destinations the background can deliver to unattended (mirrors the Auto-sync tab). 'download' and
+// 'local-folder' need a page/user context, so they're not offered as an on-demand archive save.
+const AUTO_SINK_TYPES = new Set(['drive', 'http', 'webdav', 's3', 'dropbox']);
+const SINK_ICON = { drive: '☁️', dropbox: '🗄️', s3: '🪣', webdav: '🌐', http: '🔗' };
+const sinkIcon = (s) => SINK_ICON[s.type] || '📤';
+function compatibleSinks(adapter) { return adapter ? (CFG.sinks || []).filter((s) => AUTO_SINK_TYPES.has(s.type) && sinkAcceptsSource(s, adapter)) : []; }
+// Save = deliver every NOT-yet-saved document of the CURRENT source to a destination, reusing the background's
+// full pipeline (session → list new → fetch → write → ledger). Honest about a missing session.
+async function deliver(sinkId) {
+  const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds) return;
+  const sink = (CFG.sinks || []).find((s) => s.id === sinkId); if (!sink) return;
+  document.body.classList.add('saving');
+  $('#astatus').textContent = t('archive_saving');
+  const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#astatus').textContent = v.msg; };
+  chrome.storage.onChanged.addListener(onStatus);
+  try {
+    const r = await chrome.runtime.sendMessage({ type: 'habeas:deliver', datasource: entry.ds.id, sink: sinkId });
+    if (r && r.ok && r.status === 'done') $('#astatus').textContent = r.new ? t('archive_saved_ok', [String(r.new), sinkLabel(sink)]) : t('archive_save_none');
+    else if (r && r.status === 'nosession') $('#astatus').textContent = t('archive_save_nosession', [entry.name]);
+    else $('#astatus').textContent = t('archive_save_err', [(r && r.error) || 'error']);
+  } catch (e) { $('#astatus').textContent = t('archive_save_err', [(e && e.message) || String(e)]); }
+  finally {
+    chrome.storage.onChanged.removeListener(onStatus);
+    document.body.classList.remove('saving');
+    await loadIndex(); if (CUR) { await loadDocs(CUR); renderRail(); renderDocs(); }
+  }
+}
 function openFile(r, sinkId, ext) {
   const url = chrome.runtime.getURL(`src/ui/docview.html?sink=${encodeURIComponent(sinkId)}&src=${encodeURIComponent(r.base)}&id=${encodeURIComponent(r.internalId)}${ext ? '&ext=' + encodeURIComponent(ext) : ''}`);
   chrome.tabs.create({ url });
@@ -353,6 +383,7 @@ function wire() {
   $('#main').onclick = (ev) => {
     const sc = ev.target.closest('.srccard'); if (sc) { openSource(sc.dataset.src); return; }
     const gb = ev.target.closest('[data-gb]'); if (gb) { GROUPMODE = gb.dataset.gb; renderDocs(); return; }
+    const sv = ev.target.closest('[data-save]'); if (sv) { deliver(sv.dataset.save); return; }
     if (ev.target.closest('#seltoggle')) { toggleSelecting(); return; }
     if (ev.target.closest('#selclear')) { PICKED.clear(); SELECTING = false; renderDocs(); return; }
     if (ev.target.closest('#selopen')) { batchOpen(); return; }

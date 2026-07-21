@@ -91,6 +91,7 @@ async function init() {
   await badgeClear();
   watchThemeIcon();
   wireDocsTab();
+  renderQuick().catch(() => {});
   await renderActivity();
   chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch['habeas:log']) renderActivity(); });
   await resumePendingList(); // a list left pending on login resumes automatically once the session is captured
@@ -711,6 +712,22 @@ let docsFiltered = [];     // currently-rendered subset (index target for row ha
 
 const sinkLabel = (s) => s.name || s.id || s.type;
 const docStore = (r) => nameOf(r.store && r.store.name) || nameOf(r.storeName) || nameOf(r.issuer) || nameOf(r.counterparty) || nameOf(r.description) || '';
+
+// Quick hero: a friendly landing that frames the popup as the fast lane to the visual Archive. Cheap — reads
+// only the store's source keys (no per-source item load), so opening the popup stays snappy. Chips deep-link
+// straight into a source in the Archive; the CTA opens the whole archive.
+async function renderQuick() {
+  const el = $('#quick'); if (!el) return;
+  let keys = []; try { keys = await listSources(); } catch (e) {}
+  const bases = [...new Set(keys.map((k) => String(k).split(':')[0]))];
+  if (!bases.length) { el.hidden = true; return; }
+  const open = (src) => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/archive.html' + (src ? '?src=' + encodeURIComponent(src) : '')) });
+  const chips = bases.slice(0, 10).map((b) => { const a = ADAPTERS[b]; return `<button class="q-chip" data-arch="${esc(b)}">🗂️ ${esc((a && a.name) || b)}</button>`; }).join('');
+  el.innerHTML = `<div class="q-head"><div><div class="q-title">${esc(t('archive_index_title'))}</div><div class="q-sub">${esc(t('quick_sub', [String(bases.length)]))}</div></div><button class="primary q-cta" id="q-open">${esc(t('open_archive'))} →</button></div><div class="q-chips">${chips}</div>`;
+  el.hidden = false;
+  $('#q-open').onclick = () => open('');
+  el.querySelectorAll('[data-arch]').forEach((x) => { x.onclick = () => open(x.dataset.arch); });
+}
 
 function wireDocsTab() {
   $('#tab-sources').onclick = () => switchTab('sources');

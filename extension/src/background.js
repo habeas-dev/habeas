@@ -288,6 +288,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true; // async response
   }
   if (msg.type === 'habeas:sync-stop') { stopSweep(); sendResponse({ ok: true }); return; } // stop a running sweep
+  if (msg.type === 'habeas:deliver' && msg.datasource && msg.sink) { // on-demand "save this source to this destination" (from the Archive)
+    (async () => {
+      const cfg = await getConfig();
+      const adapters = await getAdapters();
+      const ds = (cfg.datasources || []).find((d) => d.id === msg.datasource);
+      const adapter = ds && adapters[ds.adapter];
+      const sink = (cfg.sinks || []).find((k) => k.id === msg.sink);
+      if (!ds || !adapter || !sink) return { ok: false, error: 'unknown route' };
+      // Reuse the full, tested pipeline: list → filter to NEW (undelivered) → fetch → write → mark ledger + store.
+      // Returns { status:'nosession' } cleanly when there's no live session (the Archive surfaces that honestly).
+      const r = await runRoute(ds, adapter, sink, { kind: 'manual', interactive: true });
+      return { ok: true, ...r };
+    })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
+    return true; // async response
+  }
   if (msg.type === 'habeas:sched-run' && msg.id) { onScheduleAlarm(msg.id).then(() => sendResponse({ ok: true }), (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) })); return true; } // run a schedule now
   if (msg.type === 'habeas:auth' && msg.host) {
     // The in-page hook captures from ANY fetch/XHR (no URL filter), so honor the source's declared capture

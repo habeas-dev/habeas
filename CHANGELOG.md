@@ -25,6 +25,16 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   a private id is always templated from captured context (`{ctx.*}`), never needed verbatim.
 
 ### Added
+- **Save to a destination from the Archive** (`archive.js` + a new `habeas:deliver` background message reusing
+  `runRoute`). A source's document view now has a **"Save to …"** control listing the compatible software
+  destinations (Drive / HTTP / WebDAV / S3 / Dropbox that accept the source); clicking it delivers every
+  not-yet-saved document of that source to that destination through the full, tested pipeline (session → list
+  new → fetch → write → ledger + store), respecting the account filter. Statuses on the cards update
+  afterwards. Honest when there's no live session ("sign in to the source and try again") — no silent failure.
+- **A redesigned popup landing** (`ui/popup.*`): a friendly **quick hero** at the top frames the popup as the
+  fast lane to the visual Archive — a "$N sources in your archive" line, per-source chips that deep-link
+  straight into that source in the Archive, and a prominent "Open full archive" button. Cheap: it reads only
+  the store's source keys, so the popup stays snappy. The existing power controls are unchanged below it.
 - **A visual document archive** (`ui/archive.html` / `archive.js`), opened from the popup's Documents tab
   ("Open full archive"). A full-tab, friendly view of everything recovered — the counterpart to the popup's
   quick "sync + see new". Left rail is a **source → account tree**; the root "Everything" is an **index of
