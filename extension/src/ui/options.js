@@ -1,10 +1,10 @@
 import { chrome } from '../lib/ext.js';
 import { getConfig, saveConfig, upsert, remove } from '../lib/config.js';
-import { setSecret } from '../lib/secrets.js';
-import { driveSignIn, redirectUri, driveConnected, disconnectDrive, preferDeviceFlow, driveDeviceConnect } from '../sinks/drive.js';
-import { dropboxConnect, dropboxRedirectUri } from '../sinks/dropbox.js';
+import { driveSignIn, driveConnected, disconnectDrive, preferDeviceFlow, driveDeviceConnect } from '../sinks/drive.js';
+import { dropboxConnect } from '../sinks/dropbox.js';
 import { putHandle, getHandle, verifyPermission } from '../lib/fs.js';
 import { sinkAcceptsSource } from '../sinks/format.js';
+import { renderSinkFields, buildSinkFromForm } from './sinkform.js';
 import { watchThemeIcon } from '../lib/theme-icon.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { getAdapters, removeSource, isBuiltinSource } from '../adapters/index.js';
@@ -294,62 +294,12 @@ async function renderPlanner(cfg) {
   $('#pl-list').querySelectorAll('[data-pl-run]').forEach((b) => b.onclick = () => { chrome.runtime.sendMessage({ type: 'habeas:sched-run', id: b.dataset.plRun }); b.textContent = t('sched_running'); });
 }
 
-function renderFields() {
-  const type = $('#stype').value;
-  if (type === 'http') {
-    $('#sfields').innerHTML = `id:<input id="sid" size="8"> url:<input id="surl" size="22"> token:<input id="stok" size="10"> <label>${t('sink_accepts')}</label><input id="saccepts" size="14" placeholder="grocery,fuel">`;
-  } else if (type === 'webdav') {
-    $('#sfields').innerHTML = `id:<input id="sid" size="8"> <label>${t('webdav_url')}</label><input id="surl" size="24" placeholder="https://host/remote.php/dav/files/me/Habeas"> <label>${t('webdav_user')}</label><input id="swuser" size="10"> <label>${t('webdav_pass')}</label><input id="swpass" type="password" size="10">`;
-  } else if (type === 's3') {
-    $('#sfields').innerHTML = `id:<input id="sid" size="6"> <label>${t('s3_bucket')}</label><input id="s3bucket" size="10"> <label>${t('s3_region')}</label><input id="s3region" size="8" placeholder="us-east-1"> <label>${t('s3_key')}</label><input id="s3ak" size="10"> <label>${t('s3_secret')}</label><input id="s3sk" type="password" size="10"> <label>${t('s3_endpoint_opt')}</label><input id="s3ep" size="16" placeholder="MinIO/R2/B2"> <label>${t('s3_prefix_opt')}</label><input id="s3prefix" size="8">`;
-  } else if (type === 'dropbox') {
-    $('#sfields').innerHTML = `id:<input id="sid" size="6"> <label>${t('dbx_folder_opt')}</label><input id="dbxfolder" size="12" placeholder="${t('dbx_folder_ph')}"> <label>${t('dbx_appkey_opt')}</label><input id="dbxkey" size="14"> <label>${t('dbx_refresh_opt')}</label><input id="dbxrefresh" type="password" size="16">`
-      + `<div style="flex-basis:100%;margin-top:4px"><small>${t('dbx_hint')}</small><br><small>${t('redirect_hint')}</small> <code>${dropboxRedirectUri()}</code></div>`;
-  } else if (type === 'drive') {
-    $('#sfields').innerHTML = `id:<input id="sid" size="8"> <label>${t('client_id_optional')}</label><input id="sclient" size="26">`
-      + `<div style="flex-basis:100%;margin-top:6px"><small>${t('redirect_hint')}</small><br><code>${redirectUri()}</code></div>`;
-  } else {
-    $('#sfields').innerHTML = `id:<input id="sid" size="8">`;
-  }
-}
+// The per-type fields now live in the shared sink form (ui/sinkform.js), reused by the first-run assistant.
+function renderFields() { $('#sfields').innerHTML = renderSinkFields($('#stype').value); }
 
 async function addSink() {
-  const type = $('#stype').value;
-  const id = ($('#sid') && $('#sid').value.trim()) || (type + '-1');
-  const sink = { id, type };
-  if (type === 'http') {
-    sink.url = ($('#surl').value || '').trim();
-    sink.tokenRef = 'secret://' + id;
-    if ($('#stok').value.trim()) await setSecret(id, $('#stok').value.trim());
-    const acc = (($('#saccepts') && $('#saccepts').value) || '').split(',').map((x) => x.trim()).filter(Boolean);
-    if (acc.length) sink.accepts = { categories: acc };
-  } else if (type === 'webdav') {
-    sink.url = ($('#surl').value || '').trim();
-    sink.username = ($('#swuser').value || '').trim() || undefined;
-    if ($('#swpass').value) { sink.passwordRef = 'secret://' + id; await setSecret(id, $('#swpass').value); }
-  } else if (type === 's3') {
-    sink.bucket = ($('#s3bucket').value || '').trim();
-    sink.region = ($('#s3region').value || '').trim() || 'us-east-1';
-    sink.accessKeyId = ($('#s3ak').value || '').trim();
-    const ep = ($('#s3ep').value || '').trim(); if (ep) { sink.endpoint = ep; sink.pathStyle = true; }
-    const prefix = ($('#s3prefix').value || '').trim(); if (prefix) sink.prefix = prefix;
-    if ($('#s3sk').value) { sink.secretRef = 'secret://' + id; await setSecret(id, $('#s3sk').value); }
-  } else if (type === 'dropbox') {
-    sink.appKey = ($('#dbxkey').value || '').trim() || undefined;
-    const folder = ($('#dbxfolder').value || '').trim(); // blank → the app folder root (App-folder app already scopes under Aplicaciones/<app>/)
-    if (folder) sink.rootFolderName = folder;
-    if ($('#dbxrefresh').value) { sink.refreshRef = 'secret://' + id; await setSecret(id, $('#dbxrefresh').value.trim()); }
-  } else if (type === 'drive') {
-    sink.clientId = ($('#sclient').value || '').trim() || undefined;
-    sink.rootFolderName = 'Habeas';
-  } else if (type === 'local-folder') {
-    if (!window.showDirectoryPicker) { alert(t('fs_unsupported')); return; }
-    try {
-      const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
-      await putHandle('dir:' + id, handle);
-      sink.folderName = handle.name;
-    } catch (e) { return; }
-  }
+  const sink = await buildSinkFromForm(document, $('#stype').value); // shared with the first-run assistant
+  if (!sink) return;
   await upsert('sinks', sink);
   renderFields();
   render();

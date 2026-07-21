@@ -9,7 +9,8 @@ import { chrome } from '../lib/ext.js';
 import { getConfig, saveConfig } from '../lib/config.js';
 import { getAdapters } from '../adapters/index.js';
 import { listSources, getSource, getStoreConfig } from '../lib/store.js';
-import { useDriveStore, useFolderStore, useSinkStore, folderStoreAvailable } from '../lib/storesetup.js';
+import { useDriveStore, useFolderStore, useSinkStore, useHttpStore, folderStoreAvailable } from '../lib/storesetup.js';
+import { mountSinkForm, connectSink, needsConnect, storeCapable } from './sinkform.js';
 import { deliveredSet, getDocMeta } from '../lib/state.js';
 import { isRetrievable } from '../lib/retrieve.js';
 import { sinkAcceptsSource, groupLabelOf } from '../sinks/format.js';
@@ -283,12 +284,12 @@ function wizardCard() {
   const btns = [];
   btns.push(dbx
     ? `<button class="wz-btn primary" data-store="dropbox" data-sink="${esc(dbx.id)}">🗄️ ${esc(t('onboard_dropbox'))}</button>`
-    : `<button class="wz-btn primary" data-store="advanced">🗄️ ${esc(t('onboard_dropbox_setup'))}</button>`);
+    : `<button class="wz-btn primary" data-add="dropbox">🗄️ ${esc(t('onboard_dropbox_setup'))}</button>`);
   // Any other already-configured sink backend can host the store too (reuse its credentials).
   for (const type of ['webdav', 's3']) { const s = sinkOf(type); if (s) btns.push(`<button class="wz-btn" data-store="${type}" data-sink="${esc(s.id)}">${SINK_ICONS[type]} ${esc(t('onboard_use_sink', [type.toUpperCase()]))}</button>`); }
   btns.push(`<button class="wz-btn" data-store="drive">☁️ ${esc(t('onboard_drive'))}</button>`);
   if (folderStoreAvailable()) btns.push(`<button class="wz-btn" data-store="folder">📁 ${esc(t('onboard_folder'))}</button>`);
-  btns.push(`<button class="wz-btn" data-store="advanced">⚙️ ${esc(t('onboard_more'))}</button>`);
+  btns.push(`<button class="wz-btn" data-add="">➕ ${esc(t('onboard_add'))}</button>`);
   btns.push(`<button class="wz-btn ghost" data-store="dismiss">${esc(t('onboard_dismiss'))}</button>`);
   return `<div class="wizard" id="wizard">
     <div class="wz-head"><span class="wz-ic">🗄️</span><div><h2>${esc(t('onboard_title'))}</h2><p>${esc(t('onboard_body'))}</p></div></div>
@@ -313,6 +314,43 @@ async function onStoreSetup(kind, sinkId) {
     if (st) st.textContent = t('onboard_err', [(e && e.message) || String(e)]);
     if (wiz) wiz.classList.remove('busy');
   }
+}
+// Create ANY destination (sink) from the assistant, reusing the shared sink form (ui/sinkform.js — the same one
+// Settings uses). On save: OAuth-connect if needed, and if the destination can host the archive, move it there.
+function openSinkModal(preType) {
+  const ov = document.createElement('div'); ov.className = 'wz-modal';
+  const box = document.createElement('div'); box.className = 'card wz-modalbox';
+  const h = document.createElement('h3'); h.textContent = t('onboard_add_title');
+  const p = document.createElement('p'); p.className = 'muted'; p.style.margin = '4px 0 12px'; p.textContent = t('onboard_add_sub');
+  const formRoot = document.createElement('div');
+  const status = document.createElement('div'); status.className = 'wz-status';
+  const foot = document.createElement('div'); foot.className = 'row'; foot.style.cssText = 'justify-content:flex-end;margin-top:12px;gap:8px';
+  const cancel = document.createElement('button'); cancel.textContent = t('cancel');
+  const close = () => ov.remove();
+  cancel.onclick = close;
+  foot.append(cancel);
+  box.append(h, p, formRoot, status, foot);
+  ov.append(box); document.body.append(ov);
+  ov.onclick = (e) => { if (e.target === ov) close(); };
+  mountSinkForm(formRoot, {
+    type: preType,
+    onSaved: async (sink) => {
+      try {
+        if (needsConnect(sink.type)) { status.textContent = t('onboard_connecting'); await connectSink(sink); }
+        if (storeCapable(sink.type)) {
+          status.textContent = t('onboard_moving');
+          const n = sink.type === 'drive' ? await useDriveStore()
+            : sink.type === 'http' ? await useHttpStore(sink.url)
+            : await useSinkStore(sink.type, sink.id);
+          STORE_LOCAL = false; close();
+          await buildIndex(); renderRail(); renderIndex(); hydrateIndex(); // store moved → re-read
+        } else {
+          CFG = await getConfig(); // a delivery-only destination (download / local folder) — added, can't host the archive
+          status.textContent = t('onboard_sink_added');
+        }
+      } catch (e) { status.textContent = t('onboard_err', [(e && e.message) || String(e)]); }
+    },
+  });
 }
 
 // ---- rendering: index (Everything) ----
@@ -653,6 +691,7 @@ function wire() {
   };
   // main delegation (index cards, group-by, select toggle, doc cards)
   $('#main').onclick = (ev) => {
+    const wa = ev.target.closest('[data-add]'); if (wa) { openSinkModal(wa.dataset.add || undefined); return; }
     const ws = ev.target.closest('[data-store]'); if (ws) { onStoreSetup(ws.dataset.store, ws.dataset.sink); return; }
     const sc = ev.target.closest('.srccard'); if (sc) { openSource(sc.dataset.src); return; }
     const gb = ev.target.closest('[data-gb]'); if (gb) { GROUPMODE = gb.dataset.gb; renderDocs(); return; }

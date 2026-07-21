@@ -18,7 +18,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   (`lib/storesetup.js` → `moveStoreTo` / `driveSignIn` / `putHandle`) — no new store logic. **Dropbox is the
   recommended cloud store** (Google Drive's app-scoped `drive.file` access is awkward for this); the assistant
   offers one-click move to any already-configured cloud sink (Dropbox / WebDAV / S3), Google Drive, a local folder
-  (Chromium), "Other destination…" (opens Settings to add a sink or pick another backend), or dismiss. The
+  (Chromium), or dismiss. **Any destination can be created from the assistant itself** — "Add another destination…"
+  (and the Dropbox setup button) open the full add-a-sink form in a modal, then connect + move the archive there.
+- **Shared add-a-destination form** (`ui/sinkform.js`). The per-type sink fields + build/connect logic were extracted
+  from `options.js` into one module reused by both Settings and the first-run assistant — no duplication. The
   store-move core is covered by `test/store.test.mjs`.
 - **Archive — per-source "Refresh"** (`ui/archive.js`, `background.js`). A ↻ Refresh button on each source lists
   every output and writes the new documents straight into the local store — no destination required. It reuses the

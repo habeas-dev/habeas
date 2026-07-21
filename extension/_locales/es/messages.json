@@ -2497,5 +2497,20 @@
   },
   "onboard_more": {
     "message": "Otro destino…"
+  },
+  "onboard_add": {
+    "message": "Añadir otro destino…"
+  },
+  "onboard_add_title": {
+    "message": "Añadir un destino"
+  },
+  "onboard_add_sub": {
+    "message": "Configura un destino. Si puede alojar tu archivo, tu archivo se moverá allí."
+  },
+  "onboard_connecting": {
+    "message": "Conectando…"
+  },
+  "onboard_sink_added": {
+    "message": "Destino añadido. (Guarda documentos entregados; no puede alojar el archivo en sí.)"
   }
 }

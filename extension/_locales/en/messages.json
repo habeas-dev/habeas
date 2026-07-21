@@ -2497,5 +2497,20 @@
   },
   "onboard_more": {
     "message": "Other destination…"
+  },
+  "onboard_add": {
+    "message": "Add another destination…"
+  },
+  "onboard_add_title": {
+    "message": "Add a destination"
+  },
+  "onboard_add_sub": {
+    "message": "Set up a destination. If it can host your archive, your archive will be moved there."
+  },
+  "onboard_connecting": {
+    "message": "Connecting…"
+  },
+  "onboard_sink_added": {
+    "message": "Destination added. (It stores delivered documents; it can’t host the archive itself.)"
   }
 }
