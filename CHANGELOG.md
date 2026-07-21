@@ -26,6 +26,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   the account picker in place, so you choose which accounts a source tracks without the popup.
 - **Archive — a complete source manager.** The index now lists every enabled, installed source, not only those
   with stored documents — so a freshly-installed source appears and can be Refreshed to pull its first documents.
+- **Archive — "No account" bucket** (`ui/archive.js`). In a grouped source, documents with no associated account
+  are reachable via a "No account" node in the account tree (they were hidden by the multi-account gate before).
+- **Archive — select all / none** in selection mode, and a **Save → "Re-download from site"** dropdown that
+  re-fetches and re-delivers even already-delivered documents (`habeas:deliver` `force` → `runRoute` delivers all
+  listed docs, not just undelivered), mirroring the classic "Re-download from site" toggle.
 
 ### Changed
 - **Archive Refresh calls the SAME list core as the classic "List documents"** (`runtime/lister.js`,

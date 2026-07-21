@@ -62,6 +62,7 @@
     .subnode:hover{background:var(--surface);color:var(--ink)}
     .subnode.on{color:var(--brand-600);font-weight:600}
     .subnode .sd{width:7px;height:7px;border-radius:2px;flex:none;background:var(--brand-500)}
+    .subnode.none{font-style:italic} .subnode.none .sd{background:var(--muted)}
 
     .main{padding:22px 26px;min-width:0}
     @media (max-width:520px){.main{padding:16px}}
@@ -161,6 +162,9 @@
     .selbar button{border:0;border-radius:100px;padding:8px 15px;font-weight:600;cursor:pointer;font-family:var(--font-body);font-size:13px}
     .selbar .go{background:var(--accent);color:#241206}
     .selbar .clr{background:rgba(255,255,255,.14);color:#eaf4f0}
+    .selbar .pick{background:rgba(255,255,255,.10);color:#eaf4f0;font-size:12px;padding:7px 12px}
+    .savegrp .caret{padding:6px 9px}
+    .refmenu .menuhead{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:6px 10px 4px}
 
     /* reused modal — the account picker (accountpicker.js) builds its own overlay + a .card box with .row rows */
     .card{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow-lg)}

@@ -2406,5 +2406,25 @@
   },
   "open_advanced": {
     "message": "Advanced tools"
+  },
+  "archive_no_account": {
+    "message": "No account"
+  },
+  "archive_redownload": {
+    "message": "Re-download from site"
+  },
+  "archive_redownload_to": {
+    "message": "Re-download → $NAME$",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_select_all": {
+    "message": "All"
+  },
+  "archive_select_none": {
+    "message": "None"
   }
 }

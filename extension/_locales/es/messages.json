@@ -2406,5 +2406,25 @@
   },
   "open_advanced": {
     "message": "Herramientas avanzadas"
+  },
+  "archive_no_account": {
+    "message": "Sin cuenta asociada"
+  },
+  "archive_redownload": {
+    "message": "Re-descargar del sitio"
+  },
+  "archive_redownload_to": {
+    "message": "Re-descargar → $NAME$",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_select_all": {
+    "message": "Todos"
+  },
+  "archive_select_none": {
+    "message": "Ninguno"
   }
 }

@@ -294,7 +294,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       if (!ds || !adapter || !sink) return { ok: false, error: 'unknown route' };
       // Reuse the full, tested pipeline: list → filter to NEW (undelivered) → fetch → write → mark ledger + store.
       // Returns { status:'nosession' } cleanly when there's no live session (the Archive surfaces that honestly).
-      const r = await runRoute(ds, adapter, sink, { kind: 'manual', interactive: true });
+      // msg.force → "Re-download from site": deliver ALL listed docs, not just undelivered (re-fetches them).
+      const r = await runRoute(ds, adapter, sink, { kind: 'manual', interactive: true, force: !!msg.force });
       return { ok: true, ...r };
     })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true; // async response
@@ -621,7 +622,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
       // onProgress → live per-page status (visible in an open popup during a Sync-all sweep). signal → stop.
       // ds.groups = the user's saved account allow-list (grouped sources): auto/sweep only ever touch those.
       const all = await listInventory(eff, auth, net, { groupId: opts.groupId, groups: (ds.groups && ds.groups.length) ? ds.groups : undefined, signal: opts.signal, onProgress: (p) => setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])) }); // opts.groupId → one account; opts.groups → allow-list
-      const fresh = all.filter((d) => !delivered[d.internalId]);
+      const fresh = opts.force ? all : all.filter((d) => !delivered[d.internalId]); // force → re-deliver everything
       // Deliver oldest → newest (the list comes newest-first) — files written + manifest appended + store
       // recorded chronologically, matching the manual send. Covers auto, sweep and external collect.
       const eligible = fresh.filter((d) => acceptsDoc(sink, d))

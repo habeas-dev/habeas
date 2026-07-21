@@ -234,7 +234,13 @@ function enrich(r, k) {
 }
 
 // ---- rendering: rail ----
+const NO_ACCOUNT = '__habeas_no_account__'; // sentinel ACCOUNT = documents in a grouped source with no account
 function accountsOf(base) { return [...new Set(CURDOCS.filter((r) => r.base === base).map((r) => r.record.group).filter(Boolean))].sort(); }
+function hasUngrouped(base) { return CURDOCS.some((r) => r.base === base && !r.record.group); }
+// Selectable buckets in the account tree = the real accounts + a "No account" bucket when there are docs with
+// no associated account (so they're reachable, not hidden by the multi-account gate).
+function bucketsOf(base) { const a = accountsOf(base); return hasUngrouped(base) ? [...a, NO_ACCOUNT] : a; }
+const accLabel = (a) => (a === NO_ACCOUNT ? t('archive_no_account') : a);
 function renderRail() {
   const rail = $('#rail');
   // No "Everything" root and no "All accounts" subnode: a source node IS its "all accounts" view (clicking it
@@ -244,10 +250,10 @@ function renderRail() {
     const on = CUR === s.base;
     html += node(s.base, catOf(s.primaryCat).i, s.name, s.count, on, catOf(s.primaryCat).f);
     if (on) {
-      const accs = accountsOf(s.base);
-      if (accs.length > 1) {
+      const buckets = bucketsOf(s.base);
+      if (buckets.length > 1) {
         html += '<div class="subtree">';
-        for (const a of accs) html += `<button class="subnode${ACCOUNT === a ? ' on' : ''}" data-acc="${esc(a)}"><span class="sd"></span>${esc(a)}</button>`;
+        for (const a of buckets) html += `<button class="subnode${ACCOUNT === a ? ' on' : ''}${a === NO_ACCOUNT ? ' none' : ''}" data-acc="${esc(a)}"><span class="sd"></span>${esc(accLabel(a))}</button>`;
         html += '</div>';
       }
     }
@@ -286,7 +292,8 @@ function loadingPane() { return `<div class="loadpane"><span class="thb big"></s
 function visibleDocs() {
   const q = ($('#q').value || '').trim().toLowerCase();
   return CURDOCS.filter((r) => {
-    if (ACCOUNT && r.record.group !== ACCOUNT) return false;
+    if (ACCOUNT === NO_ACCOUNT) { if (r.record.group) return false; } // the "No account" bucket
+    else if (ACCOUNT && r.record.group !== ACCOUNT) return false;
     if (!q) return true;
     return [titleOf(r.record), r.record.date, r.record.type, catLabel(r.record.category), r.record.group].join(' ').toLowerCase().includes(q);
   });
@@ -313,17 +320,17 @@ async function renderDocs() {
   const entry = INDEX.find((x) => x.base === CUR) || {};
   // Multi-account source: don't mix accounts — wait for the user to pick one in the tree before showing rows.
   // The gate lives INSIDE the doc area so the source-level controls (Refresh, Accounts) stay available.
-  const accs = accountsOf(CUR);
-  const gate = accs.length > 1 && !ACCOUNT;
+  const buckets = bucketsOf(CUR);
+  const gate = buckets.length > 1 && !ACCOUNT;
   const docs = gate ? [] : visibleDocs();
   const delivered = CURDOCS.filter((r) => r.delivered.length).length;
-  let head = `<div class="crumbs"><span class="tile ${catOf(entry.primaryCat).f}" style="width:26px;height:26px;font-size:14px;border-radius:7px">${catOf(entry.primaryCat).i}</span> <b>${esc(entry.name || CUR)}</b>${ACCOUNT ? ' <span>›</span> ' + esc(ACCOUNT) : ''}</div>`;
+  let head = `<div class="crumbs"><span class="tile ${catOf(entry.primaryCat).f}" style="width:26px;height:26px;font-size:14px;border-radius:7px">${catOf(entry.primaryCat).i}</span> <b>${esc(entry.name || CUR)}</b>${ACCOUNT ? ' <span>›</span> ' + esc(accLabel(ACCOUNT)) : ''}</div>`;
   head += `<div class="summ"><span class="chip">📄 <b>${gate ? CURDOCS.length : docs.length}</b> ${esc(t('archive_docs_word'))}</span>`;
   if (delivered) head += `<span class="chip">${esc(t('archive_saved_n', [String(delivered)]))}</span>`;
   head += '</div>';
   const gb = (mode, label) => `<button data-gb="${mode}" class="${GROUPMODE === mode ? 'on' : ''}">${esc(label)}</button>`;
   const sinks = compatibleSinks(entry.adapter);
-  const saveGrp = sinks.length ? `<span class="savegrp"><span class="sl">${esc(t('archive_save_to'))}</span>${sinks.map((s) => `<button class="savebtn" data-save="${esc(s.id)}" title="${esc(t('archive_save_hint', [sinkLabel(s)]))}">${sinkIcon(s)} ${esc(sinkLabel(s))}</button>`).join('')}</span>` : '';
+  const saveGrp = sinks.length ? `<span class="savegrp"><span class="sl">${esc(t('archive_save_to'))}</span>${sinks.map((s) => `<button class="savebtn" data-save="${esc(s.id)}" title="${esc(t('archive_save_hint', [sinkLabel(s)]))}">${sinkIcon(s)} ${esc(sinkLabel(s))}</button>`).join('')}<span class="refwrap"><button id="save-more" class="savebtn caret" aria-haspopup="menu" aria-label="${esc(t('archive_redownload'))}" title="${esc(t('archive_redownload'))}">▾</button><div id="savemenu" class="refmenu" hidden role="menu"><div class="menuhead">${esc(t('archive_redownload'))}</div>${sinks.map((s) => `<button data-redl="${esc(s.id)}"><span class="ic">${sinkIcon(s)}</span> ${esc(t('archive_redownload_to', [sinkLabel(s)]))}</button>`).join('')}</div></span></span>` : '';
   // "Refresh" = the old "List documents": incremental list into the store (delta only). Its caret opens the
   // two alternative modes — a full-history re-scan and a no-network reload from the store.
   const refreshBtn = (entry.ds ? `<span class="refwrap">
@@ -341,13 +348,15 @@ async function renderDocs() {
   // Selection bar: send the picked documents to any compatible destination, open their saved files, or clear.
   const sendBtns = sinks.map((s) => `<button class="go" data-sendsel="${esc(s.id)}">${sinkIcon(s)} ${esc(t('archive_send_to', [sinkLabel(s)]))}</button>`).join('');
   const selbar = `<div class="selbar"><b id="selcount">0</b> <span>${esc(t('archive_selected_suffix'))}</span>
+    <button class="pick" id="selall">${esc(t('archive_select_all'))}</button>
+    <button class="pick" id="selnone">${esc(t('archive_select_none'))}</button>
     ${sendBtns}
     <button class="go" id="selopen">${esc(t('archive_open_saved'))}</button>
     <button class="clr" id="selclear">${esc(t('archive_clear'))}</button></div>`;
   m.innerHTML = head + '<div id="arch-groups"></div>' + selbar;
   m.classList.toggle('selecting', SELECTING);
   const container = document.getElementById('arch-groups');
-  if (gate) { container.innerHTML = `<div class="empty"><div class="big">👈</div><div style="font-family:var(--font-head);font-weight:600;font-size:17px;color:var(--ink)">${esc(t('archive_pick_account'))}</div><p style="margin-top:6px">${esc(t('archive_pick_account_sub', [String(accs.length)]))}</p></div>`; return; }
+  if (gate) { container.innerHTML = `<div class="empty"><div class="big">👈</div><div style="font-family:var(--font-head);font-weight:600;font-size:17px;color:var(--ink)">${esc(t('archive_pick_account'))}</div><p style="margin-top:6px">${esc(t('archive_pick_account_sub', [String(buckets.length)]))}</p></div>`; return; }
   if (!docs.length) { container.innerHTML = emptyState(t('no_documents'), t('archive_empty_source')); return; }
   const groups = groupDocs(docs);
   for (let gi = 0; gi < groups.length; gi++) {
@@ -424,7 +433,7 @@ const sinkIcon = (s) => SINK_ICON[s.type] || '📤';
 function compatibleSinks(adapter) { return adapter ? (CFG.sinks || []).filter((s) => AUTO_SINK_TYPES.has(s.type) && sinkAcceptsSource(s, adapter)) : []; }
 // Save = deliver every NOT-yet-saved document of the CURRENT source to a destination, reusing the background's
 // full pipeline (session → list new → fetch → write → ledger). Honest about a missing session.
-async function deliver(sinkId) {
+async function deliver(sinkId, opts = {}) {
   const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds) return;
   const sink = (CFG.sinks || []).find((s) => s.id === sinkId); if (!sink) return;
   document.body.classList.add('saving');
@@ -432,7 +441,8 @@ async function deliver(sinkId) {
   const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#astatus').textContent = v.msg; };
   chrome.storage.onChanged.addListener(onStatus);
   try {
-    const r = await chrome.runtime.sendMessage({ type: 'habeas:deliver', datasource: entry.ds.id, sink: sinkId });
+    // opts.force → "Re-download from site": re-fetch + re-deliver even already-delivered docs (bypass the ledger skip).
+    const r = await chrome.runtime.sendMessage({ type: 'habeas:deliver', datasource: entry.ds.id, sink: sinkId, force: !!opts.force });
     if (r && r.ok && r.status === 'done') $('#astatus').textContent = r.new ? t('archive_saved_ok', [String(r.new), sinkLabel(sink)]) : t('archive_save_none');
     else if (r && r.status === 'nosession') $('#astatus').textContent = t('archive_save_nosession', [entry.name]);
     else $('#astatus').textContent = t('archive_save_err', [(r && r.error) || 'error']);
@@ -489,8 +499,9 @@ async function reloadFromStore() {
   await reloadCurrent();
   $('#astatus').textContent = '';
 }
-function toggleRefMenu() { const m = $('#refmenu'); if (m) m.hidden = !m.hidden; }
-function closeRefMenu() { const m = $('#refmenu'); if (m && !m.hidden) m.hidden = true; }
+// Dropdown menus (Refresh modes, Save re-download). Opening one closes the others.
+function toggleMenu(id) { const m = $('#' + id); if (!m) return; const willOpen = m.hidden; closeMenus(); m.hidden = !willOpen; }
+function closeMenus() { document.querySelectorAll('.refmenu').forEach((m) => { m.hidden = true; }); }
 function openFile(r, sinkId, ext) {
   const url = chrome.runtime.getURL(`src/ui/docview.html?sink=${encodeURIComponent(sinkId)}&src=${encodeURIComponent(r.base)}&id=${encodeURIComponent(r.internalId)}${ext ? '&ext=' + encodeURIComponent(ext) : ''}`);
   chrome.tabs.create({ url });
@@ -552,6 +563,12 @@ async function sendSelected(sinkId) {
 
 // ---- selection (batch) ----
 function updateSelCount() { const el = $('#selcount'); if (el) el.textContent = String(PICKED.size); }
+// Select all currently-visible documents (respecting the account/search filter), or clear the selection.
+function selectAllVisible(on) {
+  if (on) for (const r of visibleDocs()) PICKED.add(r.internalId); else PICKED.clear();
+  document.querySelectorAll('.dcard').forEach((card) => { const r = CURDOCS[+card.dataset.i]; if (r) card.classList.toggle('picked', PICKED.has(r.internalId)); });
+  updateSelCount();
+}
 function toggleSelecting() {
   SELECTING = !SELECTING; if (!SELECTING) PICKED.clear();
   renderDocs();
@@ -590,11 +607,15 @@ function wire() {
     const sc = ev.target.closest('.srccard'); if (sc) { openSource(sc.dataset.src); return; }
     const gb = ev.target.closest('[data-gb]'); if (gb) { GROUPMODE = gb.dataset.gb; renderDocs(); return; }
     const sv = ev.target.closest('[data-save]'); if (sv) { deliver(sv.dataset.save); return; }
+    const rl = ev.target.closest('[data-redl]'); if (rl) { closeMenus(); deliver(rl.dataset.redl, { force: true }); return; }
     const ss = ev.target.closest('[data-sendsel]'); if (ss) { sendSelected(ss.dataset.sendsel); return; }
-    const rm = ev.target.closest('[data-refmode]'); if (rm) { closeRefMenu(); if (rm.dataset.refmode === 'full') refreshSource('full'); else reloadFromStore(); return; }
-    if (ev.target.closest('#refresh-more')) { toggleRefMenu(); return; }
+    const rm = ev.target.closest('[data-refmode]'); if (rm) { closeMenus(); if (rm.dataset.refmode === 'full') refreshSource('full'); else reloadFromStore(); return; }
+    if (ev.target.closest('#refresh-more')) { toggleMenu('refmenu'); return; }
+    if (ev.target.closest('#save-more')) { toggleMenu('savemenu'); return; }
     if (ev.target.closest('#accts')) { onManageAccounts(); return; }
-    if (ev.target.closest('#refresh')) { closeRefMenu(); refreshSource(); return; }
+    if (ev.target.closest('#refresh')) { closeMenus(); refreshSource(); return; }
+    if (ev.target.closest('#selall')) { selectAllVisible(true); return; }
+    if (ev.target.closest('#selnone')) { selectAllVisible(false); return; }
     if (ev.target.closest('#seltoggle')) { toggleSelecting(); return; }
     if (ev.target.closest('#selclear')) { PICKED.clear(); SELECTING = false; renderDocs(); return; }
     if (ev.target.closest('#selopen')) { batchOpen(); return; }
@@ -604,10 +625,10 @@ function wire() {
       else openDrawer(r);
     }
   };
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeDrawer(); closeRefMenu(); } });
-  // Dismiss the refresh-options menu on any click outside the split button (the #main handler keeps it open
-  // for clicks on the caret / a menu item; this catches everything else).
-  document.addEventListener('click', (e) => { if (!e.target.closest('.refwrap')) closeRefMenu(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeDrawer(); closeMenus(); } });
+  // Dismiss any open dropdown (Refresh modes, Save re-download) on a click outside a split button (the #main
+  // handler keeps the just-clicked one open; this catches everything else).
+  document.addEventListener('click', (e) => { if (!e.target.closest('.refwrap')) closeMenus(); });
   // A source was (re)installed → drop our cached adapters and re-read, so the Archive reflects the NEW
   // definition instead of the copy loaded when this tab opened.
   chrome.storage.onChanged.addListener((ch, area) => {
