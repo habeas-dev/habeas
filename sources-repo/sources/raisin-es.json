@@ -9,8 +9,8 @@
     "banking",
     "investment"
   ],
-  "version": "2026-07-20.8",
-  "minVersion": "0.5.0.19",
+  "version": "2026-07-20.9",
+  "minVersion": "0.5.0.24",
   "keepRaw": true,
   "contributors": [
     "David Marín Carreño"
@@ -247,6 +247,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20.9",
+      "changes": "Requires runtime 0.5.0.24: list params now resolve {ctx.*} (depositos/ahorro/documentos send the real customer_id, was literal → dbff/dbs 403) and pdf.params apply to the document fetch (dds ?preview=true). All 4 outputs verified offline against the capture."
+    },
     {
       "version": "2026-07-20.8",
       "changes": "Account list uses the real OData filter customerId eq {ctx.customer_id} & type eq TA_INTERNAL (was the invalid filter=all → 401). The customerId is templated from captured context, never hardcoded. Requires group-param ctx templating (minVersion 0.5.0.19)."

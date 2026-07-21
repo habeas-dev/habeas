@@ -934,6 +934,11 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
     // document for it. Bail cleanly (callers treat it as "artifact unavailable") instead of a bad request.
     if (/\{[^}]+\}/.test(path)) throw new Error('no document for this item');
     url = host + path;
+    // pdf.params → query on the document fetch (Raisin's dds needs ?preview=true); templated like the path.
+    if (pdf.params && Object.keys(pdf.params).length) {
+      const pp = {}; for (const k of Object.keys(pdf.params)) pp[k] = fillDocTmpl(String(pdf.params[k]), doc, internalId, csrf, auth);
+      const qs = new URLSearchParams(pp).toString(); if (qs) url += (url.indexOf('?') >= 0 ? '&' : '?') + qs;
+    }
   }
   // accept:*/* not application/pdf — some servers (Dia's invoice endpoint) return 204 No Content for a
   // bare application/pdf Accept but serve the real PDF for the browser-default */*.
@@ -1189,8 +1194,11 @@ async function fetchList(adapter, auth, params, net, group) {
   const html = list.from === 'html';
   // {group.*} in the list path / param values / referer → the account (group) currently being listed.
   // {today}/{monthStart}/{monthEnd}[:FORMAT] → computed calendar dates (e.g. a statement list's ?date_bill).
-  const path = tmplDates(tmplGroup(list.path, group));
-  const gparams = {}; for (const k of Object.keys(params || {})) gparams[k] = tmplDates(tmplGroup(params[k], group));
+  // Resolve {group.*}, calendar dates AND {ctx.*} (captured context, e.g. a customerId) in the list path +
+  // params. Without fillCtx a list param like `customer_id={ctx.customer_id}` was sent LITERALLY → the upstream
+  // rejected it (Raisin's dbff/dbs returned 403). A no-op for any string without a {ctx.*} token.
+  const path = fillCtx(tmplDates(tmplGroup(list.path, group)), auth);
+  const gparams = {}; for (const k of Object.keys(params || {})) gparams[k] = fillCtx(tmplDates(tmplGroup(params[k], group)), auth);
   const qs = new URLSearchParams(gparams).toString();
   const url = adapter.api.host + path + (qs ? '?' + qs : '');
   // Run in the site's tab (page context) so cookies + cf_clearance + fingerprint carry through and

@@ -56,8 +56,21 @@ export function buildNet(samples, issues, warnings, stats) {
   }));
   const body = (resp, status) => ({ ok: status < 400, status, json: async () => resp, text: async () => (typeof resp === 'string' ? resp : JSON.stringify(resp)), blob: async () => new Blob([typeof resp === 'string' ? resp : JSON.stringify(resp || '')]), headers: { get: () => 'application/json' } });
   const miss = () => ({ ok: false, status: 404, json: async () => ({}), text: async () => '', blob: async () => new Blob([]), headers: { get: () => null } });
+  const TMPL = /\{[a-zA-Z][\w.:-]*\}/; // an UNRESOLVED template ({ctx.customer_id}, {group.id}, {daysAgo:90}…)
   return async (url, init = {}) => {
     const req = { ...norm(url), method: String(init.method || 'GET').toUpperCase(), body: init.body, headers: init.headers || {} };
+    // A template that didn't resolve gets sent LITERALLY and the upstream rejects it (Raisin's dbff/dbs 403 on a
+    // literal `customer_id={ctx.customer_id}`). Catch it here — it never shows as a param MISMATCH (the key is
+    // present), so it would otherwise pass the capture check and only fail live.
+    const badSeg = req.path.find((s) => TMPL.test(s));
+    const badParam = Object.entries(req.params).find(([k, v]) => TMPL.test(k) || TMPL.test(String(v)));
+    const badBody = hasBody(req.body) && TMPL.test(String(req.body));
+    if (badSeg || badParam || badBody) {
+      issues.push(`unresolved template in ${req.method} ${req.path.join('/')}`
+        + (badSeg ? ` — path "${badSeg}"` : '') + (badParam ? ` — param ${badParam[0]}="${badParam[1]}"` : '') + (badBody ? ' — body' : '')
+        + ' (a {ctx.*}/{group.*}/date template did not resolve)');
+      return miss();
+    }
     const onPath = idx.filter((s) => s.method === req.method && pathMatch(s.path, req.path));
     if (!onPath.length) { issues.push(`no captured ${req.method} request for ${req.path.join('/')}`); return miss(); }
     const reproduced = onPath.filter((s) => Object.keys(s.params).every((k) => k in req.params) && (!hasBody(s.reqBody) || hasBody(req.body)));
@@ -112,6 +125,11 @@ async function replayOutput(adapter, out, samples) {
 
 // Run every output of `adapter` against `bundle` and return a structured report.
 export async function replayCapture(bundle, adapter) {
+  // Provide a SYNTHETIC value for each declared captured-context name so {ctx.*} resolves in the built requests
+  // (a real capture's ctx values are redacted). The value only needs to be non-empty + present as a query key —
+  // matching uses key presence + wildcards — so this proves the template RESOLVES without using any real datum.
+  AUTH.ctx = {};
+  for (const c of (adapter.auth && adapter.auth.context) || []) AUTH.ctx[c.name] = String(c.name).toUpperCase().replace(/[^A-Z0-9]/g, '') + '_SYNTH_9';
   const samples = (bundle && (bundle.samples || bundle.requests)) || [];
   // Binary document fetches (PDFs) are captured in the ASSET buffer, not `samples` — index them too so a
   // document output's fetch can be verified (URL/params match; the bytes aren't kept).

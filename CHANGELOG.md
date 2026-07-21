@@ -11,6 +11,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Fixed
+- **List query params now resolve `{ctx.*}`** (`runtime/inventory.js#fetchList`). A captured context id belongs
+  in a query filter, not only in the path — but `fetchList` only templated `{group.*}` + dates, so a param like
+  `customer_id={ctx.customer_id}` was sent **literally** and the upstream rejected it (Raisin's `dbff`/`dbs`
+  returned 403 on `depositos`/`ahorro`/`documentos`). Now list path + params run through `fillCtx` too (a no-op
+  for any string without a `{ctx.*}` token). Regression-tested; the enhanced replay harness also flags any
+  unresolved `{ctx.*}`/`{group.*}`/date template in a built request.
+- **`pdf.params` are appended to the document fetch** (`runtime/inventory.js#fetchPdf`). The document URL was
+  built from `pdf.path` only, ignoring `pdf.params` — so Raisin's `dds` document was fetched without the
+  required `?preview=true`. Now the declared params (templated like the path) ride the document request.
 - **Reinstalling a source now replaces every in-memory copy.** `saveSource`/`removeSource` bump a
   `habeas:sources-rev` signal, and the popup + archive listen for it and re-fetch `getAdapters()` (the
   background already re-synced on `habeas:sources`). Before, a page that had cached the adapter at load kept
