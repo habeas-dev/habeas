@@ -10,6 +10,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Changed
+- **`auth.tokenFromStorage` can auto-detect the access token.** With no `field`, it parses the stored value
+  and picks the ACCESS token from a token object (`{access_token, refresh_token, id_token}` or keycloak-js
+  `{token, refreshToken, idToken}`) — requiring a real JWT and skipping id/refresh tokens, so a short-lived
+  bearer is read FRESH on every request instead of a captured one that may have expired (Raisin's ~5-minute
+  Keycloak token: "Jwt is expired").
+
 ### Added
 - **`keep` item/group filter by field presence or id prefix** (`runtime/inventory.js`) — `keep` now also
   supports `present: true|false` (keep by whether a field exists) and `prefix` (keep items whose field starts

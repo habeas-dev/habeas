@@ -9,8 +9,8 @@
     "banking",
     "investment"
   ],
-  "version": "2026-07-20.1",
-  "minVersion": "0.5.0.8",
+  "version": "2026-07-20.2",
+  "minVersion": "0.5.0.9",
   "keepRaw": true,
   "contributors": [
     "David Marín Carreño"
@@ -32,6 +32,10 @@
       "/dds/",
       "/cas/"
     ],
+    "tokenFromStorage": {
+      "key": "auth_token",
+      "scheme": "Bearer"
+    },
     "context": [
       {
         "name": "customer_id",
@@ -220,6 +224,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20.2",
+      "changes": "Read the bearer FRESH from localStorage.auth_token on every request (auth.tokenFromStorage, access-token auto-detected) — Raisin uses a short-lived Keycloak JWT (~5 min) that expired between capture and listing (401 Jwt is expired). This always sends a valid, current user token."
+    },
     {
       "version": "2026-07-20.1",
       "changes": "Scope token capture to the user-data endpoints (auth.capturePaths /tams/ /dbff/ /dds/ /cas/) so the replayed bearer is the logged-in user's token, not a client/anonymous token the public catalog (/dcms) may carry — which caused a 401 UNAUTHORIZED on /tams/v1/accounts even with an authorization sent."

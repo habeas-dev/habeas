@@ -211,7 +211,21 @@ export function makePageFetch(tabId, adapter) {
               try {
                 const raw = localStorage.getItem(o.tfs.key);
                 let val = raw;
-                if (raw != null && o.tfs.field) { let obj = null; try { obj = JSON.parse(raw); } catch (e) {} val = obj ? o.tfs.field.split('.').reduce((x, k) => (x == null ? x : x[k]), obj) : undefined; }
+                if (raw != null) {
+                  let obj = null; try { obj = JSON.parse(raw); } catch (e) {}
+                  if (obj && typeof obj === 'object') {
+                    if (o.tfs.field) { val = o.tfs.field.split('.').reduce((x, k) => (x == null ? x : x[k]), obj); }
+                    else {
+                      // Auto-detect the ACCESS token inside a stored token object ({access_token, refresh_token,
+                      // id_token, …} or keycloak-js {token, refreshToken, idToken}) — require a real JWT and skip
+                      // id/refresh tokens, so we never send the wrong one (FECI's mistake was a non-JWT field).
+                      const isJwt = (v) => typeof v === 'string' && v.indexOf('eyJ') === 0;
+                      val = undefined;
+                      for (const k of ['access_token', 'accessToken', 'token']) { if (isJwt(obj[k])) { val = obj[k]; break; } }
+                      if (!val) for (const [k, v] of Object.entries(obj)) { if (isJwt(v) && !/refresh|id[_-]?token|idtoken/i.test(k)) { val = v; break; } }
+                    }
+                  }
+                }
                 if (val) headers[o.tfs.header] = (o.tfs.scheme ? o.tfs.scheme + ' ' : '') + val; // fresh token wins over any captured one
               } catch (e) {}
             }

@@ -46,3 +46,26 @@ test('no tokenFromStorage config → requests are untouched', async () => {
   await pf('https://x.test/a', { headers: { accept: 'y' } });
   assert.equal(lastFetch.init.headers.authorization, undefined);
 });
+
+test('auto-detect (no field): finds the ACCESS token in a token object, skipping id/refresh', async () => {
+  // A Keycloak/OAuth token set: only the ACCESS token must be sent — not the refresh or id token (Raisin).
+  globalThis.localStorage.setItem('auth_token', JSON.stringify({ refresh_token: 'eyJREFRESH.x.y', id_token: 'eyJID.x.y', access_token: 'eyJACCESS.x.y', expires_at: 123 }));
+  const adapter = { auth: { mode: 'bearer', tokenFromStorage: { key: 'auth_token', scheme: 'Bearer' } } };
+  const pf = makePageFetch(1, adapter);
+  await pf('https://x.test/tams/v1/accounts', { headers: { accept: 'application/json' } });
+  assert.equal(lastFetch.init.headers.authorization, 'Bearer eyJACCESS.x.y', 'the access token is injected, not refresh/id');
+});
+
+test('auto-detect: keycloak-js shape ({token, refreshToken, idToken}) → token', async () => {
+  globalThis.localStorage.setItem('auth_token', JSON.stringify({ token: 'eyJKC.a.b', refreshToken: 'eyJRT.a.b', idToken: 'eyJIDT.a.b' }));
+  const pf = makePageFetch(1, { auth: { tokenFromStorage: { key: 'auth_token', scheme: 'Bearer' } } });
+  await pf('https://x.test/a', { headers: {} });
+  assert.equal(lastFetch.init.headers.authorization, 'Bearer eyJKC.a.b');
+});
+
+test('auto-detect: a non-JWT token object adds no header (never sends a non-token)', async () => {
+  globalThis.localStorage.setItem('auth_token', JSON.stringify({ session_id: 'abc-123', expires_at: 9 }));
+  const pf = makePageFetch(1, { auth: { tokenFromStorage: { key: 'auth_token', scheme: 'Bearer' } } });
+  await pf('https://x.test/a', { headers: { accept: 'z' } });
+  assert.equal(lastFetch.init.headers.authorization, undefined);
+});
