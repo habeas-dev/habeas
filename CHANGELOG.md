@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-07-21
+
 ### Added
 - **First-run assistant for the canonical store** (`ui/archive.js`, `lib/storesetup.js`). While the store is still
   the default per-browser backend, the Archive index shows a small assistant that explains what "your archive" is,
