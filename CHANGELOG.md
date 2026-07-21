@@ -22,9 +22,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   request AND our replay fetch to the same URL. "Report a problem" now includes a **redacted** context line per
   observed request (header *names* only, host-level origin/referer, cookie *presence*, and the HTTP status), so
   the team can diff a **working request (HTTP 200)** against a **failing one (HTTP 401)** — "the SPA's
-  `/accounts` carried a cookie + these headers; our 401'd one didn't." Never stores header values, cookies,
-  tokens, or query strings. (The instrumentation gap that a valid-token-still-rejected source like Raisin
-  exposed: the difference was in headers the recording couldn't show.)
+  `/accounts` carried a cookie + these headers; our 401'd one didn't." Each line also shows the sent bearer's
+  **issuance timing** (`token(iat …, exp …)` — decoded from the JWT, ONLY the `iat`/`exp` timestamps, never the
+  token or any identity claim), so a **rotated/revoked-but-unexpired** token is visible: the working request
+  and our failing one carrying **different `iat`** proves we replayed a token one rotation behind the SPA's
+  live one. Never stores header values, cookies, tokens, or query strings. (The instrumentation gap that a
+  valid-token-still-rejected source like Raisin exposed: the difference was in things the recording couldn't
+  show.)
 - **A failed auth request says whether the token was expired.** The in-session page fetch decodes the SENT
   bearer's own claims (exp / iss — never the raw token), and the list/groups diagnostic appends its status,
   e.g. `[token EXPIRED 13min ago iss=auth.weltsparen.de]` or `[token valid 600s]`. So "Report a problem"

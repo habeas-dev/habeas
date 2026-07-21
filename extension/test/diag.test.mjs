@@ -44,8 +44,10 @@ test('reqctx ring accumulates redacted contexts and clears; format diffs a worki
   for (const k of Object.keys(LOCAL)) delete LOCAL[k];
   // The SPA's own /accounts request (works) vs our replay (401): same path, the report lets the team eyeball
   // the difference (here: the working one carried a cookie, ours did not).
-  await pushReqCtx('raisin-es', { path: '/tams/v1/accounts', method: 'GET', origin: 'www.raisin.com', referer: 'www.raisin.com/es-es', cookie: true, names: 'authorization,cookie,origin,referer', status: 200 });
-  await pushReqCtx('raisin-es', { path: '/tams/v1/accounts', method: 'GET', origin: 'www.raisin.com', referer: 'www.raisin.com/es-es', cookie: false, names: 'authorization,origin,referer', status: 401 });
+  // The working request carries a NEWER token issuance (later iat) than our failing replay — the rotated/
+  // revoked-but-unexpired token that reads "valid" by exp yet is rejected. Synthetic epochs.
+  await pushReqCtx('raisin-es', { path: '/tams/v1/accounts', method: 'GET', origin: 'www.raisin.com', referer: 'www.raisin.com/es-es', cookie: true, names: 'authorization,cookie,origin,referer', status: 200, tok: { iat: 1_800_000_300, exp: 1_800_001_200 } });
+  await pushReqCtx('raisin-es', { path: '/tams/v1/accounts', method: 'GET', origin: 'www.raisin.com', referer: 'www.raisin.com/es-es', cookie: false, names: 'authorization,origin,referer', status: 401, tok: { iat: 1_800_000_000, exp: 1_800_000_900 } });
   const list = await readReqCtx('raisin-es');
   assert.equal(list.length, 2);
   const txt = formatReqCtx(list);
@@ -54,6 +56,7 @@ test('reqctx ring accumulates redacted contexts and clears; format diffs a worki
   assert.match(txt, /cookie=yes/);
   assert.match(txt, /cookie=no/);
   assert.match(txt, /hdrs: authorization,cookie,origin,referer/);
+  assert.match(txt, /token\(iat \d\d:\d\d:\d\d, exp \d\d:\d\d:\d\d\)/, 'token issuance timing is rendered so a rotated token is visible');
   await clearReqCtx('raisin-es');
   assert.deepEqual(await readReqCtx('raisin-es'), []);
 });

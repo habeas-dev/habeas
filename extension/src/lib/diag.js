@@ -88,13 +88,16 @@ export async function clearReqCtx(sourceId) { try { await chrome.storage.local.r
 export function formatReqCtx(list) {
   const es = Array.isArray(list) ? list : [];
   if (!es.length) return '';
+  const hms = (s) => { const d = new Date(s * 1000); return isNaN(d) ? '?' : d.toISOString().slice(11, 19); };
   const lines = es.map((e) => {
     const ts = e.at ? '[' + String(e.at).slice(11, 19) + '] ' : '';
     const status = e.status ? ' → HTTP ' + e.status : '';
     const from = e.who ? ' (' + e.who + ')' : '';
+    // token issuance (iat/exp) so a working vs failing request reveals a rotated/revoked token — different iat.
+    const tok = e.tok ? ' token(' + [e.tok.iat != null && ('iat ' + hms(e.tok.iat)), e.tok.exp != null && ('exp ' + hms(e.tok.exp))].filter(Boolean).join(', ') + ')' : '';
     const ctx = ['origin=' + (e.origin || '∅'), 'referer=' + (e.referer || '∅'), 'cookie=' + (e.cookie ? 'yes' : 'no')].join(' ');
     const names = e.names ? '\n    hdrs: ' + e.names : '';
-    return '• ' + ts + (e.method || 'GET') + ' ' + (e.path || '') + status + from + '\n    ' + ctx + names;
+    return '• ' + ts + (e.method || 'GET') + ' ' + (e.path || '') + status + from + tok + '\n    ' + ctx + names;
   });
   return '\n\n--- observed requests (redacted; SPA vs our replay) ---\n' + lines.join('\n');
 }

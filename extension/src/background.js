@@ -95,6 +95,20 @@ let WR_MAP = {};
 let RC_PENDING = {};
 function rcHostOnly(v) { try { return new URL(v).host; } catch (e) { return v ? 'set' : ''; } }
 function rcHostSeg(v) { try { const u = new URL(v); let s = (u.pathname.split('/').filter(Boolean)[0] || ''); if (s.length > 16 || /\d/.test(s)) s = '…'; return u.host + (s ? '/' + s : ''); } catch (e) { return v ? 'set' : ''; } }
+// Decode ONLY the timing claims (iat/exp) of a sent bearer — never the token, never identity claims. Lets the
+// report show whether a WORKING request and a FAILING one carried the SAME token ISSUANCE or a different one:
+// a rotated/revoked-but-unexpired token is "valid" by exp yet rejected, and two issuances have different iat.
+function rcTokenTiming(authValue) {
+  try {
+    const m = String(authValue || '').match(/eyJ[A-Za-z0-9_-]+\.([A-Za-z0-9_-]+)\./);
+    if (!m) return null;
+    const p = JSON.parse(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const t = {};
+    if (typeof p.iat === 'number') t.iat = p.iat;
+    if (typeof p.exp === 'number') t.exp = p.exp;
+    return (t.iat != null || t.exp != null) ? t : null;
+  } catch (e) { return null; }
+}
 function stashReqCtx(details, adapters) {
   try {
     const ids = [...new Set((adapters || []).map((a) => a && a.id).filter(Boolean))];
@@ -104,7 +118,8 @@ function stashReqCtx(details, adapters) {
     const names = reqH.map((h) => h.name.toLowerCase()).filter(Boolean).sort();
     const oh = reqH.find((h) => h.name.toLowerCase() === 'origin');
     const rh = reqH.find((h) => h.name.toLowerCase() === 'referer');
-    const ctx = { path: u.pathname, method: details.method, origin: oh ? rcHostOnly(oh.value) : '', referer: rh ? rcHostSeg(rh.value) : '', cookie: names.includes('cookie'), names: names.join(',').slice(0, 300) };
+    const ah = reqH.find((h) => h.name.toLowerCase() === 'authorization');
+    const ctx = { path: u.pathname, method: details.method, origin: oh ? rcHostOnly(oh.value) : '', referer: rh ? rcHostSeg(rh.value) : '', cookie: names.includes('cookie'), names: names.join(',').slice(0, 300), tok: ah ? rcTokenTiming(ah.value) : null };
     const keys = Object.keys(RC_PENDING); if (keys.length > 200) delete RC_PENDING[keys[0]]; // bound the map
     RC_PENDING[details.requestId] = { ids, ctx };
   } catch (e) {}
