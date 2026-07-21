@@ -2440,5 +2440,45 @@
   },
   "archive_legend": {
     "message": "“In your archive” = recovered into your local archive. “Saved” = also copied to an external destination."
+  },
+  "onboard_title": {
+    "message": "Set up your archive"
+  },
+  "onboard_body": {
+    "message": "Habeas recovers your documents into your archive — the canonical store of everything it collects. Right now that archive lives only in this browser."
+  },
+  "onboard_cloud": {
+    "message": "To reach your archive from more than one device or browser, keep it in a cloud folder (e.g. Google Drive) instead of this browser."
+  },
+  "onboard_drive": {
+    "message": "Use Google Drive"
+  },
+  "onboard_folder": {
+    "message": "Use a local folder"
+  },
+  "onboard_advanced": {
+    "message": "Advanced (Dropbox, WebDAV, S3…)"
+  },
+  "onboard_dismiss": {
+    "message": "Keep it in this browser"
+  },
+  "onboard_moving": {
+    "message": "Moving your archive…"
+  },
+  "onboard_moved": {
+    "message": "Archive moved ($N$ items)",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "onboard_err": {
+    "message": "Couldn’t set it up: $E$",
+    "placeholders": {
+      "e": {
+        "content": "$1"
+      }
+    }
   }
 }

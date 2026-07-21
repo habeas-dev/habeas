@@ -8,7 +8,8 @@
 import { chrome } from '../lib/ext.js';
 import { getConfig, saveConfig } from '../lib/config.js';
 import { getAdapters } from '../adapters/index.js';
-import { listSources, getSource } from '../lib/store.js';
+import { listSources, getSource, getStoreConfig } from '../lib/store.js';
+import { useDriveStore, useFolderStore, folderStoreAvailable } from '../lib/storesetup.js';
 import { deliveredSet, getDocMeta } from '../lib/state.js';
 import { isRetrievable } from '../lib/retrieve.js';
 import { sinkAcceptsSource, groupLabelOf } from '../sinks/format.js';
@@ -35,6 +36,8 @@ let ACCOUNT = '';     // account (record.group) filter
 let GROUPMODE = 'month';
 let SELECTING = false;
 const PICKED = new Set();
+let STORE_LOCAL = false;        // the canonical store is still the default per-browser backend (→ first-run wizard)
+let ONBOARD_DISMISSED = false;  // the user chose to keep the local store
 
 // ---- category → colour family + icon + label (self-contained; keeps 30 category strings out of the locales) ----
 const F_RETAIL = 'retail', F_SERVICE = 'service', F_FINANCE = 'finance', F_OTHER = 'other';
@@ -267,13 +270,47 @@ function node(id, icon, name, count, on, fam) {
     <span class="nm">${esc(name)}</span><span class="cnt">${cnt}</span></button>`;
 }
 
+// First-run assistant: shown at the top of the index while the canonical store is still the default per-browser
+// backend. Explains the "archive" (canonical store), recommends a cloud folder for multi-device access, and sets
+// it up in one click — reusing lib/storesetup.js (the tested moveStoreTo/driveSignIn/putHandle primitives).
+function wizardCard() {
+  if (!STORE_LOCAL || ONBOARD_DISMISSED) return '';
+  const folderBtn = folderStoreAvailable() ? `<button class="wz-btn" data-store="folder">📁 ${esc(t('onboard_folder'))}</button>` : '';
+  return `<div class="wizard" id="wizard">
+    <div class="wz-head"><span class="wz-ic">🗄️</span><div><h2>${esc(t('onboard_title'))}</h2><p>${esc(t('onboard_body'))}</p></div></div>
+    <p class="wz-cloud">☁️ ${esc(t('onboard_cloud'))}</p>
+    <div class="wz-actions">
+      <button class="wz-btn primary" data-store="drive">☁️ ${esc(t('onboard_drive'))}</button>
+      ${folderBtn}
+      <button class="wz-btn" data-store="advanced">⚙️ ${esc(t('onboard_advanced'))}</button>
+      <button class="wz-btn ghost" data-store="dismiss">${esc(t('onboard_dismiss'))}</button>
+    </div>
+    <div class="wz-status" id="wz-status"></div>
+  </div>`;
+}
+async function onStoreSetup(kind) {
+  if (kind === 'dismiss') { ONBOARD_DISMISSED = true; try { await chrome.storage.local.set({ 'habeas:onboard-dismissed': true }); } catch (e) {} renderIndex(); return; }
+  if (kind === 'advanced') { chrome.runtime.openOptionsPage(); return; }
+  const wiz = $('#wizard'); if (wiz) wiz.classList.add('busy');
+  const st = $('#wz-status'); if (st) st.textContent = t('onboard_moving');
+  try {
+    const n = kind === 'drive' ? await useDriveStore() : await useFolderStore();
+    STORE_LOCAL = false;
+    if (st) st.textContent = t('onboard_moved', [String(n || 0)]);
+    await buildIndex(); renderRail(); renderIndex(); hydrateIndex(); // store moved → re-read from the new backend
+  } catch (e) {
+    if (st) st.textContent = t('onboard_err', [(e && e.message) || String(e)]);
+    if (wiz) wiz.classList.remove('busy');
+  }
+}
+
 // ---- rendering: index (Everything) ----
 function renderIndex() {
   CUR = null; ACCOUNT = ''; SELECTING = false; PICKED.clear();
   $('#main').classList.remove('selecting');
   const m = $('#main');
-  if (!INDEX.length) { m.innerHTML = emptyState(t('archive_empty_title'), t('archive_empty_sub')); return; }
-  let html = `<div class="idx-head"><h1>${esc(t('archive_index_title'))}</h1><p>${esc(t('archive_index_sub'))}</p></div>`;
+  if (!INDEX.length) { m.innerHTML = wizardCard() + emptyState(t('archive_empty_title'), t('archive_empty_sub')); return; }
+  let html = wizardCard() + `<div class="idx-head"><h1>${esc(t('archive_index_title'))}</h1><p>${esc(t('archive_index_sub'))}</p></div>`;
   html += '<div class="idx-grid">';
   for (const s of INDEX) {
     const c = catOf(s.primaryCat);
@@ -605,6 +642,7 @@ function wire() {
   };
   // main delegation (index cards, group-by, select toggle, doc cards)
   $('#main').onclick = (ev) => {
+    const ws = ev.target.closest('[data-store]'); if (ws) { onStoreSetup(ws.dataset.store); return; }
     const sc = ev.target.closest('.srccard'); if (sc) { openSource(sc.dataset.src); return; }
     const gb = ev.target.closest('[data-gb]'); if (gb) { GROUPMODE = gb.dataset.gb; renderDocs(); return; }
     const sv = ev.target.closest('[data-save]'); if (sv) { deliver(sv.dataset.save); return; }
@@ -674,6 +712,9 @@ async function init() {
   ADAPTERS = await getAdapters();
   CFG = await getConfig();
   RETRIEVABLE = (CFG.sinks || []).filter((s) => isRetrievable(s));
+  // First-run assistant: the store is still the default per-browser backend AND the user hasn't dismissed it.
+  try { STORE_LOCAL = ((await getStoreConfig()).backend || 'local') === 'local'; } catch (e) {}
+  try { ONBOARD_DISMISSED = !!(await chrome.storage.local.get('habeas:onboard-dismissed'))['habeas:onboard-dismissed']; } catch (e) {}
   wire();
   await buildIndex();                 // instant shell (no per-source item load)
   renderRail();

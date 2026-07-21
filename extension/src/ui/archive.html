@@ -67,6 +67,25 @@
     .main{padding:22px 26px;min-width:0}
     @media (max-width:520px){.main{padding:16px}}
 
+    /* first-run assistant (canonical store) */
+    .wizard{border:1px solid var(--brand-100);border-radius:16px;padding:20px 22px;margin-bottom:24px;
+      background:linear-gradient(180deg,var(--brand-50),var(--surface))}
+    .wizard.busy{opacity:.6;pointer-events:none}
+    .wz-head{display:flex;gap:14px;align-items:flex-start}
+    .wz-ic{font-size:30px;line-height:1}
+    .wz-head h2{font-family:var(--font-head);font-weight:700;font-size:19px;margin:0}
+    .wz-head p{color:var(--muted);margin:5px 0 0;font-size:14px;line-height:1.5;max-width:62ch}
+    .wz-cloud{margin:14px 0 0;font-size:13.5px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);
+      border-radius:10px;padding:11px 13px;line-height:1.5}
+    .wz-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+    .wz-btn{font-family:var(--font-body);font-weight:600;font-size:13px;border:1px solid var(--line);border-radius:100px;
+      padding:9px 16px;cursor:pointer;background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;gap:7px}
+    .wz-btn:hover{border-color:var(--brand-500)}
+    .wz-btn.primary{background:var(--brand-600);color:#fff;border-color:transparent}
+    .wz-btn.ghost{border-color:transparent;color:var(--muted)}
+    .wz-status{font-size:12.5px;color:var(--muted);margin-top:10px;min-height:1em}
+    .wz-status:empty{display:none}
+
     /* index (Todo) */
     .idx-head h1{font-family:var(--font-head);font-weight:700;font-size:clamp(22px,3vw,30px);letter-spacing:-.01em;margin:0}
     .idx-head p{color:var(--muted);margin:6px 0 0;font-size:14.5px}

@@ -2440,5 +2440,45 @@
   },
   "archive_legend": {
     "message": "«En tu archivo» = recuperado en tu archivo local. «Guardado» = copiado además a un destino externo."
+  },
+  "onboard_title": {
+    "message": "Configura tu archivo"
+  },
+  "onboard_body": {
+    "message": "Habeas recupera tus documentos en tu archivo — el almacén canónico de todo lo que recopila. Ahora mismo ese archivo vive solo en este navegador."
+  },
+  "onboard_cloud": {
+    "message": "Para acceder a tu archivo desde más de un dispositivo o navegador, guárdalo en una carpeta en la nube (p. ej. Google Drive) en lugar de en este navegador."
+  },
+  "onboard_drive": {
+    "message": "Usar Google Drive"
+  },
+  "onboard_folder": {
+    "message": "Usar una carpeta local"
+  },
+  "onboard_advanced": {
+    "message": "Avanzado (Dropbox, WebDAV, S3…)"
+  },
+  "onboard_dismiss": {
+    "message": "Seguir en este navegador"
+  },
+  "onboard_moving": {
+    "message": "Moviendo tu archivo…"
+  },
+  "onboard_moved": {
+    "message": "Archivo movido ($N$ elementos)",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "onboard_err": {
+    "message": "No se pudo configurar: $E$",
+    "placeholders": {
+      "e": {
+        "content": "$1"
+      }
+    }
   }
 }

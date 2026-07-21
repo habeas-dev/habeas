@@ -11,6 +11,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **First-run assistant for the canonical store** (`ui/archive.js`, `lib/storesetup.js`). While the store is still
+  the default per-browser backend, the Archive index shows a small assistant that explains what "your archive" is,
+  recommends keeping it in a cloud folder for multi-device access, and sets it up in one click. It reuses the
+  existing tested primitives via a thin shared abstraction (`lib/storesetup.js` → `moveStoreTo` / `driveSignIn` /
+  `putHandle`) — no new store logic. Options: Google Drive, a local folder (Chromium), Advanced (opens Settings),
+  or "keep it in this browser" (dismiss). The store-move core is covered by `test/store.test.mjs`.
 - **Archive — per-source "Refresh"** (`ui/archive.js`, `background.js`). A ↻ Refresh button on each source lists
   every output and writes the new documents straight into the local store — no destination required. It reuses the
   auto/manual list pipeline (incremental: seeds known ids so a refresh only pulls what's new) and honors the same
