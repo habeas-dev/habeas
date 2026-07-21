@@ -443,6 +443,12 @@ async function deliver(sinkId) {
 // the user lists/refreshes in place (session/login/challenges handled by the background) before deciding where to send.
 async function refreshSource(mode) {
   const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds) return;
+  // Multi-account source not yet configured → choose which accounts to track first (persisted), like the
+  // classic list's account picker. Once an allow-list is saved, later refreshes list it directly. Cancel aborts.
+  if (groupedAdapterOf(entry.adapter) && !(entry.ds.groups && entry.ds.groups.length)) {
+    const saved = await onManageAccounts({ reload: false });
+    if (!saved) return;
+  }
   document.body.classList.add('saving');
   const btn = $('#refresh'); if (btn) { btn.disabled = true; btn.classList.add('spin'); }
   $('#astatus').textContent = mode === 'full' ? t('archive_rescanning') : t('archive_refreshing');
@@ -479,28 +485,32 @@ function openFile(r, sinkId, ext) {
 // Manage which accounts a grouped source tracks (the persisted allow-list), straight from the Archive — so
 // the popup's account picker is no longer needed. Enumerates every grouped stream's accounts, saves ds.groups
 // + ds.groupLabels, then reloads (the tree + what's shown honor the new allow-list).
-async function onManageAccounts() {
-  const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds || !entry.adapter) return;
-  const gAdapters = groupedAdaptersOf(entry.adapter); if (!gAdapters.length) return;
-  if (!(await hasConsent(entry.adapter))) { $('#astatus').textContent = t('needs_consent'); return; }
+// Returns true if the user saved an account selection, false if cancelled / not applicable / no session.
+// opts.reload (default true) refreshes the view after saving; refreshSource passes false (it lists + reloads next).
+async function onManageAccounts(opts = {}) {
+  const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds || !entry.adapter) return false;
+  const gAdapters = groupedAdaptersOf(entry.adapter); if (!gAdapters.length) return false;
+  if (!(await hasConsent(entry.adapter))) { $('#astatus').textContent = t('needs_consent'); return false; }
   const auth = await getAuth(entry.adapter);
-  if (!auth) { try { await ensureSiteFetch(entry.adapter, { open: true }); } catch (e) {} $('#astatus').textContent = t('login_wait'); return; }
+  if (!auth) { try { await ensureSiteFetch(entry.adapter, { open: true }); } catch (e) {} $('#astatus').textContent = t('login_wait'); return false; }
   $('#astatus').textContent = t('accounts_loading');
   let net; try { net = await ensureSiteFetch(entry.adapter, { open: false }); } catch (e) {}
   let selected;
   try { selected = await manageAccounts(gAdapters, auth, net, (entry.ds.groups) || null); }
-  catch (e) { $('#astatus').textContent = t('accounts_failed') + (e && e.message ? ' — ' + e.message : ''); return; }
-  if (selected == null) { $('#astatus').textContent = ''; return; } // cancelled
+  catch (e) { $('#astatus').textContent = t('accounts_failed') + (e && e.message ? ' — ' + e.message : ''); return false; }
+  if (selected == null) { $('#astatus').textContent = ''; return false; } // cancelled
   const cfg = await getConfig();
   const d = (cfg.datasources || []).find((x) => x.id === entry.ds.id);
   if (d) { d.groups = selected.map((g) => String(g.id)); d.groupLabels = selected.map((g) => groupLabelOf(g)).filter(Boolean); await saveConfig(cfg); }
   CFG = cfg;
   $('#astatus').textContent = t('accounts_saved', [String(selected.length)]);
+  if (opts.reload === false) return true; // caller (refreshSource) will list + reload
   // The allow-list changed what's visible → refresh index + docs. If the current account was dropped, reset it.
   await buildIndex();
   if (ACCOUNT && d && d.groupLabels && d.groupLabels.length && !d.groupLabels.includes(ACCOUNT)) ACCOUNT = '';
   if (CUR) { await loadDocs(CUR); renderRail(); renderDocs(); }
   hydrateIndex();
+  return true;
 }
 // Send the HAND-PICKED documents (selection mode) to a destination, from the store. Delivers each record's
 // manifest and re-fetches its file when the source can still produce it (background sendStoredDocs).

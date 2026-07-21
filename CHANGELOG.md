@@ -28,6 +28,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   with stored documents — so a freshly-installed source appears and can be Refreshed to pull its first documents.
 
 ### Changed
+- **Archive Refresh picks accounts for an unconfigured multi-account source** (`ui/archive.js`). Refreshing a
+  bank/multi-account source that has no saved account allow-list yet now opens the account picker first (persisted),
+  then lists the chosen accounts — matching the classic "List documents" account prompt. Once accounts are saved,
+  later refreshes list them directly. (Grouped sources with no allow-list previously listed all accounts silently.)
+- **Popup launcher: Settings + status line left the header; sources sort by recency.** The header now holds only
+  the brand and Sync-all; Settings moved to the footer and the status line sits below the hero. Source chips are
+  ordered by most recent news first — the last activity-log entry that brought new documents, then any activity,
+  then alphabetical (was arbitrary insertion order).
 - **Popup is a pure launcher; Advanced tools + Activity log are their own tabs.** The popup now shows only the
   quick hero (a chip per source + "Open the Archive"), Sync-all, and links to Advanced tools / Settings — plus the
   last status message in the topbar (fed live from the background's `habeas:status`). The classic Sources/Documents

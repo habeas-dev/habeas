@@ -5,6 +5,7 @@ import { chrome } from '../lib/ext.js';
 import { getConfig } from '../lib/config.js';
 import { getAdapters } from '../adapters/index.js';
 import { listSources } from '../lib/store.js';
+import { getLog } from '../lib/state.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { esc } from '../lib/esc.js';
 import { watchThemeIcon } from '../lib/theme-icon.js';
@@ -25,6 +26,19 @@ async function renderQuick() {
   const storeBases = keys.map((k) => String(k).split(':')[0]);
   const cfgBases = (cfg.datasources || []).filter((d) => d.enabled !== false && ADAPTERS[d.adapter]).map((d) => d.adapter);
   const bases = [...new Set([...storeBases, ...cfgBases])];
+  // Order: sources with the MOST RECENT NEWS first. "News" = the last activity-log entry that brought new
+  // documents (new/count > 0), mapped datasource-id → adapter base. Sources with no recent news fall back to
+  // any activity, then to alphabetical. Cheap: one log read, no per-source item load.
+  const log = await getLog().catch(() => []);
+  const dsBase = {}; for (const d of (cfg.datasources || [])) dsBase[d.id] = d.adapter;
+  const newsAt = {}, seenAt = {};
+  for (const e of log) {
+    const base = dsBase[e.datasource] || e.datasource; const ts = Date.parse(e.t) || 0;
+    if (ts > (seenAt[base] || 0)) seenAt[base] = ts;
+    if ((e.new ?? e.count) > 0 && ts > (newsAt[base] || 0)) newsAt[base] = ts;
+  }
+  const rank = (b) => (newsAt[b] || 0);
+  bases.sort((a, b) => rank(b) - rank(a) || (seenAt[b] || 0) - (seenAt[a] || 0) || String((ADAPTERS[a] && ADAPTERS[a].name) || a).localeCompare(String((ADAPTERS[b] && ADAPTERS[b].name) || b)));
   const open = (src) => openTab('src/ui/archive.html' + (src ? '?src=' + encodeURIComponent(src) : ''));
   const chips = bases.slice(0, 12).map((b) => { const a = ADAPTERS[b]; return `<button class="q-chip" data-arch="${esc(b)}">🗂️ ${esc((a && a.name) || b)}</button>`; }).join('');
   const sub = bases.length ? t('quick_sub', [String(bases.length)]) : t('quick_sub_empty');
