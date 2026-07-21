@@ -71,7 +71,9 @@ export function buildRecord(d, adapter) {
   // `group` = the account/card a grouped source's row belongs to (e.g. "WiZink Oro 8765"). Persisted so a
   // row loaded from the store still shows its group (the transient _group enrichment is lost on round-trip).
   // Omitted when the source isn't grouped, so ungrouped records stay byte-identical.
-  const gl = d._group ? groupLabelOf(d._group) : '';
+  // Grouped source → the account label from _group. An UNGROUPED source can still give a row an account
+  // name by mapping a `group` field directly (e.g. a deposit that IS its own account → "Depósito <bank>").
+  const gl = d._group ? groupLabelOf(d._group) : (d.group != null && d.group !== '' ? String(d.group) : '');
   const withGroup = (r) => (gl ? { ...r, group: gl } : r);
   // `pdfUrl` = the absolute document URL for `pdf.urlField` sources (CaixaBank's statement `Url`), which
   // lives only on the raw list item. Persisting it lets a row loaded from the store (no `_raw`) still fetch

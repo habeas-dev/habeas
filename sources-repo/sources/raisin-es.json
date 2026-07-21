@@ -9,8 +9,8 @@
     "banking",
     "investment"
   ],
-  "version": "2026-07-20.14",
-  "minVersion": "0.5.0.28",
+  "version": "2026-07-20.15",
+  "minVersion": "0.5.0.29",
   "keepRaw": true,
   "contributors": [
     "David Marín Carreño"
@@ -140,7 +140,8 @@
         "amount": "accounting.balance.amount.denomination",
         "currency": "accounting.balance.amount.currency",
         "description": "Depósito {product.deposit_taking_bank.name} {accounting.effective_interest_rate:num}% TAE {accounting.term:duration} - {deposit.opening_date:date}",
-        "counterparty": "{product.deposit_taking_bank.name}"
+        "counterparty": "{product.deposit_taking_bank.name}",
+        "group": "Depósito {product.deposit_taking_bank.name}"
       }
     },
     {
@@ -200,7 +201,7 @@
     },
     {
       "id": "documentos",
-      "name": "Documentos (condiciones)",
+      "name": "Documentos de depósitos",
       "schema": "invoice@1",
       "categories": [
         "banking"
@@ -217,7 +218,7 @@
           },
           "keep": {
             "field": "accounting.deposit_id",
-            "present": true
+            "prefix": "FDA_"
           },
           "fields": {
             "id": "accounting.deposit_id",
@@ -256,9 +257,72 @@
         "description": "title",
         "type": "document_type"
       }
+    },
+    {
+      "id": "documentos-ahorro",
+      "name": "Documentos de cuentas de ahorro",
+      "schema": "invoice@1",
+      "categories": [
+        "banking"
+      ],
+      "keepRaw": true,
+      "api": {
+        "groups": {
+          "itemsPath": "entries",
+          "params": {
+            "customer_id": "{ctx.customer_id}",
+            "locale": "es-ES",
+            "sort_by": "availability",
+            "order_by": "asc"
+          },
+          "keep": {
+            "field": "accounting.deposit_id",
+            "prefix": "OMA_"
+          },
+          "fields": {
+            "id": "accounting.deposit_id",
+            "name": "Cuenta {product.deposit_taking_bank.name}"
+          },
+          "headers": {
+            "accept": "application/json, text/plain, */*"
+          },
+          "paths": [
+            "/dbff/v1/public/deposits/dashboard/active",
+            "/dbff/v1/public/deposits/dashboard/inactive"
+          ]
+        },
+        "list": {
+          "path": "/dds/api/v2/public/documents",
+          "paging": "none",
+          "itemsPath": "documents",
+          "params": {
+            "customer_id": "{ctx.customer_id}",
+            "deposit_id": "{group.id}"
+          },
+          "headers": {
+            "accept": "application/json, text/plain, */*"
+          }
+        },
+        "pdf": {
+          "path": "/dds/api/v2/public/documents/{internalId}",
+          "params": {
+            "preview": "true"
+          }
+        }
+      },
+      "fields": {
+        "internalId": "id",
+        "date": "created",
+        "description": "title",
+        "type": "document_type"
+      }
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20.15",
+      "changes": "Split documents by product: FDA_ deposits keep the \"Depósito … % TAE … plazo\" label; OMA_ savings accounts now show \"Cuenta <bank>\" (no rate/term — variable). Deposit records carry their own account label. Requires 0.5.0.29 (ungrouped-stream account label)."
+    },
     {
       "version": "2026-07-20.14",
       "changes": "Requires 0.5.0.28: group-field templates now resolve (the account picker AND the Account column show the readable name instead of a raw id)."

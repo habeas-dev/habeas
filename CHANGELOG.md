@@ -11,6 +11,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Fixed
+- **An ungrouped source can label a row's account** (`sinks/format.js`). A flat list where each row *is* its own
+  account (a deposit) can map a `group` field directly; `buildRecord` uses it when there's no grouped `_group`,
+  so those rows no longer show a blank "Account". Ungrouped rows without a `group` field stay byte-identical.
 - **Group (account) fields can be templates, so account names are readable.** `listGroups` mapped each account
   field with a plain path lookup, so a `groups.fields.name` template like `"Cuenta {product.bank.name}"` didn't
   resolve — the account picker and the "Account" column fell back to a raw id (`OMA_121_609_733_983`). It now
