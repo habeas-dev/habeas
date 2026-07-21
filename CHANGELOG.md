@@ -37,6 +37,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   (Refresh, Accounts) stay available on that prompt.
 
 ### Fixed
+- **Archive Refresh/Save/Send now open the source tab when needed** (`background.js`). They used
+  `resolveSiteFetch`, which returns null when no tab sits on the source's origin — so Refresh (and "Update full
+  history") listed nothing and Save/Send couldn't fetch, while the old "List documents" worked because it used
+  `ensureSiteFetch({open:true})`. Now `listSourceIntoStore` and the interactive `runRoute` open the site tab if
+  none exists (`sendStoredDocs` opens it only when the delivery actually needs to fetch files), matching the old
+  behavior: the page-context fetch inherits the session, and a signed-out user lands on the login page.
 - **Refreshing/saving/sending one source no longer reloads the whole tree** (`ui/archive.js`). A single-source
   action used to call `buildIndex()` + `hydrateIndex()`, re-counting *every* source (throbbers flashing across the
   entire tree). A new `reloadCurrent()` recomputes only the current source's documents and its own tree count/date;

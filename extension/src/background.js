@@ -551,7 +551,10 @@ async function listSourceIntoStore(ds, adapter, opts = {}) {
       await badgeClear(); setStatus(t('status_nosession', [name]));
       return { status: 'nosession' };
     }
-    const net = opts.net || await resolveSiteFetch(adapter); // fetch from the user's tab → inherits the session
+    // Open the site tab if none is on the source's origin — the page-context fetch needs it to inherit the
+    // session (this is exactly what the old "List documents" did; resolveSiteFetch alone returns null with no
+    // open tab, which is why Refresh listed nothing). If the user isn't signed in there, the list fails cleanly.
+    const net = opts.net || await ensureSiteFetch(adapter, { open: true });
     if (!net) { await badgeClear(); setStatus(t('status_nosession', [name])); return { status: 'nosession' }; }
     // Saved per-account allow-list (grouped sources) — or an explicit subset the Archive asked for.
     const filter = (opts.groups && opts.groups.length) ? opts.groups : ((ds.groups && ds.groups.length) ? ds.groups : null);
@@ -607,10 +610,13 @@ async function sendStoredDocs(ds, adapter, sink, ids) {
   setStatus(t('status_fetching', [String(want.size), name]));
   try {
     const auth = await authFor(adapter);
-    const net = auth ? await resolveSiteFetch(adapter).catch(() => null) : null; // null → records-only delivery still works
     const outs = outputsForSink(adapter, sink, sinkAcceptsSource); // only the outputs THIS sink accepts
     const streamIds = [...new Set(outs.map((o) => o.stream))];
     const fmtsFor = (sid) => outs.filter((o) => o.stream === sid).map((o) => o.format);
+    // Open the site tab only if these outputs can produce FILES (a per-item PDF/Excel needs the page-context
+    // fetch); a records-only send (bank movements) never fetches, so it stays quiet and works offline.
+    const wantsDocs = outs.some((o) => artifactKinds(resolveOutput(adapter, o.stream + (o.format ? '/' + o.format : ''))).length);
+    const net = auth ? await ensureSiteFetch(adapter, { open: wantsDocs }).catch(() => null) : null; // null → records-only delivery still works
     let sent = 0;
     for (const sid of streamIds) {
       const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(adapter.id, sid);
@@ -677,7 +683,9 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     // incorrecto"). Treat it as no-session → the sweep opens the login page; retries once fully logged in.
     const ctxMissing = ((adapter.auth && adapter.auth.context) || []).some((c) => !(auth && auth.ctx && auth.ctx[c.name] != null && auth.ctx[c.name] !== ''));
     if (!auth || ctxMissing) { await appendLog({ ...base, status: 'nosession' }); await badgeClear(); setStatus(t('status_nosession', [name])); return { status: 'nosession' }; }
-    const net = opts.net || await resolveSiteFetch(adapter); // fetch from the user's tab → inherits the session
+    // Auto/sweep runs unattended (a tab is already open post-login) → reuse it. A MANUAL/interactive run (the
+    // Archive's "Save") opens the site tab if none exists, so the page-context fetch inherits the session.
+    const net = opts.net || (opts.interactive ? await ensureSiteFetch(adapter, { open: true }) : await resolveSiteFetch(adapter));
     const delivered = await deliveredSet(ds.id, sink.id);
     // A source may expose several outputs (streams×formats). Auto-mode delivers the outputs THIS sink accepts
     // (a typed consumer that wants only `transaction` gets just that stream). List once per stream (formats
