@@ -658,9 +658,45 @@ function fillDocTmpl(str, doc, id, csrf, auth) {
 // Resolve a field mapping: a plain dotted path into the item, OR a template referencing {group.*}
 // (and/or item fields) — e.g. account: "{group.iban}", internalId: "{group.id}-{transactionId}". A lone
 // {x} preserves the raw value's type; a template with surrounding text interpolates to a string.
+// The UI language, for locale-aware value formatting (a comma decimal in es, "6 meses" vs "6 months").
+function uiLocale() { try { return chrome.i18n.getUILanguage() || 'en'; } catch (e) { try { return (globalThis.navigator && navigator.language) || 'en'; } catch (e2) { return 'en'; } } }
+const FMT_UNIT = { day: 'day', d: 'day', week: 'week', w: 'week', month: 'month', m: 'month', quarter: 'month', year: 'year', y: 'year', a: 'year' };
+const FMT_KEYS = /^(num|pct|duration|date)$/;
+// Format a mapped VALUE for a `{field:fmt}` directive (used only when the suffix is a known format keyword,
+// so a plain dotted path is never mistaken for a format). Browser-locale aware.
+//   :num       → a number in the UI locale (2.45 → "2,45" in es)     :pct → same, ×100
+//   :duration  → {period,units} (or {unit,value}) → "6 meses"/"1 año" (Intl unit, auto-pluralized)
+//   :date      → normalized ISO date (YYYY-MM-DD)
+export function fmtValue(v, fmt, locale) {
+  if (v == null) return '';
+  const loc = locale || uiLocale();
+  if (fmt === 'num' || fmt === 'pct') {
+    let n = typeof v === 'number' ? v : parseFloat(String(v).replace(/[^0-9eE.,+-]/g, '').replace(',', '.'));
+    if (!isFinite(n)) return String(v);
+    if (fmt === 'pct') n *= 100;
+    try { return new Intl.NumberFormat(loc, { maximumFractionDigits: 4 }).format(n); } catch (e) { return String(n); }
+  }
+  if (fmt === 'duration') {
+    if (typeof v !== 'object') return String(v);
+    const per = String(v.period ?? v.unit ?? v.type ?? '').toLowerCase().replace(/s$/, '');
+    const cnt = Number(v.units ?? v.value ?? v.amount ?? v.count ?? v.number);
+    const unit = FMT_UNIT[per];
+    if (!unit || !isFinite(cnt)) return '';
+    try { return new Intl.NumberFormat(loc, { style: 'unit', unit, unitDisplay: 'long' }).format(cnt); } catch (e) { return cnt + ' ' + per; }
+  }
+  if (fmt === 'date') { const d = normalizeDate(v); return d || String(v); }
+  return String(v);
+}
 function resolveField(value, item, group) {
   if (typeof value !== 'string' || value.indexOf('{') < 0) return get(item, value);
-  const pick = (k) => (k.indexOf('group.') === 0 ? (group ? get(group, k.slice(6)) : undefined) : get(item, k));
+  const pick = (spec) => {
+    const ci = spec.lastIndexOf(':');
+    const fmt = ci > 0 ? spec.slice(ci + 1) : '';
+    const hasFmt = ci > 0 && FMT_KEYS.test(fmt);           // only a KNOWN format keyword splits path:fmt
+    const k = hasFmt ? spec.slice(0, ci) : spec;
+    const raw = (k.indexOf('group.') === 0 ? (group ? get(group, k.slice(6)) : undefined) : get(item, k));
+    return hasFmt ? fmtValue(raw, fmt) : raw;
+  };
   const single = value.match(/^\{([^}]+)\}$/);
   if (single) return pick(single[1]);
   return value.replace(/\{([^}]+)\}/g, (m, k) => { const v = pick(k); return v == null ? '' : String(v); });

@@ -9,8 +9,8 @@
     "banking",
     "investment"
   ],
-  "version": "2026-07-20.12",
-  "minVersion": "0.5.0.26",
+  "version": "2026-07-20.13",
+  "minVersion": "0.5.0.27",
   "keepRaw": true,
   "contributors": [
     "David Marín Carreño"
@@ -139,7 +139,7 @@
         "date": "deposit.opening_date",
         "amount": "accounting.balance.amount.denomination",
         "currency": "accounting.balance.amount.currency",
-        "description": "Depósito {product.deposit_taking_bank.name} {accounting.effective_interest_rate}% TAE - {deposit.opening_date}",
+        "description": "Depósito {product.deposit_taking_bank.name} {accounting.effective_interest_rate:num}% TAE {accounting.term:duration} - {deposit.opening_date:date}",
         "counterparty": "{product.deposit_taking_bank.name}"
       }
     },
@@ -221,7 +221,7 @@
           },
           "fields": {
             "id": "accounting.deposit_id",
-            "name": "Depósito {product.deposit_taking_bank.name} {accounting.effective_interest_rate}% TAE - {deposit.opening_date}"
+            "name": "Depósito {product.deposit_taking_bank.name} {accounting.effective_interest_rate:num}% TAE {accounting.term:duration} - {deposit.opening_date:date}"
           },
           "headers": {
             "accept": "application/json, text/plain, */*"
@@ -259,6 +259,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20.13",
+      "changes": "Deposit labels now use browser-locale formatting: rate with the locale decimal comma and term as words (\"Depósito Banca Progetto 2,45% TAE 6 meses - 2024-03-22\"). Requires runtime 0.5.0.27 ({field:num|pct|duration|date} format directives)."
+    },
     {
       "version": "2026-07-20.12",
       "changes": "Readable account/deposit names: savings show \"Cuenta <bank>\", deposits \"Depósito <bank> <rate>% TAE - <opening date>\" using the real bank name (deposit_taking_bank.name). Deposit date is now the opening date (deposit.opening_date). (Term wording and decimal comma still pending a formatting helper.)"

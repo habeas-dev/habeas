@@ -55,6 +55,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   progressively instead of freezing the tab.
 
 ### Added
+- **Browser-locale value formatting in field templates** (`runtime/inventory.js`: `fmtValue`). A field/label
+  template can now format a value with `{path:num}` (a number in the UI locale — `2.45` → `2,45` in Spanish),
+  `{path:pct}` (a fraction ×100), `{path:duration}` (`{period,units}` → `6 meses` / `1 año`, auto-pluralized via
+  `Intl`), and `{path:date}` (ISO `YYYY-MM-DD`). Only a known format keyword after `:` is treated as a format, so
+  plain dotted paths are unaffected. Lets a source read like the service's own UI — e.g. Raisin deposits now
+  show `Depósito Banca Progetto 2,45% TAE 6 meses - 2024-03-22` and savings `Cuenta Nordax Bank AB publ`.
 - **A list/account enumeration can span several endpoints** (`runtime/inventory.js`: `api.list.paths[]` and
   `api.groups.paths[]`). When a source's items live behind more than one URL — Raisin keeps deposits in BOTH
   `/dashboard/active` and `/dashboard/inactive` — the runtime fetches each and merges. Without it, inactive
