@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-16T04:12:55.391Z",
+  "generated": "2026-07-21T15:48:04.928Z",
   "sources": [
     {
       "id": "aliexpress",
@@ -12,19 +12,22 @@
       "trust": "community",
       "domain": "aliexpress.com",
       "country": "global",
-      "formats": [],
+      "formats": [
+        "html"
+      ],
       "crossDomain": [],
       "version": "2026-07-16",
-      "minVersion": "0.2.1",
+      "minVersion": "0.3.0",
       "gaps": [],
+      "contributors": [],
       "changelog": [
         {
           "version": "2026-07-16",
-          "changes": "Initial: order history via Alibaba's mtop gateway. Runs in the site tab and reuses the app's own live request payload (hook stashes it) + its lib.mtop signing (no hardcoded blob, no forged signature); paginates by bumping the component pageIndex. Orders extracted from the DIDA component response (itemsFromKeys)."
+          "changes": "Initial: order history via Alibaba's mtop gateway. Runs in the site tab and reuses the app's own live request payload (hook stashes it) + its lib.mtop signing (no hardcoded blob, no forged signature); paginates by bumping the component pageIndex. Orders extracted from the DIDA component response (itemsFromKeys). Per-order receipt as a self-contained printable HTML invoice, generated from mtop queryorderreceiptinfo (no seed needed — a known flat payload) via a declarative template using AliExpress's own labels."
         }
       ],
       "url": "https://habeas-dev.github.io/sources/aliexpress.json",
-      "updated": "2026-07-16T04:12:55.391Z"
+      "updated": "2026-07-21T15:48:04.928Z"
     },
     {
       "id": "amazon-es",
@@ -44,9 +47,10 @@
       "version": "2026-07-10",
       "minVersion": "0.1.38",
       "gaps": [],
+      "contributors": [],
       "changelog": [],
       "url": "https://habeas-dev.github.io/sources/amazon-es.json",
-      "updated": "2026-07-16T04:12:55.391Z"
+      "updated": "2026-07-21T15:48:04.928Z"
     },
     {
       "id": "bipdrive-es",
@@ -65,6 +69,7 @@
       "version": "2026-07-08",
       "minVersion": null,
       "gaps": [],
+      "contributors": [],
       "changelog": [
         {
           "version": "2026-07-08",
@@ -72,7 +77,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/bipdrive-es.json",
-      "updated": "2026-07-16T04:12:55.391Z"
+      "updated": "2026-07-21T15:48:04.928Z"
     },
     {
       "id": "caixabank-consumer-es",
@@ -93,6 +98,7 @@
       "version": "2026-07-08",
       "minVersion": "0.1.35",
       "gaps": [],
+      "contributors": [],
       "changelog": [
         {
           "version": "2026-07-08",
@@ -100,7 +106,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/caixabank-consumer-es.json",
-      "updated": "2026-07-16T04:12:55.391Z"
+      "updated": "2026-07-21T15:48:04.928Z"
     },
     {
       "id": "carrefour-es",
@@ -121,6 +127,7 @@
       "version": "2026-07-08",
       "minVersion": null,
       "gaps": [],
+      "contributors": [],
       "changelog": [
         {
           "version": "2026-07-08",
@@ -128,7 +135,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/carrefour-es.json",
-      "updated": "2026-07-16T04:12:55.391Z"
+      "updated": "2026-07-21T15:48:04.928Z"
     },
     {
       "id": "decathlon-es",
@@ -147,6 +154,7 @@
       "version": "2026-07-08",
       "minVersion": null,
       "gaps": [],
+      "contributors": [],
       "changelog": [
         {
           "version": "2026-07-08",
@@ -154,7 +162,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/decathlon-es.json",
-      "updated": "2026-07-16T04:12:55.391Z"
+      "updated": "2026-07-21T15:48:04.928Z"
     },
     {
       "id": "dia-es",
@@ -174,6 +182,7 @@
       "version": "2026-07-08",
       "minVersion": null,
       "gaps": [],
+      "contributors": [],
       "changelog": [
         {
           "version": "2026-07-08",
@@ -181,7 +190,71 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/dia-es.json",
-      "updated": "2026-07-16T04:12:55.391Z"
+      "updated": "2026-07-21T15:48:04.928Z"
+    },
+    {
+      "id": "financiera-elcorteingles-es",
+      "name": "Financiera El Corte Inglés",
+      "service": "financiera-elcorteingles",
+      "categories": [
+        "card",
+        "loan"
+      ],
+      "trust": "community",
+      "domain": "financieraelcorteingles.es",
+      "country": "ES",
+      "formats": [],
+      "crossDomain": [],
+      "version": "2026-07-20.3",
+      "minVersion": "0.5.0",
+      "gaps": [],
+      "contributors": [
+        "David Marín"
+      ],
+      "changelog": [
+        {
+          "version": "2026-07-20.3",
+          "changes": "First publish to the live registry. Requires extension >= 0.5.0 (the milestone that ships declarative capturePaths, the login-safe scoped token observer, and the {date:FORMAT} document token this source relies on). Verified end-to-end by the contributor."
+        },
+        {
+          "version": "2026-07-20.2",
+          "changes": "Fix the statement PDF datePurchase format: the generate-file endpoint wants DD/MM/YYYY (e.g. 01/09/2025), but on a store re-download the date falls back to the normalized ISO value (2025-09-01), which the server rejected with HTTP 400. Now formatted explicitly via {date:DD/MM/YYYY}. Requires extension >= 0.4.1.15."
+        },
+        {
+          "version": "2026-07-20.1",
+          "changes": "Declare auth.capturePaths = ['/dashboard/'] so the token is only captured from the authenticated dashboard area (where it first appears, after login) and the header observer never engages with the sign-in flow — this keeps the extension from interfering with the bank's Transmit Security login."
+        },
+        {
+          "version": "2026-07-20",
+          "changes": "Send the per-card eci-custom-encrypted-pan header on the aplazamientos (financing-purchases) and extractos (shopping-summaries) LIST requests too — the SPA sends it on every card-scoped call (as movements already does), so the server needs it to return those lists per card, not just for movements + the statement PDF."
+        },
+        {
+          "version": "2026-07-17.4",
+          "changes": "Revert tokenFromStorage: FECI's API bearer is a WSO2 OAuth JWT held in memory (obtained via /api/accessTokenTransmit), NOT in localStorage — aphishi-lws_at.t is a session id, so injecting it gave WSO2 900901 'Invalid Credentials'. Back to capturing the bearer from the SPA's own requests (auth.replayHeaders)."
+        },
+        {
+          "version": "2026-07-17.3",
+          "changes": "(reverted) read the bearer from localStorage via auth.tokenFromStorage — wrong field for FECI (the token isn't in localStorage)."
+        },
+        {
+          "version": "2026-07-17.2",
+          "changes": "Fix extractos statement PDF download (the real cause): the generate-file POST also needs the per-card eci-custom-encrypted-pan header (same as movements), which the server requires to return the file. Sent via api.pdf.headers {group.pan}. Requires extension >= 0.4.1.2."
+        },
+        {
+          "version": "2026-07-17.1",
+          "changes": "extractos generate-file POST sends the {} JSON body + application/json content-type the SPA sends. datePurchase correct (the raw item date, DD/MM/YYYY)."
+        },
+        {
+          "version": "2026-07-17",
+          "changes": "Fix empty aplazamientos + extractos lists: send the query params the SPA sends. aplazamientos/financing-purchases now sends page_number=0&page_size=100 (the endpoint is paged); extractos/shopping-summaries now sends date_bill (the current billing date the SPA stamps), via the new {monthEnd:DD/MM/YYYY} computed-date token. Requires extension >= 0.4.1.1."
+        },
+        {
+          "version": "2026-07-16",
+          "changes": "Initial (authored from a redacted handoff recording, verified live by the contributor). Multi-card (grouped by contract): card movements (transactions), aplazamientos/financing purchases, and monthly statement PDFs (generated per month, base64). Cookie session + replayed bearer + per-card eci-custom-encrypted-pan header."
+        }
+      ],
+      "url": "https://habeas-dev.github.io/sources/financiera-elcorteingles-es.json",
+      "updated": "2026-07-21T15:48:04.928Z"
     },
     {
       "id": "hover-com",
@@ -201,6 +274,7 @@
       "version": "2026-07-13",
       "minVersion": null,
       "gaps": [],
+      "contributors": [],
       "changelog": [
         {
           "version": "2026-07-13",
@@ -212,7 +286,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/hover-com.json",
-      "updated": "2026-07-16T04:12:55.391Z"
+      "updated": "2026-07-21T15:48:04.928Z"
     },
     {
       "id": "ikea-es",
@@ -233,9 +307,10 @@
       "version": "2026-07-08",
       "minVersion": "0.1.36",
       "gaps": [],
+      "contributors": [],
       "changelog": [],
       "url": "https://habeas-dev.github.io/sources/ikea-es.json",
-      "updated": "2026-07-16T04:12:55.391Z"
+      "updated": "2026-07-21T15:48:04.928Z"
     },
     {
       "id": "ing-es",
@@ -249,20 +324,25 @@
       "country": "ES",
       "formats": [],
       "crossDomain": [],
-      "version": "2026-07-14.1",
-      "minVersion": "0.1.65.5",
+      "version": "2026-07-16",
+      "minVersion": "0.3.0.24",
       "gaps": [
         "tarjetas",
         "inversión"
       ],
+      "contributors": [],
       "changelog": [
+        {
+          "version": "2026-07-16",
+          "changes": "Map the movement's running balance to record.balanceAfter (promoted to a canonical field for the Cuéntamo contract). Requires extension >= 0.3.0.24."
+        },
         {
           "version": "2026-07-14",
           "changes": "Initial: movements (transactions), per-account monthly statements (PDF/Excel), and the integrated monthly statement (PDF). Grouped by account, 90-day window."
         }
       ],
       "url": "https://habeas-dev.github.io/sources/ing-es.json",
-      "updated": "2026-07-16T04:12:55.391Z"
+      "updated": "2026-07-21T15:48:04.928Z"
     },
     {
       "id": "leroymerlin-es",
@@ -279,6 +359,7 @@
       "version": "2026-07-10.3",
       "minVersion": "0.1.53.13",
       "gaps": [],
+      "contributors": [],
       "changelog": [
         {
           "version": "2026-07-10.3",
@@ -302,7 +383,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/leroymerlin-es.json",
-      "updated": "2026-07-16T04:12:55.391Z"
+      "updated": "2026-07-21T15:48:04.928Z"
     },
     {
       "id": "openbank-es",
@@ -316,12 +397,17 @@
       "country": "ES",
       "formats": [],
       "crossDomain": [],
-      "version": "2026-07-15.1",
-      "minVersion": "0.1.67",
+      "version": "2026-07-16",
+      "minVersion": "0.3.0.24",
       "gaps": [
         "tarjetas"
       ],
+      "contributors": [],
       "changelog": [
+        {
+          "version": "2026-07-16",
+          "changes": "Map the movement's running balance (saldo.importe) to record.balanceAfter (promoted to a canonical field for the Cuéntamo contract). Requires extension >= 0.3.0.24."
+        },
         {
           "version": "2026-07-15.1",
           "changes": "Fix `movimientos`: the first (non-SCA) page returns a flat `movimientos` array, not `methodResult.movimientos` — itemsPath now accepts both shapes."
@@ -336,7 +422,113 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/openbank-es.json",
-      "updated": "2026-07-16T04:12:55.391Z"
+      "updated": "2026-07-21T15:48:04.928Z"
+    },
+    {
+      "id": "raisin",
+      "name": "Raisin",
+      "service": "raisin",
+      "categories": [
+        "banking",
+        "investment"
+      ],
+      "trust": "community",
+      "domain": "raisin.com",
+      "country": "global",
+      "formats": [],
+      "crossDomain": [
+        "api2.weltsparen.de"
+      ],
+      "version": "2026-07-21",
+      "minVersion": "0.5.0.32",
+      "gaps": [],
+      "contributors": [
+        "David Marín Carreño"
+      ],
+      "changelog": [
+        {
+          "version": "2026-07-21",
+          "changes": "Declared country: \"global\" — the field was missing since the multi-market rename (raisin-es -> raisin), so the catalog showed no 🌐 badge and country filters didn't treat it as worldwide."
+        },
+        {
+          "version": "2026-07-20.18",
+          "changes": "Multi-language labels: the product-type word (Deposit/Account) is translated per browser locale via a source i18n dictionary (en/es/de/fr/nl — every Raisin market; en fallback), since the API only returns it as an enum. Dropped the TAE abbreviation (varies by country; % is universal). Requires 0.5.0.32 ({i18n:key} token)."
+        },
+        {
+          "version": "2026-07-20.17",
+          "changes": "Multi-market: renamed raisin-es -> raisin (the API api2.weltsparen.de is shared across all Raisin countries); the response-language `locale` param now follows the browser locale via {locale}/{locale:lower} instead of a hardcoded es-ES. Requires 0.5.0.30. (Account-label WORDS Depósito/Cuenta/TAE remain Spanish for now.)"
+        },
+        {
+          "version": "2026-07-20.16",
+          "changes": "A deposit account now shows the SAME name everywhere: its own record, its documents, and the account picker all use the full \"Depósito <bank> <rate>% TAE <term> - <opening>\" label (the record previously showed a shorter \"Depósito <bank>\"). The bank moved to the store/counterparty column."
+        },
+        {
+          "version": "2026-07-20.15",
+          "changes": "Split documents by product: FDA_ deposits keep the \"Depósito … % TAE … plazo\" label; OMA_ savings accounts now show \"Cuenta <bank>\" (no rate/term — variable). Deposit records carry their own account label. Requires 0.5.0.29 (ungrouped-stream account label)."
+        },
+        {
+          "version": "2026-07-20.14",
+          "changes": "Requires 0.5.0.28: group-field templates now resolve (the account picker AND the Account column show the readable name instead of a raw id)."
+        },
+        {
+          "version": "2026-07-20.13",
+          "changes": "Deposit labels now use browser-locale formatting: rate with the locale decimal comma and term as words (\"Depósito Banca Progetto 2,45% TAE 6 meses - 2024-03-22\"). Requires runtime 0.5.0.27 ({field:num|pct|duration|date} format directives)."
+        },
+        {
+          "version": "2026-07-20.12",
+          "changes": "Readable account/deposit names: savings show \"Cuenta <bank>\", deposits \"Depósito <bank> <rate>% TAE - <opening date>\" using the real bank name (deposit_taking_bank.name). Deposit date is now the opening date (deposit.opening_date). (Term wording and decimal comma still pending a formatting helper.)"
+        },
+        {
+          "version": "2026-07-20.11",
+          "changes": "Deposits, savings and documents now enumerate BOTH dashboard/active AND dashboard/inactive (api paths[]), so inactive/cancelled deposits and ALL their documents are captured (documents come from /dds per deposit). Requires runtime 0.5.0.26 (paths[] support)."
+        },
+        {
+          "version": "2026-07-20.10",
+          "changes": "Savings/deposit accounts now carry a readable name (the deposit-taking bank) + type, so the account list and per-account labels show a bank name instead of a raw id. Requires 0.5.0.25 (account picker enumerates every grouped stream: current account + savings + deposits)."
+        },
+        {
+          "version": "2026-07-20.9",
+          "changes": "Requires runtime 0.5.0.24: list params now resolve {ctx.*} (depositos/ahorro/documentos send the real customer_id, was literal → dbff/dbs 403) and pdf.params apply to the document fetch (dds ?preview=true). All 4 outputs verified offline against the capture."
+        },
+        {
+          "version": "2026-07-20.8",
+          "changes": "Account list uses the real OData filter customerId eq {ctx.customer_id} & type eq TA_INTERNAL (was the invalid filter=all → 401). The customerId is templated from captured context, never hardcoded. Requires group-param ctx templating (minVersion 0.5.0.19)."
+        },
+        {
+          "version": "2026-07-20.7",
+          "changes": "Send the browser-style Accept header (application/json, text/plain, */*) on every list/groups request. Instrumentation proved the ONLY difference between the SPA’s working request and our 401 was the Accept value (bare application/json); the API gateway rejects it. Same token, same everything else."
+        },
+        {
+          "version": "2026-07-20.6",
+          "changes": "auth.cookies:false — send the bearer WITHOUT cookies. Instrumentation proved the token is valid (not expired), so the 401 Authorization-required on a valid token points to a weltsparen.de session cookie interfering with the bearer on the cross-domain call (like Openbank 413). Bearer-only request."
+        },
+        {
+          "version": "2026-07-20.5",
+          "changes": "Re-enable tokenFromStorage {key:auth_token, field:access_token}: token-correlation in a fresh capture PROVED the /tams bearer IS localStorage.auth_token.access_token (same [jwt#1] tag on all 19 API calls). Reading it fresh avoids the ~5min Keycloak expiry."
+        },
+        {
+          "version": "2026-07-20.4",
+          "changes": "Revert tokenFromStorage: localStorage.auth_token.access_token is the Keycloak access token, NOT the weltsparen API bearer (a distinct api_ticket token, likely in-memory) — sending it gave 401 Authorization required. Back to the captured API bearer (capturePaths); token freshness/exchange still under investigation."
+        },
+        {
+          "version": "2026-07-20.3",
+          "changes": "Point tokenFromStorage at the explicit field access_token (localStorage.auth_token.access_token) — unambiguous and works without the auto-detect. minVersion 0.5.0.8."
+        },
+        {
+          "version": "2026-07-20.2",
+          "changes": "Read the bearer FRESH from localStorage.auth_token on every request (auth.tokenFromStorage, access-token auto-detected) — Raisin uses a short-lived Keycloak JWT (~5 min) that expired between capture and listing (401 Jwt is expired). This always sends a valid, current user token."
+        },
+        {
+          "version": "2026-07-20.1",
+          "changes": "Scope token capture to the user-data endpoints (auth.capturePaths /tams/ /dbff/ /dds/ /cas/) so the replayed bearer is the logged-in user's token, not a client/anonymous token the public catalog (/dcms) may carry — which caused a 401 UNAUTHORIZED on /tams/v1/accounts even with an authorization sent."
+        },
+        {
+          "version": "2026-07-20",
+          "changes": "Initial: Raisin (WeltSparen). Cross-domain login raisin.com -> API api2.weltsparen.de (Keycloak bearer), customer_id captured as context, 90-day window (SCA-free). Four outputs: movimientos (Raisin transaction account, tams), depósitos (fixed-term deposits FDA_, investment@2 with keepRaw), ahorro (flexible savings-account movements OMA_, from the deposit detail's embedded transactions), documentos (terms/condiciones via dds). OMA (flexible cuenta corriente) vs FDA (fixed deposit) split by the product-id prefix (auth.keep prefix on accounting.deposit_id)."
+        }
+      ],
+      "url": "https://habeas-dev.github.io/sources/raisin.json",
+      "updated": "2026-07-21T15:48:04.928Z"
     },
     {
       "id": "revolut",
@@ -352,10 +544,15 @@
       "crossDomain": [
         "storage.googleapis.com"
       ],
-      "version": "2026-07-15.2",
-      "minVersion": "0.1.68",
+      "version": "2026-07-16",
+      "minVersion": "0.3.0.24",
       "gaps": [],
+      "contributors": [],
       "changelog": [
+        {
+          "version": "2026-07-16",
+          "changes": "Map the running balance (minor-unit scaled) to record.balanceAfter and the completed date to record.valueDate — promoted to canonical fields for the Cuéntamo contract. Requires extension >= 0.3.0.24."
+        },
         {
           "version": "2026-07-15.2",
           "changes": "Add account statements (PDF/CSV) per account × month: async-generated (poll account-statements until READY) then download the signed Google Storage URL (crossDomainHosts + consent). Statements bounded to the last ~12 months."
@@ -370,7 +567,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/revolut.json",
-      "updated": "2026-07-16T04:12:55.391Z"
+      "updated": "2026-07-21T15:48:04.928Z"
     },
     {
       "id": "traderepublic",
@@ -385,10 +582,19 @@
       "country": "global",
       "formats": [],
       "crossDomain": [],
-      "version": "2026-07-15.3",
-      "minVersion": "0.2.0",
+      "version": "2026-07-17",
+      "minVersion": "0.3.0.24",
       "gaps": [],
+      "contributors": [],
       "changelog": [
+        {
+          "version": "2026-07-17",
+          "changes": "Parse the trade breakdown into structured fields: units (Shares), price (Share price) and commission (Fee) from the timelineDetailV2 'Transaction' table (English labels — the WS connect requests locale 'en'). 'Free' fees resolve to 0. Requires extension >= 0.3.0.24."
+        },
+        {
+          "version": "2026-07-16",
+          "changes": "Timeline stream now emits investment@2 (broker trade/cash): recordType inferred from the extracted ISIN, side/kind mapped from the timeline eventType, instrument{isin,name}, and the settlement account (cashAccountNumber). Trade quantity/price/fees remain in record.extra.detail (localized text) pending structured parsing. Requires extension >= 0.3.0.24."
+        },
         {
           "version": "2026-07-15.3",
           "changes": "Add monthly documents: the account statement PDF (accountstatement/statement?fromDate&toDate) and the monthly transactions CSV (async export job: POST request → poll status → download), per completed month."
@@ -407,7 +613,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/traderepublic.json",
-      "updated": "2026-07-16T04:12:55.391Z"
+      "updated": "2026-07-21T15:48:04.928Z"
     },
     {
       "id": "wizink-es",
@@ -425,6 +631,7 @@
       "version": "2026-07-10",
       "minVersion": "0.1.52",
       "gaps": [],
+      "contributors": [],
       "changelog": [
         {
           "version": "2026-07-10",
@@ -436,7 +643,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/wizink-es.json",
-      "updated": "2026-07-16T04:12:55.391Z"
+      "updated": "2026-07-21T15:48:04.928Z"
     }
   ]
 }

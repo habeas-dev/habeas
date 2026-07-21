@@ -4,11 +4,12 @@
   "service": "raisin",
   "trust": "community",
   "domain": "raisin.com",
+  "country": "global",
   "categories": [
     "banking",
     "investment"
   ],
-  "version": "2026-07-20.18",
+  "version": "2026-07-21",
   "minVersion": "0.5.0.32",
   "keepRaw": true,
   "contributors": [
@@ -318,6 +319,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-21",
+      "changes": "Declared country: \"global\" — the field was missing since the multi-market rename (raisin-es -> raisin), so the catalog showed no 🌐 badge and country filters didn't treat it as worldwide."
+    },
     {
       "version": "2026-07-20.18",
       "changes": "Multi-language labels: the product-type word (Deposit/Account) is translated per browser locale via a source i18n dictionary (en/es/de/fr/nl — every Raisin market; en fallback), since the API only returns it as an enum. Dropped the TAE abbreviation (varies by country; % is universal). Requires 0.5.0.32 ({i18n:key} token)."
