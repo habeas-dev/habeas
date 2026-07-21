@@ -12,10 +12,10 @@ import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } 
 import { resolveSiteFetch, ensureSiteFetch, recoverSession } from './lib/pagefetch.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
-import { recordDelivered, putItems, getRecords, getSource } from './lib/store.js';
+import { recordDelivered, getSource } from './lib/store.js';
 import { nextOccurrence } from './lib/schedule.js';
 import { acceptsDoc, sinkAcceptsArtifact, sinkAcceptsSource, bakeLearned } from './sinks/format.js';
-import { outputsForSink, outputsOf, resolveOutput, storeKeyOf } from './lib/outputs.js';
+import { outputsForSink, resolveOutput, storeKeyOf } from './lib/outputs.js';
 import { getAdapters } from './adapters/index.js';
 import { hasConsent } from './lib/consent.js';
 import { badgeWorking, badgeCount, badgeError, badgeClear, setStatus } from './lib/badge.js';
@@ -299,20 +299,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true; // async response
   }
-  if (msg.type === 'habeas:list' && msg.datasource) { // on-demand "list this source into the store" (from the Archive) — NO sink
-    (async () => {
-      const cfg = await getConfig();
-      const adapters = await getAdapters();
-      const ds = (cfg.datasources || []).find((d) => d.id === msg.datasource);
-      const adapter = ds && adapters[ds.adapter];
-      if (!ds || !adapter) return { ok: false, error: 'unknown source' };
-      // List every output → persist listed records to the canonical store. No delivery, no ledger writes.
-      // mode:'full' re-enumerates the whole history (reconcile); default is incremental (delta only).
-      const r = await listSourceIntoStore(ds, adapter, { groups: msg.groups, mode: msg.mode });
-      return { ok: true, ...r };
-    })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
-    return true; // async response
-  }
   if (msg.type === 'habeas:send' && msg.datasource && msg.sink && Array.isArray(msg.ids)) { // send HAND-PICKED stored docs to a destination (from the Archive's selection)
     (async () => {
       const cfg = await getConfig();
@@ -531,71 +517,6 @@ function siteMatches(adapter, host) {
 // Whole store → each endpoint resolves its own auth (mixed cookie+bearer), merged across sibling hosts
 // sharing the source's registrable domain. Cookie sources proceed with an empty store (cookies carry it).
 const authFor = (adapter) => loadAuth(adapter);
-
-// List every output of a source into the canonical store — NO sink, NO ledger. Powers the Archive's per-source
-// "Refresh" button: the same list pipeline auto/manual delivery uses, but it stops at the store (write-through)
-// so the user browses fresh documents in place without first choosing a destination. Incremental (seeds
-// knownIds from the store → known items dedup out + paging stops early), so a refresh only pulls what's new.
-async function listSourceIntoStore(ds, adapter, opts = {}) {
-  const name = adapter.name || ds.adapter;
-  await badgeWorking();
-  setStatus(t('status_listing', [name]));
-  try {
-    const auth = await authFor(adapter);
-    // Same no-session contract as runRoute: no live session (or a required captured context value still
-    // missing) → open the site so the user signs in and the token is captured, then bail cleanly. The Archive
-    // surfaces "sign in and retry"; nothing is written.
-    const ctxMissing = ((adapter.auth && adapter.auth.context) || []).some((c) => !(auth && auth.ctx && auth.ctx[c.name] != null && auth.ctx[c.name] !== ''));
-    if (!auth || ctxMissing) {
-      try { await ensureSiteFetch(adapter, { open: true }); } catch (e) { /* best-effort: open the login tab */ }
-      await badgeClear(); setStatus(t('status_nosession', [name]));
-      return { status: 'nosession' };
-    }
-    // Open the site tab if none is on the source's origin — the page-context fetch needs it to inherit the
-    // session (this is exactly what the old "List documents" did; resolveSiteFetch alone returns null with no
-    // open tab, which is why Refresh listed nothing). If the user isn't signed in there, the list fails cleanly.
-    const net = opts.net || await ensureSiteFetch(adapter, { open: true });
-    if (!net) { await badgeClear(); setStatus(t('status_nosession', [name])); return { status: 'nosession' }; }
-    // Saved per-account allow-list (grouped sources) — or an explicit subset the Archive asked for.
-    const filter = (opts.groups && opts.groups.length) ? opts.groups : ((ds.groups && ds.groups.length) ? ds.groups : null);
-    const streamIds = [...new Set(outputsOf(adapter).map((o) => o.stream))]; // formats share a stream's items → list once per stream
-    let added = 0;
-    for (const sid of streamIds) {
-      const eff = resolveOutput(adapter, sid);
-      const sk = storeKeyOf(adapter.id, sid);
-      const known = (await getRecords(sk)).map((r) => r.internalId).filter((x) => x != null);
-      const knownSet = new Set(known.map(String));
-      const docs = await listInventory(eff, auth, net, {
-        // incremental (default) seeds known ids → returned docs are the NEW ones only + paging stops early.
-        // 'full' seeds nothing → re-enumerates the whole history (reconcile); putItems upserts, so it's safe.
-        groups: filter, knownIds: opts.mode === 'full' ? null : known,
-        onProgress: (p) => setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])),
-      });
-      const items = docs.filter((d) => d.internalId != null);
-      if (items.length) {
-        try { await putItems(sk, items.map((d) => ({ internalId: d.internalId, record: d.record })), { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store best-effort */ }
-      }
-      // "new" = genuinely-unknown items. Incremental already returns only those; full returns everything, so
-      // subtract what the store already had — the count means the same thing in both modes.
-      added += opts.mode === 'full' ? items.filter((d) => !knownSet.has(String(d.internalId))).length : items.length;
-    }
-    await badgeClear();
-    setStatus(t('status_done', [name, String(added)]));
-    return { status: 'done', new: added };
-  } catch (e) {
-    const msg = (e && e.message) || String(e);
-    // Anti-bot challenge → show it to the user (core thesis: they resolve it live), not a hard error.
-    if (/captcha-delivery|datadome|geo\.captcha|interstitial|challenge-platform|__cf_chl|cf-browser-verification|just a moment|akam[ai]/i.test(msg)) {
-      const curl = challengeUrlOf(msg);
-      try { await chrome.tabs.create({ url: curl || siteBaseUrl(adapter), active: true }); } catch (e2) {}
-      await badgeClear(); setStatus(t('status_challenged', [name]));
-      return { status: 'challenged' };
-    }
-    pushDiag(adapter.id, { phase: 'list', message: msg });
-    await badgeError(); setStatus(t('status_error', [name, msg.slice(0, 80)]));
-    return { status: 'error', error: msg };
-  }
-}
 
 // Deliver a SPECIFIC set of already-stored documents (hand-picked in the Archive) to a sink. Unlike runRoute
 // (which LISTS new docs), this works straight from the canonical store — the user chose exact items to push

@@ -17,8 +17,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   no-session / anti-bot-challenge contract (opens the site to sign in or solve the check, then the user retries).
   This makes the Archive self-sufficient: browse and pull fresh documents in place before deciding where to send.
   It's the Archive equivalent of the old "List documents". A **caret** on the button opens the two alternative
-  modes the old UI had: **Update full history** (re-scan the whole history, not just the delta; `habeas:list`
-  `mode:'full'`) and **Load from store** (re-read the local store with no network request).
+  modes the old UI had: **Update full history** (re-scan the whole history, not just the delta) and **Load from
+  store** (re-read the local store with no network request).
 - **Archive — send hand-picked documents** (`ui/archive.js`, `background.js` `habeas:send` → `sendStoredDocs`).
   Selection mode now offers "Send to <destination>" for every compatible sink: the chosen documents are delivered
   from the store (each record's manifest, plus its file re-fetched when the source can still produce it).
@@ -28,10 +28,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   with stored documents — so a freshly-installed source appears and can be Refreshed to pull its first documents.
 
 ### Changed
-- **Archive Refresh picks accounts for an unconfigured multi-account source** (`ui/archive.js`). Refreshing a
-  bank/multi-account source that has no saved account allow-list yet now opens the account picker first (persisted),
-  then lists the chosen accounts — matching the classic "List documents" account prompt. Once accounts are saved,
-  later refreshes list them directly. (Grouped sources with no allow-list previously listed all accounts silently.)
+- **Archive Refresh calls the SAME list core as the classic "List documents"** (`runtime/lister.js`,
+  `ui/archive.js`, `ui/popup.js`). The listing logic was extracted into one shared `listSourceInto(adapter, opts)`
+  that both the popup's `onList` and the Archive's Refresh now call, running in the page (not a background
+  reimplementation): saved account allow-list or the transient account picker (`pickGroup`), incremental unless a
+  full re-scan, write-through to the store. This replaces the earlier background `habeas:list`/`listSourceIntoStore`
+  parallel path (removed) that behaved differently and could list nothing. Covered by `test/lister.test.mjs`.
 - **Popup launcher: Settings + status line left the header; sources sort by recency.** The header now holds only
   the brand and Sync-all; Settings moved to the footer and the status line sits below the hero. Source chips are
   ordered by most recent news first — the last activity-log entry that brought new documents, then any activity,
@@ -48,12 +50,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   (Refresh, Accounts) stay available on that prompt.
 
 ### Fixed
-- **Archive Refresh/Save/Send now open the source tab when needed** (`background.js`). They used
-  `resolveSiteFetch`, which returns null when no tab sits on the source's origin — so Refresh (and "Update full
-  history") listed nothing and Save/Send couldn't fetch, while the old "List documents" worked because it used
-  `ensureSiteFetch({open:true})`. Now `listSourceIntoStore` and the interactive `runRoute` open the site tab if
-  none exists (`sendStoredDocs` opens it only when the delivery actually needs to fetch files), matching the old
-  behavior: the page-context fetch inherits the session, and a signed-out user lands on the login page.
+- **Archive Refresh/Save/Send now open the source tab when needed.** They used `resolveSiteFetch`, which returns
+  null when no tab sits on the source's origin — so Refresh (and "Update full history") listed nothing and Save/Send
+  couldn't fetch, while the old "List documents" worked because it used `ensureSiteFetch({open:true})`. Now Refresh
+  (via the shared list core, run in the page) and the interactive `runRoute` open the site tab if none exists
+  (`sendStoredDocs` opens it only when the delivery actually needs to fetch files), matching the old behavior: the
+  page-context fetch inherits the session, and a signed-out user lands on the login page.
 - **Refreshing/saving/sending one source no longer reloads the whole tree** (`ui/archive.js`). A single-source
   action used to call `buildIndex()` + `hydrateIndex()`, re-counting *every* source (throbbers flashing across the
   entire tree). A new `reloadCurrent()` recomputes only the current source's documents and its own tree count/date;

@@ -2,6 +2,7 @@ import { chrome } from '../lib/ext.js';
 import { getConfig, saveConfig } from '../lib/config.js';
 import { manageAccounts } from './accountpicker.js';
 import { listInventory, artifactKinds, fetchArtifact, documentExt } from '../runtime/inventory.js';
+import { listSourceInto } from '../runtime/lister.js';
 import { pushDiag, recordingNet } from '../lib/diag.js';
 import { ensureSiteFetch, recoverSession, siteBaseUrl } from '../lib/pagefetch.js';
 import { pickGroup } from './grouppicker.js';
@@ -432,32 +433,20 @@ async function onList(mode, opts = {}) {
   let listSid = null; // which stream was listing when a failure was thrown (for the diagnostic)
   try {
     const net = await ensureSiteFetch(adapter, { open: true });
-    for (const sid of streamIds) {
-      if (aborted()) break;
-      listSid = sid;
-      const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(adapter.id, sid);
-      // A saved account filter (ds.groups) takes over: list ALL selected accounts, no per-list picker.
-      // Without one, keep the transient "which account this time?" picker.
-      const filter = (ds && ds.groups && ds.groups.length) ? ds.groups : null;
-      const groupId = filter ? undefined : await pickGroup(eff, auth, net);
-      const baseIds = new Set([...acc.values()].filter((d) => d._stream === sid).map((d) => d.internalId));
-      const fresh = await listInventory(eff, auth, net, {
-        groupId, groups: filter, signal: aborter.signal, knownIds: mode === 'full' ? null : baseIds,
-        onProgress: ({ year, page, docs }) => {
-          $('#status').textContent = year != null ? t('listing_year_page', [String(year), String(page), String(docs.length)]) : t('listing_page', [String(page), String(docs.length)]);
-          for (const d of docs) acc.set(key(tag(d, sid, sk)), d);
-          rebuild(); bars(); render(delivered);
-        },
-      });
-      for (const d of fresh) acc.set(key(tag(d, sid, sk)), d);
-      newTotal += fresh.length;
-      // Synthetic docs are OPTIMISTIC (every month in the window) — many don't exist (before the account
-      // opened). Don't persist them to the store at list time, or "All documents" would mark phantom months
-      // as existing files. They still show in THIS list (to pick + download); a successful download/delivery
-      // is what proves a month exists and puts it in the store.
-      const synthetic = eff.api && eff.api.list && eff.api.list.paging === 'synthetic';
-      if (!synthetic) try { await putItems(sk, fresh.filter((d) => d.internalId != null).map((d) => ({ internalId: d.internalId, record: d.record })), { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store best-effort */ }
-    }
+    // The SAME shared core the Archive's Refresh uses (runtime/lister.js). The popup just wires its live
+    // per-page rendering + the transient account picker into the callbacks.
+    const res = await listSourceInto(adapter, {
+      auth, net, ds, mode, outputs: outs, signal: aborter.signal,
+      pickGroup: (eff, a, n) => pickGroup(eff, a, n),
+      onStream: (sid) => { listSid = sid; },
+      onProgress: (sid, eff, sk, { year, page, docs }) => {
+        $('#status').textContent = year != null ? t('listing_year_page', [String(year), String(page), String(docs.length)]) : t('listing_page', [String(page), String(docs.length)]);
+        for (const d of docs) acc.set(key(tag(d, sid, sk)), d);
+        rebuild(); bars(); render(delivered);
+      },
+      onFresh: (sid, eff, sk, fresh) => { for (const d of fresh) acc.set(key(tag(d, sid, sk)), d); },
+    });
+    newTotal = res.listed;
     rebuild(); await render(delivered); bars();
     $('#status').textContent = aborted() ? t('stopped_n', [String(inventory.length)]) : t('n_listed', [String(inventory.length), String(newTotal)]);
     log(t('n_listed', [String(inventory.length), String(newTotal)]));

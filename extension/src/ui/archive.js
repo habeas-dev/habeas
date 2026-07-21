@@ -14,10 +14,14 @@ import { isRetrievable } from '../lib/retrieve.js';
 import { sinkAcceptsSource, groupLabelOf } from '../sinks/format.js';
 import { resolveOutput } from '../lib/outputs.js';
 import { artifactKinds } from '../runtime/inventory.js';
+import { listSourceInto } from '../runtime/lister.js';
 import { manageAccounts } from './accountpicker.js';
+import { pickGroup } from './grouppicker.js';
 import { hasConsent } from '../lib/consent.js';
 import { loadAuth } from '../lib/authstore.js';
-import { ensureSiteFetch } from '../lib/pagefetch.js';
+import { ensureSiteFetch, siteBaseUrl } from '../lib/pagefetch.js';
+import { challengeUrlOf } from '../lib/render.js';
+import { pushDiag } from '../lib/diag.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { esc } from '../lib/esc.js';
 
@@ -443,26 +447,35 @@ async function deliver(sinkId) {
 // the user lists/refreshes in place (session/login/challenges handled by the background) before deciding where to send.
 async function refreshSource(mode) {
   const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds) return;
-  // Multi-account source not yet configured → choose which accounts to track first (persisted), like the
-  // classic list's account picker. Once an allow-list is saved, later refreshes list it directly. Cancel aborts.
-  if (groupedAdapterOf(entry.adapter) && !(entry.ds.groups && entry.ds.groups.length)) {
-    const saved = await onManageAccounts({ reload: false });
-    if (!saved) return;
-  }
+  const adapter = entry.adapter;
+  if (!(await hasConsent(adapter))) { $('#astatus').textContent = t('needs_consent'); return; }
+  const auth = await getAuth(adapter);
+  if (!auth) { try { await ensureSiteFetch(adapter, { open: true }); } catch (e) {} $('#astatus').textContent = t('archive_refresh_nosession', [entry.name]); return; }
   document.body.classList.add('saving');
   const btn = $('#refresh'); if (btn) { btn.disabled = true; btn.classList.add('spin'); }
   $('#astatus').textContent = mode === 'full' ? t('archive_rescanning') : t('archive_refreshing');
-  const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#astatus').textContent = v.msg; };
-  chrome.storage.onChanged.addListener(onStatus);
+  const aborter = new AbortController();
   try {
-    const r = await chrome.runtime.sendMessage({ type: 'habeas:list', datasource: entry.ds.id, mode: mode || undefined });
-    if (r && r.ok && r.status === 'done') $('#astatus').textContent = r.new ? t('archive_refresh_ok', [String(r.new)]) : t('archive_refresh_none');
-    else if (r && r.status === 'nosession') $('#astatus').textContent = t('archive_refresh_nosession', [entry.name]);
-    else if (r && r.status === 'challenged') $('#astatus').textContent = t('archive_refresh_challenge', [entry.name]);
-    else $('#astatus').textContent = t('archive_refresh_err', [(r && r.error) || 'error']);
-  } catch (e) { $('#astatus').textContent = t('archive_refresh_err', [(e && e.message) || String(e)]); }
-  finally {
-    chrome.storage.onChanged.removeListener(onStatus);
+    const net = await ensureSiteFetch(adapter, { open: true });
+    // EXACTLY the same list core as the classic "List documents" (runtime/lister.js), run in THIS page: saved
+    // allow-list or the transient account picker (pickGroup), incremental unless mode:'full', → the store.
+    const res = await listSourceInto(adapter, {
+      auth, net, ds: entry.ds, mode, signal: aborter.signal,
+      pickGroup: (eff, a, n) => pickGroup(eff, a, n),
+      onProgress: (sid, eff, sk, { page, docs }) => { $('#astatus').textContent = t('status_listing_page', [entry.name, String(page || ''), String((docs && docs.length) || '')]); },
+    });
+    $('#astatus').textContent = res.new ? t('archive_refresh_ok', [String(res.new)]) : t('archive_refresh_none');
+  } catch (e) {
+    const msg = (e && e.message) || String(e);
+    pushDiag(adapter.id, { phase: 'list', message: msg });
+    const cUrl = challengeUrlOf(msg);
+    if (cUrl || /captcha-delivery|datadome|geo\.captcha|challenge-platform|__cf_chl|cf-browser-verification|just a moment|akam[ai]/i.test(msg)) {
+      try { await chrome.tabs.create({ url: cUrl || siteBaseUrl(adapter), active: true }); } catch (e2) {}
+      $('#astatus').textContent = t('archive_refresh_challenge', [entry.name]);
+    } else if (/csrf|4\d\d|5\d\d|forbidden|unauthor|sign ?in|log ?in|session|not logged/i.test(msg)) {
+      $('#astatus').textContent = t('archive_refresh_nosession', [entry.name]);
+    } else { $('#astatus').textContent = t('archive_refresh_err', [msg]); }
+  } finally {
     document.body.classList.remove('saving');
     const b = $('#refresh'); if (b) { b.disabled = false; b.classList.remove('spin'); }
     await reloadCurrent(); // just this source — not a full-tree re-hydrate
