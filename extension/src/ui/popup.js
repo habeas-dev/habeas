@@ -94,6 +94,11 @@ async function init() {
   renderQuick().catch(() => {});
   await renderActivity();
   chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch['habeas:log']) renderActivity(); });
+  // Activity log moved to a topbar popover (🗒️ next to Sync). The topbar shows the LAST status message, fed
+  // live from the background's habeas:status (and seeded from its last stored value on open).
+  wireLogs();
+  try { const s0 = (await chrome.storage.local.get('habeas:status'))['habeas:status']; if (s0 && s0.msg) setTopStatus(s0.msg); } catch (e) {}
+  chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch['habeas:status']) { const v = ch['habeas:status'].newValue; if (v && v.msg) setTopStatus(v.msg); } });
   // A source was (re)installed elsewhere → replace our cached adapters so a running list/send uses the NEW
   // definition (not the copy we loaded at popup open). Refresh the outputs/accounts UI for the current source.
   chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch['habeas:sources-rev']) getAdapters().then((a) => { ADAPTERS = a; renderQuick().catch(() => {}); getConfig().then((c) => { renderOutputs(adapterFor($('#ds').value, c).adapter); refreshAccountsBtn(c); }); }); });
@@ -325,26 +330,38 @@ async function refreshStoreButton() {
   if ($('#full-history')) $('#full-history').hidden = !n;
 }
 
+// The last status message, shown in the topbar (next to the logs icon + Sync).
+function setTopStatus(msg) { const el = $('#topstatus'); if (el) el.textContent = msg || ''; }
+// The activity log popover (🗒️ in the topbar). Toggles a panel; closes on outside click / Escape.
+function wireLogs() {
+  const btn = $('#logs-btn'), panel = $('#logs-panel'), close = $('#logs-close');
+  if (!btn || !panel) return;
+  const hide = () => { panel.hidden = true; };
+  const show = () => { renderActivity().catch(() => {}); panel.hidden = false; };
+  btn.onclick = (e) => { e.stopPropagation(); panel.hidden ? show() : hide(); };
+  if (close) close.onclick = hide;
+  document.addEventListener('click', (e) => { if (!panel.hidden && !e.target.closest('#logs-panel') && !e.target.closest('#logs-btn')) hide(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hide(); });
+}
+
 // "Sync all now": ask the background to sweep every auto route (unattended first, tab only if a source
-// needs its session). One button for "pull whatever's new across all my sources".
+// needs its session). One button for "pull whatever's new across all my sources". Status shows in the topbar;
+// live per-source progress arrives via the permanent habeas:status listener (wired in init).
 async function onSyncAll() {
   const b = $('#sync-all');
   b.textContent = t('stop'); b.onclick = () => chrome.runtime.sendMessage({ type: 'habeas:sync-stop' }); // click again to stop
-  $('#status').textContent = t('sync_all_running');
-  // Reflect the background's live per-source progress (Listing…/Fetching…/Sending…) while the sweep runs.
-  const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#status').textContent = v.msg; };
-  chrome.storage.onChanged.addListener(onStatus);
+  setTopStatus(t('sync_all_running'));
   try {
     const r = await chrome.runtime.sendMessage({ type: 'habeas:sync-all' });
     if (r && r.ok && (r.status === 'done' || r.status === 'stopped')) {
       let msg = (r.status === 'stopped' ? t('sync_all_stopped') + ' · ' : '') + t('sync_all_done', [String(r.new || 0), String(r.sources || 0)]);
       if (r.needLogin) msg += ' · ' + t('sync_all_needlogin', [String(r.needLogin)]);
       if (r.noSink) msg += ' · ' + t('sync_all_nosink', [String(r.noSink)]);
-      $('#status').textContent = msg;
-    } else if (r && r.status === 'busy') { $('#status').textContent = t('sync_all_running'); }
-    else { $('#status').textContent = t('sync_all_err', [(r && r.error) || 'error']); }
-  } catch (e) { $('#status').textContent = t('sync_all_err', [(e && e.message) || String(e)]); }
-  finally { chrome.storage.onChanged.removeListener(onStatus); b.textContent = t('sync_all'); b.onclick = onSyncAll; }
+      setTopStatus(msg);
+    } else if (r && r.status === 'busy') { setTopStatus(t('sync_all_running')); }
+    else { setTopStatus(t('sync_all_err', [(r && r.error) || 'error'])); }
+  } catch (e) { setTopStatus(t('sync_all_err', [(e && e.message) || String(e)])); }
+  finally { b.textContent = t('sync_all'); b.onclick = onSyncAll; }
 }
 
 async function onLoadStore() {

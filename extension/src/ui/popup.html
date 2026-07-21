@@ -50,6 +50,20 @@
     .q-foot a { color: var(--muted); text-decoration: none; }
     .q-foot a:hover { color: var(--brand-500, #2a7d6d); text-decoration: underline; }
     .q-foot #version { font-size: 11px; }
+    /* topbar: last status message + a logs icon that opens the activity popover */
+    .topbar .topstatus { font-size: 12px; color: #ffffffcc; max-width: 210px; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+    .topbar .iconbtn { padding: 6px 9px; line-height: 1; font-size: 15px; }
+    .logs-panel { position: fixed; top: 60px; right: 16px; z-index: 40; width: min(360px, calc(100vw - 32px));
+      max-height: 62vh; overflow: auto; background: var(--surface, #fff); color: var(--ink, inherit);
+      border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 14px 44px rgba(0,0,0,.30); }
+    .logs-panel[hidden] { display: none; }
+    .logs-head { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 12px 14px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface, #fff); }
+    .logs-head strong { font-family: var(--font-head); font-size: 14px; }
+    .logs-head button { background: none; border: 1px solid var(--line); border-radius: 7px; cursor: pointer;
+      padding: 3px 9px; color: inherit; font-size: 13px; }
+    #logs-panel #activity { padding: 8px 12px 12px; }
   </style>
 </head>
 <body>
@@ -59,8 +73,15 @@
       <span class="brand">Habeas</span>
       <span class="tagline" data-i18n="tagline"></span>
     </div>
+    <span id="topstatus" class="topstatus"></span>
+    <button id="logs-btn" class="iconbtn" data-i18n-title="activity" aria-label="Activity log" aria-haspopup="dialog">🗒️</button>
     <button id="sync-all" class="primary" data-i18n="sync_all"></button>
     <button id="opts" data-i18n="settings"></button>
+  </div>
+
+  <div id="logs-panel" class="logs-panel" hidden role="dialog" aria-modal="false" aria-label="Activity log">
+    <div class="logs-head"><strong data-i18n="activity"></strong><button id="logs-close" aria-label="Close">✕</button></div>
+    <div id="activity"></div>
   </div>
 
   <div class="app">
@@ -69,9 +90,6 @@
     </div>
 
     <div id="quick" hidden></div>
-
-    <div class="section-title"><h2 data-i18n="activity"></h2></div>
-    <div class="card"><div id="activity"></div></div>
 
     <details class="adv">
       <summary><span data-i18n="popup_advanced"></span></summary>

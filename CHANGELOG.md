@@ -28,6 +28,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   with stored documents — so a freshly-installed source appears and can be Refreshed to pull its first documents.
 
 ### Changed
+- **Activity log moved to a topbar popover** (`ui/popup.html`, `ui/popup.js`). The "Recent activity" card is gone
+  from the popup body; a 🗒️ logs icon next to Sync opens the log in a popover, and the topbar shows the last
+  status message (fed live from the background's `habeas:status`). Keeps the launcher clean.
 - **Popup is now a launcher.** The popup opens on the Archive quick-view (recent activity + a chip per source +
   "Open the Archive"); the classic Sources/Documents tabs move behind an "Advanced tools" disclosure. Everything
   the tabs did — list, send, accounts, browse — now lives in the Archive.
