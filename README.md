@@ -231,14 +231,16 @@ Or build the packaged zip yourself with `npm install && npm run package` (output
 
 There are many ways to contribute:
 
-- create new Source definitions;
+- create new Source definitions — **three ways**, from no-code to advanced: see
+  [docs/ADDING-SOURCES.md](docs/ADDING-SOURCES.md)
+  (🔒 local · 🤝 [assisted](docs/ASSISTED-AUTHORING.md) · 🛠️ [advanced AI + proxy](docs/AUTHORING-SOURCES.md));
 - improve existing Sources;
 - develop new Sinks;
 - improve documentation;
 - report bugs;
 - improve translations.
 
-Contributions of all sizes are welcome.
+Contributions of all sizes are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 

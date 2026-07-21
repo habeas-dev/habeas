@@ -5,9 +5,16 @@ is usually a **new adapter**.
 
 ## Contributing an adapter
 
-Adapters are **declarative data, not code** — plain JS objects interpreted by a fixed
-runtime (`extension/src/runtime/inventory.js`), never `eval`'d. The easiest way to author
-one is **record mode** inside the extension (no hand-writing required):
+Adapters (aka **sources**) are **declarative data, not code** — plain JS objects interpreted by a
+fixed runtime (`extension/src/runtime/inventory.js`), never `eval`'d. There are **three ways** to add
+one — see **[docs/ADDING-SOURCES.md](docs/ADDING-SOURCES.md)** for the overview:
+
+- 🔒 **Local only** — record it in the extension, keep it private (below).
+- 🤝 **Assisted** — record it and let the Habeas team finish & publish it: **[docs/ASSISTED-AUTHORING.md](docs/ASSISTED-AUTHORING.md)**.
+- 🛠️ **Advanced (AI + proxy)** — capture with mitmproxy and hand-author with an AI, for *any* service:
+  **[docs/AUTHORING-SOURCES.md](docs/AUTHORING-SOURCES.md)** (the complete adapter reference lives here).
+
+The easiest way is **record mode** inside the extension (no hand-writing required):
 
 1. On a device logged in to the service, open the extension → **Create a source**
    (record mode) and browse your data so Habeas observes the real API calls.
