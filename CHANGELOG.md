@@ -34,6 +34,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   (Refresh, Accounts) stay available on that prompt.
 
 ### Fixed
+- **The toolbar button opens the floating popup again** (`manifest.json`, `background.js`). The `action` had lost
+  its `default_popup`, and a `chrome.action.onClicked` listener was opening `popup.html` in a full tab instead.
+  Restored `default_popup: src/ui/popup.html` and removed the listener — clicking Habeas shows the launcher popup.
 - **`runRoute` sync status line had its placeholders swapped** (`background.js`) — the transient "…: N new synced"
   toast showed the count and source name in the wrong slots. Now renders `<source>: <N> new synced`.
 

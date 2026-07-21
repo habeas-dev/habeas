@@ -28,10 +28,6 @@ import { migrateSinkHeaders } from './lib/sinkheaders.js';
 import { runStoreMigration } from './lib/migrate.js';
 import { autoDebounced, retainAutoDebounce, isLoginNavigation, needsTabEscalation, sweepSinkId, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
 
-chrome.action.onClicked.addListener(() => {
-  chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/popup.html') });
-});
-
 // On startup, (re)register the in-session capture bridge for every enabled source (dynamic content
 // scripts can be dropped on an extension update). Idempotent; needs the host permission already granted.
 (async () => {
