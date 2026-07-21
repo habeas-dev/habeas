@@ -4,29 +4,128 @@
   "title": "Habeas adapter",
   "description": "Declarative definition of how to extract a user's own data from one service, in the user's live session. DATA, not code — no functions, no eval, no remote JS. This schema mirrors the runtime shape consumed by extension/src/runtime/inventory.js and enforced by extension/src/adapters/validate.js.",
   "type": "object",
-  "required": ["id", "name", "service", "match", "auth", "api", "categories"],
+  "required": [
+    "id",
+    "name",
+    "service",
+    "match",
+    "auth",
+    "api",
+    "categories"
+  ],
   "additionalProperties": true,
   "properties": {
-    "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "description": "Unique id, <service>-<country>, e.g. carrefour-es." },
-    "name": { "type": "string", "description": "Human-readable source name." },
-    "service": { "type": "string", "description": "Short service slug used for sink folder/service naming." },
-    "version": { "type": "string", "description": "Source definition version — a date YYYY-MM-DD (or semver). Shown in the catalog; the extension offers an update when the catalog version is newer than the installed one." },
-    "minVersion": { "type": "string", "description": "Minimum Habeas extension version required to run this source (e.g. it uses a newer runtime feature). The catalog gates install and the extension skips it if too old. Absent = any version." },
-    "changelog": { "type": "array", "description": "Per-version change notes (newest first), shown in the catalog details and as 'what's new' on update.", "items": { "type": "object", "required": ["version", "changes"], "additionalProperties": false, "properties": { "version": { "type": "string" }, "changes": { "type": "string" } } } },
-    "trust": { "enum": ["first-party", "community"], "description": "first-party = project-maintained & audited; community = user/contributed." },
-    "contributors": { "type": "array", "items": { "type": "string" }, "description": "Handles credited for the recording this source was authored from (the handoff workflow). Shown in the marketplace as 'Contributed by …'." },
-    "domain": { "type": "string", "description": "Registrable domain (eTLD+1) all hosts share, e.g. carrefour.es. If omitted it is derived from api.host." },
-    "openUrl": { "type": "string", "description": "Exact https page to open in the tab to establish the in-session context — ideally the user's 'my purchases/account' page (loads the SPA whose CSP allows the API host). Must stay within the source's registrable domain (enforced). Falls back to auth.loginUrl, then the site root." },
-    "country": { "type": "string", "pattern": "^([A-Z]{2}|global)$", "description": "ISO 3166-1 alpha-2 country code of the service (e.g. ES, FR, US) or 'global'. Used to filter the catalog." },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Unique id, <service>-<country>, e.g. carrefour-es."
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable source name."
+    },
+    "service": {
+      "type": "string",
+      "description": "Short service slug used for sink folder/service naming."
+    },
+    "version": {
+      "type": "string",
+      "description": "Source definition version — a date YYYY-MM-DD (or semver). Shown in the catalog; the extension offers an update when the catalog version is newer than the installed one."
+    },
+    "minVersion": {
+      "type": "string",
+      "description": "Minimum Habeas extension version required to run this source (e.g. it uses a newer runtime feature). The catalog gates install and the extension skips it if too old. Absent = any version."
+    },
+    "changelog": {
+      "type": "array",
+      "description": "Per-version change notes (newest first), shown in the catalog details and as 'what's new' on update.",
+      "items": {
+        "type": "object",
+        "required": [
+          "version",
+          "changes"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "changes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "trust": {
+      "enum": [
+        "first-party",
+        "community"
+      ],
+      "description": "first-party = project-maintained & audited; community = user/contributed."
+    },
+    "domain": {
+      "type": "string",
+      "description": "Registrable domain (eTLD+1) all hosts share, e.g. carrefour.es. If omitted it is derived from api.host."
+    },
+    "openUrl": {
+      "type": "string",
+      "description": "Exact https page to open in the tab to establish the in-session context — ideally the user's 'my purchases/account' page (loads the SPA whose CSP allows the API host). Must stay within the source's registrable domain (enforced). Falls back to auth.loginUrl, then the site root."
+    },
+    "country": {
+      "type": "string",
+      "pattern": "^([A-Z]{2}|global)$",
+      "description": "ISO 3166-1 alpha-2 country code of the service (e.g. ES, FR, US) or 'global'. Used to filter the catalog."
+    },
     "crossDomainHosts": {
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "description": "Explicit allowlist of EXTRA hosts/domains outside `domain` that this source reads from or replays the session to (e.g. a bank whose API is on another domain). Presence requires an off-site consent screen. No wildcards."
     },
-    "currency": { "type": "string", "description": "ISO currency for normalized records; defaults to EUR." },
+    "currency": {
+      "type": "string",
+      "description": "ISO currency for normalized records; defaults to EUR."
+    },
     "categories": {
       "type": "array",
-      "items": { "enum": ["grocery", "fuel", "sports", "fashion", "electronics", "home", "diy", "pharmacy", "restaurant", "marketplace", "travel", "entertainment", "retail", "energy", "water", "telecom", "utility", "tolls", "transport", "insurance", "subscription", "domains", "education", "healthcare", "government", "card", "cash", "banking", "investment", "pension", "crypto", "loan", "other"] },
+      "items": {
+        "enum": [
+          "grocery",
+          "fuel",
+          "sports",
+          "fashion",
+          "electronics",
+          "home",
+          "diy",
+          "pharmacy",
+          "restaurant",
+          "marketplace",
+          "travel",
+          "entertainment",
+          "retail",
+          "energy",
+          "water",
+          "telecom",
+          "utility",
+          "tolls",
+          "transport",
+          "insurance",
+          "subscription",
+          "domains",
+          "education",
+          "healthcare",
+          "government",
+          "card",
+          "cash",
+          "banking",
+          "investment",
+          "pension",
+          "crypto",
+          "loan",
+          "other"
+        ]
+      },
       "minItems": 1,
       "description": "The categories this source can emit (used for sink compatibility). Must be from the canonical catalog — see docs/categories.md."
     },
@@ -36,171 +135,666 @@
       "items": {
         "type": "object",
         "additionalProperties": true,
-        "required": ["id"],
+        "required": [
+          "id"
+        ],
         "properties": {
-          "id": { "type": "string" },
-          "name": { "type": "string" },
-          "schema": { "type": "string" },
-          "categories": { "type": "array", "items": { "type": "string" } },
-          "api": { "type": "object" },
-          "fields": { "type": "object" },
-          "formats": { "type": "array", "items": { "type": "object", "additionalProperties": true, "required": ["id"], "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "schema": { "type": "string" }, "api": { "type": "object" }, "fields": { "type": "object" } } } }
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "schema": {
+            "type": "string"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "api": {
+            "type": "object"
+          },
+          "fields": {
+            "type": "object"
+          },
+          "formats": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "required": [
+                "id"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "schema": {
+                  "type": "string"
+                },
+                "api": {
+                  "type": "object"
+                },
+                "fields": {
+                  "type": "object"
+                }
+              }
+            }
+          }
         }
       }
     },
     "categorize": {
       "type": "object",
-      "required": ["field"],
+      "required": [
+        "field"
+      ],
       "additionalProperties": false,
       "properties": {
-        "field": { "type": "string", "description": "Source field (dotted path allowed) whose value selects a category." },
-        "map": { "type": "object", "additionalProperties": { "type": "string" } },
-        "default": { "type": "string" }
+        "field": {
+          "type": "string",
+          "description": "Source field (dotted path allowed) whose value selects a category."
+        },
+        "map": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "default": {
+          "type": "string"
+        }
       }
     },
     "match": {
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "minItems": 1,
       "description": "URL match patterns for the login site where the session is captured."
     },
     "auth": {
       "type": "object",
-      "required": ["replayHeaders"],
+      "required": [
+        "replayHeaders"
+      ],
       "additionalProperties": false,
       "properties": {
-        "mode": { "enum": ["bearer", "cookie"], "description": "bearer = replay the captured JWT; cookie = rely on the browser's cookies (credentials:include). Endpoints may mix (e.g. cookie list + bearer PDF)." },
-        "tokenMatch": { "type": "string", "description": "Regex the captured Authorization must match to be kept as a real user token. Default eyJ (a JWT); set a different pattern for an opaque bearer token, e.g. \"^Bearer [0-9a-f-]{20,}$\". Applied only to the source's own (incl. crossDomainHosts) API hosts." },
-        "tokenHeader": { "type": "string", "description": "The request header carrying the auth token, when it is NOT `Authorization` (e.g. Openbank's `openbankauthtoken`). The webRequest capture gates on this header + tokenMatch. Defaults to `authorization`." },
-        "capturePaths": { "type": "array", "items": { "type": "string" }, "description": "Allowlist of URL path prefixes the token may be captured from (e.g. [\"/dashboard/\"]). The webRequest observer's URL filter is scoped to these, so it never engages with the login flow and the token is only ever taken from the authenticated area (e.g. FECI's /dashboard/*, which only exists after login). No list → capture anywhere." },
-        "ignorePaths": { "type": "array", "items": { "type": "string" }, "description": "Denylist of URL path prefixes to never capture the token from (a denylist hit always wins over capturePaths)." },
-        "cookies": { "type": "boolean", "description": "Whether the source's own API calls send the browser cookie jar (credentials:'include'). Defaults true. Set false for a token-only API that rejects large cookie headers (Openbank returns HTTP 413) — the replay then mirrors the SPA, which authenticates by the token header alone." },
+        "mode": {
+          "enum": [
+            "bearer",
+            "cookie"
+          ],
+          "description": "bearer = replay the captured JWT; cookie = rely on the browser's cookies (credentials:include). Endpoints may mix (e.g. cookie list + bearer PDF)."
+        },
+        "tokenMatch": {
+          "type": "string",
+          "description": "Regex the captured Authorization must match to be kept as a real user token. Default eyJ (a JWT); set a different pattern for an opaque bearer token, e.g. \"^Bearer [0-9a-f-]{20,}$\". Applied only to the source's own (incl. crossDomainHosts) API hosts."
+        },
+        "tokenHeader": {
+          "type": "string",
+          "description": "The request header carrying the auth token, when it is NOT `Authorization` (e.g. Openbank's `openbankauthtoken`). The webRequest capture gates on this header + tokenMatch. Defaults to `authorization`."
+        },
+        "capturePaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Allowlist of URL path prefixes the token may be captured from (e.g. [\"/dashboard/\"]). The webRequest observer's URL filter is scoped to these, so it never engages with the login flow and the token is only ever taken from the authenticated area (e.g. FECI's /dashboard/*, which only exists after login). No list → capture anywhere."
+        },
+        "ignorePaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Denylist of URL path prefixes to never capture the token from (a denylist hit always wins over capturePaths)."
+        },
+        "cookies": {
+          "type": "boolean",
+          "description": "Whether the source's own API calls send the browser cookie jar (credentials:'include'). Defaults true. Set false for a token-only API that rejects large cookie headers (Openbank returns HTTP 413) — the replay then mirrors the SPA, which authenticates by the token header alone."
+        },
         "context": {
           "type": "array",
           "description": "Values to capture from a request URL in the live session (e.g. a DNI in /posicionGlobal/es/{DNI}) and store like auth (storage.session, never disk), then reference in api templates as {ctx.<name>} (groups.path, list.body, pdf). Never a hardcoded value — captured per user.",
           "items": {
             "type": "object",
-            "required": ["name", "match"],
+            "required": [
+              "name",
+              "match"
+            ],
             "additionalProperties": false,
             "properties": {
-              "name": { "type": "string", "description": "Template name, referenced as {ctx.<name>}." },
-              "from": { "enum": ["url"], "description": "Where to read the value from (currently only 'url', the default)." },
-              "match": { "type": "string", "description": "Regex with exactly ONE capture group; group 1 is stored as the value." }
+              "name": {
+                "type": "string",
+                "description": "Template name, referenced as {ctx.<name>}."
+              },
+              "from": {
+                "enum": [
+                  "url"
+                ],
+                "description": "Where to read the value from (currently only 'url', the default)."
+              },
+              "match": {
+                "type": "string",
+                "description": "Regex with exactly ONE capture group; group 1 is stored as the value."
+              }
             }
           }
         },
-        "resetCookies": { "type": "boolean", "description": "When a tab is opened for a logged-out session, wipe the site's cookies first — recovers from a site that corrupts its own cookies and 500s the login (e.g. WiZink). Needs the `cookies` permission." },
-        "loginUrl": { "type": "string", "pattern": "^https://", "description": "Sign-in page to open when no session is available (e.g. https://www.wizink.es/login). Defaults to the site root derived from match/api.host." },
+        "resetCookies": {
+          "type": "boolean",
+          "description": "When a tab is opened for a logged-out session, wipe the site's cookies first — recovers from a site that corrupts its own cookies and 500s the login (e.g. WiZink). Needs the `cookies` permission."
+        },
+        "loginUrl": {
+          "type": "string",
+          "pattern": "^https://",
+          "description": "Sign-in page to open when no session is available (e.g. https://www.wizink.es/login). Defaults to the site root derived from match/api.host."
+        },
         "replayHeaders": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Captured request headers to replay when calling the API (may be empty for cookie auth)."
         },
         "captureHosts": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Extra hosts (besides api.host and match) whose requests are observed to capture auth. All must resolve to `domain` or a crossDomainHosts entry."
+        },
+        "tokenFromStorage": {
+          "type": "object",
+          "required": [
+            "key"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "localStorage key holding the token (or a token object)."
+            },
+            "field": {
+              "type": "string",
+              "description": "Field within the stored token object that holds the access token; omit to auto-detect the access token."
+            },
+            "scheme": {
+              "type": "string",
+              "description": "Auth scheme prefix prepended to the token, e.g. \"Bearer\"."
+            },
+            "header": {
+              "type": "string",
+              "description": "Request header to send the token in (default authorization)."
+            }
+          },
+          "description": "Read the bearer FRESH from localStorage on every request (for rotating/short-lived tokens): {key, field?, scheme?, header?}."
         }
       }
     },
     "api": {
       "type": "object",
-      "required": ["host"],
+      "required": [
+        "host"
+      ],
       "additionalProperties": false,
       "properties": {
-        "host": { "type": "string", "pattern": "^https://", "description": "API origin, https only." },
-        "mtop": { "type": "object", "additionalProperties": true, "required": ["api"], "description": "[mtop] Alibaba mtop-gateway source (AliExpress/Taobao/Tmall/Lazada/1688): the list runs in the site tab, reusing the app's OWN signed request via lib.mtop (no HTTP list, no forged signature). Paginated by bumping a page field through the seed's nested stringified-JSON layers (pagePath, with ~ marking each stringified layer).", "properties": { "api": { "type": "string" }, "v": { "type": "string" }, "request": { "type": "object" }, "pagePath": { "type": "string" }, "morePath": { "type": "string" }, "startPage": { "type": "number" }, "maxPages": { "type": "number" } } },
-        "itemsFromKeys": { "type": "object", "additionalProperties": false, "required": ["prefix"], "description": "Extract items from sibling OBJECT keys sharing a prefix (component-keyed responses, e.g. mtop DIDA pc_om_list_order_*), not an array. `at` = dotted path to the container, `sub` = per-item sub-object.", "properties": { "at": { "type": "string" }, "prefix": { "type": "string" }, "sub": { "type": "string" } } },
+        "host": {
+          "type": "string",
+          "pattern": "^https://",
+          "description": "API origin, https only."
+        },
+        "mtop": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "api"
+          ],
+          "description": "[mtop] Alibaba mtop-gateway source (AliExpress/Taobao/Tmall/Lazada/1688): the list runs in the site tab, reusing the app's OWN signed request via lib.mtop (no HTTP list, no forged signature). Paginated by bumping a page field through the seed's nested stringified-JSON layers (pagePath, with ~ marking each stringified layer).",
+          "properties": {
+            "api": {
+              "type": "string"
+            },
+            "v": {
+              "type": "string"
+            },
+            "request": {
+              "type": "object"
+            },
+            "pagePath": {
+              "type": "string"
+            },
+            "morePath": {
+              "type": "string"
+            },
+            "startPage": {
+              "type": "number"
+            },
+            "maxPages": {
+              "type": "number"
+            }
+          }
+        },
+        "itemsFromKeys": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "prefix"
+          ],
+          "description": "Extract items from sibling OBJECT keys sharing a prefix (component-keyed responses, e.g. mtop DIDA pc_om_list_order_*), not an array. `at` = dotted path to the container, `sub` = per-item sub-object.",
+          "properties": {
+            "at": {
+              "type": "string"
+            },
+            "prefix": {
+              "type": "string"
+            },
+            "sub": {
+              "type": "string"
+            }
+          }
+        },
         "csrf": {
           "type": "object",
-          "required": ["path", "match"],
+          "required": [
+            "path",
+            "match"
+          ],
           "additionalProperties": false,
           "description": "CSRF prelude: GET a page and regex-extract a single-use token, injected as {csrf} into list/groups/pdf bodies & paths. Refetched before each document download (tokens are often single-use).",
           "properties": {
-            "path": { "type": "string", "description": "Page whose HTML carries the token." },
-            "host": { "type": "string", "description": "Host if different from api.host (same-domain guard applies)." },
-            "method": { "enum": ["GET", "POST"] },
-            "match": { "type": "string", "description": "Regex whose capture group 1 is the token." },
-            "headers": { "type": "object", "additionalProperties": { "type": "string" } }
+            "path": {
+              "type": "string",
+              "description": "Page whose HTML carries the token."
+            },
+            "host": {
+              "type": "string",
+              "description": "Host if different from api.host (same-domain guard applies)."
+            },
+            "method": {
+              "enum": [
+                "GET",
+                "POST"
+              ]
+            },
+            "match": {
+              "type": "string",
+              "description": "Regex whose capture group 1 is the token."
+            },
+            "headers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
           }
         },
         "groups": {
           "type": "object",
-          "required": ["path", "fields"],
+          "required": [
+            "path",
+            "fields"
+          ],
           "additionalProperties": false,
           "description": "Optional parent enumeration (e.g. bank accounts): list the groups first, then `list` runs once per group with {group.*} templated into its path/params/referer. Each record carries its group (doc._group).",
           "properties": {
-            "path": { "type": "string", "description": "Endpoint that returns the groups (e.g. /accounts)." },
-            "host": { "type": "string", "description": "Host if different from api.host (same-domain guard still applies)." },
-            "itemsPath": { "type": "string", "description": "Dotted path to the groups array in the JSON response (or embedded state when from:html)." },
-            "from": { "enum": ["html"], "description": "'html' → read the groups out of the page's embedded SSR state at itemsPath." },
-            "params": { "type": "object", "additionalProperties": { "type": "string" } },
-            "method": { "enum": ["GET", "POST"] },
-            "body": { "type": "string", "description": "[POST] Body template; {csrf} and any static params are substituted." },
-            "contentType": { "type": "string", "description": "[POST] Body Content-Type (default application/x-www-form-urlencoded)." },
-            "rows": { "$ref": "#/$defs/rows" },
-            "headers": { "type": "object", "additionalProperties": { "type": "string" } },
-            "referer": { "type": "string" },
-            "fields": { "type": "object", "description": "Map group fields (id/name/iban/mask/currency…) from dotted paths, {group.*} templates, or (with rows) captured row fields; referenced as {group.<name>} and returned by the listGroups hook.", "additionalProperties": { "type": "string" } },
-            "derive": { "type": "object", "description": "Compute extra group fields from already-mapped ones with simple auditable string ops (trim, [start,end] slice) — for APIs that pack several values into one field (e.g. Openbank's BBAN carries the control digit + account number). Each key → { from, trim?, slice? }.", "additionalProperties": { "type": "object", "additionalProperties": false, "properties": { "from": { "type": "string", "description": "Name of the already-mapped group field to derive from." }, "trim": { "type": "boolean" }, "slice": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2, "description": "[start, end] character slice." } } } },
-            "mask": { "type": "array", "items": { "type": "string" }, "description": "Group field names to mask before exposing to a consumer (e.g. ['iban'] → ES12 **** 3456)." }
+            "path": {
+              "type": "string",
+              "description": "Endpoint that returns the groups (e.g. /accounts)."
+            },
+            "host": {
+              "type": "string",
+              "description": "Host if different from api.host (same-domain guard still applies)."
+            },
+            "itemsPath": {
+              "type": "string",
+              "description": "Dotted path to the groups array in the JSON response (or embedded state when from:html)."
+            },
+            "from": {
+              "enum": [
+                "html"
+              ],
+              "description": "'html' → read the groups out of the page's embedded SSR state at itemsPath."
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "method": {
+              "enum": [
+                "GET",
+                "POST"
+              ]
+            },
+            "body": {
+              "type": "string",
+              "description": "[POST] Body template; {csrf} and any static params are substituted."
+            },
+            "contentType": {
+              "type": "string",
+              "description": "[POST] Body Content-Type (default application/x-www-form-urlencoded)."
+            },
+            "rows": {
+              "$ref": "#/$defs/rows"
+            },
+            "headers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "referer": {
+              "type": "string"
+            },
+            "fields": {
+              "type": "object",
+              "description": "Map group fields (id/name/iban/mask/currency…) from dotted paths, {group.*} templates, or (with rows) captured row fields; referenced as {group.<name>} and returned by the listGroups hook.",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "derive": {
+              "type": "object",
+              "description": "Compute extra group fields from already-mapped ones with simple auditable string ops (trim, [start,end] slice) — for APIs that pack several values into one field (e.g. Openbank's BBAN carries the control digit + account number). Each key → { from, trim?, slice? }.",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "description": "Name of the already-mapped group field to derive from."
+                  },
+                  "trim": {
+                    "type": "boolean"
+                  },
+                  "slice": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "description": "[start, end] character slice."
+                  }
+                }
+              }
+            },
+            "mask": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Group field names to mask before exposing to a consumer (e.g. ['iban'] → ES12 **** 3456)."
+            }
           }
         },
         "list": {
           "type": "object",
-          "required": ["path"],
+          "required": [
+            "path"
+          ],
           "additionalProperties": false,
           "properties": {
-            "path": { "type": "string", "pattern": "^/" },
-            "from": { "enum": ["html"], "description": "'html' → the list is server-rendered: fetch the page and parse items from embedded JSON (at itemsPath) or the largest HTML table (rows → objects keyed by column header, plus `href`)." },
-            "paging": { "enum": ["offsets", "offset", "page", "cursor", "none", "years", "synthetic"], "description": "Pagination strategy. Defaults to offsets if offsetsPath present, else cursor if nextPath present, else none. 'years' partitions by year; 'synthetic' builds items locally (no list API — documents that exist once per period/account, e.g. monthly statements)." },
-            "synthetic": { "type": "object", "additionalProperties": false, "description": "[synthetic] Locally-built items for documents not enumerated by an API list.", "properties": { "each": { "enum": ["months", "group", "group-months"], "description": "months = one per completed calendar month (a monthly statement); group = one per account over the window; group-months = one per (account × completed month)." } } },
-            "nextIsUrl": { "type": "boolean", "description": "[cursor] The value at nextPath is a COMPLETE next-page URL (e.g. _links.nextPage.href), not a bare cursor token — fetch it verbatim (normalised to https, re-checked against the same-domain guard) instead of appending a cursor param." },
-            "morePath": { "type": "string", "description": "[cursor] Dotted path to a 'has more pages' flag; continue only while it equals moreValue (default 'S'). For APIs that keep a cursor even on the last page." },
-            "moreValue": { "description": "[cursor] Value of morePath that means 'more pages follow' (default 'S'; may be a boolean like true)." },
-            "cursorParams": { "type": "object", "description": "[cursor] Params sent ONLY alongside a cursor (pages 2+), never on the first request (e.g. Openbank's hasMorePagination:S).", "additionalProperties": { "type": "string" } },
-            "stopPath": { "type": "string", "description": "[cursor] Dotted path to a step-up/SCA flag; when it equals stopValue, collect the current page then STOP paging (never cross a boundary that would trigger an OTP the user didn't request, e.g. Openbank's scaRequired past ~90 days)." },
-            "stopValue": { "description": "[cursor] Value of stopPath that marks the stop boundary (default true)." },
-            "years": { "type": "object", "additionalProperties": false, "description": "[years] Year-partitioned listing (e.g. Amazon /your-orders): scan a bounded window of years, each with optional startIndex sub-paging. Dedupes across years by internalId.", "properties": { "param": { "type": "string", "description": "Year query param (default timeFilter)." }, "format": { "type": "string", "description": "Year value template; {y} → the year (default year-{y})." }, "back": { "type": "number", "description": "Years back from the current year to scan (default 6)." }, "startParam": { "type": "string", "description": "Optional within-year offset param for sub-paging (e.g. startIndex)." }, "startStep": { "type": "number", "description": "Increment (page size) for startParam (default 10)." }, "stopAfterEmpty": { "type": "number", "description": "Stop after this many CONSECUTIVE empty years (default 2) — adapts to the account's real history instead of a fixed back." } } },
-            "itemsPath": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" }, "minItems": 1 }], "description": "Dotted path to the array of items in the response (e.g. data.items), OR an array of candidate paths tried in order (first non-empty array wins — e.g. Openbank returns a flat `movimientos` on the first page but `methodResult.movimientos` on continuation pages). For from:html, the path into embedded page JSON. Use '$' when the response itself is the array." },
-            "keep": { "type": "object", "description": "Optional item filter: keep only items whose dotted-path field value is in values[] (e.g. keep ONLINE orders from a list that mixes ONLINE and IN_STORE).", "required": ["field","values"], "additionalProperties": false, "properties": { "field": { "type": "string" }, "values": { "type": "array", "items": { "type": "string" } } } },
-            "offsetsPath": { "type": "string", "description": "[offsets] Dotted path to the offsets object merged into the next query." },
-            "initialOffsets": { "type": "object", "description": "[offsets] Seed offsets object." },
-            "nextPath": { "type": "string", "description": "[cursor] Dotted path to the next cursor in the response." },
-            "cursorParam": { "type": "string", "description": "[cursor] Query param name for the cursor (default: cursor)." },
-            "pageParam": { "type": "string", "description": "[page] Query param name for the page number (default: page)." },
-            "pageStart": { "type": "number", "description": "[page] First page number (default: 1)." },
-            "offsetParam": { "type": "string", "description": "[offset] Query param name for the item offset (default: offset)." },
-            "offsetStart": { "type": "number", "description": "[offset] First offset (default: 0)." },
-            "offsetStep": { "type": "number", "description": "[offset] Offset increment per page (the page size)." },
+            "path": {
+              "type": "string",
+              "pattern": "^/"
+            },
+            "from": {
+              "enum": [
+                "html"
+              ],
+              "description": "'html' → the list is server-rendered: fetch the page and parse items from embedded JSON (at itemsPath) or the largest HTML table (rows → objects keyed by column header, plus `href`)."
+            },
+            "paging": {
+              "enum": [
+                "offsets",
+                "offset",
+                "page",
+                "cursor",
+                "none",
+                "years",
+                "synthetic"
+              ],
+              "description": "Pagination strategy. Defaults to offsets if offsetsPath present, else cursor if nextPath present, else none. 'years' partitions by year; 'synthetic' builds items locally (no list API — documents that exist once per period/account, e.g. monthly statements)."
+            },
+            "synthetic": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "[synthetic] Locally-built items for documents not enumerated by an API list.",
+              "properties": {
+                "each": {
+                  "enum": [
+                    "months",
+                    "group",
+                    "group-months"
+                  ],
+                  "description": "months = one per completed calendar month (a monthly statement); group = one per account over the window; group-months = one per (account × completed month)."
+                }
+              }
+            },
+            "nextIsUrl": {
+              "type": "boolean",
+              "description": "[cursor] The value at nextPath is a COMPLETE next-page URL (e.g. _links.nextPage.href), not a bare cursor token — fetch it verbatim (normalised to https, re-checked against the same-domain guard) instead of appending a cursor param."
+            },
+            "morePath": {
+              "type": "string",
+              "description": "[cursor] Dotted path to a 'has more pages' flag; continue only while it equals moreValue (default 'S'). For APIs that keep a cursor even on the last page."
+            },
+            "moreValue": {
+              "description": "[cursor] Value of morePath that means 'more pages follow' (default 'S'; may be a boolean like true)."
+            },
+            "cursorParams": {
+              "type": "object",
+              "description": "[cursor] Params sent ONLY alongside a cursor (pages 2+), never on the first request (e.g. Openbank's hasMorePagination:S).",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "stopPath": {
+              "type": "string",
+              "description": "[cursor] Dotted path to a step-up/SCA flag; when it equals stopValue, collect the current page then STOP paging (never cross a boundary that would trigger an OTP the user didn't request, e.g. Openbank's scaRequired past ~90 days)."
+            },
+            "stopValue": {
+              "description": "[cursor] Value of stopPath that marks the stop boundary (default true)."
+            },
+            "years": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "[years] Year-partitioned listing (e.g. Amazon /your-orders): scan a bounded window of years, each with optional startIndex sub-paging. Dedupes across years by internalId.",
+              "properties": {
+                "param": {
+                  "type": "string",
+                  "description": "Year query param (default timeFilter)."
+                },
+                "format": {
+                  "type": "string",
+                  "description": "Year value template; {y} → the year (default year-{y})."
+                },
+                "back": {
+                  "type": "number",
+                  "description": "Years back from the current year to scan (default 6)."
+                },
+                "startParam": {
+                  "type": "string",
+                  "description": "Optional within-year offset param for sub-paging (e.g. startIndex)."
+                },
+                "startStep": {
+                  "type": "number",
+                  "description": "Increment (page size) for startParam (default 10)."
+                },
+                "stopAfterEmpty": {
+                  "type": "number",
+                  "description": "Stop after this many CONSECUTIVE empty years (default 2) — adapts to the account's real history instead of a fixed back."
+                }
+              }
+            },
+            "itemsPath": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1
+                }
+              ],
+              "description": "Dotted path to the array of items in the response (e.g. data.items), OR an array of candidate paths tried in order (first non-empty array wins — e.g. Openbank returns a flat `movimientos` on the first page but `methodResult.movimientos` on continuation pages). For from:html, the path into embedded page JSON. Use '$' when the response itself is the array."
+            },
+            "keep": {
+              "type": "object",
+              "description": "Optional item filter: keep only items whose dotted-path field value is in values[] (e.g. keep ONLINE orders from a list that mixes ONLINE and IN_STORE).",
+              "required": [
+                "field",
+                "values"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "offsetsPath": {
+              "type": "string",
+              "description": "[offsets] Dotted path to the offsets object merged into the next query."
+            },
+            "initialOffsets": {
+              "type": "object",
+              "description": "[offsets] Seed offsets object."
+            },
+            "nextPath": {
+              "type": "string",
+              "description": "[cursor] Dotted path to the next cursor in the response."
+            },
+            "cursorParam": {
+              "type": "string",
+              "description": "[cursor] Query param name for the cursor (default: cursor)."
+            },
+            "pageParam": {
+              "type": "string",
+              "description": "[page] Query param name for the page number (default: page)."
+            },
+            "pageStart": {
+              "type": "number",
+              "description": "[page] First page number (default: 1)."
+            },
+            "offsetParam": {
+              "type": "string",
+              "description": "[offset] Query param name for the item offset (default: offset)."
+            },
+            "offsetStart": {
+              "type": "number",
+              "description": "[offset] First offset (default: 0)."
+            },
+            "offsetStep": {
+              "type": "number",
+              "description": "[offset] Offset increment per page (the page size)."
+            },
             "range": {
               "type": "object",
               "additionalProperties": false,
               "properties": {
-                "from": { "type": "string", "description": "Query param name for the window start." },
-                "to": { "type": "string", "description": "Query param name for the window end." },
-                "format": { "enum": ["iso", "date"], "description": "iso = full ISO timestamp (default), date = YYYY-MM-DD." }
+                "from": {
+                  "type": "string",
+                  "description": "Query param name for the window start."
+                },
+                "to": {
+                  "type": "string",
+                  "description": "Query param name for the window end."
+                },
+                "format": {
+                  "enum": [
+                    "iso",
+                    "date"
+                  ],
+                  "description": "iso = full ISO timestamp (default), date = YYYY-MM-DD."
+                }
               }
             },
-            "window": { "type": "string", "pattern": "^\\d+y$", "description": "Lookback window for the range, e.g. 3y." },
-            "maxPages": { "type": "number", "description": "Safety cap on pages fetched (default 100)." },
-            "maxAgeDays": { "type": "number", "description": "Drop documents/periods older than N days — keeps a source from requesting statements past a bank extra-auth wall (e.g. WiZink SMS beyond ~90 days). For periods sources the cut is applied before fetching each statement." },
-            "params": { "type": "object", "description": "Static query params. `count` also drives the page-paging stop condition." },
-            "headers": { "type": "object", "description": "Static headers the SPA sends for the list (e.g. dkt-ecom-origin).", "additionalProperties": { "type": "string" } },
-            "referer": { "type": "string", "description": "Referer to send per request (templated with {page}/{from}/{offset}) — for endpoints that only honour the offset when the Referer reflects the page. Set via declarativeNetRequest." },
-            "method": { "enum": ["GET", "POST"] },
-            "body": { "type": "string", "description": "[POST] Body template; {group.*}, {csrf}, the paging param ({page}/{pagina}) and static params are substituted." },
-            "contentType": { "type": "string", "description": "[POST] Body Content-Type (default application/x-www-form-urlencoded)." },
-            "rows": { "$ref": "#/$defs/rows" },
-            "maxPeriods": { "type": "number", "description": "[periods] Cap on how many past statement periods to fetch (default 24)." },
+            "window": {
+              "type": "string",
+              "pattern": "^\\d+y$",
+              "description": "Lookback window for the range, e.g. 3y."
+            },
+            "maxPages": {
+              "type": "number",
+              "description": "Safety cap on pages fetched (default 100)."
+            },
+            "maxAgeDays": {
+              "type": "number",
+              "description": "Drop documents/periods older than N days — keeps a source from requesting statements past a bank extra-auth wall (e.g. WiZink SMS beyond ~90 days). For periods sources the cut is applied before fetching each statement."
+            },
+            "params": {
+              "type": "object",
+              "description": "Static query params. `count` also drives the page-paging stop condition."
+            },
+            "headers": {
+              "type": "object",
+              "description": "Static headers the SPA sends for the list (e.g. dkt-ecom-origin).",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "referer": {
+              "type": "string",
+              "description": "Referer to send per request (templated with {page}/{from}/{offset}) — for endpoints that only honour the offset when the Referer reflects the page. Set via declarativeNetRequest."
+            },
+            "method": {
+              "enum": [
+                "GET",
+                "POST"
+              ]
+            },
+            "body": {
+              "type": "string",
+              "description": "[POST] Body template; {group.*}, {csrf}, the paging param ({page}/{pagina}) and static params are substituted."
+            },
+            "contentType": {
+              "type": "string",
+              "description": "[POST] Body Content-Type (default application/x-www-form-urlencoded)."
+            },
+            "rows": {
+              "$ref": "#/$defs/rows"
+            },
+            "maxPeriods": {
+              "type": "number",
+              "description": "[periods] Cap on how many past statement periods to fetch (default 24)."
+            },
             "periods": {
               "type": "object",
               "additionalProperties": false,
               "description": "Multi-period list assembly (e.g. WiZink card movements): fetch the current (unbilled) period plus one fetch per past statement date, all parsed with the shared list.rows row parser and concatenated. Each sub-config POSTs to list.path (query = params, form body = body with {group.*}/{csrf} filled; past.body may template {period} = a statement date). Statements behind the site extra-auth wall are skipped.",
               "properties": {
-                "current": { "$ref": "#/$defs/period", "description": "The current unbilled period; all its movements come back in one response." },
-                "dates": { "$ref": "#/$defs/period", "description": "Returns the past statement dates; needs its own `rows` to extract them (e.g. from callOperations('YYYY-MM-DD'))." },
-                "past": { "$ref": "#/$defs/period", "description": "One past statement's movements; body may template {period} = the statement date." }
+                "current": {
+                  "$ref": "#/$defs/period",
+                  "description": "The current unbilled period; all its movements come back in one response."
+                },
+                "dates": {
+                  "$ref": "#/$defs/period",
+                  "description": "Returns the past statement dates; needs its own `rows` to extract them (e.g. from callOperations('YYYY-MM-DD'))."
+                },
+                "past": {
+                  "$ref": "#/$defs/period",
+                  "description": "One past statement's movements; body may template {period} = the statement date."
+                }
               }
             }
           }
@@ -210,18 +804,86 @@
           "additionalProperties": false,
           "description": "Per-document PDF. Either a `path` (relative to api.host, GET by default; some services POST the invoice data as the body) OR a `urlField` naming a list-item field that already holds the FULL absolute https:// URL of the file.",
           "properties": {
-            "path": { "type": "string", "description": "Document path templated with {internalId}, {csrf}, {ctx.*}, {group.*} and any {field.path} from the list item (e.g. {docId}, {fileName}). Omit when using urlField or resolve." },
-            "resolve": { "type": "object", "additionalProperties": false, "required": ["path", "linkMatch"], "description": "Two-step document lookup: a resolver page (e.g. Amazon's invoice popover) carries the real, opaque document URL. Fetch path, regex linkMatch (capture group 1) out of the response TEXT for the URL (relative → prefixed with api.host), enforce the same-domain guard, then GET it. A non-match = no document (metadata-only).", "properties": { "path": { "type": "string", "description": "Resolver-page path, templated with {internalId}/{field.path}/{csrf}." }, "method": { "enum": ["GET", "POST"] }, "linkMatch": { "type": "string", "description": "Regex whose capture group 1 is the document URL in the resolver page." }, "headers": { "type": "object", "additionalProperties": { "type": "string" } } } },
-            "urlField": { "type": "string", "description": "Dotted path to a list-item field holding the FULL absolute https:// document URL (e.g. CaixaBank's statement `Url`). Fetched verbatim; its host must be api.host/domain or a crossDomainHosts entry (asserted at fetch time)." },
-            "ext": { "type": "string", "description": "File extension of the downloaded document when not a PDF (e.g. xls, csv). Default pdf." },
-            "method": { "enum": ["GET", "POST"] },
-            "host": { "type": "string", "description": "PDF host if different from api.host (still bound by the same-domain guard / crossDomainHosts)." },
-            "body": { "type": "string", "description": "[POST] Request body template; {internalId} / {field.path} are substituted." },
-            "base64Field": { "type": "string", "description": "Dotted path to a field in the JSON response holding the document BASE64-encoded (e.g. IKEA's GraphQL `data.receipt.receiptPdf`) — decoded to a blob instead of reading the response as raw binary. A null/empty value means no document for that item (metadata-only fallback)." },
-            "mime": { "type": "string", "description": "MIME type for a base64Field document (default application/pdf)." },
-            "contentType": { "type": "string", "description": "[POST] Content-Type of the body (default application/json)." },
-            "headers": { "type": "object", "description": "Static request headers; overrides the runtime defaults (e.g. set a specific Accept). The default Accept for a PDF is */*.", "additionalProperties": { "type": "string" } },
-            "referer": { "type": "string", "description": "Referer header to send (templated with {internalId}/{field.path}) — for services that gate the PDF behind its detail page. Set via declarativeNetRequest." }
+            "path": {
+              "type": "string",
+              "description": "Document path templated with {internalId}, {csrf}, {ctx.*}, {group.*} and any {field.path} from the list item (e.g. {docId}, {fileName}). Omit when using urlField or resolve."
+            },
+            "resolve": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "path",
+                "linkMatch"
+              ],
+              "description": "Two-step document lookup: a resolver page (e.g. Amazon's invoice popover) carries the real, opaque document URL. Fetch path, regex linkMatch (capture group 1) out of the response TEXT for the URL (relative → prefixed with api.host), enforce the same-domain guard, then GET it. A non-match = no document (metadata-only).",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Resolver-page path, templated with {internalId}/{field.path}/{csrf}."
+                },
+                "method": {
+                  "enum": [
+                    "GET",
+                    "POST"
+                  ]
+                },
+                "linkMatch": {
+                  "type": "string",
+                  "description": "Regex whose capture group 1 is the document URL in the resolver page."
+                },
+                "headers": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "urlField": {
+              "type": "string",
+              "description": "Dotted path to a list-item field holding the FULL absolute https:// document URL (e.g. CaixaBank's statement `Url`). Fetched verbatim; its host must be api.host/domain or a crossDomainHosts entry (asserted at fetch time)."
+            },
+            "ext": {
+              "type": "string",
+              "description": "File extension of the downloaded document when not a PDF (e.g. xls, csv). Default pdf."
+            },
+            "method": {
+              "enum": [
+                "GET",
+                "POST"
+              ]
+            },
+            "host": {
+              "type": "string",
+              "description": "PDF host if different from api.host (still bound by the same-domain guard / crossDomainHosts)."
+            },
+            "body": {
+              "type": "string",
+              "description": "[POST] Request body template; {internalId} / {field.path} are substituted."
+            },
+            "base64Field": {
+              "type": "string",
+              "description": "Dotted path to a field in the JSON response holding the document BASE64-encoded (e.g. IKEA's GraphQL `data.receipt.receiptPdf`) — decoded to a blob instead of reading the response as raw binary. A null/empty value means no document for that item (metadata-only fallback)."
+            },
+            "mime": {
+              "type": "string",
+              "description": "MIME type for a base64Field document (default application/pdf)."
+            },
+            "contentType": {
+              "type": "string",
+              "description": "[POST] Content-Type of the body (default application/json)."
+            },
+            "headers": {
+              "type": "object",
+              "description": "Static request headers; overrides the runtime defaults (e.g. set a specific Accept). The default Accept for a PDF is */*.",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "referer": {
+              "type": "string",
+              "description": "Referer header to send (templated with {internalId}/{field.path}) — for services that gate the PDF behind its detail page. Set via declarativeNetRequest."
+            }
           }
         },
         "detail": {
@@ -229,22 +891,98 @@
           "additionalProperties": false,
           "description": "Per-document JSON detail (e.g. a full order). Saved as <id>.json. Preferred over a POST-generated PDF. Use `from:'list'` when the list endpoint already returns each item's full data (no extra request).",
           "properties": {
-            "from": { "enum": ["list"], "description": "'list' → the document IS the already-listed item's JSON (no path/request needed)." },
-            "fields": { "type": "object", "additionalProperties": true, "description": "Declarative HTML → JSON: build the structured detail record from the page HTML (pages with no embedded JSON, e.g. Amazon order-details). Each key → an {re|attr|tag|sel} extractor (list-row vocabulary), optionally scoped with {region:\"data-component-name\"}. date/total/amount are normalized." },
-            "items": { "$ref": "#/$defs/rows" },
-            "const": { "type": "object", "additionalProperties": true, "description": "Constant fields merged into every detail record (e.g. currency)." },
-            "as": { "enum": ["html", "invoice", "render"], "description": "'render' → open the path in a background tab, let the SPA render + fetch its data in the user's session, then capture the FINAL DOM self-contained (cross-browser; the faithful document for client-rendered pages). 'html' → fetch the path as a page and store it self-contained (server-rendered). 'invoice' → render a clean printable invoice from the detail JSON. All save a printable .html." },
-            "mtop": { "type": "object", "additionalProperties": true, "description": "[detail] Fetch the detail through an mtop call with an explicit params payload (no captured seed needed) — e.g. AliExpress queryorderreceiptinfo. The page's lib.mtop signs it.", "properties": { "api": { "type": "string" }, "v": { "type": "string" }, "request": { "type": "object" } } },
-            "params": { "type": "object", "additionalProperties": { "type": "string" }, "description": "[detail.mtop] Request payload; values templated with {internalId}/{field.path} and in-session directives (@seed:FIELD reuses the app's own request field, @tz = browser offset). Unresolved directives are dropped." },
-            "dataPath": { "type": "string", "description": "[detail.mtop] Dotted path to the detail object inside the mtop response (e.g. data.data)." },
-            "template": { "type": "object", "additionalProperties": true, "description": "[detail as:invoice] Declarative receipt layout (title/subtitle/meta/blocks/items/totals) with {dotted.path} tokens resolved against the detail JSON; labels can reuse the source's own i18n strings." },
-            "waitFor": { "type": "string", "description": "[render] CSS selector to wait for before capturing (robust). If absent, waits waitMs." },
-            "waitMs": { "type": "number", "description": "[render] Fixed wait in ms before capturing (default 3500) when waitFor is not set." },
-            "path": { "type": "string", "description": "Detail path with {internalId} placeholder." },
-            "method": { "enum": ["GET", "POST"] },
-            "host": { "type": "string", "description": "Detail host if different from api.host (same-domain guard applies)." },
-            "headers": { "type": "object", "description": "Static headers the SPA sends for this endpoint (e.g. dkt-ecom-origin).", "additionalProperties": { "type": "string" } },
-            "referer": { "type": "string", "description": "Referer header to send (templated with {internalId}) — for endpoints that validate it. Set via declarativeNetRequest." }
+            "from": {
+              "enum": [
+                "list"
+              ],
+              "description": "'list' → the document IS the already-listed item's JSON (no path/request needed)."
+            },
+            "fields": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Declarative HTML → JSON: build the structured detail record from the page HTML (pages with no embedded JSON, e.g. Amazon order-details). Each key → an {re|attr|tag|sel} extractor (list-row vocabulary), optionally scoped with {region:\"data-component-name\"}. date/total/amount are normalized."
+            },
+            "items": {
+              "$ref": "#/$defs/rows"
+            },
+            "const": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Constant fields merged into every detail record (e.g. currency)."
+            },
+            "as": {
+              "enum": [
+                "html",
+                "invoice",
+                "render"
+              ],
+              "description": "'render' → open the path in a background tab, let the SPA render + fetch its data in the user's session, then capture the FINAL DOM self-contained (cross-browser; the faithful document for client-rendered pages). 'html' → fetch the path as a page and store it self-contained (server-rendered). 'invoice' → render a clean printable invoice from the detail JSON. All save a printable .html."
+            },
+            "mtop": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "[detail] Fetch the detail through an mtop call with an explicit params payload (no captured seed needed) — e.g. AliExpress queryorderreceiptinfo. The page's lib.mtop signs it.",
+              "properties": {
+                "api": {
+                  "type": "string"
+                },
+                "v": {
+                  "type": "string"
+                },
+                "request": {
+                  "type": "object"
+                }
+              }
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "[detail.mtop] Request payload; values templated with {internalId}/{field.path} and in-session directives (@seed:FIELD reuses the app's own request field, @tz = browser offset). Unresolved directives are dropped."
+            },
+            "dataPath": {
+              "type": "string",
+              "description": "[detail.mtop] Dotted path to the detail object inside the mtop response (e.g. data.data)."
+            },
+            "template": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "[detail as:invoice] Declarative receipt layout (title/subtitle/meta/blocks/items/totals) with {dotted.path} tokens resolved against the detail JSON; labels can reuse the source's own i18n strings."
+            },
+            "waitFor": {
+              "type": "string",
+              "description": "[render] CSS selector to wait for before capturing (robust). If absent, waits waitMs."
+            },
+            "waitMs": {
+              "type": "number",
+              "description": "[render] Fixed wait in ms before capturing (default 3500) when waitFor is not set."
+            },
+            "path": {
+              "type": "string",
+              "description": "Detail path with {internalId} placeholder."
+            },
+            "method": {
+              "enum": [
+                "GET",
+                "POST"
+              ]
+            },
+            "host": {
+              "type": "string",
+              "description": "Detail host if different from api.host (same-domain guard applies)."
+            },
+            "headers": {
+              "type": "object",
+              "description": "Static headers the SPA sends for this endpoint (e.g. dkt-ecom-origin).",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "referer": {
+              "type": "string",
+              "description": "Referer header to send (templated with {internalId}) — for endpoints that validate it. Set via declarativeNetRequest."
+            }
           }
         },
         "document": {
@@ -252,26 +990,70 @@
           "additionalProperties": false,
           "description": "The PRESENTABLE artifact (the archival/print document), separate from `detail` (structured data). A source may have BOTH; a sink chooses via accepts.artifacts. `as:render` (client-rendered page → captured), `as:html` (server-rendered page), `as:invoice` (generated from the detail JSON), or a plain PDF (path + optional method/body). Saved as <id>.html or <id>.pdf.",
           "properties": {
-            "as": { "enum": ["html", "invoice", "render"], "description": "How to produce the document (see detail.as). Absent → a plain PDF at `path`." },
-            "waitFor": { "type": "string", "description": "[render] CSS selector to wait for before capturing." },
-            "waitMs": { "type": "number", "description": "[render] Fixed wait in ms (default 3500)." },
-            "path": { "type": "string", "description": "Path with {internalId} placeholder." },
-            "method": { "enum": ["GET", "POST"] },
-            "host": { "type": "string", "description": "Host if different from api.host (same-domain guard applies)." },
-            "headers": { "type": "object", "additionalProperties": { "type": "string" } },
-            "referer": { "type": "string", "description": "Referer (templated with {internalId})." }
+            "as": {
+              "enum": [
+                "html",
+                "invoice",
+                "render"
+              ],
+              "description": "How to produce the document (see detail.as). Absent → a plain PDF at `path`."
+            },
+            "waitFor": {
+              "type": "string",
+              "description": "[render] CSS selector to wait for before capturing."
+            },
+            "waitMs": {
+              "type": "number",
+              "description": "[render] Fixed wait in ms (default 3500)."
+            },
+            "path": {
+              "type": "string",
+              "description": "Path with {internalId} placeholder."
+            },
+            "method": {
+              "enum": [
+                "GET",
+                "POST"
+              ]
+            },
+            "host": {
+              "type": "string",
+              "description": "Host if different from api.host (same-domain guard applies)."
+            },
+            "headers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "referer": {
+              "type": "string",
+              "description": "Referer (templated with {internalId})."
+            }
           }
         }
       }
     },
     "fields": {
       "type": "object",
-      "required": ["internalId", "date"],
-      "additionalProperties": { "type": "string" },
+      "required": [
+        "internalId",
+        "date"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
       "description": "Map of normalized field name -> source field (dotted path). Recognized keys depend on `schema`: receipt (total, storeName, storeAddress, type, source), invoice (total, issuer, issuerAddress, number, type, source), transaction (amount, description, counterparty, direction, type, source), investment (instrument, isin, units, price, amount, operation, type)."
     },
-    "schema": { "type": "string", "pattern": "^[a-z_]+@\\d+$", "description": "Target normalized schema: receipt@1 | invoice@1 | transaction@1 | investment@1." },
-    "itemLabel": { "type": "string", "description": "Fallback display label template when a list row has no store/issuer/etc (e.g. a source whose list encrypts everything but the id). Templated with {internalId} / {field.path}, e.g. \"Pedido {internalId}\"." }
+    "schema": {
+      "type": "string",
+      "pattern": "^[a-z_]+@\\d+$",
+      "description": "Target normalized schema: receipt@1 | invoice@1 | transaction@1 | investment@1."
+    },
+    "itemLabel": {
+      "type": "string",
+      "description": "Fallback display label template when a list row has no store/issuer/etc (e.g. a source whose list encrypts everything but the id). Templated with {internalId} / {field.path}, e.g. \"Pedido {internalId}\"."
+    }
   },
   "$defs": {
     "period": {
@@ -279,9 +1061,20 @@
       "additionalProperties": false,
       "description": "One period fetch in a multi-period list (see api.list.periods).",
       "properties": {
-        "params": { "type": "object", "description": "Static query params (e.g. pagename).", "additionalProperties": { "type": "string" } },
-        "body": { "type": "string", "description": "[POST] Form body template; {group.*}, {csrf} and (for past) {period} are substituted." },
-        "rows": { "$ref": "#/$defs/rows" }
+        "params": {
+          "type": "object",
+          "description": "Static query params (e.g. pagename).",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "body": {
+          "type": "string",
+          "description": "[POST] Form body template; {group.*}, {csrf} and (for past) {period} are substituted."
+        },
+        "rows": {
+          "$ref": "#/$defs/rows"
+        }
       }
     },
     "rows": {
@@ -289,15 +1082,44 @@
       "additionalProperties": false,
       "description": "Parse items out of HTML (for from:html lists/groups). Either `each` (a global regex, one match per item) or `row` (a container-class marker splitting per-item blocks).",
       "properties": {
-        "each": { "type": "string", "description": "Global regex; each match is one item. fields.<k> = {group:N} takes capture group N." },
-        "row": { "type": "string", "description": "Class marker splitting the HTML into per-item blocks; fields extract from each block." },
-        "section": { "type": "object", "additionalProperties": false, "description": "Optional: split the HTML into sections by a marker (section.each) and merge section-level fields into every item found within each section — so items inherit a property of their container (e.g. each order item carries its shipment's return status, whether the shipment holds one item or many).", "properties": { "each": { "type": "string", "description": "Regex marking each section boundary (e.g. a shipment header)." }, "fields": { "type": "object", "additionalProperties": true, "description": "Field name -> {re|attr|tag|sel} extractor, read from the section and merged into its items (item fields win on conflict)." } } },
+        "each": {
+          "type": "string",
+          "description": "Global regex; each match is one item. fields.<k> = {group:N} takes capture group N."
+        },
+        "row": {
+          "type": "string",
+          "description": "Class marker splitting the HTML into per-item blocks; fields extract from each block."
+        },
+        "section": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Optional: split the HTML into sections by a marker (section.each) and merge section-level fields into every item found within each section — so items inherit a property of their container (e.g. each order item carries its shipment's return status, whether the shipment holds one item or many).",
+          "properties": {
+            "each": {
+              "type": "string",
+              "description": "Regex marking each section boundary (e.g. a shipment header)."
+            },
+            "fields": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Field name -> {re|attr|tag|sel} extractor, read from the section and merged into its items (item fields win on conflict)."
+            }
+          }
+        },
         "fields": {
           "type": "object",
           "description": "Per-field extraction. each mode: {group:N}. row mode: {re} (regex, group 1) | {attr} | {tag} | {sel} (text of an element with that class).",
-          "additionalProperties": { "type": "object" }
+          "additionalProperties": {
+            "type": "object"
+          }
         },
-        "require": { "type": "array", "items": { "type": "string" }, "description": "Field names that must be non-empty; incomplete rows are dropped." }
+        "require": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Field names that must be non-empty; incomplete rows are dropped."
+        }
       }
     }
   }

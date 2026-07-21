@@ -129,7 +129,7 @@ function checkExtraction(a, req, label) {
     // (a monthly or per-account statement). No path/itemsPath; the document itself comes from api.pdf.
     req(list.synthetic && ['months', 'group', 'group-months'].includes(list.synthetic.each), p + 'api.list.synthetic.each must be months|group|group-months');
   } else {
-    req(typeof list.path === 'string' && list.path.startsWith('/'), p + 'api.list.path required');
+    req((typeof list.path === 'string' && list.path.startsWith('/')) || (Array.isArray(list.paths) && list.paths.length > 0 && list.paths.every((x) => typeof x === 'string' && x.startsWith('/'))), p + 'api.list.path (or api.list.paths[]) required');
     req(list.from === 'html' || (typeof list.itemsPath === 'string' && list.itemsPath.length > 0) || (Array.isArray(list.itemsPath) && list.itemsPath.length > 0 && list.itemsPath.every((x) => typeof x === 'string' && x)), p + 'api.list.itemsPath required — a dotted path, or an array of candidate paths (unless list.from is "html")');
     req(!list.paging || PAGING.has(list.paging), p + 'api.list.paging must be offsets|offset|page|cursor|none|years');
   }
