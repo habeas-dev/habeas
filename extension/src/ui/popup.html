@@ -45,6 +45,11 @@
     details.adv > summary::before { content: "▸ "; }
     details.adv[open] > summary::before { content: "▾ "; }
     details.adv > summary:hover { color: var(--ink, inherit); }
+    .q-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      margin-top: 14px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 11px; }
+    .q-foot a { color: var(--muted); text-decoration: none; }
+    .q-foot a:hover { color: var(--brand-500, #2a7d6d); text-decoration: underline; }
+    .q-foot #version { font-size: 11px; }
   </style>
 </head>
 <body>
@@ -61,12 +66,6 @@
   <div class="app">
     <div id="contribnotice" hidden class="card" style="border-color:#2e7d32;cursor:pointer">
       <span data-i18n="contrib_popup_notice"></span>
-    </div>
-    <div class="card">
-      <div class="section-title"><h3 data-i18n="about_title"></h3></div>
-      <p class="muted" data-i18n="about_body" style="margin:6px 0 12px"></p>
-      <a id="repo" href="https://github.com/habeas-dev/habeas" target="_blank" rel="noopener" data-i18n="learn_more"></a>
-      <span id="version" class="muted" style="float:right;font-size:11px"></span>
     </div>
 
     <div id="quick" hidden></div>
@@ -158,6 +157,11 @@
       </div>
     </div>
     </details><!-- /advanced -->
+
+    <div class="q-foot">
+      <a id="repo" href="https://github.com/habeas-dev/habeas" target="_blank" rel="noopener" data-i18n="learn_more"></a>
+      <span id="version" class="muted"></span>
+    </div>
 
     <div id="doc-modal" hidden>
       <div class="doc-modal-backdrop"></div>
