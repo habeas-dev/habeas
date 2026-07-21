@@ -26,7 +26,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   **`name=valuefingerprint`** (a short, non-reversible FNV-1a hash of its value — sensitive headers
   `cookie`/`authorization` are never hashed), so two requests are diffed **value-by-value, not just by name**:
   a header that shares a name but differs in value (e.g. `sec-fetch-site: cross-site` vs `same-origin`) shows a
-  different fingerprint. Each line also shows the sent bearer's
+  different fingerprint. Each line also shows the **query string** (safe filter/paging/date param names verbatim
+  — e.g. `filter=all` vs the SPA's real value — everything else hashed), the **raw header order** (a WAF can
+  reject on order-fingerprint alone), and a **fingerprint of the whole `Authorization` value** (`token(… fp …)`)
+  to confirm two requests carry a byte-identical token+scheme, not just the same `iat`. Each line also shows the
+  sent bearer's
   **issuance timing** (`token(iat …, exp …)` — decoded from the JWT, ONLY the `iat`/`exp` timestamps, never the
   token or any identity claim), so a **rotated/revoked-but-unexpired** token is visible: the working request
   and our failing one carrying **different `iat`** proves we replayed a token one rotation behind the SPA's

@@ -97,7 +97,9 @@ let RC_PENDING = {};
 // working request and a failing one can be diffed value-by-value ("is our `sec-fetch-site` really identical?")
 // without ever transmitting the values. Sensitive headers (cookie/authorization) are never hashed.
 function rcHash(s) { let h = 0x811c9dc5 >>> 0; const str = String(s == null ? '' : s); for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36); }
-const RC_NOHASH = new Set(['cookie', 'authorization']); // cookie = sensitive; authorization = covered by iat/exp
+const RC_NOHASH = new Set(['cookie', 'authorization']); // cookie = sensitive; authorization = covered by iat/exp (+ a value hash to confirm byte-identity)
+// Query param names safe to reveal verbatim in a report (enums / paging / dates — not PII). Anything else is hashed.
+const RC_QSAFE = new Set(['filter', 'embed', 'type', 'status', 'state', 'sort', 'sortby', 'order', 'direction', 'page', 'size', 'offset', 'limit', 'count', 'locale', 'lang', 'currency', 'from', 'to', 'date_from', 'date_to', 'view', 'fields', 'include', 'scope']);
 function rcHostOnly(v) { try { return new URL(v).host; } catch (e) { return v ? 'set' : ''; } }
 function rcHostSeg(v) { try { const u = new URL(v); let s = (u.pathname.split('/').filter(Boolean)[0] || ''); if (s.length > 16 || /\d/.test(s)) s = '…'; return u.host + (s ? '/' + s : ''); } catch (e) { return v ? 'set' : ''; } }
 // Decode ONLY the timing claims (iat/exp) of a sent bearer — never the token, never identity claims. Lets the
@@ -126,7 +128,13 @@ function stashReqCtx(details, adapters) {
     const ah = reqH.find((h) => h.name.toLowerCase() === 'authorization');
     const hh = {}; // per-header value fingerprint (non-sensitive headers only), to diff values not just names
     for (const h of reqH) { const n = h.name.toLowerCase(); if (n && !RC_NOHASH.has(n)) hh[n] = rcHash(h.value); }
-    const ctx = { path: u.pathname, method: details.method, origin: oh ? rcHostOnly(oh.value) : '', referer: rh ? rcHostSeg(rh.value) : '', cookie: names.includes('cookie'), names: names.join(',').slice(0, 300), hh, tok: ah ? rcTokenTiming(ah.value) : null };
+    // Query params: reveal known-safe filter/paging names verbatim (they're enums/numbers, not PII), hash the
+    // rest — so a working vs failing request diffs the query too, not just path (e.g. filter=all vs filter=<X>).
+    const qp = {}; let hasQ = false;
+    for (const [k, v] of u.searchParams) { const lk = k.toLowerCase(); qp[k] = RC_QSAFE.has(lk) ? String(v).slice(0, 80) : rcHash(v); hasQ = true; }
+    // Raw header ORDER (not the sorted `names`) — a WAF can reject on header-order fingerprint alone.
+    const order = reqH.map((h) => h.name.toLowerCase()).join(',').slice(0, 400);
+    const ctx = { path: u.pathname, method: details.method, origin: oh ? rcHostOnly(oh.value) : '', referer: rh ? rcHostSeg(rh.value) : '', cookie: names.includes('cookie'), names: names.join(',').slice(0, 300), hh, order, query: hasQ ? qp : null, auth: ah ? rcHash(ah.value) : null, tok: ah ? rcTokenTiming(ah.value) : null };
     const keys = Object.keys(RC_PENDING); if (keys.length > 200) delete RC_PENDING[keys[0]]; // bound the map
     RC_PENDING[details.requestId] = { ids, ctx };
   } catch (e) {}

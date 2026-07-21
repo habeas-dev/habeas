@@ -49,18 +49,21 @@ test('reqctx ring accumulates redacted contexts and clears; format diffs a worki
   // The working request carries a NEWER token issuance (later iat) than our failing replay — the rotated/
   // revoked-but-unexpired token that reads "valid" by exp yet is rejected. Per-header value fingerprints (hh)
   // let us confirm every OTHER header is byte-identical (same hash) — here sec-fetch-site DIFFERS. Synthetic.
-  await pushReqCtx('raisin-es', { path: '/tams/v1/accounts', method: 'GET', origin: 'www.raisin.com', referer: 'www.raisin.com/es-es', cookie: false, names: 'accept,authorization,sec-fetch-site', status: 200, tok: { iat: 1_800_000_300, exp: 1_800_001_200 }, hh: { accept: 'aaa', 'sec-fetch-site': 'xxx' } });
-  await pushReqCtx('raisin-es', { path: '/tams/v1/accounts', method: 'GET', origin: 'www.raisin.com', referer: 'www.raisin.com/es-es', cookie: false, names: 'accept,authorization,sec-fetch-site', status: 401, tok: { iat: 1_800_000_000, exp: 1_800_000_900 }, hh: { accept: 'aaa', 'sec-fetch-site': 'yyy' } });
+  // Working vs failing now diff on: token (same iat + same auth fp ⇒ identical token), the QUERY (filter=<X> vs
+  // filter=all — the query my earlier build stripped), and header ORDER. Synthetic.
+  await pushReqCtx('raisin-es', { path: '/tams/v1/accounts', method: 'GET', origin: 'www.raisin.com', referer: 'www.raisin.com/es-es', cookie: false, names: 'accept,authorization,sec-fetch-site', status: 200, tok: { iat: 1_800_000_300, exp: 1_800_001_200 }, auth: 'auth9', hh: { accept: 'aaa', 'sec-fetch-site': 'xxx' }, query: { filter: 'type:CURRENT,SAVINGS' }, order: 'accept,authorization,sec-fetch-site' });
+  await pushReqCtx('raisin-es', { path: '/tams/v1/accounts', method: 'GET', origin: 'www.raisin.com', referer: 'www.raisin.com/es-es', cookie: false, names: 'accept,authorization,sec-fetch-site', status: 401, tok: { iat: 1_800_000_300, exp: 1_800_001_200 }, auth: 'auth9', hh: { accept: 'aaa', 'sec-fetch-site': 'xxx' }, query: { filter: 'all' }, order: 'authorization,accept,sec-fetch-site' });
   const list = await readReqCtx('raisin-es');
   assert.equal(list.length, 2);
   const txt = formatReqCtx(list);
   assert.match(txt, /HTTP 200/);
   assert.match(txt, /HTTP 401/);
-  assert.match(txt, /token\(iat \d\d:\d\d:\d\d, exp \d\d:\d\d:\d\d\)/, 'token issuance timing is rendered so a rotated token is visible');
+  assert.match(txt, /token\(iat \d\d:\d\d:\d\d, exp \d\d:\d\d:\d\d, fp auth9\)/, 'token issuance + a whole-Authorization fingerprint are rendered');
   assert.match(txt, /accept=aaa/, 'header VALUE fingerprint is shown, not just the name');
-  assert.match(txt, /sec-fetch-site=xxx/); // working request
-  assert.match(txt, /sec-fetch-site=yyy/); // our replay — different value, same name
-  assert.match(txt, /\bauthorization\b(?!=)/, 'authorization is listed but NOT hashed (covered by iat)');
+  assert.match(txt, /query: filter=type:CURRENT,SAVINGS/, 'safe query param is revealed verbatim (the value the earlier build hid)');
+  assert.match(txt, /query: filter=all/);
+  assert.match(txt, /order: accept,authorization,sec-fetch-site/, 'raw header order is shown to catch order-fingerprint rejection');
+  assert.match(txt, /\bauthorization\b(?!=)/, 'authorization is listed but NOT value-hashed inline (covered by the fp)');
   await clearReqCtx('raisin-es');
   assert.deepEqual(await readReqCtx('raisin-es'), []);
 });

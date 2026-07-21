@@ -94,11 +94,15 @@ export function formatReqCtx(list) {
     const status = e.status ? ' → HTTP ' + e.status : '';
     const from = e.who ? ' (' + e.who + ')' : '';
     // token issuance (iat/exp) so a working vs failing request reveals a rotated/revoked token — different iat.
-    const tok = e.tok ? ' token(' + [e.tok.iat != null && ('iat ' + hms(e.tok.iat)), e.tok.exp != null && ('exp ' + hms(e.tok.exp))].filter(Boolean).join(', ') + ')' : '';
+    // authfp = fingerprint of the WHOLE Authorization value → same fp ⇒ byte-identical token+scheme (rules out
+    // a subtle token/scheme difference the iat can't see).
+    const tok = e.tok ? ' token(' + [e.tok.iat != null && ('iat ' + hms(e.tok.iat)), e.tok.exp != null && ('exp ' + hms(e.tok.exp)), e.auth && ('fp ' + e.auth)].filter(Boolean).join(', ') + ')' : (e.auth ? ' token(fp ' + e.auth + ')' : '');
     const ctx = ['origin=' + (e.origin || '∅'), 'referer=' + (e.referer || '∅'), 'cookie=' + (e.cookie ? 'yes' : 'no')].join(' ');
+    const query = e.query ? '\n    query: ' + Object.keys(e.query).map((k) => k + '=' + e.query[k]).join(' ') : '';
     // each header shown as name=valuefingerprint (when hashed) so two requests diff value-by-value, not just names
     const names = e.names ? '\n    hdrs: ' + e.names.split(',').map((n) => (e.hh && e.hh[n]) ? n + '=' + e.hh[n] : n).join(' ') : '';
-    return '• ' + ts + (e.method || 'GET') + ' ' + (e.path || '') + status + from + tok + '\n    ' + ctx + names;
+    const order = e.order ? '\n    order: ' + e.order : '';
+    return '• ' + ts + (e.method || 'GET') + ' ' + (e.path || '') + status + from + tok + '\n    ' + ctx + query + names + order;
   });
   return '\n\n--- observed requests (redacted; SPA vs our replay) ---\n' + lines.join('\n');
 }
