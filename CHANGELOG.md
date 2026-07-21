@@ -11,6 +11,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Fixed
+- **Reinstalling a source now replaces every in-memory copy.** `saveSource`/`removeSource` bump a
+  `habeas:sources-rev` signal, and the popup + archive listen for it and re-fetch `getAdapters()` (the
+  background already re-synced on `habeas:sources`). Before, a page that had cached the adapter at load kept
+  running the OLD definition after a reinstall — so a fixed source (e.g. a corrected query filter) appeared to
+  have no effect until the page was reloaded. (This cost several rounds on Raisin.)
+- **A problem report shows the version of the source that is ACTUALLY installed**, read from the stored adapter
+  (`ui/options.js`), plus "(installed)" / "(NOT installed)". The earlier fallback to the thread's *offered*
+  latest version masked "you're still running the old source" — the report read v0.8 while the running adapter
+  was v0.7.
 - **A guided re-recording reads clearly in the conversation.** The message that accompanies an attached
   recording is now a plain "📎 recording sent" note instead of echoing the team's instruction verbatim (which
   looked like a duplicate of the team's message).

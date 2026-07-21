@@ -8,6 +8,7 @@ import { sinkAcceptsSource } from '../sinks/format.js';
 import { watchThemeIcon } from '../lib/theme-icon.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { getAdapters, removeSource, isBuiltinSource } from '../adapters/index.js';
+import { getStoredSources } from '../adapters/loader.js';
 import { needsConsent, hasConsent, grantConsent, consentDescriptor } from '../lib/consent.js';
 import { requestCapturePermissions, registerCapture, unregisterCapture } from '../lib/capture.js';
 import { exportSource, buildShareUrl, importFromFile } from '../registry/share.js';
@@ -610,10 +611,14 @@ async function openThread(id) {
     // latest offered in the thread.
     const reportMeta = async () => {
       let ext = ''; try { ext = chrome.runtime.getManifest().version; } catch (e) {}
-      let sv = ''; try { const o = await chrome.storage.local.get('habeas:contribVer:' + id); sv = o['habeas:contribVer:' + id] || ''; } catch (e) {}
-      if (!sv && data.source) sv = String(data.source.version || '');
       const sid = data.sourceId || (data.source && data.source.id) || '';
-      return 'Habeas ' + (ext || '?') + (sid ? ' · source ' + sid + (sv ? ' v' + sv : '') : '');
+      // Report the version ACTUALLY installed (from the stored adapter) — not the latest OFFERED in the thread.
+      // The earlier fallback to data.source.version masked "you're testing an old build of the source": it read
+      // v0.8 while the running adapter was v0.7. Marks whether the source is even installed.
+      let sv = '', installed = false;
+      try { const stored = (await getStoredSources()).find((a) => a.id === sid); if (stored) { sv = String(stored.version || ''); installed = true; } } catch (e) {}
+      if (!installed) { try { const o = await chrome.storage.local.get('habeas:contribVer:' + id); if (o['habeas:contribVer:' + id]) sv = o['habeas:contribVer:' + id]; } catch (e) {} }
+      return 'Habeas ' + (ext || '?') + (sid ? ' · source ' + sid + (sv ? ' v' + sv : '') + (installed ? ' (installed)' : ' (NOT installed)') : '');
     };
     // "See what's sent": full transparency, behind a button — the exact message (plain line + the technical
     // trace) that would go to the team, so the contributor is never suspicious about what leaves their machine.

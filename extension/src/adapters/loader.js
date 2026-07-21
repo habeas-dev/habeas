@@ -25,7 +25,12 @@ export async function getStoredSources() {
 
 async function setStoredSources(arr) {
   await chrome.storage.local.set({ [STORE_KEY]: arr });
+  // Signal every open surface (popup / archive / options / background) that the source catalog changed, so a
+  // reinstalled source REPLACES the copy each page cached at load — otherwise a page keeps running the old
+  // adapter (e.g. an old query filter) even after the user reinstalls. Listeners re-fetch getAdapters().
+  try { await chrome.storage.local.set({ [REV_KEY]: Date.now() }); } catch (e) {}
 }
+export const REV_KEY = 'habeas:sources-rev';
 
 // Add or replace a community/local source (validated). Throws on invalid input.
 export async function saveSource(adapter) {

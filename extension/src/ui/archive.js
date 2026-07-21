@@ -394,6 +394,16 @@ function wire() {
     }
   };
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+  // A source was (re)installed → drop our cached adapters and re-read, so the Archive reflects the NEW
+  // definition instead of the copy loaded when this tab opened.
+  chrome.storage.onChanged.addListener((ch, area) => {
+    if (area !== 'local' || !ch['habeas:sources-rev']) return;
+    (async () => {
+      ADAPTERS = await getAdapters(); CFG = await getConfig(); RETRIEVABLE = (CFG.sinks || []).filter((s) => isRetrievable(s));
+      await loadIndex();
+      if (CUR && INDEX.some((x) => x.base === CUR)) { await loadDocs(CUR); renderRail(); renderDocs(); } else { renderRail(); renderIndex(); }
+    })().catch(() => {});
+  });
 }
 function batchOpen() {
   const picks = CURDOCS.filter((r) => PICKED.has(r.internalId) && r.delivered.length && r.formats.length);

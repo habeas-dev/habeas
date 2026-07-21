@@ -94,6 +94,9 @@ async function init() {
   renderQuick().catch(() => {});
   await renderActivity();
   chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch['habeas:log']) renderActivity(); });
+  // A source was (re)installed elsewhere → replace our cached adapters so a running list/send uses the NEW
+  // definition (not the copy we loaded at popup open). Refresh the outputs/accounts UI for the current source.
+  chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch['habeas:sources-rev']) getAdapters().then((a) => { ADAPTERS = a; renderQuick().catch(() => {}); getConfig().then((c) => { renderOutputs(adapterFor($('#ds').value, c).adapter); refreshAccountsBtn(c); }); }); });
   await resumePendingList(); // a list left pending on login resumes automatically once the session is captured
 }
 
