@@ -14,6 +14,14 @@ test('groups.paths merges accounts from several endpoints', async () => {
   assert.deepEqual(groups.map((g) => g.id).sort(), ['ACT-1', 'ACT-2', 'INACT-1'], 'accounts from both endpoints merged');
 });
 
+test('a group field can be a TEMPLATE (readable account name), not just a plain path', async () => {
+  const net = async () => ({ ok: true, status: 200, text: async () => '', json: async () => ({ entries: [{ id: 'OMA_1', product: { deposit_taking_bank: { name: 'Nordax Bank AB publ' } } }] }) });
+  const adapter = { id: 'x', api: { host: 'https://h.example', groups: { path: '/g', itemsPath: 'entries', fields: { id: 'id', name: 'Cuenta {product.deposit_taking_bank.name}' } } } };
+  const groups = await listGroups(adapter, { byPath: {}, merged: {} }, net);
+  assert.equal(groups[0].id, 'OMA_1');
+  assert.equal(groups[0].name, 'Cuenta Nordax Bank AB publ', 'the group name template resolved (was showing the raw id)');
+});
+
 test('list.paths merges items from several endpoints (deposits: active + inactive)', async () => {
   const net = async (url) => {
     const items = url.includes("inactive") ? [{ id: "I-1", d: "2026-02-01" }] : [{ id: "A-1", d: "2026-01-01" }];

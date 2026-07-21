@@ -11,6 +11,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Fixed
+- **Group (account) fields can be templates, so account names are readable.** `listGroups` mapped each account
+  field with a plain path lookup, so a `groups.fields.name` template like `"Cuenta {product.bank.name}"` didn't
+  resolve — the account picker and the "Account" column fell back to a raw id (`OMA_121_609_733_983`). It now
+  resolves group fields through the same template engine as record fields (paths, templates, and the new
+  `:num`/`:duration`/`:date` formats), so both show the readable name. Re-list a source to refresh already-stored
+  labels.
 - **List query params now resolve `{ctx.*}`** (`runtime/inventory.js#fetchList`). A captured context id belongs
   in a query filter, not only in the path — but `fetchList` only templated `{group.*}` + dates, so a param like
   `customer_id={ctx.customer_id}` was sent **literally** and the upstream rejected it (Raisin's `dbff`/`dbs`

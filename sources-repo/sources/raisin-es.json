@@ -9,8 +9,8 @@
     "banking",
     "investment"
   ],
-  "version": "2026-07-20.13",
-  "minVersion": "0.5.0.27",
+  "version": "2026-07-20.14",
+  "minVersion": "0.5.0.28",
   "keepRaw": true,
   "contributors": [
     "David Marín Carreño"
@@ -259,6 +259,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20.14",
+      "changes": "Requires 0.5.0.28: group-field templates now resolve (the account picker AND the Account column show the readable name instead of a raw id)."
+    },
     {
       "version": "2026-07-20.13",
       "changes": "Deposit labels now use browser-locale formatting: rate with the locale decimal comma and term as words (\"Depósito Banca Progetto 2,45% TAE 6 meses - 2024-03-22\"). Requires runtime 0.5.0.27 ({field:num|pct|duration|date} format directives)."

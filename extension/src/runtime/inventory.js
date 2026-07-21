@@ -183,7 +183,10 @@ export async function listGroups(adapter, auth, net) {
   const seen = new Set(), out = [];
   for (const item of (items || [])) {
     const grp = { _raw: item };
-    for (const k of Object.keys(g.fields || {})) grp[k] = get(item, g.fields[k]);
+    // resolveField (not a plain get) so a group field can be a TEMPLATE with formats — e.g. a readable account
+    // name `"Cuenta {product.deposit_taking_bank.name}"` or `"Depósito {…} {rate:num}% TAE {term:duration}"`.
+    // A plain dotted path (the common case) still resolves exactly as before.
+    for (const k of Object.keys(g.fields || {})) grp[k] = resolveField(g.fields[k], item);
     // `derive`: compute extra group fields from mapped ones with simple, auditable string ops — trim and a
     // [start,end] slice. Banks often pack several values into one string (Openbank's BBAN carries the
     // control digit + account number), so a source can split them out declaratively: e.g.
