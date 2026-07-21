@@ -2448,7 +2448,7 @@
     "message": "Habeas recupera tus documentos en tu archivo — el almacén canónico de todo lo que recopila. Ahora mismo ese archivo vive solo en este navegador."
   },
   "onboard_cloud": {
-    "message": "Para acceder a tu archivo desde más de un dispositivo o navegador, guárdalo en una carpeta en la nube (p. ej. Google Drive) en lugar de en este navegador."
+    "message": "Para acceder a tu archivo desde más de un dispositivo o navegador, guárdalo en la nube. Recomendamos Dropbox — el acceso restringido de Google Drive lo hace incómodo para esto."
   },
   "onboard_drive": {
     "message": "Usar Google Drive"
@@ -2480,5 +2480,22 @@
         "content": "$1"
       }
     }
+  },
+  "onboard_dropbox": {
+    "message": "Usar Dropbox"
+  },
+  "onboard_dropbox_setup": {
+    "message": "Configurar Dropbox (recomendado)"
+  },
+  "onboard_use_sink": {
+    "message": "Usar $NAME$",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "onboard_more": {
+    "message": "Otro destino…"
   }
 }

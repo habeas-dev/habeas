@@ -19,5 +19,18 @@ export async function useFolderStore() {
   return moveStoreTo({ backend: 'folder' });
 }
 
+// Move the canonical store to a backend that REUSES a configured sink's credentials (dropbox / webdav / s3).
+// The sink is set up in Settings; here we just repoint the store at it. Returns items moved.
+export async function useSinkStore(backend, sinkId) {
+  if (!sinkId) throw new Error('missing sink');
+  return moveStoreTo({ backend, sinkId });
+}
+
+// Move the canonical store to an HTTP endpoint. Returns items moved.
+export async function useHttpStore(url) {
+  if (!url) throw new Error('missing url');
+  return moveStoreTo({ backend: 'http', url });
+}
+
 // Whether the local-folder store is available (Chromium File System Access only).
 export const folderStoreAvailable = () => typeof window !== 'undefined' && typeof window.showDirectoryPicker === 'function';

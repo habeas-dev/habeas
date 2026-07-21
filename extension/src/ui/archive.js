@@ -9,7 +9,7 @@ import { chrome } from '../lib/ext.js';
 import { getConfig, saveConfig } from '../lib/config.js';
 import { getAdapters } from '../adapters/index.js';
 import { listSources, getSource, getStoreConfig } from '../lib/store.js';
-import { useDriveStore, useFolderStore, folderStoreAvailable } from '../lib/storesetup.js';
+import { useDriveStore, useFolderStore, useSinkStore, folderStoreAvailable } from '../lib/storesetup.js';
 import { deliveredSet, getDocMeta } from '../lib/state.js';
 import { isRetrievable } from '../lib/retrieve.js';
 import { sinkAcceptsSource, groupLabelOf } from '../sinks/format.js';
@@ -273,28 +273,39 @@ function node(id, icon, name, count, on, fam) {
 // First-run assistant: shown at the top of the index while the canonical store is still the default per-browser
 // backend. Explains the "archive" (canonical store), recommends a cloud folder for multi-device access, and sets
 // it up in one click — reusing lib/storesetup.js (the tested moveStoreTo/driveSignIn/putHandle primitives).
+const SINK_ICONS = { dropbox: '🗄️', drive: '☁️', webdav: '🌐', s3: '🪣', http: '🔗' };
 function wizardCard() {
   if (!STORE_LOCAL || ONBOARD_DISMISSED) return '';
-  const folderBtn = folderStoreAvailable() ? `<button class="wz-btn" data-store="folder">📁 ${esc(t('onboard_folder'))}</button>` : '';
+  const sinkOf = (type) => (CFG.sinks || []).find((s) => s.type === type);
+  // Dropbox is the RECOMMENDED cloud store (Drive's drive.file scope only sees files it created — awkward). If a
+  // Dropbox sink is already set up, one-click move to it; otherwise the primary button opens Settings to add one.
+  const dbx = sinkOf('dropbox');
+  const btns = [];
+  btns.push(dbx
+    ? `<button class="wz-btn primary" data-store="dropbox" data-sink="${esc(dbx.id)}">🗄️ ${esc(t('onboard_dropbox'))}</button>`
+    : `<button class="wz-btn primary" data-store="advanced">🗄️ ${esc(t('onboard_dropbox_setup'))}</button>`);
+  // Any other already-configured sink backend can host the store too (reuse its credentials).
+  for (const type of ['webdav', 's3']) { const s = sinkOf(type); if (s) btns.push(`<button class="wz-btn" data-store="${type}" data-sink="${esc(s.id)}">${SINK_ICONS[type]} ${esc(t('onboard_use_sink', [type.toUpperCase()]))}</button>`); }
+  btns.push(`<button class="wz-btn" data-store="drive">☁️ ${esc(t('onboard_drive'))}</button>`);
+  if (folderStoreAvailable()) btns.push(`<button class="wz-btn" data-store="folder">📁 ${esc(t('onboard_folder'))}</button>`);
+  btns.push(`<button class="wz-btn" data-store="advanced">⚙️ ${esc(t('onboard_more'))}</button>`);
+  btns.push(`<button class="wz-btn ghost" data-store="dismiss">${esc(t('onboard_dismiss'))}</button>`);
   return `<div class="wizard" id="wizard">
     <div class="wz-head"><span class="wz-ic">🗄️</span><div><h2>${esc(t('onboard_title'))}</h2><p>${esc(t('onboard_body'))}</p></div></div>
     <p class="wz-cloud">☁️ ${esc(t('onboard_cloud'))}</p>
-    <div class="wz-actions">
-      <button class="wz-btn primary" data-store="drive">☁️ ${esc(t('onboard_drive'))}</button>
-      ${folderBtn}
-      <button class="wz-btn" data-store="advanced">⚙️ ${esc(t('onboard_advanced'))}</button>
-      <button class="wz-btn ghost" data-store="dismiss">${esc(t('onboard_dismiss'))}</button>
-    </div>
+    <div class="wz-actions">${btns.join('')}</div>
     <div class="wz-status" id="wz-status"></div>
   </div>`;
 }
-async function onStoreSetup(kind) {
+async function onStoreSetup(kind, sinkId) {
   if (kind === 'dismiss') { ONBOARD_DISMISSED = true; try { await chrome.storage.local.set({ 'habeas:onboard-dismissed': true }); } catch (e) {} renderIndex(); return; }
   if (kind === 'advanced') { chrome.runtime.openOptionsPage(); return; }
   const wiz = $('#wizard'); if (wiz) wiz.classList.add('busy');
   const st = $('#wz-status'); if (st) st.textContent = t('onboard_moving');
   try {
-    const n = kind === 'drive' ? await useDriveStore() : await useFolderStore();
+    const n = kind === 'drive' ? await useDriveStore()
+      : kind === 'folder' ? await useFolderStore()
+      : await useSinkStore(kind, sinkId); // dropbox / webdav / s3 → reuse the configured sink's credentials
     STORE_LOCAL = false;
     if (st) st.textContent = t('onboard_moved', [String(n || 0)]);
     await buildIndex(); renderRail(); renderIndex(); hydrateIndex(); // store moved → re-read from the new backend
@@ -642,7 +653,7 @@ function wire() {
   };
   // main delegation (index cards, group-by, select toggle, doc cards)
   $('#main').onclick = (ev) => {
-    const ws = ev.target.closest('[data-store]'); if (ws) { onStoreSetup(ws.dataset.store); return; }
+    const ws = ev.target.closest('[data-store]'); if (ws) { onStoreSetup(ws.dataset.store, ws.dataset.sink); return; }
     const sc = ev.target.closest('.srccard'); if (sc) { openSource(sc.dataset.src); return; }
     const gb = ev.target.closest('[data-gb]'); if (gb) { GROUPMODE = gb.dataset.gb; renderDocs(); return; }
     const sv = ev.target.closest('[data-save]'); if (sv) { deliver(sv.dataset.save); return; }
