@@ -8,8 +8,8 @@
     "banking",
     "investment"
   ],
-  "version": "2026-07-20.17",
-  "minVersion": "0.5.0.30",
+  "version": "2026-07-20.18",
+  "minVersion": "0.5.0.32",
   "keepRaw": true,
   "contributors": [
     "David Marín Carreño"
@@ -138,9 +138,9 @@
         "date": "deposit.opening_date",
         "amount": "accounting.balance.amount.denomination",
         "currency": "accounting.balance.amount.currency",
-        "description": "{product.deposit_taking_bank.name}",
+        "description": "{i18n:deposit} {product.deposit_taking_bank.name} {accounting.effective_interest_rate:num}% {accounting.term:duration} - {deposit.opening_date:date}",
         "counterparty": "{product.deposit_taking_bank.name}",
-        "group": "Depósito {product.deposit_taking_bank.name} {accounting.effective_interest_rate:num}% TAE {accounting.term:duration} - {deposit.opening_date:date}"
+        "group": "{i18n:deposit} {product.deposit_taking_bank.name} {accounting.effective_interest_rate:num}% {accounting.term:duration} - {deposit.opening_date:date}"
       }
     },
     {
@@ -167,7 +167,7 @@
           "fields": {
             "id": "accounting.deposit_id",
             "currency": "accounting.balance.amount.currency",
-            "name": "Cuenta {product.deposit_taking_bank.name}"
+            "name": "{i18n:account} {product.deposit_taking_bank.name}"
           },
           "headers": {
             "accept": "application/json, text/plain, */*"
@@ -221,7 +221,7 @@
           },
           "fields": {
             "id": "accounting.deposit_id",
-            "name": "Depósito {product.deposit_taking_bank.name} {accounting.effective_interest_rate:num}% TAE {accounting.term:duration} - {deposit.opening_date:date}"
+            "name": "{i18n:deposit} {product.deposit_taking_bank.name} {accounting.effective_interest_rate:num}% {accounting.term:duration} - {deposit.opening_date:date}"
           },
           "headers": {
             "accept": "application/json, text/plain, */*"
@@ -280,7 +280,7 @@
           },
           "fields": {
             "id": "accounting.deposit_id",
-            "name": "Cuenta {product.deposit_taking_bank.name}"
+            "name": "{i18n:account} {product.deposit_taking_bank.name}"
           },
           "headers": {
             "accept": "application/json, text/plain, */*"
@@ -318,6 +318,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-07-20.18",
+      "changes": "Multi-language labels: the product-type word (Deposit/Account) is translated per browser locale via a source i18n dictionary (en/es/de/fr/nl — every Raisin market; en fallback), since the API only returns it as an enum. Dropped the TAE abbreviation (varies by country; % is universal). Requires 0.5.0.32 ({i18n:key} token)."
+    },
     {
       "version": "2026-07-20.17",
       "changes": "Multi-market: renamed raisin-es -> raisin (the API api2.weltsparen.de is shared across all Raisin countries); the response-language `locale` param now follows the browser locale via {locale}/{locale:lower} instead of a hardcoded es-ES. Requires 0.5.0.30. (Account-label WORDS Depósito/Cuenta/TAE remain Spanish for now.)"
@@ -390,5 +394,21 @@
       "version": "2026-07-20",
       "changes": "Initial: Raisin (WeltSparen). Cross-domain login raisin.com -> API api2.weltsparen.de (Keycloak bearer), customer_id captured as context, 90-day window (SCA-free). Four outputs: movimientos (Raisin transaction account, tams), depósitos (fixed-term deposits FDA_, investment@2 with keepRaw), ahorro (flexible savings-account movements OMA_, from the deposit detail's embedded transactions), documentos (terms/condiciones via dds). OMA (flexible cuenta corriente) vs FDA (fixed deposit) split by the product-id prefix (auth.keep prefix on accounting.deposit_id)."
     }
-  ]
+  ],
+  "i18n": {
+    "deposit": {
+      "en": "Deposit",
+      "es": "Depósito",
+      "de": "Festgeld",
+      "fr": "Dépôt",
+      "nl": "Deposito"
+    },
+    "account": {
+      "en": "Account",
+      "es": "Cuenta",
+      "de": "Konto",
+      "fr": "Compte",
+      "nl": "Rekening"
+    }
+  }
 }

@@ -186,7 +186,7 @@ export async function listGroups(adapter, auth, net) {
     // resolveField (not a plain get) so a group field can be a TEMPLATE with formats — e.g. a readable account
     // name `"Cuenta {product.deposit_taking_bank.name}"` or `"Depósito {…} {rate:num}% TAE {term:duration}"`.
     // A plain dotted path (the common case) still resolves exactly as before.
-    for (const k of Object.keys(g.fields || {})) grp[k] = resolveField(g.fields[k], item);
+    for (const k of Object.keys(g.fields || {})) grp[k] = resolveField(g.fields[k], item, undefined, adapter.i18n);
     // `derive`: compute extra group fields from mapped ones with simple, auditable string ops — trim and a
     // [start,end] slice. Banks often pack several values into one string (Openbank's BBAN carries the
     // control digit + account number), so a source can split them out declaratively: e.g.
@@ -698,9 +698,19 @@ export function fmtValue(v, fmt, locale) {
   if (fmt === 'date') { const d = normalizeDate(v); return d || String(v); }
   return String(v);
 }
-function resolveField(value, item, group) {
+// A source-level translation: `{i18n:key}` → `adapter.i18n[key]` picked by the browser language. Lets a
+// MULTI-MARKET source translate a fixed label word the API only returns as an enum (e.g. Raisin's product type
+// "Deposit"/"Depósito"/"Festgeld"…). Falls back exact-locale → language → English → any value.
+function i18nWord(map, key) {
+  const dict = map && map[key];
+  if (!dict || typeof dict !== 'object') return '';
+  const loc = String(uiLocale()); const lang = loc.toLowerCase().split(/[-_]/)[0];
+  return dict[loc] || dict[loc.toLowerCase()] || dict[lang] || dict.en || dict[Object.keys(dict)[0]] || '';
+}
+function resolveField(value, item, group, i18n) {
   if (typeof value !== 'string' || value.indexOf('{') < 0) return get(item, value);
   const pick = (spec) => {
+    if (spec.indexOf('i18n:') === 0) return i18nWord(i18n, spec.slice(5)); // {i18n:key} → per-locale word
     const ci = spec.lastIndexOf(':');
     const fmt = ci > 0 ? spec.slice(ci + 1) : '';
     const hasFmt = ci > 0 && FMT_KEYS.test(fmt);           // only a KNOWN format keyword splits path:fmt
@@ -1522,7 +1532,7 @@ function collect(adapter, data, seen, all, group) {
 function mapDoc(adapter, p, group) {
   const f = adapter.fields, doc = { _raw: p };
   if (group) doc._group = group; // the parent (account) this record belongs to
-  for (const k in f) doc[k] = resolveField(f[k], p, group);
+  for (const k in f) doc[k] = resolveField(f[k], p, group, adapter.i18n);
   // Multi-period grouped rows (WiZink movements) carry NO per-movement id in the HTML. If the source's
   // fields.internalId didn't resolve to one, synthesize a STABLE composite from the group + period +
   // per-period index + raw date + raw amount, so re-runs dedupe (same input → same id).

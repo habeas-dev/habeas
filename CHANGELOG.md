@@ -68,6 +68,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   progressively instead of freezing the tab.
 
 ### Added
+- **`{i18n:key}` templating token — per-locale label words in a source** (`runtime/inventory.js`). A source can
+  carry an `i18n` dictionary (`{ deposit: {en, es, de, …}, account: {…} }`) and a field/label template can
+  reference `{i18n:deposit}`, resolved to the browser language (exact-locale → language → English → any). This
+  lets a multi-market source translate a fixed word the API only returns as an enum — Raisin's product type now
+  reads `Depósito`/`Deposit`/`Festgeld`/… per the user's language (markets en/es/de/fr/nl), composed with the
+  browser-locale number and duration (`2,45% 6 meses` / `2.45% 6 months` / …).
 - **`{locale}` templating token for multi-market sources** (`runtime/inventory.js`: `fillLocale`). A path or
   query param can carry `{locale}` (the browser locale, BCP-47, e.g. `es-ES`) or `{locale:lower}` (`es-es`), so
   one source serves every market a platform runs in when the API is shared and only the response-language param

@@ -22,6 +22,14 @@ test('a group field can be a TEMPLATE (readable account name), not just a plain 
   assert.equal(groups[0].name, 'Cuenta Nordax Bank AB publ', 'the group name template resolved (was showing the raw id)');
 });
 
+test('{i18n:key} in a group field translates the word by locale (multi-market)', async () => {
+  const net = async () => ({ ok: true, status: 200, text: async () => '', json: async () => ({ entries: [{ id: 'D1', bank: 'Acme' }] }) });
+  const adapter = { id: 'x', i18n: { deposit: { en: 'Deposit', es: 'Depósito', de: 'Festgeld' } }, api: { host: 'https://h.example', groups: { path: '/g', itemsPath: 'entries', fields: { id: 'id', name: '{i18n:deposit} {bank}' } } } };
+  const groups = await listGroups(adapter, { byPath: {}, merged: {} }, net);
+  // The test env's UI locale decides which word; assert it's one of the dict values + the interpolated field.
+  assert.match(groups[0].name, /^(Deposit|Depósito|Festgeld) Acme$/, 'the {i18n:deposit} word resolved and the field interpolated');
+});
+
 test('list.paths merges items from several endpoints (deposits: active + inactive)', async () => {
   const net = async (url) => {
     const items = url.includes("inactive") ? [{ id: "I-1", d: "2026-02-01" }] : [{ id: "A-1", d: "2026-01-01" }];
