@@ -76,7 +76,7 @@ test('handoff correlation: same id → stable [id#N] across path/query/header/fi
   assert.ok(s.url.includes('/payments/' + tag + '/'), 'path shares the tag');
   assert.ok(s.url.includes('accountNumber=' + tag), 'query shares the tag');
   assert.equal(s.reqHeaders['x-entity'], tag);                         // header shares it → answers "same id?" structurally
-  assert.equal(s.reqHeaders.authorization, '[redacted]');              // auth dropped, never correlated
+  assert.match(s.reqHeaders.authorization, /^Bearer \[jwt#\d+\]$/);     // auth VALUE gone; scheme + a CORRELATED token tag kept (traces which token was sent)
   assert.equal(s.json.cards[0].opCode, '0006');                        // operation code (system) kept
   assert.equal(s.json.cards[0].centerCode, '1234');                    // 4-digit code kept
   assert.equal(s.json.cards[0].holder, '[text]');                      // a name is NOT kept/correlated

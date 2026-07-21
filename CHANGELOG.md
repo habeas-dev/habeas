@@ -11,6 +11,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Tokens are correlated in a recording, like ids** (`lib/redact.js`) — the same token value now gets the same
+  `[jwt#N]` tag across a **sent `Authorization` header** and **client storage/memory** (kept in a separate map
+  the orphan review never reveals, so a live token is never exposed). A sent bearer is redacted to its scheme +
+  the tag (`Bearer [jwt#N]`) instead of dropped. So the team can see, from the redacted bundle alone, whether
+  the API bearer is the same token as e.g. `localStorage.auth_token.access_token` — the exact question that
+  cost several Raisin rounds — without anyone opening DevTools.
 - **A recording surfaces where its tokens live** (`lib/redact.js#collectStorageTokens`) — the redacted handoff
   now includes `tokenLocations`: a safe map of client-storage paths that hold a JWT, tagged access / refresh /
   id (paths only, never a token value). So the team can wire `auth.tokenFromStorage` at the right field (e.g.

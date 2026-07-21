@@ -24,6 +24,12 @@ export function makeRefs() {
   const map = new Map(); let n = 0;
   const tag = (val) => { const k = String(val); if (!map.has(k)) map.set(k, ++n); return '[id#' + map.get(k) + ']'; };
   tag.map = map; // value → N, so buildHandoff can invert tags back to values for the orphan review
+  // Correlated TOKEN tag: the SAME token value → the SAME [jwt#N], across a sent Authorization header AND
+  // client storage/memory — so a maintainer sees which token is used where (e.g. is the API bearer the same
+  // as localStorage.auth_token.access_token?) WITHOUT ever seeing a value. Kept in a SEPARATE map that the
+  // orphan review never inverts: a live token is never revealable.
+  const jmap = new Map(); let jn = 0;
+  tag.tok = (val) => { const k = String(val); if (!jmap.has(k)) jmap.set(k, ++jn); return '[jwt#' + jmap.get(k) + ']'; };
   return tag;
 }
 
@@ -73,7 +79,7 @@ export function revealOrphans(bundle, tags) {
 export function redactString(s, key = '', refs = null) {
   s = String(s == null ? '' : s);
   if (!s) return s;
-  if (JWT.test(s)) return '[jwt]';
+  if (JWT.test(s)) return refs && refs.tok ? refs.tok(s) : '[jwt]'; // correlated across headers + storage
   if (EMAIL.test(s)) return '[email]';
   if (/^(https?|wss?):\/\//i.test(s)) return redactUrl(s, refs);
   const nosp = s.replace(/[\s-]/g, '');
@@ -164,13 +170,20 @@ export function redactBody(body, refs = null) {
   return scrubText(body);
 }
 
-// Request headers: keep the NAMES (shape), drop auth/token values entirely, redact the rest; a few
-// config headers (content-type, accept) are safe to keep verbatim (they help authoring, no PII).
+// Request headers: keep the NAMES (shape), never keep an auth/token VALUE, redact the rest; a few config
+// headers (content-type, accept) are safe verbatim (they help authoring, no PII). An auth/token header that
+// carries a JWT keeps only its scheme + a CORRELATED token tag (Bearer [jwt#N]) — no value, but it reveals
+// which token was sent (matches the same tag in storage), so a maintainer can see the API bearer's identity.
 const DROP_HDR = /token|csrf|xsrf|auth|cookie|sessionid|api-key|requestorigin/i;
 const KEEP_HDR = /^(content-type|accept|accept-language)$/i;
+function redactCred(v, refs) {
+  const s = String(v);
+  const m = s.match(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*/);
+  return (m && refs && refs.tok) ? s.slice(0, m.index) + refs.tok(m[0]) + s.slice(m.index + m[0].length) : '[redacted]';
+}
 export function redactHeaders(h, refs = null) {
   const out = {};
-  for (const k of Object.keys(h || {})) out[k] = DROP_HDR.test(k) ? '[redacted]' : (KEEP_HDR.test(k) ? h[k] : redactString(String(h[k]), k, refs));
+  for (const k of Object.keys(h || {})) out[k] = DROP_HDR.test(k) ? redactCred(h[k], refs) : (KEEP_HDR.test(k) ? h[k] : redactString(String(h[k]), k, refs));
   return out;
 }
 
