@@ -46,17 +46,21 @@ test('reqctx ring accumulates redacted contexts and clears; format diffs a worki
   // the difference (here: the working one carried a cookie, ours did not).
   // The working request carries a NEWER token issuance (later iat) than our failing replay — the rotated/
   // revoked-but-unexpired token that reads "valid" by exp yet is rejected. Synthetic epochs.
-  await pushReqCtx('raisin-es', { path: '/tams/v1/accounts', method: 'GET', origin: 'www.raisin.com', referer: 'www.raisin.com/es-es', cookie: true, names: 'authorization,cookie,origin,referer', status: 200, tok: { iat: 1_800_000_300, exp: 1_800_001_200 } });
-  await pushReqCtx('raisin-es', { path: '/tams/v1/accounts', method: 'GET', origin: 'www.raisin.com', referer: 'www.raisin.com/es-es', cookie: false, names: 'authorization,origin,referer', status: 401, tok: { iat: 1_800_000_000, exp: 1_800_000_900 } });
+  // The working request carries a NEWER token issuance (later iat) than our failing replay — the rotated/
+  // revoked-but-unexpired token that reads "valid" by exp yet is rejected. Per-header value fingerprints (hh)
+  // let us confirm every OTHER header is byte-identical (same hash) — here sec-fetch-site DIFFERS. Synthetic.
+  await pushReqCtx('raisin-es', { path: '/tams/v1/accounts', method: 'GET', origin: 'www.raisin.com', referer: 'www.raisin.com/es-es', cookie: false, names: 'accept,authorization,sec-fetch-site', status: 200, tok: { iat: 1_800_000_300, exp: 1_800_001_200 }, hh: { accept: 'aaa', 'sec-fetch-site': 'xxx' } });
+  await pushReqCtx('raisin-es', { path: '/tams/v1/accounts', method: 'GET', origin: 'www.raisin.com', referer: 'www.raisin.com/es-es', cookie: false, names: 'accept,authorization,sec-fetch-site', status: 401, tok: { iat: 1_800_000_000, exp: 1_800_000_900 }, hh: { accept: 'aaa', 'sec-fetch-site': 'yyy' } });
   const list = await readReqCtx('raisin-es');
   assert.equal(list.length, 2);
   const txt = formatReqCtx(list);
   assert.match(txt, /HTTP 200/);
   assert.match(txt, /HTTP 401/);
-  assert.match(txt, /cookie=yes/);
-  assert.match(txt, /cookie=no/);
-  assert.match(txt, /hdrs: authorization,cookie,origin,referer/);
   assert.match(txt, /token\(iat \d\d:\d\d:\d\d, exp \d\d:\d\d:\d\d\)/, 'token issuance timing is rendered so a rotated token is visible');
+  assert.match(txt, /accept=aaa/, 'header VALUE fingerprint is shown, not just the name');
+  assert.match(txt, /sec-fetch-site=xxx/); // working request
+  assert.match(txt, /sec-fetch-site=yyy/); // our replay — different value, same name
+  assert.match(txt, /\bauthorization\b(?!=)/, 'authorization is listed but NOT hashed (covered by iat)');
   await clearReqCtx('raisin-es');
   assert.deepEqual(await readReqCtx('raisin-es'), []);
 });

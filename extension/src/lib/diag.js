@@ -96,7 +96,8 @@ export function formatReqCtx(list) {
     // token issuance (iat/exp) so a working vs failing request reveals a rotated/revoked token — different iat.
     const tok = e.tok ? ' token(' + [e.tok.iat != null && ('iat ' + hms(e.tok.iat)), e.tok.exp != null && ('exp ' + hms(e.tok.exp))].filter(Boolean).join(', ') + ')' : '';
     const ctx = ['origin=' + (e.origin || '∅'), 'referer=' + (e.referer || '∅'), 'cookie=' + (e.cookie ? 'yes' : 'no')].join(' ');
-    const names = e.names ? '\n    hdrs: ' + e.names : '';
+    // each header shown as name=valuefingerprint (when hashed) so two requests diff value-by-value, not just names
+    const names = e.names ? '\n    hdrs: ' + e.names.split(',').map((n) => (e.hh && e.hh[n]) ? n + '=' + e.hh[n] : n).join(' ') : '';
     return '• ' + ts + (e.method || 'GET') + ' ' + (e.path || '') + status + from + tok + '\n    ' + ctx + names;
   });
   return '\n\n--- observed requests (redacted; SPA vs our replay) ---\n' + lines.join('\n');

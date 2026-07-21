@@ -22,7 +22,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   request AND our replay fetch to the same URL. "Report a problem" now includes a **redacted** context line per
   observed request (header *names* only, host-level origin/referer, cookie *presence*, and the HTTP status), so
   the team can diff a **working request (HTTP 200)** against a **failing one (HTTP 401)** — "the SPA's
-  `/accounts` carried a cookie + these headers; our 401'd one didn't." Each line also shows the sent bearer's
+  `/accounts` carried a cookie + these headers; our 401'd one didn't." Each header is shown as
+  **`name=valuefingerprint`** (a short, non-reversible FNV-1a hash of its value — sensitive headers
+  `cookie`/`authorization` are never hashed), so two requests are diffed **value-by-value, not just by name**:
+  a header that shares a name but differs in value (e.g. `sec-fetch-site: cross-site` vs `same-origin`) shows a
+  different fingerprint. Each line also shows the sent bearer's
   **issuance timing** (`token(iat …, exp …)` — decoded from the JWT, ONLY the `iat`/`exp` timestamps, never the
   token or any identity claim), so a **rotated/revoked-but-unexpired** token is visible: the working request
   and our failing one carrying **different `iat`** proves we replayed a token one rotation behind the SPA's

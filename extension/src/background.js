@@ -93,6 +93,11 @@ let WR_MAP = {};
 // requestId here, fill the HTTP status when the response arrives, and commit it — so a report can diff a
 // working request (HTTP 200) against a failing one (HTTP 401). Never keeps header values/cookies/tokens/query.
 let RC_PENDING = {};
+// FNV-1a 32-bit → base36: a short, NON-reversible fingerprint of a header value. Same value → same hash, so a
+// working request and a failing one can be diffed value-by-value ("is our `sec-fetch-site` really identical?")
+// without ever transmitting the values. Sensitive headers (cookie/authorization) are never hashed.
+function rcHash(s) { let h = 0x811c9dc5 >>> 0; const str = String(s == null ? '' : s); for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36); }
+const RC_NOHASH = new Set(['cookie', 'authorization']); // cookie = sensitive; authorization = covered by iat/exp
 function rcHostOnly(v) { try { return new URL(v).host; } catch (e) { return v ? 'set' : ''; } }
 function rcHostSeg(v) { try { const u = new URL(v); let s = (u.pathname.split('/').filter(Boolean)[0] || ''); if (s.length > 16 || /\d/.test(s)) s = '…'; return u.host + (s ? '/' + s : ''); } catch (e) { return v ? 'set' : ''; } }
 // Decode ONLY the timing claims (iat/exp) of a sent bearer — never the token, never identity claims. Lets the
@@ -119,7 +124,9 @@ function stashReqCtx(details, adapters) {
     const oh = reqH.find((h) => h.name.toLowerCase() === 'origin');
     const rh = reqH.find((h) => h.name.toLowerCase() === 'referer');
     const ah = reqH.find((h) => h.name.toLowerCase() === 'authorization');
-    const ctx = { path: u.pathname, method: details.method, origin: oh ? rcHostOnly(oh.value) : '', referer: rh ? rcHostSeg(rh.value) : '', cookie: names.includes('cookie'), names: names.join(',').slice(0, 300), tok: ah ? rcTokenTiming(ah.value) : null };
+    const hh = {}; // per-header value fingerprint (non-sensitive headers only), to diff values not just names
+    for (const h of reqH) { const n = h.name.toLowerCase(); if (n && !RC_NOHASH.has(n)) hh[n] = rcHash(h.value); }
+    const ctx = { path: u.pathname, method: details.method, origin: oh ? rcHostOnly(oh.value) : '', referer: rh ? rcHostSeg(rh.value) : '', cookie: names.includes('cookie'), names: names.join(',').slice(0, 300), hh, tok: ah ? rcTokenTiming(ah.value) : null };
     const keys = Object.keys(RC_PENDING); if (keys.length > 200) delete RC_PENDING[keys[0]]; // bound the map
     RC_PENDING[details.requestId] = { ids, ctx };
   } catch (e) {}
