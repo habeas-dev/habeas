@@ -16,6 +16,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   looked like a duplicate of the team's message).
 
 ### Added
+- **Every problem report is stamped with the Habeas build + installed source version** (`ui/options.js`). The
+  team section of a report now always opens with `Habeas <version> · source <id> v<source-version>` — sent even
+  when there's no failure trace — so a result is never ambiguous about WHICH extension build and WHICH source
+  version produced it (both shuffle a lot during authoring). Shown in the "See what's sent" preview too.
 - **A report shows the actual request context — SPA vs our replay** (`lib/diag.js#pushReqCtx`/`formatReqCtx`,
   `background.js`). The webRequest observer already sees the FULL headers a request carried, including the
   browser-set `Origin`/`Referer`/`Cookie` the in-page sample hook drops — and it fires on BOTH the site's own

@@ -604,6 +604,17 @@ async function openThread(id) {
   if (data.source && data.source.id) {
     // Read the CURRENT technical trace (freshest failure) — used both to preview and to send.
     const readDiag = async () => { if (!data.sourceId) return null; try { const o = await chrome.storage.local.get('habeas:diag:' + data.sourceId); return o['habeas:diag:' + data.sourceId] || null; } catch (e) { return null; } };
+    // Stamp every report with the Habeas build + the installed source version, so the team never has to guess
+    // WHICH extension/source produced a result (we've shuffled both a lot mid-debug). Always sent, even with no
+    // failure trace. Installed source version = what's actually installed here (habeas:contribVer), not the
+    // latest offered in the thread.
+    const reportMeta = async () => {
+      let ext = ''; try { ext = chrome.runtime.getManifest().version; } catch (e) {}
+      let sv = ''; try { const o = await chrome.storage.local.get('habeas:contribVer:' + id); sv = o['habeas:contribVer:' + id] || ''; } catch (e) {}
+      if (!sv && data.source) sv = String(data.source.version || '');
+      const sid = data.sourceId || (data.source && data.source.id) || '';
+      return 'Habeas ' + (ext || '?') + (sid ? ' · source ' + sid + (sv ? ' v' + sv : '') : '');
+    };
     // "See what's sent": full transparency, behind a button — the exact message (plain line + the technical
     // trace) that would go to the team, so the contributor is never suspicious about what leaves their machine.
     const pk = document.getElementById('rep-peek-' + id);
@@ -611,16 +622,18 @@ async function openThread(id) {
       const box = document.getElementById('rep-detail-' + id); if (!box) return;
       if (!box.hidden) { box.hidden = true; return; }
       const d = await readDiag();
+      const meta = await reportMeta();
       const trace = formatDiag(d) + formatReqCtx(data.sourceId ? await readReqCtx(data.sourceId) : []);
-      box.textContent = t('contrib_report_prefix') + (trace ? '\n\n' + scrubText(trace).slice(0, 1800) : '\n\n(' + t('contrib_report_none') + ')');
+      box.textContent = t('contrib_report_prefix') + '\n\n' + meta + (trace ? '\n' + scrubText(trace).slice(0, 1800) : '\n(' + t('contrib_report_none') + ')');
       box.hidden = false;
     };
     const rb = document.getElementById('rep-diag-' + id);
     if (rb) rb.onclick = async () => {
       rb.disabled = true;
       const d = await readDiag();
+      const meta = await reportMeta();
       const trace = formatDiag(d) + formatReqCtx(data.sourceId ? await readReqCtx(data.sourceId) : []);
-      const tail = trace ? TEAM_DIAG + scrubText(trace).slice(0, 10000) : ''; // fits the server's handoff-message limit
+      const tail = TEAM_DIAG + meta + (trace ? '\n' + scrubText(trace).slice(0, 10000) : ''); // version always rides; fits the server's handoff-message limit
       try {
         await replyHandoff(id, sub.id, t('contrib_report_prefix') + tail);
         if (trace && data.sourceId) { await clearDiag(data.sourceId); await clearReqCtx(data.sourceId); }
