@@ -20,7 +20,7 @@ import { esc } from '../lib/esc.js';
 import { nextOccurrence, describeSchedule, validateSpec } from '../lib/schedule.js';
 import { getSubmitter, markSeen, unreadCount } from '../lib/submitter.js';
 import { getMyHandoffs, getHandoffThread, replyHandoff } from '../registry/client.js';
-import { formatDiag, clearDiag } from '../lib/diag.js';
+import { formatDiag, clearDiag, readReqCtx, clearReqCtx, formatReqCtx } from '../lib/diag.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { scrubText } from '../lib/redact.js';
 
@@ -611,7 +611,7 @@ async function openThread(id) {
       const box = document.getElementById('rep-detail-' + id); if (!box) return;
       if (!box.hidden) { box.hidden = true; return; }
       const d = await readDiag();
-      const trace = formatDiag(d);
+      const trace = formatDiag(d) + formatReqCtx(data.sourceId ? await readReqCtx(data.sourceId) : []);
       box.textContent = t('contrib_report_prefix') + (trace ? '\n\n' + scrubText(trace).slice(0, 1800) : '\n\n(' + t('contrib_report_none') + ')');
       box.hidden = false;
     };
@@ -619,11 +619,11 @@ async function openThread(id) {
     if (rb) rb.onclick = async () => {
       rb.disabled = true;
       const d = await readDiag();
-      const trace = formatDiag(d);
+      const trace = formatDiag(d) + formatReqCtx(data.sourceId ? await readReqCtx(data.sourceId) : []);
       const tail = trace ? TEAM_DIAG + scrubText(trace).slice(0, 10000) : ''; // fits the server's handoff-message limit
       try {
         await replyHandoff(id, sub.id, t('contrib_report_prefix') + tail);
-        if (trace && data.sourceId) await clearDiag(data.sourceId);
+        if (trace && data.sourceId) { await clearDiag(data.sourceId); await clearReqCtx(data.sourceId); }
         el.hidden = true; await openThread(id); // re-render: the report appears + the button stays for the next one
       } catch (e) {
         rb.disabled = false; // let the contributor retry, and SAY it failed instead of doing nothing

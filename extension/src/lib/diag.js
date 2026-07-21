@@ -58,3 +58,43 @@ export function recordingNet(net) {
   };
   return { net: fn, ref };
 }
+
+// ---- request-context ring ---------------------------------------------------------------------------
+// The webRequest observer sees the FULL headers a request carried — including the browser-set Origin,
+// Referer and Cookie that the in-page sample hook drops. It fires on BOTH the site's own SPA request AND
+// our replay fetch (same URL). Recording a REDACTED context per request (header NAMES only, host-level
+// origin/referer, cookie presence, and the response status) lets the team diff a WORKING request against a
+// FAILING one — e.g. "the SPA's /accounts carried a cookie + these headers; our 401'd one didn't." Never
+// stores header VALUES, cookies, tokens, or query strings. storage.local (non-sensitive), capped, best-effort.
+const RCKEY = (id) => 'habeas:reqctx:' + id;
+const RCCAP = 24;
+export async function pushReqCtx(sourceId, entry) {
+  if (!sourceId || !entry) return;
+  const k = RCKEY(sourceId);
+  try {
+    const o = await chrome.storage.local.get(k);
+    const arr = Array.isArray(o[k]) ? o[k] : [];
+    arr.push({ at: new Date().toISOString(), ...entry });
+    await chrome.storage.local.set({ [k]: arr.slice(-RCCAP) });
+  } catch (e) { /* best-effort */ }
+}
+export async function readReqCtx(sourceId) {
+  try { const o = await chrome.storage.local.get(RCKEY(sourceId)); return Array.isArray(o[RCKEY(sourceId)]) ? o[RCKEY(sourceId)] : []; } catch (e) { return []; }
+}
+export async function clearReqCtx(sourceId) { try { await chrome.storage.local.remove(RCKEY(sourceId)); } catch (e) {} }
+
+// Render the request-context ring for the report. Groups nothing — just one compact line per observed
+// request so the team can eyeball "which requests carried what and which HTTP status they got".
+export function formatReqCtx(list) {
+  const es = Array.isArray(list) ? list : [];
+  if (!es.length) return '';
+  const lines = es.map((e) => {
+    const ts = e.at ? '[' + String(e.at).slice(11, 19) + '] ' : '';
+    const status = e.status ? ' → HTTP ' + e.status : '';
+    const from = e.who ? ' (' + e.who + ')' : '';
+    const ctx = ['origin=' + (e.origin || '∅'), 'referer=' + (e.referer || '∅'), 'cookie=' + (e.cookie ? 'yes' : 'no')].join(' ');
+    const names = e.names ? '\n    hdrs: ' + e.names : '';
+    return '• ' + ts + (e.method || 'GET') + ' ' + (e.path || '') + status + from + '\n    ' + ctx + names;
+  });
+  return '\n\n--- observed requests (redacted; SPA vs our replay) ---\n' + lines.join('\n');
+}

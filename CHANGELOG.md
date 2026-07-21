@@ -16,6 +16,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   looked like a duplicate of the team's message).
 
 ### Added
+- **A report shows the actual request context — SPA vs our replay** (`lib/diag.js#pushReqCtx`/`formatReqCtx`,
+  `background.js`). The webRequest observer already sees the FULL headers a request carried, including the
+  browser-set `Origin`/`Referer`/`Cookie` the in-page sample hook drops — and it fires on BOTH the site's own
+  request AND our replay fetch to the same URL. "Report a problem" now includes a **redacted** context line per
+  observed request (header *names* only, host-level origin/referer, cookie *presence*, and the HTTP status), so
+  the team can diff a **working request (HTTP 200)** against a **failing one (HTTP 401)** — "the SPA's
+  `/accounts` carried a cookie + these headers; our 401'd one didn't." Never stores header values, cookies,
+  tokens, or query strings. (The instrumentation gap that a valid-token-still-rejected source like Raisin
+  exposed: the difference was in headers the recording couldn't show.)
 - **A failed auth request says whether the token was expired.** The in-session page fetch decodes the SENT
   bearer's own claims (exp / iss — never the raw token), and the list/groups diagnostic appends its status,
   e.g. `[token EXPIRED 13min ago iss=auth.weltsparen.de]` or `[token valid 600s]`. So "Report a problem"

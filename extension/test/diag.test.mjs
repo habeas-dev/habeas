@@ -9,7 +9,7 @@ globalThis.chrome = { storage: { local: {
   set: async (o) => { Object.assign(LOCAL, o); },
   remove: async (k) => { delete LOCAL[k]; },
 } } };
-const { pushDiag, readDiag, clearDiag, formatDiag, recordingNet } = await import('../src/lib/diag.js');
+const { pushDiag, readDiag, clearDiag, formatDiag, recordingNet, pushReqCtx, readReqCtx, clearReqCtx, formatReqCtx } = await import('../src/lib/diag.js');
 
 test('pushDiag accumulates multiple failures (does not overwrite) and clearDiag removes them', async () => {
   for (const k of Object.keys(LOCAL)) delete LOCAL[k];
@@ -39,6 +39,26 @@ test('formatDiag is back-compatible with the old single-error shape, and empty i
   assert.equal(formatDiag(null), '');
   assert.equal(formatDiag({ entries: [] }), '');
 });
+
+test('reqctx ring accumulates redacted contexts and clears; format diffs a working vs failing request', async () => {
+  for (const k of Object.keys(LOCAL)) delete LOCAL[k];
+  // The SPA's own /accounts request (works) vs our replay (401): same path, the report lets the team eyeball
+  // the difference (here: the working one carried a cookie, ours did not).
+  await pushReqCtx('raisin-es', { path: '/tams/v1/accounts', method: 'GET', origin: 'www.raisin.com', referer: 'www.raisin.com/es-es', cookie: true, names: 'authorization,cookie,origin,referer', status: 200 });
+  await pushReqCtx('raisin-es', { path: '/tams/v1/accounts', method: 'GET', origin: 'www.raisin.com', referer: 'www.raisin.com/es-es', cookie: false, names: 'authorization,origin,referer', status: 401 });
+  const list = await readReqCtx('raisin-es');
+  assert.equal(list.length, 2);
+  const txt = formatReqCtx(list);
+  assert.match(txt, /HTTP 200/);
+  assert.match(txt, /HTTP 401/);
+  assert.match(txt, /cookie=yes/);
+  assert.match(txt, /cookie=no/);
+  assert.match(txt, /hdrs: authorization,cookie,origin,referer/);
+  await clearReqCtx('raisin-es');
+  assert.deepEqual(await readReqCtx('raisin-es'), []);
+});
+
+test('formatReqCtx empty is blank', () => { assert.equal(formatReqCtx([]), ''); assert.equal(formatReqCtx(null), ''); });
 
 test('recordingNet remembers the LAST request issued (which one failed in a multi-step fetch)', async () => {
   const net = async (u) => ({ status: /generate-file/.test(u) ? 500 : 200, ok: !/generate-file/.test(u) });

@@ -6,7 +6,7 @@ import { chrome } from './lib/ext.js';
 import { getConfig } from './lib/config.js';
 import { registerCapture } from './lib/capture.js';
 import { loadAuth, hasAuth, capturePathAllowed } from './lib/authstore.js';
-import { pushDiag, recordingNet } from './lib/diag.js';
+import { pushDiag, recordingNet, pushReqCtx } from './lib/diag.js';
 import { deliveredSet, markDelivered, appendLog, rememberDocMeta } from './lib/state.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
 import { resolveSiteFetch, ensureSiteFetch, recoverSession } from './lib/pagefetch.js';
@@ -88,11 +88,39 @@ async function saveContext(host, name, value) {
 // background, before the SPA runs) and can't be seen by the page — needed for SPAs that fetch their
 // token/ids before the injected hook is ready. Only headers/URLs are read; never response bodies/cookies.
 let WR_MAP = {};
+// Redacted request-context ring: the observer sees the FULL headers (Origin/Referer/Cookie the sample hook
+// drops) on BOTH the SPA's own request AND our replay fetch to the same URL. We stash a REDACTED context per
+// requestId here, fill the HTTP status when the response arrives, and commit it — so a report can diff a
+// working request (HTTP 200) against a failing one (HTTP 401). Never keeps header values/cookies/tokens/query.
+let RC_PENDING = {};
+function rcHostOnly(v) { try { return new URL(v).host; } catch (e) { return v ? 'set' : ''; } }
+function rcHostSeg(v) { try { const u = new URL(v); let s = (u.pathname.split('/').filter(Boolean)[0] || ''); if (s.length > 16 || /\d/.test(s)) s = '…'; return u.host + (s ? '/' + s : ''); } catch (e) { return v ? 'set' : ''; } }
+function stashReqCtx(details, adapters) {
+  try {
+    const ids = [...new Set((adapters || []).map((a) => a && a.id).filter(Boolean))];
+    if (!ids.length) return;
+    const reqH = details.requestHeaders || [];
+    const u = new URL(details.url);
+    const names = reqH.map((h) => h.name.toLowerCase()).filter(Boolean).sort();
+    const oh = reqH.find((h) => h.name.toLowerCase() === 'origin');
+    const rh = reqH.find((h) => h.name.toLowerCase() === 'referer');
+    const ctx = { path: u.pathname, method: details.method, origin: oh ? rcHostOnly(oh.value) : '', referer: rh ? rcHostSeg(rh.value) : '', cookie: names.includes('cookie'), names: names.join(',').slice(0, 300) };
+    const keys = Object.keys(RC_PENDING); if (keys.length > 200) delete RC_PENDING[keys[0]]; // bound the map
+    RC_PENDING[details.requestId] = { ids, ctx };
+  } catch (e) {}
+}
+function onReqCtxResponse(details) {
+  const p = RC_PENDING[details.requestId]; if (!p) return;
+  delete RC_PENDING[details.requestId];
+  const ctx = { ...p.ctx, status: details.statusCode };
+  for (const id of p.ids) pushReqCtx(id, ctx);
+}
 function onWebRequestHeaders(details) {
   try {
     const u = new URL(details.url);
     const adapters = WR_MAP[u.host];
     if (!adapters || !adapters.length) return;
+    stashReqCtx(details, adapters); // record the redacted request context (committed with status on response)
     const reqH = details.requestHeaders || [];
     for (const a of adapters) {
       // The source can declare WHERE its token lives (auth.capturePaths / ignorePaths). The observer's URL
@@ -162,10 +190,13 @@ async function syncWebRequestCapture() {
   }
   WR_MAP = map;
   try { chrome.webRequest.onSendHeaders.removeListener(onWebRequestHeaders); } catch (e) {}
+  try { chrome.webRequest.onHeadersReceived.removeListener(onReqCtxResponse); } catch (e) {}
   const urls = [...urlSet];
   if (!urls.length) return;
   try { chrome.webRequest.onSendHeaders.addListener(onWebRequestHeaders, { urls }, ['requestHeaders', 'extraHeaders']); }
   catch (e) { try { chrome.webRequest.onSendHeaders.addListener(onWebRequestHeaders, { urls }, ['requestHeaders']); } catch (e2) {} }
+  // Pair the response status back to each stashed request context (see RC_PENDING / stashReqCtx).
+  try { chrome.webRequest.onHeadersReceived.addListener(onReqCtxResponse, { urls }); } catch (e) {}
 }
 
 // ---- record-mode document capture --------------------------------------------------------------------
