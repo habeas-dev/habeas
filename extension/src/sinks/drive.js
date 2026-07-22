@@ -4,6 +4,7 @@
 import { chrome } from '../lib/ext.js';
 import { encryptString, decryptString } from '../lib/secrets.js';
 import { pathFor, toRecords, mergeRecords } from './format.js';
+import { makeShardedStore } from '../lib/store/sharded.js';
 
 const SCOPE = 'https://www.googleapis.com/auth/drive.file';
 // Habeas ships with its own OAuth client (drive.file, non-sensitive → no CASA). A sink
@@ -253,34 +254,43 @@ export function driveStore(cfg = {}) {
   // (prompt=none): a valid/renewable token → they work; otherwise they no-op (best-effort). The user grants
   // ONCE via Settings → "Connect Drive" (the only interactive path). Token persists in storage.local.
   const interactive = cfg.interactive === true; // default false — opt in explicitly (Connect Drive button)
-  const ia = (opts) => (opts && opts.interactive === false ? false : interactive);
-  const dirId = async (token) => ensureFolderPath(token, [root, sub], {});
-  // Best-effort: a silent-token failure (or a transient Drive error) must NOT throw — it would break a List
-  // or a delivery. Reads → null (no store data), writes → skipped. The user reconnects via Settings.
-  return {
-    async loadSource(id, opts) {
-      try {
-        return await withToken(clientId, ia(opts), async (token) => {
-          const j = await readJson(token, id + '.json', await dirId(token));
-          return j && typeof j === 'object' && !Array.isArray(j) && j.items ? j : null; // a store source object, not the [] readJson miss
-        });
-      } catch (e) { return null; }
-    },
-    async saveSource(id, data) {
-      try {
-        await withToken(clientId, interactive, async (token) => putJson(token, id + '.json', await dirId(token), JSON.stringify(data)));
-      } catch (e) { /* can't reach the Drive store right now → keep it best-effort */ }
-    },
-    async listSources() {
-      try {
-        return await withToken(clientId, interactive, async (token) => {
-          const rootId = await findFile(token, root, 'root', true); if (!rootId) return [];
-          const subId = await findFile(token, sub, rootId, true); if (!subId) return [];
-          return listFolderJson(token, subId);
-        });
-      } catch (e) { return []; }
-    },
+  // Month-SHARDED (see lib/store/sharded.js): root/sub/<sourceId>/<name>.json; the pre-shard <sourceId>.json in
+  // root/sub is auto-reformatted on load. Store ops are SILENT (reads never pop OAuth; writes use the connect
+  // flag) and best-effort — a token/Drive hiccup must never break a List or a delivery.
+  const storeFolderId = async (token, create) => {
+    if (create) return ensureFolderPath(token, [root, sub], {});
+    const rootId = await findFile(token, root, 'root', true); if (!rootId) return null;
+    return findFile(token, sub, rootId, true);
   };
+  const srcFolderId = async (token, id, create) => { const sId = await storeFolderId(token, create); if (!sId) return null; return create ? findOrCreateFolder(token, id, sId) : findFile(token, id, sId, true); };
+  const fn = (name) => name + '.json';
+  const asObj = (j) => (j && typeof j === 'object' && !Array.isArray(j) ? j : null); // readJson returns [] on miss
+  const prim = {
+    async readShard(id, name) { try { return await withToken(clientId, false, async (t) => { const f = await srcFolderId(t, id, false); return f ? asObj(await readJson(t, fn(name), f)) : null; }); } catch (e) { return null; } },
+    async writeShard(id, name, obj) { await withToken(clientId, interactive, async (t) => putJson(t, fn(name), await srcFolderId(t, id, true), JSON.stringify(obj))); },
+    async removeShard(id, name) { try { await withToken(clientId, interactive, async (t) => { const f = await srcFolderId(t, id, false); if (!f) return; const g = await findFile(t, fn(name), f); if (g) await driveDelete(t, g); }); } catch (e) { /* best-effort */ } },
+    async listShardNames(id) { try { return await withToken(clientId, false, async (t) => { const f = await srcFolderId(t, id, false); return f ? (await listFolderJson(t, f)).filter((n) => n !== '_meta') : []; }); } catch (e) { return []; } },
+    async listSourceIds() { try { return await withToken(clientId, false, async (t) => { const s = await storeFolderId(t, false); return s ? listSourceEntries(t, s) : []; }); } catch (e) { return []; } },
+    async readLegacy(id) { try { return await withToken(clientId, false, async (t) => { const s = await storeFolderId(t, false); return s ? asObj(await readJson(t, fn(id), s)) : null; }); } catch (e) { return null; } },
+    async removeLegacy(id) { try { await withToken(clientId, interactive, async (t) => { const s = await storeFolderId(t, false); if (!s) return; const g = await findFile(t, fn(id), s); if (g) await driveDelete(t, g); }); } catch (e) { /* best-effort */ } },
+    async removeSource(id) { try { await withToken(clientId, interactive, async (t) => { const s = await storeFolderId(t, false); if (!s) return; const f = await findFile(t, id, s, true); if (f) await driveDelete(t, f); const g = await findFile(t, fn(id), s); if (g) await driveDelete(t, g); }); } catch (e) { /* best-effort */ } },
+  };
+  return makeShardedStore(prim);
+}
+// Every source id under the _store folder: a source subfolder (sharded) OR a legacy <id>.json file.
+async function listSourceEntries(token, parentId) {
+  const q = `'${parentId}' in parents and trashed=false`;
+  const r = await fetch('https://www.googleapis.com/drive/v3/files?fields=files(name,mimeType)&q=' + encodeURIComponent(q), { headers: { Authorization: 'Bearer ' + token } });
+  if (r.status === 401) throw new Error('drive 401');
+  if (!r.ok) return [];
+  const d = await r.json().catch(() => ({}));
+  const s = new Set();
+  for (const f of d.files || []) { if (f.mimeType === 'application/vnd.google-apps.folder') s.add(f.name); else if ((f.name || '').endsWith('.json')) s.add(f.name.slice(0, -5)); }
+  return [...s];
+}
+async function driveDelete(token, id) {
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}`, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
+  if (!r.ok && r.status !== 404) throw new Error('drive delete ' + r.status);
 }
 async function listFolderJson(token, parentId) {
   const q = `'${parentId}' in parents and trashed=false and mimeType!='application/vnd.google-apps.folder'`;

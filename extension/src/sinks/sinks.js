@@ -9,6 +9,7 @@ import { makeZip } from '../lib/zip.js';
 import { pathFor, buildManifest, toRecords, mergeRecords, jsonBlob, today } from './format.js';
 import { driveWrite, driveRead } from './drive.js';
 import { dropboxWrite } from './dropbox.js';
+import { makeShardedStore, pathPrim } from '../lib/store/sharded.js';
 
 export function listSinkTypes() { return ['download', 'local-folder', 'drive', 'http', 'webdav', 's3', 'dropbox']; }
 
@@ -199,6 +200,13 @@ async function s3GetJson(cfg, key) {
     return await r.json().catch(() => []);
   } catch (e) { return []; }
 }
+async function s3Delete(cfg, key) {
+  const url = s3Url(cfg, key);
+  const { headers } = await sigv4Sign({ method: 'DELETE', url, region: cfg.region, accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey, amzDate: amzNow(), payloadHash: S3_EMPTY_SHA });
+  const r = await fetch(url, { method: 'DELETE', headers });
+  if (!r.ok && r.status !== 404) throw new Error('s3 delete ' + r.status);
+}
+const s3BucketRoot = (c) => c.endpoint ? (c.pathStyle ? `${c.endpoint}/${c.bucket}` : c.endpoint) : (c.pathStyle ? `https://s3.${c.region}.amazonaws.com/${c.bucket}` : `https://${c.bucket}.s3.${c.region}.amazonaws.com`);
 
 function triggerDownload(blob, name) {
   const url = URL.createObjectURL(blob);
@@ -270,50 +278,64 @@ export async function folderRetrieve(dirHandle, relPath) {
 // --- Canonical-store backends (reuse the delivery sinks' primitives) --------------------------------
 // Per-source JSON at <storeFolder>/<sourceId>.json under the sink's target, reusing its credentials.
 // All ops best-effort/silent — a store read/write must never break a List or delivery.
+// Month-SHARDED (see lib/store/sharded.js). io supplies path file I/O; the sharded/pathPrim layer does the rest.
 export function webdavStore(sink, cfg = {}) {
   const base = String(sink.url || '').replace(/\/+$/, '');
   const folder = (cfg && cfg.storeFolder) || '_store';
-  const rel = (id) => folder + '/' + id + '.json';
-  return {
-    async loadSource(id) {
-      try { const auth = await webdavAuthHeader(sink); const j = await webdavGetJson(base + '/' + encodePath(rel(id)), auth); return j && typeof j === 'object' && !Array.isArray(j) && j.items ? j : null; } catch (e) { return null; }
+  const url = (rel) => base + '/' + encodePath(rel);
+  const io = {
+    async readJson(rel) {
+      try { const auth = await webdavAuthHeader(sink); const r = await fetch(url(rel), { headers: { ...(auth ? { Authorization: auth } : {}), Accept: 'application/json' } }); if (!r.ok) return null; const j = await r.json().catch(() => null); return j && typeof j === 'object' && !Array.isArray(j) ? j : null; } catch (e) { return null; }
     },
-    async saveSource(id, data) {
-      try { const auth = await webdavAuthHeader(sink); await webdavMkcols(base, rel(id), auth, new Set()); await webdavPut(base + '/' + encodePath(rel(id)), jsonBlob(JSON.stringify(data)), auth); } catch (e) { /* best-effort */ }
-    },
-    async listSources() {
+    async writeJson(rel, obj) { const auth = await webdavAuthHeader(sink); await webdavMkcols(base, rel, auth, new Set()); await webdavPut(url(rel), jsonBlob(JSON.stringify(obj)), auth); },
+    async removePath(rel) { try { const auth = await webdavAuthHeader(sink); await fetch(url(rel), { method: 'DELETE', headers: auth ? { Authorization: auth } : {} }); } catch (e) { /* best-effort */ } },
+    async removeDir(rel) { try { const auth = await webdavAuthHeader(sink); await fetch(url(rel) + '/', { method: 'DELETE', headers: auth ? { Authorization: auth } : {} }); } catch (e) { /* best-effort */ } },
+    async listDir(rel) {
       try {
         const auth = await webdavAuthHeader(sink);
-        const r = await fetch(base + '/' + encodePath(folder) + '/', { method: 'PROPFIND', headers: { ...(auth ? { Authorization: auth } : {}), Depth: '1' } });
+        const dirUrl = url(rel) + '/';
+        const r = await fetch(dirUrl, { method: 'PROPFIND', headers: { ...(auth ? { Authorization: auth } : {}), Depth: '1' } });
         if (!r.ok) return [];
         const txt = await r.text();
-        return [...new Set([...txt.matchAll(/href\s*>\s*([^<]+?\.json)\s*<\/[a-z:]*href/gi)].map((m) => decodeURIComponent(m[1].split('/').filter(Boolean).pop()).replace(/\.json$/, '')))];
+        const self = decodeURIComponent(new URL(dirUrl).pathname).replace(/\/+$/, '');
+        const out = [];
+        for (const m of txt.matchAll(/<[a-z0-9]*:?response\b[\s\S]*?<\/[a-z0-9]*:?response>/gi)) {
+          const block = m[0]; const hm = block.match(/<[a-z0-9]*:?href\s*>\s*([^<]+?)\s*<\/[a-z0-9]*:?href>/i); if (!hm) continue;
+          const href = decodeURIComponent(hm[1]); const hp = (href.startsWith('http') ? new URL(href).pathname : href);
+          if (hp.replace(/\/+$/, '') === self) continue; // the collection itself
+          const isDir = /<[a-z0-9]*:?collection\b/i.test(block) || href.endsWith('/');
+          const name = hp.replace(/\/+$/, '').split('/').filter(Boolean).pop();
+          if (name) out.push({ name, isDir });
+        }
+        return out;
       } catch (e) { return []; }
     },
   };
+  return makeShardedStore(pathPrim(io, folder));
 }
 
+// Month-SHARDED (see lib/store/sharded.js). S3 has no real folders → listDir uses a delimiter listing.
 export function s3Store(sink, cfg = {}) {
   const folder = (cfg && cfg.storeFolder) || '_store';
-  const keyOf = (id) => folder + '/' + id + '.json';
-  return {
-    async loadSource(id) {
-      try { const c = await s3Config(sink); const j = await s3GetJson(c, s3Key(c, keyOf(id))); return j && typeof j === 'object' && !Array.isArray(j) && j.items ? j : null; } catch (e) { return null; }
+  const io = {
+    async readJson(rel) {
+      try { const c = await s3Config(sink); const url = s3Url(c, s3Key(c, rel)); const { headers } = await sigv4Sign({ method: 'GET', url, region: c.region, accessKeyId: c.accessKeyId, secretAccessKey: c.secretAccessKey, amzDate: amzNow(), payloadHash: S3_EMPTY_SHA }); const r = await fetch(url, { headers }); if (!r.ok) return null; const j = await r.json().catch(() => null); return j && typeof j === 'object' && !Array.isArray(j) ? j : null; } catch (e) { return null; }
     },
-    async saveSource(id, data) {
-      try { const c = await s3Config(sink); await s3Put(c, s3Key(c, keyOf(id)), jsonBlob(JSON.stringify(data))); } catch (e) { /* best-effort */ }
-    },
-    async listSources() {
+    async writeJson(rel, obj) { const c = await s3Config(sink); await s3Put(c, s3Key(c, rel), jsonBlob(JSON.stringify(obj))); },
+    async removePath(rel) { try { const c = await s3Config(sink); await s3Delete(c, s3Key(c, rel)); } catch (e) { /* best-effort */ } },
+    async listDir(rel) {
       try {
         const c = await s3Config(sink);
-        const bucketRoot = c.endpoint ? (c.pathStyle ? `${c.endpoint}/${c.bucket}` : c.endpoint) : (c.pathStyle ? `https://s3.${c.region}.amazonaws.com/${c.bucket}` : `https://${c.bucket}.s3.${c.region}.amazonaws.com`);
-        const url = `${bucketRoot}/?list-type=2&prefix=${encodeURIComponent(s3Key(c, folder + '/'))}`;
+        const prefix = s3Key(c, rel + '/');
+        const url = `${s3BucketRoot(c)}/?list-type=2&delimiter=%2F&prefix=${encodeURIComponent(prefix)}`;
         const { headers } = await sigv4Sign({ method: 'GET', url, region: c.region, accessKeyId: c.accessKeyId, secretAccessKey: c.secretAccessKey, amzDate: amzNow(), payloadHash: S3_EMPTY_SHA });
-        const r = await fetch(url, { headers });
-        if (!r.ok) return [];
-        const txt = await r.text();
-        return [...new Set([...txt.matchAll(/<Key>\s*([^<]+?)\.json\s*<\/Key>/gi)].map((m) => m[1].split('/').filter(Boolean).pop()))];
+        const r = await fetch(url, { headers }); if (!r.ok) return [];
+        const txt = await r.text(); const out = [];
+        for (const m of txt.matchAll(/<Key>\s*([^<]+?)\s*<\/Key>/gi)) { if (m[1] === prefix) continue; const name = m[1].split('/').filter(Boolean).pop(); if (name) out.push({ name, isDir: false }); }
+        for (const m of txt.matchAll(/<Prefix>\s*([^<]+?)\s*<\/Prefix>/gi)) { if (m[1] === prefix) continue; const name = m[1].replace(/\/+$/, '').split('/').filter(Boolean).pop(); if (name) out.push({ name, isDir: true }); }
+        return out;
       } catch (e) { return []; }
     },
   };
+  return makeShardedStore(pathPrim(io, folder)); // no removeDir → removeSource deletes each child object
 }
