@@ -38,6 +38,7 @@ let ACCOUNT = '';     // account (record.group) filter
 let GROUPMODE = 'month';
 let SELECTING = false;
 let LP_SWALLOW = false;          // a long-press just fired → swallow the click it produces
+let LAZY_OBS = null;             // IntersectionObserver rendering more document groups as they scroll into view
 const PICKED = new Set();
 let STORE_LOCAL = false;        // the canonical store is still the default per-browser backend (→ first-run wizard)
 let ONBOARD_DISMISSED = false;  // the user chose to keep the local store
@@ -523,16 +524,31 @@ async function renderDocs() {
     ${sendBtns}${sendMore}
     <button class="go" id="selopen">${esc(t('archive_open_saved'))}</button>
     <button class="clr" id="selclear">${esc(t('archive_clear'))}</button></div>`;
+  if (LAZY_OBS) { LAZY_OBS.disconnect(); LAZY_OBS = null; } // drop any prior source's lazy renderer
   m.innerHTML = head + '<div id="arch-groups"></div>' + selbar;
   m.classList.toggle('selecting', SELECTING);
   const container = document.getElementById('arch-groups');
   if (gate) { container.innerHTML = `<div class="empty"><div class="big">👈</div><div style="font-family:var(--font-head);font-weight:600;font-size:17px;color:var(--ink)">${esc(t('archive_pick_account'))}</div><p style="margin-top:6px">${esc(t('archive_pick_account_sub', [String(buckets.length)]))}</p></div>`; return; }
   if (!docs.length) { container.innerHTML = emptyState(t('no_documents'), t('archive_empty_source')); return; }
   const groups = groupDocs(docs);
-  for (let gi = 0; gi < groups.length; gi++) {
-    if (seq !== docsSeq) return; // superseded → stop appending
-    container.insertAdjacentHTML('beforeend', groupHtml(groups[gi], entry));
-    if (gi % 5 === 4 && gi + 1 < groups.length) await new Promise((r) => setTimeout(r, 0)); // yield every 5 groups
+  // Progressive render: paint the first few groups (newest first), then append more as a sentinel scrolls near —
+  // a source with years of history no longer freezes the tab building thousands of cards up front.
+  container.innerHTML = '<div id="arch-sentinel" style="height:1px"></div>';
+  const sentinel = document.getElementById('arch-sentinel');
+  let rendered = 0;
+  const BATCH = 8;
+  const renderMore = () => {
+    if (seq !== docsSeq) { if (LAZY_OBS) { LAZY_OBS.disconnect(); LAZY_OBS = null; } return; } // superseded
+    const end = Math.min(rendered + BATCH, groups.length);
+    let html = ''; for (let gi = rendered; gi < end; gi++) html += groupHtml(groups[gi], entry);
+    sentinel.insertAdjacentHTML('beforebegin', html);
+    rendered = end;
+    if (rendered >= groups.length && LAZY_OBS) { LAZY_OBS.disconnect(); LAZY_OBS = null; sentinel.remove(); }
+  };
+  renderMore(); // first batch — visible immediately
+  if (rendered < groups.length) {
+    LAZY_OBS = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) renderMore(); }, { rootMargin: '800px' });
+    LAZY_OBS.observe(sentinel);
   }
   updateSelCount();
 }

@@ -22,6 +22,14 @@ import { emptySource, mergeItems, mergeSources } from './format.js';
 
 const META = '_meta';
 const UNDATED = '_undated';
+// Run `fn` over `items` with at most `cap` in flight; returns results aligned with the input order.
+async function mapLimit(items, cap, fn) {
+  const out = new Array(items.length);
+  let i = 0;
+  const worker = async () => { while (i < items.length) { const k = i++; out[k] = await fn(items[k], k); } };
+  await Promise.all(Array.from({ length: Math.min(cap, items.length) }, worker));
+  return out;
+}
 // Shard bucket for an entry, from record.date: YYYY-MM (a bare date or an ISO datetime); a YEAR-only date (some
 // sources — Amazon — expose only the year in their listing) buckets by year; anything else is _undated.
 function periodOf(entry) {
@@ -44,11 +52,13 @@ export function makeShardedStore(prim) {
     let data = emptySource((meta && meta.meta) || (legacy && legacy.meta) || {});
     let heal = false;
     if (legacy && legacy.items) { data = mergeSources(data, legacy); heal = true; } // legacy blob → reformat into shards
-    for (const n of names) {
-      const sh = await prim.readShard(id, n).catch(() => null);
-      if (!sh || !sh.items) continue;
+    // Read every month shard CONCURRENTLY (a source with years of history has dozens; sequential round-trips to a
+    // cloud backend were the slow part of opening it). Bounded fan-out so a cloud backend isn't hammered.
+    const shards = await mapLimit(names, 8, (n) => prim.readShard(id, n).catch(() => null));
+    for (let k = 0; k < names.length; k++) {
+      const sh = shards[k]; if (!sh || !sh.items) continue;
       data = mergeSources(data, { meta: {}, items: sh.items });
-      if (!heal) for (const e of Object.values(sh.items)) if (periodOf(e) !== n) { heal = true; break; } // an entry in the wrong shard
+      if (!heal) for (const e of Object.values(sh.items)) if (periodOf(e) !== names[k]) { heal = true; break; } // an entry in the wrong shard
     }
     if (heal && (!opts || opts.interactive !== false)) {
       try { await saveSource(id, data); } catch (e) { /* no token/permission for a write → serve the read-only assembly */ }

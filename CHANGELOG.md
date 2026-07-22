@@ -54,6 +54,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   option to fetch just the JSON (no wasteful PDF fallback). No-ops silently for sources with no JSON detail.
 
 ### Fixed
+- **Opening a big source in the Archive is fast again + renders progressively** (`lib/store/sharded.js`,
+  `ui/archive.js`). Month-sharding made loading a source with years of history slow — `loadSource` read its
+  dozens of shards **sequentially** (one cloud round-trip each). Shards are now read **concurrently** (bounded
+  fan-out of 8). And the document list renders **progressively**: the newest few month/category groups paint
+  immediately, then more append as a sentinel scrolls into view (IntersectionObserver), instead of building
+  thousands of cards up front and showing them all at once.
 - **Long operations retry instead of failing when the service worker is recycled** (`ui/archive.js`,
   `background.js`). MV3 recycles the background service worker mid-operation, closing the message channel before
   the response arrives ("A listener indicated an asynchronous response by returning true, but the message channel
