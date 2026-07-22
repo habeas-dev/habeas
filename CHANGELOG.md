@@ -10,6 +10,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-07-22
+
+### Added
 - **"Recover data from destination"** (`background.js`, `sinks/sinks.js`, `ui/archive.js`). A source whose
   listing exposes only a coarse stub (Amazon: a year, no amount) determined each document's real date **and
   amount and details** at download time, but a past build wrote them only to the delivered files + the
