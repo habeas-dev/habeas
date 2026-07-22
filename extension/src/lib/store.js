@@ -4,6 +4,12 @@
 // move it between backends (a union-merge, never clobbering). Record shaping lives in the pure format module.
 import { chrome } from './ext.js';
 import * as local from './store/local.js';
+import * as folder from './store/folder.js';
+import * as http from './store/http.js';
+import * as drive from './store/drive.js';
+import * as dropbox from './store/dropbox.js';
+import * as webdav from './store/webdav.js';
+import * as s3 from './store/s3.js';
 import { emptySource, mergeItems, mergeSources, project, views } from './store/format.js';
 
 const CFG_KEY = 'habeas:store';
@@ -13,19 +19,15 @@ export async function setStoreConfig(cfg) { await chrome.storage.local.set({ [CF
 let override = null;               // tests inject an in-memory backend
 export function setBackend(b) { override = b; }
 
-// A backend implements { loadSource(id)->data|null, saveSource(id,data), listSources()->[id] }. local is a
-// static module; folder/drive/http are factories bound to their config (dir handle / Drive folder / URL).
+// A backend implements { loadSource(id)->data|null, saveSource(id,data), appendItems, listSources()->[id], … }.
+// `local` is a static module; the others are factories bound to their config (dir handle / Drive folder / URL).
+// Modules are imported STATICALLY (not via dynamic import()) because dynamic import() is disallowed in an MV3
+// service worker — a background store write to a cloud backend used to fail silently on that alone.
+const BACKENDS = { folder, http, drive, dropbox, webdav, s3 };
 async function makeBackend(cfg) {
   cfg = cfg || (await getStoreConfig());
-  switch (cfg && cfg.backend) {
-    case 'folder': return (await import('./store/folder.js')).make(cfg);
-    case 'http': return (await import('./store/http.js')).make(cfg);
-    case 'drive': return (await import('./store/drive.js')).make(cfg);
-    case 'dropbox': return (await import('./store/dropbox.js')).make(cfg);
-    case 'webdav': return (await import('./store/webdav.js')).make(cfg);
-    case 's3': return (await import('./store/s3.js')).make(cfg);
-    default: return local;
-  }
+  const mod = BACKENDS[cfg && cfg.backend];
+  return mod ? mod.make(cfg) : local;
 }
 async function backendFor() { return override || makeBackend(); }
 // The active configured backend (respects a test-injected override). Used by the store migration to walk and

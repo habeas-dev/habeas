@@ -51,6 +51,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   option to fetch just the JSON (no wasteful PDF fallback). No-ops silently for sources with no JSON detail.
 
 ### Fixed
+- **Cloud store writes/reads from the background actually work now (root cause of several store bugs)**
+  (`lib/store.js`). `makeBackend` resolved non-`local` backends with a dynamic `import()`, which is **disallowed
+  in an MV3 service worker** ("import() is disallowed on ServiceWorkerGlobalScope"). So every canonical-store
+  operation from the background — `recordDelivered` write-through on download, `listSources`, the new date
+  reconcile — silently failed for a Dropbox/Drive/WebDAV/S3 store. This is why a download never wrote the real
+  date back to the store, and why the store looked unlistable from the service worker. All backends are now
+  imported **statically**.
 - **The "Stop" button only shows while something is running** (`ui/archive.html`). The `.abar button` rule set
   `display:inline-flex`, which overrode the `hidden` attribute, so the red Stop button was always visible. Added
   the `.abar button[hidden]{display:none}` override (same pattern already used for menus/overlays).
