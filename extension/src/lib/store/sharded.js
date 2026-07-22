@@ -32,27 +32,25 @@ function periodOf(entry) {
 }
 
 export function makeShardedStore(prim) {
-  // Assemble a source from its legacy blob (if any) ∪ every month shard → { meta, items }.
-  async function assemble(id, legacy, names, meta) {
-    let data = emptySource((meta && meta.meta) || (legacy && legacy.meta) || {});
-    if (legacy && legacy.items) data = mergeSources(data, legacy);
-    for (const n of names) {
-      const s = await prim.readShard(id, n).catch(() => null);
-      if (s && s.items) data = mergeSources(data, { meta: {}, items: s.items });
-    }
-    return data;
-  }
-
-  // Reassemble a source → { meta, items } (or null). A legacy single blob is REFORMATTED into month shards
-  // here on load (one-time), so simply opening the Archive migrates it — unless this is a passive read
-  // (opts.interactive === false, e.g. a badge probe), where we must not write.
+  // Reassemble a source → { meta, items } (or null). Two things heal on load (one saveSource re-splits into the
+  // right shards): a legacy single blob is reformatted into shards, AND entries sitting in the WRONG shard —
+  // e.g. year-dated records an older periodOf dumped into _undated — are moved to their correct shard. So simply
+  // opening the Archive fixes both. Skipped on a passive read (opts.interactive === false, e.g. a badge probe).
   async function loadSource(id, opts) {
     const legacy = await prim.readLegacy(id).catch(() => null);
     const names = await prim.listShardNames(id).catch(() => []);
     const meta = await prim.readShard(id, META).catch(() => null);
     if (!legacy && !names.length && !meta) return null; // nothing stored for this source
-    const data = await assemble(id, legacy, names, meta);
-    if (legacy && legacy.items && (!opts || opts.interactive !== false)) {
+    let data = emptySource((meta && meta.meta) || (legacy && legacy.meta) || {});
+    let heal = false;
+    if (legacy && legacy.items) { data = mergeSources(data, legacy); heal = true; } // legacy blob → reformat into shards
+    for (const n of names) {
+      const sh = await prim.readShard(id, n).catch(() => null);
+      if (!sh || !sh.items) continue;
+      data = mergeSources(data, { meta: {}, items: sh.items });
+      if (!heal) for (const e of Object.values(sh.items)) if (periodOf(e) !== n) { heal = true; break; } // an entry in the wrong shard
+    }
+    if (heal && (!opts || opts.interactive !== false)) {
       try { await saveSource(id, data); } catch (e) { /* no token/permission for a write → serve the read-only assembly */ }
     }
     return data;

@@ -79,6 +79,29 @@ test('a document also moves out of _undated once it gains any date', async () =>
   assert.deepEqual(ids(await s.loadSource('x')), ['U1']);
 });
 
+test('loadSource self-heals entries left in the wrong shard (year-dated records dumped in _undated)', async () => {
+  const b = memBackend(); const s = makeShardedStore(b);
+  // Simulate what an older periodOf wrote: year-only records sitting in _undated.
+  b.shards.set('amazon-es/_undated', { items: {
+    O1: { record: { internalId: 'O1', date: '2026' }, at: '1' },
+    O2: { record: { internalId: 'O2', date: '2025' }, at: '1' },
+    U0: { record: { internalId: 'U0', date: '' }, at: '1' },
+  } });
+  const data = await s.loadSource('amazon-es');
+  assert.deepEqual(ids(data), ['O1', 'O2', 'U0'], 'all items still returned');
+  assert.deepEqual(shardItems(b, 'amazon-es', '2026'), ['O1'], 'the 2026 record moved to its year shard');
+  assert.deepEqual(shardItems(b, 'amazon-es', '2025'), ['O2']);
+  assert.deepEqual(shardItems(b, 'amazon-es', '_undated'), ['U0'], 'only the truly-dateless one stays in _undated');
+});
+
+test('a passive load does NOT self-heal misplaced shards (no write without a session)', async () => {
+  const b = memBackend(); const s = makeShardedStore(b);
+  b.shards.set('x/_undated', { items: { O1: { record: { internalId: 'O1', date: '2026' }, at: '1' } } });
+  await s.loadSource('x', { interactive: false });
+  assert.deepEqual(shardItems(b, 'x', '_undated'), ['O1'], 'left in place on a passive read');
+  assert.ok(!has(b, 'x', '2026'));
+});
+
 test('a legacy single blob is reformatted into month shards on load (auto-migration)', async () => {
   const b = memBackend(); const s = makeShardedStore(b);
   b.legacy.set('amazon-es', { meta: { source: 'amazon-es' }, items: {

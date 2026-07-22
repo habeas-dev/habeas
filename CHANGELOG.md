@@ -54,7 +54,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   independently of delivery (`adoptRealDate` fetches the detail just for the date when it's still year-only), (2)
   a year-only date buckets by **year** (a year is a date), not `_undated`, and (3) `appendItems` **moves** a
   document to its month shard once its date becomes precise, dropping the stale copy from the coarser (year /
-  `_undated`) shard — no duplicates. Covered by `test/sharded-store.test.mjs`.
+  `_undated`) shard — no duplicates. **`loadSource` also self-heals**: entries an older build left in the wrong
+  shard (e.g. a whole Amazon history dumped in `_undated`) are re-split into the right shards the next time the
+  Archive is opened. Covered by `test/sharded-store.test.mjs`.
 - **Large downloads checkpoint incrementally — no more "500 downloaded, metadata lost"** (`background.js`). A
   long download (`runRoute` Save / Sync-all, `sendStoredDocs` Send/Re-download) used to fetch every document,
   then write the files + delivery ledger + canonical-store records **once at the very end** — so any interruption
