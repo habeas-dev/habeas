@@ -131,11 +131,32 @@ function fileFormatsFor(adapter, streamId) {
 }
 
 // ---- data load ----
-// Build the index SHELL cheaply — just the source keys + adapter metadata, NO per-source item load. So the
-// page paints instantly; counts/dates fill in afterwards (hydrateIndex) with throbbers. This is what fixes
-// "the archive takes forever": we no longer load every source fully before showing anything.
+// Lightweight local cache of the index metadata (sources, counts, last date, accounts) so the Archive paints
+// REAL data instantly on open instead of empty rows/throbbers while the (possibly cloud) store is read. Refreshed
+// in the background on every hydrate; the store stays the source of truth.
+const CACHE_KEY = 'habeas:archive-cache';
+async function loadCache() { try { return (await chrome.storage.local.get(CACHE_KEY))[CACHE_KEY] || null; } catch (e) { return null; } }
+async function saveCache() {
+  const sources = {};
+  for (const s of INDEX) sources[s.base] = { name: s.name, primaryCat: s.primaryCat, count: s.count, lastDate: s.lastDate, accounts: s.accounts || [] };
+  try { await chrome.storage.local.set({ [CACHE_KEY]: { at: Date.now(), sources } }); } catch (e) {}
+}
+// Paint an index straight from the cache — before any store call — so opening the Archive is never blank.
+function seedIndexFromCache(cache) {
+  const cs = (cache && cache.sources) || {};
+  INDEX = Object.keys(cs).map((base) => {
+    const c = cs[base];
+    const ds = (CFG.datasources || []).find((d) => d.adapter === base) || (CFG.datasources || []).find((d) => d.id === base) || null;
+    const adapter = (ds && ADAPTERS[ds.adapter]) || ADAPTERS[base] || null;
+    return { base, ds, adapter, name: c.name || (adapter && adapter.name) || base, count: c.count, lastDate: c.lastDate, primaryCat: c.primaryCat || primaryCatOf(adapter), accounts: c.accounts || [], keys: [] };
+  }).filter((s) => s.count > 0 || s.ds).sort((a, b) => (b.lastDate || '').localeCompare(a.lastDate || '') || (b.count || 0) - (a.count || 0) || a.name.localeCompare(b.name));
+}
+// Build the index SHELL — source keys + adapter metadata, seeding count/lastDate/accounts from the cache so known
+// sources show REAL numbers immediately (no throbber); genuinely-new sources start null and hydrate in. NO
+// per-source item load here, so the page stays snappy even against a slow backend.
 async function buildIndex() {
   const keys = await listSources();
+  const cs = ((await loadCache()) || {}).sources || {};
   const storeBases = keys.map((k) => String(k).split(':')[0]);
   // Also list every ENABLED, installed datasource — even with no stored docs yet — so the Archive is a complete
   // source manager: a freshly-installed source shows up and can be Refreshed to pull its first documents (this is
@@ -145,8 +166,9 @@ async function buildIndex() {
   INDEX = bases.map((base) => {
     const ds = (CFG.datasources || []).find((d) => d.adapter === base) || (CFG.datasources || []).find((d) => d.id === base) || null;
     const adapter = (ds && ADAPTERS[ds.adapter]) || ADAPTERS[base] || null;
-    return { base, ds, adapter, name: (adapter && adapter.name) || base, count: null, lastDate: null, primaryCat: primaryCatOf(adapter), keys: keys.filter((k) => String(k).split(':')[0] === base) };
-  }).sort((a, b) => a.name.localeCompare(b.name));
+    const c = cs[base] || {};
+    return { base, ds, adapter, name: (adapter && adapter.name) || base, count: (c.count != null ? c.count : null), lastDate: (c.lastDate != null ? c.lastDate : null), primaryCat: primaryCatOf(adapter), accounts: c.accounts || [], keys: keys.filter((k) => String(k).split(':')[0] === base) };
+  }).sort((a, b) => (b.lastDate || '').localeCompare(a.lastDate || '') || (b.count || 0) - (a.count || 0) || a.name.localeCompare(b.name));
 }
 // Load each source's live count + last date one at a time, yielding between them so the shell stays responsive,
 // and patch that source's card/rail node in place (throbber → value). When all are known, drop empty sources
@@ -158,12 +180,12 @@ async function hydrateIndex() {
   const grid = document.querySelector('.idx-grid'); if (grid) grid.classList.add('hydrating');
   for (const s of INDEX) {
     if (seq !== hydrateSeq) return; // a newer refresh started
-    let count = 0, lastDate = '';
+    let count = 0, lastDate = ''; const accSet = new Set();
     for (const key of s.keys) {
       const src = await getSource(key).catch(() => null); if (!src || !src.items) continue;
-      for (const e of Object.values(src.items)) { if (e.gone) continue; if (!groupAllowed(s.ds, e.record && e.record.group)) continue; count++; const dt = (e.record && e.record.date) || ''; if (dt > lastDate) lastDate = dt; }
+      for (const e of Object.values(src.items)) { if (e.gone) continue; const g = e.record && e.record.group; if (!groupAllowed(s.ds, g)) continue; count++; const dt = (e.record && e.record.date) || ''; if (dt > lastDate) lastDate = dt; if (g) accSet.add(g); }
     }
-    s.count = count; s.lastDate = lastDate;
+    s.count = count; s.lastDate = lastDate; s.accounts = [...accSet].sort();
     patchMeta(s);
     await new Promise((r) => setTimeout(r, 0)); // yield → paint between sources
   }
@@ -173,6 +195,7 @@ async function hydrateIndex() {
   INDEX = INDEX.filter((s) => s.count > 0 || s.ds).sort((a, b) => (b.lastDate || '').localeCompare(a.lastDate || '') || (b.count || 0) - (a.count || 0) || a.name.localeCompare(b.name));
   $('#astatus').textContent = '';
   if (CUR === null) renderIndex(); else renderRail(); // reflect final order (index) / final counts (rail)
+  await saveCache(); // persist the fresh numbers + accounts for an instant next open
 }
 // Refresh ONLY the current source in place: recompute its stored docs + its own tree count/date and re-render,
 // WITHOUT re-hydrating (re-counting) every other source. A single-source action (Refresh, Save, Send, Accounts)
@@ -185,13 +208,14 @@ async function reloadCurrent() {
   if (s) {
     s.keys = keys;
     s.ds = (CFG.datasources || []).find((d) => d.adapter === CUR) || (CFG.datasources || []).find((d) => d.id === CUR) || s.ds; // pick up a just-saved account allow-list
-    let count = 0, lastDate = '';
+    let count = 0, lastDate = ''; const accSet = new Set();
     for (const key of keys) {
       const src = await getSource(key).catch(() => null); if (!src || !src.items) continue;
-      for (const e of Object.values(src.items)) { if (e.gone) continue; if (!groupAllowed(s.ds, e.record && e.record.group)) continue; count++; const dt = (e.record && e.record.date) || ''; if (dt > lastDate) lastDate = dt; }
+      for (const e of Object.values(src.items)) { if (e.gone) continue; const g = e.record && e.record.group; if (!groupAllowed(s.ds, g)) continue; count++; const dt = (e.record && e.record.date) || ''; if (dt > lastDate) lastDate = dt; if (g) accSet.add(g); }
     }
-    s.count = count; s.lastDate = lastDate;
+    s.count = count; s.lastDate = lastDate; s.accounts = [...accSet].sort();
     patchMeta(s);
+    saveCache(); // keep the cache fresh after a single-source refresh
   }
   renderRail(); renderDocs();
 }
@@ -239,7 +263,14 @@ function enrich(r, k) {
 
 // ---- rendering: rail ----
 const NO_ACCOUNT = '__habeas_no_account__'; // sentinel ACCOUNT = documents in a grouped source with no account
-function accountsOf(base) { return [...new Set(CURDOCS.filter((r) => r.base === base).map((r) => r.record.group).filter(Boolean))].sort(); }
+// Accounts of a source: from the currently-loaded docs when available, else the cached list (so the tree shows
+// accounts instantly on open, before this source's documents finish loading).
+function accountsOf(base) {
+  const fromDocs = [...new Set(CURDOCS.filter((r) => r.base === base).map((r) => r.record.group).filter(Boolean))].sort();
+  if (fromDocs.length) return fromDocs;
+  const s = INDEX.find((x) => x.base === base);
+  return (s && s.accounts && s.accounts.length) ? s.accounts.slice() : [];
+}
 function hasUngrouped(base) { return CURDOCS.some((r) => r.base === base && !r.record.group); }
 // Selectable buckets in the account tree = the real accounts + a "No account" bucket when there are docs with
 // no associated account (so they're reachable, not hidden by the multi-account gate).
@@ -802,12 +833,20 @@ async function init() {
   try { STORE_LOCAL = ((await getStoreConfig()).backend || 'local') === 'local'; } catch (e) {}
   try { ONBOARD_DISMISSED = !!(await chrome.storage.local.get('habeas:onboard-dismissed'))['habeas:onboard-dismissed']; } catch (e) {}
   wire();
-  await buildIndex();                 // instant shell (no per-source item load)
-  renderRail();
-  // deep-link ?src=<base> opens a source directly (used by the popup entry point)
   const want = new URLSearchParams(location.search).get('src');
+  // 1) Paint REAL data instantly from the local cache — sources, counts, accounts — before touching the store.
+  const cache = await loadCache();
+  if (cache && Object.keys((cache.sources) || {}).length) {
+    seedIndexFromCache(cache);
+    renderRail();
+    if (!(want && INDEX.some((x) => x.base === want))) renderIndex(); // (a deep-link opens its source below)
+  }
+  // 2) Reconcile against the store (buildIndex re-seeds counts from cache too → still no throbbers for known
+  //    sources), then hydrate live counts in the background and refresh the cache.
+  await buildIndex();
+  renderRail();
   if (want && INDEX.some((x) => x.base === want)) await openSource(want);
   else renderIndex();
-  hydrateIndex();                     // fill counts/dates in the background, with throbbers
+  hydrateIndex();
 }
 init();

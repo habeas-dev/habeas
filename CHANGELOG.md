@@ -11,6 +11,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **The Archive paints from a local cache on open** (`ui/archive.js`). Basic index metadata — the existing
+  sources, each source's document count + last date, and its accounts (groups) — is cached in `storage.local`
+  (`habeas:archive-cache`) and rendered instantly on open, so the Archive is never blank/throbbing while a
+  (possibly cloud) store is read. It then reconciles against the store and hydrates live counts in the
+  background, refreshing the cache. `buildIndex` seeds counts from the cache too (known sources show real numbers,
+  no throbber); `accountsOf` falls back to the cached accounts so the account tree shows instantly on open.
 - **Inline document preview in the Archive** (`ui/archive.js`, `ui/archive.html`). Previewable delivered files
   (PDF, HTML, images) now open in an overlay inside the Archive — a 👁 Preview action in the document drawer —
   instead of a separate tab. It fetches the file's blob from its destination via the same `retrieveDelivered`
