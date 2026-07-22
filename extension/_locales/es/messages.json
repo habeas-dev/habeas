@@ -2188,7 +2188,7 @@
     "message": "Guardado"
   },
   "archive_status_local": {
-    "message": "Solo en tu archivo"
+    "message": "Pendiente"
   },
   "archive_empty_title": {
     "message": "Aún no hay nada aquí"
@@ -2462,10 +2462,10 @@
     "message": "Ninguno"
   },
   "archive_status_local_hint": {
-    "message": "Recuperado y guardado en tu archivo. Aún no copiado a un destino externo."
+    "message": "Los datos están en tu archivo; el fichero aún está pendiente de guardar en tu destino."
   },
   "archive_status_saved_hint": {
-    "message": "Copiado además a: $DEST$",
+    "message": "Fichero guardado en: $DEST$",
     "placeholders": {
       "dest": {
         "content": "$1"
@@ -2473,7 +2473,7 @@
     }
   },
   "archive_legend": {
-    "message": "«En tu archivo» = recuperado en tu archivo local. «Guardado» = copiado además a un destino externo."
+    "message": "«Pendiente» = tenemos los datos en tu archivo, pero el fichero aún no se ha guardado. «Guardado» = el fichero está guardado en tu destino."
   },
   "onboard_title": {
     "message": "Configura tu archivo"

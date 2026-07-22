@@ -2188,7 +2188,7 @@
     "message": "Saved"
   },
   "archive_status_local": {
-    "message": "Only in your archive"
+    "message": "Pending"
   },
   "archive_empty_title": {
     "message": "Nothing here yet"
@@ -2462,10 +2462,10 @@
     "message": "None"
   },
   "archive_status_local_hint": {
-    "message": "Recovered and kept in your archive. Not yet copied to an external destination."
+    "message": "The data is in your archive; the file itself is still pending — not yet saved to your destination."
   },
   "archive_status_saved_hint": {
-    "message": "Also copied to: $DEST$",
+    "message": "File saved to: $DEST$",
     "placeholders": {
       "dest": {
         "content": "$1"
@@ -2473,7 +2473,7 @@
     }
   },
   "archive_legend": {
-    "message": "“In your archive” = recovered into your local archive. “Saved” = also copied to an external destination."
+    "message": "“Pending” = we have the data in your archive, but the file itself isn't saved yet. “Saved” = the file is saved to your destination."
   },
   "onboard_title": {
     "message": "Set up your archive"
