@@ -27,7 +27,7 @@
     "message": "Listar documentos"
   },
   "load_store": {
-    "message": "Cargar del almacén"
+    "message": "Cargar del archivo"
   },
   "outputs_label": {
     "message": "Obtener:"
@@ -82,16 +82,16 @@
     "message": "Todas las cuentas"
   },
   "full_history_hint": {
-    "message": "Vuelve a listar todo en fresco desde el sitio para poder re-descargar los documentos seleccionados (las filas cargadas del almacén local son solo registro y NO se re-descargan). Requiere tener la sesión iniciada en el sitio."
+    "message": "Vuelve a listar todo en fresco desde el sitio para poder re-descargar los documentos seleccionados (las filas cargadas del archivo local son solo registro y NO se re-descargan). Requiere tener la sesión iniciada en el sitio."
   },
   "force_redownload": {
     "message": "Re-descargar del sitio"
   },
   "force_redownload_hint": {
-    "message": "Vuelve a bajar del sitio los ficheros + detalles de los documentos seleccionados (incluso filas cargadas del almacén local), actualizando la fecha/importe reales en el almacén. Requiere sesión iniciada."
+    "message": "Vuelve a bajar del sitio los ficheros + detalles de los documentos seleccionados (incluso filas cargadas del archivo local), actualizando la fecha/importe reales en el archivo. Requiere sesión iniciada."
   },
   "n_from_store": {
-    "message": "$N$ del almacén (sin extraer)",
+    "message": "$N$ del archivo (sin extraer)",
     "placeholders": {
       "n": {
         "content": "$1"
@@ -1530,16 +1530,16 @@
     "message": "Buscar fuentes por nombre, servicio, categoría…"
   },
   "store_title": {
-    "message": "Almacén canónico"
+    "message": "Tu archivo"
   },
   "store_help": {
     "message": "Dónde se guardan tus datos extraídos. Los destinos y consumidores se sirven de él — así un segundo destino, dispositivo o consumidor de solo-datos lo reutiliza en vez de re-extraer. Elige local, una carpeta sincronizada o tu propio endpoint HTTP, y muévelo cuando quieras."
   },
   "dest_multidevice_hint": {
-    "message": "¿Sincronizas entre dispositivos? Usa un backend de nube nativo que escriba la propia extensión —Google Drive, Dropbox, WebDAV o S3— como almacén y destino. No apuntes la opción de carpeta local a una carpeta sincronizada por una herramienta externa (Google Drive Desktop, grive2, rclone…): la extensión no puede deduplicar contra ficheros que crea otra app (y con el scope drive.file de Drive ni siquiera los ve), lo que duplica carpetas. Un backend nativo es la misma app en cada equipo, así que deduplica entre ellos."
+    "message": "¿Sincronizas entre dispositivos? Usa un backend de nube nativo que escriba la propia extensión —Google Drive, Dropbox, WebDAV o S3— como archivo y destino. No apuntes la opción de carpeta local a una carpeta sincronizada por una herramienta externa (Google Drive Desktop, grive2, rclone…): la extensión no puede deduplicar contra ficheros que crea otra app (y con el scope drive.file de Drive ni siquiera los ve), lo que duplica carpetas. Un backend nativo es la misma app en cada equipo, así que deduplica entre ellos."
   },
   "store_where": {
-    "message": "El almacén vive en:"
+    "message": "Tu archivo vive en:"
   },
   "store_local": {
     "message": "Este dispositivo (local)"
@@ -1563,7 +1563,7 @@
     "message": "— añade antes un sink de este tipo —"
   },
   "store_need_sink": {
-    "message": "Elige un sink configurado para el almacén."
+    "message": "Elige un sink configurado para el archivo."
   },
   "drive_disconnect": {
     "message": "Desconectar Drive"
@@ -1575,10 +1575,10 @@
     "message": "Endpoint HTTP"
   },
   "store_move": {
-    "message": "Mover almacén aquí"
+    "message": "Mover mi archivo aquí"
   },
   "store_browse": {
-    "message": "Inspeccionar almacén…"
+    "message": "Inspeccionar el archivo…"
   },
   "store_pick_folder": {
     "message": "Elegir carpeta…"
@@ -1593,7 +1593,7 @@
     "message": "Importando…"
   },
   "store_imported": {
-    "message": "Importados $N$ registros al almacén.",
+    "message": "Importados $N$ registros al archivo.",
     "placeholders": {
       "n": {
         "content": "$1"
@@ -2399,10 +2399,10 @@
     "message": "Re-escaneando todo el historial…"
   },
   "archive_load_store": {
-    "message": "Cargar desde almacén"
+    "message": "Cargar del archivo local"
   },
   "archive_load_store_hint": {
-    "message": "Recargar desde el almacén local — sin conexión"
+    "message": "Recargar desde el archivo local — sin conexión"
   },
   "open_advanced": {
     "message": "Herramientas avanzadas"
@@ -2445,7 +2445,7 @@
     "message": "Configura tu archivo"
   },
   "onboard_body": {
-    "message": "Habeas recupera tus documentos en tu archivo — el almacén canónico de todo lo que recopila. Ahora mismo ese archivo vive solo en este navegador."
+    "message": "Habeas recupera tus documentos en tu archivo — donde se guarda todo lo que recopila. Ahora mismo ese archivo vive solo en este navegador."
   },
   "onboard_cloud": {
     "message": "Para acceder a tu archivo desde más de un dispositivo o navegador, guárdalo en la nube. Recomendamos Dropbox — el acceso restringido de Google Drive lo hace incómodo para esto."

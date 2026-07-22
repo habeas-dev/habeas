@@ -27,7 +27,7 @@
     "message": "List documents"
   },
   "load_store": {
-    "message": "Load from store"
+    "message": "Load from archive"
   },
   "outputs_label": {
     "message": "Get:"
@@ -82,16 +82,16 @@
     "message": "All accounts"
   },
   "full_history_hint": {
-    "message": "Re-list everything fresh from the site so the selected documents can be re-downloaded (rows loaded from the local store are record-only and are NOT re-fetched). Requires being logged in to the site."
+    "message": "Re-list everything fresh from the site so the selected documents can be re-downloaded (rows loaded from the local archive are record-only and are NOT re-fetched). Requires being logged in to the site."
   },
   "force_redownload": {
     "message": "Re-download from site"
   },
   "force_redownload_hint": {
-    "message": "Re-fetch the selected documents' files + details from the site (even rows loaded from the local store), refreshing the real date/amount in the store. Requires being logged in."
+    "message": "Re-fetch the selected documents' files + details from the site (even rows loaded from the local archive), refreshing the real date/amount in the archive. Requires being logged in."
   },
   "n_from_store": {
-    "message": "$N$ from store (no extraction)",
+    "message": "$N$ from archive (no extraction)",
     "placeholders": {
       "n": {
         "content": "$1"
@@ -1530,16 +1530,16 @@
     "message": "Search sources by name, service, category…"
   },
   "store_title": {
-    "message": "Canonical store"
+    "message": "Your archive"
   },
   "store_help": {
     "message": "Where your extracted data is kept. Sinks and consumers are served from it — so a second sink, device or record-only consumer reuses it instead of re-extracting. Choose local, a synced folder, or your own HTTP endpoint, and move it freely."
   },
   "dest_multidevice_hint": {
-    "message": "Syncing across devices? Use a native cloud backend the extension writes directly — Google Drive, Dropbox, WebDAV or S3 — as both store and sink. Don't point the local-folder option at a folder synced by an external tool (Google Drive Desktop, grive2, rclone…): the extension can't dedup against files another app created (and with Drive's drive.file scope it can't even see them), which duplicates folders. A native backend is the same app on every device, so it dedups across them."
+    "message": "Syncing across devices? Use a native cloud backend the extension writes directly — Google Drive, Dropbox, WebDAV or S3 — as both archive and sink. Don't point the local-folder option at a folder synced by an external tool (Google Drive Desktop, grive2, rclone…): the extension can't dedup against files another app created (and with Drive's drive.file scope it can't even see them), which duplicates folders. A native backend is the same app on every device, so it dedups across them."
   },
   "store_where": {
-    "message": "Store lives in:"
+    "message": "Your archive lives in:"
   },
   "store_local": {
     "message": "This device (local)"
@@ -1563,7 +1563,7 @@
     "message": "— add a sink of this type first —"
   },
   "store_need_sink": {
-    "message": "Pick a configured sink for the store."
+    "message": "Pick a configured sink for the archive."
   },
   "drive_disconnect": {
     "message": "Disconnect Drive"
@@ -1575,10 +1575,10 @@
     "message": "HTTP endpoint"
   },
   "store_move": {
-    "message": "Move store here"
+    "message": "Move my archive here"
   },
   "store_browse": {
-    "message": "Browse store…"
+    "message": "Browse archive…"
   },
   "store_pick_folder": {
     "message": "Choose folder…"
@@ -1593,7 +1593,7 @@
     "message": "Importing…"
   },
   "store_imported": {
-    "message": "Imported $N$ records into the store.",
+    "message": "Imported $N$ records into the archive.",
     "placeholders": {
       "n": {
         "content": "$1"
@@ -2399,10 +2399,10 @@
     "message": "Re-scanning full history…"
   },
   "archive_load_store": {
-    "message": "Load from store"
+    "message": "Load from local archive"
   },
   "archive_load_store_hint": {
-    "message": "Reload from the local store — no network request"
+    "message": "Reload from the local archive — no network request"
   },
   "open_advanced": {
     "message": "Advanced tools"
@@ -2445,7 +2445,7 @@
     "message": "Set up your archive"
   },
   "onboard_body": {
-    "message": "Habeas recovers your documents into your archive — the canonical store of everything it collects. Right now that archive lives only in this browser."
+    "message": "Habeas recovers your documents into your archive — where everything it collects is kept. Right now that archive lives only in this browser."
   },
   "onboard_cloud": {
     "message": "To reach your archive from more than one device or browser, keep it in the cloud. We recommend Dropbox — Google Drive’s app-scoped access makes it awkward for this."
