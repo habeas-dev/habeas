@@ -1,5 +1,9 @@
 # consumers/
 
+> **Integrating a web app with Habeas?** Start with the developer guide:
+> **[`../docs/INTEGRATION.md`](../docs/INTEGRATION.md)** — what to provide, which APIs to call
+> (`window.postMessage`), and what your ingest endpoint receives, end to end.
+
 A **consumer** is an external app that receives normalized records from Habeas
 via a sink. Consumers are **decoupled** from the Core: they don't know about
 adapters, and the Core doesn't know about them. A consumer only:

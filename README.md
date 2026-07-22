@@ -118,7 +118,7 @@ Current sinks include:
 - S3 and S3-compatible storage (MinIO, Cloudflare R2, Backblaze B2)
 - Dropbox
 
-Applications can also integrate with Habeas to receive user-authorized data without implementing provider-specific authentication and extraction logic.
+Applications can also integrate with Habeas to receive user-authorized data without implementing provider-specific authentication and extraction logic. See the developer guide: **[docs/INTEGRATION.md](docs/INTEGRATION.md)**.
 
 ---
 
