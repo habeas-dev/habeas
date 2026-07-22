@@ -391,6 +391,7 @@ if (!window.showDirectoryPicker) {
 }
 $('#stype').onchange = renderFields;
 $('#addsink').onclick = addSink;
+{ const oa = $('#open-archive'); if (oa) oa.onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/archive.html') }); }
 $('#create').onclick = () => { location.href = 'author.html'; };
 $('#browse').onclick = () => { location.href = 'marketplace.html'; };
 $('#ds-search').oninput = filterSources;
@@ -419,10 +420,11 @@ $('#importfile').onchange = async (e) => {
 // --- "My contributions": the return half of the handoff loop. Poll this contributor's submissions,
 // show status + the team's questions, let them reply or re-record. Degrades to empty if the API is down.
 function tabBadge(name, n) {
-  const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
+  // "My contributions" lives under Advanced now → badge that rail item with the unread count.
+  const btn = document.querySelector('.onav [data-nav="advanced"]');
   if (!btn) return;
-  btn.querySelector('.tabcount')?.remove();
-  if (n > 0) { const s = document.createElement('span'); s.className = 'tabcount pill sent'; s.style.marginLeft = '6px'; s.textContent = String(n); btn.appendChild(s); }
+  btn.querySelector('.cnt')?.remove();
+  if (n > 0) { const s = document.createElement('span'); s.className = 'cnt'; s.textContent = String(n); btn.appendChild(s); }
 }
 async function renderContributions() {
   const wrap = $('#contriblist'); if (!wrap) return;
@@ -624,17 +626,40 @@ async function openThread(id) {
   tabBadge('contributions', unreadCount(await getMyHandoffs(sub.id), (await getSubmitter()).seen));
 }
 
-(function initTabs() {
-  const btns = [...document.querySelectorAll('.tab-btn')];
+// Plain-language overview (the "Inicio" section): where the archive lives, how many services are connected,
+// whether auto-sync is on — plus a first-run 1·2·3 checklist that fades once all three are set up.
+async function renderOverview() {
+  const cfg = await getConfig().catch(() => ({ datasources: [], routes: [] }));
+  const nEnabled = (cfg.datasources || []).filter((d) => d.enabled).length;
+  const nAuto = (cfg.routes || []).filter((r) => r.mode === 'auto').length;
+  const backend = ((await getStoreConfig().catch(() => ({}))).backend) || 'local';
+  const set = (id, txt) => { const el = $(id); if (el) el.textContent = txt; };
+  set('#ov-services', nEnabled ? t('opt_ov_services_n', [String(nEnabled)]) : t('opt_ov_services_none'));
+  set('#ov-storage', backend === 'local' ? t('opt_ov_store_localv') : t('opt_ov_store_cloud', [t('store_' + backend)]));
+  set('#ov-auto', nAuto ? t('opt_ov_auto_on', [String(nAuto)]) : t('opt_ov_auto_off'));
+  const s1 = nEnabled > 0, s2 = backend !== 'local', s3 = nAuto > 0;
+  const fr = $('#firstrun'); if (fr) fr.hidden = (s1 && s2 && s3);
+  const mark = (id, done, subKey) => { const el = $(id); if (!el) return; el.classList.toggle('done', done); const st = el.querySelector('.st'); if (st) st.textContent = done ? t('opt_step_done') : t(subKey); };
+  mark('#step-services', s1, 'opt_step_services_sub');
+  mark('#step-storage', s2, 'opt_step_storage_sub');
+  mark('#step-auto', s3, 'opt_step_auto_sub');
+}
+
+(function initNav() {
+  const btns = () => [...document.querySelectorAll('.onav [data-nav]')];
   const show = (name) => {
-    document.querySelectorAll('.tab').forEach((s) => { s.hidden = s.dataset.tab !== name; });
-    btns.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
-    try { localStorage.setItem('habeas-settings-tab', name); } catch (e) {}
-    if (name === 'contributions') renderContributions();
+    document.querySelectorAll('.osec').forEach((s) => s.classList.toggle('on', s.dataset.sec === name));
+    btns().forEach((b) => b.setAttribute('aria-selected', String(b.dataset.nav === name)));
+    try { localStorage.setItem('habeas-settings-nav', name); } catch (e) {}
+    if (name === 'home') renderOverview();
+    if (name === 'advanced') renderContributions();
   };
-  btns.forEach((b) => { b.onclick = () => show(b.dataset.tab); });
-  let saved; try { saved = localStorage.getItem('habeas-settings-tab'); } catch (e) {}
-  show(btns.some((b) => b.dataset.tab === saved) ? saved : 'sources');
+  window.__optShow = show; // used by data-goto handlers below
+  btns().forEach((b) => { b.onclick = () => show(b.dataset.nav); });
+  // data-goto (overview cards/steps) jumps to a section
+  document.addEventListener('click', (e) => { const g = e.target.closest && e.target.closest('[data-goto]'); if (g) show(g.dataset.goto); });
+  let saved; try { saved = localStorage.getItem('habeas-settings-nav'); } catch (e) {}
+  show(btns().some((b) => b.dataset.nav === saved) ? saved : 'home');
 })();
 
 renderFields();

@@ -2512,5 +2512,158 @@
   },
   "onboard_sink_added": {
     "message": "Destino añadido. (Guarda documentos entregados; no puede alojar el archivo en sí.)"
+  },
+  "opt_nav_home": {
+    "message": "Inicio"
+  },
+  "opt_nav_services": {
+    "message": "Servicios"
+  },
+  "opt_nav_storage": {
+    "message": "Dónde se guardan"
+  },
+  "opt_nav_auto": {
+    "message": "Automático"
+  },
+  "opt_nav_privacy": {
+    "message": "Privacidad"
+  },
+  "opt_nav_advanced": {
+    "message": "Avanzado"
+  },
+  "opt_home_title": {
+    "message": "Tu configuración de un vistazo"
+  },
+  "opt_home_intro": {
+    "message": "Ajusta de dónde saca Habeas tus documentos, dónde se guardan y cuándo se actualizan."
+  },
+  "opt_step_services": {
+    "message": "Conecta un servicio"
+  },
+  "opt_step_services_sub": {
+    "message": "Elige de dónde recuperar documentos (tu súper, tu banco…)."
+  },
+  "opt_step_storage": {
+    "message": "Elige dónde guardar tus documentos"
+  },
+  "opt_step_storage_sub": {
+    "message": "En este navegador o en la nube (para tenerlos en varios dispositivos)."
+  },
+  "opt_step_auto": {
+    "message": "Actívalo automático"
+  },
+  "opt_step_auto_sub": {
+    "message": "Que Habeas traiga lo nuevo por ti."
+  },
+  "opt_step_go": {
+    "message": "Ir"
+  },
+  "opt_step_done": {
+    "message": "✓ Hecho"
+  },
+  "opt_ov_manage": {
+    "message": "Gestionar"
+  },
+  "opt_ov_change": {
+    "message": "Cambiar"
+  },
+  "opt_ov_storage_h": {
+    "message": "Dónde se guardan"
+  },
+  "opt_ov_services_n": {
+    "message": "$N$ servicios conectados",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_ov_services_none": {
+    "message": "Ningún servicio conectado todavía"
+  },
+  "opt_ov_store_localv": {
+    "message": "En este navegador"
+  },
+  "opt_ov_store_cloud": {
+    "message": "En la nube ($NAME$)",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_ov_auto_on": {
+    "message": "Activo en $N$ servicio(s)",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_ov_auto_off": {
+    "message": "Desactivado"
+  },
+  "opt_services_title": {
+    "message": "Servicios"
+  },
+  "opt_services_intro": {
+    "message": "Conecta los servicios de los que quieres recuperar documentos. Tú inicias sesión; Habeas nunca guarda tu contraseña."
+  },
+  "opt_add_service": {
+    "message": "+ Añadir un servicio"
+  },
+  "opt_services_adv": {
+    "message": "Para usuarios avanzados"
+  },
+  "opt_services_adv_help": {
+    "message": "Crea tu propia fuente, o importa una que te hayan pasado."
+  },
+  "opt_storage_title": {
+    "message": "Dónde se guardan tus documentos"
+  },
+  "opt_storage_intro": {
+    "message": "Tus documentos viven en tu archivo. Guárdalo en la nube para tenerlos en todos tus dispositivos, y a salvo."
+  },
+  "opt_storage_import": {
+    "message": "Recuperar de una copia anterior"
+  },
+  "store_import_help": {
+    "message": "Si ya tienes documentos guardados en un destino, tráelos a tu archivo sin volver a descargarlos."
+  },
+  "opt_auto_title": {
+    "message": "Actualización automática"
+  },
+  "opt_auto_intro": {
+    "message": "Deja que Habeas traiga documentos nuevos por ti, sin que tengas que entrar cada vez."
+  },
+  "opt_auto_onlogin": {
+    "message": "Al iniciar sesión"
+  },
+  "opt_auto_schedule": {
+    "message": "En un horario"
+  },
+  "opt_privacy_title": {
+    "message": "Privacidad y permisos"
+  },
+  "opt_privacy_intro": {
+    "message": "Cómo protege Habeas tus datos, y qué has permitido."
+  },
+  "opt_privacy_h": {
+    "message": "Tus datos, bajo tu control"
+  },
+  "opt_privacy_p1": {
+    "message": "Habeas nunca guarda tus contraseñas — tú inicias sesión, en tu propia sesión."
+  },
+  "opt_privacy_p2": {
+    "message": "Nada sale de tu navegador hasta que eliges un destino."
+  },
+  "opt_privacy_p3": {
+    "message": "Es código abierto (AGPL-3.0): cualquiera puede auditar qué hace."
+  },
+  "opt_advanced_intro": {
+    "message": "Envía copias a otros destinos, crea tus propias fuentes y gestiona tus contribuciones."
+  },
+  "opt_dests_help": {
+    "message": "Además de tu archivo, puedes enviar copias de tus documentos a una carpeta, la nube o una app."
   }
 }

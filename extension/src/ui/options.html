@@ -5,12 +5,42 @@
   <title>Habeas · Settings</title>
   <link rel="stylesheet" href="theme.css" />
   <style>
-    .tabbar { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin: 0 0 18px; flex-wrap: wrap; }
-    .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; padding: 10px 14px; margin-bottom: -1px; cursor: pointer; color: var(--muted); font: inherit; }
-    .tab-btn[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
-    .tab-btn:hover { color: var(--ink); }
-    .tab { animation: fade .15s ease; }
+    /* settings shell — a left rail (like the Archive) + a content panel, plain-language sections */
+    .oshell { display: flex; gap: 0; align-items: flex-start; }
+    .onav { width: 230px; flex: none; padding: 8px; position: sticky; top: 78px; }
+    .onav .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 700; padding: 6px 10px; }
+    .onav button { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; background: none;
+      font: inherit; font-size: 14px; font-weight: 600; color: var(--ink); padding: 9px 11px; border-radius: 10px; cursor: pointer; }
+    .onav button .ic { font-size: 16px; width: 20px; text-align: center; }
+    .onav button:hover { background: var(--surface-2); }
+    .onav button[aria-selected="true"] { background: var(--brand-50); color: var(--brand-600); }
+    .onav .cnt { margin-left: auto; font-size: 11px; font-weight: 700; background: var(--brand-600); color: #fff; border-radius: 999px; padding: 1px 7px; }
+    .opanel { flex: 1; min-width: 0; padding: 4px 4px 40px; }
+    .ohead { margin: 4px 0 16px; }
+    .ohead h2 { font-family: var(--font-head); font-weight: 700; font-size: clamp(20px,2.4vw,26px); letter-spacing: -.01em; margin: 0; }
+    .ohead p { color: var(--muted); margin: 6px 0 0; font-size: 14px; max-width: 64ch; line-height: 1.5; }
+    .osec { display: none; animation: fade .15s ease; }
+    .osec.on { display: block; }
     @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    .subhead { font-family: var(--font-head); font-weight: 700; font-size: 15px; margin: 22px 0 8px; }
+    .note { font-size: 13px; color: var(--muted); border-left: 3px solid var(--brand-500); padding: 2px 0 2px 10px; margin: 8px 0; line-height: 1.5; }
+    /* overview */
+    .ov-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(230px,1fr)); gap: 14px; }
+    .ov-card { border: 1px solid var(--line); border-radius: 14px; padding: 16px; background: var(--surface); }
+    .ov-card .ic { font-size: 22px } .ov-card h3 { font-family: var(--font-head); font-size: 15px; margin: 8px 0 2px } .ov-card .v { font-size: 13.5px; color: var(--muted) }
+    .ov-card a, .ov-card button.link2 { display: inline-block; margin-top: 10px; color: var(--brand-600); font-weight: 600; font-size: 13px; background: none; border: 0; padding: 0; cursor: pointer; font-family: var(--font-body) }
+    .steps { display: flex; flex-direction: column; gap: 10px; margin-top: 8px }
+    .step { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+    .step .n { width: 26px; height: 26px; border-radius: 50%; background: var(--brand-600); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 13px; flex: none }
+    .step.done .n { background: #1f7a4d } .step .g { flex: 1 } .step .st { font-size: 12px; color: var(--muted) }
+    .step button { border: 1px solid var(--brand-500); background: var(--brand-50); color: var(--brand-600); border-radius: 999px; padding: 6px 13px; font-weight: 600; font-size: 12.5px; cursor: pointer }
+    /* store backend chooser (buttons, like the first-run assistant) */
+    .backends { display: flex; flex-wrap: wrap; gap: 9px; margin: 6px 0 4px }
+    .bk { font-size: 13px; font-weight: 700; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; cursor: pointer; background: var(--surface); color: var(--ink); display: inline-flex; gap: 7px; align-items: center }
+    .bk[aria-pressed="true"] { background: var(--brand-600); color: #fff; border-color: transparent }
+    #store-fields, #sfields { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+    .privacy-hero { display: flex; gap: 14px; align-items: flex-start; border: 1px solid var(--line); border-radius: 14px; padding: 16px; background: linear-gradient(180deg,var(--brand-50),var(--surface)) }
+    .privacy-hero .ic { font-size: 26px } .privacy-hero ul { margin: 6px 0 0 18px; line-height: 1.8; font-size: 13.5px; color: var(--ink) }
   </style>
 </head>
 <body>
@@ -20,133 +50,188 @@
       <span class="brand">Habeas</span>
       <span class="tagline" data-i18n="settings"></span>
     </div>
+    <button id="open-archive" class="primary" data-i18n="open_archive"></button>
   </div>
 
   <div class="app">
-    <div class="tabbar" role="tablist">
-      <button class="tab-btn" role="tab" data-tab="sources" data-i18n="datasources" aria-selected="true"></button>
-      <button class="tab-btn" role="tab" data-tab="dests" data-i18n="destinations"></button>
-      <button class="tab-btn" role="tab" data-tab="auto" data-i18n="auto_sync"></button>
-      <button class="tab-btn" role="tab" data-tab="planner" data-i18n="planner_title"></button>
-      <button class="tab-btn" role="tab" data-tab="integrations" data-i18n="grants_title"></button>
-      <button class="tab-btn" role="tab" data-tab="contributions" data-i18n="contrib_title"></button>
+    <div class="oshell">
+      <nav class="onav" role="tablist">
+        <div class="lbl" data-i18n="settings"></div>
+        <button role="tab" data-nav="home" aria-selected="true"><span class="ic">🏠</span> <span data-i18n="opt_nav_home"></span></button>
+        <button role="tab" data-nav="services"><span class="ic">🔌</span> <span data-i18n="opt_nav_services"></span></button>
+        <button role="tab" data-nav="storage"><span class="ic">🗄️</span> <span data-i18n="opt_nav_storage"></span></button>
+        <button role="tab" data-nav="auto"><span class="ic">🔄</span> <span data-i18n="opt_nav_auto"></span></button>
+        <button role="tab" data-nav="privacy"><span class="ic">🛡️</span> <span data-i18n="opt_nav_privacy"></span></button>
+        <button role="tab" data-nav="advanced"><span class="ic">⚙️</span> <span data-i18n="opt_nav_advanced"></span></button>
+      </nav>
+
+      <div class="opanel">
+
+        <!-- ══ HOME / OVERVIEW ══ -->
+        <section class="osec" data-sec="home" role="tabpanel">
+          <div class="ohead"><h2 data-i18n="opt_home_title"></h2><p data-i18n="opt_home_intro"></p></div>
+          <div id="firstrun" hidden>
+            <div class="steps">
+              <div class="step" id="step-services"><span class="n">1</span><div class="g"><b data-i18n="opt_step_services"></b><div class="st" data-i18n="opt_step_services_sub"></div></div><button data-goto="services" data-i18n="opt_step_go"></button></div>
+              <div class="step" id="step-storage"><span class="n">2</span><div class="g"><b data-i18n="opt_step_storage"></b><div class="st" data-i18n="opt_step_storage_sub"></div></div><button data-goto="storage" data-i18n="opt_step_go"></button></div>
+              <div class="step" id="step-auto"><span class="n">3</span><div class="g"><b data-i18n="opt_step_auto"></b><div class="st" data-i18n="opt_step_auto_sub"></div></div><button data-goto="auto" data-i18n="opt_step_go"></button></div>
+            </div>
+          </div>
+          <div class="ov-grid" style="margin-top:16px">
+            <div class="ov-card"><div class="ic">🔌</div><h3 data-i18n="opt_nav_services"></h3><div class="v" id="ov-services"></div><button class="link2" data-goto="services" data-i18n="opt_ov_manage"></button></div>
+            <div class="ov-card"><div class="ic">🗄️</div><h3 data-i18n="opt_ov_storage_h"></h3><div class="v" id="ov-storage"></div><button class="link2" data-goto="storage" data-i18n="opt_ov_change"></button></div>
+            <div class="ov-card"><div class="ic">🔄</div><h3 data-i18n="opt_nav_auto"></h3><div class="v" id="ov-auto"></div><button class="link2" data-goto="auto" data-i18n="opt_ov_manage"></button></div>
+          </div>
+        </section>
+
+        <!-- ══ SERVICES (sources) ══ -->
+        <section class="osec" data-sec="services" role="tabpanel">
+          <div class="ohead"><h2 data-i18n="opt_services_title"></h2><p data-i18n="opt_services_intro"></p></div>
+          <div class="toolbar">
+            <input id="ds-search" type="search" class="search" data-i18n-ph="search_sources" autocomplete="off" />
+            <span class="spacer"></span>
+            <button id="browse" class="primary" data-i18n="opt_add_service"></button>
+          </div>
+          <div id="ds" class="src-list"></div>
+          <p id="ds-empty" class="muted" hidden data-i18n="no_sources_match"></p>
+          <div class="subhead" data-i18n="opt_services_adv"></div>
+          <p class="note" data-i18n="opt_services_adv_help"></p>
+          <div class="toolbar">
+            <button id="create" data-i18n="create_source"></button>
+            <button id="import" data-i18n="import_source"></button>
+            <button id="paste" data-i18n="paste_source"></button>
+            <input id="importfile" type="file" accept="application/json" hidden />
+          </div>
+        </section>
+
+        <!-- ══ STORAGE (canonical store) ══ -->
+        <section class="osec" data-sec="storage" role="tabpanel">
+          <div class="ohead"><h2 data-i18n="opt_storage_title"></h2><p data-i18n="opt_storage_intro"></p></div>
+          <div class="card">
+            <div class="row" style="align-items:center;gap:8px">
+              <span class="muted" data-i18n="store_where"></span>
+              <select id="store-backend">
+                <option value="local" data-i18n="store_local"></option>
+                <option value="folder" data-i18n="store_folder"></option>
+                <option value="dropbox" data-i18n="store_dropbox"></option>
+                <option value="drive" data-i18n="store_drive"></option>
+                <option value="webdav" data-i18n="store_webdav"></option>
+                <option value="s3" data-i18n="store_s3"></option>
+                <option value="http" data-i18n="store_http"></option>
+              </select>
+              <span id="store-fields" class="row"></span>
+              <button id="store-move" class="primary" data-i18n="store_move"></button>
+              <button id="store-browse" type="button" data-i18n="store_browse"></button>
+              <span id="store-status" class="muted"></span>
+            </div>
+            <p class="note" data-i18n="dest_multidevice_hint"></p>
+          </div>
+          <div class="subhead" data-i18n="opt_storage_import"></div>
+          <p class="note" data-i18n="store_import_help"></p>
+          <div class="card row">
+            <span class="muted" data-i18n="store_import_from"></span>
+            <select id="store-import-sink"></select>
+            <button id="store-import" data-i18n="store_import"></button>
+            <span id="store-import-status" class="muted"></span>
+          </div>
+        </section>
+
+        <!-- ══ AUTOMATIC (auto-sync + planner) ══ -->
+        <section class="osec" data-sec="auto" role="tabpanel">
+          <div class="ohead"><h2 data-i18n="opt_auto_title"></h2><p data-i18n="opt_auto_intro"></p></div>
+          <div class="subhead" data-i18n="opt_auto_onlogin"></div>
+          <p class="note" data-i18n="auto_help"></p>
+          <div class="toolbar"><input id="auto-search" type="search" class="search" data-i18n-ph="search_sources" autocomplete="off" /></div>
+          <div id="routes" class="src-list"></div>
+          <p id="auto-empty" class="muted" hidden data-i18n="no_sources_match"></p>
+
+          <div class="subhead" data-i18n="opt_auto_schedule"></div>
+          <p class="note" data-i18n="planner_help"></p>
+          <div class="card" style="display:flex;flex-direction:column;gap:8px">
+            <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+              <select id="pl-ds" title="source"></select>
+              <span class="muted">→</span>
+              <select id="pl-sink" title="destination"></select>
+            </div>
+            <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+              <select id="pl-kind">
+                <option value="daily" data-i18n="sched_kind_daily"></option>
+                <option value="weekly" data-i18n="sched_kind_weekly"></option>
+                <option value="monthly-day" data-i18n="sched_kind_monthlyday"></option>
+                <option value="monthly-weekday" data-i18n="sched_kind_monthlyweekday"></option>
+                <option value="monthly-businessday" data-i18n="sched_kind_monthlybusiness"></option>
+              </select>
+              <span id="pl-weekdays" class="row" style="gap:4px" hidden></span>
+              <select id="pl-nth" hidden>
+                <option value="1" data-i18n="sched_ord_1"></option>
+                <option value="2" data-i18n="sched_ord_2"></option>
+                <option value="3" data-i18n="sched_ord_3"></option>
+                <option value="4" data-i18n="sched_ord_4"></option>
+                <option value="5" data-i18n="sched_ord_5"></option>
+                <option value="-1" data-i18n="sched_ord_last"></option>
+              </select>
+              <select id="pl-weekday" hidden></select>
+              <input id="pl-days" type="text" inputmode="numeric" placeholder="5, 20" size="8" hidden />
+              <label class="muted" data-i18n="sched_time_label"></label>
+              <input id="pl-time" type="time" value="09:00" />
+              <button id="pl-add" class="primary" data-i18n="sched_add"></button>
+            </div>
+            <p id="pl-preview" class="muted" style="margin:0"></p>
+          </div>
+          <div id="pl-list" class="src-list" style="margin-top:10px"></div>
+          <p id="pl-empty" class="muted" hidden data-i18n="sched_none"></p>
+        </section>
+
+        <!-- ══ PRIVACY (integrations + reassurance) ══ -->
+        <section class="osec" data-sec="privacy" role="tabpanel">
+          <div class="ohead"><h2 data-i18n="opt_privacy_title"></h2><p data-i18n="opt_privacy_intro"></p></div>
+          <div class="privacy-hero">
+            <span class="ic">🛡️</span>
+            <div><b data-i18n="opt_privacy_h"></b>
+              <ul>
+                <li data-i18n="opt_privacy_p1"></li>
+                <li data-i18n="opt_privacy_p2"></li>
+                <li data-i18n="opt_privacy_p3"></li>
+              </ul>
+            </div>
+          </div>
+          <div class="subhead" data-i18n="grants_title"></div>
+          <p class="note" data-i18n="grants_help"></p>
+          <div id="grants"></div>
+        </section>
+
+        <!-- ══ ADVANCED (destinations + contributions) ══ -->
+        <section class="osec" data-sec="advanced" role="tabpanel">
+          <div class="ohead"><h2 data-i18n="opt_nav_advanced"></h2><p data-i18n="opt_advanced_intro"></p></div>
+
+          <div class="subhead" data-i18n="destinations"></div>
+          <p class="note" data-i18n="opt_dests_help"></p>
+          <div id="sinks"></div>
+          <div class="card">
+            <b data-i18n="add_destination"></b>
+            <div class="row" style="margin-top:12px">
+              <select id="stype">
+                <option value="download" data-i18n="sink_download"></option>
+                <option value="local-folder" data-i18n="sink_local"></option>
+                <option value="drive" data-i18n="sink_drive"></option>
+                <option value="http" data-i18n="sink_http"></option>
+                <option value="webdav" data-i18n="sink_webdav"></option>
+                <option value="s3" data-i18n="sink_s3"></option>
+                <option value="dropbox" data-i18n="sink_dropbox"></option>
+              </select>
+              <span id="sfields" class="row"></span>
+              <button id="addsink" class="primary" data-i18n="add"></button>
+            </div>
+          </div>
+
+          <div class="subhead" data-i18n="contrib_title"></div>
+          <p class="note" data-i18n="contrib_help"></p>
+          <div id="contriblist"></div>
+          <p id="contribempty" class="muted" data-i18n="contrib_empty" hidden></p>
+        </section>
+
+      </div>
     </div>
-
-    <section class="tab" data-tab="sources" role="tabpanel">
-      <div class="toolbar">
-        <input id="ds-search" type="search" class="search" data-i18n-ph="search_sources" autocomplete="off" />
-        <span class="spacer"></span>
-        <button id="browse" class="primary" data-i18n="browse_sources"></button>
-        <button id="create" data-i18n="create_source"></button>
-        <button id="import" data-i18n="import_source"></button>
-        <button id="paste" data-i18n="paste_source"></button>
-        <input id="importfile" type="file" accept="application/json" hidden />
-      </div>
-      <div id="ds" class="src-list"></div>
-      <p id="ds-empty" class="muted" hidden data-i18n="no_sources_match"></p>
-    </section>
-
-    <section class="tab" data-tab="dests" role="tabpanel" hidden>
-      <div class="card">
-        <b data-i18n="store_title"></b>
-        <p class="muted" data-i18n="store_help" style="margin:4px 0 6px"></p>
-        <p class="muted" data-i18n="dest_multidevice_hint" style="margin:0 0 10px; border-left:3px solid var(--brand-600); padding-left:8px"></p>
-        <div class="row">
-          <span class="muted" data-i18n="store_where"></span>
-          <select id="store-backend">
-            <option value="local" data-i18n="store_local"></option>
-            <option value="folder" data-i18n="store_folder"></option>
-            <option value="drive" data-i18n="store_drive"></option>
-            <option value="dropbox" data-i18n="store_dropbox"></option>
-            <option value="webdav" data-i18n="store_webdav"></option>
-            <option value="s3" data-i18n="store_s3"></option>
-            <option value="http" data-i18n="store_http"></option>
-          </select>
-          <span id="store-fields" class="row"></span>
-          <button id="store-move" data-i18n="store_move"></button>
-          <button id="store-browse" type="button" data-i18n="store_browse"></button>
-          <span id="store-status" class="muted"></span>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <span class="muted" data-i18n="store_import_from"></span>
-          <select id="store-import-sink"></select>
-          <button id="store-import" data-i18n="store_import"></button>
-          <span id="store-import-status" class="muted"></span>
-        </div>
-      </div>
-      <div id="sinks"></div>
-      <div class="card">
-        <b data-i18n="add_destination"></b>
-        <div class="row" style="margin-top:12px">
-          <select id="stype">
-            <option value="download" data-i18n="sink_download"></option>
-            <option value="local-folder" data-i18n="sink_local"></option>
-            <option value="drive" data-i18n="sink_drive"></option>
-            <option value="http" data-i18n="sink_http"></option>
-            <option value="webdav" data-i18n="sink_webdav"></option>
-            <option value="s3" data-i18n="sink_s3"></option>
-            <option value="dropbox" data-i18n="sink_dropbox"></option>
-          </select>
-          <span id="sfields" class="row"></span>
-          <button id="addsink" class="primary" data-i18n="add"></button>
-        </div>
-      </div>
-    </section>
-
-    <section class="tab" data-tab="auto" role="tabpanel" hidden>
-      <p class="muted" data-i18n="auto_help" style="margin:2px 0 12px"></p>
-      <div class="toolbar"><input id="auto-search" type="search" class="search" data-i18n-ph="search_sources" autocomplete="off" /></div>
-      <div id="routes" class="src-list"></div>
-      <p id="auto-empty" class="muted" hidden data-i18n="no_sources_match"></p>
-    </section>
-
-    <section class="tab" data-tab="planner" role="tabpanel" hidden>
-      <p class="muted" data-i18n="planner_help" style="margin:2px 0 12px"></p>
-      <div class="card" style="display:flex;flex-direction:column;gap:8px">
-        <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-          <select id="pl-ds" title="source"></select>
-          <span class="muted">→</span>
-          <select id="pl-sink" title="destination"></select>
-        </div>
-        <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-          <select id="pl-kind">
-            <option value="daily" data-i18n="sched_kind_daily"></option>
-            <option value="weekly" data-i18n="sched_kind_weekly"></option>
-            <option value="monthly-day" data-i18n="sched_kind_monthlyday"></option>
-            <option value="monthly-weekday" data-i18n="sched_kind_monthlyweekday"></option>
-            <option value="monthly-businessday" data-i18n="sched_kind_monthlybusiness"></option>
-          </select>
-          <span id="pl-weekdays" class="row" style="gap:4px" hidden></span>
-          <select id="pl-nth" hidden>
-            <option value="1" data-i18n="sched_ord_1"></option>
-            <option value="2" data-i18n="sched_ord_2"></option>
-            <option value="3" data-i18n="sched_ord_3"></option>
-            <option value="4" data-i18n="sched_ord_4"></option>
-            <option value="5" data-i18n="sched_ord_5"></option>
-            <option value="-1" data-i18n="sched_ord_last"></option>
-          </select>
-          <select id="pl-weekday" hidden></select>
-          <input id="pl-days" type="text" inputmode="numeric" placeholder="5, 20" size="8" hidden />
-          <label class="muted" data-i18n="sched_time_label"></label>
-          <input id="pl-time" type="time" value="09:00" />
-          <button id="pl-add" class="primary" data-i18n="sched_add"></button>
-        </div>
-        <p id="pl-preview" class="muted" style="margin:0"></p>
-      </div>
-      <div id="pl-list" class="src-list" style="margin-top:10px"></div>
-      <p id="pl-empty" class="muted" hidden data-i18n="sched_none"></p>
-    </section>
-
-    <section class="tab" data-tab="integrations" role="tabpanel" hidden>
-      <p class="muted" data-i18n="grants_help" style="margin:2px 0 12px"></p>
-      <div id="grants"></div>
-    </section>
-
-    <section class="tab" data-tab="contributions" role="tabpanel" hidden>
-      <p class="muted" data-i18n="contrib_help" style="margin:2px 0 12px"></p>
-      <div id="contriblist"></div>
-      <p id="contribempty" class="muted" data-i18n="contrib_empty" hidden></p>
-    </section>
   </div>
 
   <script type="module" src="options.js"></script>

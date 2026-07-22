@@ -2512,5 +2512,158 @@
   },
   "onboard_sink_added": {
     "message": "Destination added. (It stores delivered documents; it can’t host the archive itself.)"
+  },
+  "opt_nav_home": {
+    "message": "Home"
+  },
+  "opt_nav_services": {
+    "message": "Services"
+  },
+  "opt_nav_storage": {
+    "message": "Where they’re kept"
+  },
+  "opt_nav_auto": {
+    "message": "Automatic"
+  },
+  "opt_nav_privacy": {
+    "message": "Privacy"
+  },
+  "opt_nav_advanced": {
+    "message": "Advanced"
+  },
+  "opt_home_title": {
+    "message": "Your setup at a glance"
+  },
+  "opt_home_intro": {
+    "message": "Set up where Habeas gets your documents, where they’re kept, and when they refresh."
+  },
+  "opt_step_services": {
+    "message": "Connect a service"
+  },
+  "opt_step_services_sub": {
+    "message": "Choose where to recover documents from (your supermarket, your bank…)."
+  },
+  "opt_step_storage": {
+    "message": "Choose where your documents are kept"
+  },
+  "opt_step_storage_sub": {
+    "message": "In this browser, or in the cloud (to have them on several devices)."
+  },
+  "opt_step_auto": {
+    "message": "Turn on automatic updates"
+  },
+  "opt_step_auto_sub": {
+    "message": "Let Habeas pull what’s new for you."
+  },
+  "opt_step_go": {
+    "message": "Go"
+  },
+  "opt_step_done": {
+    "message": "✓ Done"
+  },
+  "opt_ov_manage": {
+    "message": "Manage"
+  },
+  "opt_ov_change": {
+    "message": "Change"
+  },
+  "opt_ov_storage_h": {
+    "message": "Where they’re kept"
+  },
+  "opt_ov_services_n": {
+    "message": "$N$ services connected",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_ov_services_none": {
+    "message": "No services connected yet"
+  },
+  "opt_ov_store_localv": {
+    "message": "In this browser"
+  },
+  "opt_ov_store_cloud": {
+    "message": "In the cloud ($NAME$)",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_ov_auto_on": {
+    "message": "On for $N$ service(s)",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_ov_auto_off": {
+    "message": "Off"
+  },
+  "opt_services_title": {
+    "message": "Services"
+  },
+  "opt_services_intro": {
+    "message": "Connect the services you want to recover documents from. You sign in yourself; Habeas never stores your password."
+  },
+  "opt_add_service": {
+    "message": "+ Add a service"
+  },
+  "opt_services_adv": {
+    "message": "For advanced users"
+  },
+  "opt_services_adv_help": {
+    "message": "Create your own source, or import one shared with you."
+  },
+  "opt_storage_title": {
+    "message": "Where your documents are kept"
+  },
+  "opt_storage_intro": {
+    "message": "Your documents live in your archive. Keep it in the cloud to have them on all your devices, and safe."
+  },
+  "opt_storage_import": {
+    "message": "Recover from an earlier copy"
+  },
+  "store_import_help": {
+    "message": "If you already have documents saved to a destination, bring them into your archive without re-downloading."
+  },
+  "opt_auto_title": {
+    "message": "Automatic updates"
+  },
+  "opt_auto_intro": {
+    "message": "Let Habeas pull new documents for you, without opening it every time."
+  },
+  "opt_auto_onlogin": {
+    "message": "When you sign in"
+  },
+  "opt_auto_schedule": {
+    "message": "On a schedule"
+  },
+  "opt_privacy_title": {
+    "message": "Privacy & permissions"
+  },
+  "opt_privacy_intro": {
+    "message": "How Habeas protects your data, and what you’ve allowed."
+  },
+  "opt_privacy_h": {
+    "message": "Your data, under your control"
+  },
+  "opt_privacy_p1": {
+    "message": "Habeas never stores your passwords — you sign in, in your own session."
+  },
+  "opt_privacy_p2": {
+    "message": "Nothing leaves your browser until you choose a destination."
+  },
+  "opt_privacy_p3": {
+    "message": "It’s open source (AGPL-3.0): anyone can audit what it does."
+  },
+  "opt_advanced_intro": {
+    "message": "Send copies to other destinations, create your own sources, and manage your contributions."
+  },
+  "opt_dests_help": {
+    "message": "Beyond your archive, you can send copies of your documents to a folder, the cloud, or an app."
   }
 }

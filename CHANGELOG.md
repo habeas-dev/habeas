@@ -10,6 +10,17 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Changed
+- **Settings page reorganized around plain-language user journeys** (`ui/options.html`, `ui/options.js`). The dense
+  6-tab admin layout is gone; Settings now has a left rail (like the Archive) with sections framed for a
+  non-technical user: **Inicio** (a "your setup at a glance" overview + a first-run 1·2·3 checklist), **Servicios**
+  (connect services to recover documents; source authoring tucked under "advanced"), **Dónde se guardan** (the
+  canonical store — split out from Destinations so "your archive" and "sending copies" stop being conflated),
+  **Automático** (auto-sync + scheduled deliveries merged), **Privacidad** (a "no passwords, in your session,
+  open source" reassurance + the site-integration grants), and **Avanzado** (destinations/sinks + contributions).
+  All the existing logic is reused unchanged — element ids preserved; only the IA, copy, navigation, and visual
+  shell changed. New plain-language copy in en/es.
+
 ## [0.6.0] — 2026-07-21
 
 ### Added
