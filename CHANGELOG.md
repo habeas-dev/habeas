@@ -48,11 +48,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   the in-flight chunk; already-checkpointed documents are durable. `writeToSink`/`recordDelivered`/`markDelivered`
   all read-merge-write, so repeated flushes accumulate safely. The ephemeral `download` (ZIP) sink stays
   single-shot (one flush = one ZIP). Covered by `test/checkpoint.test.mjs`.
-- **PDF (and HTML/image) inline preview no longer downloads instead of rendering** (`ui/archive.js`). A sink
-  hands the file back as `application/octet-stream` (Dropbox's download endpoint sets that Content-Type), so the
-  preview `<iframe>`/`<img>` downloaded the blob rather than showing it. The preview now re-wraps the retrieved
-  blob with the MIME its extension implies (`application/pdf`, `text/html`, `image/*`) before creating the
-  object URL, so it renders inline in the overlay.
+- **PDF (and HTML/image) preview no longer downloads instead of rendering** (`manifest.json`, `ui/archive.js`,
+  `ui/docview.js`). Two causes: (1) a sink hands the file back as `application/octet-stream` (Dropbox's download
+  endpoint sets that Content-Type) → the blob is now re-wrapped with the MIME its extension implies
+  (`application/pdf`, `text/html`, `image/*`) before the object URL; (2) on an MV3 extension page the built-in
+  PDF viewer is a plugin blocked by the default `object-src 'self'`, so a `blob:` PDF in an `<iframe>` was
+  downloaded, not rendered. Fixed by relaxing the manifest CSP to `object-src 'self' blob:` and rendering PDFs
+  in an `<embed>` (the element `object-src` governs). Applied to both the Archive preview overlay and the
+  full-tab document viewer.
 - **Sending/re-downloading hand-picked documents works with a cloud-backed archive** (`background.js`,
   `ui/archive.js`, `ui/popup.js`). The Archive's Send/Re-download passed only document ids, and the background then
   re-read the canonical store to find them — but a **Dropbox/folder-backed archive isn't listable from the service

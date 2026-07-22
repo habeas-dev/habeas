@@ -50,9 +50,16 @@ const fail = (m) => { mount.innerHTML = ''; const p = document.createElement('p'
       const hint = (res && res.reason) ? ' (' + res.reason + ')' : ' — si fue entregado por una versión antigua, prueba a re-descargarlo (toggle «Re-descargar del sitio») para regenerar la ruta.';
       return fail('No se pudo recuperar el fichero de este destino' + hint + tried);
     }
-    const url = URL.createObjectURL(res.blob); // created in THIS tab → lives as long as the tab
-    const f = document.createElement('iframe'); f.className = 'frame'; f.src = url;
-    mount.innerHTML = ''; mount.appendChild(f);
+    // Re-wrap with the MIME the extension implies (a sink hands blobs back as octet-stream) so the browser
+    // renders instead of downloading; PDFs go in an <embed> (an <iframe> to a blob PDF is downloaded on an MV3
+    // extension page — see the manifest's `object-src 'self' blob:`).
+    const kind = (res.ext || preferExt || '').toLowerCase();
+    const MIME = { pdf: 'application/pdf', html: 'text/html', htm: 'text/html', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', svg: 'image/svg+xml' };
+    const blob = (MIME[kind] && res.blob.type !== MIME[kind]) ? new Blob([res.blob], { type: MIME[kind] }) : res.blob;
+    const url = URL.createObjectURL(blob); // created in THIS tab → lives as long as the tab
+    const el = kind === 'pdf' ? document.createElement('embed') : document.createElement('iframe');
+    el.className = 'frame'; el.src = url; if (kind === 'pdf') el.type = 'application/pdf';
+    mount.innerHTML = ''; mount.appendChild(el);
     bar.textContent = label;
   } catch (e) { fail((e && e.message) || String(e)); }
 })();
