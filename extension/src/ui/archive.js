@@ -39,6 +39,27 @@ let SELECTING = false;
 const PICKED = new Set();
 let STORE_LOCAL = false;        // the canonical store is still the default per-browser backend (→ first-run wizard)
 let ONBOARD_DISMISSED = false;  // the user chose to keep the local store
+let CURRENT_STOP = null;        // how to stop the in-progress action (local abort, or a background message)
+
+// A long action (Refresh / Save / Send / Sync) started/ended — show the Stop button + the busy cursor.
+function beginOp(stopFn) { CURRENT_STOP = stopFn; document.body.classList.add('saving'); const b = $('#astop'); if (b) { b.hidden = false; b.disabled = false; } }
+function endOp() { CURRENT_STOP = null; document.body.classList.remove('saving'); const b = $('#astop'); if (b) b.hidden = true; }
+// Live per-document progress from the background (Save/Send): patch each card in place as it downloads — the real
+// date/amount, then the "Saved" pill — instead of only at the end.
+function applyDocProgress(p) {
+  if (!p || !Array.isArray(p.docs)) return;
+  const entry = INDEX.find((x) => x.base === CUR);
+  if (!entry || !entry.ds || entry.ds.id !== p.ds) return; // only the source being viewed
+  for (const d of p.docs) {
+    const i = CURDOCS.findIndex((r) => String(r.internalId) === String(d.internalId) && (d.stream == null || r._stream === d.stream));
+    if (i < 0) continue;
+    const r = CURDOCS[i];
+    if (d.record) r.record = { ...r.record, ...d.record };
+    if (d.delivered) { const sink = (CFG.sinks || []).find((s) => s.id === d.delivered); if (sink && !r.delivered.some((s) => s.id === sink.id)) r.delivered.push(sink); }
+    const card = document.querySelector('.dcard[data-i="' + i + '"]');
+    if (card) card.outerHTML = cardHtml(r); // cardHtml re-derives data-i (= i) + the picked state
+  }
+}
 
 // ---- category → colour family + icon + label (self-contained; keeps 30 category strings out of the locales) ----
 const F_RETAIL = 'retail', F_SERVICE = 'service', F_FINANCE = 'finance', F_OTHER = 'other';
@@ -571,7 +592,7 @@ function compatibleSinks(adapter) { return adapter ? (CFG.sinks || []).filter((s
 async function deliver(sinkId, opts = {}) {
   const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds) return;
   const sink = (CFG.sinks || []).find((s) => s.id === sinkId); if (!sink) return;
-  document.body.classList.add('saving');
+  beginOp(() => chrome.runtime.sendMessage({ type: 'habeas:stop' })); // Stop → abort the background op
   $('#astatus').textContent = t('archive_saving');
   const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#astatus').textContent = v.msg; };
   chrome.storage.onChanged.addListener(onStatus);
@@ -584,7 +605,7 @@ async function deliver(sinkId, opts = {}) {
   } catch (e) { $('#astatus').textContent = t('archive_save_err', [(e && e.message) || String(e)]); }
   finally {
     chrome.storage.onChanged.removeListener(onStatus);
-    document.body.classList.remove('saving');
+    endOp();
     await reloadCurrent(); // just this source — not a full-tree re-hydrate
   }
 }
@@ -596,10 +617,10 @@ async function refreshSource(mode) {
   if (!(await hasConsent(adapter))) { $('#astatus').textContent = t('needs_consent'); return; }
   const auth = await getAuth(adapter);
   if (!auth) { try { await ensureSiteFetch(adapter, { open: true }); } catch (e) {} $('#astatus').textContent = t('archive_refresh_nosession', [entry.name]); return; }
-  document.body.classList.add('saving');
+  const aborter = new AbortController();
+  beginOp(() => { try { aborter.abort(); } catch (e) {} }); // Stop → abort the in-page list
   const btn = $('#refresh'); if (btn) { btn.disabled = true; btn.classList.add('spin'); }
   $('#astatus').textContent = mode === 'full' ? t('archive_rescanning') : t('archive_refreshing');
-  const aborter = new AbortController();
   try {
     const net = await ensureSiteFetch(adapter, { open: true });
     // EXACTLY the same list core as the classic "List documents" (runtime/lister.js), run in THIS page: saved
@@ -621,7 +642,7 @@ async function refreshSource(mode) {
       $('#astatus').textContent = t('archive_refresh_nosession', [entry.name]);
     } else { $('#astatus').textContent = t('archive_refresh_err', [msg]); }
   } finally {
-    document.body.classList.remove('saving');
+    endOp();
     const b = $('#refresh'); if (b) { b.disabled = false; b.classList.remove('spin'); }
     await reloadCurrent(); // just this source — not a full-tree re-hydrate
   }
@@ -710,7 +731,7 @@ async function sendSelected(sinkId, opts = {}) {
   // isn't readable from the background the way it is from a page). The background just fetches files + delivers.
   const docs = CURDOCS.filter((r) => PICKED.has(r.internalId)).map((r) => ({ internalId: r.internalId, record: r.record, stream: r._stream || '' }));
   if (!docs.length) { $('#astatus').textContent = t('nothing_selected'); return; }
-  document.body.classList.add('saving');
+  beginOp(() => chrome.runtime.sendMessage({ type: 'habeas:stop' })); // Stop → abort the background op
   $('#astatus').textContent = t('archive_sending_n', [String(docs.length)]);
   const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#astatus').textContent = v.msg; };
   chrome.storage.onChanged.addListener(onStatus);
@@ -727,7 +748,7 @@ async function sendSelected(sinkId, opts = {}) {
   } catch (e) { $('#astatus').textContent = t('archive_save_err', [(e && e.message) || String(e)]); }
   finally {
     chrome.storage.onChanged.removeListener(onStatus);
-    document.body.classList.remove('saving');
+    endOp();
     PICKED.clear(); SELECTING = false;
     await reloadCurrent(); // just this source — not a full-tree re-hydrate
   }
@@ -763,6 +784,11 @@ function goIndex() { CUR = null; renderRail(); renderIndex(); }
 function wire() {
   $('#opts').onclick = () => chrome.runtime.openOptionsPage();
   { const l = $('#logs'); if (l) l.onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/activity.html') }); }
+  { const s = $('#astop'); if (s) s.onclick = () => { if (CURRENT_STOP) CURRENT_STOP(); s.disabled = true; $('#astatus').textContent = t('stopping'); }; }
+  // The status line is single-line-clamped (ellipsis); mirror its text into the title so hover shows the full message.
+  { const as = $('#astatus'); if (as && typeof MutationObserver !== 'undefined') { const mo = new MutationObserver(() => { as.title = as.textContent || ''; }); mo.observe(as, { childList: true, characterData: true, subtree: true }); } }
+  // Live per-document progress from the background (Save/Send) → patch cards as they download.
+  chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch['habeas:doc-progress']) applyDocProgress(ch['habeas:doc-progress'].newValue); });
   { const c = $('#pv-close'); if (c) c.onclick = closePreview; }
   { const tb = $('#pv-tab'); if (tb) tb.onclick = () => { if (PV_CTX) openFile(PV_CTX.r, PV_CTX.sink.id, PV_CTX.ext); }; }
   $('#dw-close').onclick = closeDrawer;
@@ -828,7 +854,8 @@ function batchOpen() {
 
 async function onSync() {
   const b = $('#sync');
-  b.disabled = true; $('#astatus').textContent = t('sync_all_running');
+  b.disabled = true; beginOp(() => chrome.runtime.sendMessage({ type: 'habeas:sync-stop' })); // Stop → stop the sweep
+  $('#astatus').textContent = t('sync_all_running');
   const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#astatus').textContent = v.msg; };
   chrome.storage.onChanged.addListener(onStatus);
   try {
@@ -839,7 +866,7 @@ async function onSync() {
   } catch (e) { $('#astatus').textContent = t('sync_all_err', [(e && e.message) || String(e)]); }
   finally {
     chrome.storage.onChanged.removeListener(onStatus);
-    b.disabled = false;
+    b.disabled = false; endOp();
     await buildIndex(); if (CUR) { await loadDocs(CUR); renderRail(); renderDocs(); } else { renderRail(); renderIndex(); } hydrateIndex();
   }
 }

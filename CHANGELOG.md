@@ -22,6 +22,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   instead of a separate tab. It fetches the file's blob from its destination via the same `retrieveDelivered`
   the full-tab viewer uses (PDF/HTML in an iframe, images in an `<img>`), with "Open in a tab" and Esc-to-close.
   Non-previewable types (Excel, JSON…) still open in the full-tab viewer.
+- **Live per-document progress in the Archive + a Stop button** (`background.js`, `ui/archive.js`,
+  `ui/archive.html`). Save/Send/Re-download now stream each document to the Archive view as it downloads: the
+  background emits a `habeas:doc-progress` signal per document (the real date/amount as it's fetched, then a
+  "saved" flip after delivery), and the open Archive patches just that card — the view fills in as work runs, not
+  only at the end. A red **Detener** button appears while an operation is in flight and aborts it cleanly (a global
+  `AbortController` + `habeas:stop`, threaded through `runRoute`/`sendStoredDocs`/`listInventory` and Sync-all).
+  The status line now shows a live `N/total · name` counter for long sources and mirrors its text into the
+  element title, so a truncated message is readable in full on hover.
 
 ### Fixed
 - **Sending/re-downloading hand-picked documents works with a cloud-backed archive** (`background.js`,

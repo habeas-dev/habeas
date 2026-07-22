@@ -271,6 +271,16 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
 const SAMPLE_CAP = 120; // room for a thorough multi-account session (analytics beacons are filtered at the hook, so this holds real API calls + documents)
 const WS_FRAME_CAP = 200; // WebSocket/SSE frames (own buffer) — enough for the handshake + a data sample
 
+// A single in-flight INTERACTIVE background op (Save / Send / Re-download). A `habeas:stop` aborts it; the op's
+// loops poll the signal. (Sync-all has its own sweepController.)
+let __opAbort = null;
+function startOp() { try { if (__opAbort) __opAbort.abort(); } catch (e) {} __opAbort = new AbortController(); return __opAbort.signal; }
+function stopOp() { try { if (__opAbort) __opAbort.abort(); } catch (e) {} }
+// Live per-document progress → the Archive updates each card AS it downloads (real date/amount, then "saved"),
+// not only at the end. docs: [{ internalId, stream, record?, delivered? }].
+let __progSeq = 0;
+function emitProgress(dsId, docs) { try { chrome.storage.local.set({ 'habeas:doc-progress': { ds: dsId, seq: ++__progSeq, docs } }); } catch (e) {} }
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg) return;
   if (msg.type === 'habeas:ext') {
@@ -284,6 +294,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true; // async response
   }
   if (msg.type === 'habeas:sync-stop') { stopSweep(); sendResponse({ ok: true }); return; } // stop a running sweep
+  if (msg.type === 'habeas:stop') { stopOp(); stopSweep(); sendResponse({ ok: true }); return; } // stop any in-progress interactive op
   if (msg.type === 'habeas:deliver' && msg.datasource && msg.sink) { // on-demand "save this source to this destination" (from the Archive)
     (async () => {
       const cfg = await getConfig();
@@ -295,7 +306,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       // Reuse the full, tested pipeline: list → filter to NEW (undelivered) → fetch → write → mark ledger + store.
       // Returns { status:'nosession' } cleanly when there's no live session (the Archive surfaces that honestly).
       // msg.force → "Re-download from site": deliver ALL listed docs, not just undelivered (re-fetches them).
-      const r = await runRoute(ds, adapter, sink, { kind: 'manual', interactive: true, force: !!msg.force });
+      const r = await runRoute(ds, adapter, sink, { kind: 'manual', interactive: true, force: !!msg.force, signal: startOp() });
       return { ok: true, ...r };
     })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true; // async response
@@ -308,7 +319,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const adapter = ds && adapters[ds.adapter];
       const sink = (cfg.sinks || []).find((k) => k.id === msg.sink);
       if (!ds || !adapter || !sink) return { ok: false, error: 'unknown route' };
-      const r = await sendStoredDocs(ds, adapter, sink, msg.docs, { force: !!msg.force });
+      const r = await sendStoredDocs(ds, adapter, sink, msg.docs, { force: !!msg.force, signal: startOp() });
       return { ok: true, ...r };
     })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true; // async response
@@ -542,6 +553,7 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
     for (const dd of picked) { const s = (dd && dd.stream) || ''; (byStream.get(s) || byStream.set(s, []).get(s)).push(dd); }
     let sent = 0, accepted = 0;
     for (const [sid, list] of byStream) {
+      if (opts.signal && opts.signal.aborted) break; // Stop pressed
       const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(adapter.id, sid);
       const docs = list.filter((dd) => dd && dd.internalId != null).map((dd) => {
         const rec = dd.record || {};
@@ -555,7 +567,9 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
       if (!eligible.length) continue;
       const fmts = outputsOf(adapter).filter((o) => o.stream === sid).map((o) => o.format); // all this stream's formats
       const files = new Map();
+      let n = 0;
       if (net) for (const d of eligible) {
+        if (opts.signal && opts.signal.aborted) break; // Stop pressed — stop before the next doc
         const arts = [];
         for (const fmt of (fmts.length ? fmts : [''])) {
           const oeff = resolveOutput(adapter, sid + (fmt ? '/' + fmt : ''));
@@ -570,11 +584,14 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
         }
         await adoptDetailMeta(d, arts); // Amazon &c.: pull the real date/amount from the JSON detail into the record
         if (arts.length) files.set(d.internalId, arts);
+        emitProgress(ds.id, [{ internalId: d.internalId, stream: sid, record: bakeLearned(d) }]); // live: the card shows the real date now
+        setStatus(t('status_downloading', [String(++n), String(eligible.length), sink.id])); // live counter
       }
       setStatus(t('status_sending', [String(eligible.length), sink.id]));
       await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, source: sk, ext: documentExt(eff) || 'pdf', interactive: true });
       await markDelivered(ds.id, sink.id, eligible.map((d) => d.internalId));
       for (const d of eligible) d.record = bakeLearned(d);
+      emitProgress(ds.id, eligible.map((d) => ({ internalId: d.internalId, stream: sid, record: d.record, delivered: sink.id }))); // live: flip cards to "saved"
       try { await recordDelivered(sk, eligible, { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store best-effort */ }
       try { await rememberDocMeta(adapter.id, eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined }))); } catch (e) {}
       sent += eligible.length;
@@ -634,6 +651,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
       if (!eligible.length) continue;
       setStatus(t('status_fetching', [String(eligible.length), name]));
       const files = new Map();
+      let fetched = 0;
       for (const d of eligible) {
         if (opts.signal && opts.signal.aborted) break; // stop fetching mid-source
         const arts = [];
@@ -655,6 +673,8 @@ async function runRoute(ds, adapter, sink, opts = {}) {
         }
         await adoptDetailMeta(d, arts); // Amazon &c.: pull the real date/amount from the JSON detail into the record
         if (arts.length) files.set(d.internalId, arts);
+        emitProgress(ds.id, [{ internalId: d.internalId, stream: sid, record: bakeLearned(d) }]); // live date/amount on the card
+        setStatus(t('status_downloading', [String(++fetched), String(eligible.length), name])); // live counter (long sources)
       }
       // A stream that HAS a document (a statement PDF) but produced none from any eligible item — a silent
       // "0 documents" the contributor can't explain. Record it so "Report a problem" surfaces it.
@@ -665,6 +685,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
       await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, source: sk, ext: documentExt(eff) || 'pdf', interactive: !!opts.interactive });
       await markDelivered(ds.id, sink.id, eligible.map((d) => d.internalId));
       for (const d of eligible) d.record = bakeLearned(d); // persist the real date/amount learned from the detail
+      emitProgress(ds.id, eligible.map((d) => ({ internalId: d.internalId, stream: sid, record: d.record, delivered: sink.id }))); // live: flip cards to "saved"
       try { await recordDelivered(sk, eligible, { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store is best-effort */ } // write-through to the canonical store
       try { await rememberDocMeta(adapter.id, eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, returnStatus: d.returnStatus || undefined }))); } catch (e) { /* best-effort */ }
       totalNew += eligible.length;
