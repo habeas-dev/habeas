@@ -2439,20 +2439,20 @@
     "message": "Reload from the local archive — no network request"
   },
   "archive_reconcile": {
-    "message": "Recover dates from destination"
+    "message": "Recover data from destination"
   },
   "archive_reconcile_hint": {
-    "message": "Read the real dates from what was already delivered (no re-download) and save them to the archive"
+    "message": "Read the real data (dates, amounts, details) from what was already delivered (no re-download) and save it to the archive"
   },
   "archive_reconcile_running": {
-    "message": "Recovering real dates from the destination…"
+    "message": "Recovering real data from the destination…"
   },
   "archive_reconcile_ok": {
-    "message": "Recovered the real date for $N$ documents",
+    "message": "Recovered data for $N$ documents",
     "placeholders": { "n": { "content": "$1" } }
   },
   "archive_reconcile_none": {
-    "message": "No more precise dates found in the destination"
+    "message": "No richer data found in the destination"
   },
   "archive_reconcile_err": {
     "message": "Couldn't recover dates: $ERR$",

@@ -10,14 +10,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
-### Added
-- **"Recover dates from destination"** (`background.js`, `sinks/sinks.js`, `ui/archive.js`). A source whose
-  listing exposes only a year (Amazon) determined each document's real date at download time, but a past build
-  wrote that date only to the delivered files + the destination's per-source manifest — not back to the store
-  record. New Refresh-menu action reads that manifest (the precise dates are already there) and write-throughs
-  the finer records **without re-fetching from the source**; the store's shard layer then moves each document
-  from its year/`_undated` shard to its month shard. `readSinkRecords` now also reads Dropbox/WebDAV/S3
-  manifests. (Going forward, `adoptRealDate` already saves the real date to the store at download.)
+- **"Recover data from destination"** (`background.js`, `sinks/sinks.js`, `ui/archive.js`). A source whose
+  listing exposes only a coarse stub (Amazon: a year, no amount) determined each document's real date **and
+  amount and details** at download time, but a past build wrote them only to the delivered files + the
+  destination's per-source manifest — not back to the store record. New Refresh-menu action reads that manifest
+  (which carries the full delivered record) and write-throughs every **richer** record (a precise date, a real
+  amount, return/refund/payment, or line items) **without re-fetching from the source** — recovering the whole
+  record, not just the date; the store's shard layer then moves each document to its month shard.
+  `readSinkRecords` now also reads Dropbox/WebDAV/S3 manifests. (Going forward, `adoptRealDate` already saves the
+  real date to the store at download.)
 - **Group-header checkboxes + long-press to select in the Archive** (`ui/archive.js`, `ui/archive.html`). In
   selection mode each month/category/store header shows a checkbox that selects or deselects that whole group at
   once (with an on / partial / none state that tracks individual toggles). And **long-pressing any document**

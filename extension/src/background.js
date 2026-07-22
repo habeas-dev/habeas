@@ -319,7 +319,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const ds = (cfg.datasources || []).find((d) => d.id === msg.datasource);
       const adapter = ds && adapters[ds.adapter];
       if (!ds || !adapter) return { ok: false, error: 'unknown source' };
-      const upgraded = await reconcileDatesFromDelivered(ds, adapter);
+      const upgraded = await reconcileFromDelivered(ds, adapter);
       return { ok: true, upgraded };
     })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true; // async response
@@ -559,13 +559,24 @@ async function adoptRealDate(adapter, sid, auth, d, arts, net) {
   }
 }
 
-// Recover REAL dates into the canonical store from what was already delivered, WITHOUT re-fetching from the
-// source. The store record can hold a coarse date (Amazon's list gives only a year; a past download determined
-// the real date but only wrote it to the delivered files + the sink's per-source manifest, not back to the
-// store). This reads that manifest — which carries the precise date — and write-throughs the finer records; the
-// store's shard layer then MOVES each doc from its year/_undated shard to its month shard. Returns how many were
-// upgraded. Best-effort per (output × readable sink); the first sink holding the manifest wins.
-async function reconcileDatesFromDelivered(ds, adapter) {
+// A delivered manifest record carries REAL data the list-time store stub lacked — not just the precise date, but
+// the amount, return status, payment, line items… A record is worth recovering if it holds ANY of that richer
+// content (a full date, a numeric amount, or a detail-only field), i.e. it isn't a bare year-only listing stub.
+function isRichRecord(r) {
+  if (!r || r.internalId == null) return false;
+  return /^\d{4}-\d{2}-\d{2}/.test(String(r.date || ''))
+    || typeof r.total === 'number' || typeof r.amount === 'number'
+    || !!(r.returnStatus || r.refundTotal != null || r.paymentMethod || r.number)
+    || !!(r.extra && Object.keys(r.extra).length) || (Array.isArray(r.items) && r.items.length > 0);
+}
+
+// Recover REAL record data into the canonical store from what was already delivered, WITHOUT re-fetching from the
+// source. The store record can be a coarse stub (Amazon's list gives only a year + no amount; a past download
+// determined the real date/amount/details but wrote them only to the delivered files + the sink's per-source
+// manifest, not back to the store). This reads that manifest and write-throughs the richer records (whole record:
+// date, amount, everything); the store's shard layer then MOVES each doc to its month shard. Returns how many
+// were upgraded. Best-effort per (output × readable sink); the first sink holding the manifest wins.
+async function reconcileFromDelivered(ds, adapter) {
   const cfg = await getConfig();
   const readable = (cfg.sinks || []).filter((s) => ['dropbox', 'webdav', 's3', 'local-folder', 'drive'].includes(s.type));
   let upgraded = 0;
@@ -578,8 +589,7 @@ async function reconcileDatesFromDelivered(ds, adapter) {
         const dirHandle = sink.type === 'local-folder' ? await getHandle('dir:' + sink.id).catch(() => null) : undefined;
         recs = await readSinkRecords(sink, { service, source: sk, dirHandle });
       } catch (e) { continue; }
-      // Only records whose delivered date is MORE precise than a bare year (a full YYYY-MM-DD) are worth writing.
-      const better = (recs || []).filter((r) => r && r.internalId != null && /^\d{4}-\d{2}-\d{2}/.test(String(r.date || '')));
+      const better = (recs || []).filter(isRichRecord);
       if (!better.length) continue;
       await putItems(sk, better.map((r) => ({ internalId: r.internalId, record: r })), { source: adapter.id, srcVersion: adapter.version });
       upgraded += better.length;

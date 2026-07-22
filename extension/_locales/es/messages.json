@@ -2439,20 +2439,20 @@
     "message": "Recargar desde el archivo local — sin conexión"
   },
   "archive_reconcile": {
-    "message": "Recuperar fechas del destino"
+    "message": "Recuperar datos del destino"
   },
   "archive_reconcile_hint": {
-    "message": "Lee las fechas reales de lo ya entregado (sin re-descargar) y las guarda en el archivo"
+    "message": "Lee los datos reales (fechas, importes, detalles) de lo ya entregado (sin re-descargar) y los guarda en el archivo"
   },
   "archive_reconcile_running": {
-    "message": "Recuperando fechas reales del destino…"
+    "message": "Recuperando datos reales del destino…"
   },
   "archive_reconcile_ok": {
-    "message": "Recuperada la fecha real de $N$ documentos",
+    "message": "Recuperados datos de $N$ documentos",
     "placeholders": { "n": { "content": "$1" } }
   },
   "archive_reconcile_none": {
-    "message": "No se encontraron fechas más precisas en el destino"
+    "message": "No se encontraron datos más ricos en el destino"
   },
   "archive_reconcile_err": {
     "message": "No se pudieron recuperar las fechas: $ERR$",
