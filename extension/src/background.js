@@ -12,7 +12,7 @@ import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } 
 import { resolveSiteFetch, ensureSiteFetch, recoverSession } from './lib/pagefetch.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
-import { recordDelivered, getSource, listSources } from './lib/store.js';
+import { recordDelivered } from './lib/store.js';
 import { nextOccurrence } from './lib/schedule.js';
 import { acceptsDoc, sinkAcceptsArtifact, sinkAcceptsSource, bakeLearned, adoptDetailMeta } from './sinks/format.js';
 import { outputsForSink, outputsOf, resolveOutput, storeKeyOf } from './lib/outputs.js';
@@ -300,7 +300,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true; // async response
   }
-  if (msg.type === 'habeas:send' && msg.datasource && msg.sink && Array.isArray(msg.ids)) { // send HAND-PICKED stored docs to a destination (from the Archive's selection)
+  if (msg.type === 'habeas:send' && msg.datasource && msg.sink && Array.isArray(msg.docs)) { // deliver HAND-PICKED docs (records passed from the Archive) to a destination
     (async () => {
       const cfg = await getConfig();
       const adapters = await getAdapters();
@@ -308,7 +308,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const adapter = ds && adapters[ds.adapter];
       const sink = (cfg.sinks || []).find((k) => k.id === msg.sink);
       if (!ds || !adapter || !sink) return { ok: false, error: 'unknown route' };
-      const r = await sendStoredDocs(ds, adapter, sink, msg.ids, { force: !!msg.force });
+      const r = await sendStoredDocs(ds, adapter, sink, msg.docs, { force: !!msg.force });
       return { ok: true, ...r };
     })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true; // async response
@@ -524,37 +524,31 @@ const authFor = (adapter) => loadAuth(adapter);
 // somewhere. The normalized record always delivers (manifest); a per-item file is re-fetched when the source can
 // still produce it and there's a live session (best-effort — old items whose PDF template needs list-only fields
 // just deliver record-only, same contract as the popup's store-loaded send).
-async function sendStoredDocs(ds, adapter, sink, ids, opts = {}) {
+async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
   const name = adapter.name || ds.adapter;
-  const want = new Set((ids || []).map(String));
-  if (!want.size) return { status: 'done', sent: 0 };
+  const found = (picked || []).length;
+  if (!found) return { status: 'done', sent: 0, found: 0, accepted: 0 };
   await badgeWorking();
-  setStatus(t('status_fetching', [String(want.size), name]));
+  setStatus(t('status_fetching', [String(found), name]));
   try {
     const auth = await authFor(adapter);
-    const outs = outputsForSink(adapter, sink, sinkAcceptsSource);
     // Open the site tab only if the outputs can produce FILES (a per-item PDF/Excel needs the page-context
     // fetch); a records-only send never fetches. opts.force ("Re-download from site") always opens it.
-    const wantsDocs = opts.force || outs.some((o) => artifactKinds(resolveOutput(adapter, o.stream + (o.format ? '/' + o.format : ''))).length);
+    const wantsDocs = opts.force || outputsOf(adapter).some((o) => artifactKinds(resolveOutput(adapter, o.id)).length);
     const net = auth ? await ensureSiteFetch(adapter, { open: wantsDocs }).catch(() => null) : null; // null → records-only delivery still works
-    // Find the picked docs in the ACTUAL store keys of this source (base or base:stream) — NOT keys derived from
-    // the sink's accepted outputs. A stream mismatch there was silently finding nothing ("nothing sent").
-    const keys = (await listSources()).filter((k) => String(k).split(':')[0] === adapter.id);
-    let sent = 0, found = 0, accepted = 0;
-    for (const sk of keys) {
-      const sid = String(sk).split(':')[1] || '';
-      const eff = resolveOutput(adapter, sid);
-      const src = await getSource(sk); if (!src || !src.items) continue;
-      const docs = [];
-      for (const [internalId, e] of Object.entries(src.items)) {
-        if (e.gone || !want.has(String(internalId))) continue;
-        const rec = e.record || {};
-        // category MUST be on the doc top-level: acceptsDoc(sink, doc) reads doc.category (a sink with an
-        // accepts.categories filter would otherwise reject every stored doc). Fall back to the source's default.
+    // The RECORDS were passed in from the Archive page (which already read the store) → no store re-read here,
+    // so a Dropbox/folder-backed archive that the service worker can't list still works. Group by stream.
+    const byStream = new Map();
+    for (const dd of picked) { const s = (dd && dd.stream) || ''; (byStream.get(s) || byStream.set(s, []).get(s)).push(dd); }
+    let sent = 0, accepted = 0;
+    for (const [sid, list] of byStream) {
+      const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(adapter.id, sid);
+      const docs = list.filter((dd) => dd && dd.internalId != null).map((dd) => {
+        const rec = dd.record || {};
+        // category MUST be on the doc top-level: acceptsDoc(sink, doc) reads doc.category. Fall back to the source's default.
         const category = rec.category != null ? rec.category : ((adapter.categorize && adapter.categorize.default) || (adapter.categories && adapter.categories[0]));
-        docs.push({ internalId, record: rec, date: rec.date, total: rec.total ?? rec.amount, currency: rec.currency, category, type: rec.type, group: rec.group || '', _stream: sid, _storeKey: sk, _fromStore: true });
-      }
-      found += docs.length;
+        return { internalId: dd.internalId, record: rec, date: rec.date, total: rec.total ?? rec.amount, currency: rec.currency, category, type: rec.type, group: rec.group || '', _stream: sid, _storeKey: sk, _fromStore: true };
+      });
       const eligible = docs.filter((d) => acceptsDoc(sink, d))
         .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : (a.date || '') > (b.date || '') ? 1 : 0));
       accepted += eligible.length;
@@ -585,9 +579,9 @@ async function sendStoredDocs(ds, adapter, sink, ids, opts = {}) {
       try { await rememberDocMeta(adapter.id, eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined }))); } catch (e) {}
       sent += eligible.length;
     }
-    // Instrument a 0-sent result so the cause is visible (Report a problem) and the Archive can say which it was:
-    // nothing matched the picked ids in the store, vs. found but rejected by the sink's category filter.
-    if (!sent) pushDiag(adapter.id, { phase: 'send', message: `send: picked ${want.size}, found ${found} in store (${keys.length} keys), accepted ${accepted} by sink '${sink.id}' filter → 0 sent` });
+    // A 0-sent result now means the sink's category filter rejected everything (the docs were passed in, so
+    // they were definitely "found"). Log it for Report a problem.
+    if (!sent) pushDiag(adapter.id, { phase: 'send', message: `send → 0 sent · picked=${found} accepted=${accepted} sink='${sink.id}'` });
     await appendLog({ kind: 'manual', datasource: ds.id, sink: sink.id, status: 'ok', count: sent });
     await badgeCount(sent);
     setStatus(t('status_done', [name, String(sent)]));

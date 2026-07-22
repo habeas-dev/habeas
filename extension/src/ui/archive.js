@@ -255,7 +255,7 @@ async function loadDocs(base) {
         const set = deliveredCache[ck] || (deliveredCache[ck] = await deliveredSet(dsId, sink.id).catch(() => ({})));
         if (set[internalId]) delivered.push(sink);
       }
-      rows.push({ base, dsId, adapter, internalId, record, delivered, formats });
+      rows.push({ base, dsId, adapter, internalId, record, delivered, formats, _stream: stream });
     }
   }
   rows.sort((a, b) => ((a.record.date || '') < (b.record.date || '') ? 1 : -1));
@@ -705,18 +705,21 @@ async function onManageAccounts(opts = {}) {
 async function sendSelected(sinkId, opts = {}) {
   const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds) return;
   const sink = (CFG.sinks || []).find((s) => s.id === sinkId); if (!sink) return;
-  const ids = [...PICKED];
-  if (!ids.length) { $('#astatus').textContent = t('nothing_selected'); return; }
+  // Pass the picked docs' RECORDS (which THIS page already read from the archive) to the background — so it
+  // doesn't have to re-read the store, which the service worker can't always do (a Dropbox/folder-backed archive
+  // isn't readable from the background the way it is from a page). The background just fetches files + delivers.
+  const docs = CURDOCS.filter((r) => PICKED.has(r.internalId)).map((r) => ({ internalId: r.internalId, record: r.record, stream: r._stream || '' }));
+  if (!docs.length) { $('#astatus').textContent = t('nothing_selected'); return; }
   document.body.classList.add('saving');
-  $('#astatus').textContent = t('archive_sending_n', [String(ids.length)]);
+  $('#astatus').textContent = t('archive_sending_n', [String(docs.length)]);
   const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#astatus').textContent = v.msg; };
   chrome.storage.onChanged.addListener(onStatus);
   try {
     // opts.force → "Re-download from site": re-fetch the selected docs' files + details fresh (opens the site tab).
-    const r = await chrome.runtime.sendMessage({ type: 'habeas:send', datasource: entry.ds.id, sink: sinkId, ids, force: !!opts.force });
+    const r = await chrome.runtime.sendMessage({ type: 'habeas:send', datasource: entry.ds.id, sink: sinkId, docs, force: !!opts.force });
     if (r && r.ok && r.status === 'done') {
       if (r.sent) $('#astatus').textContent = t('archive_sent_ok', [String(r.sent), sinkLabel(sink)]);
-      else if (!r.found) $('#astatus').textContent = t('archive_send_notfound');       // ids not in the store
+      else if (!r.found) $('#astatus').textContent = t('archive_send_notfound') + (r.debug ? ' · ' + r.debug : '');   // none passed (unexpected)
       else $('#astatus').textContent = t('archive_send_incompat', [sinkLabel(sink)]);   // found but the sink's filter rejected them
     }
     else if (r && r.status === 'nosession') $('#astatus').textContent = t('archive_save_nosession', [entry.name]);
