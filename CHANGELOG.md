@@ -31,6 +31,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   The status line now shows a live `N/total · name` counter for long sources and mirrors its text into the
   element title, so a truncated message is readable in full on hover.
 
+- **The document drawer shows the order breakdown** (`ui/archive.js`, `lib/detailview.js`, `lib/retrieve.js`).
+  Opening a document in the Archive now fetches its stored JSON detail (the `data` artifact saved next to the
+  file — e.g. an Amazon order's line items, unit prices, payment method + last4, return/refund) back from a
+  readable destination and renders it: a line-item table plus payment/return/refund rows. Fetched on demand, so
+  the full breakdown shows even though the compact store record only keeps date/total — nothing has to be
+  re-downloaded. New pure `lib/detailview.js#detailView` (unit-tested); `retrieveDelivered` gained an `only`
+  option to fetch just the JSON (no wasteful PDF fallback). No-ops silently for sources with no JSON detail.
+
 ### Fixed
 - **PDF (and HTML/image) inline preview no longer downloads instead of rendering** (`ui/archive.js`). A sink
   hands the file back as `application/octet-stream` (Dropbox's download endpoint sets that Content-Type), so the

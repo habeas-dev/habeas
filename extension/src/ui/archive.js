@@ -13,6 +13,7 @@ import { useDriveStore, useFolderStore, useSinkStore, useHttpStore, folderStoreA
 import { mountSinkForm, connectSink, needsConnect, storeCapable } from './sinkform.js';
 import { deliveredSet, getDocMeta } from '../lib/state.js';
 import { isRetrievable, retrieveDelivered } from '../lib/retrieve.js';
+import { detailView, hasDetail } from '../lib/detailview.js';
 import { sinkAcceptsSource, groupLabelOf } from '../sinks/format.js';
 import { resolveOutput } from '../lib/outputs.js';
 import { artifactKinds } from '../runtime/inventory.js';
@@ -563,8 +564,10 @@ function openDrawer(r) {
   if (acts.length) body += `<div class="actions">${acts.join('')}</div>`;
   else if (r.delivered.length) body += `<div class="actions-note">${esc(t('archive_delivered_data'))}</div>`;
   else body += `<div class="actions-note">${esc(t('archive_no_dest'))}</div>`;
+  body += `<div class="detail" id="dw-detail" hidden></div>`; // filled from the stored JSON detail on demand
   body += `<button class="rawtoggle" id="rawtoggle">${esc(t('archive_raw_show'))}</button><pre class="raw" id="rawbox" hidden></pre>`;
   const b = $('#dw-body'); b.innerHTML = body;
+  void loadStoredDetail(r); // fetch the order's JSON breakdown (items, payment, refund) and render it
   b.dataset.i = String(CURDOCS.indexOf(r));
   const rb = $('#rawbox'); rb.textContent = JSON.stringify(r.record, null, 2);
   $('#rawtoggle').onclick = () => { rb.hidden = !rb.hidden; };
@@ -579,7 +582,46 @@ function openDrawer(r) {
 function actBtn(icon, label, sub, act, primary) {
   return `<button class="abtn ${primary ? 'primary' : ''}" data-act="${esc(act)}"><span class="ai">${icon}</span><span class="grow">${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ''}</span></button>`;
 }
-function closeDrawer() { $('#drawer').classList.remove('on'); $('#scrim').classList.remove('on'); $('#drawer').setAttribute('aria-hidden', 'true'); }
+function closeDrawer() { $('#drawer').classList.remove('on'); $('#scrim').classList.remove('on'); $('#drawer').setAttribute('aria-hidden', 'true'); DW_SEQ++; }
+// On opening a document, pull its stored JSON detail (the `data` artifact saved next to the file) back from a
+// retrievable destination and render the order breakdown — line items, payment, refund. Fetched on demand, so
+// the full detail shows even though the compact store record only keeps date/total. No-ops silently when the
+// source has no JSON detail, nothing was delivered to a readable destination, or the file can't be found.
+let DW_SEQ = 0;
+async function loadStoredDetail(r) {
+  const el = $('#dw-detail'); if (!el) return;
+  if (!r.adapter || !artifactKinds(r.adapter).some((k) => k.kind === 'data')) return; // this source emits no JSON detail
+  const sink = (r.delivered || []).find(isRetrievable); if (!sink) return;            // nothing readable to fetch from
+  const seq = ++DW_SEQ;
+  el.hidden = false;
+  el.innerHTML = `<div class="dloading"><span class="thb"></span> ${esc(t('archive_detail_loading'))}</div>`;
+  try {
+    const res = await retrieveDelivered(sink, r.adapter, r.record, 'json', { only: true });
+    if (seq !== DW_SEQ) return; // a newer drawer opened
+    if (!res || !res.blob) { el.hidden = true; return; }
+    const view = detailView(JSON.parse(await res.blob.text()));
+    if (!hasDetail(view)) { el.hidden = true; return; }
+    el.innerHTML = detailHtml(view, r.record);
+  } catch (e) { if (seq === DW_SEQ) el.hidden = true; } // not JSON / not found → just no panel
+}
+function detailHtml(view, record) {
+  const cur = view.currency || record.currency || 'EUR';
+  let html = '';
+  if (view.items.length) {
+    const rows = view.items.map((it) => {
+      const price = it.price != null ? `<td class="num">${esc(fmtMoney(Number(it.price), cur))}</td>` : '<td class="num"></td>';
+      const ret = it.returned ? `<span class="ret">${esc(it.returned)}</span>` : '';
+      return `<tr><td>${esc(it.name || '—')}${ret}</td>${price}</tr>`;
+    }).join('');
+    html += `<div class="dsec"><h4>${esc(t('archive_detail_items', [String(view.items.length)]))}</h4><table class="ditems"><tbody>${rows}</tbody></table></div>`;
+  }
+  const m = view.meta, rows = [];
+  if (m.paymentMethod) rows.push([t('archive_field_payment'), String(m.paymentMethod) + (m.paymentLast4 ? ' ···· ' + m.paymentLast4 : '')]);
+  if (m.returnStatus) rows.push([t('archive_field_return'), String(m.returnStatus)]);
+  if (m.refundTotal != null) rows.push([t('archive_field_refund'), fmtMoney(Number(m.refundTotal), cur)]);
+  if (rows.length) html += `<div class="dsec"><dl class="kvx">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(String(v))}</dd>`).join('')}</dl></div>`;
+  return html;
+}
 const sinkLabel = (s) => s.name || s.id || s.type;
 // Software destinations the background can deliver to unattended (mirrors the Auto-sync tab). 'download' and
 // 'local-folder' need a page/user context, so they're not offered as an on-demand archive save.

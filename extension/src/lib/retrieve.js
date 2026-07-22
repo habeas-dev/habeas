@@ -29,7 +29,7 @@ function candidatePaths(adapter, sink, record, preferExt) {
 // Try to pull the delivered file back. Returns { blob, ext } on success, or { tried:[paths] } on failure
 // (so the viewer can show what it looked for — was the file absent, or the path not reconstructable?).
 // preferExt: try that format's path first (a statement delivered as both PDF and Excel).
-export async function retrieveDelivered(sink, adapter, record, preferExt) {
+export async function retrieveDelivered(sink, adapter, record, preferExt, opts = {}) {
   if (!isRetrievable(sink)) return { tried: [] };
   let handle = null;
   if (sink.type === 'local-folder') {
@@ -37,7 +37,11 @@ export async function retrieveDelivered(sink, adapter, record, preferExt) {
     if (!handle || !(await verifyPermission(handle).catch(() => false))) return { tried: [], reason: 'folder not connected' };
   }
   const tried = [];
-  for (const { ext, path } of candidatePaths(adapter, sink, record, preferExt)) {
+  // opts.only: try ONLY the preferExt paths (don't fall back to other formats). Used to fetch the JSON detail
+  // for the drawer — a fallback would waste a PDF download and then fail to JSON.parse it.
+  let cands = candidatePaths(adapter, sink, record, preferExt);
+  if (opts.only && preferExt) cands = cands.filter((c) => c.ext === preferExt);
+  for (const { ext, path } of cands) {
     try {
       let blob = null;
       if (sink.type === 'dropbox') blob = await dropboxRetrieve(sink, path);

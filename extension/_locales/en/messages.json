@@ -2223,6 +2223,26 @@
   "archive_field_files": {
     "message": "Files"
   },
+  "archive_field_payment": {
+    "message": "Payment"
+  },
+  "archive_field_return": {
+    "message": "Return"
+  },
+  "archive_field_refund": {
+    "message": "Refund"
+  },
+  "archive_detail_loading": {
+    "message": "Loading details…"
+  },
+  "archive_detail_items": {
+    "message": "$N$ items",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
   "archive_open_capped": {
     "message": "Opened $N$ of $TOTAL$ (limit)",
     "placeholders": {
