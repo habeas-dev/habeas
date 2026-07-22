@@ -37,6 +37,7 @@ let CURDOCS = [];     // [{ base, dsId, adapter, internalId, record, delivered[]
 let ACCOUNT = '';     // account (record.group) filter
 let GROUPMODE = 'month';
 let SELECTING = false;
+let LP_SWALLOW = false;          // a long-press just fired → swallow the click it produces
 const PICKED = new Set();
 let STORE_LOCAL = false;        // the canonical store is still the default per-browser backend (→ first-run wizard)
 let ONBOARD_DISMISSED = false;  // the user chose to keep the local store
@@ -519,8 +520,23 @@ async function renderDocs() {
 function groupHtml(g, entry) {
   const net = g.items.reduce((a, r) => { const v = (typeof r.record.total === 'number' ? r.record.total : r.record.amount); if (typeof v !== 'number') return a; const dir = r.record.direction; return a + (dir === 'out' ? -Math.abs(v) : dir === 'in' ? Math.abs(v) : v); }, 0);
   const showNet = GROUPMODE === 'month' && isBankish(entry.adapter);
-  return `<div class="mgroup"><div class="mhead"><h4>${esc(g.label)}</h4><span class="line"></span><span class="mtot">${showNet ? esc(fmtMoney(net, currencyOf(g.items))) : t('n_documents', [String(g.items.length)])}</span></div><div class="cards">${g.items.map(cardHtml).join('')}</div></div>`;
+  // A group checkbox in the header (shown only in selection mode) selects/deselects the whole group at once.
+  const picked = g.items.filter((r) => PICKED.has(r.internalId)).length;
+  const gstate = picked === 0 ? '' : picked === g.items.length ? ' on' : ' some';
+  const gchk = `<span class="gchk${gstate}" data-gchk role="checkbox" aria-checked="${picked === 0 ? 'false' : picked === g.items.length ? 'true' : 'mixed'}" tabindex="0" title="${esc(t('archive_select_group'))}"></span>`;
+  return `<div class="mgroup"><div class="mhead">${gchk}<h4>${esc(g.label)}</h4><span class="line"></span><span class="mtot">${showNet ? esc(fmtMoney(net, currencyOf(g.items))) : t('n_documents', [String(g.items.length)])}</span></div><div class="cards">${g.items.map(cardHtml).join('')}</div></div>`;
 }
+// Recompute a group header's checkbox from its cards' current picked state (on / some / none).
+function refreshGroupChk(grp) {
+  if (!grp) return;
+  const chk = grp.querySelector('[data-gchk]'); if (!chk) return;
+  const rows = [...grp.querySelectorAll('.dcard')].map((c) => CURDOCS[+c.dataset.i]).filter(Boolean);
+  const n = rows.filter((r) => PICKED.has(r.internalId)).length;
+  chk.classList.toggle('on', n > 0 && n === rows.length);
+  chk.classList.toggle('some', n > 0 && n < rows.length);
+  chk.setAttribute('aria-checked', n === 0 ? 'false' : n === rows.length ? 'true' : 'mixed');
+}
+const refreshAllGroupChk = () => document.querySelectorAll('.mgroup').forEach(refreshGroupChk);
 function currencyOf(items) { const r = items.find((x) => x.record.currency); return (r && r.record.currency) || 'EUR'; }
 function cardHtml(r) {
   const i = CURDOCS.indexOf(r);
@@ -812,11 +828,23 @@ function updateSelCount() { const el = $('#selcount'); if (el) el.textContent = 
 function selectAllVisible(on) {
   if (on) for (const r of visibleDocs()) PICKED.add(r.internalId); else PICKED.clear();
   document.querySelectorAll('.dcard').forEach((card) => { const r = CURDOCS[+card.dataset.i]; if (r) card.classList.toggle('picked', PICKED.has(r.internalId)); });
+  refreshAllGroupChk();
   updateSelCount();
 }
 function toggleSelecting() {
   SELECTING = !SELECTING; if (!SELECTING) PICKED.clear();
   renderDocs();
+}
+// Enter selection mode from a long-press on a card — turn on the mode and pre-select that document, WITHOUT a
+// full re-render (so the just-pressed card + its group checkbox update in place; a re-render would drop the
+// still-down pointer). The CSS `.selecting` class reveals the card/group checkboxes and the selection bar.
+function enterSelectingWith(card) {
+  SELECTING = true;
+  $('#main').classList.add('selecting');
+  const st = $('#seltoggle'); if (st) { st.classList.add('on'); st.textContent = t('archive_sel_done'); }
+  const r = card && CURDOCS[+card.dataset.i];
+  if (r) { PICKED.add(r.internalId); card.classList.add('picked'); refreshGroupChk(card.closest('.mgroup')); }
+  updateSelCount();
 }
 
 // ---- navigation ----
@@ -854,8 +882,20 @@ function wire() {
     const acc = ev.target.closest('[data-acc]'); if (acc) { ACCOUNT = acc.dataset.acc; renderRail(); renderDocs(); return; }
     const src = ev.target.closest('[data-src]'); if (src) openSource(src.dataset.src);
   };
+  // Long-press a document → enter selection mode + select it (touch-friendly; the "Select" button still works).
+  { const m = $('#main'); let timer = null;
+    const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+    m.addEventListener('pointerdown', (ev) => {
+      LP_SWALLOW = false; cancel();
+      if (SELECTING) return; // already selecting → the click handler toggles normally
+      const card = ev.target.closest('.dcard'); if (!card) return;
+      timer = setTimeout(() => { timer = null; LP_SWALLOW = true; enterSelectingWith(card); }, 500);
+    });
+    for (const e of ['pointerup', 'pointermove', 'pointercancel', 'pointerleave']) m.addEventListener(e, cancel);
+  }
   // main delegation (index cards, group-by, select toggle, doc cards)
   $('#main').onclick = (ev) => {
+    if (LP_SWALLOW) { LP_SWALLOW = false; return; } // eat the click that follows a long-press
     const wa = ev.target.closest('[data-add]'); if (wa) { openSinkModal(wa.dataset.add || undefined); return; }
     const ws = ev.target.closest('[data-store]'); if (ws) { onStoreSetup(ws.dataset.store, ws.dataset.sink); return; }
     const sc = ev.target.closest('.srccard'); if (sc) { openSource(sc.dataset.src); return; }
@@ -875,9 +915,16 @@ function wire() {
     if (ev.target.closest('#seltoggle')) { toggleSelecting(); return; }
     if (ev.target.closest('#selclear')) { PICKED.clear(); SELECTING = false; renderDocs(); return; }
     if (ev.target.closest('#selopen')) { batchOpen(); return; }
+    // Group header checkbox → select/deselect every document in that month/category/store at once.
+    const gchk = ev.target.closest('[data-gchk]'); if (gchk && SELECTING) {
+      const grp = gchk.closest('.mgroup'); const cards = [...grp.querySelectorAll('.dcard')];
+      const allPicked = cards.every((c) => { const r = CURDOCS[+c.dataset.i]; return r && PICKED.has(r.internalId); });
+      for (const c of cards) { const r = CURDOCS[+c.dataset.i]; if (!r) continue; if (allPicked) PICKED.delete(r.internalId); else PICKED.add(r.internalId); c.classList.toggle('picked', !allPicked); }
+      refreshGroupChk(grp); updateSelCount(); return;
+    }
     const card = ev.target.closest('.dcard'); if (card) {
       const r = CURDOCS[+card.dataset.i]; if (!r) return;
-      if (SELECTING) { if (PICKED.has(r.internalId)) PICKED.delete(r.internalId); else PICKED.add(r.internalId); card.classList.toggle('picked'); updateSelCount(); }
+      if (SELECTING) { if (PICKED.has(r.internalId)) PICKED.delete(r.internalId); else PICKED.add(r.internalId); card.classList.toggle('picked'); updateSelCount(); refreshGroupChk(card.closest('.mgroup')); }
       else openDrawer(r);
     }
   };

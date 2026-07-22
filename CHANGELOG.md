@@ -11,6 +11,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Group-header checkboxes + long-press to select in the Archive** (`ui/archive.js`, `ui/archive.html`). In
+  selection mode each month/category/store header shows a checkbox that selects or deselects that whole group at
+  once (with an on / partial / none state that tracks individual toggles). And **long-pressing any document**
+  enters selection mode and pre-selects it (touch-friendly; the "Select" button still works).
 - **The Archive paints from a local cache on open** (`ui/archive.js`). Basic index metadata — the existing
   sources, each source's document count + last date, and its accounts (groups) — is cached in `storage.local`
   (`habeas:archive-cache`) and rendered instantly on open, so the Archive is never blank/throbbing while a
@@ -40,6 +44,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   option to fetch just the JSON (no wasteful PDF fallback). No-ops silently for sources with no JSON detail.
 
 ### Fixed
+- **The "Stop" button only shows while something is running** (`ui/archive.html`). The `.abar button` rule set
+  `display:inline-flex`, which overrode the `hidden` attribute, so the red Stop button was always visible. Added
+  the `.abar button[hidden]{display:none}` override (same pattern already used for menus/overlays).
 - **Amazon documents no longer all land dateless in the store** (`background.js`, `lib/store/sharded.js`). Amazon
   exposes only a YEAR in its listing; the real date rides the per-document JSON detail. That detail is only
   fetched when the SINK accepts the `data` artifact, so a PDF-only destination left every record year-only — and

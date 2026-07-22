@@ -2458,6 +2458,9 @@
   "archive_select_all": {
     "message": "All"
   },
+  "archive_select_group": {
+    "message": "Select/deselect this group"
+  },
   "archive_select_none": {
     "message": "None"
   },
