@@ -714,7 +714,11 @@ async function sendSelected(sinkId, opts = {}) {
   try {
     // opts.force → "Re-download from site": re-fetch the selected docs' files + details fresh (opens the site tab).
     const r = await chrome.runtime.sendMessage({ type: 'habeas:send', datasource: entry.ds.id, sink: sinkId, ids, force: !!opts.force });
-    if (r && r.ok && r.status === 'done') $('#astatus').textContent = r.sent ? t('archive_sent_ok', [String(r.sent), sinkLabel(sink)]) : t('archive_send_none');
+    if (r && r.ok && r.status === 'done') {
+      if (r.sent) $('#astatus').textContent = t('archive_sent_ok', [String(r.sent), sinkLabel(sink)]);
+      else if (!r.found) $('#astatus').textContent = t('archive_send_notfound');       // ids not in the store
+      else $('#astatus').textContent = t('archive_send_incompat', [sinkLabel(sink)]);   // found but the sink's filter rejected them
+    }
     else if (r && r.status === 'nosession') $('#astatus').textContent = t('archive_save_nosession', [entry.name]);
     else $('#astatus').textContent = t('archive_save_err', [(r && r.error) || 'error']);
   } catch (e) { $('#astatus').textContent = t('archive_save_err', [(e && e.message) || String(e)]); }

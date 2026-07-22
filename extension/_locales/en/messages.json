@@ -2682,5 +2682,16 @@
   },
   "archive_preview_fail": {
     "message": "Couldn’t load this file from its destination. If it was delivered by an old build, try Re-download from site."
+  },
+  "archive_send_notfound": {
+    "message": "Those documents weren’t found in your archive."
+  },
+  "archive_send_incompat": {
+    "message": "$NAME$ doesn’t accept those documents (its category filter).",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
   }
 }

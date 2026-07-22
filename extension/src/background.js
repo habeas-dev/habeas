@@ -12,10 +12,10 @@ import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } 
 import { resolveSiteFetch, ensureSiteFetch, recoverSession } from './lib/pagefetch.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
-import { recordDelivered, getSource } from './lib/store.js';
+import { recordDelivered, getSource, listSources } from './lib/store.js';
 import { nextOccurrence } from './lib/schedule.js';
 import { acceptsDoc, sinkAcceptsArtifact, sinkAcceptsSource, bakeLearned, adoptDetailMeta } from './sinks/format.js';
-import { outputsForSink, resolveOutput, storeKeyOf } from './lib/outputs.js';
+import { outputsForSink, outputsOf, resolveOutput, storeKeyOf } from './lib/outputs.js';
 import { getAdapters } from './adapters/index.js';
 import { hasConsent } from './lib/consent.js';
 import { badgeWorking, badgeCount, badgeError, badgeClear, setStatus } from './lib/badge.js';
@@ -532,31 +532,34 @@ async function sendStoredDocs(ds, adapter, sink, ids, opts = {}) {
   setStatus(t('status_fetching', [String(want.size), name]));
   try {
     const auth = await authFor(adapter);
-    const outs = outputsForSink(adapter, sink, sinkAcceptsSource); // only the outputs THIS sink accepts
-    const streamIds = [...new Set(outs.map((o) => o.stream))];
-    const fmtsFor = (sid) => outs.filter((o) => o.stream === sid).map((o) => o.format);
-    // Open the site tab only if these outputs can produce FILES (a per-item PDF/Excel needs the page-context
-    // fetch); a records-only send (bank movements) never fetches, so it stays quiet and works offline.
-    // opts.force ("Re-download from site") always opens the tab so files + details are re-fetched fresh.
+    const outs = outputsForSink(adapter, sink, sinkAcceptsSource);
+    // Open the site tab only if the outputs can produce FILES (a per-item PDF/Excel needs the page-context
+    // fetch); a records-only send never fetches. opts.force ("Re-download from site") always opens it.
     const wantsDocs = opts.force || outs.some((o) => artifactKinds(resolveOutput(adapter, o.stream + (o.format ? '/' + o.format : ''))).length);
     const net = auth ? await ensureSiteFetch(adapter, { open: wantsDocs }).catch(() => null) : null; // null → records-only delivery still works
-    let sent = 0;
-    for (const sid of streamIds) {
-      const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(adapter.id, sid);
+    // Find the picked docs in the ACTUAL store keys of this source (base or base:stream) — NOT keys derived from
+    // the sink's accepted outputs. A stream mismatch there was silently finding nothing ("nothing sent").
+    const keys = (await listSources()).filter((k) => String(k).split(':')[0] === adapter.id);
+    let sent = 0, found = 0, accepted = 0;
+    for (const sk of keys) {
+      const sid = String(sk).split(':')[1] || '';
+      const eff = resolveOutput(adapter, sid);
       const src = await getSource(sk); if (!src || !src.items) continue;
-      // Build the chosen docs of this stream from the store.
       const docs = [];
       for (const [internalId, e] of Object.entries(src.items)) {
         if (e.gone || !want.has(String(internalId))) continue;
         const rec = e.record || {};
-        // category MUST be on the doc top-level: acceptsDoc(sink, doc) reads doc.category, so a sink with an
-        // accepts.categories filter would otherwise reject every stored doc (undefined ∉ categories) → "nothing sent".
-        docs.push({ internalId, record: rec, date: rec.date, total: rec.total ?? rec.amount, currency: rec.currency, category: rec.category, type: rec.type, group: rec.group || '', _stream: sid, _storeKey: sk, _fromStore: true });
+        // category MUST be on the doc top-level: acceptsDoc(sink, doc) reads doc.category (a sink with an
+        // accepts.categories filter would otherwise reject every stored doc). Fall back to the source's default.
+        const category = rec.category != null ? rec.category : ((adapter.categorize && adapter.categorize.default) || (adapter.categories && adapter.categories[0]));
+        docs.push({ internalId, record: rec, date: rec.date, total: rec.total ?? rec.amount, currency: rec.currency, category, type: rec.type, group: rec.group || '', _stream: sid, _storeKey: sk, _fromStore: true });
       }
+      found += docs.length;
       const eligible = docs.filter((d) => acceptsDoc(sink, d))
         .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : (a.date || '') > (b.date || '') ? 1 : 0));
+      accepted += eligible.length;
       if (!eligible.length) continue;
-      const fmts = fmtsFor(sid);
+      const fmts = outputsOf(adapter).filter((o) => o.stream === sid).map((o) => o.format); // all this stream's formats
       const files = new Map();
       if (net) for (const d of eligible) {
         const arts = [];
@@ -582,10 +585,13 @@ async function sendStoredDocs(ds, adapter, sink, ids, opts = {}) {
       try { await rememberDocMeta(adapter.id, eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined }))); } catch (e) {}
       sent += eligible.length;
     }
+    // Instrument a 0-sent result so the cause is visible (Report a problem) and the Archive can say which it was:
+    // nothing matched the picked ids in the store, vs. found but rejected by the sink's category filter.
+    if (!sent) pushDiag(adapter.id, { phase: 'send', message: `send: picked ${want.size}, found ${found} in store (${keys.length} keys), accepted ${accepted} by sink '${sink.id}' filter → 0 sent` });
     await appendLog({ kind: 'manual', datasource: ds.id, sink: sink.id, status: 'ok', count: sent });
     await badgeCount(sent);
     setStatus(t('status_done', [name, String(sent)]));
-    return { status: 'done', sent };
+    return { status: 'done', sent, found, accepted };
   } catch (e) {
     const msg = (e && e.message) || String(e);
     pushDiag(adapter.id, { phase: 'send', message: msg });

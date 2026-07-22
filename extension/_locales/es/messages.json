@@ -2682,5 +2682,16 @@
   },
   "archive_preview_fail": {
     "message": "No se pudo cargar este fichero desde su destino. Si lo entregó una versión antigua, prueba «Re-descargar del sitio»."
+  },
+  "archive_send_notfound": {
+    "message": "No se encontraron esos documentos en tu archivo."
+  },
+  "archive_send_incompat": {
+    "message": "$NAME$ no acepta esos documentos (su filtro de categorías).",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
   }
 }

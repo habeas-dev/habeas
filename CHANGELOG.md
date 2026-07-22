@@ -24,11 +24,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   Non-previewable types (Excel, JSON…) still open in the full-tab viewer.
 
 ### Fixed
-- **Sending/re-downloading stored documents to a category-filtered sink no longer says "nothing sent"**
-  (`background.js`, `ui/popup.js`). `acceptsDoc` reads `doc.category`, but docs built from the store carried the
-  category only on `record` — so a sink with an `accepts.categories` filter (e.g. one that accepts Amazon's
-  category) rejected every stored doc (`undefined ∉ categories`). Copy `category` up to the doc top level in
-  `sendStoredDocs` and the popup's `docsFromStore`. Covered by `test/format.test.mjs`.
+- **Sending/re-downloading hand-picked stored documents no longer silently fails** (`background.js`, `ui/popup.js`,
+  `ui/archive.js`). Two causes of "nothing sent": (1) `sendStoredDocs` looked for the picked docs under store keys
+  derived from the sink's accepted *outputs*, so a stream mismatch found nothing — it now scans the source's
+  **actual** store keys. (2) `acceptsDoc` reads `doc.category`, but docs built from the store carried it only on
+  `record` (and old records may lack it entirely) — the doc now copies `category` up, falling back to the source's
+  default category (also fixed in the popup's `docsFromStore`). The Archive now distinguishes the two failure
+  modes ("not found in your archive" vs "the destination's category filter rejected them"), and a 0-sent result is
+  logged for "Report a problem". Covered by `test/format.test.mjs`.
 - **The real document date is now saved to the Archive on download** (`sinks/format.js`, `background.js`,
   `ui/popup.js`). Sources whose list only exposes a year (Amazon) carry the real date in a JSON detail fetched at
   download time; the popup's send adopted it but the Archive's Save (`runRoute`) and Send (`sendStoredDocs`) did
