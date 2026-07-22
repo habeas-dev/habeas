@@ -54,6 +54,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   option to fetch just the JSON (no wasteful PDF fallback). No-ops silently for sources with no JSON detail.
 
 ### Fixed
+- **Long operations retry instead of failing when the service worker is recycled** (`ui/archive.js`,
+  `background.js`). MV3 recycles the background service worker mid-operation, closing the message channel before
+  the response arrives ("A listener indicated an asynchronous response by returning true, but the message channel
+  closed before a response was received"). Save/Send/Recover-data/Sync-all now **re-send the message a few times**
+  on that transient error (showing "Connection dropped — retrying (n/total)…") — safe because a fresh attempt
+  aborts any lingering prior one and resumes from the per-chunk delivery ledger. Plus a **keep-alive heartbeat**
+  (a periodic extension-API call while an op runs) resets the worker's idle timer so it's recycled far less often.
 - **Cloud store writes/reads from the background actually work now (root cause of several store bugs)**
   (`lib/store.js`). `makeBackend` resolved non-`local` backends with a dynamic `import()`, which is **disallowed
   in an MV3 service worker** ("import() is disallowed on ServiceWorkerGlobalScope"). So every canonical-store

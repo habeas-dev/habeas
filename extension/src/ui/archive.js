@@ -46,6 +46,24 @@ let CURRENT_STOP = null;        // how to stop the in-progress action (local abo
 // A long action (Refresh / Save / Send / Sync) started/ended — show the Stop button + the busy cursor.
 function beginOp(stopFn) { CURRENT_STOP = stopFn; document.body.classList.add('saving'); const b = $('#astop'); if (b) { b.hidden = false; b.disabled = false; } }
 function endOp() { CURRENT_STOP = null; document.body.classList.remove('saving'); const b = $('#astop'); if (b) b.hidden = true; }
+// MV3 recycles the background service worker mid-operation, closing the message channel before the response
+// arrives ("message channel closed before a response was received"). Our long ops are RESUMABLE — a fresh
+// attempt aborts any lingering prior one (background startOp) and continues from the per-chunk ledger — so on
+// that transient error we RE-SEND the message a few times before surfacing it. A real error propagates at once.
+async function sendOp(msg, { retries = 4, delay = 900, onRetry } = {}) {
+  let lastErr;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try { return await chrome.runtime.sendMessage(msg); }
+    catch (e) {
+      lastErr = e; const m = (e && e.message) || String(e);
+      if (!/message channel closed|message port closed|Receiving end does not exist/i.test(m)) throw e; // not a SW recycle → real failure
+      if (attempt >= retries) break;
+      if (onRetry) onRetry(attempt + 1, retries);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  throw lastErr;
+}
 // Live per-document progress from the background (Save/Send): patch each card in place as it downloads — the real
 // date/amount, then the "Saved" pill — instead of only at the end.
 function applyDocProgress(p) {
@@ -657,7 +675,7 @@ async function deliver(sinkId, opts = {}) {
   chrome.storage.onChanged.addListener(onStatus);
   try {
     // opts.force → "Re-download from site": re-fetch + re-deliver even already-delivered docs (bypass the ledger skip).
-    const r = await chrome.runtime.sendMessage({ type: 'habeas:deliver', datasource: entry.ds.id, sink: sinkId, force: !!opts.force });
+    const r = await sendOp({ type: 'habeas:deliver', datasource: entry.ds.id, sink: sinkId, force: !!opts.force }, { onRetry: (n, m) => { $('#astatus').textContent = t('op_retrying', [String(n), String(m + 1)]); } });
     if (r && r.ok && r.status === 'done') $('#astatus').textContent = r.new ? t('archive_saved_ok', [String(r.new), sinkLabel(sink)]) : t('archive_save_none');
     else if (r && r.status === 'nosession') $('#astatus').textContent = t('archive_save_nosession', [entry.name]);
     else $('#astatus').textContent = t('archive_save_err', [(r && r.error) || 'error']);
@@ -723,7 +741,7 @@ async function reconcileDates() {
   const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#astatus').textContent = v.msg; }; // live progress from the background
   chrome.storage.onChanged.addListener(onStatus);
   try {
-    const r = await chrome.runtime.sendMessage({ type: 'habeas:reconcile', datasource: entry.ds.id });
+    const r = await sendOp({ type: 'habeas:reconcile', datasource: entry.ds.id }, { onRetry: (n, m) => { $('#astatus').textContent = t('op_retrying', [String(n), String(m + 1)]); } });
     if (r && r.ok) { await reloadCurrent(); $('#astatus').textContent = r.upgraded ? t('archive_reconcile_ok', [String(r.upgraded)]) : t('archive_reconcile_none'); }
     else $('#astatus').textContent = t('archive_reconcile_err', [(r && r.error) || 'error']);
   } catch (e) { $('#astatus').textContent = t('archive_reconcile_err', [(e && e.message) || String(e)]); }
@@ -820,7 +838,7 @@ async function sendSelected(sinkId, opts = {}) {
   chrome.storage.onChanged.addListener(onStatus);
   try {
     // opts.force → "Re-download from site": re-fetch the selected docs' files + details fresh (opens the site tab).
-    const r = await chrome.runtime.sendMessage({ type: 'habeas:send', datasource: entry.ds.id, sink: sinkId, docs, force: !!opts.force });
+    const r = await sendOp({ type: 'habeas:send', datasource: entry.ds.id, sink: sinkId, docs, force: !!opts.force }, { onRetry: (n, m) => { $('#astatus').textContent = t('op_retrying', [String(n), String(m + 1)]); } });
     if (r && r.ok && r.status === 'done') {
       if (r.sent) $('#astatus').textContent = t('archive_sent_ok', [String(r.sent), sinkLabel(sink)]);
       else if (!r.found) $('#astatus').textContent = t('archive_send_notfound') + (r.debug ? ' · ' + r.debug : '');   // none passed (unexpected)
@@ -973,7 +991,7 @@ async function onSync() {
   const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#astatus').textContent = v.msg; };
   chrome.storage.onChanged.addListener(onStatus);
   try {
-    const r = await chrome.runtime.sendMessage({ type: 'habeas:sync-all' });
+    const r = await sendOp({ type: 'habeas:sync-all' }, { onRetry: (n, m) => { $('#astatus').textContent = t('op_retrying', [String(n), String(m + 1)]); } });
     if (r && r.ok && (r.status === 'done' || r.status === 'stopped')) $('#astatus').textContent = t('sync_all_done', [String(r.new || 0), String(r.sources || 0)]);
     else if (r && r.status === 'busy') $('#astatus').textContent = t('sync_all_running');
     else $('#astatus').textContent = t('sync_all_err', [(r && r.error) || 'error']);

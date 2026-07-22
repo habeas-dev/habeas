@@ -2447,6 +2447,10 @@
   "archive_reconcile_running": {
     "message": "Recovering real data from the destination…"
   },
+  "op_retrying": {
+    "message": "Connection dropped — retrying ($N$/$TOTAL$)…",
+    "placeholders": { "n": { "content": "$1" }, "total": { "content": "$2" } }
+  },
   "reconcile_reading": {
     "message": "Reading what's already saved in $SINK$…",
     "placeholders": { "sink": { "content": "$1" } }

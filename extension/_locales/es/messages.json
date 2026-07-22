@@ -2447,6 +2447,10 @@
   "archive_reconcile_running": {
     "message": "Recuperando datos reales del destino…"
   },
+  "op_retrying": {
+    "message": "Se cortó la conexión — reintentando ($N$/$TOTAL$)…",
+    "placeholders": { "n": { "content": "$1" }, "total": { "content": "$2" } }
+  },
   "reconcile_reading": {
     "message": "Leyendo lo ya guardado en $SINK$…",
     "placeholders": { "sink": { "content": "$1" } }

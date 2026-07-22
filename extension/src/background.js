@@ -275,8 +275,18 @@ const WS_FRAME_CAP = 200; // WebSocket/SSE frames (own buffer) — enough for th
 // A single in-flight INTERACTIVE background op (Save / Send / Re-download). A `habeas:stop` aborts it; the op's
 // loops poll the signal. (Sync-all has its own sweepController.)
 let __opAbort = null;
-function startOp() { try { if (__opAbort) __opAbort.abort(); } catch (e) {} __opAbort = new AbortController(); return __opAbort.signal; }
-function stopOp() { try { if (__opAbort) __opAbort.abort(); } catch (e) {} }
+// Keep the MV3 service worker alive during a long op: a periodic extension-API call resets its idle timer so it
+// isn't recycled mid-operation (which would close the message channel before the caller gets a response). A
+// safety timeout stops the heartbeat if an op ends without calling stopOp (there's no explicit "op done" event).
+let __ka = null, __kaStop = null;
+function keepAlive() {
+  if (!__ka) __ka = setInterval(() => { try { chrome.runtime.getPlatformInfo(() => {}); } catch (e) {} }, 20000);
+  if (__kaStop) clearTimeout(__kaStop);
+  __kaStop = setTimeout(stopKeepAlive, 6 * 60 * 1000);
+}
+function stopKeepAlive() { if (__ka) { clearInterval(__ka); __ka = null; } if (__kaStop) { clearTimeout(__kaStop); __kaStop = null; } }
+function startOp() { try { if (__opAbort) __opAbort.abort(); } catch (e) {} __opAbort = new AbortController(); keepAlive(); return __opAbort.signal; }
+function stopOp() { try { if (__opAbort) __opAbort.abort(); } catch (e) {} stopKeepAlive(); }
 // Live per-document progress → the Archive updates each card AS it downloads (real date/amount, then "saved"),
 // not only at the end. docs: [{ internalId, stream, record?, delivered? }].
 let __progSeq = 0;
@@ -319,8 +329,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const ds = (cfg.datasources || []).find((d) => d.id === msg.datasource);
       const adapter = ds && adapters[ds.adapter];
       if (!ds || !adapter) return { ok: false, error: 'unknown source' };
-      const upgraded = await reconcileFromDelivered(ds, adapter);
-      return { ok: true, upgraded };
+      keepAlive();
+      try { return { ok: true, upgraded: await reconcileFromDelivered(ds, adapter) }; }
+      finally { stopKeepAlive(); }
     })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true; // async response
   }
