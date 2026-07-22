@@ -40,6 +40,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   option to fetch just the JSON (no wasteful PDF fallback). No-ops silently for sources with no JSON detail.
 
 ### Fixed
+- **Large downloads checkpoint incrementally — no more "500 downloaded, metadata lost"** (`background.js`). A
+  long download (`runRoute` Save / Sync-all, `sendStoredDocs` Send/Re-download) used to fetch every document,
+  then write the files + delivery ledger + canonical-store records **once at the very end** — so any interruption
+  (Stop, the service worker recycling, the browser closing, a failed final write) lost the whole batch's
+  metadata. It now flushes every 25 documents (files + ledger + store records), so an interruption loses at most
+  the in-flight chunk; already-checkpointed documents are durable. `writeToSink`/`recordDelivered`/`markDelivered`
+  all read-merge-write, so repeated flushes accumulate safely. The ephemeral `download` (ZIP) sink stays
+  single-shot (one flush = one ZIP). Covered by `test/checkpoint.test.mjs`.
 - **PDF (and HTML/image) inline preview no longer downloads instead of rendering** (`ui/archive.js`). A sink
   hands the file back as `application/octet-stream` (Dropbox's download endpoint sets that Content-Type), so the
   preview `<iframe>`/`<img>` downloaded the blob rather than showing it. The preview now re-wraps the retrieved
@@ -68,6 +76,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   `store.js#deleteSource`; the local backend removes the key, cloud backends empty it).
 
 ### Changed
+- **Clearer document status labels: "Pending" / "Saved"** (`_locales`). The Archive card status "Only in your
+  archive" vs "Saved" was confusing when your destination *is* your archive (e.g. Dropbox as both store and
+  sink) — it read as two places when the real difference is **data vs file**: your archive holds the data
+  (record), a destination holds the file. Renamed to **Pending** (we have the data; the file isn't saved yet)
+  and **Saved** (the file is saved to your destination), with tooltips and the legend reworded to match.
 - **Settings page reorganized around plain-language user journeys** (`ui/options.html`, `ui/options.js`). The dense
   6-tab admin layout is gone; Settings now has a left rail (like the Archive) with sections framed for a
   non-technical user: **Inicio** (a "your setup at a glance" overview + a first-run 1·2·3 checklist), **Servicios**

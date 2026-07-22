@@ -567,9 +567,25 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
       if (!eligible.length) continue;
       const fmts = outputsOf(adapter).filter((o) => o.stream === sid).map((o) => o.format); // all this stream's formats
       const files = new Map();
-      let n = 0;
+      let n = 0, pending = [];
+      // Checkpoint every CHUNK docs (see runRoute): a long re-download persists incrementally so an
+      // interruption loses at most one chunk, not the whole batch. The `download` (ZIP) sink → one final flush.
+      const CHUNK = sink.type === 'download' ? Infinity : 25;
+      const flushChunk = async () => {
+        if (!pending.length) return;
+        const batch = pending; pending = [];
+        setStatus(t('status_sending', [String(batch.length), sink.id]));
+        await writeToSink(sink, batch, files, { service: adapter.service || ds.adapter, source: sk, ext: documentExt(eff) || 'pdf', interactive: true });
+        await markDelivered(ds.id, sink.id, batch.map((d) => d.internalId));
+        for (const d of batch) d.record = bakeLearned(d);
+        emitProgress(ds.id, batch.map((d) => ({ internalId: d.internalId, stream: sid, record: d.record, delivered: sink.id }))); // live: flip cards to "saved"
+        try { await recordDelivered(sk, batch, { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store best-effort */ }
+        try { await rememberDocMeta(adapter.id, batch.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined }))); } catch (e) {}
+        for (const d of batch) files.delete(d.internalId); // bound memory
+        sent += batch.length;
+      };
       if (net) for (const d of eligible) {
-        if (opts.signal && opts.signal.aborted) break; // Stop pressed — stop before the next doc
+        if (opts.signal && opts.signal.aborted) break; // Stop pressed — stop before the next doc (flushed chunks are safe)
         const arts = [];
         for (const fmt of (fmts.length ? fmts : [''])) {
           const oeff = resolveOutput(adapter, sid + (fmt ? '/' + fmt : ''));
@@ -586,15 +602,12 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
         if (arts.length) files.set(d.internalId, arts);
         emitProgress(ds.id, [{ internalId: d.internalId, stream: sid, record: bakeLearned(d) }]); // live: the card shows the real date now
         setStatus(t('status_downloading', [String(++n), String(eligible.length), sink.id])); // live counter
+        pending.push(d);
+        if (pending.length >= CHUNK) await flushChunk(); // checkpoint
+      } else {
+        pending = eligible.slice(); // record-only send: no per-doc fetch, deliver the manifest in one flush
       }
-      setStatus(t('status_sending', [String(eligible.length), sink.id]));
-      await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, source: sk, ext: documentExt(eff) || 'pdf', interactive: true });
-      await markDelivered(ds.id, sink.id, eligible.map((d) => d.internalId));
-      for (const d of eligible) d.record = bakeLearned(d);
-      emitProgress(ds.id, eligible.map((d) => ({ internalId: d.internalId, stream: sid, record: d.record, delivered: sink.id }))); // live: flip cards to "saved"
-      try { await recordDelivered(sk, eligible, { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store best-effort */ }
-      try { await rememberDocMeta(adapter.id, eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined }))); } catch (e) {}
-      sent += eligible.length;
+      await flushChunk(); // final partial chunk (whole batch for record-only / the download sink)
     }
     // A 0-sent result now means the sink's category filter rejected everything (the docs were passed in, so
     // they were definitely "found"). Log it for Report a problem.
@@ -651,9 +664,28 @@ async function runRoute(ds, adapter, sink, opts = {}) {
       if (!eligible.length) continue;
       setStatus(t('status_fetching', [String(eligible.length), name]));
       const files = new Map();
-      let fetched = 0;
+      let fetched = 0, anyArts = false, pending = [];
+      // Checkpoint every CHUNK docs so a long download persists incrementally (sink files + delivery ledger +
+      // canonical-store records). An interruption — Stop, the service worker recycling, the browser closing —
+      // then loses at most one chunk instead of the whole batch (the reported "500 downloaded, metadata lost").
+      // writeToSink/recordDelivered/markDelivered all read-merge-write, so repeated flushes accumulate safely.
+      // The ephemeral `download` (ZIP) sink can't be chunked (one flush = one ZIP) → single final flush.
+      const CHUNK = sink.type === 'download' ? Infinity : 25;
+      const flushChunk = async () => {
+        if (!pending.length) return;
+        const batch = pending; pending = [];
+        setStatus(t('status_sending', [String(batch.length), sink.id]));
+        await writeToSink(sink, batch, files, { service: adapter.service || ds.adapter, source: sk, ext: documentExt(eff) || 'pdf', interactive: !!opts.interactive });
+        await markDelivered(ds.id, sink.id, batch.map((d) => d.internalId));
+        for (const d of batch) d.record = bakeLearned(d); // persist the real date/amount learned from the detail
+        emitProgress(ds.id, batch.map((d) => ({ internalId: d.internalId, stream: sid, record: d.record, delivered: sink.id }))); // live: flip cards to "saved"
+        try { await recordDelivered(sk, batch, { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store is best-effort */ } // write-through to the canonical store
+        try { await rememberDocMeta(adapter.id, batch.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, returnStatus: d.returnStatus || undefined }))); } catch (e) { /* best-effort */ }
+        for (const d of batch) files.delete(d.internalId); // bound memory across a large sweep
+        totalNew += batch.length;
+      };
       for (const d of eligible) {
-        if (opts.signal && opts.signal.aborted) break; // stop fetching mid-source
+        if (opts.signal && opts.signal.aborted) break; // stop fetching mid-source (already-flushed chunks are safe)
         const arts = [];
         for (const fmt of (fmts.length ? fmts : [''])) {
           const oeff = resolveOutput(adapter, sid + (fmt ? '/' + fmt : ''));
@@ -672,23 +704,18 @@ async function runRoute(ds, adapter, sink, opts = {}) {
           }
         }
         await adoptDetailMeta(d, arts); // Amazon &c.: pull the real date/amount from the JSON detail into the record
-        if (arts.length) files.set(d.internalId, arts);
+        if (arts.length) { files.set(d.internalId, arts); anyArts = true; }
         emitProgress(ds.id, [{ internalId: d.internalId, stream: sid, record: bakeLearned(d) }]); // live date/amount on the card
         setStatus(t('status_downloading', [String(++fetched), String(eligible.length), name])); // live counter (long sources)
+        pending.push(d);
+        if (pending.length >= CHUNK) await flushChunk(); // checkpoint this chunk before fetching the next
       }
+      await flushChunk(); // final partial chunk (and, for the download sink, the whole batch at once)
       // A stream that HAS a document (a statement PDF) but produced none from any eligible item — a silent
       // "0 documents" the contributor can't explain. Record it so "Report a problem" surfaces it.
-      if (!files.size && eligible.length && documentExt(eff)) {
+      if (!anyArts && eligible.length && documentExt(eff)) {
         pushDiag(adapter.id, { phase: 'document', output: sid, message: 'listed ' + eligible.length + ' item(s) but none produced a document (download failed or the document template did not resolve)' });
       }
-      setStatus(t('status_sending', [String(eligible.length), sink.id]));
-      await writeToSink(sink, eligible, files, { service: adapter.service || ds.adapter, source: sk, ext: documentExt(eff) || 'pdf', interactive: !!opts.interactive });
-      await markDelivered(ds.id, sink.id, eligible.map((d) => d.internalId));
-      for (const d of eligible) d.record = bakeLearned(d); // persist the real date/amount learned from the detail
-      emitProgress(ds.id, eligible.map((d) => ({ internalId: d.internalId, stream: sid, record: d.record, delivered: sink.id }))); // live: flip cards to "saved"
-      try { await recordDelivered(sk, eligible, { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store is best-effort */ } // write-through to the canonical store
-      try { await rememberDocMeta(adapter.id, eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, returnStatus: d.returnStatus || undefined }))); } catch (e) { /* best-effort */ }
-      totalNew += eligible.length;
     }
     if (!totalNew) { await appendLog({ ...base, status: 'none', new: 0 }); await badgeClear(); setStatus(t('status_none', [name])); return { status: 'done', new: 0 }; }
 
