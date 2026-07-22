@@ -81,6 +81,8 @@ function money(r) {
   return { txt, cls };
 }
 function dateShort(iso) { const d = new Date(iso); if (isNaN(d.getTime())) return String(iso || '').slice(0, 10); return d.toLocaleDateString(ESLANG ? 'es-ES' : 'en-US', { day: 'numeric', month: 'short' }); }
+// Day + month + YEAR (short) — used on cards when the grouping doesn't already show the year (Category / Store).
+function dateShortY(iso) { const d = new Date(iso); if (isNaN(d.getTime())) return String(iso || '').slice(0, 10); return d.toLocaleDateString(ESLANG ? 'es-ES' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }); }
 function dateLong(iso) { const d = new Date(iso); if (isNaN(d.getTime())) return String(iso || '').slice(0, 10); return d.toLocaleDateString(ESLANG ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }); }
 function monthLabel(key) { const d = new Date(key + '-01T00:00:00'); if (isNaN(d.getTime())) return key; return d.toLocaleDateString(ESLANG ? 'es-ES' : 'en-US', { month: 'long', year: 'numeric' }); }
 
@@ -504,7 +506,9 @@ function cardHtml(r) {
   const st = r.delivered.length
     ? `<span class="status sent" title="${esc(t('archive_status_saved_hint', [r.delivered.map(sinkLabel).join(', ')]))}"><span class="d"></span>${esc(t('archive_status_saved'))}</span>`
     : `<span class="status new" title="${esc(t('archive_status_local_hint'))}"><span class="d"></span>${esc(t('archive_status_local'))}</span>`;
-  const sub = [dateShort(r.record.date), r.record.group && ACCOUNT === '' ? esc(r.record.group) : ''].filter(Boolean).join(' · ');
+  // Month grouping already shows the year in the group header; Category/Store don't → put the year on the card.
+  const dstr = GROUPMODE === 'month' ? dateShort(r.record.date) : dateShortY(r.record.date);
+  const sub = [dstr, r.record.group && ACCOUNT === '' ? esc(r.record.group) : ''].filter(Boolean).join(' · ');
   return `<button class="dcard${PICKED.has(r.internalId) ? ' picked' : ''}" data-i="${i}">
     <span class="chk">✓</span>
     <span class="tile ${c.f}">${c.i}</span>
