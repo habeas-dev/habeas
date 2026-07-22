@@ -24,6 +24,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   Non-previewable types (Excel, JSON…) still open in the full-tab viewer.
 
 ### Fixed
+- **The real document date is now saved to the Archive on download** (`sinks/format.js`, `background.js`,
+  `ui/popup.js`). Sources whose list only exposes a year (Amazon) carry the real date in a JSON detail fetched at
+  download time; the popup's send adopted it but the Archive's Save (`runRoute`) and Send (`sendStoredDocs`) did
+  not — so Amazon documents were stored as `YYYY-01-01`. Extracted the adoption into a shared
+  `format.js#adoptDetailMeta(d, arts)` and applied it in all three download paths, so the record, file names, the
+  canonical store, and the docMeta overlay all get the real date. (Use Save → "Re-download from site" to fix
+  already-stored documents.) Covered by `test/format.test.mjs`.
 - **Source cards in the Archive index stack name + count again** (`ui/archive.html`). `.sc-m` was an inline span,
   so a source's name and its "N documents · date" ran together on one line; it's now a flex column.
 - **Orphan sources are hidden and auto-cleaned** (`ui/archive.js`, `lib/store.js`). Store keys left behind by a

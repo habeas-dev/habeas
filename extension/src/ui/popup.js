@@ -8,7 +8,7 @@ import { ensureSiteFetch, recoverSession, siteBaseUrl } from '../lib/pagefetch.j
 import { pickGroup } from './grouppicker.js';
 import { renderPage, challengeUrlOf } from '../lib/render.js';
 import { writeToSink } from '../sinks/sinks.js';
-import { sinkAcceptsSource, acceptsDoc, sinkAcceptsArtifact, groupLabelOf, bakeLearned } from '../sinks/format.js';
+import { sinkAcceptsSource, acceptsDoc, sinkAcceptsArtifact, groupLabelOf, bakeLearned, adoptDetailMeta } from '../sinks/format.js';
 import { deliveredSet, markDelivered, getLog, appendLog, getDocMeta, rememberDocMeta } from '../lib/state.js';
 import { badgeWorking, badgeClear } from '../lib/badge.js';
 import { getHandle, verifyPermission } from '../lib/fs.js';
@@ -596,18 +596,9 @@ async function onSend() {
         }
       }
     }
-    // A JSON detail carries the real date + amount that the list may encrypt (Amazon). Adopt them (only
-    // over a missing/year-only value) — so file NAMES, the manifest record, and the live table are right.
-    for (const a of arts) {
-      if (a.ext !== 'json') continue;
-      try {
-        const r = JSON.parse(await a.blob.text());
-        if (/^\d{4}-\d{2}-\d{2}/.test(r.date || '')) { d.date = r.date; if (d.record) d.record.date = r.date; } // detail is authoritative
-        if (typeof r.total === 'number') { d.total = r.total; if (d.record) d.record.total = r.total; } // detail wins — the list may hide/encrypt the total, and a stale learned value must not stick (0€ charged ≠ order total)
-        if (r.returnStatus) { d.returnStatus = r.returnStatus; if (d.record) d.record.returnStatus = r.returnStatus; } // an item was returned/refunded
-      } catch (e) { /* not JSON */ }
-      break; // the first JSON detail
-    }
+    // A JSON detail carries the real date + amount that the list may encrypt (Amazon). Adopt them onto the doc
+    // (shared with the Archive's Save/Send) so file NAMES, the manifest record, the store, and the live table match.
+    await adoptDetailMeta(d, arts);
     return arts;
   };
   // All artifacts of a doc across its selected formats (a statement's PDF + Excel are both fetched here).

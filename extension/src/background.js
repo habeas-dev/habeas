@@ -14,7 +14,7 @@ import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink } from './sinks/sinks.js';
 import { recordDelivered, getSource } from './lib/store.js';
 import { nextOccurrence } from './lib/schedule.js';
-import { acceptsDoc, sinkAcceptsArtifact, sinkAcceptsSource, bakeLearned } from './sinks/format.js';
+import { acceptsDoc, sinkAcceptsArtifact, sinkAcceptsSource, bakeLearned, adoptDetailMeta } from './sinks/format.js';
 import { outputsForSink, resolveOutput, storeKeyOf } from './lib/outputs.js';
 import { getAdapters } from './adapters/index.js';
 import { hasConsent } from './lib/consent.js';
@@ -568,6 +568,7 @@ async function sendStoredDocs(ds, adapter, sink, ids) {
             catch (e) { const msg = (e && e.message) || String(e); if (!/no document for this (item|source)|no PDF for this source/i.test(msg)) pushDiag(adapter.id, { phase: 'document', output: sid, item: d.date || d.internalId, message: msg, method: rc.ref.last && rc.ref.last.method, url: rc.ref.last && rc.ref.last.url, status: rc.ref.last && rc.ref.last.status }); }
           }
         }
+        await adoptDetailMeta(d, arts); // Amazon &c.: pull the real date/amount from the JSON detail into the record
         if (arts.length) files.set(d.internalId, arts);
       }
       setStatus(t('status_sending', [String(eligible.length), sink.id]));
@@ -649,6 +650,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
             }
           }
         }
+        await adoptDetailMeta(d, arts); // Amazon &c.: pull the real date/amount from the JSON detail into the record
         if (arts.length) files.set(d.internalId, arts);
       }
       // A stream that HAS a document (a statement PDF) but produced none from any eligible item — a silent

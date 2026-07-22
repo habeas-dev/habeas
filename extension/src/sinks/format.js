@@ -39,6 +39,23 @@ export function bakeLearned(d) {
   return r;
 }
 
+// A source whose list HIDES/encrypts the real date + amount (Amazon exposes only a year in the list) carries
+// them in a JSON DETAIL artifact fetched at download time. Adopt them onto the doc — only over a missing /
+// year-only value — so the file names, the manifest record, AND the canonical store all get the real date, not
+// "YYYY-01-01". Shared by the popup's send and the Archive's Save/Send so all download paths behave the same.
+export async function adoptDetailMeta(d, arts) {
+  for (const a of (arts || [])) {
+    if (!a || a.ext !== 'json' || !a.blob) continue;
+    try {
+      const r = JSON.parse(await a.blob.text());
+      if (/^\d{4}-\d{2}-\d{2}/.test(r.date || '')) { d.date = r.date; if (d.record) d.record.date = r.date; } // the detail is authoritative
+      if (typeof r.total === 'number') { d.total = r.total; if (d.record) d.record.total = r.total; }        // a stale learned total must not stick (0 € charged ≠ order total)
+      if (r.returnStatus) { d.returnStatus = r.returnStatus; if (d.record) d.record.returnStatus = r.returnStatus; }
+    } catch (e) { /* not JSON */ }
+    break; // the first JSON detail wins
+  }
+}
+
 // Schema-aware normalized record. `receipt@1` is byte-identical to the historical shape so
 // existing manifests do not change. New schemas (invoice/transaction/investment) shape the
 // same mapped doc differently. Currency defaults to EUR unless the adapter overrides it.

@@ -1,6 +1,29 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sinkAcceptsArtifact, sourceFormats, pathFor, mergeRecords } from '../src/sinks/format.js';
+import { sinkAcceptsArtifact, sourceFormats, pathFor, mergeRecords, adoptDetailMeta, bakeLearned } from '../src/sinks/format.js';
+
+// A source whose list only exposes a year (Amazon) → the real date rides a JSON detail fetched at download time.
+// adoptDetailMeta must pull it onto the doc + its record so the store gets the real date, not "YYYY-01-01".
+const jsonArt = (o) => ({ ext: 'json', blob: { text: async () => JSON.stringify(o) } });
+
+test('adoptDetailMeta pulls the real date/amount from the JSON detail over a year-only value', async () => {
+  const d = { date: '2026', record: { date: '2026-01-01', total: 0 } };
+  await adoptDetailMeta(d, [{ ext: 'pdf', blob: {} }, jsonArt({ date: '2026-06-14', total: 48.2, returnStatus: 'returned' })]);
+  assert.equal(d.date, '2026-06-14');
+  assert.equal(d.record.date, '2026-06-14');
+  assert.equal(d.record.total, 48.2);
+  assert.equal(d.record.returnStatus, 'returned');
+  assert.equal(bakeLearned(d).date, '2026-06-14', 'the baked record carries the real date to the store');
+});
+
+test('adoptDetailMeta ignores a detail with only a year, and is a no-op with no JSON detail', async () => {
+  const a = { date: '2026-01-01', record: { date: '2026-01-01' } };
+  await adoptDetailMeta(a, [jsonArt({ date: '2026' })]); // year-only detail → not adopted
+  assert.equal(a.record.date, '2026-01-01');
+  const b = { date: '2026-01-01', record: { date: '2026-01-01' } };
+  await adoptDetailMeta(b, [{ ext: 'pdf', blob: {} }]); // no JSON at all
+  assert.equal(b.record.date, '2026-01-01');
+});
 
 test('mergeRecords keeps the cumulative manifest oldest → newest', () => {
   const merged = mergeRecords(
