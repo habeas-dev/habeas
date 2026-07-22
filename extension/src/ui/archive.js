@@ -8,7 +8,7 @@
 import { chrome } from '../lib/ext.js';
 import { getConfig, saveConfig } from '../lib/config.js';
 import { getAdapters } from '../adapters/index.js';
-import { listSources, getSource, getStoreConfig } from '../lib/store.js';
+import { listSources, getSource, getStoreConfig, deleteSource } from '../lib/store.js';
 import { useDriveStore, useFolderStore, useSinkStore, useHttpStore, folderStoreAvailable } from '../lib/storesetup.js';
 import { mountSinkForm, connectSink, needsConnect, storeCapable } from './sinkform.js';
 import { deliveredSet, getDocMeta } from '../lib/state.js';
@@ -149,20 +149,26 @@ function seedIndexFromCache(cache) {
     const ds = (CFG.datasources || []).find((d) => d.adapter === base) || (CFG.datasources || []).find((d) => d.id === base) || null;
     const adapter = (ds && ADAPTERS[ds.adapter]) || ADAPTERS[base] || null;
     return { base, ds, adapter, name: c.name || (adapter && adapter.name) || base, count: c.count, lastDate: c.lastDate, primaryCat: c.primaryCat || primaryCatOf(adapter), accounts: c.accounts || [], keys: [] };
-  }).filter((s) => s.count > 0 || s.ds).sort((a, b) => (b.lastDate || '').localeCompare(a.lastDate || '') || (b.count || 0) - (a.count || 0) || a.name.localeCompare(b.name));
+  }).filter((s) => isRenderable(s.base) && (s.count > 0 || s.ds)).sort((a, b) => (b.lastDate || '').localeCompare(a.lastDate || '') || (b.count || 0) - (a.count || 0) || a.name.localeCompare(b.name));
 }
 // Build the index SHELL — source keys + adapter metadata, seeding count/lastDate/accounts from the cache so known
 // sources show REAL numbers immediately (no throbber); genuinely-new sources start null and hydrate in. NO
 // per-source item load here, so the page stays snappy even against a slow backend.
+const hasDsFor = (base) => (CFG.datasources || []).some((d) => d.adapter === base || d.id === base);
+const isRenderable = (base) => !!ADAPTERS[base] || hasDsFor(base); // a real, installed source (not an orphan key)
 async function buildIndex() {
   const keys = await listSources();
   const cs = ((await loadCache()) || {}).sources || {};
-  const storeBases = keys.map((k) => String(k).split(':')[0]);
+  const storeBases = [...new Set(keys.map((k) => String(k).split(':')[0]))];
+  // ORPHAN store keys — a base with stored data but NO installed adapter AND no configured datasource, left over
+  // from a removed/renamed source (raisin-es → raisin). Don't render them, and auto-clean their store data.
+  const orphans = storeBases.filter((b) => !isRenderable(b));
+  if (orphans.length) { for (const key of keys) { if (orphans.includes(String(key).split(':')[0])) { try { await deleteSource(key); } catch (e) {} } } }
   // Also list every ENABLED, installed datasource — even with no stored docs yet — so the Archive is a complete
   // source manager: a freshly-installed source shows up and can be Refreshed to pull its first documents (this is
   // what lets the Archive replace the popup's Sources list).
   const cfgBases = (CFG.datasources || []).filter((d) => d.enabled !== false && ADAPTERS[d.adapter]).map((d) => d.adapter);
-  const bases = [...new Set([...storeBases, ...cfgBases])];
+  const bases = [...new Set([...storeBases, ...cfgBases])].filter(isRenderable);
   INDEX = bases.map((base) => {
     const ds = (CFG.datasources || []).find((d) => d.adapter === base) || (CFG.datasources || []).find((d) => d.id === base) || null;
     const adapter = (ds && ADAPTERS[ds.adapter]) || ADAPTERS[base] || null;
@@ -192,7 +198,7 @@ async function hydrateIndex() {
   if (seq !== hydrateSeq) return;
   // Keep sources with documents AND every configured source (even at 0 docs — the user can Refresh it); drop
   // only orphan store keys that have no live docs and no datasource. Docs-first by recency, then empties by name.
-  INDEX = INDEX.filter((s) => s.count > 0 || s.ds).sort((a, b) => (b.lastDate || '').localeCompare(a.lastDate || '') || (b.count || 0) - (a.count || 0) || a.name.localeCompare(b.name));
+  INDEX = INDEX.filter((s) => isRenderable(s.base) && (s.count > 0 || s.ds)).sort((a, b) => (b.lastDate || '').localeCompare(a.lastDate || '') || (b.count || 0) - (a.count || 0) || a.name.localeCompare(b.name));
   $('#astatus').textContent = '';
   if (CUR === null) renderIndex(); else renderRail(); // reflect final order (index) / final counts (rail)
   await saveCache(); // persist the fresh numbers + accounts for an instant next open

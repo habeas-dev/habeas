@@ -82,6 +82,14 @@ export async function clearStoreSource(sourceId) {
   const src = await backend.loadSource(sourceId);
   await backend.saveSource(sourceId, { meta: (src && src.meta) || {}, items: {} });
 }
+// Fully remove a source's store entry so it stops being listed (the local backend deletes the key; cloud
+// backends that don't implement a delete are emptied as a fallback). Used to auto-clean orphan keys left behind
+// by a removed/renamed source (e.g. raisin-es → raisin).
+export async function deleteSource(sourceId) {
+  const backend = await backendFor();
+  if (typeof backend.clearSource === 'function') { try { return await backend.clearSource(sourceId); } catch (e) { /* fall through to empty */ } }
+  try { await backend.saveSource(sourceId, { meta: {}, items: {} }); } catch (e) {}
+}
 export async function getRecords(sourceId, opts) { try { return project(await (await backendFor()).loadSource(sourceId), opts); } catch (e) { return project(null, opts); } }
 export async function getViews(sourceId, delivered) { try { return views(await (await backendFor()).loadSource(sourceId), delivered); } catch (e) { return views(null, delivered); } }
 // Passive UI hint (the "Load from store" button badge) → never pop an OAuth window just to count; a Drive

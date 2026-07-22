@@ -23,6 +23,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   the full-tab viewer uses (PDF/HTML in an iframe, images in an `<img>`), with "Open in a tab" and Esc-to-close.
   Non-previewable types (Excel, JSON…) still open in the full-tab viewer.
 
+### Fixed
+- **Source cards in the Archive index stack name + count again** (`ui/archive.html`). `.sc-m` was an inline span,
+  so a source's name and its "N documents · date" ran together on one line; it's now a flex column.
+- **Orphan sources are hidden and auto-cleaned** (`ui/archive.js`, `lib/store.js`). Store keys left behind by a
+  removed/renamed source (e.g. `raisin-es` → `raisin`) — a base with stored data but no installed adapter and no
+  configured datasource — no longer render in the Archive, and their store data is auto-deleted on load (new
+  `store.js#deleteSource`; the local backend removes the key, cloud backends empty it).
+
 ### Changed
 - **Settings page reorganized around plain-language user journeys** (`ui/options.html`, `ui/options.js`). The dense
   6-tab admin layout is gone; Settings now has a left rail (like the Archive) with sections framed for a
