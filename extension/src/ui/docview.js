@@ -31,7 +31,7 @@ const fail = (m) => { mount.innerHTML = ''; const p = document.createElement('p'
       const src = await getSource(key).catch(() => null);
       if (src && src.items && src.items[id]) { record = src.items[id].record || {}; break; }
     }
-    if (!record) return fail('No se encontró el registro en el almacén.');
+    if (!record) return fail('No se encontró el registro en el archivo.');
 
     // Overlay the real date/amount learned at download time (docMeta), same as the popup.
     const known = (await getDocMeta(base).catch(() => ({})))[id];

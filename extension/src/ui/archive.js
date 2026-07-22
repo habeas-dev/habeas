@@ -12,7 +12,7 @@ import { listSources, getSource, getStoreConfig } from '../lib/store.js';
 import { useDriveStore, useFolderStore, useSinkStore, useHttpStore, folderStoreAvailable } from '../lib/storesetup.js';
 import { mountSinkForm, connectSink, needsConnect, storeCapable } from './sinkform.js';
 import { deliveredSet, getDocMeta } from '../lib/state.js';
-import { isRetrievable } from '../lib/retrieve.js';
+import { isRetrievable, retrieveDelivered } from '../lib/retrieve.js';
 import { sinkAcceptsSource, groupLabelOf } from '../sinks/format.js';
 import { resolveOutput } from '../lib/outputs.js';
 import { artifactKinds } from '../runtime/inventory.js';
@@ -495,7 +495,7 @@ function openDrawer(r) {
   // actions: open each delivered FILE (real). A record-only movement (a bank line) has no file — its data
   // rode the manifest — so it gets an honest note, not a broken "open". Nothing delivered → the sync note.
   const acts = [];
-  if (r.formats.length) for (const sink of r.delivered) for (const f of r.formats) acts.push(actBtn('⬇', t('open_from', [sinkLabel(sink)]), (r.formats.length > 1 ? f.name : f.ext.toUpperCase()), `open:${sink.id}:${f.ext}`, true));
+  if (r.formats.length) for (const sink of r.delivered) for (const f of r.formats) { const pv = PREVIEWABLE.has((f.ext || '').toLowerCase()); acts.push(actBtn(pv ? '👁' : '⬇', t(pv ? 'archive_preview_from' : 'open_from', [sinkLabel(sink)]), (r.formats.length > 1 ? f.name : f.ext.toUpperCase()), `open:${sink.id}:${f.ext}`, true)); }
   if (acts.length) body += `<div class="actions">${acts.join('')}</div>`;
   else if (r.delivered.length) body += `<div class="actions-note">${esc(t('archive_delivered_data'))}</div>`;
   else body += `<div class="actions-note">${esc(t('archive_no_dest'))}</div>`;
@@ -504,7 +504,12 @@ function openDrawer(r) {
   b.dataset.i = String(CURDOCS.indexOf(r));
   const rb = $('#rawbox'); rb.textContent = JSON.stringify(r.record, null, 2);
   $('#rawtoggle').onclick = () => { rb.hidden = !rb.hidden; };
-  b.querySelectorAll('[data-act]').forEach((el) => { el.onclick = () => { const [, sinkId, ext] = el.dataset.act.split(':'); openFile(r, sinkId, ext); }; });
+  b.querySelectorAll('[data-act]').forEach((el) => { el.onclick = () => {
+    const [, sinkId, ext] = el.dataset.act.split(':');
+    const sink = (CFG.sinks || []).find((s) => s.id === sinkId);
+    if (sink && PREVIEWABLE.has((ext || '').toLowerCase())) previewFile(r, sink, ext); // inline preview in the Archive
+    else openFile(r, sinkId, ext);                                                     // other types → the full-tab viewer
+  }; });
   $('#drawer').classList.add('on'); $('#scrim').classList.add('on'); $('#drawer').setAttribute('aria-hidden', 'false');
 }
 function actBtn(icon, label, sub, act, primary) {
@@ -593,6 +598,35 @@ function openFile(r, sinkId, ext) {
   const url = chrome.runtime.getURL(`src/ui/docview.html?sink=${encodeURIComponent(sinkId)}&src=${encodeURIComponent(r.base)}&id=${encodeURIComponent(r.internalId)}${ext ? '&ext=' + encodeURIComponent(ext) : ''}`);
   chrome.tabs.create({ url });
 }
+// Inline preview inside the Archive: fetch the delivered file's blob from its sink and render it in an overlay
+// (PDF/HTML in an iframe, images in an <img>) — no new tab. Falls back to the full-tab viewer for other types.
+const PREVIEWABLE = new Set(['pdf', 'html', 'htm', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'svg']);
+let PV_URL = null, PV_CTX = null;
+function closePreview() {
+  const ov = $('#preview'); if (ov) ov.hidden = true;
+  const body = $('#pv-body'); if (body) body.innerHTML = '';
+  if (PV_URL) { try { URL.revokeObjectURL(PV_URL); } catch (e) {} PV_URL = null; }
+  PV_CTX = null;
+}
+async function previewFile(r, sink, ext) {
+  PV_CTX = { r, sink, ext };
+  const ov = $('#preview'); const body = $('#pv-body'); const title = $('#pv-title');
+  if (!ov || !body) { openFile(r, sink.id, ext); return; } // no overlay in the DOM → fall back
+  if (title) title.textContent = titleOf(r.record) + (r.record.date ? ' · ' + String(r.record.date).slice(0, 10) : '');
+  body.innerHTML = `<div class="pv-msg"><span class="thb big"></span> ${esc(t('archive_preview_loading'))}</div>`;
+  ov.hidden = false;
+  try {
+    const res = await retrieveDelivered(sink, r.adapter, r.record, ext);
+    if (PV_CTX && PV_CTX.r !== r) return; // a newer preview started
+    if (!res || !res.blob) { body.innerHTML = `<div class="pv-msg">${esc(t('archive_preview_fail'))}</div>`; return; }
+    if (PV_URL) { try { URL.revokeObjectURL(PV_URL); } catch (e) {} }
+    PV_URL = URL.createObjectURL(res.blob);
+    const kind = (res.ext || ext || '').toLowerCase();
+    body.innerHTML = /^(png|jpe?g|webp|gif|svg)$/.test(kind)
+      ? `<img class="pv-img" src="${PV_URL}" alt="" />`
+      : `<iframe class="pv-frame" src="${PV_URL}"></iframe>`;
+  } catch (e) { body.innerHTML = `<div class="pv-msg">${esc((e && e.message) || String(e))}</div>`; }
+}
 // Manage which accounts a grouped source tracks (the persisted allow-list), straight from the Archive — so
 // the popup's account picker is no longer needed. Enumerates every grouped stream's accounts, saves ds.groups
 // + ds.groupLabels, then reloads (the tree + what's shown honor the new allow-list).
@@ -678,6 +712,8 @@ function goIndex() { CUR = null; renderRail(); renderIndex(); }
 function wire() {
   $('#opts').onclick = () => chrome.runtime.openOptionsPage();
   { const l = $('#logs'); if (l) l.onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/activity.html') }); }
+  { const c = $('#pv-close'); if (c) c.onclick = closePreview; }
+  { const tb = $('#pv-tab'); if (tb) tb.onclick = () => { if (PV_CTX) openFile(PV_CTX.r, PV_CTX.sink.id, PV_CTX.ext); }; }
   $('#dw-close').onclick = closeDrawer;
   $('#scrim').onclick = closeDrawer;
   $('#q').oninput = () => { if (CUR) renderDocs(); else renderIndex(); };
@@ -714,7 +750,7 @@ function wire() {
       else openDrawer(r);
     }
   };
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeDrawer(); closeMenus(); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if ($('#preview') && !$('#preview').hidden) { closePreview(); return; } closeDrawer(); closeMenus(); } });
   // Dismiss any open dropdown (Refresh modes, Save re-download) on a click outside a split button (the #main
   // handler keeps the just-clicked one open; this catches everything else).
   document.addEventListener('click', (e) => { if (!e.target.closest('.refwrap')) closeMenus(); });

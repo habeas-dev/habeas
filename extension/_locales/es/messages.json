@@ -2665,5 +2665,22 @@
   },
   "opt_dests_help": {
     "message": "Además de tu archivo, puedes enviar copias de tus documentos a una carpeta, la nube o una app."
+  },
+  "archive_preview_from": {
+    "message": "Vista previa ($NAME$)",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_preview_tab": {
+    "message": "Abrir en pestaña"
+  },
+  "archive_preview_loading": {
+    "message": "Cargando vista previa…"
+  },
+  "archive_preview_fail": {
+    "message": "No se pudo cargar este fichero desde su destino. Si lo entregó una versión antigua, prueba «Re-descargar del sitio»."
   }
 }

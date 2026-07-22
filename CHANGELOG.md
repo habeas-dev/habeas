@@ -10,6 +10,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **Inline document preview in the Archive** (`ui/archive.js`, `ui/archive.html`). Previewable delivered files
+  (PDF, HTML, images) now open in an overlay inside the Archive — a 👁 Preview action in the document drawer —
+  instead of a separate tab. It fetches the file's blob from its destination via the same `retrieveDelivered`
+  the full-tab viewer uses (PDF/HTML in an iframe, images in an `<img>`), with "Open in a tab" and Esc-to-close.
+  Non-previewable types (Excel, JSON…) still open in the full-tab viewer.
+
 ### Changed
 - **Settings page reorganized around plain-language user journeys** (`ui/options.html`, `ui/options.js`). The dense
   6-tab admin layout is gone; Settings now has a left rail (like the Archive) with sections framed for a

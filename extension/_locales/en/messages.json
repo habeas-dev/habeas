@@ -2665,5 +2665,22 @@
   },
   "opt_dests_help": {
     "message": "Beyond your archive, you can send copies of your documents to a folder, the cloud, or an app."
+  },
+  "archive_preview_from": {
+    "message": "Preview ($NAME$)",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_preview_tab": {
+    "message": "Open in a tab"
+  },
+  "archive_preview_loading": {
+    "message": "Loading preview…"
+  },
+  "archive_preview_fail": {
+    "message": "Couldn’t load this file from its destination. If it was delivered by an old build, try Re-download from site."
   }
 }
