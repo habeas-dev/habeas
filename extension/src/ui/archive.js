@@ -488,6 +488,7 @@ async function renderDocs() {
       <div id="refmenu" class="refmenu" hidden role="menu">
         <button data-refmode="full" title="${esc(t('archive_refresh_full_hint'))}"><span class="ic">↻</span> ${esc(t('archive_refresh_full'))}</button>
         <button data-refmode="store" title="${esc(t('archive_load_store_hint'))}"><span class="ic">📦</span> ${esc(t('archive_load_store'))}</button>
+        <button data-refmode="reconcile" title="${esc(t('archive_reconcile_hint'))}"><span class="ic">🗓️</span> ${esc(t('archive_reconcile'))}</button>
       </div></span>` : '');
   // Accounts (allow-list) manager — grouped sources only. Lets the user choose which accounts to track from
   // the Archive, so the popup's account picker isn't needed.
@@ -713,6 +714,18 @@ async function reloadFromStore() {
   await reloadCurrent();
   $('#astatus').textContent = '';
 }
+// Recover real dates into the store from what was already delivered (the sink's manifest carries the precise
+// date even when the store record only has a year) — no re-fetch from the source. The store then moves each doc
+// to its month shard. Then reload so the view reflects the upgraded dates.
+async function reconcileDates() {
+  const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds) { $('#astatus').textContent = t('archive_reconcile_nods'); return; }
+  $('#astatus').textContent = t('archive_reconcile_running');
+  try {
+    const r = await chrome.runtime.sendMessage({ type: 'habeas:reconcile', datasource: entry.ds.id });
+    if (r && r.ok) { await reloadCurrent(); $('#astatus').textContent = r.upgraded ? t('archive_reconcile_ok', [String(r.upgraded)]) : t('archive_reconcile_none'); }
+    else $('#astatus').textContent = t('archive_reconcile_err', [(r && r.error) || 'error']);
+  } catch (e) { $('#astatus').textContent = t('archive_reconcile_err', [(e && e.message) || String(e)]); }
+}
 // Dropdown menus (Refresh modes, Save re-download). Opening one closes the others.
 function toggleMenu(id) { const m = $('#' + id); if (!m) return; const willOpen = m.hidden; closeMenus(); m.hidden = !willOpen; }
 function closeMenus() { document.querySelectorAll('.refmenu').forEach((m) => { m.hidden = true; }); }
@@ -904,7 +917,7 @@ function wire() {
     const ss = ev.target.closest('[data-sendsel]'); if (ss) { sendSelected(ss.dataset.sendsel); return; }
     const sr = ev.target.closest('[data-sendredl]'); if (sr) { closeMenus(); sendSelected(sr.dataset.sendredl, { force: true }); return; }
     if (ev.target.closest('#sel-more')) { toggleMenu('selmenu'); return; }
-    const rm = ev.target.closest('[data-refmode]'); if (rm) { closeMenus(); if (rm.dataset.refmode === 'full') refreshSource('full'); else reloadFromStore(); return; }
+    const rm = ev.target.closest('[data-refmode]'); if (rm) { closeMenus(); if (rm.dataset.refmode === 'full') refreshSource('full'); else if (rm.dataset.refmode === 'reconcile') reconcileDates(); else reloadFromStore(); return; }
     if (ev.target.closest('#refresh-more')) { toggleMenu('refmenu'); return; }
     if (ev.target.closest('#save-more')) { toggleMenu('savemenu'); return; }
     if (ev.target.closest('#accts')) { onManageAccounts(); return; }

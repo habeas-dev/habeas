@@ -2438,6 +2438,29 @@
   "archive_load_store_hint": {
     "message": "Recargar desde el archivo local — sin conexión"
   },
+  "archive_reconcile": {
+    "message": "Recuperar fechas del destino"
+  },
+  "archive_reconcile_hint": {
+    "message": "Lee las fechas reales de lo ya entregado (sin re-descargar) y las guarda en el archivo"
+  },
+  "archive_reconcile_running": {
+    "message": "Recuperando fechas reales del destino…"
+  },
+  "archive_reconcile_ok": {
+    "message": "Recuperada la fecha real de $N$ documentos",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "archive_reconcile_none": {
+    "message": "No se encontraron fechas más precisas en el destino"
+  },
+  "archive_reconcile_err": {
+    "message": "No se pudieron recuperar las fechas: $ERR$",
+    "placeholders": { "err": { "content": "$1" } }
+  },
+  "archive_reconcile_nods": {
+    "message": "Esta fuente no está configurada como origen de datos"
+  },
   "open_advanced": {
     "message": "Herramientas avanzadas"
   },

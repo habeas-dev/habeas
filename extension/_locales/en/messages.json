@@ -2438,6 +2438,29 @@
   "archive_load_store_hint": {
     "message": "Reload from the local archive — no network request"
   },
+  "archive_reconcile": {
+    "message": "Recover dates from destination"
+  },
+  "archive_reconcile_hint": {
+    "message": "Read the real dates from what was already delivered (no re-download) and save them to the archive"
+  },
+  "archive_reconcile_running": {
+    "message": "Recovering real dates from the destination…"
+  },
+  "archive_reconcile_ok": {
+    "message": "Recovered the real date for $N$ documents",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "archive_reconcile_none": {
+    "message": "No more precise dates found in the destination"
+  },
+  "archive_reconcile_err": {
+    "message": "Couldn't recover dates: $ERR$",
+    "placeholders": { "err": { "content": "$1" } }
+  },
+  "archive_reconcile_nods": {
+    "message": "This source isn't configured as a datasource"
+  },
   "open_advanced": {
     "message": "Advanced tools"
   },

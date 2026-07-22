@@ -11,8 +11,9 @@ import { deliveredSet, markDelivered, appendLog, rememberDocMeta } from './lib/s
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
 import { resolveSiteFetch, ensureSiteFetch, recoverSession } from './lib/pagefetch.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
-import { writeToSink } from './sinks/sinks.js';
-import { recordDelivered } from './lib/store.js';
+import { writeToSink, readSinkRecords } from './sinks/sinks.js';
+import { recordDelivered, putItems } from './lib/store.js';
+import { getHandle } from './lib/fs.js';
 import { nextOccurrence } from './lib/schedule.js';
 import { acceptsDoc, sinkAcceptsArtifact, sinkAcceptsSource, bakeLearned, adoptDetailMeta } from './sinks/format.js';
 import { outputsForSink, outputsOf, resolveOutput, storeKeyOf } from './lib/outputs.js';
@@ -311,6 +312,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true; // async response
   }
+  if (msg.type === 'habeas:reconcile' && msg.datasource) { // recover real dates into the store from delivered manifests
+    (async () => {
+      const cfg = await getConfig();
+      const adapters = await getAdapters();
+      const ds = (cfg.datasources || []).find((d) => d.id === msg.datasource);
+      const adapter = ds && adapters[ds.adapter];
+      if (!ds || !adapter) return { ok: false, error: 'unknown source' };
+      const upgraded = await reconcileDatesFromDelivered(ds, adapter);
+      return { ok: true, upgraded };
+    })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
+    return true; // async response
+  }
   if (msg.type === 'habeas:send' && msg.datasource && msg.sink && Array.isArray(msg.docs)) { // deliver HAND-PICKED docs (records passed from the Archive) to a destination
     (async () => {
       const cfg = await getConfig();
@@ -544,6 +557,36 @@ async function adoptRealDate(adapter, sid, auth, d, arts, net) {
     try { await adoptDetailMeta(d, [await fetchArtifact(resolveOutput(adapter, sid), auth, d, net, renderPage, 'data')]); }
     catch (e) { /* detail unavailable (retention/error) → keep the list date */ }
   }
+}
+
+// Recover REAL dates into the canonical store from what was already delivered, WITHOUT re-fetching from the
+// source. The store record can hold a coarse date (Amazon's list gives only a year; a past download determined
+// the real date but only wrote it to the delivered files + the sink's per-source manifest, not back to the
+// store). This reads that manifest — which carries the precise date — and write-throughs the finer records; the
+// store's shard layer then MOVES each doc from its year/_undated shard to its month shard. Returns how many were
+// upgraded. Best-effort per (output × readable sink); the first sink holding the manifest wins.
+async function reconcileDatesFromDelivered(ds, adapter) {
+  const cfg = await getConfig();
+  const readable = (cfg.sinks || []).filter((s) => ['dropbox', 'webdav', 's3', 'local-folder', 'drive'].includes(s.type));
+  let upgraded = 0;
+  for (const o of outputsOf(adapter)) {
+    const sk = storeKeyOf(adapter.id, o.stream);
+    const service = adapter.service || ds.adapter;
+    for (const sink of readable) {
+      let recs = [];
+      try {
+        const dirHandle = sink.type === 'local-folder' ? await getHandle('dir:' + sink.id).catch(() => null) : undefined;
+        recs = await readSinkRecords(sink, { service, source: sk, dirHandle });
+      } catch (e) { continue; }
+      // Only records whose delivered date is MORE precise than a bare year (a full YYYY-MM-DD) are worth writing.
+      const better = (recs || []).filter((r) => r && r.internalId != null && /^\d{4}-\d{2}-\d{2}/.test(String(r.date || '')));
+      if (!better.length) continue;
+      await putItems(sk, better.map((r) => ({ internalId: r.internalId, record: r })), { source: adapter.id, srcVersion: adapter.version });
+      upgraded += better.length;
+      break; // this output's manifest was found on one sink → no need to try the others
+    }
+  }
+  return upgraded;
 }
 
 // Deliver a SPECIFIC set of already-stored documents (hand-picked in the Archive) to a sink. Unlike runRoute

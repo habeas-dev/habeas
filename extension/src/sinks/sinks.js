@@ -8,7 +8,7 @@ import { resolveSinkExtraHeaders } from '../lib/sinkheaders.js';
 import { makeZip } from '../lib/zip.js';
 import { pathFor, buildManifest, toRecords, mergeRecords, jsonBlob, today } from './format.js';
 import { driveWrite, driveRead } from './drive.js';
-import { dropboxWrite } from './dropbox.js';
+import { dropboxWrite, dropboxRetrieve } from './dropbox.js';
 import { makeShardedStore, pathPrim } from '../lib/store/sharded.js';
 
 export function listSinkTypes() { return ['download', 'local-folder', 'drive', 'http', 'webdav', 's3', 'dropbox']; }
@@ -237,7 +237,16 @@ export async function readSinkRecords(sink, opts = {}) {
     return Array.isArray(recs) ? recs : [];
   }
   if (sink.type === 'drive') { const recs = await driveRead(sink, opts).catch(() => []); return Array.isArray(recs) ? recs : []; }
-  return [];
+  // Generic readable sinks: the cumulative per-source manifest lives at <service>/<source>.json. Fetch + parse it.
+  const rel = service + '/' + manifestName(opts);
+  let blob = null;
+  try {
+    if (sink.type === 'dropbox') blob = await dropboxRetrieve(sink, rel);
+    else if (sink.type === 'webdav') blob = await webdavRetrieve(sink, rel);
+    else if (sink.type === 's3') blob = await s3Retrieve(sink, rel);
+  } catch (e) { return []; }
+  if (!blob) return [];
+  try { const j = JSON.parse(await blob.text()); return Array.isArray(j) ? j : []; } catch (e) { return []; }
 }
 async function writeFile(dir, name, blob) {
   const fh = await dir.getFileHandle(name, { create: true });
