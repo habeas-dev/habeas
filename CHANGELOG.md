@@ -81,6 +81,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   with stored documents — so a freshly-installed source appears and can be Refreshed to pull its first documents.
 - **Archive — "No account" bucket** (`ui/archive.js`). In a grouped source, documents with no associated account
   are reachable via a "No account" node in the account tree (they were hidden by the multi-account gate before).
+- **Archive — "Re-download from site" for the selection**, as a caret next to the selection bar's "Send to
+  <destination>" (mirrors the Save button's dropdown). Re-fetches the picked documents' files + details fresh
+  from the site — `habeas:send` `force` → `sendStoredDocs` always opens the site tab — so, e.g., an Amazon
+  document stored with the wrong date is regenerated with the real one.
 - **Archive — select all / none** in selection mode, and a **Save → "Re-download from site"** dropdown that
   re-fetches and re-delivers even already-delivered documents (`habeas:deliver` `force` → `runRoute` delivers all
   listed docs, not just undelivered), mirroring the classic "Re-download from site" toggle.

@@ -471,12 +471,14 @@ async function renderDocs() {
   const acctBtn = (entry.ds && groupedAdapterOf(entry.adapter)) ? `<button id="accts" class="refbtn" title="${esc(t('archive_accounts_hint'))}"><span class="ic">👤</span> ${esc(t('archive_accounts'))}</button>` : '';
   head += `<div class="docbar"><div class="groupby">${gb('month', t('group_month'))}${gb('category', t('group_category'))}${gb('store', t('group_store'))}</div>
     <div class="docbar-r">${acctBtn}${refreshBtn}${saveGrp}<button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div></div>`;
-  // Selection bar: send the picked documents to any compatible destination, open their saved files, or clear.
+  // Selection bar: send the picked documents to any compatible destination (with a caret for "Re-download from
+  // site" per destination), open their saved files, or clear.
   const sendBtns = sinks.map((s) => `<button class="go" data-sendsel="${esc(s.id)}">${sinkIcon(s)} ${esc(t('archive_send_to', [sinkLabel(s)]))}</button>`).join('');
+  const sendMore = sinks.length ? `<span class="refwrap"><button id="sel-more" class="go caret2" aria-haspopup="menu" aria-label="${esc(t('archive_redownload'))}" title="${esc(t('archive_redownload'))}">▾</button><div id="selmenu" class="refmenu up" hidden role="menu"><div class="menuhead">${esc(t('archive_redownload'))}</div>${sinks.map((s) => `<button data-sendredl="${esc(s.id)}"><span class="ic">${sinkIcon(s)}</span> ${esc(t('archive_redownload_to', [sinkLabel(s)]))}</button>`).join('')}</div></span>` : '';
   const selbar = `<div class="selbar"><b id="selcount">0</b> <span>${esc(t('archive_selected_suffix'))}</span>
     <button class="pick" id="selall">${esc(t('archive_select_all'))}</button>
     <button class="pick" id="selnone">${esc(t('archive_select_none'))}</button>
-    ${sendBtns}
+    ${sendBtns}${sendMore}
     <button class="go" id="selopen">${esc(t('archive_open_saved'))}</button>
     <button class="clr" id="selclear">${esc(t('archive_clear'))}</button></div>`;
   m.innerHTML = head + '<div id="arch-groups"></div>' + selbar;
@@ -700,7 +702,7 @@ async function onManageAccounts(opts = {}) {
 }
 // Send the HAND-PICKED documents (selection mode) to a destination, from the store. Delivers each record's
 // manifest and re-fetches its file when the source can still produce it (background sendStoredDocs).
-async function sendSelected(sinkId) {
+async function sendSelected(sinkId, opts = {}) {
   const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds) return;
   const sink = (CFG.sinks || []).find((s) => s.id === sinkId); if (!sink) return;
   const ids = [...PICKED];
@@ -710,7 +712,8 @@ async function sendSelected(sinkId) {
   const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#astatus').textContent = v.msg; };
   chrome.storage.onChanged.addListener(onStatus);
   try {
-    const r = await chrome.runtime.sendMessage({ type: 'habeas:send', datasource: entry.ds.id, sink: sinkId, ids });
+    // opts.force → "Re-download from site": re-fetch the selected docs' files + details fresh (opens the site tab).
+    const r = await chrome.runtime.sendMessage({ type: 'habeas:send', datasource: entry.ds.id, sink: sinkId, ids, force: !!opts.force });
     if (r && r.ok && r.status === 'done') $('#astatus').textContent = r.sent ? t('archive_sent_ok', [String(r.sent), sinkLabel(sink)]) : t('archive_send_none');
     else if (r && r.status === 'nosession') $('#astatus').textContent = t('archive_save_nosession', [entry.name]);
     else $('#astatus').textContent = t('archive_save_err', [(r && r.error) || 'error']);
@@ -775,6 +778,8 @@ function wire() {
     const sv = ev.target.closest('[data-save]'); if (sv) { deliver(sv.dataset.save); return; }
     const rl = ev.target.closest('[data-redl]'); if (rl) { closeMenus(); deliver(rl.dataset.redl, { force: true }); return; }
     const ss = ev.target.closest('[data-sendsel]'); if (ss) { sendSelected(ss.dataset.sendsel); return; }
+    const sr = ev.target.closest('[data-sendredl]'); if (sr) { closeMenus(); sendSelected(sr.dataset.sendredl, { force: true }); return; }
+    if (ev.target.closest('#sel-more')) { toggleMenu('selmenu'); return; }
     const rm = ev.target.closest('[data-refmode]'); if (rm) { closeMenus(); if (rm.dataset.refmode === 'full') refreshSource('full'); else reloadFromStore(); return; }
     if (ev.target.closest('#refresh-more')) { toggleMenu('refmenu'); return; }
     if (ev.target.closest('#save-more')) { toggleMenu('savemenu'); return; }

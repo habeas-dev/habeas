@@ -308,7 +308,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const adapter = ds && adapters[ds.adapter];
       const sink = (cfg.sinks || []).find((k) => k.id === msg.sink);
       if (!ds || !adapter || !sink) return { ok: false, error: 'unknown route' };
-      const r = await sendStoredDocs(ds, adapter, sink, msg.ids);
+      const r = await sendStoredDocs(ds, adapter, sink, msg.ids, { force: !!msg.force });
       return { ok: true, ...r };
     })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true; // async response
@@ -524,7 +524,7 @@ const authFor = (adapter) => loadAuth(adapter);
 // somewhere. The normalized record always delivers (manifest); a per-item file is re-fetched when the source can
 // still produce it and there's a live session (best-effort — old items whose PDF template needs list-only fields
 // just deliver record-only, same contract as the popup's store-loaded send).
-async function sendStoredDocs(ds, adapter, sink, ids) {
+async function sendStoredDocs(ds, adapter, sink, ids, opts = {}) {
   const name = adapter.name || ds.adapter;
   const want = new Set((ids || []).map(String));
   if (!want.size) return { status: 'done', sent: 0 };
@@ -537,7 +537,8 @@ async function sendStoredDocs(ds, adapter, sink, ids) {
     const fmtsFor = (sid) => outs.filter((o) => o.stream === sid).map((o) => o.format);
     // Open the site tab only if these outputs can produce FILES (a per-item PDF/Excel needs the page-context
     // fetch); a records-only send (bank movements) never fetches, so it stays quiet and works offline.
-    const wantsDocs = outs.some((o) => artifactKinds(resolveOutput(adapter, o.stream + (o.format ? '/' + o.format : ''))).length);
+    // opts.force ("Re-download from site") always opens the tab so files + details are re-fetched fresh.
+    const wantsDocs = opts.force || outs.some((o) => artifactKinds(resolveOutput(adapter, o.stream + (o.format ? '/' + o.format : ''))).length);
     const net = auth ? await ensureSiteFetch(adapter, { open: wantsDocs }).catch(() => null) : null; // null → records-only delivery still works
     let sent = 0;
     for (const sid of streamIds) {
