@@ -32,6 +32,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   element title, so a truncated message is readable in full on hover.
 
 ### Fixed
+- **PDF (and HTML/image) inline preview no longer downloads instead of rendering** (`ui/archive.js`). A sink
+  hands the file back as `application/octet-stream` (Dropbox's download endpoint sets that Content-Type), so the
+  preview `<iframe>`/`<img>` downloaded the blob rather than showing it. The preview now re-wraps the retrieved
+  blob with the MIME its extension implies (`application/pdf`, `text/html`, `image/*`) before creating the
+  object URL, so it renders inline in the overlay.
 - **Sending/re-downloading hand-picked documents works with a cloud-backed archive** (`background.js`,
   `ui/archive.js`, `ui/popup.js`). The Archive's Send/Re-download passed only document ids, and the background then
   re-read the canonical store to find them — but a **Dropbox/folder-backed archive isn't listable from the service

@@ -665,6 +665,8 @@ function openFile(r, sinkId, ext) {
 // Inline preview inside the Archive: fetch the delivered file's blob from its sink and render it in an overlay
 // (PDF/HTML in an iframe, images in an <img>) — no new tab. Falls back to the full-tab viewer for other types.
 const PREVIEWABLE = new Set(['pdf', 'html', 'htm', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'svg']);
+// The MIME each previewable ext must carry so the browser renders (not downloads) a blob: URL in an iframe/img.
+const PREVIEW_MIME = { pdf: 'application/pdf', html: 'text/html', htm: 'text/html', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', svg: 'image/svg+xml' };
 let PV_URL = null, PV_CTX = null;
 function closePreview() {
   const ov = $('#preview'); if (ov) ov.hidden = true;
@@ -684,8 +686,12 @@ async function previewFile(r, sink, ext) {
     if (PV_CTX && PV_CTX.r !== r) return; // a newer preview started
     if (!res || !res.blob) { body.innerHTML = `<div class="pv-msg">${esc(t('archive_preview_fail'))}</div>`; return; }
     if (PV_URL) { try { URL.revokeObjectURL(PV_URL); } catch (e) {} }
-    PV_URL = URL.createObjectURL(res.blob);
     const kind = (res.ext || ext || '').toLowerCase();
+    // A sink (Dropbox &c.) hands the blob back as application/octet-stream, so an <iframe> would DOWNLOAD it
+    // instead of rendering. Re-wrap it with the MIME the extension implies so the browser previews it inline.
+    const mime = PREVIEW_MIME[kind];
+    const blob = (mime && res.blob.type !== mime) ? new Blob([res.blob], { type: mime }) : res.blob;
+    PV_URL = URL.createObjectURL(blob);
     body.innerHTML = /^(png|jpe?g|webp|gif|svg)$/.test(kind)
       ? `<img class="pv-img" src="${PV_URL}" alt="" />`
       : `<iframe class="pv-frame" src="${PV_URL}"></iframe>`;
