@@ -750,13 +750,12 @@ async function previewFile(r, sink, ext) {
     const mime = PREVIEW_MIME[kind];
     const blob = (mime && res.blob.type !== mime) ? new Blob([res.blob], { type: mime }) : res.blob;
     PV_URL = URL.createObjectURL(blob);
-    // PDF → <embed> (the plugin element the manifest's `object-src 'self' blob:` allows; an <iframe> to a blob
-    // PDF is downloaded, not rendered, on an MV3 extension page). Images → <img>. Everything else → <iframe>.
+    // Images → <img>; everything else (PDF/HTML) → <iframe> with the correct MIME so the browser renders inline.
+    // (MV3 forbids `blob:` in object-src, so a plugin <embed> isn't an option; if a PDF still downloads here on
+    // Chrome, "Open in a tab" renders it reliably via a top-level navigation.)
     body.innerHTML = /^(png|jpe?g|webp|gif|svg)$/.test(kind)
       ? `<img class="pv-img" src="${PV_URL}" alt="" />`
-      : kind === 'pdf'
-        ? `<embed class="pv-frame" type="application/pdf" src="${PV_URL}" />`
-        : `<iframe class="pv-frame" src="${PV_URL}"></iframe>`;
+      : `<iframe class="pv-frame" src="${PV_URL}"></iframe>`;
   } catch (e) { body.innerHTML = `<div class="pv-msg">${esc((e && e.message) || String(e))}</div>`; }
 }
 // Manage which accounts a grouped source tracks (the persisted allow-list), straight from the Archive — so

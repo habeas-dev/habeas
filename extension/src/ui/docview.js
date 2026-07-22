@@ -51,15 +51,17 @@ const fail = (m) => { mount.innerHTML = ''; const p = document.createElement('p'
       return fail('No se pudo recuperar el fichero de este destino' + hint + tried);
     }
     // Re-wrap with the MIME the extension implies (a sink hands blobs back as octet-stream) so the browser
-    // renders instead of downloading; PDFs go in an <embed> (an <iframe> to a blob PDF is downloaded on an MV3
-    // extension page — see the manifest's `object-src 'self' blob:`).
+    // renders instead of downloading. A blob PDF inside an <iframe> on an MV3 extension page is DOWNLOADED, not
+    // rendered (and MV3 forbids a plugin <embed> — no `blob:` in object-src); a TOP-LEVEL navigation of this tab
+    // to the blob, however, is rendered by Chrome's built-in viewer. So PDFs take over the tab; HTML/images
+    // stay in the framed viewer (with the info bar).
     const kind = (res.ext || preferExt || '').toLowerCase();
     const MIME = { pdf: 'application/pdf', html: 'text/html', htm: 'text/html', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', svg: 'image/svg+xml' };
     const blob = (MIME[kind] && res.blob.type !== MIME[kind]) ? new Blob([res.blob], { type: MIME[kind] }) : res.blob;
     const url = URL.createObjectURL(blob); // created in THIS tab → lives as long as the tab
-    const el = kind === 'pdf' ? document.createElement('embed') : document.createElement('iframe');
-    el.className = 'frame'; el.src = url; if (kind === 'pdf') el.type = 'application/pdf';
-    mount.innerHTML = ''; mount.appendChild(el);
+    if (kind === 'pdf') { window.location.href = url; return; } // top-level nav → the built-in PDF viewer renders it
+    const f = document.createElement('iframe'); f.className = 'frame'; f.src = url;
+    mount.innerHTML = ''; mount.appendChild(f);
     bar.textContent = label;
   } catch (e) { fail((e && e.message) || String(e)); }
 })();
