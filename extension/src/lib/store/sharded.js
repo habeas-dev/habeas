@@ -22,10 +22,13 @@ import { emptySource, mergeItems, mergeSources } from './format.js';
 
 const META = '_meta';
 const UNDATED = '_undated';
-// Month bucket for an entry: record.date's YYYY-MM (accepts a bare date or an ISO datetime), else _undated.
+// Shard bucket for an entry, from record.date: YYYY-MM (a bare date or an ISO datetime); a YEAR-only date (some
+// sources — Amazon — expose only the year in their listing) buckets by year; anything else is _undated.
 function periodOf(entry) {
   const d = (entry && entry.record && entry.record.date) || '';
-  return /^\d{4}-\d{2}/.test(d) ? String(d).slice(0, 7) : UNDATED;
+  if (/^\d{4}-\d{2}/.test(d)) return String(d).slice(0, 7); // YYYY-MM
+  if (/^\d{4}(\D|$)/.test(d)) return String(d).slice(0, 4);  // year-only → a year shard (not "undated")
+  return UNDATED;
 }
 
 export function makeShardedStore(prim) {
@@ -84,6 +87,20 @@ export function makeShardedStore(prim) {
       const cur = (await prim.readShard(id, p).catch(() => null)) || { items: {} };
       const merged = mergeItems({ meta: {}, items: cur.items || {} }, es, null);
       await prim.writeShard(id, p, { items: merged.items });
+    }
+    // MOVE, don't duplicate: a document whose date became more precise (Amazon's year → the real month once the
+    // detail is analyzed) is written to its month shard above; here we drop its old copy from any COARSER shard
+    // (the year shard, or _undated) so it lives in exactly one place. Dates only ever get finer, so month
+    // siblings are never touched. Coarser shards usually don't exist (well-dated sources) → cheap misses.
+    const drop = {};
+    for (const [p, es] of Object.entries(byPeriod)) {
+      const coarser = /^\d{4}-\d{2}/.test(p) ? [p.slice(0, 4), UNDATED] : /^\d{4}$/.test(p) ? [UNDATED] : [];
+      for (const c of coarser) for (const e of es) (drop[c] || (drop[c] = new Set())).add(String(e.internalId));
+    }
+    for (const [c, idset] of Object.entries(drop)) {
+      const sh = await prim.readShard(id, c).catch(() => null); if (!sh || !sh.items) continue;
+      let changed = false; for (const iid of idset) if (sh.items[iid]) { delete sh.items[iid]; changed = true; }
+      if (changed) { if (Object.keys(sh.items).length) await prim.writeShard(id, c, { items: sh.items }); else await prim.removeShard(id, c).catch(() => {}); }
     }
     if (meta && Object.keys(meta).length) { // keep the source meta current (small; not derived data)
       const cur = (await prim.readShard(id, META).catch(() => null)) || { meta: {} };

@@ -530,6 +530,22 @@ function siteMatches(adapter, host) {
 // sharing the source's registrable domain. Cookie sources proceed with an empty store (cookies carry it).
 const authFor = (adapter) => loadAuth(adapter);
 
+// Ensure the STORE record carries the real date/amount, not the list-time placeholder. Amazon &c. expose only a
+// YEAR in the listing; the true date lives in the per-document JSON detail. adoptDetailMeta pulls it from the
+// fetched artifacts — but those are gated by what the SINK accepts (a format filter), so a PDF-only sink never
+// fetches the detail and the record stays year-only → the shard store buckets it as _undated. The date is store
+// metadata, independent of delivery: if it's still not a full date and the source HAS a detail, fetch it once
+// just for adoption (no extra fetch when the detail was already delivered, or the date is already complete).
+async function adoptRealDate(adapter, sid, auth, d, arts, net) {
+  await adoptDetailMeta(d, arts);
+  const detail = adapter.api && adapter.api.detail;
+  const full = /^\d{4}-\d{2}-\d{2}/.test((d.record && d.record.date) || d.date || '');
+  if (!full && detail && !detail.as && !arts.some((a) => a && a.ext === 'json')) {
+    try { await adoptDetailMeta(d, [await fetchArtifact(resolveOutput(adapter, sid), auth, d, net, renderPage, 'data')]); }
+    catch (e) { /* detail unavailable (retention/error) → keep the list date */ }
+  }
+}
+
 // Deliver a SPECIFIC set of already-stored documents (hand-picked in the Archive) to a sink. Unlike runRoute
 // (which LISTS new docs), this works straight from the canonical store — the user chose exact items to push
 // somewhere. The normalized record always delivers (manifest); a per-item file is re-fetched when the source can
@@ -598,7 +614,7 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
             catch (e) { const msg = (e && e.message) || String(e); if (!/no document for this (item|source)|no PDF for this source/i.test(msg)) pushDiag(adapter.id, { phase: 'document', output: sid, item: d.date || d.internalId, message: msg, method: rc.ref.last && rc.ref.last.method, url: rc.ref.last && rc.ref.last.url, status: rc.ref.last && rc.ref.last.status }); }
           }
         }
-        await adoptDetailMeta(d, arts); // Amazon &c.: pull the real date/amount from the JSON detail into the record
+        await adoptRealDate(adapter, sid, auth, d, arts, net); // real date/amount from the JSON detail (fetched for adoption even if the sink filters it out)
         if (arts.length) files.set(d.internalId, arts);
         emitProgress(ds.id, [{ internalId: d.internalId, stream: sid, record: bakeLearned(d) }]); // live: the card shows the real date now
         setStatus(t('status_downloading', [String(++n), String(eligible.length), sink.id])); // live counter
@@ -703,7 +719,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
             }
           }
         }
-        await adoptDetailMeta(d, arts); // Amazon &c.: pull the real date/amount from the JSON detail into the record
+        await adoptRealDate(adapter, sid, auth, d, arts, net); // real date/amount from the JSON detail (fetched for adoption even if the sink filters it out)
         if (arts.length) { files.set(d.internalId, arts); anyArts = true; }
         emitProgress(ds.id, [{ internalId: d.internalId, stream: sid, record: bakeLearned(d) }]); // live date/amount on the card
         setStatus(t('status_downloading', [String(++fetched), String(eligible.length), name])); // live counter (long sources)

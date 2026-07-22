@@ -40,6 +40,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   option to fetch just the JSON (no wasteful PDF fallback). No-ops silently for sources with no JSON detail.
 
 ### Fixed
+- **Amazon documents no longer all land dateless in the store** (`background.js`, `lib/store/sharded.js`). Amazon
+  exposes only a YEAR in its listing; the real date rides the per-document JSON detail. That detail is only
+  fetched when the SINK accepts the `data` artifact, so a PDF-only destination left every record year-only — and
+  the month-sharded store then bucketed them all as `_undated`. Now (1) the real date is adopted for the store
+  independently of delivery (`adoptRealDate` fetches the detail just for the date when it's still year-only), (2)
+  a year-only date buckets by **year** (a year is a date), not `_undated`, and (3) `appendItems` **moves** a
+  document to its month shard once its date becomes precise, dropping the stale copy from the coarser (year /
+  `_undated`) shard — no duplicates. Covered by `test/sharded-store.test.mjs`.
 - **Large downloads checkpoint incrementally — no more "500 downloaded, metadata lost"** (`background.js`). A
   long download (`runRoute` Save / Sync-all, `sendStoredDocs` Send/Re-download) used to fetch every document,
   then write the files + delivery ledger + canonical-store records **once at the very end** — so any interruption
