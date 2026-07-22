@@ -5,9 +5,10 @@ self-contained HTML mockup — so they can be regenerated (and edited/localized)
 copy changes, instead of hand-capturing the live extension.
 
 ## Files
-- `screenshots.html` — five `<section class="shot">` panels (popup receipts · sources · destinations ·
-  record mode · integrations/consent). Each shot shows when `document.body[data-shot="N"]` is set. Edit
-  the headlines, sample data, or add a shot here; keep `SHOTS` in `render.mjs` in sync.
+- `screenshots.html` — five `<section class="shot">` panels (visual archive · popup launcher · cloud
+  archive/first-run assistant · record mode · consent). Each shot shows when `document.body[data-shot="N"]`
+  is set. Edit the headlines, sample data, or add a shot here; keep `SHOTS` in `render.mjs` in sync.
+  All sample data is synthetic (fictional brands/banks/amounts) — safe to publish.
 - `render.mjs` — renders each shot to `out/habeas-shot-N.png` at exactly 1280×800 (24-bit, no alpha),
   the size both stores accept.
 
