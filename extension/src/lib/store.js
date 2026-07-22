@@ -45,6 +45,9 @@ export async function putItems(sourceId, entries, meta) {
   const sv = meta && meta.srcVersion;
   const stamped = entries.map((e) => ({ ...e, at: e.at || now(), ...(e.gone ? { goneAt: e.goneAt || now() } : {}), ...(e.srcVersion || sv ? { srcVersion: e.srcVersion || sv } : {}) }));
   const backend = await backendFor();
+  // A sharded backend exposes appendItems → route entries to their period shards, writing ONLY those (bounded
+  // cost; a 1500-doc checkpoint no longer rewrites the whole source). Others: read-merge-write the whole source.
+  if (typeof backend.appendItems === 'function') { await backend.appendItems(sourceId, stamped, meta); return; }
   const cur = (await backend.loadSource(sourceId)) || emptySource(meta);
   await backend.saveSource(sourceId, mergeItems(cur, stamped, meta));
 }
@@ -94,7 +97,7 @@ export async function getRecords(sourceId, opts) { try { return project(await (a
 export async function getViews(sourceId, delivered) { try { return views(await (await backendFor()).loadSource(sourceId), delivered); } catch (e) { return views(null, delivered); } }
 // Passive UI hint (the "Load from store" button badge) → never pop an OAuth window just to count; a Drive
 // backend reads this silently (interactive:false) and returns null if no token is available yet.
-export async function countLive(sourceId) { try { const s = await (await backendFor()).loadSource(sourceId, { interactive: false }); return s ? Object.values(s.items).filter((e) => !e.gone).length : 0; } catch (e) { return 0; } }
+export async function countLive(sourceId) { try { const b = await backendFor(); if (typeof b.countLive === 'function') return await b.countLive(sourceId); const s = await b.loadSource(sourceId, { interactive: false }); return s ? Object.values(s.items).filter((e) => !e.gone).length : 0; } catch (e) { return 0; } }
 
 // Union every source from one backend into another (never clobbers; keyed by id). Idempotent → safe to
 // re-run an interrupted move. Returns how many sources were copied.

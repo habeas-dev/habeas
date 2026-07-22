@@ -6,6 +6,7 @@
 import { chrome } from '../lib/ext.js';
 import { getSecret, encryptString, decryptString } from '../lib/secrets.js';
 import { pathFor, toRecords, mergeRecords, jsonBlob } from './format.js';
+import { makeShardedStore } from '../lib/store/sharded.js';
 
 const TOKEN_URL = 'https://api.dropboxapi.com/oauth2/token';
 const UPLOAD_URL = 'https://content.dropboxapi.com/2/files/upload';
@@ -169,34 +170,33 @@ export async function dropboxRetrieve(sink, relPath) {
   return await r.blob();
 }
 
-// Canonical-store backend on Dropbox: per-source JSON at <root>/<storeFolder>/<sourceId>.json, reusing the
-// sink's token. All ops are best-effort/silent — a store read/write must never break a List or delivery.
+async function dbxDelete(token, path) {
+  const r = await fetch('https://api.dropboxapi.com/2/files/delete_v2', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ path }) });
+  if (!r.ok && r.status !== 409) throw new Error('dropbox delete ' + r.status); // 409 path/not_found → already gone
+}
+// Canonical-store backend on Dropbox: month-SHARDED under <root>/<storeFolder>/<sourceId>/<YYYY-MM>.json (see
+// lib/store/sharded.js), reusing the sink's token. The sharded layer handles all shard/period/legacy logic; this
+// only supplies raw file I/O over store-root-relative paths. A pre-shard `<sourceId>.json` is auto-reformatted.
 export function dropboxStore(sink, cfg = {}) {
   const folder = dbxPath(sink.rootFolderName || '', (cfg && cfg.storeFolder) || '_store');
-  const filePath = (id) => folder + '/' + id + '.json';
-  return {
-    async loadSource(id) {
-      const token = await dropboxToken(sink);
-      const r = await fetch(DOWNLOAD_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Dropbox-API-Arg': apiArg({ path: filePath(id) }) } });
-      // 409 = path/not_found → genuinely no store entry yet (return null, not an error). Any OTHER non-ok
-      // status (401 token, 5xx…) is a real failure the caller must SEE — don't collapse it to "empty".
-      if (r.status === 409) return null;
-      if (!r.ok) throw new Error(`Dropbox download ${r.status} for ${filePath(id)}: ${(await r.text().catch(() => '')).slice(0, 200)}`);
+  const abs = (rel) => folder + (rel ? '/' + rel : '');
+  const prim = {
+    async read(rel) {
+      const r = await fetch(DOWNLOAD_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + await dropboxToken(sink), 'Dropbox-API-Arg': apiArg({ path: abs(rel) }) } });
+      if (r.status === 409) return null; // path/not_found → nothing there yet
+      if (!r.ok) throw new Error(`Dropbox download ${r.status} for ${abs(rel)}: ${(await r.text().catch(() => '')).slice(0, 200)}`); // 401 token &c. must surface
       const j = await r.json().catch(() => null);
-      if (!j || typeof j !== 'object' || Array.isArray(j) || !j.items) throw new Error(`Dropbox store file ${filePath(id)} exists but is not a valid store object (no .items)`);
-      return j;
+      return j && typeof j === 'object' && !Array.isArray(j) ? j : null;
     },
-    async saveSource(id, data) {
-      try { await dbxUpload(await dropboxToken(sink), filePath(id), jsonBlob(JSON.stringify(data))); } catch (e) { /* best-effort */ }
-    },
-    async listSources() {
-      try {
-        const token = await dropboxToken(sink);
-        const r = await fetch('https://api.dropboxapi.com/2/files/list_folder', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ path: folder }) });
-        if (!r.ok) return [];
-        const j = await r.json().catch(() => ({}));
-        return (j.entries || []).filter((e) => e['.tag'] === 'file' && /\.json$/.test(e.name || '')).map((e) => e.name.replace(/\.json$/, ''));
-      } catch (e) { return []; }
+    async write(rel, obj) { await dbxUpload(await dropboxToken(sink), abs(rel), jsonBlob(JSON.stringify(obj))); },
+    async remove(rel) { await dbxDelete(await dropboxToken(sink), abs(rel)); },
+    async removeDir(rel) { await dbxDelete(await dropboxToken(sink), abs(rel)); }, // delete_v2 is recursive on a folder
+    async listChildren(rel) {
+      const r = await fetch('https://api.dropboxapi.com/2/files/list_folder', { method: 'POST', headers: { Authorization: 'Bearer ' + await dropboxToken(sink), 'Content-Type': 'application/json' }, body: JSON.stringify({ path: abs(rel) }) });
+      if (!r.ok) return []; // 409 (folder not found) or any error → treat as empty
+      const j = await r.json().catch(() => ({}));
+      return (j.entries || []).map((e) => ({ name: e.name || '', isDir: e['.tag'] === 'folder' }));
     },
   };
+  return makeShardedStore(prim);
 }

@@ -76,6 +76,18 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   `store.js#deleteSource`; the local backend removes the key, cloud backends empty it).
 
 ### Changed
+- **The canonical store is now month-sharded per source** (`lib/store/sharded.js`, `lib/store.js`,
+  `sinks/dropbox.js`, `lib/store/folder.js`). One ever-growing `_store/<id>.json` per source became a folder of
+  monthly shards — `_store/<id>/<YYYY-MM>.json` (+ `_undated.json`) with a small `_meta.json` (periods + live
+  counts). Motivation: a source with thousands of documents (Amazon) had a large JSON that **every checkpoint
+  rewrote in full** (O(n²) bandwidth — badly amplified by the new per-25-doc checkpointing). Now a write routes
+  entries to their month shards and rewrites **only those** (a recent-orders sync touches one or two tiny files);
+  `countLive` reads just `_meta.json` for the badge. A new generic sharding layer sits over 4 file primitives
+  (`read`/`write`/`remove`/`listChildren`) so each backend stays thin; **Dropbox and folder** adopt it now
+  (webdav/s3/local unchanged — they fall back to whole-file writes). **Transparent**: `loadSource` reassembles
+  the shards into the same `{ meta, items }` shape, so `format.js`, the Archive and consumers are untouched. A
+  pre-shard `<id>.json` is **auto-reformatted into shards on load** (one-time; passive badge reads never write).
+  Covered by `test/sharded-store.test.mjs`.
 - **Clearer document status labels: "Pending" / "Saved"** (`_locales`). The Archive card status "Only in your
   archive" vs "Saved" was confusing when your destination *is* your archive (e.g. Dropbox as both store and
   sink) — it read as two places when the real difference is **data vs file**: your archive holds the data
