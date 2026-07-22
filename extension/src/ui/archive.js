@@ -720,11 +720,14 @@ async function reloadFromStore() {
 async function reconcileDates() {
   const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds) { $('#astatus').textContent = t('archive_reconcile_nods'); return; }
   $('#astatus').textContent = t('archive_reconcile_running');
+  const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#astatus').textContent = v.msg; }; // live progress from the background
+  chrome.storage.onChanged.addListener(onStatus);
   try {
     const r = await chrome.runtime.sendMessage({ type: 'habeas:reconcile', datasource: entry.ds.id });
     if (r && r.ok) { await reloadCurrent(); $('#astatus').textContent = r.upgraded ? t('archive_reconcile_ok', [String(r.upgraded)]) : t('archive_reconcile_none'); }
     else $('#astatus').textContent = t('archive_reconcile_err', [(r && r.error) || 'error']);
   } catch (e) { $('#astatus').textContent = t('archive_reconcile_err', [(e && e.message) || String(e)]); }
+  finally { chrome.storage.onChanged.removeListener(onStatus); }
 }
 // Dropdown menus (Refresh modes, Save re-download). Opening one closes the others.
 function toggleMenu(id) { const m = $('#' + id); if (!m) return; const willOpen = m.hidden; closeMenus(); m.hidden = !willOpen; }

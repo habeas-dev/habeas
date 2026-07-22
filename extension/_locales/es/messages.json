@@ -2447,6 +2447,18 @@
   "archive_reconcile_running": {
     "message": "Recuperando datos reales del destino…"
   },
+  "reconcile_reading": {
+    "message": "Leyendo lo ya guardado en $SINK$…",
+    "placeholders": { "sink": { "content": "$1" } }
+  },
+  "reconcile_reading_none": {
+    "message": "Nada más rico que recuperar en $SINK$",
+    "placeholders": { "sink": { "content": "$1" } }
+  },
+  "reconcile_saving": {
+    "message": "Recuperando datos: $N$/$TOTAL$ · $NAME$…",
+    "placeholders": { "n": { "content": "$1" }, "total": { "content": "$2" }, "name": { "content": "$3" } }
+  },
   "archive_reconcile_ok": {
     "message": "Recuperados datos de $N$ documentos",
     "placeholders": { "n": { "content": "$1" } }

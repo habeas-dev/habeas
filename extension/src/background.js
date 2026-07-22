@@ -579,20 +579,31 @@ function isRichRecord(r) {
 async function reconcileFromDelivered(ds, adapter) {
   const cfg = await getConfig();
   const readable = (cfg.sinks || []).filter((s) => ['dropbox', 'webdav', 's3', 'local-folder', 'drive'].includes(s.type));
+  const name = adapter.name || ds.adapter;
   let upgraded = 0;
   for (const o of outputsOf(adapter)) {
     const sk = storeKeyOf(adapter.id, o.stream);
     const service = adapter.service || ds.adapter;
+    const stream = o.stream;
     for (const sink of readable) {
+      const label = sink.name || sink.id || sink.type;
+      setStatus(t('reconcile_reading', [label])); // step 1: fetch the delivered manifest
       let recs = [];
       try {
         const dirHandle = sink.type === 'local-folder' ? await getHandle('dir:' + sink.id).catch(() => null) : undefined;
         recs = await readSinkRecords(sink, { service, source: sk, dirHandle });
       } catch (e) { continue; }
       const better = (recs || []).filter(isRichRecord);
-      if (!better.length) continue;
-      await putItems(sk, better.map((r) => ({ internalId: r.internalId, record: r })), { source: adapter.id, srcVersion: adapter.version });
-      upgraded += better.length;
+      if (!better.length) { setStatus(t('reconcile_reading_none', [label])); continue; }
+      // step 2: write-through in chunks so the status counter advances and the open Archive patches cards live.
+      const CHUNK = 40;
+      for (let i = 0; i < better.length; i += CHUNK) {
+        const batch = better.slice(i, i + CHUNK);
+        await putItems(sk, batch.map((r) => ({ internalId: r.internalId, record: r })), { source: adapter.id, srcVersion: adapter.version });
+        upgraded += batch.length;
+        setStatus(t('reconcile_saving', [String(Math.min(i + CHUNK, better.length)), String(better.length), name]));
+        emitProgress(ds.id, batch.map((r) => ({ internalId: r.internalId, stream, record: r }))); // live: cards show the recovered date/amount
+      }
       break; // this output's manifest was found on one sink → no need to try the others
     }
   }

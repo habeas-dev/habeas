@@ -18,7 +18,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   amount, return/refund/payment, or line items) **without re-fetching from the source** — recovering the whole
   record, not just the date; the store's shard layer then moves each document to its month shard.
   `readSinkRecords` now also reads Dropbox/WebDAV/S3 manifests. (Going forward, `adoptRealDate` already saves the
-  real date to the store at download.)
+  real date to the store at download.) It reports **live progress** — reading the manifest, then a
+  `recovered N/total` counter as it write-throughs in chunks — and patches the open Archive's cards as each
+  chunk lands.
 - **Group-header checkboxes + long-press to select in the Archive** (`ui/archive.js`, `ui/archive.html`). In
   selection mode each month/category/store header shows a checkbox that selects or deselects that whole group at
   once (with an on / partial / none state that tracks individual toggles). And **long-pressing any document**
