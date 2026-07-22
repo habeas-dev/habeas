@@ -549,7 +549,9 @@ async function sendStoredDocs(ds, adapter, sink, ids, opts = {}) {
       for (const [internalId, e] of Object.entries(src.items)) {
         if (e.gone || !want.has(String(internalId))) continue;
         const rec = e.record || {};
-        docs.push({ internalId, record: rec, date: rec.date, total: rec.total ?? rec.amount, currency: rec.currency, type: rec.type, group: rec.group || '', _stream: sid, _storeKey: sk, _fromStore: true });
+        // category MUST be on the doc top-level: acceptsDoc(sink, doc) reads doc.category, so a sink with an
+        // accepts.categories filter would otherwise reject every stored doc (undefined ∉ categories) → "nothing sent".
+        docs.push({ internalId, record: rec, date: rec.date, total: rec.total ?? rec.amount, currency: rec.currency, category: rec.category, type: rec.type, group: rec.group || '', _stream: sid, _storeKey: sk, _fromStore: true });
       }
       const eligible = docs.filter((d) => acceptsDoc(sink, d))
         .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : (a.date || '') > (b.date || '') ? 1 : 0));

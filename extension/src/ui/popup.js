@@ -315,7 +315,7 @@ const nameOf = (v) => (v && typeof v === 'object') ? (v.name || v.nombre || v.de
 // Marked _fromStore so send delivers them WITHOUT fetching documents (a projection of what we already have).
 const docsFromStore = (records) => records.map((r) => ({
   internalId: r.internalId, record: r, _fromStore: true,
-  date: r.date, total: r.total ?? r.amount, currency: r.currency, type: r.type, returnStatus: r.returnStatus, group: r.group || '',
+  date: r.date, total: r.total ?? r.amount, currency: r.currency, category: r.category, type: r.type, returnStatus: r.returnStatus, group: r.group || '',
   storeName: nameOf(r.store && r.store.name) || nameOf(r.storeName), label: nameOf(r.store && r.store.name) || nameOf(r.issuer) || nameOf(r.counterparty) || nameOf(r.description) || '',
 }));
 

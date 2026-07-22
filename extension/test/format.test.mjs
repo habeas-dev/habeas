@@ -1,6 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sinkAcceptsArtifact, sourceFormats, pathFor, mergeRecords, adoptDetailMeta, bakeLearned } from '../src/sinks/format.js';
+import { sinkAcceptsArtifact, sourceFormats, pathFor, mergeRecords, adoptDetailMeta, bakeLearned, acceptsDoc } from '../src/sinks/format.js';
+
+// acceptsDoc reads doc.category (top-level). A doc built from the store MUST copy category up from its record,
+// or a sink with an accepts.categories filter rejects every stored doc → "nothing sent".
+test('acceptsDoc uses the doc top-level category, not record.category', () => {
+  const sink = { accepts: { categories: ['grocery'] } };
+  assert.equal(acceptsDoc(sink, { category: 'grocery' }), true);
+  assert.equal(acceptsDoc(sink, { category: 'fuel' }), false);
+  assert.equal(acceptsDoc(sink, { record: { category: 'grocery' } }), false, 'category on record alone is not seen');
+  assert.equal(acceptsDoc({}, {}), true, 'a sink with no filter accepts anything');
+});
 
 // A source whose list only exposes a year (Amazon) → the real date rides a JSON detail fetched at download time.
 // adoptDetailMeta must pull it onto the doc + its record so the store gets the real date, not "YYYY-01-01".
