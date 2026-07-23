@@ -12,10 +12,10 @@ import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } 
 import { resolveSiteFetch, ensureSiteFetch, recoverSession, withBrandHost, findSiteTab } from './lib/pagefetch.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink, readSinkRecords } from './sinks/sinks.js';
-import { recordDelivered, putItems } from './lib/store.js';
+import { recordDelivered, putItems, getRecords } from './lib/store.js';
 import { getHandle } from './lib/fs.js';
 import { nextOccurrence } from './lib/schedule.js';
-import { acceptsDoc, sinkAcceptsArtifact, sinkAcceptsSource, bakeLearned, adoptDetailMeta } from './sinks/format.js';
+import { acceptsDoc, sinkAcceptsArtifact, sinkAcceptsSource, bakeLearned, adoptDetailMeta, groupLabelOf } from './sinks/format.js';
 import { outputsForSink, outputsOf, resolveOutput, storeKeyOf } from './lib/outputs.js';
 import { storeIdOf, migrateBrandDomains } from './lib/instances.js';
 import { getAdapters } from './adapters/index.js';
@@ -670,8 +670,9 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
     const auth = await authFor(adapter);
     // Open the site tab only if the outputs can produce FILES (a per-item PDF/Excel needs the page-context
     // fetch); a records-only send never fetches. opts.force ("Re-download from site") always opens it.
+    // opts.noOpen (archive-only external sync) never opens one — files come along only if a tab is already there.
     const wantsDocs = opts.force || outputsOf(adapter).some((o) => artifactKinds(resolveOutput(adapter, o.id)).length);
-    const net = auth ? await ensureSiteFetch(adapter, { open: wantsDocs, ds }).catch(() => null) : null; // null → records-only delivery still works
+    const net = auth ? await ensureSiteFetch(adapter, { open: wantsDocs && !opts.noOpen, ds }).catch(() => null) : null; // null → records-only delivery still works
     adapter = withBrandHost(adapter, net, ds); // brand (multi-TLD) source → api.host = the tab's domain, or the pinned country
     // The RECORDS were passed in from the Archive page (which already read the store) → no store re-read here,
     // so a Dropbox/folder-backed archive that the service worker can't list still works. Group by stream.
@@ -1029,6 +1030,14 @@ async function listGroupsForGrant(origin, payload) {
   for (const s of adapter.streams || []) { const eff = resolveOutput(adapter, s.id); if (eff.api && eff.api.groups) gAdapters.push(eff); }
   if (!gAdapters.length) return { ok: true, status: 'ok', groups: [] }; // this source has no groups
   const allow = (ds.groups || []).map(String); // the user's saved account allow-list (popup picker)
+  // Serve the last live enumeration from cache FIRST (groups change rarely; no bank contact, no
+  // tab). A consumer passes `refresh: true` to force a fresh in-session enumeration.
+  if (!(payload && payload.refresh) && Array.isArray(ds.groupsCache) && ds.groupsCache.length) {
+    const groups = allow.length ? ds.groupsCache.filter((g) => allow.includes(String(g.id))) : ds.groupsCache;
+    await touchGrant(grant.id, new Date().toISOString());
+    await appendLog({ kind: 'ext-groups', origin, source: ds.id, status: 'cached', count: groups.length });
+    return { ok: true, status: 'ok', cached: true, groups };
+  }
   const net = await resolveSiteFetch(adapter, ds).catch(() => null);
   if (!net || !(await hasLiveSession(adapter))) {
     // No live session. Serve the user's SAVED account selection (ds.groups/ds.groupLabels, curated in
@@ -1060,9 +1069,12 @@ async function listGroupsForGrant(origin, payload) {
       if (seen.has(id)) continue; seen.add(id);
       if (allow.length && !allow.includes(id)) continue; // respect the user's account filter — excluded accounts are not revealed
       const o = {}; for (const k of fieldNames) o[k] = mask.includes(k) ? maskValue(g[k]) : g[k];
+      o.label = groupLabelOf(g); // the record.group label — lets a consumer relate groups to delivered records
       out.push(o);
     }
   }
+  // Persist the enumeration so later list-groups calls are served without contacting the bank.
+  try { ds.groupsCache = out; ds.groupsCacheAt = new Date().toISOString(); await saveConfig(cfg); } catch (e) {}
   await touchGrant(grant.id, new Date().toISOString());
   await appendLog({ kind: 'ext-groups', origin, source: ds.id, status: 'ok', count: out.length });
   return { ok: true, status: 'ok', groups: out };
@@ -1105,6 +1117,16 @@ async function collectForGrant(origin, payload) {
   const sink = cfg.sinks.find((s) => s.id === grant.sinkId);
   if (!adapter || !sink) return { ok: false, status: 'error', error: 'route not found' };
 
+  // Archive-only sync: deliver NEW stored docs (per this sink's ledger) straight from the canonical
+  // store, WITHOUT contacting the source — no tab, no session, no login. `group` narrows to one
+  // account via the cached enumeration's record label.
+  if (payload && payload.fromStore) {
+    const groupId = payload.group != null ? String(payload.group) : undefined;
+    const entry = groupId && Array.isArray(ds.groupsCache) ? ds.groupsCache.find((g) => String(g.id) === groupId) : null;
+    runExternalStoreSend(ds, adapter, sink, { label: entry && entry.label ? String(entry.label) : undefined });
+    return { ok: true, status: 'collecting', fromStore: true };
+  }
+
   const host = hostOf(adapter);
   const live = await hasLiveSession(adapter);
   // A tab on the source site is needed (the in-session, page-context fetch) — but REUSE one already
@@ -1144,6 +1166,27 @@ function injectCapture(tabId) {
 async function runExternalCollect(grant, ds, adapter, sink, tabId, groupId) {
   const net = tabId ? await resolveSiteFetch(adapter, ds).catch(() => null) : null;
   return runRoute(ds, adapter, sink, { kind: 'ext', origin: grant.origin, interactive: true, net: net || undefined, groupId });
+}
+
+// Archive-only external sync: read every stream's stored records, keep the ones this sink hasn't
+// delivered yet (per ledger), optionally narrow to one account (its record.group label, resolved
+// from the cached enumeration), and hand them to sendStoredDocs with noOpen (record-only unless a
+// site tab already happens to be open — the source is never contacted on purpose).
+async function runExternalStoreSend(ds, adapter, sink, { label } = {}) {
+  const sid0 = storeIdOf(ds, adapter);
+  const delivered = await deliveredSet(ds.id, sink.id).catch(() => ({}));
+  const streams = [...new Set(outputsOf(adapter).map((o) => o.stream))];
+  const picked = [];
+  for (const sid of streams) {
+    const sk = storeKeyOf(sid0, sid);
+    let recs; try { recs = await getRecords(sk, { delivered }); } catch (e) { continue; }
+    for (const r of recs || []) {
+      if (!r || r.internalId == null) continue;
+      if (label && String(r.group || '') !== label) continue; // one account only
+      picked.push({ internalId: r.internalId, record: r, stream: sid });
+    }
+  }
+  return sendStoredDocs(ds, adapter, sink, picked, { noOpen: true });
 }
 
 async function addPending(host, entry) {

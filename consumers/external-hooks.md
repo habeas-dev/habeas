@@ -72,9 +72,19 @@ it"). Send `headers` again only to rotate the credential.
 ```js
 const res = await habeas('collect', { grantId });
 // status: 'collecting' (a live session existed → running now)
-//       | 'needs-login' (Habeas opened the source's login tab; the user authenticates, then it runs)
+//       | 'needs-login' (Habeas surfaced the source's login tab; the user authenticates, then it runs)
 //       | 'debounced'   (rate-limited; try again shortly)
 //       | 'denied'      (no such grant for your origin)
+```
+
+**Archive-only sync** — deliver what Habeas has already collected, without contacting the source
+(no tab, no session, no login): pass `fromStore: true`. Only documents this route hasn't delivered
+yet are sent (per-route dedupe as always); per-item files (PDFs) come along only when a site tab
+happens to be open — records always deliver.
+
+```js
+await habeas('collect', { grantId, fromStore: true });          // → { ok:true, status:'collecting', fromStore:true }
+await habeas('collect', { grantId, group, fromStore: true });   // one account only
 ```
 
 Collection lists the source, delivers only **new** documents (Habeas dedupes per route), and POSTs
@@ -92,11 +102,14 @@ const res = await habeas('list-groups', { grantId });
 // status: 'ok'           → res.groups: [{ id, name, iban, currency, … }]  (fields per the source; sensitive ones may be masked, e.g. "ES12 **** 3456")
 //       | 'needs-login'  (Habeas opened the source's login tab; retry after the user authenticates)
 //       | 'denied'       (no such grant for your origin)
-// With no live session, if the user already picked their accounts in Habeas's own "Accounts" picker,
-// you get that saved selection instead of a login round-trip: status 'ok' + `cached: true`, with
-// `{ id, name }` per group (no iban/currency until a live enumeration). If the user restricted the
-// source to some accounts, live listings are filtered to that selection too — excluded accounts are
-// never revealed.
+// Once a live enumeration has succeeded, its result is CACHED and served on every later call —
+// status 'ok' + `cached: true`, no bank contact, no tab. Pass `{ grantId, refresh: true }` to force
+// a fresh in-session enumeration (which may surface a login). Each group also carries `label`, the
+// exact `record.group` label delivered on records — use it to relate groups to data.
+// With no cache and no live session, if the user already picked their accounts in Habeas's own
+// "Accounts" picker, you get that saved selection ({ id, name } per group). If the user restricted
+// the source to some accounts, cached and live listings are filtered to that selection too —
+// excluded accounts are never revealed.
 ```
 
 Then collect **one group at a time** by passing its `id`:

@@ -10,6 +10,17 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **External `collect` gains archive-only sync** (`background.js`, `{ fromStore: true }`): deliver the NEW
+  stored documents (per-route ledger) straight from the canonical store without contacting the source — no
+  tab, no session, no login. `group` narrows to one account via the cached enumeration's record label; per-item
+  files come along only if a site tab is already open (`sendStoredDocs` `noOpen`). Lets a consumer offer
+  "sync from archive" next to "go to the source".
+- **External `list-groups` caches the enumeration** (`ds.groupsCache`): once a live enumeration succeeds it is
+  persisted and served on every later call (`cached: true`, no bank contact, no tab); `{ refresh: true }`
+  forces a fresh in-session enumeration. Each group now carries `label` — the exact `record.group` label
+  delivered on records. Documented in `consumers/external-hooks.md`.
+
 ### Changed
 - **External hooks: loopback sinks may be plain `http://`** (`lib/exthooks.js` `sinkIsOriginBound`). Sinks on
   `localhost`, `*.localhost` or `127.x.x.x` no longer require https — mirroring the browsers' *potentially
