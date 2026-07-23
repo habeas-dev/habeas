@@ -83,6 +83,7 @@ function withinAgeDays(dateStr, days) {
 
 export async function listInventory(adapter, auth, net, opts) {
   const list = (adapter.api && adapter.api.list) || {};
+  if (list.idOverride) adapter._idxState = new Map(); // fresh per-IMPORT ordinal state (the Nth same-key item in THIS run)
   const byDate = (x, y) => (x.date < y.date ? 1 : -1);
   // maxAgeDays: never surface documents older than N days — keeps a source from requesting statements
   // past a bank's extra-auth wall (WiZink asks for an SMS beyond ~90 days). For a periods source the
@@ -1574,13 +1575,19 @@ function mapDoc(adapter, p, group) {
   // transactionLocalUUID every sync → duplicates; keying those by {date|amount|productId} instead makes re-runs
   // (and the pending→settled transition) dedupe. Account movements (no `status`) keep their stable UUID, so
   // genuine same-day/same-amount repeats there stay distinct. `when.present` gates on a field's existence.
+  // KEY subtlety: two items with the SAME natural key WITHIN ONE import are genuinely distinct charges (ING
+  // listed both), so append a per-run ORDINAL (0,1,2…) — the Nth same-key item in a run is always the same
+  // charge across runs (stable order) → still dedupes, while a second distinct same-key charge gets its own id.
   const io = adapter.api && adapter.api.list && adapter.api.list.idOverride;
   if (io && io.template && io.when && io.when.field) {
     const wv = get(p, io.when.field);
     const match = io.when.present === true ? (wv != null && wv !== '')
       : io.when.present === false ? (wv == null || wv === '')
         : (Array.isArray(io.when.values) ? io.when.values.map(String).includes(String(wv)) : false);
-    if (match) { const nid = io.template.replace(/\{([^}]+)\}/g, (_, path) => { const v = get(p, path); return v == null ? '' : String(v); }); if (nid) doc.internalId = nid; }
+    if (match) {
+      const base = io.template.replace(/\{([^}]+)\}/g, (_, path) => { const v = get(p, path); return v == null ? '' : String(v); });
+      if (base) { const st = adapter._idxState || (adapter._idxState = new Map()); const n = st.get(base) || 0; st.set(base, n + 1); doc.internalId = base + '|' + n; }
+    }
   }
   // Date fields → ISO (textual/locale, also epoch ms/s). `valueDate` is the bank movement's value date
   // (distinct from the booked `date`), promoted to a canonical field when a source maps it.
