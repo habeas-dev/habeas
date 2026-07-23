@@ -2,12 +2,25 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { sinkIsOriginBound, validateProposal, sinkIdForOrigin, enabledSources } from '../src/lib/exthooks.js';
 
-test('origin-bound: the sink URL host must equal the requesting origin (https only)', () => {
+test('origin-bound: the sink URL host must equal the requesting origin (https, or http on loopback)', () => {
   assert.ok(sinkIsOriginBound('https://tiquetera.app', 'https://tiquetera.app/ingest'));
   assert.ok(!sinkIsOriginBound('https://tiquetera.app', 'https://evil.com/ingest'), 'cross-origin rejected');
-  assert.ok(!sinkIsOriginBound('https://tiquetera.app', 'http://tiquetera.app/ingest'), 'http rejected');
+  assert.ok(!sinkIsOriginBound('https://tiquetera.app', 'http://tiquetera.app/ingest'), 'http rejected on a real host');
   assert.ok(!sinkIsOriginBound('https://a.tiquetera.app', 'https://tiquetera.app/i'), 'different host (subdomain) rejected');
   assert.ok(!sinkIsOriginBound('', 'https://x.app/i'));
+});
+
+test('origin-bound: loopback sinks may be plain http (local development)', () => {
+  assert.ok(sinkIsOriginBound('http://localhost:5173', 'http://localhost:5173/ingest'), 'http localhost accepted');
+  assert.ok(sinkIsOriginBound('http://127.0.0.1:8080', 'http://127.0.0.1:8080/ingest'), 'http 127.0.0.1 accepted');
+  assert.ok(sinkIsOriginBound('https://localhost:8443', 'https://localhost:8443/ingest'), 'https localhost still fine');
+  assert.ok(sinkIsOriginBound('http://app.localhost', 'http://app.localhost/ingest'), '*.localhost accepted');
+  // Origin-binding still applies: only a page ON localhost can point at localhost.
+  assert.ok(!sinkIsOriginBound('https://tiquetera.app', 'http://localhost/ingest'), 'remote origin cannot target localhost');
+  assert.ok(!sinkIsOriginBound('http://localhost', 'http://tiquetera.app/ingest'), 'localhost origin cannot target a remote http host');
+  // Lookalikes are NOT loopback.
+  assert.ok(!sinkIsOriginBound('http://localhost.evil.com', 'http://localhost.evil.com/i'), 'localhost.evil.com is not loopback');
+  assert.ok(!sinkIsOriginBound('http://127.0.0.1.evil.com', 'http://127.0.0.1.evil.com/i'), '127.0.0.1.evil.com is not loopback');
 });
 
 test('validateProposal accepts an origin-bound http sink, rejects the rest', () => {

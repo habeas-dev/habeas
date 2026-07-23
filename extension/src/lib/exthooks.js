@@ -8,11 +8,22 @@ import { hostOf } from '../adapters/validate.js';
 
 export const originHost = (origin) => hostOf(origin);
 
-// The sink URL must point back to the requesting origin's own host (nowhere else).
+// Loopback hosts are trustworthy without TLS (mirrors the browsers' "potentially trustworthy
+// origin" rule): the traffic never leaves the machine. Enables local development of consumers
+// against http://localhost — origin-binding still applies, so only a page served ON localhost
+// can propose a localhost sink.
+function isLoopbackHost(h) {
+  return h === 'localhost' || h.endsWith('.localhost') || /^127(?:\.\d{1,3}){3}$/.test(h);
+}
+
+// The sink URL must point back to the requesting origin's own host (nowhere else), over
+// https — or plain http when the sink is loopback (local development).
 export function sinkIsOriginBound(origin, sinkUrl) {
   const oh = originHost(origin);
   const sh = hostOf(sinkUrl || '');
-  return !!oh && !!sh && oh === sh && /^https:\/\//i.test(String(sinkUrl || ''));
+  if (!oh || !sh || oh !== sh) return false;
+  const url = String(sinkUrl || '');
+  return /^https:\/\//i.test(url) || (/^http:\/\//i.test(url) && isLoopbackHost(sh));
 }
 
 // Validate a propose-workflow request. Returns { ok, error?, sink?, filter? }.

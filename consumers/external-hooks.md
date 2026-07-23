@@ -19,9 +19,10 @@ log in — Habeas never handles credentials), and is rate-limited and logged.
 
 Habeas injects a small bridge on every https page (and on `http://localhost` / `http://127.0.0.1` for local
 development). You communicate with `window.postMessage`; the bridge relays to the extension and posts the reply
-back to your page (same-origin only). Note: `propose-workflow`/`collect` still require an **https** sink URL
-(the origin-bound rule), so a plain-http localhost app can `list-sources` (discovery) but must serve its
-ingest sink over https to receive data.
+back to your page (same-origin only). Sinks must be **https** — except **loopback** hosts (`localhost`,
+`*.localhost`, `127.x.x.x`), which may be plain `http://` (the browsers' *potentially trustworthy origin*
+rule: the traffic never leaves the machine), so the whole flow works against a plain-http local dev server.
+Origin-binding still applies: only a page served on localhost can propose a localhost sink.
 
 ```js
 function habeas(api, payload) {

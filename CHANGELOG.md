@@ -10,6 +10,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Changed
+- **External hooks: loopback sinks may be plain `http://`** (`lib/exthooks.js` `sinkIsOriginBound`). Sinks on
+  `localhost`, `*.localhost` or `127.x.x.x` no longer require https — mirroring the browsers' *potentially
+  trustworthy origin* rule (loopback traffic never leaves the machine) — so a consumer app can develop the whole
+  propose → consent → collect → deliver flow against a plain-http local dev server. Origin-binding is unchanged
+  (only a page served on localhost can propose a localhost sink); every non-loopback host keeps the strict https
+  requirement. Docs updated (`docs/INTEGRATION.md`, `consumers/external-hooks.md`).
+
 ### Added
 - **JSON per-document detail extraction** (`runtime/inventory.js` `extractDetailFields`). `api.detail` can now set
   `json: true` (+ optional `root`) so a JSON detail endpoint is mapped via dotted get()-paths and `items:{path,

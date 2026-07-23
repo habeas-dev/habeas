@@ -37,7 +37,7 @@ the background with a stale session: no live session ⇒ interactive login.
 | You provide | Notes |
 | --- | --- |
 | An **HTTPS origin** for your web app | The bridge runs on `https://` pages (and `http://localhost` for dev). |
-| An **HTTPS ingest endpoint on your own host** | e.g. `https://app.example.com/habeas/ingest`. Its host **must equal** your page's origin host. |
+| An **HTTPS ingest endpoint on your own host** | e.g. `https://app.example.com/habeas/ingest`. Its host **must equal** your page's origin host. Plain `http://` is allowed only for loopback hosts (local dev). |
 | (Optional) a **pairing token** | A header you supply in the proposal (e.g. `x-pair-token`) that Habeas sends with **every** delivery, so your endpoint can attribute the upload to a user/session. |
 | (Optional) a **category filter** | e.g. `['grocery']` to receive only grocery receipts. |
 
@@ -254,10 +254,12 @@ async function connectCarrefour() {
 
 ## Local development
 
-The bridge also runs on `http://localhost` and `http://127.0.0.1`, so you can call `list-sources` and
-wire up the flow locally. **But** `propose-workflow` / `collect` still require an **HTTPS** sink URL
-(the origin‑bound rule), so your ingest endpoint must be served over HTTPS to actually receive data —
-even in development (a tunnel such as an https dev proxy works).
+The bridge also runs on `http://localhost` and `http://127.0.0.1`, and **loopback sinks may be plain
+`http://`** (`localhost`, `*.localhost`, `127.x.x.x` — mirroring the browsers' *potentially trustworthy
+origin* rule: the traffic never leaves the machine). So the **whole** flow — `list-sources`,
+`propose-workflow`, `collect`, delivery — works against a plain-http dev server. Origin-binding still
+applies: only a page served on localhost can propose a localhost sink. Any non-loopback host keeps the
+strict HTTPS requirement.
 
 ## Revocation & UX
 
