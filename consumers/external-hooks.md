@@ -88,6 +88,11 @@ const res = await habeas('list-groups', { grantId });
 // status: 'ok'           → res.groups: [{ id, name, iban, currency, … }]  (fields per the source; sensitive ones may be masked, e.g. "ES12 **** 3456")
 //       | 'needs-login'  (Habeas opened the source's login tab; retry after the user authenticates)
 //       | 'denied'       (no such grant for your origin)
+// With no live session, if the user already picked their accounts in Habeas's own "Accounts" picker,
+// you get that saved selection instead of a login round-trip: status 'ok' + `cached: true`, with
+// `{ id, name }` per group (no iban/currency until a live enumeration). If the user restricted the
+// source to some accounts, live listings are filtered to that selection too — excluded accounts are
+// never revealed.
 ```
 
 Then collect **one group at a time** by passing its `id`:

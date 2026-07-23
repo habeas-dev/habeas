@@ -34,6 +34,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   failing when clicked). Older documents with no recorded exts still show every format (backward-compatible).
 
 ### Fixed
+- **External `list-groups` now works for streamed sources (ING) and serves the saved account selection
+  without a login** (`background.js` `listGroupsForGrant`). The hook only looked at the adapter's top-level
+  `api.groups`, but a streamed source (ING) declares groups per stream — so a consumer always got `groups: []`
+  and could never offer the account mapping. It now resolves every grouped stream (same rule as the popup's
+  account picker, deduped by id) and, with no live session, returns the user's saved picker selection
+  (`ds.groups`/`ds.groupLabels`) as `status:'ok', cached:true` instead of forcing an interactive login. Live
+  listings are filtered to the user's account allow-list (excluded accounts are never revealed to the origin),
+  and one stream failing to enumerate no longer kills the rest. Documented in `consumers/external-hooks.md`.
 - **The `list-sources` consent screen no longer shows empty rows** (`ui/authorize.html`). The source /
   destination / scope rows are hidden for a `list-sources` request (there is nothing to show), but the
   `hidden` attribute was defeated by the `.kv { display:grid }` author rule — a `[hidden]{display:none

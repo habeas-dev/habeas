@@ -994,9 +994,24 @@ async function listGroupsForGrant(origin, payload) {
   const ds = cfg.datasources.find((d) => d.id === grant.datasourceId && d.enabled);
   const adapter = ds && adapters[ds.adapter];
   if (!adapter) return { ok: false, status: 'error', error: 'route not found' };
-  if (!adapter.api.groups) return { ok: true, status: 'ok', groups: [] }; // this source has no groups
+  // A streamed source (ING) declares api.groups per STREAM, not at the top level — resolve every
+  // grouped stream, same rule as the popup's account picker (checking + savings + deposits…).
+  const gAdapters = [];
+  if (adapter.api && adapter.api.groups) gAdapters.push(adapter);
+  for (const s of adapter.streams || []) { const eff = resolveOutput(adapter, s.id); if (eff.api && eff.api.groups) gAdapters.push(eff); }
+  if (!gAdapters.length) return { ok: true, status: 'ok', groups: [] }; // this source has no groups
+  const allow = (ds.groups || []).map(String); // the user's saved account allow-list (popup picker)
   const net = await resolveSiteFetch(adapter, ds).catch(() => null);
   if (!net || !(await hasLiveSession(adapter))) {
+    // No live session. Serve the user's SAVED account selection (ds.groups/ds.groupLabels, curated in
+    // Habeas's own picker) — enough for a consumer to offer the mapping — before falling back to an
+    // interactive login.
+    if (allow.length) {
+      const labels = Array.isArray(ds.groupLabels) && ds.groupLabels.length === allow.length ? ds.groupLabels : null;
+      const groups = allow.map((id, i) => ({ id, name: (labels && labels[i]) || id }));
+      await appendLog({ kind: 'ext-groups', origin, source: ds.id, status: 'cached', count: groups.length });
+      return { ok: true, status: 'ok', cached: true, groups };
+    }
     // Need a logged-in tab on the source site to enumerate in-session; open one and ask to retry.
     const tab = await chrome.tabs.create({ url: siteBaseUrl(adapter), active: true }).catch(() => null);
     injectCapture(tab && tab.id);
@@ -1004,10 +1019,19 @@ async function listGroupsForGrant(origin, payload) {
     return { ok: true, status: 'needs-login' };
   }
   const auth = await authFor(adapter);
-  const groups = await listGroups(adapter, auth, net);
-  const fieldNames = Object.keys(adapter.api.groups.fields || {});
-  const mask = adapter.api.groups.mask || [];
-  const out = groups.map((g) => { const o = {}; for (const k of fieldNames) o[k] = mask.includes(k) ? maskValue(g[k]) : g[k]; return o; });
+  const seen = new Set(); const out = [];
+  for (const ga of gAdapters) {
+    let groups; try { groups = await listGroups(ga, auth, net); } catch (e) { continue; } // one stream failing must not kill the rest
+    const fieldNames = Object.keys(ga.api.groups.fields || {});
+    const mask = ga.api.groups.mask || [];
+    for (const g of groups) {
+      const id = String(g.id == null ? '' : g.id);
+      if (seen.has(id)) continue; seen.add(id);
+      if (allow.length && !allow.includes(id)) continue; // respect the user's account filter — excluded accounts are not revealed
+      const o = {}; for (const k of fieldNames) o[k] = mask.includes(k) ? maskValue(g[k]) : g[k];
+      out.push(o);
+    }
+  }
   await touchGrant(grant.id, new Date().toISOString());
   await appendLog({ kind: 'ext-groups', origin, source: ds.id, status: 'ok', count: out.length });
   return { ok: true, status: 'ok', groups: out };
