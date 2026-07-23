@@ -28,6 +28,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   Refunded/Reembolsado/Erstattet…) plus a currency capture that takes a symbol before or after the amount.
   Verified for Spain, beta elsewhere; testers in other countries confirm the total label/currency, date parsing
   and refund words (open items in the source `notes`). `domains` covers 18 Amazon TLDs.
+- **Multiple active countries for a brand source** (`background.js`, `runtime/lister.js`, `ui/archive.js`). A user
+  with, say, amazon.es AND amazon.com can now pin several countries (the country picker is multi-select →
+  `ds.brandDomains`); an unattended scheduled/sweep run lists each country in turn (`runRouteCountries`).
+  Interactive runs still follow whichever tab you're on. Every record is tagged with the country it came from
+  (`record.country`) and the Archive shows it (ES/COM) on each card, so the mixed store stays distinguishable.
 - **Experimental (beta) sources can be published and tested** (`registry`, `ui/marketplace.*`, sources catalog).
   A source drafted but not yet verified against a real account (e.g. DeGiro, derived from woob's endpoint map)
   can now ship flagged `beta: true` instead of being hidden — otherwise nobody with the account could ever test

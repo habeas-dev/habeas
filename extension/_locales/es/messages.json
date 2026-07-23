@@ -2401,10 +2401,10 @@
     "message": "Fija el país que usa esta fuente en las sincronizaciones programadas desatendidas"
   },
   "archive_country_sub": {
-    "message": "¿Qué sitio de país debe usar una sincronización programada y desatendida? Los usos interactivos siempre usan la pestaña en la que estés."
+    "message": "¿Qué países debe cubrir una sincronización programada y desatendida? Elige uno o varios. Ninguno = automático. Los usos interactivos siempre usan la pestaña en la que estés."
   },
-  "archive_country_auto": {
-    "message": "Automático (la pestaña en la que esté)"
+  "archive_country_done": {
+    "message": "Hecho"
   },
   "archive_send_to": {
     "message": "Enviar a $NAME$",

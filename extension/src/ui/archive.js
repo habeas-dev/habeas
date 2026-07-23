@@ -514,7 +514,9 @@ async function renderDocs() {
   const acctBtn = (entry.ds && groupedAdapterOf(entry.adapter)) ? `<button id="accts" class="refbtn" title="${esc(t('archive_accounts_hint'))}"><span class="ic">👤</span> ${esc(t('archive_accounts'))}</button>` : '';
   // Country picker — brand (multi-TLD) sources only: pins which country an unattended scheduled run uses.
   const brandDomains = (entry.adapter && Array.isArray(entry.adapter.domains) && entry.adapter.domains.length) ? entry.adapter.domains : null;
-  const countryBtn = (entry.ds && brandDomains) ? `<button id="country" class="refbtn" title="${esc(t('archive_country_hint'))}"><span class="ic">🌍</span> ${esc(entry.ds.brandDomain || t('archive_country'))}</button>` : '';
+  const pinned = (entry.ds && entry.ds.brandDomains) || [];
+  const cLabel = pinned.length ? pinned.map((d) => d.replace(/^[^.]*\./, '').toUpperCase()).join('/') : t('archive_country');
+  const countryBtn = (entry.ds && brandDomains) ? `<button id="country" class="refbtn" title="${esc(t('archive_country_hint'))}"><span class="ic">🌍</span> ${esc(cLabel)}</button>` : '';
   head += `<div class="docbar"><div class="groupby">${gb('month', t('group_month'))}${gb('category', t('group_category'))}${gb('store', t('group_store'))}</div>
     <div class="docbar-r">${countryBtn}${acctBtn}${refreshBtn}${saveGrp}<button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div></div>`;
   // Selection bar: send the picked documents to any compatible destination (with a caret for "Re-download from
@@ -586,7 +588,8 @@ function cardHtml(r) {
     : `<span class="status new" title="${esc(t('archive_status_local_hint'))}"><span class="d"></span>${esc(t('archive_status_local'))}</span>`;
   // Month grouping already shows the year in the group header; Category/Store don't → put the year on the card.
   const dstr = GROUPMODE === 'month' ? dateShort(r.record.date) : dateShortY(r.record.date);
-  const sub = [dstr, r.record.group && ACCOUNT === '' ? esc(r.record.group) : ''].filter(Boolean).join(' · ');
+  const country = r.record.country ? esc(String(r.record.country).replace(/^[^.]*\./, '').toUpperCase()) : ''; // brand multi-country → show the TLD (ES/COM)
+  const sub = [dstr, country, r.record.group && ACCOUNT === '' ? esc(r.record.group) : ''].filter(Boolean).join(' · ');
   return `<button class="dcard${PICKED.has(r.internalId) ? ' picked' : ''}" data-i="${i}">
     <span class="chk">✓</span>
     <span class="tile ${c.f}">${c.i}</span>
@@ -820,28 +823,31 @@ async function previewFile(r, sink, ext) {
 // Saves ds.brandDomain. "Automatic" clears it (interactive runs use whatever Amazon tab you're on).
 async function onPickCountry() {
   const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds || !entry.adapter || !Array.isArray(entry.adapter.domains)) return;
-  const chosen = await pickCountry(entry.adapter.domains, entry.ds.brandDomain);
+  const chosen = await pickCountry(entry.adapter.domains, entry.ds.brandDomains || []);
   if (chosen == null) return; // cancelled
   const cfg = await getConfig();
   const d = (cfg.datasources || []).find((x) => x.id === entry.ds.id);
-  if (d) { if (chosen) d.brandDomain = chosen; else delete d.brandDomain; await saveConfig(cfg); CFG = cfg; entry.ds = d; }
+  if (d) { if (chosen.length) d.brandDomains = chosen; else delete d.brandDomains; delete d.brandDomain; await saveConfig(cfg); CFG = cfg; entry.ds = d; }
   renderDocs();
 }
+// Multi-select: pick ONE OR MORE countries a scheduled run syncs (a user with amazon.es AND amazon.com). No
+// selection → "automatic" (scheduled uses the default; interactive always follows the tab). Returns the chosen
+// array, or null on cancel.
 function pickCountry(domains, current) {
+  const sel = new Set(current || []);
   return new Promise((resolve) => {
     const ov = document.createElement('div'); ov.className = 'pv';
-    const row = (val, label, on) => `<button class="wz-btn${on ? ' on' : ''}" data-cc="${esc(val)}" style="justify-content:flex-start">${esc(label)}</button>`;
-    ov.innerHTML = `<div class="pv-bar"><b>${esc(t('archive_country'))}</b><button id="cc-x">✕</button></div>
-      <div class="pv-body" style="align-items:flex-start;overflow:auto"><div style="display:flex;flex-direction:column;gap:6px;width:100%;max-width:360px;margin:24px auto">
+    const row = (dn) => `<button class="wz-btn${sel.has(dn) ? ' on' : ''}" data-cc="${esc(dn)}" style="justify-content:flex-start"><span class="cc-tick">${sel.has(dn) ? '✓' : ''}</span> ${esc(dn)}</button>`;
+    ov.innerHTML = `<div class="pv-bar"><b>${esc(t('archive_country'))}</b><button id="cc-ok">${esc(t('archive_country_done'))}</button></div>
+      <div class="pv-body" style="align-items:flex-start;overflow:auto"><div style="display:flex;flex-direction:column;gap:6px;width:100%;max-width:380px;margin:24px auto">
       <p class="muted" style="margin:0 0 6px">${esc(t('archive_country_sub'))}</p>
-      ${row('', t('archive_country_auto'), !current)}
-      ${domains.map((dn) => row(dn, dn, dn === current)).join('')}
+      ${domains.map(row).join('')}
       </div></div>`;
     document.body.appendChild(ov);
     const done = (v) => { try { ov.remove(); } catch (e) {} resolve(v); };
-    ov.querySelector('#cc-x').onclick = () => done(null);
+    ov.querySelector('#cc-ok').onclick = () => done([...sel]);
     ov.onclick = (e) => { if (e.target === ov) done(null); };
-    ov.querySelectorAll('[data-cc]').forEach((b) => { b.onclick = () => done(b.dataset.cc); });
+    ov.querySelectorAll('[data-cc]').forEach((b) => { b.onclick = () => { const d = b.dataset.cc; if (sel.has(d)) sel.delete(d); else sel.add(d); b.classList.toggle('on'); const tk = b.querySelector('.cc-tick'); if (tk) tk.textContent = sel.has(d) ? '✓' : ''; }; });
   });
 }
 async function onManageAccounts(opts = {}) {

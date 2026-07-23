@@ -22,6 +22,7 @@ export async function listSourceInto(adapter, opts = {}) {
   const ds = opts.ds || {};
   const auth = opts.auth, net = opts.net;
   adapter = withBrandHost(adapter, net, ds); // brand (multi-TLD) source → api.host = the tab's domain, or the pinned country
+  const brandCountry = (Array.isArray(adapter.domains) ? adapter.domains.find((d) => ((adapter.api && adapter.api.host) || '').includes(d)) : null) || null;
   const outs = (opts.outputs && opts.outputs.length) ? opts.outputs : outputsOf(adapter);
   const streamIds = [...new Set(outs.map((o) => o.stream))];
   // A saved account filter (ds.groups) takes over: list ALL selected accounts, no per-list picker. Without
@@ -41,6 +42,7 @@ export async function listSourceInto(adapter, opts = {}) {
       knownIds: opts.mode === 'full' ? null : known, // incremental early-stop unless a full re-scan
       onProgress: opts.onProgress ? (p) => opts.onProgress(sid, eff, sk, p) : undefined,
     });
+    if (brandCountry) for (const d of fresh) if (d.record) d.record.country = brandCountry; // tag which country each record came from
     if (opts.onFresh) opts.onFresh(sid, eff, sk, fresh);
     const items = fresh.filter((d) => d.internalId != null);
     // Synthetic docs are OPTIMISTIC (every month in the window) — many don't exist yet (before the account

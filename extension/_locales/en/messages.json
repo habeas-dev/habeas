@@ -2401,10 +2401,10 @@
     "message": "Pin the country this source uses for unattended scheduled syncs"
   },
   "archive_country_sub": {
-    "message": "Which country's site should a scheduled, unattended sync use? Interactive runs always use whichever tab you're on."
+    "message": "Which countries should a scheduled, unattended sync cover? Pick one or more. None = automatic. Interactive runs always use whichever tab you're on."
   },
-  "archive_country_auto": {
-    "message": "Automatic (the tab I'm on)"
+  "archive_country_done": {
+    "message": "Done"
   },
   "archive_send_to": {
     "message": "Send to $NAME$",

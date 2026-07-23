@@ -490,6 +490,19 @@ function hasObservableBearer(adapter) {
 let sweeping = false;
 let sweepController = null; // AbortController for the running sweep (so the popup can stop it)
 function stopSweep() { if (sweepController) { try { sweepController.abort(); } catch (e) {} } }
+// A brand source pinned to SEVERAL countries (ds.brandDomains) runs once per country in an unattended sweep /
+// scheduled run — there's no tab to infer the domain, so each country is opened + listed in turn. Non-brand or
+// single-country sources run once. Used only on the unattended paths (interactive runs follow the user's tab).
+async function runRouteCountries(ds, adapter, sink, opts = {}) {
+  const countries = (adapter && Array.isArray(adapter.domains) && Array.isArray(ds.brandDomains) && ds.brandDomains.length) ? ds.brandDomains : [undefined];
+  let agg = null;
+  for (const c of countries) {
+    if (opts.signal && opts.signal.aborted) break;
+    const r = await runRoute(ds, adapter, sink, { ...opts, brandDomain: c });
+    agg = agg ? { ...r, new: (agg.new || 0) + (r.new || 0), status: (r.status === 'done' || agg.status === 'done') ? 'done' : r.status } : r;
+  }
+  return agg || { status: 'done', new: 0 };
+}
 async function sweepAllSources() {
   if (sweeping) return { status: 'busy' };
   sweeping = true;
@@ -516,7 +529,7 @@ async function sweepAllSources() {
       sources++;
       setStatus(t('status_listing', [adapter.name || ds.adapter]));
       await appendLog({ kind: 'sweep', datasource: ds.id, status: 'listing' }); // incremental: "syncing X…" in the log
-      let res = await runRoute(ds, adapter, sink, { kind: 'sweep', signal }); // 1) unattended
+      let res = await runRouteCountries(ds, adapter, sink, { kind: 'sweep', signal }); // 1) unattended (per brand country)
       if (signal.aborted) break; // don't open login tabs / escalate after a stop
       if (res.status === 'nosession') {
         // No captured session → open/navigate the login page (foregrounded) so the user CAN authenticate.
@@ -733,8 +746,12 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     if (!auth || ctxMissing) { await appendLog({ ...base, status: 'nosession' }); await badgeClear(); setStatus(t('status_nosession', [name])); return { status: 'nosession' }; }
     // Auto/sweep runs unattended (a tab is already open post-login) → reuse it. A MANUAL/interactive run (the
     // Archive's "Save") opens the site tab if none exists, so the page-context fetch inherits the session.
-    const net = opts.net || (opts.interactive ? await ensureSiteFetch(adapter, { open: true, ds }) : await resolveSiteFetch(adapter));
-    adapter = withBrandHost(adapter, net, ds); // brand (multi-TLD) source → api.host = the tab's domain, or the pinned country
+    // A brand source may run for a SPECIFIC country this invocation (opts.brandDomain — the per-country loop of a
+    // scheduled/sweep run), else the datasource's single pinned country. Interactive runs still follow the tab.
+    const countryDs = { brandDomain: opts.brandDomain }; // set by runRouteCountries for a scheduled per-country run; interactive follows the tab
+    const net = opts.net || (opts.interactive ? await ensureSiteFetch(adapter, { open: true, ds: countryDs }) : await resolveSiteFetch(adapter));
+    adapter = withBrandHost(adapter, net, countryDs); // brand (multi-TLD) source → api.host = the tab's domain, or the pinned country
+    const brandCountry = (Array.isArray(adapter.domains) ? adapter.domains.find((d) => (adapter.api.host || '').includes(d)) : null) || null; // tag records with the country they came from
     const delivered = await deliveredSet(ds.id, sink.id);
     // A source may expose several outputs (streams×formats). Auto-mode delivers the outputs THIS sink accepts
     // (a typed consumer that wants only `transaction` gets just that stream). List once per stream (formats
@@ -749,6 +766,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
       // onProgress → live per-page status (visible in an open popup during a Sync-all sweep). signal → stop.
       // ds.groups = the user's saved account allow-list (grouped sources): auto/sweep only ever touch those.
       const all = await listInventory(eff, auth, net, { groupId: opts.groupId, groups: (ds.groups && ds.groups.length) ? ds.groups : undefined, signal: opts.signal, onProgress: (p) => setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])) }); // opts.groupId → one account; opts.groups → allow-list
+      if (brandCountry) for (const d of all) if (d.record) d.record.country = brandCountry; // which country each record came from (mixed multi-country store)
       const fresh = opts.force ? all : all.filter((d) => !delivered[d.internalId]); // force → re-deliver everything
       // Deliver oldest → newest (the list comes newest-first) — files written + manifest appended + store
       // recorded chronologically, matching the manual send. Covers auto, sweep and external collect.
@@ -889,7 +907,7 @@ async function onScheduleAlarm(id) {
 
   await appendLog({ kind: 'schedule', datasource: s.datasource, sink: s.sink, status: 'running' });
   let res;
-  try { res = await runRoute(ds, adapter, sink, { kind: 'schedule' }); }
+  try { res = await runRouteCountries(ds, adapter, sink, { kind: 'schedule' }); }
   catch (e) { res = { status: 'error', error: (e && e.message) || String(e) }; }
   st.lastRun = nowMs(); st.lastStatus = res.status;
 
