@@ -315,9 +315,10 @@ async function loadDocs(base) {
       // Per-doc formats: hide a format the doc doesn't actually have (an old Amazon order with no invoice PDF).
       // `known[id].exts` = the exts actually delivered (recorded at send time); absent (older docs) → show all.
       const km = known[internalId];
-      const dfmts = (km && Array.isArray(km.exts)) ? formats.filter((f) => km.exts.includes(f.ext)) : formats;
-      if (delivered.length && formats.length && !(km && Array.isArray(km.exts))) pendingFmt++;
-      rows.push({ base, dsId, adapter, internalId, record, delivered, formats: dfmts, _stream: stream });
+      const scanned = !!(km && Array.isArray(km.exts));
+      const dfmts = scanned ? formats.filter((f) => km.exts.includes(f.ext)) : formats;
+      if (delivered.length && formats.length && !scanned) pendingFmt++;
+      rows.push({ base, dsId, adapter, internalId, record, delivered, formats: dfmts, _stream: stream, _scanned: scanned });
     }
   }
   rows.sort((a, b) => ((a.record.date || '') < (b.record.date || '') ? 1 : -1));
@@ -660,6 +661,13 @@ function openDrawer(r) {
     else openFile(r, sinkId, ext);                                                     // other types → the full-tab viewer
   }; });
   $('#drawer').classList.add('on'); $('#scrim').classList.add('on'); $('#drawer').setAttribute('aria-hidden', 'false');
+  // Lazy format scan: the FIRST time a delivered doc's detail opens, probe which file formats it actually has and
+  // record them — so a format it lacks (e.g. a missing invoice PDF) stops offering its button. Runs in the
+  // background; if it changes the formats and this doc's drawer is still open, re-render it.
+  if (r.delivered.length && !r._scanned) {
+    const entry = INDEX.find((x) => x.base === r.base); const before = r.formats.length; const myI = String(CURDOCS.indexOf(r));
+    if (entry) scanDocFormats(entry, r).then(() => { if (r.formats.length !== before && $('#drawer').classList.contains('on') && $('#dw-body') && $('#dw-body').dataset.i === myI) openDrawer(r); }).catch(() => {});
+  }
 }
 function actBtn(icon, label, sub, act, primary) {
   return `<button class="abtn ${primary ? 'primary' : ''}" data-act="${esc(act)}"><span class="ai">${icon}</span><span class="grow">${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ''}</span></button>`;
@@ -786,6 +794,22 @@ async function reloadFromStore() {
 // exist on the destination — so the Archive can hide a format button a document doesn't have (an old order with
 // no invoice PDF). Probes each document format against the sinks the doc was delivered to; skips docs whose
 // exts are already known. Progress in the status line; Stop aborts. `known[id].exts` is read back in loadDocs.
+// Probe ONE delivered document's file formats against its sinks, record the exts, and update the doc's
+// `formats` in place (so a missing-format button disappears). Returns the exts found. `r._scanned` marks it done.
+async function scanDocFormats(entry, r) {
+  const fmts = fileFormatsFor(entry.adapter, r._stream); // the document formats this source can produce (e.g. pdf)
+  const found = [];
+  for (const f of fmts) {
+    for (const sink of r.delivered) {
+      const res = await retrieveDelivered(sink, r.adapter, r.record, f.ext, { only: true }).catch(() => null);
+      if (res && res.blob) { found.push(f.ext); break; }
+    }
+  }
+  const exts = [...new Set(found)];
+  await rememberDocMeta(entry.base, [{ internalId: r.internalId, exts }]);
+  r.formats = fmts.filter((f) => exts.includes(f.ext)); r._scanned = true;
+  return exts;
+}
 async function scanFormats() {
   const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds || !entry.adapter) { $('#astatus').textContent = t('archive_reconcile_nods'); return; }
   const meta = await getDocMeta(entry.base).catch(() => ({}));
@@ -797,15 +821,7 @@ async function scanFormats() {
   try {
     for (const r of docs) {
       if (aborter.signal.aborted) break;
-      const fmts = fileFormatsFor(entry.adapter, r._stream); // the document formats this source can produce (e.g. pdf)
-      const found = [];
-      for (const f of fmts) {
-        for (const sink of r.delivered) {
-          const res = await retrieveDelivered(sink, r.adapter, r.record, f.ext, { only: true }).catch(() => null);
-          if (res && res.blob) { found.push(f.ext); break; }
-        }
-      }
-      await rememberDocMeta(entry.base, [{ internalId: r.internalId, exts: [...new Set(found)] }]);
+      await scanDocFormats(entry, r);
       $('#astatus').textContent = t('archive_scan_progress', [String(++n), String(docs.length)]);
     }
   } finally {

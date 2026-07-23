@@ -27,6 +27,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   `detail.json`/`detail.root` and a JSON `items` shape. Covered by `test/detail-json.test.mjs`.
 
 ### Added
+- **Lazy format scan on opening a document detail** (`ui/archive.js`). The first time a delivered
+  document's detail drawer opens, its file formats are probed + recorded in the background; if it turns out to
+  lack a format (no invoice PDF), that button disappears and the drawer re-renders — so formats self-correct as
+  you browse, no explicit scan needed.
 - **Automatic, unattended archive maintenance from cloud destinations** (`background.js`
   `runAutoMaintenance`). Version-gated (`MAINT_VER`): once, at startup, for every enabled source with a readable
   destination (Dropbox/WebDAV/S3/Drive/folder), it recovers the real data (dates, amounts, details) already
