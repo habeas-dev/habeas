@@ -103,6 +103,9 @@ code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; 
 .src-meta { font-size: 12px; margin-top: 3px; }
 .src-meta code { font-size: 11px; }
 .src-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.src-dests { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 7px; }
+.destchk { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; cursor: pointer; }
+.destchk input { cursor: pointer; }
 .src-manage { display: flex; gap: 2px; }
 button.link { background: none; border: none; box-shadow: none; padding: 4px 8px; color: var(--muted); font-size: 12px; font-weight: 500; cursor: pointer; border-radius: 6px; }
 button.link:hover { background: var(--line); color: inherit; }

@@ -466,6 +466,10 @@
   "auto_on_pill": {
     "message": "auto activo"
   },
+  "auto_on_n": {
+    "message": "auto → $1 destino(s)",
+    "placeholders": { "1": { "content": "$1" } }
+  },
   "no_sw_sinks": {
     "message": "(sin destinos Drive/HTTP)"
   },

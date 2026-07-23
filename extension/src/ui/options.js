@@ -185,38 +185,36 @@ async function render() {
 
   const swSinks = cfg.sinks.filter((s) => ['drive', 'http', 'webdav', 's3', 'dropbox'].includes(s.type));
   const enabledDs = cfg.datasources.filter((d) => d.enabled);
-  const routeOf = (d) => (cfg.routes || []).find((r) => r.datasource === d.id && r.mode === 'auto');
+  // Auto-sync now supports N destinations per source: one auto route per (datasource, sink). `routesOf` lists
+  // them all; a source is "on" if it has any. The canonical archive is written on every delivery, so picking a
+  // service already keeps the archive in sync too.
+  const routesOf = (d) => (cfg.routes || []).filter((r) => r.datasource === d.id && r.mode === 'auto');
   const nameOf = (d) => { const nm = (CATALOG[d.adapter] && CATALOG[d.adapter].name) || d.id; const tld = d.brandDomain ? ' (' + d.brandDomain.replace(/^[^.]*\./, '').toUpperCase() + ')' : ''; return nm + tld; };
   // Order: sources with auto enabled first, then alphabetical — same as the Sources tab.
-  const ordered = enabledDs.slice().sort((a, b) => ((!!routeOf(b)) - (!!routeOf(a))) || nameOf(a).localeCompare(nameOf(b)));
+  const ordered = enabledDs.slice().sort((a, b) => ((routesOf(b).length > 0) - (routesOf(a).length > 0)) || nameOf(a).localeCompare(nameOf(b)));
   $('#routes').innerHTML = ordered.map((d) => {
-    const route = routeOf(d);
+    const on = routesOf(d);
+    const onSet = new Set(on.map((r) => r.sink));
     const dsAdapter = CATALOG[d.adapter];
     const sinks = swSinks.filter((s) => !dsAdapter || sinkAcceptsSource(s, dsAdapter));
-    const opts = sinks.map((s) => `<option value="${esc(s.id)}" ${route && route.sink === s.id ? 'selected' : ''}>${esc(s.id)} (${esc(s.type)})</option>`).join('');
     const hay = [nameOf(d), d.id].join(' ').toLowerCase();
-    return `<div class="src-card${route ? ' on' : ''}" data-hay="${esc(hay)}">
+    const dests = sinks.length
+      ? sinks.map((s) => `<label class="destchk"><input type="checkbox" data-rsink="${esc(d.id)}" data-sink="${esc(s.id)}"${onSet.has(s.id) ? ' checked' : ''}> ${esc(s.id)} <span class="muted">(${esc(s.type)})</span></label>`).join('')
+      : `<span class="muted">${t('no_sw_sinks')}</span>`;
+    return `<div class="src-card${on.length ? ' on' : ''}" data-hay="${esc(hay)}">
       <div class="src-info">
-        <div class="src-title"><b>${esc(nameOf(d))}</b> ${route ? `<span class="pill sent">${t('auto_on_pill')}</span>` : ''}</div>
-        <div class="src-meta muted">${route ? '→ ' + esc(route.sink) : `<code>${esc(d.id)}</code>`}</div>
-      </div>
-      <div class="src-actions">
-        <select data-rsel="${esc(d.id)}" ${sinks.length ? '' : 'disabled'}>${opts || `<option value="">${t('no_sw_sinks')}</option>`}</select>
-        <button data-rtoggle="${esc(d.id)}" data-on="${route ? 1 : 0}" class="${route ? '' : 'primary'}">${route ? t('disable_auto') : t('enable_auto')}</button>
+        <div class="src-title"><b>${esc(nameOf(d))}</b> ${on.length ? `<span class="pill sent">${t('auto_on_n', [String(on.length)])}</span>` : `<code>${esc(d.id)}</code>`}</div>
+        <div class="src-dests">${dests}</div>
       </div>
     </div>`;
   }).join('') || `<p class="muted">${t('enable_ds_first')}</p>`;
   filterRoutes();
-  $('#routes').querySelectorAll('[data-rtoggle]').forEach((b) => b.onclick = async () => {
-    const dsId = b.dataset.rtoggle;
-    const existing = ((await getConfig()).routes || []).find((r) => r.datasource === dsId && r.mode === 'auto');
-    if (existing) { await remove('routes', existing.id); }
-    else {
-      const sel = document.querySelector(`[data-rsel="${dsId}"]`);
-      const sinkId = sel && sel.value;
-      if (!sinkId) { alert(t('add_sink_first')); return; }
-      await upsert('routes', { id: dsId + '->' + sinkId, datasource: dsId, sink: sinkId, mode: 'auto' });
-    }
+  // Each destination checkbox is an independent auto route (datasource → sink). Toggling adds/removes just that
+  // route, so a source can fan out to several services at once (the archive rides along on every delivery).
+  $('#routes').querySelectorAll('[data-rsink]').forEach((cb) => cb.onchange = async () => {
+    const dsId = cb.dataset.rsink, sinkId = cb.dataset.sink, id = dsId + '->' + sinkId;
+    if (cb.checked) await upsert('routes', { id, datasource: dsId, sink: sinkId, mode: 'auto' });
+    else await remove('routes', id);
     render();
   });
 

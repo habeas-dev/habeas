@@ -508,7 +508,8 @@ async function sweepAllSources() {
     // Every ENABLED source (not only ones with an auto route). Each resolves a destination: auto-route sink
     // → the source's remembered favorite → the global default sink. Sources with no SW-runnable destination
     // are reported (noSink), not silently skipped.
-    const autoBy = {}; (cfg.routes || []).filter((r) => r.mode === 'auto').forEach((r) => { autoBy[r.datasource] = r.sink; });
+    // A source can fan out to SEVERAL auto destinations now → collect ALL its auto-route sinks (not just one).
+    const autoSinksBy = {}; (cfg.routes || []).filter((r) => r.mode === 'auto').forEach((r) => { (autoSinksBy[r.datasource] = autoSinksBy[r.datasource] || []).push(r.sink); });
     const favs = (await chrome.storage.local.get('habeas:favsink'))['habeas:favsink'] || {};
     const def = (await chrome.storage.local.get('habeas:defaultsink'))['habeas:defaultsink'] || '';
     const swRunnable = (s) => !!s && s.type !== 'download' && s.type !== 'local-folder';
@@ -518,26 +519,32 @@ async function sweepAllSources() {
       if (signal.aborted) break; // stopped by the user
       const adapter = adapters[ds.adapter];
       if (!adapter || !(await hasConsent(adapter))) continue;
-      const sink = cfg.sinks.find((s) => s.id === sweepSinkId(ds.id, autoBy, favs, def));
-      if (!swRunnable(sink)) { noSink++; continue; }
+      // ALL of this source's auto destinations (fallback to its favorite / the global default when it has none).
+      const sinkIds = (autoSinksBy[ds.id] && autoSinksBy[ds.id].length) ? [...new Set(autoSinksBy[ds.id])] : [sweepSinkId(ds.id, {}, favs, def)];
+      const sinks = sinkIds.map((id) => cfg.sinks.find((s) => s.id === id)).filter(swRunnable);
+      if (!sinks.length) { noSink++; continue; }
       sources++;
       setStatus(t('status_listing', [adapter.name || ds.adapter]));
       await appendLog({ kind: 'sweep', datasource: ds.id, status: 'listing' }); // incremental: "syncing X…" in the log
-      let res = await runRoute(ds, adapter, sink, { kind: 'sweep', signal }); // 1) unattended; each instance pins its own country
-      if (signal.aborted) break; // don't open login tabs / escalate after a stop
-      if (res.status === 'nosession') {
-        // No captured session → open/navigate the login page (foregrounded) so the user CAN authenticate.
-        // A bearer source's session only exists after login, so there's nothing to retry in-place now —
-        // the user logs in and re-runs (or auto-sync resumes on capture for a source with an auto route).
-        try { await recoverSession(adapter); } catch (e) {}
-      } else if (needsTabEscalation(res)) {
-        // Session may be live but there's no tab (anti-bot/CSRF) → open the site tab and retry in-session.
-        const net = await ensureSiteFetch(adapter, { open: true }).catch(() => null);
-        if (net) res = await runRoute(ds, adapter, sink, { kind: 'sweep', net, interactive: true });
+      let deliveredHere = false;
+      for (const sink of sinks) {
+        if (signal.aborted) break;
+        let res = await runRoute(ds, adapter, sink, { kind: 'sweep', signal }); // unattended; each instance pins its own country
+        if (signal.aborted) break; // don't open login tabs / escalate after a stop
+        if (res.status === 'nosession') {
+          // No captured session → open/navigate the login page so the user CAN authenticate. Stop trying the
+          // remaining sinks for this source (they'd all hit the same dead session); resume on capture.
+          try { await recoverSession(adapter); } catch (e) {}
+          needLogin++; break;
+        } else if (needsTabEscalation(res)) {
+          // Session may be live but there's no tab (anti-bot/CSRF) → open the site tab and retry in-session.
+          const net = await ensureSiteFetch(adapter, { open: true }).catch(() => null);
+          if (net) res = await runRoute(ds, adapter, sink, { kind: 'sweep', net, interactive: true });
+        }
+        if (res.status === 'done') { if (!deliveredHere) { totalNew += res.new || 0; deliveredHere = true; } } // count NEW once per source (the store is shared)
+        else if (res.status === 'challenged') { needLogin++; break; }
+        else if (res.status === 'error') errors++;
       }
-      if (res.status === 'done') totalNew += res.new || 0;
-      else if (res.status === 'nosession' || res.status === 'challenged') needLogin++;
-      else if (res.status === 'error') errors++;
     }
     const stopped = signal.aborted;
     await appendLog({ kind: 'sweep', status: stopped ? 'stopped' : 'ok', sources, new: totalNew, needLogin, errors, noSink });

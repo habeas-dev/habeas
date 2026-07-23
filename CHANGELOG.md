@@ -11,6 +11,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Auto-sync to MULTIPLE destinations per source** (`ui/options.js`, `background.js`). Automatic mode was one
+  destination per source; now each source shows a checkbox per compatible service and you can enable several at
+  once — a source fans out to every checked destination on login-capture and on the periodic sweep (the
+  canonical archive is written on every delivery, so it stays in sync too). The sweep collects ALL of a
+  source's auto-route sinks (was: only the last one).
 - **External `revoke-grant` hook** (`background.js`, `extbridge.js`): a consumer may revoke its OWN grant
   (pure scope reduction, no consent screen; origin-bound as always). The user's source/sink config in Habeas
   stays — only the origin's capability goes. Documented in `consumers/external-hooks.md`.
