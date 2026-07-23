@@ -2478,6 +2478,10 @@
   "archive_scan_none": {
     "message": "Nothing to scan (formats already known, or no delivered documents)"
   },
+  "archive_scan_pending": {
+    "message": "$1 delivered document(s) haven't had their file formats checked yet.",
+    "placeholders": { "1": { "content": "$1" } }
+  },
   "archive_scan_progress": {
     "message": "Scanning formats — $1 of $2…",
     "placeholders": { "1": { "content": "$1" }, "2": { "content": "$2" } }

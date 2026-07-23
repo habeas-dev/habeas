@@ -50,6 +50,7 @@ import { autoDebounced, retainAutoDebounce, isLoginNavigation, needsTabEscalatio
   syncWebRequestCapture();
   syncLearnAssetCapture().catch(() => {}); // (re)arm record-mode document capture if a recording is in progress
   syncSchedules().catch(() => {}); // (re)arm the download planner's alarms; overdue ones fire the catch-up
+  runAutoMaintenance().catch(() => {}); // version-gated: recover real data from cloud destinations, once, unattended
   try { chrome.alarms.create('contrib:poll', { periodInMinutes: 20 }); } catch (e) {} // poll for team replies to the user's handoffs
   checkContribReplies(); // check once on startup so a reply that arrived while closed notifies promptly
 })();
@@ -625,6 +626,33 @@ async function reconcileFromDelivered(ds, adapter) {
     }
   }
   return upgraded;
+}
+
+// Version-gated, UNATTENDED maintenance: recover real data (dates, amounts, details) from what was already
+// delivered to a CLOUD/readable destination — the same as the Archive's "Recover data from destination", but run
+// once automatically at startup for every enabled source, so a cloud-backed archive self-heals without the user
+// clicking. Gated by MAINT_KEY===MAINT_VER (bump MAINT_VER to re-run for everyone). Throttled + keep-alive so a
+// long recovery outlives SW idle; if it's cut short the marker isn't set and it resumes next startup. Purely
+// reads back what's already there — never re-downloads from the source, never touches the network of a source.
+const MAINT_KEY = 'habeas:automaint';
+const MAINT_VER = 1;
+async function runAutoMaintenance() {
+  let o; try { o = await chrome.storage.local.get(MAINT_KEY); } catch (e) { o = {}; }
+  if (o[MAINT_KEY] === MAINT_VER) return;
+  const cfg = await getConfig();
+  const readable = (cfg.sinks || []).filter((s) => ['dropbox', 'webdav', 's3', 'local-folder', 'drive'].includes(s.type));
+  if (!readable.length) return; // no readable destination → nothing to recover; don't mark (re-check once one exists)
+  const adapters = await getAdapters();
+  keepAlive();
+  try {
+    for (const ds of (cfg.datasources || []).filter((d) => d.enabled)) {
+      const adapter = adapters[ds.adapter]; if (!adapter) continue;
+      try { await reconcileFromDelivered(ds, adapter); } catch (e) { /* best-effort per source */ }
+      await new Promise((r) => setTimeout(r, 400)); // throttle between sources — don't hammer the destination
+    }
+    try { await chrome.storage.local.set({ [MAINT_KEY]: MAINT_VER }); } catch (e) {}
+    setStatus('');
+  } finally { stopKeepAlive(); }
 }
 
 // Deliver a SPECIFIC set of already-stored documents (hand-picked in the Archive) to a sink. Unlike runRoute

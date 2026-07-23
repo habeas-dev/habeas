@@ -35,6 +35,7 @@ let LANG = 'en', ESLANG = false;
 let INDEX = [];       // [{ base, ds, adapter, name, count, lastDate, primaryCat }]
 let CUR = null;       // current source base, or null = the index
 let CURDOCS = [];     // [{ base, dsId, adapter, internalId, record, delivered[], formats[] }]
+let PENDING_FMT = 0;  // delivered docs in the current view whose file formats haven't been scanned yet
 let ACCOUNT = '';     // account (record.group) filter
 let GROUPMODE = 'month';
 let SELECTING = false;
@@ -296,6 +297,7 @@ async function loadDocs(base) {
   const known = await getDocMeta(base).catch(() => ({}));
   const deliveredCache = {};
   const rows = [];
+  let pendingFmt = 0; // delivered docs whose file formats haven't been scanned yet (exts unknown) → offer a scan
   for (const key of keys) {
     const src = await getSource(key).catch(() => null); if (!src || !src.items) continue;
     const stream = String(key).split(':')[1] || '';
@@ -314,11 +316,13 @@ async function loadDocs(base) {
       // `known[id].exts` = the exts actually delivered (recorded at send time); absent (older docs) → show all.
       const km = known[internalId];
       const dfmts = (km && Array.isArray(km.exts)) ? formats.filter((f) => km.exts.includes(f.ext)) : formats;
+      if (delivered.length && formats.length && !(km && Array.isArray(km.exts))) pendingFmt++;
       rows.push({ base, dsId, adapter, internalId, record, delivered, formats: dfmts, _stream: stream });
     }
   }
   rows.sort((a, b) => ((a.record.date || '') < (b.record.date || '') ? 1 : -1));
   CURDOCS = rows;
+  PENDING_FMT = pendingFmt;
 }
 function enrich(r, k) {
   if (!k) return r;
@@ -537,6 +541,9 @@ async function renderDocs() {
   const countryBtn = (entry.ds && isBrand) ? `<button id="country" class="refbtn" title="${esc(t('archive_country_hint'))}"><span class="ic">🌍</span> ${esc(cLabel)}</button>` : '';
   head += `<div class="docbar"><div class="groupby">${gb('month', t('group_month'))}${gb('category', t('group_category'))}${gb('store', t('group_store'))}</div>
     <div class="docbar-r">${countryBtn}${acctBtn}${refreshBtn}${saveGrp}<button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div></div>`;
+  // Pending maintenance: some delivered docs haven't had their file formats scanned → a format they lack (e.g. a
+  // missing invoice PDF) may still offer a button. Offer to scan (the destination probe isn't auto-run).
+  if (PENDING_FMT) head += `<div class="fmtnotice" style="margin:8px 0;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);font-size:13px;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap">🔎 ${esc(t('archive_scan_pending', [String(PENDING_FMT)]))} <button id="scan-pending" class="refbtn">${esc(t('archive_scan'))}</button></div>`;
   // Selection bar: send the picked documents to any compatible destination (with a caret for "Re-download from
   // site" per destination), open their saved files, or clear.
   const sendBtns = sinks.map((s) => `<button class="go" data-sendsel="${esc(s.id)}">${sinkIcon(s)} ${esc(t('archive_send_to', [sinkLabel(s)]))}</button>`).join('');
@@ -1054,6 +1061,7 @@ function wire() {
     const sr = ev.target.closest('[data-sendredl]'); if (sr) { closeMenus(); sendSelected(sr.dataset.sendredl, { force: true }); return; }
     if (ev.target.closest('#sel-more')) { toggleMenu('selmenu'); return; }
     const rm = ev.target.closest('[data-refmode]'); if (rm) { closeMenus(); const m = rm.dataset.refmode; if (m === 'full') refreshSource('full'); else if (m === 'reconcile') reconcileDates(); else if (m === 'scanformats') scanFormats(); else reloadFromStore(); return; }
+    if (ev.target.closest('#scan-pending')) { scanFormats(); return; }
     if (ev.target.closest('#refresh-more')) { toggleMenu('refmenu'); return; }
     if (ev.target.closest('#save-more')) { toggleMenu('savemenu'); return; }
     if (ev.target.closest('#accts')) { onManageAccounts(); return; }

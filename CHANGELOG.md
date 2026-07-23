@@ -27,6 +27,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   `detail.json`/`detail.root` and a JSON `items` shape. Covered by `test/detail-json.test.mjs`.
 
 ### Added
+- **Automatic, unattended archive maintenance from cloud destinations** (`background.js`
+  `runAutoMaintenance`). Version-gated (`MAINT_VER`): once, at startup, for every enabled source with a readable
+  destination (Dropbox/WebDAV/S3/Drive/folder), it recovers the real data (dates, amounts, details) already
+  written to that destination back into the archive — the same as the manual “Recover data from destination”,
+  but with no user action. Throttled + keep-alive; resumes next startup if cut short; never re-downloads from a
+  source.
+- **“Formats pending” notice in the Archive** (`ui/archive.js`). The per-document format scan probes the
+  destination and isn’t auto-run, so when delivered documents haven’t had their formats checked the source view
+  shows a notice with a one-click “Scan file formats”.
 - **“Scan file formats” — backfill which formats each delivered document actually has** (`ui/archive.js`).
   A source refresh-menu action probes the destination for each document’s formats and records them
   (`rememberDocMeta.exts`), so already-stored documents get the same per-document button hiding as new ones

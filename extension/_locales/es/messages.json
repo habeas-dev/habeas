@@ -2478,6 +2478,10 @@
   "archive_scan_none": {
     "message": "Nada que escanear (formatos ya conocidos, o sin documentos entregados)"
   },
+  "archive_scan_pending": {
+    "message": "$1 documento(s) entregado(s) sin comprobar sus formatos de fichero.",
+    "placeholders": { "1": { "content": "$1" } }
+  },
   "archive_scan_progress": {
     "message": "Escaneando formatos — $1 de $2…",
     "placeholders": { "1": { "content": "$1" }, "2": { "content": "$2" } }
