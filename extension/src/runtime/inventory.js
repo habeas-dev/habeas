@@ -1183,6 +1183,9 @@ export function extractDetailFields(text, cfg) {
     if (cfg.items) rec.items = parseHtmlItems(text || '', cfg.items);
   }
   if (rec.date != null && rec.date !== '') rec.date = normalizeDate(rec.date);
+  // A `currency` field captured off the amount (a multi-currency source) is a symbol/prefix like "€"/"US$" →
+  // normalize to the ISO code so the record is clean regardless of who consumes it.
+  if (typeof rec.currency === 'string' && rec.currency) { const v = rec.currency, iso = v.match(/\b(USD|EUR|GBP|JPY|CHF|CAD|AUD|MXN|BRL|INR|SEK|NOK|DKK|PLN)\b/); rec.currency = iso ? iso[1] : v.includes('€') ? 'EUR' : v.includes('£') ? 'GBP' : v.includes('¥') ? 'JPY' : v.includes('$') ? 'USD' : v; }
   for (const k of ['total', 'amount', 'refundTotal', 'gross', 'net', 'fee']) if (typeof rec[k] === 'string' && rec[k] !== '') rec[k] = normalizeAmount(rec[k]);
   if (Array.isArray(rec.items)) for (const it of rec.items) for (const k of ['price', 'amount', 'total']) if (typeof it[k] === 'string' && it[k] !== '') it[k] = normalizeAmount(it[k]);
   return rec;

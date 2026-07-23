@@ -26,6 +26,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   bought), invoice id and expanded counterparty (email, is-business). Schema (`schema/adapter.schema.json`) gains
   `detail.json`/`detail.root` and a JSON `items` shape. Covered by `test/detail-json.test.mjs`.
 
+### Added
+- **Per-document format buttons — hide a format a document doesn't have** (`lib/state.js`, `background.js`,
+  `ui/popup.js`, `ui/archive.js`). Delivery now records, per document, which artifact extensions were actually
+  produced (`rememberDocMeta` gains `exts`), so the Archive only shows the PDF button for orders that really have
+  an invoice — an old Amazon order past invoice retention no longer offers a PDF preview at all (rather than
+  failing when clicked). Older documents with no recorded exts still show every format (backward-compatible).
+
 ### Fixed
 - **PDF preview no longer downloads the JSON detail when a doc has no PDF** (`ui/archive.js` `previewFile`). The
   Archive preview fetched the requested format but fell back to any other delivered ext — so previewing the PDF

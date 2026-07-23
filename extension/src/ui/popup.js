@@ -657,7 +657,7 @@ async function onSend() {
       await markDelivered($('#ds').value, sink.id, eligible.map((c) => c.internalId));
     }
     // Persist the real dates + amounts we learned from the details (source-level) so future listings show them.
-    await rememberDocMeta(storeIdOf(ds, adapter), eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, returnStatus: d.returnStatus || undefined })));
+    await rememberDocMeta(storeIdOf(ds, adapter), eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, returnStatus: d.returnStatus || undefined, exts: [...new Set((files.get(d.internalId) || []).map((a) => a && a.ext).filter(Boolean))] })));
     // Write-through to the canonical store: every delivered item's normalized record is recorded once, so a
     // second sink / consumer / device can be served from the store instead of re-extracting (canonical-store.md).
     // Items live per STREAM store key (formats share items) → group and record under each stream's key.

@@ -310,7 +310,11 @@ async function loadDocs(base) {
         const set = deliveredCache[ck] || (deliveredCache[ck] = await deliveredSet(dsId, sink.id).catch(() => ({})));
         if (set[internalId]) delivered.push(sink);
       }
-      rows.push({ base, dsId, adapter, internalId, record, delivered, formats, _stream: stream });
+      // Per-doc formats: hide a format the doc doesn't actually have (an old Amazon order with no invoice PDF).
+      // `known[id].exts` = the exts actually delivered (recorded at send time); absent (older docs) → show all.
+      const km = known[internalId];
+      const dfmts = (km && Array.isArray(km.exts)) ? formats.filter((f) => km.exts.includes(f.ext)) : formats;
+      rows.push({ base, dsId, adapter, internalId, record, delivered, formats: dfmts, _stream: stream });
     }
   }
   rows.sort((a, b) => ((a.record.date || '') < (b.record.date || '') ? 1 : -1));

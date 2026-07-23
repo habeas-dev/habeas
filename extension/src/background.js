@@ -678,7 +678,7 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
         for (const d of batch) d.record = bakeLearned(d);
         emitProgress(ds.id, batch.map((d) => ({ internalId: d.internalId, stream: sid, record: d.record, delivered: sink.id }))); // live: flip cards to "saved"
         try { await recordDelivered(sk, batch, { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store best-effort */ }
-        try { await rememberDocMeta(storeIdOf(ds, adapter), batch.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined }))); } catch (e) {}
+        try { await rememberDocMeta(storeIdOf(ds, adapter), batch.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, exts: [...new Set((files.get(d.internalId) || []).map((a) => a && a.ext).filter(Boolean))] }))); } catch (e) {}
         for (const d of batch) files.delete(d.internalId); // bound memory
         sent += batch.length;
       };
@@ -784,7 +784,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
         for (const d of batch) d.record = bakeLearned(d); // persist the real date/amount learned from the detail
         emitProgress(ds.id, batch.map((d) => ({ internalId: d.internalId, stream: sid, record: d.record, delivered: sink.id }))); // live: flip cards to "saved"
         try { await recordDelivered(sk, batch, { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store is best-effort */ } // write-through to the canonical store
-        try { await rememberDocMeta(storeIdOf(ds, adapter), batch.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, returnStatus: d.returnStatus || undefined }))); } catch (e) { /* best-effort */ }
+        try { await rememberDocMeta(storeIdOf(ds, adapter), batch.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, returnStatus: d.returnStatus || undefined, exts: [...new Set((files.get(d.internalId) || []).map((a) => a && a.ext).filter(Boolean))] }))); } catch (e) { /* best-effort */ }
         for (const d of batch) files.delete(d.internalId); // bound memory across a large sweep
         totalNew += batch.length;
       };

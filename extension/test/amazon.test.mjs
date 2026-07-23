@@ -8,7 +8,7 @@ import { listInventory, fetchDetail, fetchPdf, extractDetailFields } from '../sr
 // The REAL shipped adapter (sources-repo/sources/amazon-es.json) is exercised here against SYNTHETIC
 // HTML fixtures (small, invented — they mirror the real Amazon structures but carry NO real user data).
 const here = dirname(fileURLToPath(import.meta.url));
-const AMAZON = JSON.parse(readFileSync(join(here, '../../sources-repo/sources/amazon-es.json'), 'utf8'));
+const AMAZON = JSON.parse(readFileSync(join(here, '../../sources-repo/sources/amazon.json'), 'utf8'));
 const AUTH = { byPath: {}, merged: {} }; // cookie auth → no replay headers
 
 const YEAR = new Date().getFullYear();
@@ -45,12 +45,11 @@ const DETAIL_HTML = `<!DOCTYPE html><html><body>
   <div data-component="briefOrderInfoInvoice"><span>Importe total: 0,00 €</span></div>
   <div data-component="chargeSummary">
     <span>Resumen del pedido</span>
-    <span>Subtotal de producto(s):</span> <span>24,99 €</span>
-    <span>Env&iacute;o:</span> <span>0,00 €</span>
-    <span>Total antes de impuestos:</span> <span>24,99 €</span>
-    <span>Impuestos:</span> <span>0,00 €</span>
-    <div><span>Total:</span></div><div><span class="a-text-bold">24,99 €</span></div>
-    <div><span>Importe del cheque regalo:</span></div>
+    <div class="a-row od-line-item-row"><div class="a-column a-span3"><span>Subtotal de producto(s):</span></div><div class="a-column a-span9 od-line-item-row-content a-span-last"><span class="a-size-base a-color-base">24,99 €</span></div></div>
+    <div class="a-row od-line-item-row"><div class="a-column a-span3"><span>Env&iacute;o:</span></div><div class="a-column a-span9 od-line-item-row-content a-span-last"><span class="a-size-base a-color-base">0,00 €</span></div></div>
+    <div class="a-row od-line-item-row"><div class="a-column a-span3"><span>Total antes de impuestos:</span></div><div class="a-column a-span9 od-line-item-row-content a-span-last"><span class="a-size-base a-color-base">24,99 €</span></div></div>
+    <div class="a-row od-line-item-row"><div class="a-column a-span3"><span>Impuestos:</span></div><div class="a-column a-span9 od-line-item-row-content a-span-last"><span class="a-size-base a-color-base">0,00 €</span></div></div>
+    <div class="a-row od-line-item-row"><div class="a-column a-span3"><span class="a-text-bold"><span>Total:</span></span></div><div class="a-column a-span9 od-line-item-row-content a-span-last"><span class="a-size-base a-color-base a-text-bold">24,99 €</span></div></div>
   </div>
 </body></html>`;
 
