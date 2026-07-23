@@ -848,24 +848,26 @@ async function onPickCountry() {
   else { await loadDocs(CUR); renderRail(); renderDocs(); }
   hydrateIndex();
 }
-// Multi-select: pick ONE OR MORE countries a scheduled run syncs (a user with amazon.es AND amazon.com). No
-// selection → "automatic" (scheduled uses the default; interactive always follows the tab). Returns the chosen
-// array, or null on cancel.
+// Multi-select: pick the countries a brand source is installed for (each becomes its own instance). Uses the
+// standard modal box (centred, its own scroll) so a long TLD list never clips like the preview overlay did.
+// Returns the chosen array, or null on cancel.
 function pickCountry(domains, current) {
   const sel = new Set(current || []);
   return new Promise((resolve) => {
-    const ov = document.createElement('div'); ov.className = 'pv';
-    const row = (dn) => `<button class="wz-btn${sel.has(dn) ? ' on' : ''}" data-cc="${esc(dn)}" style="justify-content:flex-start"><span class="cc-tick">${sel.has(dn) ? '✓' : ''}</span> ${esc(dn)}</button>`;
-    ov.innerHTML = `<div class="pv-bar"><b>${esc(t('archive_country'))}</b><button id="cc-ok">${esc(t('archive_country_done'))}</button></div>
-      <div class="pv-body" style="align-items:flex-start;overflow:auto"><div style="display:flex;flex-direction:column;gap:6px;width:100%;max-width:380px;margin:24px auto">
-      <p class="muted" style="margin:0 0 6px">${esc(t('archive_country_sub'))}</p>
-      ${domains.map(row).join('')}
-      </div></div>`;
+    const ov = document.createElement('div'); ov.className = 'wz-modal';
+    const box = document.createElement('div'); box.className = 'wz-modalbox';
+    box.style.cssText = 'background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;width:min(420px,94vw)';
+    const row = (dn) => `<button class="wz-btn${sel.has(dn) ? ' primary' : ''}" data-cc="${esc(dn)}" style="justify-content:flex-start;width:100%"><span class="cc-tick" style="display:inline-block;width:1em">${sel.has(dn) ? '✓' : ''}</span> ${esc(dn)}</button>`;
+    box.innerHTML = `<div class="wz-head"><div><h3>${esc(t('archive_country'))}</h3><p class="muted" style="margin:6px 0 0;font-size:13px">${esc(t('archive_country_sub'))}</p></div></div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin:14px 0">${domains.map(row).join('')}</div>
+      <div style="display:flex;justify-content:flex-end;gap:8px"><button class="wz-btn ghost" id="cc-cancel">${esc(t('cancel'))}</button><button class="wz-btn primary" id="cc-ok">${esc(t('archive_country_done'))}</button></div>`;
+    ov.appendChild(box);
     document.body.appendChild(ov);
     const done = (v) => { try { ov.remove(); } catch (e) {} resolve(v); };
-    ov.querySelector('#cc-ok').onclick = () => done([...sel]);
+    box.querySelector('#cc-ok').onclick = () => done([...sel]);
+    box.querySelector('#cc-cancel').onclick = () => done(null);
     ov.onclick = (e) => { if (e.target === ov) done(null); };
-    ov.querySelectorAll('[data-cc]').forEach((b) => { b.onclick = () => { const d = b.dataset.cc; if (sel.has(d)) sel.delete(d); else sel.add(d); b.classList.toggle('on'); const tk = b.querySelector('.cc-tick'); if (tk) tk.textContent = sel.has(d) ? '✓' : ''; }; });
+    box.querySelectorAll('[data-cc]').forEach((b) => { b.onclick = () => { const d = b.dataset.cc; if (sel.has(d)) sel.delete(d); else sel.add(d); b.classList.toggle('primary'); const tk = b.querySelector('.cc-tick'); if (tk) tk.textContent = sel.has(d) ? '✓' : ''; }; });
   });
 }
 async function onManageAccounts(opts = {}) {

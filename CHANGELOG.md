@@ -39,6 +39,7 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   (COM)). A pinned instance always targets its own country — even interactively on another Amazon tab it won't
   write one country's data into another's store. Records are still tagged with `record.country`. The earlier
   "several countries under one datasource" shape (`ds.brandDomains`) auto-migrates to instances on startup.
+  The 🌍 country picker is a standard centred modal, so a long TLD list scrolls cleanly instead of clipping.
   Covered by `test/instances.test.mjs` + `test/brandhost.test.mjs`.
 - **Experimental (beta) sources can be published and tested** (`registry`, `ui/marketplace.*`, sources catalog).
   A source drafted but not yet verified against a real account (e.g. DeGiro, derived from woob's endpoint map)
