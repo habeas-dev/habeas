@@ -34,6 +34,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   failing when clicked). Older documents with no recorded exts still show every format (backward-compatible).
 
 ### Fixed
+- **A 401 while fetching a source brings its tab to the front** (`lib/pagefetch.js`). When an
+  in-page request comes back 401 (the session/CSRF token is not usable yet — e.g. PayPal before its SPA has
+  minted the token, or an expired session), the source's tab is surfaced once so the user can see it and log
+  in / let the SPA re-authenticate, instead of the operation just failing silently.
 - **PDF preview no longer downloads the JSON detail when a doc has no PDF** (`ui/archive.js` `previewFile`). The
   Archive preview fetched the requested format but fell back to any other delivered ext — so previewing the PDF
   of an order with no invoice (e.g. an old Amazon order past retention) returned the JSON detail, which the

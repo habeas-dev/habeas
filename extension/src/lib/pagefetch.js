@@ -187,6 +187,7 @@ export function makePageFetch(tabId, adapter) {
   // SPA made an authed call). `auth.tokenFromStorage {key,field,scheme,header}` reads it FRESH from localStorage
   // in the page on every request — the reliable path. Read here (background can't see the page's localStorage).
   const tfs = adapter && adapter.auth && adapter.auth.tokenFromStorage;
+  let fronted = false; // a 401 → surface the source tab ONCE per fetcher (not on every request of the op)
   const pf = async (url, init = {}) => {
     const arg = {
       url: String(url),
@@ -251,6 +252,9 @@ export function makePageFetch(tabId, adapter) {
       out = res && res.result;
     } catch (e) { out = { ok: false, status: 0, error: String(e && e.message || e) }; }
     out = out || { ok: false, status: 0, error: 'no result' };
+    // A 401 means the session/token isn't usable (the SPA hasn't minted its CSRF token yet, or the session
+    // expired) — bring the source's tab to the FRONT so the user sees it and can log in / let the SPA re-auth.
+    if (out.status === 401 && !fronted) { fronted = true; foregroundTab(tabId); }
     return {
       ok: out.ok, status: out.status, sentHeaders: out.sentHeaders, sentToken: out.sentToken,
       text: async () => out.text || out.error || '',
@@ -266,6 +270,11 @@ export function makePageFetch(tabId, adapter) {
   pf.ws = makePageWs(tabId); // WebSocket-API sources (Trade Republic) list through this same tab
   pf.mtop = makePageMtop(tabId); // Alibaba mtop-API sources (AliExpress…) list through this same tab
   return pf;
+}
+
+// Bring a tab (and its window) to the foreground — used to surface a source's tab on a 401 so the user can act.
+async function foregroundTab(tabId) {
+  try { const tab = await chrome.tabs.update(tabId, { active: true }); if (tab && tab.windowId != null) await chrome.windows.update(tab.windowId, { focused: true }); } catch (e) {}
 }
 
 // Find an open tab on the source's site and return a page-bound fetch (or null if none is open —
