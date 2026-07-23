@@ -2394,6 +2394,18 @@
   "archive_accounts_hint": {
     "message": "Choose which accounts this source tracks"
   },
+  "archive_country": {
+    "message": "Country"
+  },
+  "archive_country_hint": {
+    "message": "Pin the country this source uses for unattended scheduled syncs"
+  },
+  "archive_country_sub": {
+    "message": "Which country's site should a scheduled, unattended sync use? Interactive runs always use whichever tab you're on."
+  },
+  "archive_country_auto": {
+    "message": "Automatic (the tab I'm on)"
+  },
   "archive_send_to": {
     "message": "Send to $NAME$",
     "placeholders": {

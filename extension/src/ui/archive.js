@@ -512,8 +512,11 @@ async function renderDocs() {
   // Accounts (allow-list) manager — grouped sources only. Lets the user choose which accounts to track from
   // the Archive, so the popup's account picker isn't needed.
   const acctBtn = (entry.ds && groupedAdapterOf(entry.adapter)) ? `<button id="accts" class="refbtn" title="${esc(t('archive_accounts_hint'))}"><span class="ic">👤</span> ${esc(t('archive_accounts'))}</button>` : '';
+  // Country picker — brand (multi-TLD) sources only: pins which country an unattended scheduled run uses.
+  const brandDomains = (entry.adapter && Array.isArray(entry.adapter.domains) && entry.adapter.domains.length) ? entry.adapter.domains : null;
+  const countryBtn = (entry.ds && brandDomains) ? `<button id="country" class="refbtn" title="${esc(t('archive_country_hint'))}"><span class="ic">🌍</span> ${esc(entry.ds.brandDomain || t('archive_country'))}</button>` : '';
   head += `<div class="docbar"><div class="groupby">${gb('month', t('group_month'))}${gb('category', t('group_category'))}${gb('store', t('group_store'))}</div>
-    <div class="docbar-r">${acctBtn}${refreshBtn}${saveGrp}<button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div></div>`;
+    <div class="docbar-r">${countryBtn}${acctBtn}${refreshBtn}${saveGrp}<button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div></div>`;
   // Selection bar: send the picked documents to any compatible destination (with a caret for "Re-download from
   // site" per destination), open their saved files, or clear.
   const sendBtns = sinks.map((s) => `<button class="go" data-sendsel="${esc(s.id)}">${sinkIcon(s)} ${esc(t('archive_send_to', [sinkLabel(s)]))}</button>`).join('');
@@ -813,6 +816,34 @@ async function previewFile(r, sink, ext) {
 // + ds.groupLabels, then reloads (the tree + what's shown honor the new allow-list).
 // Returns true if the user saved an account selection, false if cancelled / not applicable / no session.
 // opts.reload (default true) refreshes the view after saving; refreshSource passes false (it lists + reloads next).
+// Pin the COUNTRY (brand TLD) a brand source uses — needed for unattended scheduled runs (no tab to infer it).
+// Saves ds.brandDomain. "Automatic" clears it (interactive runs use whatever Amazon tab you're on).
+async function onPickCountry() {
+  const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds || !entry.adapter || !Array.isArray(entry.adapter.domains)) return;
+  const chosen = await pickCountry(entry.adapter.domains, entry.ds.brandDomain);
+  if (chosen == null) return; // cancelled
+  const cfg = await getConfig();
+  const d = (cfg.datasources || []).find((x) => x.id === entry.ds.id);
+  if (d) { if (chosen) d.brandDomain = chosen; else delete d.brandDomain; await saveConfig(cfg); CFG = cfg; entry.ds = d; }
+  renderDocs();
+}
+function pickCountry(domains, current) {
+  return new Promise((resolve) => {
+    const ov = document.createElement('div'); ov.className = 'pv';
+    const row = (val, label, on) => `<button class="wz-btn${on ? ' on' : ''}" data-cc="${esc(val)}" style="justify-content:flex-start">${esc(label)}</button>`;
+    ov.innerHTML = `<div class="pv-bar"><b>${esc(t('archive_country'))}</b><button id="cc-x">✕</button></div>
+      <div class="pv-body" style="align-items:flex-start;overflow:auto"><div style="display:flex;flex-direction:column;gap:6px;width:100%;max-width:360px;margin:24px auto">
+      <p class="muted" style="margin:0 0 6px">${esc(t('archive_country_sub'))}</p>
+      ${row('', t('archive_country_auto'), !current)}
+      ${domains.map((dn) => row(dn, dn, dn === current)).join('')}
+      </div></div>`;
+    document.body.appendChild(ov);
+    const done = (v) => { try { ov.remove(); } catch (e) {} resolve(v); };
+    ov.querySelector('#cc-x').onclick = () => done(null);
+    ov.onclick = (e) => { if (e.target === ov) done(null); };
+    ov.querySelectorAll('[data-cc]').forEach((b) => { b.onclick = () => done(b.dataset.cc); });
+  });
+}
 async function onManageAccounts(opts = {}) {
   const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds || !entry.adapter) return false;
   const gAdapters = groupedAdaptersOf(entry.adapter); if (!gAdapters.length) return false;
@@ -961,6 +992,7 @@ function wire() {
     if (ev.target.closest('#refresh-more')) { toggleMenu('refmenu'); return; }
     if (ev.target.closest('#save-more')) { toggleMenu('savemenu'); return; }
     if (ev.target.closest('#accts')) { onManageAccounts(); return; }
+    if (ev.target.closest('#country')) { onPickCountry(); return; }
     if (ev.target.closest('#refresh')) { closeMenus(); refreshSource(); return; }
     if (ev.target.closest('#selall')) { selectAllVisible(true); return; }
     if (ev.target.closest('#selnone')) { selectAllVisible(false); return; }

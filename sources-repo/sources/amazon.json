@@ -1,0 +1,150 @@
+{
+  "id": "amazon",
+  "name": "Amazon",
+  "service": "amazon",
+  "trust": "first-party",
+  "beta": true,
+  "verified": false,
+  "domain": "amazon.com",
+  "domains": [
+    "amazon.com",
+    "amazon.co.uk",
+    "amazon.de",
+    "amazon.fr",
+    "amazon.it",
+    "amazon.es",
+    "amazon.nl",
+    "amazon.se",
+    "amazon.pl",
+    "amazon.com.tr",
+    "amazon.ca",
+    "amazon.com.mx",
+    "amazon.com.br",
+    "amazon.co.jp",
+    "amazon.in",
+    "amazon.com.au",
+    "amazon.sg",
+    "amazon.ae"
+  ],
+  "country": "global",
+  "version": "2026-07-23",
+  "minVersion": "0.7.0.3",
+  "license": "AGPL-3.0-or-later",
+  "notes": "BETA — a MULTI-COUNTRY generalization of the verified amazon-es source. The your-orders SPA structure (data-component regions, order-card slot-ids, invoice popover, item titles/prices, and the internal paymentMethodHeader/lastDigits JSON keys) is the SAME in every locale, so most of this is universal; only a few TEXT labels are locale-specific and are matched with a multi-language regex alternation (Total/Gesamt/Totale…, Refunded/Reembolsado/Erstattet…) plus a currency capture that accepts a symbol before OR after the amount. VERIFIED for Spain (amazon.es); UNVERIFIED elsewhere. Open items a tester in another country can confirm: (1) the grand-total label + currency for their market (esp. non-€: .com $, .co.uk £, .co.jp ¥); (2) the order-detail DATE parses (normalizeDate handles en/es month names; other locales may fall back to year-only); (3) the return/refund words. Pin the country for unattended scheduled runs with the country picker (ds.brandDomain).",
+  "categories": [
+    "marketplace"
+  ],
+  "match": [
+    "https://www.amazon.com/*",
+    "https://www.amazon.co.uk/*",
+    "https://www.amazon.de/*",
+    "https://www.amazon.fr/*",
+    "https://www.amazon.it/*",
+    "https://www.amazon.es/*",
+    "https://www.amazon.nl/*",
+    "https://www.amazon.se/*",
+    "https://www.amazon.pl/*",
+    "https://www.amazon.com.tr/*",
+    "https://www.amazon.ca/*",
+    "https://www.amazon.com.mx/*",
+    "https://www.amazon.com.br/*",
+    "https://www.amazon.co.jp/*",
+    "https://www.amazon.in/*",
+    "https://www.amazon.com.au/*",
+    "https://www.amazon.sg/*",
+    "https://www.amazon.ae/*"
+  ],
+  "auth": {
+    "mode": "cookie",
+    "replayHeaders": []
+  },
+  "api": {
+    "host": "https://www.amazon.com",
+    "list": {
+      "path": "/your-orders/orders",
+      "from": "html",
+      "paging": "years",
+      "years": {
+        "param": "timeFilter",
+        "format": "year-{y}",
+        "startParam": "startIndex",
+        "startStep": 10,
+        "stopAfterEmpty": 2
+      },
+      "maxPages": 200,
+      "rows": {
+        "each": "amzn1\\.yourorders\\.order-card\\.([0-9]{3}-[0-9]{7}-[0-9]{7})",
+        "fields": {
+          "orderId": {
+            "group": 1
+          }
+        }
+      }
+    },
+    "detail": {
+      "path": "/your-orders/order-details?orderID={internalId}",
+      "method": "GET",
+      "fields": {
+        "orderId": {
+          "region": "orderId",
+          "tag": "span"
+        },
+        "date": {
+          "region": "orderDate",
+          "tag": "span"
+        },
+        "total": {
+          "region": "chargeSummary",
+          "re": "[^a-zA-Z](?:Total|Gesamt|Totale|Totaal|Summe|Totalt|Toplam):[\\s\\S]{0,400}?([^\\s<>0-9]{0,3}\\s*[\\d.,]+\\s*[^\\s<>0-9]{0,3})"
+        },
+        "returnStatus": {
+          "re": "od-status-message[\\s\\S]{0,80}?(Reembolsado|Devolución completada|Refunded|Returned|Return complete|Erstattet|Rückerstattung|Remboursé|Retour terminé|Rimborsato|Reso completato)"
+        },
+        "refundTotal": {
+          "re": "(?:Reembolso|Refund|Erstattung|Remboursement|Rimborso)[\\s\\S]{0,400}?([^\\s<>0-9]{0,3}\\s*[\\d.,]+\\s*[^\\s<>0-9]{0,3})"
+        },
+        "paymentMethod": {
+          "re": "paymentMethodHeader[\\\\\":]+([^\\\\\"]+)(?:(?!paymentMethodHeader)[\\s\\S]){0,300}?lastDigits"
+        },
+        "paymentLast4": {
+          "re": "lastDigits[\\\\\":]+(\\d{4})"
+        }
+      },
+      "items": {
+        "each": "data-component=\"itemTitle\"[\\s\\S]*?href=\"/dp/([A-Z0-9]{10})[^\"]*\"[^>]*>([^<]+)</a>[\\s\\S]{0,5000}?data-component=\"unitPrice\">[\\s\\S]{0,400}?a-offscreen\">([^<]+)<",
+        "fields": {
+          "asin": {
+            "group": 1
+          },
+          "title": {
+            "group": 2
+          },
+          "price": {
+            "group": 3
+          }
+        },
+        "section": {
+          "each": "data-component=\"shipmentStatus\"",
+          "fields": {
+            "returned": {
+              "re": "od-status-message[\\s\\S]{0,80}?(Reembolsado|Devolución completada|Refunded|Returned|Return complete|Erstattet|Remboursé|Rimborsato)"
+            }
+          }
+        }
+      }
+    },
+    "pdf": {
+      "resolve": {
+        "path": "/your-orders/invoice/popover?orderId={internalId}",
+        "method": "GET",
+        "linkMatch": "href=\"(/documents/download/[^\"]+/invoice\\.pdf)\""
+      }
+    }
+  },
+  "fields": {
+    "internalId": "orderId",
+    "date": "_year"
+  },
+  "schema": "receipt@1",
+  "itemLabel": "Order {internalId}"
+}

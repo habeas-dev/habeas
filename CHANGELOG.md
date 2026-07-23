@@ -20,7 +20,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   the declared brand set; a non-brand host is still rejected. Enables a single generic Amazon (etc.) instead of
   one source per country. Covered by `test/adapters.test.mjs`. An **unattended scheduled run** (no tab to infer
   the domain from) honours a per-datasource pinned country (`ds.brandDomain`): it opens that country's site and
-  uses it as the host. (The visible country picker ships with the generic Amazon source.)
+  uses it as the host, chosen with a **country picker** (🌍) in the Archive source view (brand sources only).
+- **Generic Amazon source (beta) — one source for every Amazon country** (`sources/amazon.json`). A multi-TLD
+  generalization of the verified `amazon-es`: the your-orders SPA structure (data-component regions, order-card
+  ids, invoice popover, item prices, and the internal payment JSON keys) is identical across locales, so only a
+  few text labels differ — matched with a multi-language regex alternation (Total/Gesamt/Totale…,
+  Refunded/Reembolsado/Erstattet…) plus a currency capture that takes a symbol before or after the amount.
+  Verified for Spain, beta elsewhere; testers in other countries confirm the total label/currency, date parsing
+  and refund words (open items in the source `notes`). `domains` covers 18 Amazon TLDs.
 - **Experimental (beta) sources can be published and tested** (`registry`, `ui/marketplace.*`, sources catalog).
   A source drafted but not yet verified against a real account (e.g. DeGiro, derived from woob's endpoint map)
   can now ship flagged `beta: true` instead of being hidden — otherwise nobody with the account could ever test

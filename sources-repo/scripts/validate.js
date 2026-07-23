@@ -51,7 +51,10 @@ export function collectHosts(adapter) {
 export function checkHosts(adapter) {
   const base = registrableDomain(adapter.domain || (adapter.api && adapter.api.host) || '');
   const extra = [...new Set((adapter.crossDomainHosts || []).map(registrableDomain))].filter(Boolean);
-  const allowed = new Set([base, ...extra].filter(Boolean));
+  // Brand domains: several TLDs of the SAME brand (amazon.es/.com/.de…), each with its own browser-isolated
+  // cookie session → allowed without off-site consent (cookie-mode only, enforced in validateAdapter).
+  const brand = [...new Set((adapter.domains || []).map(registrableDomain))].filter(Boolean);
+  const allowed = new Set([base, ...extra, ...brand].filter(Boolean));
   const hosts = collectHosts(adapter);
   const offenders = hosts.filter((h) => !allowed.has(registrableDomain(h)));
   return {
@@ -59,8 +62,9 @@ export function checkHosts(adapter) {
     base,
     allowed: [...allowed],
     crossDomain: extra,             // extra registrable domains → require explicit user consent
+    brand,
     hosts,
-    offenders,                      // hosts not covered by base or crossDomain → hard reject
+    offenders,                      // hosts not covered by base / crossDomain / brand → hard reject
   };
 }
 
@@ -187,6 +191,11 @@ export function validateAdapter(adapter) {
       const th = adapter.throttle;
       req(th && typeof th.minMs === 'number' && th.minMs >= 0 && (th.jitterMs == null || (typeof th.jitterMs === 'number' && th.jitterMs >= 0)),
         'throttle must be { minMs: number≥0, jitterMs?: number≥0 }');
+    }
+
+    if (Array.isArray(adapter.domains) && adapter.domains.length) {
+      req(auth.mode === 'cookie', 'a multi-domain source (domains[]) must use auth.mode "cookie" — the browser then isolates each domain session, so one domain\'s session can never reach another');
+      req(adapter.domains.every((d) => typeof d === 'string' && /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(d)), 'domains[] must be registrable domains, e.g. "amazon.es"');
     }
 
     const h = checkHosts(adapter);
