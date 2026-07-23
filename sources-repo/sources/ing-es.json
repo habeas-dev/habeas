@@ -5,20 +5,35 @@
   "trust": "community",
   "domain": "ingdirect.es",
   "country": "ES",
-  "version": "2026-07-16",
-  "minVersion": "0.3.0.24",
-  "categories": ["banking"],
-  "gaps": ["tarjetas", "inversión"],
-  "throttle": { "minMs": 300, "jitterMs": 500 },
-  "match": ["https://ing.ingdirect.es/*"],
+  "version": "2026-07-23",
+  "minVersion": "0.7.0.21",
+  "categories": [
+    "banking"
+  ],
+  "gaps": [
+    "tarjetas",
+    "inversión"
+  ],
+  "throttle": {
+    "minMs": 300,
+    "jitterMs": 500
+  },
+  "match": [
+    "https://ing.ingdirect.es/*"
+  ],
   "openUrl": "https://ing.ingdirect.es/app/login",
   "currency": "EUR",
   "auth": {
     "mode": "bearer",
     "tokenMatch": "^Bearer eyJ[A-Za-z0-9._-]+$",
-    "replayHeaders": ["authorization", "x-ing-extendedsessioncontext"]
+    "replayHeaders": [
+      "authorization",
+      "x-ing-extendedsessioncontext"
+    ]
   },
-  "api": { "host": "https://api.ing.ingdirect.es" },
+  "api": {
+    "host": "https://api.ing.ingdirect.es"
+  },
   "streams": [
     {
       "id": "movimientos",
@@ -36,7 +51,9 @@
             "iban": "identifiers[type=PRODUCT_NUMBER].value",
             "currency": "denominationCurrency"
           },
-          "mask": ["iban"]
+          "mask": [
+            "iban"
+          ]
         },
         "list": {
           "path": "/v2/products/{group.id}/transactions",
@@ -46,8 +63,21 @@
           "itemsPath": "transactions",
           "window": "90d",
           "maxAgeDays": 90,
-          "range": { "from": "fromDate", "to": "toDate", "format": "date" },
-          "params": { "limit": 100, "filterEru": "false" }
+          "range": {
+            "from": "fromDate",
+            "to": "toDate",
+            "format": "date"
+          },
+          "params": {
+            "limit": 100,
+            "filterEru": "false"
+          },
+          "keep": {
+            "field": "status.description",
+            "exclude": [
+              "Pendiente de liquidar"
+            ]
+          }
         }
       },
       "fields": {
@@ -85,11 +115,15 @@
             "type": "type",
             "iban": "identifiers[type=PRODUCT_NUMBER].value"
           },
-          "mask": ["iban"]
+          "mask": [
+            "iban"
+          ]
         },
         "list": {
           "paging": "synthetic",
-          "synthetic": { "each": "group-months" },
+          "synthetic": {
+            "each": "group-months"
+          },
           "maxAgeDays": 90
         }
       },
@@ -104,12 +138,24 @@
         {
           "id": "pdf",
           "name": "PDF",
-          "api": { "pdf": { "path": "/v2/products/{group.id}/transactions/report?fromDate={fromDate}&toDate={toDate}&limit=1000&filterEru=false&reportType=pdf", "method": "GET", "ext": "pdf" } }
+          "api": {
+            "pdf": {
+              "path": "/v2/products/{group.id}/transactions/report?fromDate={fromDate}&toDate={toDate}&limit=1000&filterEru=false&reportType=pdf",
+              "method": "GET",
+              "ext": "pdf"
+            }
+          }
         },
         {
           "id": "excel",
           "name": "Excel",
-          "api": { "pdf": { "path": "/v2/products/{group.id}/transactions/report?fromDate={fromDate}&toDate={toDate}&limit=1000&filterEru=false&reportType=xls", "method": "GET", "ext": "xls" } }
+          "api": {
+            "pdf": {
+              "path": "/v2/products/{group.id}/transactions/report?fromDate={fromDate}&toDate={toDate}&limit=1000&filterEru=false&reportType=xls",
+              "method": "GET",
+              "ext": "xls"
+            }
+          }
         }
       ]
     },
@@ -121,10 +167,16 @@
         "host": "https://ing.ingdirect.es",
         "list": {
           "paging": "synthetic",
-          "synthetic": { "each": "months" },
+          "synthetic": {
+            "each": "months"
+          },
           "maxAgeDays": 90
         },
-        "pdf": { "path": "/genoma_api/rest/products/statement?year={year}&month={month}", "method": "GET", "ext": "pdf" }
+        "pdf": {
+          "path": "/genoma_api/rest/products/statement?year={year}&month={month}",
+          "method": "GET",
+          "ext": "pdf"
+        }
       },
       "fields": {
         "internalId": "{period}",
@@ -135,7 +187,17 @@
     }
   ],
   "changelog": [
-    { "version": "2026-07-16", "changes": "Map the movement's running balance to record.balanceAfter (promoted to a canonical field for the Cuéntamo contract). Requires extension >= 0.3.0.24." },
-    { "version": "2026-07-14", "changes": "Initial: movements (transactions), per-account monthly statements (PDF/Excel), and the integrated monthly statement (PDF). Grouped by account, 90-day window." }
+    {
+      "version": "2026-07-23",
+      "changes": "Do not persist PENDING card charges (status \"Pendiente de liquidar\"): ING re-lists a still-pending charge with a fresh id/sequence/balance every sync, so they never dedup and pile up as duplicates — only the stable SETTLED record is kept; account movements have no status and are untouched. Needs extension >= 0.7.0.21 (keep.exclude)."
+    },
+    {
+      "version": "2026-07-16",
+      "changes": "Map the movement's running balance to record.balanceAfter (promoted to a canonical field for the Cuéntamo contract). Requires extension >= 0.3.0.24."
+    },
+    {
+      "version": "2026-07-14",
+      "changes": "Initial: movements (transactions), per-account monthly statements (PDF/Excel), and the integrated monthly statement (PDF). Grouped by account, 90-day window."
+    }
   ]
 }

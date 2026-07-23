@@ -1448,6 +1448,11 @@ export function keepFilter(items, keep) {
   const val = (p) => get(p, keep.field);
   let out = items;
   if (Array.isArray(keep.values)) { const vals = new Set(keep.values.map(String)); out = out.filter((p) => vals.has(String(val(p)))); }
+  // `exclude`: DROP items whose field value is in the list, keeping items where the field is absent/other (a
+  // blacklist). ING re-lists a still-PENDING card charge with a fresh id/sequence/balance every sync → it never
+  // dedups and piles up; excluding "Pendiente de liquidar" keeps only the stable SETTLED record (account
+  // movements have no status field, so they're untouched).
+  if (Array.isArray(keep.exclude)) { const ex = new Set(keep.exclude.map(String)); out = out.filter((p) => { const v = val(p); return v == null || v === '' || !ex.has(String(v)); }); }
   if (typeof keep.present === 'boolean') out = out.filter((p) => { const v = val(p); return (v != null && v !== '') === keep.present; });
   if (keep.prefix) { const pre = Array.isArray(keep.prefix) ? keep.prefix : [keep.prefix]; out = out.filter((p) => { const v = String(val(p) ?? ''); return pre.some((x) => v.startsWith(x)); }); }
   return out;

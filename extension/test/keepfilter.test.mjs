@@ -38,3 +38,12 @@ test('values + no-op: exact match, and no keep returns everything', () => {
   assert.equal(keepFilter(items, null).length, 5);
   assert.equal(keepFilter(items, { values: ['flex'] }).length, 5); // no field → no-op
 });
+
+test('exclude: drop matching values but KEEP items where the field is absent (ING pending charges)', () => {
+  // ING re-lists a still-PENDING card charge with a fresh id every sync → pile-up; exclude drops them while
+  // leaving settled + account movements (which have no status field) untouched.
+  const kept = keepFilter(items, { field: 'kind', exclude: ['fixed', 'broken'] });
+  assert.deepEqual(kept.map((x) => x.kind), ['flex', 'flex']);
+  const byMat = keepFilter(items, { field: 'maturity', exclude: ['2027-01-01'] });
+  assert.equal(byMat.length, 4); // the one 2027 item dropped; the other fixed + all field-absent items kept
+});
