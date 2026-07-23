@@ -1696,6 +1696,19 @@
   "market_offsite": {
     "message": "⚠ envía la sesión fuera del dominio"
   },
+  "market_beta_pill": {
+    "message": "beta"
+  },
+  "market_beta_hint": {
+    "message": "Experimental — es un borrador aún sin verificar contra una cuenta real. Puede que no funcione; instalarla ayuda a probarla."
+  },
+  "market_beta_filter": {
+    "message": "Experimentales (beta)"
+  },
+  "market_beta_confirm": {
+    "message": "«$SOURCE$» es experimental y aún no se ha verificado contra una cuenta real. Puede que no funcione. ¿Instalarla y ayudar a probarla?",
+    "placeholders": { "source": { "content": "$1" } }
+  },
   "market_install": {
     "message": "Instalar"
   },

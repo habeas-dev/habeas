@@ -1,0 +1,124 @@
+{
+  "id": "degiro",
+  "name": "DeGiro",
+  "service": "degiro",
+  "trust": "community",
+  "beta": true,
+  "verified": false,
+  "domain": "degiro.nl",
+  "country": "EU",
+  "currency": "EUR",
+  "version": "2026-07-23",
+  "minVersion": "0.5.0.24",
+  "license": "AGPL-3.0-or-later",
+  "attribution": {
+    "derivedFrom": "woob — DeGiro module",
+    "url": "https://gitlab.com/woob/woob/-/tree/master/modules/degiro",
+    "referenceLicense": "LGPL-3.0-or-later",
+    "note": "The API host, endpoint paths and response field names were used as REFERENCE (facts / interface, no source code copied) to draft this declarative adapter. This adapter is data, licensed AGPL-3.0-or-later like Habeas. woob's login/scraping code is not used: Habeas replays the user's own live session, it does not log in.",
+    "license": "AGPL-3.0-or-later"
+  },
+  "notes": "BETA / UNVERIFIED — drafted from woob's endpoint+field map; NOT yet validated against a real in-session capture. Do not publish to the catalog until verified. Open items before promoting to sources/: (1) confirm the URL context capture fires for a SAME-domain source (trader.degiro.nl API + login share the host; raisin/caixabank are cross-domain); (2) confirm itemsPath + field names against a real JSON response (v4/transactions and v6/accountoverview); (3) confirm the fromDate/toDate format (DD/MM/YYYY) and that `window` drives it; (4) resolve productId -> name/isin via POST /product_search/secure/v5/products/info (an enrichment step this draft does not do yet — records carry productId as `ticker` until then).",
+  "categories": [
+    "investment"
+  ],
+  "match": [
+    "https://trader.degiro.nl/*"
+  ],
+  "openUrl": "https://trader.degiro.nl/",
+  "auth": {
+    "mode": "cookie",
+    "capturePaths": [
+      "/reporting/",
+      "/trading",
+      "/pa/"
+    ],
+    "context": [
+      {
+        "name": "sessionId",
+        "from": "url",
+        "match": "[?&;]sessionId=([A-Za-z0-9._-]+)"
+      },
+      {
+        "name": "intAccount",
+        "from": "url",
+        "match": "[?&]intAccount=([0-9]+)"
+      }
+    ],
+    "cookies": true
+  },
+  "api": {
+    "host": "https://trader.degiro.nl"
+  },
+  "streams": [
+    {
+      "id": "transacciones",
+      "name": "Transacciones (compras/ventas)",
+      "schema": "investment@2",
+      "categories": [
+        "investment"
+      ],
+      "keepRaw": true,
+      "api": {
+        "list": {
+          "path": "/reporting/secure/v4/transactions",
+          "itemsPath": "data",
+          "window": "10y",
+          "params": {
+            "intAccount": "{ctx.intAccount}",
+            "sessionId": "{ctx.sessionId}",
+            "fromDate": "{fromDate:DD/MM/YYYY}",
+            "toDate": "{toDate:DD/MM/YYYY}",
+            "groupTransactionsByOrder": "false"
+          },
+          "headers": {
+            "accept": "application/json, text/plain, */*"
+          }
+        }
+      },
+      "fields": {
+        "internalId": "id",
+        "date": "date",
+        "side": "buysell",
+        "units": "quantity",
+        "price": "price",
+        "netAmount": "total",
+        "currency": "currency",
+        "ticker": "productId"
+      }
+    },
+    {
+      "id": "movimientos",
+      "name": "Movimientos de cuenta (efectivo)",
+      "schema": "transaction@1",
+      "categories": [
+        "investment"
+      ],
+      "keepRaw": true,
+      "api": {
+        "list": {
+          "path": "/reporting/secure/v6/accountoverview",
+          "itemsPath": "data.cashMovements",
+          "window": "10y",
+          "params": {
+            "intAccount": "{ctx.intAccount}",
+            "sessionId": "{ctx.sessionId}",
+            "fromDate": "{fromDate:DD/MM/YYYY}",
+            "toDate": "{toDate:DD/MM/YYYY}"
+          },
+          "headers": {
+            "accept": "application/json, text/plain, */*"
+          }
+        }
+      },
+      "fields": {
+        "internalId": "id",
+        "date": "date",
+        "valueDate": "valueDate",
+        "amount": "change",
+        "currency": "currency",
+        "description": "description"
+      }
+    }
+  ]
+}

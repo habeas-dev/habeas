@@ -28,6 +28,7 @@ const entries = readdirSync(dir)
     return {
       id: a.id, name: a.name, service: a.service,
       categories: a.categories || [], trust: a.trust || 'community',
+      beta: !!a.beta,   // experimental: drafted but not yet verified against a real in-session capture
       domain: a.domain, country: a.country || null, formats: formatsOf(a), crossDomain: a.crossDomainHosts || [],
       version: (a.version || now.slice(0, 10)),
       minVersion: a.minVersion || null,

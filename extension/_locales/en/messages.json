@@ -1696,6 +1696,19 @@
   "market_offsite": {
     "message": "⚠ sends session off-site"
   },
+  "market_beta_pill": {
+    "message": "beta"
+  },
+  "market_beta_hint": {
+    "message": "Experimental — drafted but not yet verified against a real account. It may not work; installing helps test it."
+  },
+  "market_beta_filter": {
+    "message": "Experimental (beta)"
+  },
+  "market_beta_confirm": {
+    "message": "“$SOURCE$” is experimental and hasn't been verified against a real account yet. It may not work. Install it and help test it?",
+    "placeholders": { "source": { "content": "$1" } }
+  },
   "market_install": {
     "message": "Install"
   },

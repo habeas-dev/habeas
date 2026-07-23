@@ -10,6 +10,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **Experimental (beta) sources can be published and tested** (`registry`, `ui/marketplace.*`, sources catalog).
+  A source drafted but not yet verified against a real account (e.g. DeGiro, derived from woob's endpoint map)
+  can now ship flagged `beta: true` instead of being hidden — otherwise nobody with the account could ever test
+  it. The catalog carries the flag (`build-index.mjs`), and the marketplace shows beta sources with an
+  "experimental" pill, a toggle to hide them, and a confirm-on-install warning that they're unverified. First one
+  in: **DeGiro** (`degiro`, beta), credited to woob's DeGiro module under AGPL.
+
 ## [0.7.0] — 2026-07-22
 
 ### Added

@@ -58,9 +58,12 @@ visual mapper `ui/author.*` → test → save); and **sharing** (export/import J
 `habeas-dev/sources`, `ui/marketplace.*` browse/install from `index.json` + ratings/comments client).
 External infra is LIVE: the `habeas-dev/sources` catalog at `habeas-dev.github.io/sources/index.json`,
 and the ratings/comments service at `https://api.habeas.dev` (Cloudflare Worker + D1, repo
-`habeas-dev/api`; contract in `docs/registry.md`). Only real, API-verified
-sources ship or get published; fictional design skeletons live in `extension/test/fixtures/` as
-test-only fixtures and never appear in the extension.
+`habeas-dev/api`; contract in `docs/registry.md`). Verified, API-tested sources publish normally.
+An **experimental / unverified draft** (e.g. one derived from a reference like woob's endpoint map but not
+yet validated against a real in-session capture) may also publish, flagged **`beta: true`** in the source
+JSON — the catalog carries the flag (`build-index.mjs`), the marketplace shows it behind an "experimental"
+filter with a warning on install, so people who *have* the account can test it and report back. Fictional
+design skeletons still live in `extension/test/fixtures/` as test-only fixtures and never appear in the extension.
 
 ## Repo layout
 

@@ -12,7 +12,9 @@ const INDEX_URL = 'https://habeas-dev.github.io/sources/index.json';
 const API_BASE = 'https://api.habeas.dev';
 
 // index.json entry shape (see docs/registry.md):
-// { id, name, service, categories[], trust, domain, crossDomain[], version, url, updated }
+// { id, name, service, categories[], trust, beta, domain, crossDomain[], version, url, updated }
+// beta: an experimental source drafted but not yet verified against a real account — hidden behind the
+// marketplace's "experimental" filter and warned on install, so people who HAVE the account can test it.
 export async function fetchIndex() {
   const res = await fetch(INDEX_URL, { cache: 'no-cache' });
   if (!res.ok) throw new Error('registry ' + res.status);

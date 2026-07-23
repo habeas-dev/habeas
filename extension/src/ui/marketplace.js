@@ -10,12 +10,14 @@ const $ = (s) => document.querySelector(s);
 // the primary gate, but a hostile-but-valid entry must not be able to inject markup here).
 let ENTRIES = [];
 let INSTALLED = {};
+let SHOW_BETA = true; // experimental sources are shown by default (the point is to get them tested); a toggle hides them
 
 async function init() {
   applyI18n();
   $('#opts').onclick = () => chrome.runtime.openOptionsPage();
   $('#reload').onclick = load;
   $('#q').oninput = render;
+  { const c = $('#beta-toggle'); if (c) { c.checked = SHOW_BETA; c.onchange = () => { SHOW_BETA = c.checked; render(); }; } }
   await load();
 }
 
@@ -58,7 +60,9 @@ function rank(e) {
 }
 function render() {
   const q = $('#q').value.trim();
-  const list = ENTRIES.filter((e) => matches(e, q))
+  // Experimental (beta) sources are hidden when the toggle is off — but one that's already installed always
+  // shows, so the user can see/update/remove it.
+  const list = ENTRIES.filter((e) => matches(e, q) && (SHOW_BETA || !e.beta || INSTALLED[e.id]))
     .sort((a, b) => (rank(a) - rank(b)) || (a.name || a.id).localeCompare(b.name || b.id));
   if (!list.length) { $('#list').innerHTML = `<p class="muted">${t('market_empty')}</p>`; return; }
   const outdated = list.filter((e) => isOutdated(e) && meetsMinVersion(e.minVersion)); // don't offer to update into a version this extension can't run
@@ -71,6 +75,7 @@ function render() {
     const up = isOutdated(e);
     const compatible = meetsMinVersion(e.minVersion); // running extension new enough for this source?
     const trust = e.trust === 'first-party' ? t('trust_first_party') : t('trust_community');
+    const beta = e.beta ? ` <span class="pill" style="border-color:#8e44ad;color:#8e44ad" title="${esc(t('market_beta_hint'))}">${t('market_beta_pill')}</span>` : '';
     const offsite = (e.crossDomain && e.crossDomain.length) ? `<span class="warn" title="${esc(e.crossDomain.join(', '))}">${t('market_offsite')}</span>` : '';
     const ver = e.version ? ` · v${esc(e.version)}` : '';
     const needs = !compatible ? ` <span class="pill" style="border-color:#c77;color:#c77" title="${esc(t('market_needs_version', [e.minVersion]))}">${t('market_needs_pill', [esc(e.minVersion)])}</span>` : '';
@@ -83,7 +88,7 @@ function render() {
         <div style="flex:1">
           <b>${esc(e.name || e.id)}</b> <code>${esc(e.id)}</code><br>
           <span class="muted">${e.country ? flag(e.country) + ' ' : ''}${esc((e.categories || []).join(', '))} · ${esc(e.domain || '')}${(e.formats || []).length ? ' · ' + esc((e.formats || []).join('/').toUpperCase()) : ''}${ver}</span>
-          <span class="pill type">${trust}</span> ${offsite}${up ? ` <span class="pill" style="border-color:#c77;color:#c77">${t('market_update_pill')}</span>` : ''}${needs}${gapsHtml}
+          <span class="pill type">${trust}</span>${beta} ${offsite}${up ? ` <span class="pill" style="border-color:#c77;color:#c77">${t('market_update_pill')}</span>` : ''}${needs}${gapsHtml}
           ${(e.contributors || []).length ? `<br><span class="muted" style="font-size:12px">${t('market_contributed_by', [esc(e.contributors.join(', '))])}</span>` : ''}
           <span class="rating muted" data-rate="${esc(e.id)}"></span>
         </div>
@@ -161,6 +166,8 @@ async function fillRating(e) {
 async function onInstall(id) {
   const entry = ENTRIES.find((e) => e.id === id);
   if (!entry) return;
+  // Experimental source → make sure the user knows it's unverified before installing (they're the tester now).
+  if (entry.beta && !confirm(t('market_beta_confirm', [entry.name || id]))) return;
   const btn = document.querySelector(`[data-install="${id}"]`);
   btn.disabled = true; btn.textContent = t('market_installing');
   try {
