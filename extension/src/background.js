@@ -9,7 +9,7 @@ import { loadAuth, hasAuth, capturePathAllowed } from './lib/authstore.js';
 import { pushDiag, recordingNet, pushReqCtx, redactReqVal as rcRedactVal } from './lib/diag.js';
 import { deliveredSet, markDelivered, appendLog, rememberDocMeta } from './lib/state.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
-import { resolveSiteFetch, ensureSiteFetch, recoverSession, withBrandHost, findSiteTab } from './lib/pagefetch.js';
+import { resolveSiteFetch, ensureSiteFetch, recoverSession, withBrandHost, findSiteTab, foregroundTab } from './lib/pagefetch.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink, readSinkRecords } from './sinks/sinks.js';
 import { recordDelivered, putItems, getRecords } from './lib/store.js';
@@ -758,6 +758,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
   const name = adapter.name || ds.adapter;
   await badgeWorking();
   setStatus(t('status_listing', [name]));
+  let netRef = null; // the page fetcher's tab — surfaced ONLY if a USER-initiated run then FAILS on auth (re-login)
   try {
     const auth = await authFor(adapter);
     // NOT ready if there's no session, OR a required captured context value is still missing — the SPA
@@ -771,10 +772,8 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     // A brand source instance is pinned to a SINGLE country (ds.brandDomain) — its own store, ledger and
     // schedule. An unattended run (no tab) opens that country; an interactive run still follows the user's tab.
     const countryDs = { brandDomain: opts.brandDomain || ds.brandDomain };
-    // Only a USER-initiated run (manual save / external collect) may surface the tab on a 401 — never an
-    // unattended sweep/schedule/auto (that caused Chrome to jump to the tab out of nowhere).
-    const fg = opts.kind === 'manual' || opts.kind === 'ext';
-    const net = opts.net || (opts.interactive ? await ensureSiteFetch(adapter, { open: true, ds: countryDs, foreground: fg }) : await resolveSiteFetch(adapter, countryDs, fg));
+    const net = opts.net || (opts.interactive ? await ensureSiteFetch(adapter, { open: true, ds: countryDs }) : await resolveSiteFetch(adapter, countryDs));
+    netRef = net;
     adapter = withBrandHost(adapter, net, countryDs); // brand (multi-TLD) source → api.host = the tab's domain, or the pinned country
     const brandCountry = (Array.isArray(adapter.domains) ? adapter.domains.find((d) => (adapter.api.host || '').includes(d)) : null) || null; // tag records with the country they came from
     const delivered = await deliveredSet(ds.id, sink.id);
@@ -880,6 +879,10 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     if (kind === 'auto') notify(t('notify_autoerr', [msg]));
     await badgeError();
     setStatus(t('status_error', [name, msg.slice(0, 80)]));
+    // The op FAILED on auth (401/403 — session expired / not authenticated) on a USER-initiated run → surface the
+    // source's tab so the user can re-login. Never for an unattended run, and never for a transient 401 that
+    // recovered (we only reach here on a hard failure).
+    if ((kind === 'manual' || kind === 'ext') && netRef && netRef.tabId != null && /\b(401|403)\b/.test(msg)) foregroundTab(netRef.tabId);
     return { status: 'error', error: msg };
   }
 }
