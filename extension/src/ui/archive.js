@@ -11,7 +11,7 @@ import { getAdapters } from '../adapters/index.js';
 import { listSources, getSource, getStoreConfig, deleteSource } from '../lib/store.js';
 import { useDriveStore, useFolderStore, useSinkStore, useHttpStore, folderStoreAvailable } from '../lib/storesetup.js';
 import { mountSinkForm, connectSink, needsConnect, storeCapable } from './sinkform.js';
-import { deliveredSet, getDocMeta } from '../lib/state.js';
+import { deliveredSet, getDocMeta, rememberDocMeta } from '../lib/state.js';
 import { isRetrievable, retrieveDelivered } from '../lib/retrieve.js';
 import { detailView, hasDetail } from '../lib/detailview.js';
 import { sinkAcceptsSource, groupLabelOf } from '../sinks/format.js';
@@ -525,6 +525,7 @@ async function renderDocs() {
         <button data-refmode="full" title="${esc(t('archive_refresh_full_hint'))}"><span class="ic">↻</span> ${esc(t('archive_refresh_full'))}</button>
         <button data-refmode="store" title="${esc(t('archive_load_store_hint'))}"><span class="ic">📦</span> ${esc(t('archive_load_store'))}</button>
         <button data-refmode="reconcile" title="${esc(t('archive_reconcile_hint'))}"><span class="ic">🗓️</span> ${esc(t('archive_reconcile'))}</button>
+        <button data-refmode="scanformats" title="${esc(t('archive_scan_hint'))}"><span class="ic">🔎</span> ${esc(t('archive_scan'))}</button>
       </div></span>` : '');
   // Accounts (allow-list) manager — grouped sources only. Lets the user choose which accounts to track from
   // the Archive, so the popup's account picker isn't needed.
@@ -774,6 +775,38 @@ async function reloadFromStore() {
 // Recover real dates into the store from what was already delivered (the sink's manifest carries the precise
 // date even when the store record only has a year) — no re-fetch from the source. The store then moves each doc
 // to its month shard. Then reload so the view reflects the upgraded dates.
+// Scan the delivered documents of the current source and record, per document, which file FORMATS actually
+// exist on the destination — so the Archive can hide a format button a document doesn't have (an old order with
+// no invoice PDF). Probes each document format against the sinks the doc was delivered to; skips docs whose
+// exts are already known. Progress in the status line; Stop aborts. `known[id].exts` is read back in loadDocs.
+async function scanFormats() {
+  const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds || !entry.adapter) { $('#astatus').textContent = t('archive_reconcile_nods'); return; }
+  const meta = await getDocMeta(entry.base).catch(() => ({}));
+  const docs = CURDOCS.filter((r) => r.delivered.length && !(meta[r.internalId] && Array.isArray(meta[r.internalId].exts)));
+  if (!docs.length) { $('#astatus').textContent = t('archive_scan_none'); return; }
+  const aborter = new AbortController();
+  beginOp(() => { try { aborter.abort(); } catch (e) {} });
+  let n = 0;
+  try {
+    for (const r of docs) {
+      if (aborter.signal.aborted) break;
+      const fmts = fileFormatsFor(entry.adapter, r._stream); // the document formats this source can produce (e.g. pdf)
+      const found = [];
+      for (const f of fmts) {
+        for (const sink of r.delivered) {
+          const res = await retrieveDelivered(sink, r.adapter, r.record, f.ext, { only: true }).catch(() => null);
+          if (res && res.blob) { found.push(f.ext); break; }
+        }
+      }
+      await rememberDocMeta(entry.base, [{ internalId: r.internalId, exts: [...new Set(found)] }]);
+      $('#astatus').textContent = t('archive_scan_progress', [String(++n), String(docs.length)]);
+    }
+  } finally {
+    endOp();
+    await loadDocs(CUR); renderDocs(); // re-render so buttons reflect the scanned formats
+    $('#astatus').textContent = t('archive_scan_ok', [String(n)]);
+  }
+}
 async function reconcileDates() {
   const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds) { $('#astatus').textContent = t('archive_reconcile_nods'); return; }
   $('#astatus').textContent = t('archive_reconcile_running');
@@ -1020,7 +1053,7 @@ function wire() {
     const ss = ev.target.closest('[data-sendsel]'); if (ss) { sendSelected(ss.dataset.sendsel); return; }
     const sr = ev.target.closest('[data-sendredl]'); if (sr) { closeMenus(); sendSelected(sr.dataset.sendredl, { force: true }); return; }
     if (ev.target.closest('#sel-more')) { toggleMenu('selmenu'); return; }
-    const rm = ev.target.closest('[data-refmode]'); if (rm) { closeMenus(); if (rm.dataset.refmode === 'full') refreshSource('full'); else if (rm.dataset.refmode === 'reconcile') reconcileDates(); else reloadFromStore(); return; }
+    const rm = ev.target.closest('[data-refmode]'); if (rm) { closeMenus(); const m = rm.dataset.refmode; if (m === 'full') refreshSource('full'); else if (m === 'reconcile') reconcileDates(); else if (m === 'scanformats') scanFormats(); else reloadFromStore(); return; }
     if (ev.target.closest('#refresh-more')) { toggleMenu('refmenu'); return; }
     if (ev.target.closest('#save-more')) { toggleMenu('savemenu'); return; }
     if (ev.target.closest('#accts')) { onManageAccounts(); return; }

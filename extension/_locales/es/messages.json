@@ -2469,6 +2469,23 @@
   "archive_reconcile_hint": {
     "message": "Lee los datos reales (fechas, importes, detalles) de lo ya entregado (sin re-descargar) y los guarda en el archivo"
   },
+  "archive_scan": {
+    "message": "Escanear formatos"
+  },
+  "archive_scan_hint": {
+    "message": "Comprueba en el destino qué formatos de fichero tiene realmente cada documento, para que un formato que un documento no tenga (p. ej. sin PDF de factura) deje de mostrar su botón"
+  },
+  "archive_scan_none": {
+    "message": "Nada que escanear (formatos ya conocidos, o sin documentos entregados)"
+  },
+  "archive_scan_progress": {
+    "message": "Escaneando formatos — $1 de $2…",
+    "placeholders": { "1": { "content": "$1" }, "2": { "content": "$2" } }
+  },
+  "archive_scan_ok": {
+    "message": "Escaneados $1 documento(s)",
+    "placeholders": { "1": { "content": "$1" } }
+  },
   "archive_reconcile_running": {
     "message": "Recuperando datos reales del destino…"
   },

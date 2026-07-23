@@ -27,6 +27,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   `detail.json`/`detail.root` and a JSON `items` shape. Covered by `test/detail-json.test.mjs`.
 
 ### Added
+- **“Scan file formats” — backfill which formats each delivered document actually has** (`ui/archive.js`).
+  A source refresh-menu action probes the destination for each document’s formats and records them
+  (`rememberDocMeta.exts`), so already-stored documents get the same per-document button hiding as new ones
+  (an old order with no invoice PDF stops offering its button). Skips documents whose formats are already known;
+  shows progress and can be stopped.
 - **Per-document format buttons — hide a format a document doesn't have** (`lib/state.js`, `background.js`,
   `ui/popup.js`, `ui/archive.js`). Delivery now records, per document, which artifact extensions were actually
   produced (`rememberDocMeta` gains `exts`), so the Archive only shows the PDF button for orders that really have
