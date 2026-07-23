@@ -2666,6 +2666,9 @@
   "opt_nav_storage": {
     "message": "Where they’re kept"
   },
+  "opt_nav_dests": {
+    "message": "Destinations"
+  },
   "opt_nav_auto": {
     "message": "Automatic"
   },
@@ -2805,10 +2808,19 @@
     "message": "It’s open source (AGPL-3.0): anyone can audit what it does."
   },
   "opt_advanced_intro": {
-    "message": "Send copies to other destinations, create your own sources, and manage your contributions."
+    "message": "Create your own sources and manage your contributions."
   },
   "opt_dests_help": {
     "message": "Beyond your archive, you can send copies of your documents to a folder, the cloud, or an app."
+  },
+  "opt_dests_title": {
+    "message": "Destinations"
+  },
+  "opt_dests_subtitle": {
+    "message": "Places Habeas can send copies of your documents — a folder, the cloud, or a connected app. Rename them, or mark one as the default. Your archive is always kept separately."
+  },
+  "opt_dests_add_help": {
+    "message": "Add somewhere new to send copies to. You can give it a friendly name now, or rename it later."
   },
   "archive_preview_from": {
     "message": "Preview ($NAME$)",

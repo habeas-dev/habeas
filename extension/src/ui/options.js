@@ -132,16 +132,30 @@ async function render() {
   });
 
   const defSink = (await chrome.storage.local.get('habeas:defaultsink'))['habeas:defaultsink'] || '';
-  $('#sinks').innerHTML = cfg.sinks.map((s) =>
-    `<div class="card row"><b style="flex:1">${esc(s.name || s.id)}${s.name ? ` <code>${esc(s.id)}</code>` : ''}${s.id === defSink ? ' <span class="pill sent">★ ' + t('default_sink') + '</span>' : ''}</b><code>${esc(s.type)}</code>
-      ${s.type === 'drive' ? `<button data-conn="${esc(s.id)}">${t('connect_drive')}</button>` : ''}
-      ${s.type === 'dropbox' ? `<button data-dbxconn="${esc(s.id)}">${t('connect_dropbox')}</button>` : ''}
-      ${s.type === 'local-folder' ? `<code>${esc(s.folderName || '—')}</code><button data-folder="${esc(s.id)}">${t('change_folder')}</button>` : ''}
-      ${s.url ? `<small>${esc(s.url)}</small>` : ''}
-      <button data-rename="${esc(s.id)}" title="${esc(t('sink_rename_hint'))}">${t('sink_rename')}</button>
-      <button data-default="${esc(s.id)}" title="${t('set_default_hint')}">${s.id === defSink ? t('unset_default') : t('set_default')}</button>
-      <button data-del="${esc(s.id)}">${t('remove')}</button></div>`).join('')
-    || `<p class="muted">${t('no_sinks')}</p>`;
+  const SINK_IC = { download: '⬇️', 'local-folder': '📁', drive: '☁️', dropbox: '📦', webdav: '🌐', s3: '🪣', http: '🔗' };
+  const SINK_TL = { download: 'sink_download', 'local-folder': 'sink_local', drive: 'sink_drive', http: 'sink_http', webdav: 'sink_webdav', s3: 'sink_s3', dropbox: 'sink_dropbox' };
+  $('#sinks').innerHTML = cfg.sinks.map((s) => {
+    const isDef = s.id === defSink;
+    const typeLabel = t(SINK_TL[s.type]) || s.type;
+    const detail = s.type === 'local-folder' ? esc(s.folderName || '—') : (s.url ? esc(s.url) : '');
+    return `<div class="dest-card${isDef ? ' is-default' : ''}">
+      <div class="dest-top">
+        <div class="dest-ic">${SINK_IC[s.type] || '📤'}</div>
+        <div class="dest-id">
+          <div class="dest-name">${esc(s.name || s.id)}${isDef ? ` <span class="pill sent">★ ${t('default_sink')}</span>` : ''}</div>
+          <div class="dest-meta">${esc(typeLabel)}${s.name ? ` · <code>${esc(s.id)}</code>` : ''}${detail ? ` · ${detail}` : ''}</div>
+        </div>
+      </div>
+      <div class="dest-actions">
+        ${s.type === 'drive' ? `<button data-conn="${esc(s.id)}">${t('connect_drive')}</button>` : ''}
+        ${s.type === 'dropbox' ? `<button data-dbxconn="${esc(s.id)}">${t('connect_dropbox')}</button>` : ''}
+        ${s.type === 'local-folder' ? `<button data-folder="${esc(s.id)}">${t('change_folder')}</button>` : ''}
+        <button data-rename="${esc(s.id)}" title="${esc(t('sink_rename_hint'))}">${t('sink_rename')}</button>
+        <button data-default="${esc(s.id)}" title="${esc(t('set_default_hint'))}">${isDef ? t('unset_default') : t('set_default')}</button>
+        <button data-del="${esc(s.id)}">${t('remove')}</button>
+      </div>
+    </div>`;
+  }).join('') || `<p class="muted">${t('no_sinks')}</p>`;
   $('#sinks').querySelectorAll('[data-rename]').forEach((b) => b.onclick = async () => {
     const c = await getConfig(); const s = (c.sinks || []).find((x) => x.id === b.dataset.rename); if (!s) return;
     const nm = prompt(t('sink_rename_prompt'), s.name || '');
@@ -308,6 +322,7 @@ async function addSink() {
   const sink = await buildSinkFromForm(document, $('#stype').value); // shared with the first-run assistant
   if (!sink) return;
   await upsert('sinks', sink);
+  const nm = $('#sname'); if (nm) nm.value = ''; // reset the (optional) name field for the next one
   renderFields();
   render();
 }

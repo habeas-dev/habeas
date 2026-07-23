@@ -11,6 +11,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **A dedicated "Destinations" section in Settings** (`ui/options.html`, `ui/options.js`). The configured
+  destinations (sinks) moved out of *Advanced* into their own left-rail section, laid out as one card per
+  destination — a type icon, the friendly name, its type/id/URL, and inline Rename / Set-default / Remove
+  (plus Connect / Change-folder where relevant). The add-a-destination form now also takes an optional name up
+  front. *Advanced* keeps only "Create your own sources" and "My contributions".
 - **The authorize screen lets you edit the proposed destination name** (`ui/authorize.html`, `ui/authorize.js`).
   The name a site proposes (or its host, as the default) is now shown in an editable field on the consent screen,
   so you can rename the destination before granting it — the value you leave there becomes the destination’s

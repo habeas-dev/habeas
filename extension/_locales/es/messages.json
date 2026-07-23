@@ -2666,6 +2666,9 @@
   "opt_nav_storage": {
     "message": "Dónde se guardan"
   },
+  "opt_nav_dests": {
+    "message": "Destinos"
+  },
   "opt_nav_auto": {
     "message": "Automático"
   },
@@ -2805,10 +2808,19 @@
     "message": "Es código abierto (AGPL-3.0): cualquiera puede auditar qué hace."
   },
   "opt_advanced_intro": {
-    "message": "Envía copias a otros destinos, crea tus propias fuentes y gestiona tus contribuciones."
+    "message": "Crea tus propias fuentes y gestiona tus contribuciones."
   },
   "opt_dests_help": {
     "message": "Además de tu archivo, puedes enviar copias de tus documentos a una carpeta, la nube o una app."
+  },
+  "opt_dests_title": {
+    "message": "Destinos"
+  },
+  "opt_dests_subtitle": {
+    "message": "Lugares a los que Habeas puede enviar copias de tus documentos — una carpeta, la nube o una app conectada. Renómbralos o marca uno como predeterminado. Tu archivo siempre se guarda aparte."
+  },
+  "opt_dests_add_help": {
+    "message": "Añade un nuevo sitio al que enviar copias. Puedes ponerle un nombre ahora o renombrarlo después."
   },
   "archive_preview_from": {
     "message": "Vista previa ($NAME$)",
