@@ -39,6 +39,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   failing when clicked). Older documents with no recorded exts still show every format (backward-compatible).
 
 ### Fixed
+- **A re-proposal without `sink.headers` keeps the already-paired credential** (`ui/authorize.js`). A consumer
+  only ever sees its pairing token once, so it cannot re-send it when connecting a second source; the sink
+  `upsert` then silently wiped the stored `headersRef`. Absence of `headers` now means "don't change it" — the
+  existing `headersRef`/`headers` are carried over; sending `headers` again still rotates the credential. Stops
+  consumers minting a fresh pairing token per connection. Documented in `consumers/external-hooks.md`.
+- **`status` no longer lists the `list-sources` capability grant** (`background.js` `extStatus`). It has no
+  source/sink, so consumers rendered it as a phantom connection with an empty source name. Route grants only.
 - **External `list-groups` now works for streamed sources (ING) and serves the saved account selection
   without a login** (`background.js` `listGroupsForGrant`). The hook only looked at the adapter's top-level
   `api.groups`, but a streamed source (ING) declares groups per stream — so a consumer always got `groups: []`

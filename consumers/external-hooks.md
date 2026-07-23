@@ -59,9 +59,13 @@ const res = await habeas('propose-workflow', {
 `status:'pending'` means the consent screen is open. Poll **status** to learn the outcome:
 
 ```js
-const { grants } = await habeas('status');   // only grants belonging to YOUR origin
-// grants: [{ grantId, source, sinkOrigin }]
+const { grants } = await habeas('status');   // only ROUTE grants belonging to YOUR origin
+// grants: [{ grantId, source, sinkOrigin }]  (the list-sources capability grant is not listed)
 ```
+
+**Connecting a second source?** Omit `sink.headers` in the new proposal: your origin's sink keeps the
+pairing credential it already stores (you only ever saw the token once, so absence means "don't change
+it"). Send `headers` again only to rotate the credential.
 
 ## B. Request collection
 

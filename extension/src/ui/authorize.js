@@ -1,6 +1,6 @@
 import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
-import { upsert } from '../lib/config.js';
+import { upsert, getConfig } from '../lib/config.js';
 import { getAdapters } from '../adapters/index.js';
 import { addGrant } from '../lib/grants.js';
 import { appendLog } from '../lib/state.js';
@@ -56,6 +56,15 @@ async function resolve(allow, req, adapter) {
   const sinkId = sinkIdForOrigin(req.origin);
   const sink = { id: sinkId, type: 'http', url: req.sink.url };
   if (req.sink.headers) sink.headers = req.sink.headers;
+  else {
+    // Re-proposal WITHOUT headers keeps the already-paired credential: a consumer cannot re-read
+    // its pairing token (it only ever sees it once), so absence means "don't change it" — otherwise
+    // connecting a second source would silently wipe the sink's stored token.
+    const cfg = await getConfig();
+    const prev = (cfg.sinks || []).find((s) => s.id === sinkId);
+    if (prev && prev.headersRef) sink.headersRef = prev.headersRef;
+    else if (prev && prev.headers) sink.headers = prev.headers;
+  }
   if (req.filter && req.filter.categories && req.filter.categories.length) sink.accepts = { categories: req.filter.categories };
   // Pairing-token headers go to the encrypted secrets store (headersRef), never plaintext config.
   await upsert('sinks', await secureSinkHeaders(sink));

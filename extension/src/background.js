@@ -1052,7 +1052,9 @@ async function proposeWorkflow(origin, payload) {
 }
 
 async function extStatus(origin) {
-  const grants = await grantsForOrigin(origin);
+  // Route grants only: a capability grant (kind:'list-sources') has no source/sink and would
+  // surface at the consumer as a phantom connection with an empty source.
+  const grants = (await grantsForOrigin(origin)).filter((g) => g.datasourceId);
   return { ok: true, grants: grants.map((g) => ({ grantId: g.id, source: g.datasourceId, sinkOrigin: originHost(origin) })) };
 }
 
