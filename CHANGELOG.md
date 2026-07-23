@@ -76,6 +76,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   failing when clicked). Older documents with no recorded exts still show every format (backward-compatible).
 
 ### Fixed
+- **Delivery marking is now positive-confirmation per record** (`background.js` `ackAccepted`, both flush
+  paths). An http consumer that replies `accepted: [id…]` gets ONLY those docs marked in the delivery ledger —
+  records the consumer refused (e.g. an account not mapped yet on its side) stay undelivered and retry on the
+  next sync, instead of being lost forever behind a blanket 2xx. Sinks that don't reply with `accepted` (file
+  sinks, older consumers) keep the old contract (no throw = whole batch confirmed). External `collect
+  fromStore` additionally accepts `force: true` — re-send the whole archive ignoring the ledger (the recovery
+  path; safe with a deduping consumer) — and reports `rejected`. Documented in `consumers/external-hooks.md`.
 - **Grants no longer stack duplicates** (`lib/grants.js` `addGrant`): every approval of the same (origin,
   source) proposal appended another grant, so a consumer ended up with N identical connections. `addGrant`
   now enforces the documented "one grant per (origin, route)" rule (and one `list-sources` capability grant

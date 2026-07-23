@@ -83,12 +83,25 @@ yet are sent (per-route dedupe as always); per-item files (PDFs) come along only
 happens to be open — records always deliver.
 
 ```js
-await habeas('collect', { grantId, fromStore: true });          // → { ok:true, status:'done', fromStore:true, sent, found }
+await habeas('collect', { grantId, fromStore: true });          // → { ok:true, status:'done', fromStore:true, sent, found, rejected }
 await habeas('collect', { grantId, group, fromStore: true });   // one account only
-// `found` = new-for-this-route documents in the archive; `sent` = actually delivered.
-// found === 0 → the archive holds nothing new (collect from the source first, or check the
-// Habeas Documents browser). status:'error' + error on a delivery failure (e.g. sink rejected).
+await habeas('collect', { grantId, fromStore: true, force: true }); // re-send the WHOLE archive, ignoring the ledger
+// `found` = candidate documents in the archive; `sent` = positively acknowledged by your sink;
+// `rejected` = your sink refused them (they stay undelivered and retry). found === 0 → the archive
+// holds nothing new (collect from the source first). status:'error' + error on a delivery failure.
+// `force` is the recovery path (e.g. records once marked delivered that your side dropped) — safe
+// as long as your sink dedupes, which the acknowledgment protocol below assumes anyway.
 ```
+
+### Per-record acknowledgment (recommended for http consumers)
+
+Delivery marking is **positive-confirmation**: if your sink's JSON reply includes
+`accepted: [id…]` (the canonical records' `id`s you actually incorporated — applied, queued for
+review, or recognized as an already-known duplicate), Habeas marks ONLY those as delivered; the rest
+stay pending and retry on the next sync. Optionally include `rejected: [id…]` for observability. A
+reply without `accepted` keeps the old contract: HTTP 2xx confirms the whole batch. Never reply 2xx
+while silently dropping records — without `accepted`, that marks them delivered and they will not be
+re-sent.
 
 Collection lists the source, delivers only **new** documents (Habeas dedupes per route), and POSTs
 to your sink a `multipart/form-data` with: `records` (JSON manifest of normalized records — each

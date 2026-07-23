@@ -667,6 +667,16 @@ async function runAutoMaintenance() {
 // somewhere. The normalized record always delivers (manifest); a per-item file is re-fetched when the source can
 // still produce it and there's a live session (best-effort — old items whose PDF template needs list-only fields
 // just deliver record-only, same contract as the popup's store-loaded send).
+// Positive per-record acknowledgment: an http consumer may reply { accepted: [id…] } — only those
+// docs enter the delivery ledger (the rest stay undelivered and retry on the next sync). A sink
+// that doesn't reply with `accepted` (file sinks, older consumers) confirms by not throwing: the
+// whole batch is marked, as before.
+function ackAccepted(res, batch) {
+  if (!res || !Array.isArray(res.accepted)) return batch;
+  const ok = new Set(res.accepted.map(String));
+  return batch.filter((d) => ok.has(String(d.internalId)));
+}
+
 async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
   const name = adapter.name || ds.adapter;
   const found = (picked || []).length;
@@ -685,7 +695,7 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
     // so a Dropbox/folder-backed archive that the service worker can't list still works. Group by stream.
     const byStream = new Map();
     for (const dd of picked) { const s = (dd && dd.stream) || ''; (byStream.get(s) || byStream.set(s, []).get(s)).push(dd); }
-    let sent = 0, accepted = 0;
+    let sent = 0, accepted = 0, rejectedCount = 0;
     for (const [sid, list] of byStream) {
       if (opts.signal && opts.signal.aborted) break; // Stop pressed
       const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(storeIdOf(ds, adapter), sid);
@@ -709,14 +719,16 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
         if (!pending.length) return;
         const batch = pending; pending = [];
         setStatus(t('status_sending', [String(batch.length), sink.id]));
-        await writeToSink(sink, batch, files, { service: adapter.service || ds.adapter, source: sk, ext: documentExt(eff) || 'pdf', interactive: true });
-        await markDelivered(ds.id, sink.id, batch.map((d) => d.internalId));
+        const res = await writeToSink(sink, batch, files, { service: adapter.service || ds.adapter, source: sk, ext: documentExt(eff) || 'pdf', interactive: true });
+        const acked = ackAccepted(res, batch); // positive per-record confirmation: only acked docs enter the ledger
+        await markDelivered(ds.id, sink.id, acked.map((d) => d.internalId));
         for (const d of batch) d.record = bakeLearned(d);
-        emitProgress(ds.id, batch.map((d) => ({ internalId: d.internalId, stream: sid, record: d.record, delivered: sink.id }))); // live: flip cards to "saved"
+        emitProgress(ds.id, acked.map((d) => ({ internalId: d.internalId, stream: sid, record: d.record, delivered: sink.id }))); // live: flip cards to "saved"
         try { await recordDelivered(sk, batch, { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store best-effort */ }
         try { await rememberDocMeta(storeIdOf(ds, adapter), batch.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, exts: [...new Set((files.get(d.internalId) || []).map((a) => a && a.ext).filter(Boolean))] }))); } catch (e) {}
         for (const d of batch) files.delete(d.internalId); // bound memory
-        sent += batch.length;
+        sent += acked.length;
+        rejectedCount += batch.length - acked.length;
       };
       if (net) for (const d of eligible) {
         if (opts.signal && opts.signal.aborted) break; // Stop pressed — stop before the next doc (flushed chunks are safe)
@@ -749,7 +761,7 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
     await appendLog({ kind: 'manual', datasource: ds.id, sink: sink.id, status: 'ok', count: sent });
     await badgeCount(sent);
     setStatus(t('status_done', [name, String(sent)]));
-    return { status: 'done', sent, found, accepted };
+    return { status: 'done', sent, found, accepted, rejected: rejectedCount };
   } catch (e) {
     const msg = (e && e.message) || String(e);
     pushDiag(adapter.id, { phase: 'send', message: msg });
@@ -817,10 +829,11 @@ async function runRoute(ds, adapter, sink, opts = {}) {
         if (!pending.length) return;
         const batch = pending; pending = [];
         setStatus(t('status_sending', [String(batch.length), sink.id]));
-        await writeToSink(sink, batch, files, { service: adapter.service || ds.adapter, source: sk, ext: documentExt(eff) || 'pdf', interactive: !!opts.interactive });
-        await markDelivered(ds.id, sink.id, batch.map((d) => d.internalId));
+        const wres = await writeToSink(sink, batch, files, { service: adapter.service || ds.adapter, source: sk, ext: documentExt(eff) || 'pdf', interactive: !!opts.interactive });
+        const acked = ackAccepted(wres, batch); // positive per-record confirmation: only acked docs enter the ledger
+        await markDelivered(ds.id, sink.id, acked.map((d) => d.internalId));
         for (const d of batch) d.record = bakeLearned(d); // persist the real date/amount learned from the detail
-        emitProgress(ds.id, batch.map((d) => ({ internalId: d.internalId, stream: sid, record: d.record, delivered: sink.id }))); // live: flip cards to "saved"
+        emitProgress(ds.id, acked.map((d) => ({ internalId: d.internalId, stream: sid, record: d.record, delivered: sink.id }))); // live: flip cards to "saved"
         try { await recordDelivered(sk, batch, { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store is best-effort */ } // write-through to the canonical store
         try { await rememberDocMeta(storeIdOf(ds, adapter), batch.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, returnStatus: d.returnStatus || undefined, exts: [...new Set((files.get(d.internalId) || []).map((a) => a && a.ext).filter(Boolean))] }))); } catch (e) { /* best-effort */ }
         for (const d of batch) files.delete(d.internalId); // bound memory across a large sweep
@@ -1149,9 +1162,12 @@ async function collectForGrant(origin, payload) {
     const groupId = payload.group != null ? String(payload.group) : undefined;
     const entry = groupId && Array.isArray(ds.groupsCache) ? ds.groupsCache.find((g) => String(g.id) === groupId) : null;
     // Awaited: an archive-only send is fast (store read + record-only POSTs), and returning the
-    // counts lets the consumer tell "delivered N" from "nothing new in the archive".
-    const r = await runExternalStoreSend(ds, adapter, sink, { label: entry && entry.label ? String(entry.label) : undefined });
-    return { ok: r.status !== 'error', status: r.status === 'error' ? 'error' : 'done', fromStore: true, sent: r.sent || 0, found: r.found || 0, ...(r.error ? { error: r.error } : {}) };
+    // counts lets the consumer tell "delivered N" from "nothing new in the archive". `force: true`
+    // ignores the delivery ledger and re-sends the WHOLE archive (safe: the consumer replies with
+    // per-record `accepted` and dedupes on its side) — the recovery path when records were once
+    // marked delivered but the consumer dropped them.
+    const r = await runExternalStoreSend(ds, adapter, sink, { label: entry && entry.label ? String(entry.label) : undefined, force: !!payload.force });
+    return { ok: r.status !== 'error', status: r.status === 'error' ? 'error' : 'done', fromStore: true, sent: r.sent || 0, found: r.found || 0, rejected: r.rejected || 0, ...(r.error ? { error: r.error } : {}) };
   }
 
   const host = hostOf(adapter);
@@ -1199,9 +1215,9 @@ async function runExternalCollect(grant, ds, adapter, sink, tabId, groupId) {
 // delivered yet (per ledger), optionally narrow to one account (its record.group label, resolved
 // from the cached enumeration), and hand them to sendStoredDocs with noOpen (record-only unless a
 // site tab already happens to be open — the source is never contacted on purpose).
-async function runExternalStoreSend(ds, adapter, sink, { label } = {}) {
+async function runExternalStoreSend(ds, adapter, sink, { label, force } = {}) {
   const sid0 = storeIdOf(ds, adapter);
-  const delivered = await deliveredSet(ds.id, sink.id).catch(() => ({}));
+  const delivered = force ? {} : await deliveredSet(ds.id, sink.id).catch(() => ({}));
   const streams = [...new Set(outputsOf(adapter).map((o) => o.stream))];
   const picked = [];
   for (const sid of streams) {
