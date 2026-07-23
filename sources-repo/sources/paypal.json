@@ -1,0 +1,57 @@
+{
+  "id": "paypal",
+  "name": "PayPal",
+  "service": "paypal",
+  "trust": "community",
+  "beta": true,
+  "version": "2026-07-23",
+  "minVersion": "0.7.0.3",
+  "domain": "paypal.com",
+  "match": ["https://www.paypal.com/*"],
+  "openUrl": "https://www.paypal.com/myaccount/activities/",
+  "categories": ["banking"],
+  "schema": "transaction@1",
+  "auth": {
+    "mode": "cookie",
+    "replayHeaders": ["x-csrf-token", "x-requested-with"],
+    "capturePaths": ["/myaccount/activities"]
+  },
+  "api": {
+    "host": "https://www.paypal.com",
+    "list": {
+      "path": "/myaccount/activities/loadmore",
+      "paging": "cursor",
+      "cursorParam": "nextPageToken",
+      "nextPath": "data.data.activity.nextPageToken",
+      "itemsPath": "data.data.activity.transactions",
+      "params": {
+        "transactionType": "ALL",
+        "selectedCurrency": "ALL",
+        "start_date": "2005-01-01",
+        "end_date": "2035-12-31",
+        "free_text_search": "",
+        "type": "",
+        "status": "",
+        "currency": "",
+        "filter_id": "",
+        "issuance_product_name": "",
+        "asset_names": "",
+        "asset_symbols": "",
+        "isClearFreeTextSearch": "false",
+        "isClearFilterSelection": "false",
+        "isClientSideFiltering": "false"
+      },
+      "headers": { "x-requested-with": "XMLHttpRequest" }
+    }
+  },
+  "fields": {
+    "internalId": "id",
+    "date": "date.rawDate.date",
+    "amount": "amountInfo.contents.amountText",
+    "currency": "amounts.currencyCode",
+    "counterparty": "counterpartyInfo.counterpartyName",
+    "description": "descriptionInfo.content.transactionDescriptionText",
+    "type": "primitiveTxnType"
+  },
+  "notes": "Personal PayPal activity (payments sent/received). Built from a real in-session capture (2026-07-23), replacing the earlier unverified woob-derived draft. LIST: GET /myaccount/activities/loadmore returns data.data.activity.transactions[] and a data.data.activity.nextPageToken cursor (absent on the last page); a wide start_date/end_date window pulls the whole history. AUTH: cookie session + a captured x-csrf-token header (rotates; captured from /myaccount/activities requests) + x-requested-with. AMOUNT: the list gives a locale-formatted amountText ('-9,00 €') which money() parses (comma decimal + sign preserved) and amounts.currencyCode for the currency; DATE: date.rawDate.date is ISO-8601. Field mapping VERIFIED offline against 79 real captured transactions (id/date/amount/currency/counterparty). BETA: the pagination ENTRY (first loadmore call carries no nextPageToken → expected to return page 1) is not yet confirmed live for a multi-page account; a per-transaction DETAIL endpoint (GET /myaccount/activities/details/inline/{id} → data.amount.rawAmounts.gross.value, counterparty, itemDetails.itemList[]) and downloadable statements/reports (async /reports/apis/common/ql) are captured and can be added as enrichment/streams later."
+}
