@@ -34,6 +34,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   failing when clicked). Older documents with no recorded exts still show every format (backward-compatible).
 
 ### Fixed
+- **The `list-sources` consent screen no longer shows empty rows** (`ui/authorize.html`). The source /
+  destination / scope rows are hidden for a `list-sources` request (there is nothing to show), but the
+  `hidden` attribute was defeated by the `.kv { display:grid }` author rule — a `[hidden]{display:none
+  !important}` override makes it effective.
 - **A 401 while fetching a source brings its tab to the front** (`lib/pagefetch.js`). When an
   in-page request comes back 401 (the session/CSRF token is not usable yet — e.g. PayPal before its SPA has
   minted the token, or an expired session), the source's tab is surfaced once so the user can see it and log
