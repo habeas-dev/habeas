@@ -68,7 +68,13 @@ async function resolve(allow, req, adapter) {
   if (req.filter && req.filter.categories && req.filter.categories.length) sink.accepts = { categories: req.filter.categories };
   // Pairing-token headers go to the encrypted secrets store (headersRef), never plaintext config.
   await upsert('sinks', await secureSinkHeaders(sink));
-  await upsert('datasources', { id: req.source, adapter: req.source, enabled: true, options: {} });
+  // MERGE with an existing datasource — upsert replaces the whole object, which used to wipe the
+  // user's saved state (account selection ds.groups/groupLabels, brandDomain, groups cache…).
+  {
+    const cfgDs = await getConfig();
+    const prevDs = (cfgDs.datasources || []).find((d) => d.id === req.source);
+    await upsert('datasources', { options: {}, ...(prevDs || {}), id: req.source, adapter: req.source, enabled: true });
+  }
   await upsert('routes', { id: req.source + '->' + sinkId, datasource: req.source, sink: sinkId, mode: 'external' });
   const grant = { id: 'g_' + crypto.randomUUID(), origin: req.origin, datasourceId: req.source, sinkId, filter: req.filter || null, createdAt: new Date().toISOString(), lastUsedAt: null };
   await addGrant(grant);

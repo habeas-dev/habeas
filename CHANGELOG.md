@@ -67,6 +67,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   failing when clicked). Older documents with no recorded exts still show every format (backward-compatible).
 
 ### Fixed
+- **Approving an external proposal no longer wipes the datasource's saved state** (`ui/authorize.js`). The
+  datasource `upsert` replaced the whole object, destroying the user's account selection
+  (`ds.groups`/`groupLabels`), brand pinning and groups cache when a consumer connection was approved. It now
+  merges over the existing datasource.
 - **External collect / list-groups reuse the source's open tab instead of stacking a new one per call**
   (`background.js` `collectForGrant` / `listGroupsForGrant`, via `pagefetch.js#findSiteTab`, now exported).
   Every sync opened a fresh tab on the source site — on a single-session bank (ING) the second tab shows a
