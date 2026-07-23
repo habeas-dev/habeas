@@ -1520,10 +1520,18 @@ export function minorExp(ccy) {
 
 export function normalizeAmount(v) {
   if (v == null || v === '' || typeof v === 'number') return v;
-  let s = String(v).replace(/[\s ]|€|eur/gi, '');
+  // Strip everything that is not part of the number — currency symbols/codes AND letter prefixes like
+  // "US$"/"R$" — so a multi-currency source (a generic Amazon billing US$/£/¥) normalizes too, not only EUR.
+  let s = String(v).replace(/[^\d.,()+-]/g, '');
   if (!s) return v;
   const neg = /^-|-$|^\(|\)$/.test(s);
-  s = s.replace(/[()+\-]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'); // strip thousands '.', decimal ','→'.'
+  s = s.replace(/[()+\-]/g, '');
+  // Locale-agnostic decimal detection (a generic Amazon sees both "1.234,56" EUR and "1,234.56" US): with BOTH
+  // separators the LAST one is the decimal; with only ',' it's the decimal iff it's the last 1–2 digits (else
+  // thousands); with only '.' strip a thousands dot (3-digit groups) but keep a 1–2 decimal dot.
+  if (s.includes(',') && s.includes('.')) s = s.lastIndexOf(',') > s.lastIndexOf('.') ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
+  else if (s.includes(',')) s = /,\d{1,2}$/.test(s) ? s.replace(',', '.') : s.replace(/,/g, '');
+  else s = s.replace(/\.(?=\d{3}(\D|$))/g, '');
   const n = parseFloat(s);
   return isNaN(n) ? v : (neg ? -n : n);
 }

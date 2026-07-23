@@ -50,6 +50,10 @@ export async function adoptDetailMeta(d, arts) {
       const r = JSON.parse(await a.blob.text());
       if (/^\d{4}-\d{2}-\d{2}/.test(r.date || '')) { d.date = r.date; if (d.record) d.record.date = r.date; } // the detail is authoritative
       if (typeof r.total === 'number') { d.total = r.total; if (d.record) d.record.total = r.total; }        // a stale learned total must not stick (0 € charged ≠ order total)
+      // Multi-currency sources (a generic Amazon billing US$/€/£/¥): the detail's amount string carries the
+      // currency, but `total` is normalized to a bare number → adopt the currency the detail reported too, so a
+      // non-EUR order isn't mislabelled EUR by the default. curOf maps a symbol/code; a bare ISO code is kept.
+      if (r.currency) { const c = curOf(String(r.currency)) || (/^[A-Z]{3}$/.test(String(r.currency)) ? String(r.currency) : null); if (c) { d.currency = c; if (d.record) d.record.currency = c; } }
       if (r.returnStatus) { d.returnStatus = r.returnStatus; if (d.record) d.record.returnStatus = r.returnStatus; }
     } catch (e) { /* not JSON */ }
     break; // the first JSON detail wins

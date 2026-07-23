@@ -1,6 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { extractDetailFields } from '../src/runtime/inventory.js';
+import { extractDetailFields, normalizeAmount } from '../src/runtime/inventory.js';
+
+test('normalizeAmount parses both EUR and US/UK number formats + currency symbols', () => {
+  assert.equal(normalizeAmount('US$9.99'), 9.99);
+  assert.equal(normalizeAmount('US$1,234.56'), 1234.56); // US thousands + dot decimal
+  assert.equal(normalizeAmount('9,99 €'), 9.99);
+  assert.equal(normalizeAmount('1.234,56 €'), 1234.56);  // EUR thousands + comma decimal
+  assert.equal(normalizeAmount('1.234 €'), 1234);        // EUR thousands, no cents
+  assert.equal(normalizeAmount('£12.50'), 12.5);
+  assert.equal(normalizeAmount('¥1500'), 1500);
+  assert.equal(normalizeAmount('-5,00'), -5);
+});
 
 // Synthetic PayPal-shaped detail (NO real values) — the SHAPE mirrors /myaccount/activities/details/inline/{id}.
 const DETAIL = JSON.stringify({

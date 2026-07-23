@@ -19,6 +19,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   `detail.json`/`detail.root` and a JSON `items` shape. Covered by `test/detail-json.test.mjs`.
 
 ### Fixed
+- **Order-total extraction: grand total (any currency) instead of a subtotal / nothing** (`runtime/inventory.js`
+  `normalizeAmount`, `sinks/format.js` `adoptDetailMeta`, `sources/amazon.json`). The generic Amazon total regex
+  matched `Total:` literally — but the grand-total row reads `Total (I.V.A. Incluido): US$9.99` on a
+  Spanish-language amazon.com, so nothing (or a pre-tax subtotal) was captured; and `normalizeAmount` only
+  stripped `€`, leaving `US$9.99` an un-parsed string that then defaulted to EUR. Now: the regex anchors to the
+  LAST bold total row's amount span (grand total, any label), `normalizeAmount` is locale-agnostic (parses both
+  `1.234,56 €` and `US$1,234.56`, strips any currency symbol/prefix), and the detail also reports its currency
+  which `adoptDetailMeta` adopts (via `curOf`) so a non-EUR order isn't mislabelled. Verified against real
+  captured amazon.es (€) + amazon.com (US$) order-details. Covered by `test/detail-json.test.mjs`.
 - **Brand source instances open the source's orders page, not the domain root** (`lib/pagefetch.js`
   `siteBaseUrl`). A brand (multi-TLD) instance opened `https://www.<domain>/` (the homepage), ignoring the
   source's `openUrl`, so the SPA/locale context the list fetch needs was never established — e.g. the generic
