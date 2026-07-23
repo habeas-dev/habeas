@@ -27,8 +27,8 @@
     "amazon.ae"
   ],
   "country": "global",
-  "version": "2026-07-23.1",
-  "minVersion": "0.7.0.3",
+  "version": "2026-07-23.2",
+  "minVersion": "0.7.0.9",
   "license": "AGPL-3.0-or-later",
   "notes": "BETA — a MULTI-COUNTRY generalization of the verified amazon-es source. The your-orders SPA structure (data-component regions, order-card slot-ids, invoice popover, item titles/prices, and the internal paymentMethodHeader/lastDigits JSON keys) is the SAME in every locale, so most of this is universal; only a few TEXT labels are locale-specific and are matched with a multi-language regex alternation (Total/Gesamt/Totale…, Refunded/Reembolsado/Erstattet…) plus a currency capture that accepts a symbol before OR after the amount. VERIFIED for Spain (amazon.es); UNVERIFIED elsewhere. Open items a tester in another country can confirm: (1) the grand-total label + currency for their market (esp. non-€: .com $, .co.uk £, .co.jp ¥); (2) the order-detail DATE parses (normalizeDate handles en/es month names; other locales may fall back to year-only); (3) the return/refund words. Pin the country for unattended scheduled runs with the country picker (ds.brandDomain). The year pager scans the FULL window (back:30, stopAfterEmpty:30) rather than stopping after a couple of empty years, because Amazon histories are often sparse/gappy (e.g. orders only in 2008, 2011, 2016, 2020) — a low stopAfterEmpty truncated everything before the first recent order. Future optimization: parse the on-page timeFilter year dropdown to scan only the years the account actually has.",
   "categories": [
@@ -54,6 +54,7 @@
     "https://www.amazon.sg/*",
     "https://www.amazon.ae/*"
   ],
+  "openUrl": "https://www.amazon.com/gp/css/order-history?ref_=nav_orders_first",
   "auth": {
     "mode": "cookie",
     "replayHeaders": []

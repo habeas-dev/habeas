@@ -313,9 +313,14 @@ async function findSiteTab(adapter, ds) {
 // in-session context the page-context fetch needs.
 export function siteBaseUrl(adapter, ds) {
   // Brand (multi-TLD) source pinned to a country (ds.brandDomain): open THAT country's site so an unattended
-  // scheduled run establishes the right session (otherwise there's no tab to infer the domain from).
+  // scheduled run establishes the right session (otherwise there's no tab to infer the domain from). Honor the
+  // source's openUrl PATH (its "my orders" page) on the pinned domain — landing on the root instead of the
+  // orders page leaves the SPA/locale context unestablished, which can make the list fetch come back empty
+  // (e.g. a Spanish-language amazon.com redirects order pages to /-/es/). Falls back to the root.
   if (Array.isArray(adapter.domains) && adapter.domains.length && ds && ds.brandDomain && adapter.domains.includes(ds.brandDomain)) {
-    return 'https://www.' + ds.brandDomain + '/';
+    const base = 'https://www.' + ds.brandDomain;
+    if (adapter.openUrl && /^https:\/\//.test(adapter.openUrl)) { try { const u = new URL(adapter.openUrl); return base + u.pathname + u.search; } catch (e) {} }
+    return base + '/';
   }
   // A source can name the exact page to open (openUrl) — its "my purchases / account" page — so the tab
   // lands the user on their data AND loads the SPA whose CSP allows the API host. Guarded to the source's

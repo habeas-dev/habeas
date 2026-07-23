@@ -30,6 +30,13 @@ test('a non-brand (single-domain) source is returned unchanged', () => {
   assert.equal(withBrandHost(dia, { origin: 'https://x' }, { brandDomain: 'y' }), dia);
 });
 
-test('siteBaseUrl opens the pinned country', () => {
+test('siteBaseUrl opens the pinned country root when the source has no openUrl', () => {
   assert.equal(siteBaseUrl(AMAZON, { brandDomain: 'amazon.de' }), 'https://www.amazon.de/');
+});
+
+test('siteBaseUrl honors the source openUrl PATH on the pinned brand domain', () => {
+  // Landing on the orders page (not the root) establishes the SPA/locale context the list fetch needs.
+  const amz = { ...AMAZON, openUrl: 'https://www.amazon.com/gp/css/order-history?ref_=nav_orders_first' };
+  assert.equal(siteBaseUrl(amz, { brandDomain: 'amazon.de' }), 'https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first');
+  assert.equal(siteBaseUrl(amz, { brandDomain: 'amazon.com' }), 'https://www.amazon.com/gp/css/order-history?ref_=nav_orders_first');
 });

@@ -10,6 +10,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **Brand source instances open the source's orders page, not the domain root** (`lib/pagefetch.js`
+  `siteBaseUrl`). A brand (multi-TLD) instance opened `https://www.<domain>/` (the homepage), ignoring the
+  source's `openUrl`, so the SPA/locale context the list fetch needs was never established — e.g. the generic
+  Amazon source found NO orders on a Spanish-language amazon.com (which redirects order pages to `/-/es/`)
+  while amazon.es worked. Now it opens the `openUrl` PATH on the pinned domain
+  (`amazon.com/gp/css/order-history`). The generic `amazon` source gains an `openUrl`; its `minVersion` is
+  bumped to 0.7.0.9 so only builds with the fix install it. Covered by `test/brandhost.test.mjs`.
+
 ### Added
 - **Brand sources: one source across a brand's TLDs (dynamic host)** (`adapters/validate.js`, `lib/pagefetch.js`,
   `background.js`, `runtime/lister.js`). A source can declare `domains: ["amazon.es","amazon.com","amazon.de",…]`
