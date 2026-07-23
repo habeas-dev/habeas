@@ -17,6 +17,7 @@
     .src .name { font-weight: 700; font-size: 1.05rem; }
     .src .pill { font-size: .72rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line, #3335); color: var(--muted, #888); white-space: nowrap; }
     .src .pill.fp { border-color: #2e7d3288; color: #2e7d32; }
+    .src .pill.beta { border-color: #8e44ad88; color: #8e44ad; }
     .src .meta { color: var(--muted, #888); font-size: .88rem; }
     .src .cats { display: flex; flex-wrap: wrap; gap: 6px; }
     .src .cat { font-size: .74rem; padding: 2px 8px; border-radius: 6px; background: rgba(127,127,127,.12); }
@@ -62,6 +63,12 @@
          without JavaScript. The script hydrates it with live data, ratings and filters on load. -->
     <div id="list" class="srcgrid" aria-live="polite"><!-- SOURCES:START -->
       <div class="src">
+        <div class="top"><span class="name">Amazon</span><span class="pill fp">first-party</span><span class="pill beta">experimental</span></div>
+        <div class="meta">🌐 amazon · amazon.com</div>
+        <div class="cats"><span class="cat">marketplace</span><span class="cat fmt">json</span><span class="cat fmt">pdf</span></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/amazon.json" rel="noopener">View JSON →</a></div>
+      </div>
+      <div class="src">
         <div class="top"><span class="name">Amazon España — pedidos</span><span class="pill fp">first-party</span></div>
         <div class="meta">🇪🇸 amazon · amazon.es</div>
         <div class="cats"><span class="cat">marketplace</span><span class="cat fmt">json</span><span class="cat fmt">pdf</span></div>
@@ -104,10 +111,22 @@
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/aliexpress.json" rel="noopener">View JSON →</a></div>
       </div>
       <div class="src">
+        <div class="top"><span class="name">American Express</span><span class="pill ">community</span><span class="pill beta">experimental</span></div>
+        <div class="meta">🌐 amex · americanexpress.com</div>
+        <div class="cats"><span class="cat">banking</span></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/americanexpress.json" rel="noopener">View JSON →</a></div>
+      </div>
+      <div class="src">
         <div class="top"><span class="name">Decathlon España — tickets</span><span class="pill ">community</span></div>
         <div class="meta">🇪🇸 decathlon · decathlon.es</div>
         <div class="cats"><span class="cat">sports</span><span class="cat fmt">json</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/decathlon-es.json" rel="noopener">View JSON →</a></div>
+      </div>
+      <div class="src">
+        <div class="top"><span class="name">DeGiro</span><span class="pill ">community</span><span class="pill beta">experimental</span></div>
+        <div class="meta">🇪🇺 degiro · degiro.nl</div>
+        <div class="cats"><span class="cat">investment</span></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/degiro.json" rel="noopener">View JSON →</a></div>
       </div>
       <div class="src">
         <div class="top"><span class="name">Dia España — tickets</span><span class="pill ">community</span></div>
@@ -140,10 +159,22 @@
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/leroymerlin-es.json" rel="noopener">View JSON →</a></div>
       </div>
       <div class="src">
+        <div class="top"><span class="name">N26</span><span class="pill ">community</span><span class="pill beta">experimental</span></div>
+        <div class="meta">🇪🇺 n26 · n26.com</div>
+        <div class="cats"><span class="cat">banking</span></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/n26.json" rel="noopener">View JSON →</a></div>
+      </div>
+      <div class="src">
         <div class="top"><span class="name">Openbank España</span><span class="pill ">community</span></div>
         <div class="meta">🇪🇸 openbank · openbank.es</div>
         <div class="cats"><span class="cat">banking</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/openbank-es.json" rel="noopener">View JSON →</a></div>
+      </div>
+      <div class="src">
+        <div class="top"><span class="name">PayPal</span><span class="pill ">community</span><span class="pill beta">experimental</span></div>
+        <div class="meta">🌐 paypal · paypal.com</div>
+        <div class="cats"><span class="cat">banking</span></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/paypal.json" rel="noopener">View JSON →</a></div>
       </div>
       <div class="src">
         <div class="top"><span class="name">Raisin</span><span class="pill ">community</span></div>
@@ -178,7 +209,7 @@
         loading: 'Loading the catalog…',
         failed: 'Couldn’t load the catalog right now. See it on GitHub: github.com/habeas-dev/sources.',
         empty: 'No sources published yet.',
-        fp: 'first-party', community: 'community',
+        fp: 'first-party', community: 'community', beta: 'experimental',
         norate: 'no ratings yet', view: 'View JSON',
         country: 'Country:', all: 'All', global: 'Global', format: 'Format:',
         count: (n) => `${n} source${n === 1 ? '' : 's'}`,
@@ -190,7 +221,7 @@
         loading: 'Cargando el catálogo…',
         failed: 'No se pudo cargar el catálogo ahora mismo. Míralo en GitHub: github.com/habeas-dev/sources.',
         empty: 'Aún no hay fuentes publicadas.',
-        fp: 'first-party', community: 'comunidad',
+        fp: 'first-party', community: 'comunidad', beta: 'experimental',
         norate: 'sin valoraciones', view: 'Ver JSON',
         country: 'País:', all: 'Todos', global: 'Global', format: 'Formato:',
         count: (n) => `${n} ${n === 1 ? 'fuente' : 'fuentes'}`,
@@ -210,7 +241,7 @@
       const r = RATINGS[s.id];
       const rate = r && r.count ? `★ ${(+r.avg).toFixed(1)} · ${r.count}` : t.norate;
       return `<div class="src">
-        <div class="top"><span class="name">${esc(s.name)}</span><span class="pill ${fp ? 'fp' : ''}">${fp ? t.fp : t.community}</span></div>
+        <div class="top"><span class="name">${esc(s.name)}</span><span class="pill ${fp ? 'fp' : ''}">${fp ? t.fp : t.community}</span>${s.beta ? `<span class="pill beta">${t.beta}</span>` : ''}</div>
         <div class="meta">${s.country ? flag(s.country) + ' ' : ''}${esc(s.service)} · ${esc(s.domain)}</div>
         <div class="cats">${cats}${fmts}</div>
         <div class="foot"><span class="rate">${rate}</span><a class="view" href="${esc(s.url)}" rel="noopener">${t.view} →</a></div>
