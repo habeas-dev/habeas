@@ -301,7 +301,7 @@ export function withBrandHost(adapter, net, ds) {
 // The open browser tab (if any) sitting on the source's site — the in-session context to fetch through. For a
 // pinned brand INSTANCE, only a tab on THAT country counts (an amazon.es tab must not serve the amazon.com
 // instance — it would write .es data into the .com store).
-async function findSiteTab(adapter, ds) {
+export async function findSiteTab(adapter, ds) {
   const pinned = ds && ds.brandDomain && Array.isArray(adapter.domains) && adapter.domains.includes(ds.brandDomain) ? ds.brandDomain : null;
   const pats = [];
   if (pinned) { pats.push(`*://*.${pinned}/*`, `*://${pinned}/*`); }

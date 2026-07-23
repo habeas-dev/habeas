@@ -52,6 +52,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   failing when clicked). Older documents with no recorded exts still show every format (backward-compatible).
 
 ### Fixed
+- **External collect / list-groups reuse the source's open tab instead of stacking a new one per call**
+  (`background.js` `collectForGrant` / `listGroupsForGrant`, via `pagefetch.js#findSiteTab`, now exported).
+  Every sync opened a fresh tab on the source site — on a single-session bank (ING) the second tab shows a
+  login screen (and can drop the live session), and the page-context fetch could then pick the wrong tab. An
+  existing site tab is now reused (surfaced only when the user must log in); a tab is created only if none is
+  open.
 - **A re-proposal without `sink.headers` keeps the already-paired credential** (`ui/authorize.js`). A consumer
   only ever sees its pairing token once, so it cannot re-send it when connecting a second source; the sink
   `upsert` then silently wiped the stored `headersRef`. Absence of `headers` now means "don't change it" — the

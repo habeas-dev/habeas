@@ -9,7 +9,7 @@ import { loadAuth, hasAuth, capturePathAllowed } from './lib/authstore.js';
 import { pushDiag, recordingNet, pushReqCtx, redactReqVal as rcRedactVal } from './lib/diag.js';
 import { deliveredSet, markDelivered, appendLog, rememberDocMeta } from './lib/state.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
-import { resolveSiteFetch, ensureSiteFetch, recoverSession, withBrandHost } from './lib/pagefetch.js';
+import { resolveSiteFetch, ensureSiteFetch, recoverSession, withBrandHost, findSiteTab } from './lib/pagefetch.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink, readSinkRecords } from './sinks/sinks.js';
 import { recordDelivered, putItems } from './lib/store.js';
@@ -1040,8 +1040,11 @@ async function listGroupsForGrant(origin, payload) {
       await appendLog({ kind: 'ext-groups', origin, source: ds.id, status: 'cached', count: groups.length });
       return { ok: true, status: 'ok', cached: true, groups };
     }
-    // Need a logged-in tab on the source site to enumerate in-session; open one and ask to retry.
-    const tab = await chrome.tabs.create({ url: siteBaseUrl(adapter), active: true }).catch(() => null);
+    // Need a logged-in tab on the source site to enumerate in-session; surface an existing one
+    // (or open one) and ask to retry — never stack a second tab on a single-session bank.
+    let tab = await findSiteTab(adapter, ds).catch(() => null);
+    if (tab) await surfaceTab(tab);
+    else tab = await chrome.tabs.create({ url: siteBaseUrl(adapter), active: true }).catch(() => null);
     injectCapture(tab && tab.id);
     await appendLog({ kind: 'ext-groups', origin, source: ds.id, status: 'needs-login' });
     return { ok: true, status: 'needs-login' };
@@ -1104,9 +1107,13 @@ async function collectForGrant(origin, payload) {
 
   const host = hostOf(adapter);
   const live = await hasLiveSession(adapter);
-  // ALWAYS a dedicated tab on the source site (needed for the in-session, page-context fetch).
-  // Background if a session is live; foregrounded (login prompt) if the user must authenticate.
-  const tab = await chrome.tabs.create({ url: siteBaseUrl(adapter), active: !live }).catch(() => null);
+  // A tab on the source site is needed (the in-session, page-context fetch) — but REUSE one already
+  // sitting on the site instead of stacking a new tab per collect: single-session banks (ING) show a
+  // login (and may drop the live session) when a second tab opens, and the page-fetch could then pick
+  // the wrong tab. Background if a session is live; foregrounded (login) if the user must authenticate.
+  let tab = await findSiteTab(adapter, ds).catch(() => null);
+  if (tab) { if (!live) await surfaceTab(tab); }
+  else tab = await chrome.tabs.create({ url: siteBaseUrl(adapter), active: !live }).catch(() => null);
   injectCapture(tab && tab.id); // best-effort: capture the JWT/csrf as the user browses/logs in
 
   const groupId = payload && payload.group != null ? payload.group : undefined; // collect one account only
@@ -1117,6 +1124,13 @@ async function collectForGrant(origin, payload) {
 }
 
 const hasLiveSession = (adapter) => hasAuth(adapter);
+
+// Bring an existing tab to the front (window + tab) — used when the user must log in there.
+async function surfaceTab(tab) {
+  if (!tab || tab.id == null) return;
+  try { await chrome.windows.update(tab.windowId, { focused: true }); } catch (e) {}
+  try { await chrome.tabs.update(tab.id, { active: true }); } catch (e) {}
+}
 
 function injectCapture(tabId) {
   if (!tabId || !chrome.scripting) return;
