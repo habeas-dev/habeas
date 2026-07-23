@@ -1,0 +1,78 @@
+{
+  "id": "n26",
+  "name": "N26",
+  "service": "n26",
+  "trust": "community",
+  "beta": true,
+  "verified": false,
+  "domain": "n26.com",
+  "country": "EU",
+  "currency": "EUR",
+  "version": "2024-08-10",
+  "minVersion": "0.5.0.24",
+  "license": "AGPL-3.0-or-later",
+  "attribution": {
+    "derivedFrom": "woob — N26 module",
+    "copyright": "Copyright (C) 2016 Benjamin Bouvier",
+    "url": "https://gitlab.com/woob/woob/-/tree/master/modules/n26",
+    "referenceLicense": "LGPL-3.0-or-later",
+    "woobIntelDate": "2024-08-10",
+    "note": "The API host, endpoint paths and response field names were used as REFERENCE (facts / interface, no source code copied). `version` is the woob module's last functional (intel) commit date, not a repo-wide chore. No code copied; woob's credential login is not used — Habeas replays the user's own live session. This adapter is data, AGPL-3.0-or-later like Habeas.",
+    "license": "AGPL-3.0-or-later"
+  },
+  "notes": "BETA / UNVERIFIED — drafted from woob (intel 2024-08, relatively fresh). Cross-domain: login on n26.com, API on api.tech26.de (different registrable domain) → the crossDomainHosts consent screen fires. Auth: Bearer JWT (captured by default) + a per-device `device-token` header the SPA sends (replayed). Open items to promote out of beta: (1) confirm the /api/smrt/transactions response is a top-level array (itemsPath '$') and the field names; (2) visibleTS/createdTS are epoch ms → date (normalizeDate handles epoch); (3) confirm the `device-token` header is actually captured+replayed and that no other header is required; (4) amount is the account-currency (EUR) value; originalCurrency/originalAmount are only set on FX transactions (kept in extra via keepRaw).",
+  "categories": [
+    "banking"
+  ],
+  "match": [
+    "https://app.n26.com/*"
+  ],
+  "crossDomainHosts": [
+    "api.tech26.de"
+  ],
+  "openUrl": "https://app.n26.com/",
+  "auth": {
+    "capturePaths": [
+      "/api/"
+    ],
+    "replayHeaders": [
+      "authorization",
+      "device-token"
+    ],
+    "cookies": false
+  },
+  "api": {
+    "host": "https://api.tech26.de"
+  },
+  "streams": [
+    {
+      "id": "movimientos",
+      "name": "Movimientos",
+      "schema": "transaction@1",
+      "categories": [
+        "banking"
+      ],
+      "keepRaw": true,
+      "api": {
+        "list": {
+          "path": "/api/smrt/transactions",
+          "itemsPath": "$",
+          "params": {
+            "limit": "1000"
+          },
+          "headers": {
+            "accept": "application/json"
+          }
+        }
+      },
+      "fields": {
+        "internalId": "id",
+        "date": "visibleTS",
+        "amount": "amount",
+        "counterparty": "merchantName",
+        "type": "type",
+        "description": "referenceText"
+      }
+    }
+  ]
+}

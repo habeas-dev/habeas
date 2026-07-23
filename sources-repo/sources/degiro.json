@@ -8,7 +8,7 @@
   "domain": "degiro.nl",
   "country": "EU",
   "currency": "EUR",
-  "version": "2026-07-23",
+  "version": "2024-11-04",
   "minVersion": "0.5.0.24",
   "license": "AGPL-3.0-or-later",
   "attribution": {
@@ -29,6 +29,7 @@
   "openUrl": "https://trader.degiro.nl/",
   "auth": {
     "mode": "cookie",
+    "replayHeaders": [],
     "capturePaths": [
       "/reporting/",
       "/trading",

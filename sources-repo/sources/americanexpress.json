@@ -1,0 +1,78 @@
+{
+  "id": "americanexpress",
+  "name": "American Express",
+  "service": "amex",
+  "trust": "community",
+  "beta": true,
+  "verified": false,
+  "domain": "americanexpress.com",
+  "country": "global",
+  "currency": "EUR",
+  "version": "2021-08-13",
+  "minVersion": "0.5.0.24",
+  "license": "AGPL-3.0-or-later",
+  "attribution": {
+    "derivedFrom": "woob — American Express module",
+    "copyright": "Copyright (C) 2013 Romain Bignon",
+    "url": "https://gitlab.com/woob/woob/-/tree/master/modules/americanexpress",
+    "referenceLicense": "LGPL-3.0-or-later",
+    "woobIntelDate": "2021-08-13",
+    "note": "Endpoint + field map used as REFERENCE (facts / interface, no source code copied). `version` is the woob module's last functional (intel) commit date. No code copied; Habeas replays the user's own live session, it does not log in. This adapter is data, AGPL-3.0-or-later like Habeas.",
+    "license": "AGPL-3.0-or-later"
+  },
+  "notes": "BETA / UNVERIFIED and the LEAST ready of the batch. woob itself flagged '[americanexpress] new login is not supported' in 2021-08, so the intel is old AND was already breaking. Amex authenticates its JSON API with a per-card `account_token` HEADER (obtained from /api/servicing/v1/member), not a bearer/cookie alone — it's a grouped, multi-card source. Open items before this can work: (1) confirm the account_token(s) are captured and replayed as a header, and model MULTIPLE cards as groups (each card its own token); (2) transactions paging (offset + statement_end_date + status=posted) and the array path 'transactions'; (3) date field (charge_date vs post_date); (4) the correct regional host (global.americanexpress.com vs a locale host). Needs a real capture from someone with an Amex account.",
+  "categories": [
+    "banking"
+  ],
+  "match": [
+    "https://global.americanexpress.com/*"
+  ],
+  "openUrl": "https://global.americanexpress.com/dashboard",
+  "auth": {
+    "mode": "cookie",
+    "capturePaths": [
+      "/api/servicing/"
+    ],
+    "replayHeaders": [
+      "account_token",
+      "account_tokens",
+      "authorization"
+    ],
+    "cookies": true
+  },
+  "api": {
+    "host": "https://global.americanexpress.com"
+  },
+  "streams": [
+    {
+      "id": "movimientos",
+      "name": "Movimientos",
+      "schema": "transaction@1",
+      "categories": [
+        "banking"
+      ],
+      "keepRaw": true,
+      "api": {
+        "list": {
+          "path": "/api/servicing/v1/financials/transactions",
+          "itemsPath": "transactions",
+          "params": {
+            "limit": "1000",
+            "offset": "0",
+            "status": "posted"
+          },
+          "headers": {
+            "accept": "application/json"
+          }
+        }
+      },
+      "fields": {
+        "internalId": "reference_id",
+        "date": "charge_date",
+        "amount": "amount",
+        "description": "description",
+        "counterparty": "description"
+      }
+    }
+  ]
+}
