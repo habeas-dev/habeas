@@ -3,18 +3,26 @@
   "name": "PayPal",
   "service": "paypal",
   "trust": "community",
-  "beta": true,
-  "version": "2026-07-23.1",
+  "version": "2026-07-23.2",
   "minVersion": "0.7.0.10",
   "domain": "paypal.com",
-  "match": ["https://www.paypal.com/*"],
+  "match": [
+    "https://www.paypal.com/*"
+  ],
   "openUrl": "https://www.paypal.com/myaccount/activities/",
-  "categories": ["banking"],
+  "categories": [
+    "banking"
+  ],
   "schema": "transaction@1",
   "auth": {
     "mode": "cookie",
-    "replayHeaders": ["x-csrf-token", "x-requested-with"],
-    "capturePaths": ["/myaccount/activities"]
+    "replayHeaders": [
+      "x-csrf-token",
+      "x-requested-with"
+    ],
+    "capturePaths": [
+      "/myaccount/activities"
+    ]
   },
   "api": {
     "host": "https://www.paypal.com",
@@ -41,12 +49,16 @@
         "isClearFilterSelection": "false",
         "isClientSideFiltering": "false"
       },
-      "headers": { "x-requested-with": "XMLHttpRequest" }
+      "headers": {
+        "x-requested-with": "XMLHttpRequest"
+      }
     },
     "detail": {
       "path": "/myaccount/activities/details/inline/{internalId}",
       "method": "GET",
-      "headers": { "x-requested-with": "XMLHttpRequest" },
+      "headers": {
+        "x-requested-with": "XMLHttpRequest"
+      },
       "json": true,
       "root": "data",
       "fields": {
@@ -63,7 +75,11 @@
       },
       "items": {
         "path": "itemDetails.itemList",
-        "fields": { "name": "name", "price": "price", "total": "itemTotalPrice" }
+        "fields": {
+          "name": "name",
+          "price": "price",
+          "total": "itemTotalPrice"
+        }
       }
     }
   },
