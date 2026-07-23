@@ -19,6 +19,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   `detail.json`/`detail.root` and a JSON `items` shape. Covered by `test/detail-json.test.mjs`.
 
 ### Fixed
+- **PDF preview no longer downloads the JSON detail when a doc has no PDF** (`ui/archive.js` `previewFile`). The
+  Archive preview fetched the requested format but fell back to any other delivered ext — so previewing the PDF
+  of an order with no invoice (e.g. an old Amazon order past retention) returned the JSON detail, which the
+  viewer then downloaded. Preview now retrieves EXACTLY the requested format (`retrieveDelivered … {only:true}`)
+  and shows "preview unavailable" instead.
 - **Order-total extraction: grand total (any currency) instead of a subtotal / nothing** (`runtime/inventory.js`
   `normalizeAmount`, `sinks/format.js` `adoptDetailMeta`, `sources/amazon.json`). The generic Amazon total regex
   matched `Total:` literally — but the grand-total row reads `Total (I.V.A. Incluido): US$9.99` on a

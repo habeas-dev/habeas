@@ -809,7 +809,9 @@ async function previewFile(r, sink, ext) {
   body.innerHTML = `<div class="pv-msg"><span class="thb big"></span> ${esc(t('archive_preview_loading'))}</div>`;
   ov.hidden = false;
   try {
-    const res = await retrieveDelivered(sink, r.adapter, r.record, ext);
+    // only:true — preview EXACTLY the requested format; never fall back to another ext (a missing PDF invoice,
+    // e.g. an old Amazon order past retention, must not silently return the JSON detail → the viewer downloads it).
+    const res = await retrieveDelivered(sink, r.adapter, r.record, ext, { only: true });
     if (PV_CTX && PV_CTX.r !== r) return; // a newer preview started
     if (!res || !res.blob) { body.innerHTML = `<div class="pv-msg">${esc(t('archive_preview_fail'))}</div>`; return; }
     if (PV_URL) { try { URL.revokeObjectURL(PV_URL); } catch (e) {} }
