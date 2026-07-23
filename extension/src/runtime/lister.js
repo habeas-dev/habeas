@@ -21,7 +21,7 @@ import { putItems, getRecords } from '../lib/store.js';
 export async function listSourceInto(adapter, opts = {}) {
   const ds = opts.ds || {};
   const auth = opts.auth, net = opts.net;
-  adapter = withBrandHost(adapter, net); // brand (multi-TLD) source → api.host = the domain the user's tab is on
+  adapter = withBrandHost(adapter, net, ds); // brand (multi-TLD) source → api.host = the tab's domain, or the pinned country
   const outs = (opts.outputs && opts.outputs.length) ? opts.outputs : outputsOf(adapter);
   const streamIds = [...new Set(outs.map((o) => o.stream))];
   // A saved account filter (ds.groups) takes over: list ALL selected accounts, no per-list picker. Without

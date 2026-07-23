@@ -18,7 +18,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   cookie-mode only, so the browser isolates each domain's session — one country's session can never be replayed
   to another (no off-site consent needed, unlike `crossDomainHosts`). The security guard (`checkHosts`) allows
   the declared brand set; a non-brand host is still rejected. Enables a single generic Amazon (etc.) instead of
-  one source per country. Covered by `test/adapters.test.mjs`.
+  one source per country. Covered by `test/adapters.test.mjs`. An **unattended scheduled run** (no tab to infer
+  the domain from) honours a per-datasource pinned country (`ds.brandDomain`): it opens that country's site and
+  uses it as the host. (The visible country picker ships with the generic Amazon source.)
 - **Experimental (beta) sources can be published and tested** (`registry`, `ui/marketplace.*`, sources catalog).
   A source drafted but not yet verified against a real account (e.g. DeGiro, derived from woob's endpoint map)
   can now ship flagged `beta: true` instead of being hidden — otherwise nobody with the account could ever test

@@ -278,13 +278,14 @@ export async function resolveSiteFetch(adapter) {
   return pf;
 }
 
-// For a brand (multi-TLD) source, resolve api.host to the domain the user's tab is actually on (the in-page
-// fetch runs in THAT tab, so its cookies match). A single-domain source is returned unchanged.
-export function withBrandHost(adapter, net) {
-  if (adapter && Array.isArray(adapter.domains) && adapter.domains.length && net && net.origin) {
-    return { ...adapter, api: { ...adapter.api, host: net.origin } };
-  }
-  return adapter;
+// For a brand (multi-TLD) source, resolve api.host to the domain the user's tab is on (the in-page fetch runs in
+// THAT tab, so its cookies match). When there's no tab — an UNATTENDED scheduled run — fall back to the country
+// the datasource is pinned to (ds.brandDomain, chosen by the user). A single-domain source is returned unchanged.
+export function withBrandHost(adapter, net, ds) {
+  if (!adapter || !Array.isArray(adapter.domains) || !adapter.domains.length) return adapter;
+  let host = (net && net.origin) || null;
+  if (!host && ds && ds.brandDomain && adapter.domains.includes(ds.brandDomain)) host = 'https://www.' + ds.brandDomain;
+  return host ? { ...adapter, api: { ...adapter.api, host } } : adapter;
 }
 
 // The open browser tab (if any) sitting on the source's site — the in-session context to fetch through.
@@ -303,7 +304,12 @@ async function findSiteTab(adapter) {
 
 // The site's base URL (from the source's match / api host) — where a tab is opened to establish the
 // in-session context the page-context fetch needs.
-export function siteBaseUrl(adapter) {
+export function siteBaseUrl(adapter, ds) {
+  // Brand (multi-TLD) source pinned to a country (ds.brandDomain): open THAT country's site so an unattended
+  // scheduled run establishes the right session (otherwise there's no tab to infer the domain from).
+  if (Array.isArray(adapter.domains) && adapter.domains.length && ds && ds.brandDomain && adapter.domains.includes(ds.brandDomain)) {
+    return 'https://www.' + ds.brandDomain + '/';
+  }
   // A source can name the exact page to open (openUrl) — its "my purchases / account" page — so the tab
   // lands the user on their data AND loads the SPA whose CSP allows the API host. Guarded to the source's
   // own registrable domain by validate.js (collectHosts), like every other host it touches.
@@ -322,10 +328,10 @@ export function siteBaseUrl(adapter) {
 // A page-bound fetch for the source's site. Reuses an open tab; with { open:true }, LAUNCHES one when
 // none exists (so the session is available — the user may need to log in there) and waits for it to load.
 // This is what makes a source recover from "no tab → CSRF/auth failure" instead of silently failing.
-export async function ensureSiteFetch(adapter, { open = false } = {}) {
+export async function ensureSiteFetch(adapter, { open = false, ds } = {}) {
   const existing = await resolveSiteFetch(adapter);
   if (existing || !open) return existing;
-  const url = siteBaseUrl(adapter);
+  const url = siteBaseUrl(adapter, ds);
   let tab; try { tab = await chrome.tabs.create({ url, active: true }); } catch (e) { return null; }
   if (!tab || tab.id == null) return null;
   await waitTabComplete(tab.id);

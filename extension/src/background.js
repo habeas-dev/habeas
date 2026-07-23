@@ -637,8 +637,8 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
     // Open the site tab only if the outputs can produce FILES (a per-item PDF/Excel needs the page-context
     // fetch); a records-only send never fetches. opts.force ("Re-download from site") always opens it.
     const wantsDocs = opts.force || outputsOf(adapter).some((o) => artifactKinds(resolveOutput(adapter, o.id)).length);
-    const net = auth ? await ensureSiteFetch(adapter, { open: wantsDocs }).catch(() => null) : null; // null → records-only delivery still works
-    adapter = withBrandHost(adapter, net); // brand (multi-TLD) source → api.host = the domain the user's tab is on
+    const net = auth ? await ensureSiteFetch(adapter, { open: wantsDocs, ds }).catch(() => null) : null; // null → records-only delivery still works
+    adapter = withBrandHost(adapter, net, ds); // brand (multi-TLD) source → api.host = the tab's domain, or the pinned country
     // The RECORDS were passed in from the Archive page (which already read the store) → no store re-read here,
     // so a Dropbox/folder-backed archive that the service worker can't list still works. Group by stream.
     const byStream = new Map();
@@ -733,8 +733,8 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     if (!auth || ctxMissing) { await appendLog({ ...base, status: 'nosession' }); await badgeClear(); setStatus(t('status_nosession', [name])); return { status: 'nosession' }; }
     // Auto/sweep runs unattended (a tab is already open post-login) → reuse it. A MANUAL/interactive run (the
     // Archive's "Save") opens the site tab if none exists, so the page-context fetch inherits the session.
-    const net = opts.net || (opts.interactive ? await ensureSiteFetch(adapter, { open: true }) : await resolveSiteFetch(adapter));
-    adapter = withBrandHost(adapter, net); // brand (multi-TLD) source → api.host = the domain the user's tab is on
+    const net = opts.net || (opts.interactive ? await ensureSiteFetch(adapter, { open: true, ds }) : await resolveSiteFetch(adapter));
+    adapter = withBrandHost(adapter, net, ds); // brand (multi-TLD) source → api.host = the tab's domain, or the pinned country
     const delivered = await deliveredSet(ds.id, sink.id);
     // A source may expose several outputs (streams×formats). Auto-mode delivers the outputs THIS sink accepts
     // (a typed consumer that wants only `transaction` gets just that stream). List once per stream (formats
