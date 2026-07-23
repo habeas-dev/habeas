@@ -52,7 +52,12 @@ export function collectHosts(adapter) {
 export function checkHosts(adapter) {
   const base = registrableDomain(adapter.domain || (adapter.api && adapter.api.host) || '');
   const extra = [...new Set((adapter.crossDomainHosts || []).map(registrableDomain))].filter(Boolean);
-  const allowed = new Set([base, ...extra].filter(Boolean));
+  // Brand domains: one source may operate on several TLDs of the SAME brand (amazon.es/.com/.de…). Each domain
+  // uses its OWN browser-isolated cookie session — the source never replays one domain's session to another —
+  // so these are allowed WITHOUT the off-site consent that crossDomainHosts needs. Cookie-mode only (enforced
+  // in validateAdapter), because that's what makes the browser guarantee the per-domain session isolation.
+  const brand = [...new Set((adapter.domains || []).map(registrableDomain))].filter(Boolean);
+  const allowed = new Set([base, ...extra, ...brand].filter(Boolean));
   const hosts = collectHosts(adapter);
   const offenders = hosts.filter((h) => !allowed.has(registrableDomain(h)));
   return {
@@ -60,8 +65,9 @@ export function checkHosts(adapter) {
     base,
     allowed: [...allowed],
     crossDomain: extra,             // extra registrable domains → require explicit user consent
+    brand,                          // same-brand TLDs → allowed without consent (cookie-isolated sessions)
     hosts,
-    offenders,                      // hosts not covered by base or crossDomain → hard reject
+    offenders,                      // hosts not covered by base / crossDomain / brand → hard reject
   };
 }
 
@@ -164,6 +170,14 @@ export function validateAdapter(adapter) {
       const th = adapter.throttle;
       req(th && typeof th.minMs === 'number' && th.minMs >= 0 && (th.jitterMs == null || (typeof th.jitterMs === 'number' && th.jitterMs >= 0)),
         'throttle must be { minMs: number≥0, jitterMs?: number≥0 }');
+    }
+
+    // Multi-domain (brand) source: several TLDs of the same brand, one adapter. Cookie-only so the browser
+    // isolates each domain's session (no cross-domain replay is even possible); the API host is resolved at
+    // runtime to whichever brand domain the user's tab is on.
+    if (Array.isArray(adapter.domains) && adapter.domains.length) {
+      req(auth.mode === 'cookie', 'a multi-domain source (domains[]) must use auth.mode "cookie" — the browser then isolates each domain session, so one domain\'s session can never reach another');
+      req(adapter.domains.every((d) => typeof d === 'string' && /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(d)), 'domains[] must be registrable domains, e.g. "amazon.es"');
     }
 
     const h = checkHosts(adapter);

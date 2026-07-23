@@ -272,13 +272,26 @@ export function makePageFetch(tabId, adapter) {
 // the caller then falls back to a direct extension fetch, which works for non-anti-bot APIs).
 export async function resolveSiteFetch(adapter) {
   const tab = await findSiteTab(adapter);
-  return tab ? makePageFetch(tab.id, adapter) : null;
+  if (!tab) return null;
+  const pf = makePageFetch(tab.id, adapter);
+  try { pf.origin = new URL(tab.url).origin; } catch (e) {} // the domain this session is on — for brand (multi-TLD) sources
+  return pf;
+}
+
+// For a brand (multi-TLD) source, resolve api.host to the domain the user's tab is actually on (the in-page
+// fetch runs in THAT tab, so its cookies match). A single-domain source is returned unchanged.
+export function withBrandHost(adapter, net) {
+  if (adapter && Array.isArray(adapter.domains) && adapter.domains.length && net && net.origin) {
+    return { ...adapter, api: { ...adapter.api, host: net.origin } };
+  }
+  return adapter;
 }
 
 // The open browser tab (if any) sitting on the source's site — the in-session context to fetch through.
 async function findSiteTab(adapter) {
   const pats = [];
   if (adapter.domain) pats.push(`*://*.${adapter.domain}/*`, `*://${adapter.domain}/*`);
+  for (const d of adapter.domains || []) pats.push(`*://*.${d}/*`, `*://${d}/*`); // brand TLDs (amazon.es/.com/.de…)
   for (const m of adapter.match || []) {
     const h = String(m).replace(/^[a-z]+:\/\//i, '').replace(/[:/].*$/, '');
     if (h && !pats.some((p) => p.endsWith('//' + h + '/*') || p.endsWith('.' + h + '/*'))) pats.push(`*://${h}/*`);
@@ -312,10 +325,13 @@ export function siteBaseUrl(adapter) {
 export async function ensureSiteFetch(adapter, { open = false } = {}) {
   const existing = await resolveSiteFetch(adapter);
   if (existing || !open) return existing;
-  let tab; try { tab = await chrome.tabs.create({ url: siteBaseUrl(adapter), active: true }); } catch (e) { return null; }
+  const url = siteBaseUrl(adapter);
+  let tab; try { tab = await chrome.tabs.create({ url, active: true }); } catch (e) { return null; }
   if (!tab || tab.id == null) return null;
   await waitTabComplete(tab.id);
-  return makePageFetch(tab.id, adapter);
+  const pf = makePageFetch(tab.id, adapter);
+  try { pf.origin = new URL(tab.url || url).origin; } catch (e) {}
+  return pf;
 }
 
 const cookieDomain = (adapter) => (adapter.domain || ((adapter.api && adapter.api.host) || '').replace(/^https?:\/\//, '').replace(/[:/].*$/, ''));

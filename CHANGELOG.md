@@ -11,6 +11,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Brand sources: one source across a brand's TLDs (dynamic host)** (`adapters/validate.js`, `lib/pagefetch.js`,
+  `background.js`, `runtime/lister.js`). A source can declare `domains: ["amazon.es","amazon.com","amazon.de",…]`
+  — several country TLDs of the SAME brand, one adapter. Its `api.host` is resolved at runtime to whichever brand
+  domain the user's tab is on, and the in-session fetch runs in that tab (its own cookies). Safe by construction:
+  cookie-mode only, so the browser isolates each domain's session — one country's session can never be replayed
+  to another (no off-site consent needed, unlike `crossDomainHosts`). The security guard (`checkHosts`) allows
+  the declared brand set; a non-brand host is still rejected. Enables a single generic Amazon (etc.) instead of
+  one source per country. Covered by `test/adapters.test.mjs`.
 - **Experimental (beta) sources can be published and tested** (`registry`, `ui/marketplace.*`, sources catalog).
   A source drafted but not yet verified against a real account (e.g. DeGiro, derived from woob's endpoint map)
   can now ship flagged `beta: true` instead of being hidden — otherwise nobody with the account could ever test
