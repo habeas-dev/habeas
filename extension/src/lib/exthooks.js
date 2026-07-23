@@ -36,7 +36,10 @@ export function validateProposal(origin, msg) {
   if (!sinkIsOriginBound(origin, sink.url)) return { ok: false, error: 'origin-bound: the sink URL host must equal the requesting origin' };
   const filter = msg.filter && Array.isArray(msg.filter.categories) ? { categories: msg.filter.categories.map(String) } : undefined;
   const headers = sink.headers && typeof sink.headers === 'object' ? sink.headers : undefined;
-  return { ok: true, sink: { type: 'http', url: sink.url, ...(headers ? { headers } : {}) }, filter };
+  // A site MAY propose a friendly display name (untrusted → sanitized + length-capped; the origin id stays
+  // visible next to it in Settings, so a spoofy name can't hide which site the destination really is).
+  const name = typeof sink.name === 'string' ? sink.name.replace(/[\r\n\t]+/g, ' ').trim().slice(0, 40) : '';
+  return { ok: true, sink: { type: 'http', url: sink.url, ...(name ? { name } : {}), ...(headers ? { headers } : {}) }, filter };
 }
 
 // A short, stable id for a sink derived from its origin host (so re-proposals reuse the same sink).

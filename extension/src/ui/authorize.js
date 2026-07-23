@@ -28,7 +28,7 @@ async function init() {
   const adapters = await getAdapters();
   const adapter = adapters[req.source];
   $('#source').textContent = (adapter && adapter.name) || req.source;
-  $('#dest').textContent = req.sink.url;
+  $('#dest').textContent = ((req.sink && req.sink.name) ? req.sink.name + ' — ' : '') + req.sink.url;
   $('#scope').textContent = req.filter && req.filter.categories && req.filter.categories.length ? req.filter.categories.join(', ') : t('authz_scope_all');
   $('#deny').onclick = () => resolve(false, req);
   $('#allow').onclick = () => resolve(true, req, adapter);
@@ -54,7 +54,9 @@ async function resolve(allow, req, adapter) {
   }
   if (!adapter) { $('#status').textContent = t('authz_unknown_source'); return; }
   const sinkId = sinkIdForOrigin(req.origin);
-  const sink = { id: sinkId, type: 'http', url: req.sink.url };
+  // Give the auto-created destination a friendly, visible name: the site's proposed name if any, else its own
+  // host (e.g. "tiquetera.app") — so it doesn't show as a bare "ext-…" id in Settings.
+  const sink = { id: sinkId, name: (req.sink && req.sink.name) || originHost(req.origin), type: 'http', url: req.sink.url };
   if (req.sink.headers) sink.headers = req.sink.headers;
   else {
     // Re-proposal WITHOUT headers keeps the already-paired credential: a consumer cannot re-read

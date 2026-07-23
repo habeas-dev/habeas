@@ -11,6 +11,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Site-created destinations get a friendly name too** (`lib/exthooks.js`, `ui/authorize.js`). When a site
+  proposes its own http destination, it may now include a display name (untrusted → sanitized + length-capped);
+  otherwise the destination is auto-named after the site’s host (e.g. "tiquetera.app") instead of showing a bare
+  "ext-…" id. The authorize screen shows the name being granted; the origin id stays visible in Settings.
 - **Destinations can have a friendly, visible name** (`ui/sinkform.js`, `ui/options.js`). Sinks were shown by
   their bare id everywhere; the add-a-destination form now has an optional name field, existing destinations get
   a Rename button, and the name (falling back to the id) is used in the destinations list, the auto-sync

@@ -47,6 +47,15 @@ test('sinkIdForOrigin is stable and host-derived', () => {
   assert.equal(sinkIdForOrigin('https://tiquetera.app'), sinkIdForOrigin('https://tiquetera.app/other-path'));
 });
 
+test('validateProposal captures a proposed name (sanitized + length-capped), omits it when absent', () => {
+  const base = { source: 'carrefour-es', sink: { type: 'http', url: 'https://tiquetera.app/ingest' } };
+  assert.equal(validateProposal('https://tiquetera.app', base).sink.name, undefined); // no name → omitted
+  const named = validateProposal('https://tiquetera.app', { ...base, sink: { ...base.sink, name: '  Tiquetera\n ' } });
+  assert.equal(named.sink.name, 'Tiquetera'); // trimmed, newlines stripped
+  const long = validateProposal('https://tiquetera.app', { ...base, sink: { ...base.sink, name: 'x'.repeat(80) } });
+  assert.equal(long.sink.name.length, 40); // length-capped
+});
+
 test('enabledSources returns only enabled datasources, as public metadata (no accounts/data)', () => {
   const adapters = {
     'ing-es': { id: 'ing-es', name: 'ING España', service: 'ing', categories: ['banking'], trust: 'community', api: { host: 'x' } },
