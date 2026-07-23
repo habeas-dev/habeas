@@ -11,6 +11,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Destinations can have a friendly, visible name** (`ui/sinkform.js`, `ui/options.js`). Sinks were shown by
+  their bare id everywhere; the add-a-destination form now has an optional name field, existing destinations get
+  a Rename button, and the name (falling back to the id) is used in the destinations list, the auto-sync
+  checkboxes, the scheduler and the store picker.
 - **Auto-sync to MULTIPLE destinations per source** (`ui/options.js`, `background.js`). Automatic mode was one
   destination per source; now each source shows a checkbox per compatible service and you can enable several at
   once — a source fans out to every checked destination on login-capture and on the periodic sweep (the

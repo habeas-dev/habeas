@@ -46,6 +46,7 @@ export async function buildSinkFromForm(root, type) {
   const val = (id) => { const el = root.querySelector('#' + id); return el ? el.value : ''; };
   const id = (val('sid').trim()) || (type + '-1');
   const sink = { id, type };
+  const nm = val('sname').trim(); if (nm) sink.name = nm; // a friendly, visible name (falls back to the id)
   if (type === 'http') {
     sink.url = val('surl').trim(); sink.tokenRef = 'secret://' + id;
     if (val('stok').trim()) await setSecret(id, val('stok').trim());
@@ -100,6 +101,7 @@ export function mountSinkForm(root, opts = {}) {
   const sel = document.createElement('select');
   sel.innerHTML = SINK_TYPES.filter((x) => allowed.includes(x.value)).map((x) => `<option value="${esc(x.value)}">${esc(t(x.i18n))}</option>`).join('');
   if (opts.type && allowed.includes(opts.type)) sel.value = opts.type;
+  const nameIn = document.createElement('input'); nameIn.id = 'sname'; nameIn.size = 12; nameIn.placeholder = t('sink_name_ph'); nameIn.title = t('sink_name_hint');
   const fields = document.createElement('span'); fields.className = 'row';
   const add = document.createElement('button'); add.className = 'primary'; add.textContent = t(opts.addLabel || 'add');
   const paint = () => { fields.innerHTML = renderSinkFields(sel.value); };
@@ -114,7 +116,7 @@ export function mountSinkForm(root, opts = {}) {
     } catch (e) { if (opts.onError) opts.onError(e); else alert((e && e.message) || String(e)); }
     finally { add.disabled = false; }
   };
-  wrap.append(sel, fields, add);
+  wrap.append(sel, nameIn, fields, add);
   root.innerHTML = ''; root.append(wrap);
   return { typeSelect: sel, repaint: paint };
 }

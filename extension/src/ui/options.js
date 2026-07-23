@@ -133,14 +133,22 @@ async function render() {
 
   const defSink = (await chrome.storage.local.get('habeas:defaultsink'))['habeas:defaultsink'] || '';
   $('#sinks').innerHTML = cfg.sinks.map((s) =>
-    `<div class="card row"><b style="flex:1">${esc(s.id)}${s.id === defSink ? ' <span class="pill sent">★ ' + t('default_sink') + '</span>' : ''}</b><code>${esc(s.type)}</code>
+    `<div class="card row"><b style="flex:1">${esc(s.name || s.id)}${s.name ? ` <code>${esc(s.id)}</code>` : ''}${s.id === defSink ? ' <span class="pill sent">★ ' + t('default_sink') + '</span>' : ''}</b><code>${esc(s.type)}</code>
       ${s.type === 'drive' ? `<button data-conn="${esc(s.id)}">${t('connect_drive')}</button>` : ''}
       ${s.type === 'dropbox' ? `<button data-dbxconn="${esc(s.id)}">${t('connect_dropbox')}</button>` : ''}
       ${s.type === 'local-folder' ? `<code>${esc(s.folderName || '—')}</code><button data-folder="${esc(s.id)}">${t('change_folder')}</button>` : ''}
       ${s.url ? `<small>${esc(s.url)}</small>` : ''}
+      <button data-rename="${esc(s.id)}" title="${esc(t('sink_rename_hint'))}">${t('sink_rename')}</button>
       <button data-default="${esc(s.id)}" title="${t('set_default_hint')}">${s.id === defSink ? t('unset_default') : t('set_default')}</button>
       <button data-del="${esc(s.id)}">${t('remove')}</button></div>`).join('')
     || `<p class="muted">${t('no_sinks')}</p>`;
+  $('#sinks').querySelectorAll('[data-rename]').forEach((b) => b.onclick = async () => {
+    const c = await getConfig(); const s = (c.sinks || []).find((x) => x.id === b.dataset.rename); if (!s) return;
+    const nm = prompt(t('sink_rename_prompt'), s.name || '');
+    if (nm == null) return; // cancelled
+    const v = nm.trim(); if (v) s.name = v; else delete s.name;
+    await upsert('sinks', s); render();
+  });
   $('#sinks').querySelectorAll('[data-default]').forEach((b) => b.onclick = async () => {
     const cur = (await chrome.storage.local.get('habeas:defaultsink'))['habeas:defaultsink'] || '';
     await chrome.storage.local.set({ 'habeas:defaultsink': cur === b.dataset.default ? '' : b.dataset.default }); // toggle
@@ -199,7 +207,7 @@ async function render() {
     const sinks = swSinks.filter((s) => !dsAdapter || sinkAcceptsSource(s, dsAdapter));
     const hay = [nameOf(d), d.id].join(' ').toLowerCase();
     const dests = sinks.length
-      ? sinks.map((s) => `<label class="destchk"><input type="checkbox" data-rsink="${esc(d.id)}" data-sink="${esc(s.id)}"${onSet.has(s.id) ? ' checked' : ''}> ${esc(s.id)} <span class="muted">(${esc(s.type)})</span></label>`).join('')
+      ? sinks.map((s) => `<label class="destchk"><input type="checkbox" data-rsink="${esc(d.id)}" data-sink="${esc(s.id)}"${onSet.has(s.id) ? ' checked' : ''}> ${esc(s.name || s.id)} <span class="muted">(${esc(s.type)})</span></label>`).join('')
       : `<span class="muted">${t('no_sw_sinks')}</span>`;
     return `<div class="src-card${on.length ? ' on' : ''}" data-hay="${esc(hay)}">
       <div class="src-info">
@@ -266,7 +274,7 @@ async function renderPlanner(cfg) {
   const opt = (v, label, sel) => `<option value="${esc(v)}"${sel === v ? ' selected' : ''}>${esc(label)}</option>`;
   const dsSel = $('#pl-ds'), sinkSel = $('#pl-sink');
   if (dsSel) dsSel.innerHTML = dsList.map((d) => opt(d.id, ((adapters[d.adapter] && adapters[d.adapter].name) || d.adapter) + (d.brandDomain ? ' (' + d.brandDomain.replace(/^[^.]*\./, '').toUpperCase() + ')' : ''), dsSel.value)).join('') || opt('', t('sched_no_sources'));
-  if (sinkSel) sinkSel.innerHTML = sinkList.map((s) => opt(s.id, `${s.id} (${s.type})`, sinkSel.value)).join('') || opt('', t('sched_no_sinks'));
+  if (sinkSel) sinkSel.innerHTML = sinkList.map((s) => opt(s.id, `${s.name || s.id} (${s.type})`, sinkSel.value)).join('') || opt('', t('sched_no_sinks'));
   const wd = $('#pl-weekdays'); if (wd && !wd.dataset.built) { wd.dataset.built = '1'; wd.innerHTML = WEEKDAYS.map(([n, k]) => `<label class="pill" style="cursor:pointer">${esc(t(k))}<input type="checkbox" value="${n}" style="margin-left:3px"></label>`).join(''); }
   const wdSel = $('#pl-weekday'); if (wdSel && !wdSel.options.length) wdSel.innerHTML = WEEKDAYS.map(([n, k]) => `<option value="${n}">${esc(t(k))}</option>`).join('');
   syncPlannerForm();
@@ -315,7 +323,7 @@ function renderStoreFields() {
     const sel = document.createElement('select'); sel.id = 'store-sink'; f.append(sel);
     getConfig().then(async (c) => {
       const sinks = (c.sinks || []).filter((s) => s.type === b);
-      sel.innerHTML = sinks.length ? sinks.map((s) => `<option value="${esc(s.id)}">${esc(s.id)}</option>`).join('') : `<option value="">${t('store_no_sink')}</option>`;
+      sel.innerHTML = sinks.length ? sinks.map((s) => `<option value="${esc(s.id)}">${esc(s.name || s.id)}</option>`).join('') : `<option value="">${t('store_no_sink')}</option>`;
       const cur = await getStoreConfig(); if (cur.backend === b && cur.sinkId) sel.value = cur.sinkId;
     });
   }

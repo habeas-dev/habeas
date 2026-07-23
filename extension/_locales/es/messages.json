@@ -470,6 +470,21 @@
     "message": "auto → $1 destino(s)",
     "placeholders": { "1": { "content": "$1" } }
   },
+  "sink_name_ph": {
+    "message": "nombre (opcional)"
+  },
+  "sink_name_hint": {
+    "message": "Un nombre visible y amigable para este destino (si no, se usa el id)"
+  },
+  "sink_rename": {
+    "message": "Renombrar"
+  },
+  "sink_rename_hint": {
+    "message": "Pon un nombre visible y amigable a este destino"
+  },
+  "sink_rename_prompt": {
+    "message": "Nombre visible para este destino (vacío para quitarlo):"
+  },
   "no_sw_sinks": {
     "message": "(sin destinos Drive/HTTP)"
   },

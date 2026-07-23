@@ -473,6 +473,21 @@
   "no_sw_sinks": {
     "message": "(no Drive/HTTP destinations)"
   },
+  "sink_name_ph": {
+    "message": "name (optional)"
+  },
+  "sink_name_hint": {
+    "message": "A friendly, visible name for this destination (falls back to the id)"
+  },
+  "sink_rename": {
+    "message": "Rename"
+  },
+  "sink_rename_hint": {
+    "message": "Set a friendly, visible name for this destination"
+  },
+  "sink_rename_prompt": {
+    "message": "Visible name for this destination (blank to clear):"
+  },
   "enable_ds_first": {
     "message": "Enable a data source to configure auto."
   },
