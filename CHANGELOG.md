@@ -11,6 +11,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **The authorize screen lets you edit the proposed destination name** (`ui/authorize.html`, `ui/authorize.js`).
+  The name a site proposes (or its host, as the default) is now shown in an editable field on the consent screen,
+  so you can rename the destination before granting it — the value you leave there becomes the destination’s
+  visible name (blank falls back to the site’s host).
 - **Site-created destinations get a friendly name too** (`lib/exthooks.js`, `ui/authorize.js`). When a site
   proposes its own http destination, it may now include a display name (untrusted → sanitized + length-capped);
   otherwise the destination is auto-named after the site’s host (e.g. "tiquetera.app") instead of showing a bare

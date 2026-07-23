@@ -924,6 +924,9 @@
   "authz_dest": {
     "message": "Envía a"
   },
+  "authz_name": {
+    "message": "Nómbralo"
+  },
   "authz_scope": {
     "message": "Alcance de datos"
   },

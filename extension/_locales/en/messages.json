@@ -924,6 +924,9 @@
   "authz_dest": {
     "message": "Sends to"
   },
+  "authz_name": {
+    "message": "Name it"
+  },
   "authz_scope": {
     "message": "Data scope"
   },

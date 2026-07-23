@@ -20,7 +20,7 @@ async function init() {
     // Consent to reveal WHICH sources are enabled (public metadata only) — no source/dest/scope to show.
     $('#intro').textContent = t('authz_ls_intro');
     $('#note').textContent = t('authz_ls_note');
-    for (const id of ['row-source', 'row-dest', 'row-scope']) { const el = document.getElementById(id); if (el) el.hidden = true; }
+    for (const id of ['row-source', 'row-dest', 'row-name', 'row-scope']) { const el = document.getElementById(id); if (el) el.hidden = true; }
     $('#deny').onclick = () => resolve(false, req);
     $('#allow').onclick = () => resolve(true, req);
     return;
@@ -28,7 +28,9 @@ async function init() {
   const adapters = await getAdapters();
   const adapter = adapters[req.source];
   $('#source').textContent = (adapter && adapter.name) || req.source;
-  $('#dest').textContent = ((req.sink && req.sink.name) ? req.sink.name + ' — ' : '') + req.sink.url;
+  $('#dest').textContent = req.sink.url;
+  // The destination's visible name — prefilled with the site's proposal (or its host) and EDITABLE before approving.
+  $('#namein').value = (req.sink && req.sink.name) || originHost(req.origin);
   $('#scope').textContent = req.filter && req.filter.categories && req.filter.categories.length ? req.filter.categories.join(', ') : t('authz_scope_all');
   $('#deny').onclick = () => resolve(false, req);
   $('#allow').onclick = () => resolve(true, req, adapter);
@@ -54,9 +56,10 @@ async function resolve(allow, req, adapter) {
   }
   if (!adapter) { $('#status').textContent = t('authz_unknown_source'); return; }
   const sinkId = sinkIdForOrigin(req.origin);
-  // Give the auto-created destination a friendly, visible name: the site's proposed name if any, else its own
-  // host (e.g. "tiquetera.app") — so it doesn't show as a bare "ext-…" id in Settings.
-  const sink = { id: sinkId, name: (req.sink && req.sink.name) || originHost(req.origin), type: 'http', url: req.sink.url };
+  // Give the auto-created destination a friendly, visible name: whatever the user left in the editable name field
+  // (prefilled with the site's proposal or its host), never a bare "ext-…" id.
+  const editedName = (($('#namein') && $('#namein').value) || '').trim();
+  const sink = { id: sinkId, name: editedName || originHost(req.origin), type: 'http', url: req.sink.url };
   if (req.sink.headers) sink.headers = req.sink.headers;
   else {
     // Re-proposal WITHOUT headers keeps the already-paired credential: a consumer cannot re-read
