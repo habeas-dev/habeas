@@ -20,7 +20,11 @@ export async function getGrant(id) {
   return (await getGrants()).find((g) => g.id === id) || null;
 }
 export async function addGrant(grant) {
-  const list = await getGrants();
+  // One grant per (origin, route/kind): re-approving REPLACES the previous grant instead of
+  // stacking duplicates (a consumer that re-proposes the same source got one grant per approval).
+  const same = (g) => g.origin === grant.origin &&
+    (grant.kind ? g.kind === grant.kind : !g.kind && g.datasourceId === grant.datasourceId);
+  const list = (await getGrants()).filter((g) => !same(g));
   list.push(grant);
   await setGrants(list);
   return grant;

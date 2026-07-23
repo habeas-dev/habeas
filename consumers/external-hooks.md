@@ -123,6 +123,19 @@ own tab** (in-session) and returns **metadata only** — never the items, never 
 source with no groups returns `groups: []` (use plain `collect`). Omitting `group` in `collect`
 delivers **all** groups.
 
+## Revoking your own grant
+
+A consumer may drop a grant it no longer wants (pure scope reduction — no consent screen). Origin-bound
+like everything else: you can only revoke grants that belong to your origin. The user's source/sink
+config in Habeas stays; only your origin's capability to trigger it goes away.
+
+```js
+await habeas('revoke-grant', { grantId });   // → { ok:true, status:'ok' } | { ok:false, status:'denied' }
+```
+
+Re-approving a proposal never stacks duplicates: there is at most ONE grant per (origin, source) — a
+fresh approval replaces the previous grant.
+
 ## D. List enabled sources (discovery)
 
 Ask which sources the user currently has **enabled**, so your app can offer the relevant ones instead

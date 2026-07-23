@@ -11,6 +11,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **External `revoke-grant` hook** (`background.js`, `extbridge.js`): a consumer may revoke its OWN grant
+  (pure scope reduction, no consent screen; origin-bound as always). The user's source/sink config in Habeas
+  stays — only the origin's capability goes. Documented in `consumers/external-hooks.md`.
 - **External `collect` gains archive-only sync** (`background.js`, `{ fromStore: true }`): deliver the NEW
   stored documents (per-route ledger) straight from the canonical store without contacting the source — no
   tab, no session, no login. `group` narrows to one account via the cached enumeration's record label; per-item
@@ -67,6 +70,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   failing when clicked). Older documents with no recorded exts still show every format (backward-compatible).
 
 ### Fixed
+- **Grants no longer stack duplicates** (`lib/grants.js` `addGrant`): every approval of the same (origin,
+  source) proposal appended another grant, so a consumer ended up with N identical connections. `addGrant`
+  now enforces the documented "one grant per (origin, route)" rule (and one `list-sources` capability grant
+  per origin): a fresh approval replaces the previous grant.
 - **Approving an external proposal no longer wipes the datasource's saved state** (`ui/authorize.js`). The
   datasource `upsert` replaced the whole object, destroying the user's account selection
   (`ds.groups`/`groupLabels`), brand pinning and groups cache when a consumer connection was approved. It now

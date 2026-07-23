@@ -25,7 +25,7 @@ import { t } from './lib/i18n.js';
 import { getSubmitter } from './lib/submitter.js';
 import { getMyHandoffs } from './registry/client.js';
 import { validateProposal, originHost, enabledSources } from './lib/exthooks.js';
-import { getGrant, grantsForOrigin, grantUsableBy, touchGrant } from './lib/grants.js';
+import { getGrant, grantsForOrigin, grantUsableBy, touchGrant, revokeGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
 import { runStoreMigration } from './lib/migrate.js';
 import { autoDebounced, retainAutoDebounce, isLoginNavigation, needsTabEscalation, sweepSinkId, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
@@ -980,7 +980,19 @@ async function handleExt(api, payload, origin) {
   if (api === 'list-groups') return listGroupsForGrant(origin, payload);
   if (api === 'list-sources') return listSourcesForOrigin(origin);
   if (api === 'status') return extStatus(origin);
+  if (api === 'revoke-grant') return revokeGrantForOrigin(origin, payload);
   return { ok: false, status: 'error', error: 'unknown api' };
+}
+
+// A consumer may revoke ITS OWN grant (pure scope reduction — no consent needed; origin-bound like
+// everything else). The route's datasource/sink config stays in Habeas (it's the user's); only this
+// origin's capability to trigger it goes away.
+async function revokeGrantForOrigin(origin, payload) {
+  const grant = await getGrant(payload && payload.grantId);
+  if (!grantUsableBy(grant, origin)) return { ok: false, status: 'denied', error: 'no grant for this origin' };
+  await revokeGrant(grant.id);
+  await appendLog({ kind: 'ext-revoke', origin, source: grant.datasourceId || grant.kind || '', status: 'ok' });
+  return { ok: true, status: 'ok' };
 }
 
 // A site asks which sources the user currently has enabled. Consent-gated per origin (a lightweight
