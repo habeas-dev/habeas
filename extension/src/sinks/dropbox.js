@@ -170,6 +170,16 @@ export async function dropboxRetrieve(sink, relPath) {
   return await r.blob();
 }
 
+// Existence check by METADATA (no download) — used to scan which formats a delivered doc has cheaply.
+export async function dropboxExists(sink, relPath) {
+  const token = await dropboxToken(sink);
+  const path = dbxPath(sink.rootFolderName || '', relPath);
+  const r = await fetch('https://api.dropboxapi.com/2/files/get_metadata', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ path }) });
+  if (r.status === 409) return false; // path/not_found
+  if (!r.ok) throw new Error(`Dropbox metadata ${r.status}`);
+  return true;
+}
+
 async function dbxDelete(token, path) {
   const r = await fetch('https://api.dropboxapi.com/2/files/delete_v2', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ path }) });
   if (!r.ok && r.status !== 409) throw new Error('dropbox delete ' + r.status); // 409 path/not_found → already gone

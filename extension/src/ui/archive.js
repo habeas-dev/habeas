@@ -801,8 +801,9 @@ async function scanDocFormats(entry, r) {
   const found = [];
   for (const f of fmts) {
     for (const sink of r.delivered) {
-      const res = await retrieveDelivered(sink, r.adapter, r.record, f.ext, { only: true }).catch(() => null);
-      if (res && res.blob) { found.push(f.ext); break; }
+      // existsOnly → probe by metadata/HEAD, no download (a doc that HAS the PDF isn't re-downloaded just to check).
+      const res = await retrieveDelivered(sink, r.adapter, r.record, f.ext, { only: true, existsOnly: true }).catch(() => null);
+      if (res && res.exists) { found.push(f.ext); break; }
     }
   }
   const exts = [...new Set(found)];

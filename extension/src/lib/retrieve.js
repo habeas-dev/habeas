@@ -3,8 +3,8 @@
 // lives in the sink. A sink is "retrievable" only if we can read an arbitrary file back from it; download
 // (ephemeral ZIP) and http (POST-only) are NOT. We reconstruct the delivery path with the same pathFor the
 // sink used at write time; if it can't be reconstructed/fetched, the caller falls back to the JSON viewer.
-import { webdavRetrieve, s3Retrieve, folderRetrieve } from '../sinks/sinks.js';
-import { dropboxRetrieve } from '../sinks/dropbox.js';
+import { webdavRetrieve, s3Retrieve, folderRetrieve, webdavExists, s3Exists, folderExists } from '../sinks/sinks.js';
+import { dropboxRetrieve, dropboxExists } from '../sinks/dropbox.js';
 import { pathFor } from '../sinks/format.js';
 import { documentExt } from '../runtime/inventory.js';
 import { getHandle, verifyPermission } from './fs.js';
@@ -43,6 +43,16 @@ export async function retrieveDelivered(sink, adapter, record, preferExt, opts =
   if (opts.only && preferExt) cands = cands.filter((c) => c.ext === preferExt);
   for (const { ext, path } of cands) {
     try {
+      // opts.existsOnly: check existence by METADATA/HEAD (no download) — used to scan which formats a doc has.
+      if (opts.existsOnly) {
+        let ok = false;
+        if (sink.type === 'dropbox') ok = await dropboxExists(sink, path);
+        else if (sink.type === 'webdav') ok = await webdavExists(sink, path);
+        else if (sink.type === 's3') ok = await s3Exists(sink, path);
+        else if (sink.type === 'local-folder') ok = await folderExists(handle, path);
+        if (ok) return { exists: true, ext, path };
+        tried.push(path); continue;
+      }
       let blob = null;
       if (sink.type === 'dropbox') blob = await dropboxRetrieve(sink, path);
       else if (sink.type === 'webdav') blob = await webdavRetrieve(sink, path);

@@ -27,6 +27,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   `detail.json`/`detail.root` and a JSON `items` shape. Covered by `test/detail-json.test.mjs`.
 
 ### Added
+- **Format existence checked by metadata (no download)** (`lib/retrieve.js`, `sinks/*`). The format scan (lazy on
+  detail-open, and the full/auto passes) now probes each format with a metadata/HEAD call — Dropbox
+  `get_metadata`, S3/WebDAV `HEAD`, folder `getFileHandle` — via `retrieveDelivered(… {existsOnly:true})`, so a
+  document that HAS a format is no longer downloaded just to confirm it exists.
 - **Lazy format scan on opening a document detail** (`ui/archive.js`). The first time a delivered
   document's detail drawer opens, its file formats are probed + recorded in the background; if it turns out to
   lack a format (no invoice PDF), that button disappears and the drawer re-renders — so formats self-correct as

@@ -284,6 +284,35 @@ export async function folderRetrieve(dirHandle, relPath) {
   return await (await dir.getFileHandle(name)).getFile();
 }
 
+// --- Existence checks (no download) — used to scan which formats a delivered doc has cheaply. ---
+export async function webdavExists(sink, relPath) {
+  const base = String(sink.url || '').replace(/\/+$/, '');
+  const auth = await webdavAuthHeader(sink);
+  const url = base + '/' + encodePath(relPath);
+  let r = await fetch(url, { method: 'HEAD', headers: auth ? { Authorization: auth } : {} });
+  if (r.status === 405 || r.status === 501) r = await fetch(url, { method: 'GET', headers: { ...(auth ? { Authorization: auth } : {}), Range: 'bytes=0-0' } }); // HEAD unsupported → tiny ranged GET
+  if (r.status === 404) return false;
+  if (!r.ok && r.status !== 206) throw new Error(`WebDAV HEAD ${r.status}`);
+  return true;
+}
+export async function s3Exists(sink, relPath) {
+  const cfg = await s3Config(sink);
+  const url = s3Url(cfg, s3Key(cfg, relPath));
+  const { headers } = await sigv4Sign({ method: 'HEAD', url, region: cfg.region, accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey, amzDate: amzNow(), payloadHash: S3_EMPTY_SHA });
+  const r = await fetch(url, { method: 'HEAD', headers });
+  if (r.status === 404) return false;
+  if (!r.ok) throw new Error(`S3 HEAD ${r.status}`);
+  return true;
+}
+export async function folderExists(dirHandle, relPath) {
+  let dir = dirHandle;
+  const parts = String(relPath).split('/').filter(Boolean);
+  const name = parts.pop();
+  for (const p of parts) dir = await dir.getDirectoryHandle(p);
+  await dir.getFileHandle(name); // throws NotFoundError if the file is missing
+  return true;
+}
+
 // --- Canonical-store backends (reuse the delivery sinks' primitives) --------------------------------
 // Per-source JSON at <storeFolder>/<sourceId>.json under the sink's target, reusing its credentials.
 // All ops best-effort/silent — a store read/write must never break a List or delivery.
