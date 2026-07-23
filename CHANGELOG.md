@@ -10,6 +10,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **JSON per-document detail extraction** (`runtime/inventory.js` `extractDetailFields`). `api.detail` can now set
+  `json: true` (+ optional `root`) so a JSON detail endpoint is mapped via dotted get()-paths and `items:{path,
+  fields}` — previously detail field extraction was HTML-only. Lets PayPal enrich each transaction from
+  `/myaccount/activities/details/inline/{id}` with the numeric gross/net/**fee** amounts, **line items** (what was
+  bought), invoice id and expanded counterparty (email, is-business). Schema (`schema/adapter.schema.json`) gains
+  `detail.json`/`detail.root` and a JSON `items` shape. Covered by `test/detail-json.test.mjs`.
+
 ### Fixed
 - **Brand source instances open the source's orders page, not the domain root** (`lib/pagefetch.js`
   `siteBaseUrl`). A brand (multi-TLD) instance opened `https://www.<domain>/` (the homepage), ignoring the

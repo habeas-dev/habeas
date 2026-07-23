@@ -1160,15 +1160,30 @@ function componentRegion(html, name) {
 // line-items; `detail.const` merges constant fields (e.g. currency). date/total/amount are normalized
 // like a mapped doc (ISO date, numeric amount). Used when api.detail declares `fields`; else the
 // auto-detecting extractDetail path is used (full back-compat).
-export function extractDetailFields(html, cfg) {
+export function extractDetailFields(text, cfg) {
   const rec = { ...(cfg.const || {}) };
-  for (const k of Object.keys(cfg.fields || {})) {
-    const f = cfg.fields[k];
-    rec[k] = extractField(f.region ? componentRegion(html, f.region) : (html || ''), f);
+  if (cfg.json) {
+    // JSON detail (e.g. PayPal /details/inline): fields are dotted paths (get() supports array selectors) into
+    // the parsed body, optionally under a `root` path. `items` reads an array + per-element field paths.
+    let j = null; try { j = JSON.parse(text); } catch (e) {}
+    const root = cfg.root ? get(j, cfg.root) : j;
+    for (const k of Object.keys(cfg.fields || {})) {
+      const f = cfg.fields[k];
+      rec[k] = get(root, typeof f === 'string' ? f : (f && f.path) || '');
+    }
+    if (cfg.items && cfg.items.path) {
+      const arr = get(root, cfg.items.path);
+      rec.items = Array.isArray(arr) ? arr.map((el) => { const it = {}; for (const ik of Object.keys(cfg.items.fields || {})) it[ik] = get(el, cfg.items.fields[ik]); return it; }) : [];
+    }
+  } else {
+    for (const k of Object.keys(cfg.fields || {})) {
+      const f = cfg.fields[k];
+      rec[k] = extractField(f.region ? componentRegion(text, f.region) : (text || ''), f);
+    }
+    if (cfg.items) rec.items = parseHtmlItems(text || '', cfg.items);
   }
-  if (cfg.items) rec.items = parseHtmlItems(html || '', cfg.items);
   if (rec.date != null && rec.date !== '') rec.date = normalizeDate(rec.date);
-  for (const k of ['total', 'amount', 'refundTotal']) if (typeof rec[k] === 'string' && rec[k] !== '') rec[k] = normalizeAmount(rec[k]);
+  for (const k of ['total', 'amount', 'refundTotal', 'gross', 'net', 'fee']) if (typeof rec[k] === 'string' && rec[k] !== '') rec[k] = normalizeAmount(rec[k]);
   if (Array.isArray(rec.items)) for (const it of rec.items) for (const k of ['price', 'amount', 'total']) if (typeof it[k] === 'string' && it[k] !== '') it[k] = normalizeAmount(it[k]);
   return rec;
 }

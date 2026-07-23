@@ -903,7 +903,26 @@
               "description": "Declarative HTML → JSON: build the structured detail record from the page HTML (pages with no embedded JSON, e.g. Amazon order-details). Each key → an {re|attr|tag|sel} extractor (list-row vocabulary), optionally scoped with {region:\"data-component-name\"}. date/total/amount are normalized."
             },
             "items": {
-              "$ref": "#/$defs/rows"
+              "anyOf": [
+                { "$ref": "#/$defs/rows" },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "description": "[detail json] Line items from a JSON detail: `path` (dotted, get()-style) to the array + per-element `fields` (each a dotted path).",
+                  "properties": {
+                    "path": { "type": "string" },
+                    "fields": { "type": "object", "additionalProperties": { "type": "string" } }
+                  }
+                }
+              ]
+            },
+            "json": {
+              "type": "boolean",
+              "description": "[detail] The detail response is JSON (e.g. PayPal /details/inline). `fields` values become dotted get()-paths (not HTML extractors) and `items` uses the {path,fields} JSON shape."
+            },
+            "root": {
+              "type": "string",
+              "description": "[detail json] Optional dotted path to the object the fields are relative to (e.g. \"data\")."
             },
             "const": {
               "type": "object",
