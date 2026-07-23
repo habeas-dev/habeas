@@ -186,7 +186,7 @@ async function render() {
   const swSinks = cfg.sinks.filter((s) => ['drive', 'http', 'webdav', 's3', 'dropbox'].includes(s.type));
   const enabledDs = cfg.datasources.filter((d) => d.enabled);
   const routeOf = (d) => (cfg.routes || []).find((r) => r.datasource === d.id && r.mode === 'auto');
-  const nameOf = (d) => (CATALOG[d.adapter] && CATALOG[d.adapter].name) || d.id;
+  const nameOf = (d) => { const nm = (CATALOG[d.adapter] && CATALOG[d.adapter].name) || d.id; const tld = d.brandDomain ? ' (' + d.brandDomain.replace(/^[^.]*\./, '').toUpperCase() + ')' : ''; return nm + tld; };
   // Order: sources with auto enabled first, then alphabetical — same as the Sources tab.
   const ordered = enabledDs.slice().sort((a, b) => ((!!routeOf(b)) - (!!routeOf(a))) || nameOf(a).localeCompare(nameOf(b)));
   $('#routes').innerHTML = ordered.map((d) => {
@@ -267,7 +267,7 @@ async function renderPlanner(cfg) {
   const sinkList = (cfg.sinks || []).filter((s) => s.type !== 'download' && s.type !== 'local-folder');
   const opt = (v, label, sel) => `<option value="${esc(v)}"${sel === v ? ' selected' : ''}>${esc(label)}</option>`;
   const dsSel = $('#pl-ds'), sinkSel = $('#pl-sink');
-  if (dsSel) dsSel.innerHTML = dsList.map((d) => opt(d.id, (adapters[d.adapter] && adapters[d.adapter].name) || d.adapter, dsSel.value)).join('') || opt('', t('sched_no_sources'));
+  if (dsSel) dsSel.innerHTML = dsList.map((d) => opt(d.id, ((adapters[d.adapter] && adapters[d.adapter].name) || d.adapter) + (d.brandDomain ? ' (' + d.brandDomain.replace(/^[^.]*\./, '').toUpperCase() + ')' : ''), dsSel.value)).join('') || opt('', t('sched_no_sources'));
   if (sinkSel) sinkSel.innerHTML = sinkList.map((s) => opt(s.id, `${s.id} (${s.type})`, sinkSel.value)).join('') || opt('', t('sched_no_sinks'));
   const wd = $('#pl-weekdays'); if (wd && !wd.dataset.built) { wd.dataset.built = '1'; wd.innerHTML = WEEKDAYS.map(([n, k]) => `<label class="pill" style="cursor:pointer">${esc(t(k))}<input type="checkbox" value="${n}" style="margin-left:3px"></label>`).join(''); }
   const wdSel = $('#pl-weekday'); if (wdSel && !wdSel.options.length) wdSel.innerHTML = WEEKDAYS.map(([n, k]) => `<option value="${n}">${esc(t(k))}</option>`).join('');
@@ -276,7 +276,8 @@ async function renderPlanner(cfg) {
   const schedules = cfg.schedules || [];
   $('#pl-empty').hidden = schedules.length > 0;
   $('#pl-list').innerHTML = schedules.map((s) => {
-    const dsName = (adapters[(dsList.find((d) => d.id === s.datasource) || {}).adapter] || {}).name || s.datasource;
+    const sds = dsList.find((d) => d.id === s.datasource) || {};
+    const dsName = ((adapters[sds.adapter] || {}).name || s.datasource) + (sds.brandDomain ? ' (' + sds.brandDomain.replace(/^[^.]*\./, '').toUpperCase() + ')' : '');
     const nx = s.enabled ? nextOccurrence(s.spec, Date.now()) : null;
     return `<div class="src-card${s.enabled ? ' on' : ''}">
       <div class="src-info">

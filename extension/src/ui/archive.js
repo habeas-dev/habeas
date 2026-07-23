@@ -16,6 +16,7 @@ import { isRetrievable, retrieveDelivered } from '../lib/retrieve.js';
 import { detailView, hasDetail } from '../lib/detailview.js';
 import { sinkAcceptsSource, groupLabelOf } from '../sinks/format.js';
 import { resolveOutput } from '../lib/outputs.js';
+import { reconcileInstances, instancesOf } from '../lib/instances.js';
 import { artifactKinds } from '../runtime/inventory.js';
 import { listSourceInto } from '../runtime/lister.js';
 import { manageAccounts } from './accountpicker.js';
@@ -138,6 +139,18 @@ function isBankish(adapter) {
   return false;
 }
 function primaryCatOf(adapter) { return (adapter && adapter.categories && adapter.categories[0]) || (adapter && adapter.category) || 'other'; }
+// Display name for a source node. A brand source installed as SEVERAL country instances suffixes each with its
+// TLD ("Amazon · ES" / "Amazon · COM"); a lone install stays just "Amazon".
+function instanceName(adapter, ds) {
+  if (!adapter) return null;
+  const dom = ds && ds.brandDomain;
+  const siblings = ds ? (CFG.datasources || []).filter((d) => d.adapter === ds.adapter).length : 0;
+  const tld = dom ? String(dom).replace(/^[^.]*\./, '').toUpperCase() : '';
+  return (adapter.name || adapter.id) + (dom && siblings > 1 ? ' · ' + tld : '');
+}
+// The datasource that owns a store base. The base IS the datasource id (instances keep their own store); fall
+// back to matching by adapter id for a pre-instance store key.
+const dsForBase = (base) => (CFG.datasources || []).find((d) => d.id === base) || (CFG.datasources || []).find((d) => d.adapter === base) || null;
 function groupAllowed(ds, group) { const labels = ds && ds.groupLabels; return !(labels && labels.length) || !group || labels.includes(group); }
 // The captured session for a source (merged across sibling hosts sharing its registrable domain).
 const getAuth = (adapter) => loadAuth(adapter);
@@ -190,9 +203,9 @@ function seedIndexFromCache(cache) {
   const cs = (cache && cache.sources) || {};
   INDEX = Object.keys(cs).map((base) => {
     const c = cs[base];
-    const ds = (CFG.datasources || []).find((d) => d.adapter === base) || (CFG.datasources || []).find((d) => d.id === base) || null;
+    const ds = dsForBase(base);
     const adapter = (ds && ADAPTERS[ds.adapter]) || ADAPTERS[base] || null;
-    return { base, ds, adapter, name: c.name || (adapter && adapter.name) || base, count: c.count, lastDate: c.lastDate, primaryCat: c.primaryCat || primaryCatOf(adapter), accounts: c.accounts || [], keys: [] };
+    return { base, ds, adapter, name: instanceName(adapter, ds) || c.name || base, count: c.count, lastDate: c.lastDate, primaryCat: c.primaryCat || primaryCatOf(adapter), accounts: c.accounts || [], keys: [] };
   }).filter((s) => isRenderable(s.base) && (s.count > 0 || s.ds)).sort((a, b) => (b.lastDate || '').localeCompare(a.lastDate || '') || (b.count || 0) - (a.count || 0) || a.name.localeCompare(b.name));
 }
 // Build the index SHELL — source keys + adapter metadata, seeding count/lastDate/accounts from the cache so known
@@ -211,13 +224,13 @@ async function buildIndex() {
   // Also list every ENABLED, installed datasource — even with no stored docs yet — so the Archive is a complete
   // source manager: a freshly-installed source shows up and can be Refreshed to pull its first documents (this is
   // what lets the Archive replace the popup's Sources list).
-  const cfgBases = (CFG.datasources || []).filter((d) => d.enabled !== false && ADAPTERS[d.adapter]).map((d) => d.adapter);
+  const cfgBases = (CFG.datasources || []).filter((d) => d.enabled !== false && ADAPTERS[d.adapter]).map((d) => d.id);
   const bases = [...new Set([...storeBases, ...cfgBases])].filter(isRenderable);
   INDEX = bases.map((base) => {
-    const ds = (CFG.datasources || []).find((d) => d.adapter === base) || (CFG.datasources || []).find((d) => d.id === base) || null;
+    const ds = dsForBase(base);
     const adapter = (ds && ADAPTERS[ds.adapter]) || ADAPTERS[base] || null;
     const c = cs[base] || {};
-    return { base, ds, adapter, name: (adapter && adapter.name) || base, count: (c.count != null ? c.count : null), lastDate: (c.lastDate != null ? c.lastDate : null), primaryCat: primaryCatOf(adapter), accounts: c.accounts || [], keys: keys.filter((k) => String(k).split(':')[0] === base) };
+    return { base, ds, adapter, name: instanceName(adapter, ds) || base, count: (c.count != null ? c.count : null), lastDate: (c.lastDate != null ? c.lastDate : null), primaryCat: primaryCatOf(adapter), accounts: c.accounts || [], keys: keys.filter((k) => String(k).split(':')[0] === base) };
   }).sort((a, b) => (b.lastDate || '').localeCompare(a.lastDate || '') || (b.count || 0) - (a.count || 0) || a.name.localeCompare(b.name));
 }
 // Load each source's live count + last date one at a time, yielding between them so the shell stays responsive,
@@ -512,11 +525,11 @@ async function renderDocs() {
   // Accounts (allow-list) manager — grouped sources only. Lets the user choose which accounts to track from
   // the Archive, so the popup's account picker isn't needed.
   const acctBtn = (entry.ds && groupedAdapterOf(entry.adapter)) ? `<button id="accts" class="refbtn" title="${esc(t('archive_accounts_hint'))}"><span class="ic">👤</span> ${esc(t('archive_accounts'))}</button>` : '';
-  // Country picker — brand (multi-TLD) sources only: pins which country an unattended scheduled run uses.
-  const brandDomains = (entry.adapter && Array.isArray(entry.adapter.domains) && entry.adapter.domains.length) ? entry.adapter.domains : null;
-  const pinned = (entry.ds && entry.ds.brandDomains) || [];
-  const cLabel = pinned.length ? pinned.map((d) => d.replace(/^[^.]*\./, '').toUpperCase()).join('/') : t('archive_country');
-  const countryBtn = (entry.ds && brandDomains) ? `<button id="country" class="refbtn" title="${esc(t('archive_country_hint'))}"><span class="ic">🌍</span> ${esc(cLabel)}</button>` : '';
+  // Country instances — brand (multi-TLD) sources only: manage the per-country instances (each its own store +
+  // schedule). The button shows THIS instance's country; the picker manages the whole set.
+  const isBrand = !!(entry.adapter && Array.isArray(entry.adapter.domains) && entry.adapter.domains.length);
+  const cLabel = (entry.ds && entry.ds.brandDomain) ? entry.ds.brandDomain.replace(/^[^.]*\./, '').toUpperCase() : t('archive_country');
+  const countryBtn = (entry.ds && isBrand) ? `<button id="country" class="refbtn" title="${esc(t('archive_country_hint'))}"><span class="ic">🌍</span> ${esc(cLabel)}</button>` : '';
   head += `<div class="docbar"><div class="groupby">${gb('month', t('group_month'))}${gb('category', t('group_category'))}${gb('store', t('group_store'))}</div>
     <div class="docbar-r">${countryBtn}${acctBtn}${refreshBtn}${saveGrp}<button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div></div>`;
   // Selection bar: send the picked documents to any compatible destination (with a caret for "Re-download from
@@ -715,13 +728,13 @@ async function refreshSource(mode) {
   const adapter = entry.adapter;
   if (!(await hasConsent(adapter))) { $('#astatus').textContent = t('needs_consent'); return; }
   const auth = await getAuth(adapter);
-  if (!auth) { try { await ensureSiteFetch(adapter, { open: true }); } catch (e) {} $('#astatus').textContent = t('archive_refresh_nosession', [entry.name]); return; }
+  if (!auth) { try { await ensureSiteFetch(adapter, { open: true, ds: entry.ds }); } catch (e) {} $('#astatus').textContent = t('archive_refresh_nosession', [entry.name]); return; }
   const aborter = new AbortController();
   beginOp(() => { try { aborter.abort(); } catch (e) {} }); // Stop → abort the in-page list
   const btn = $('#refresh'); if (btn) { btn.disabled = true; btn.classList.add('spin'); }
   $('#astatus').textContent = mode === 'full' ? t('archive_rescanning') : t('archive_refreshing');
   try {
-    const net = await ensureSiteFetch(adapter, { open: true });
+    const net = await ensureSiteFetch(adapter, { open: true, ds: entry.ds });
     // EXACTLY the same list core as the classic "List documents" (runtime/lister.js), run in THIS page: saved
     // allow-list or the transient account picker (pickGroup), incremental unless mode:'full', → the store.
     const res = await listSourceInto(adapter, {
@@ -819,16 +832,21 @@ async function previewFile(r, sink, ext) {
 // + ds.groupLabels, then reloads (the tree + what's shown honor the new allow-list).
 // Returns true if the user saved an account selection, false if cancelled / not applicable / no session.
 // opts.reload (default true) refreshes the view after saving; refreshSource passes false (it lists + reloads next).
-// Pin the COUNTRY (brand TLD) a brand source uses — needed for unattended scheduled runs (no tab to infer it).
-// Saves ds.brandDomain. "Automatic" clears it (interactive runs use whatever Amazon tab you're on).
+// Manage the COUNTRY INSTANCES of a brand source: each chosen country becomes its own datasource (own store,
+// ledger and schedule) so amazon.es and amazon.com never mix. Reconciles the datasource set to the picked
+// countries, then rebuilds the index (instances may have appeared or vanished).
 async function onPickCountry() {
   const entry = INDEX.find((x) => x.base === CUR); if (!entry || !entry.ds || !entry.adapter || !Array.isArray(entry.adapter.domains)) return;
-  const chosen = await pickCountry(entry.adapter.domains, entry.ds.brandDomains || []);
-  if (chosen == null) return; // cancelled
   const cfg = await getConfig();
-  const d = (cfg.datasources || []).find((x) => x.id === entry.ds.id);
-  if (d) { if (chosen.length) d.brandDomains = chosen; else delete d.brandDomains; delete d.brandDomain; await saveConfig(cfg); CFG = cfg; entry.ds = d; }
-  renderDocs();
+  const current = instancesOf(cfg.datasources, entry.adapter.id).map((d) => d.brandDomain).filter(Boolean);
+  const chosen = await pickCountry(entry.adapter.domains, current);
+  if (chosen == null) return; // cancelled
+  cfg.datasources = reconcileInstances(cfg.datasources, entry.adapter, chosen);
+  await saveConfig(cfg); CFG = cfg;
+  await buildIndex();
+  if (!INDEX.find((x) => x.base === CUR)) { CUR = null; renderIndex(); } // this instance's country was un-chosen
+  else { await loadDocs(CUR); renderRail(); renderDocs(); }
+  hydrateIndex();
 }
 // Multi-select: pick ONE OR MORE countries a scheduled run syncs (a user with amazon.es AND amazon.com). No
 // selection → "automatic" (scheduled uses the default; interactive always follows the tab). Returns the chosen
@@ -855,9 +873,9 @@ async function onManageAccounts(opts = {}) {
   const gAdapters = groupedAdaptersOf(entry.adapter); if (!gAdapters.length) return false;
   if (!(await hasConsent(entry.adapter))) { $('#astatus').textContent = t('needs_consent'); return false; }
   const auth = await getAuth(entry.adapter);
-  if (!auth) { try { await ensureSiteFetch(entry.adapter, { open: true }); } catch (e) {} $('#astatus').textContent = t('login_wait'); return false; }
+  if (!auth) { try { await ensureSiteFetch(entry.adapter, { open: true, ds: entry.ds }); } catch (e) {} $('#astatus').textContent = t('login_wait'); return false; }
   $('#astatus').textContent = t('accounts_loading');
-  let net; try { net = await ensureSiteFetch(entry.adapter, { open: false }); } catch (e) {}
+  let net; try { net = await ensureSiteFetch(entry.adapter, { open: false, ds: entry.ds }); } catch (e) {}
   let selected;
   try { selected = await manageAccounts(gAdapters, auth, net, (entry.ds.groups) || null); }
   catch (e) { $('#astatus').textContent = t('accounts_failed') + (e && e.message ? ' — ' + e.message : ''); return false; }

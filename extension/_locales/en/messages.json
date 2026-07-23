@@ -2398,10 +2398,10 @@
     "message": "Country"
   },
   "archive_country_hint": {
-    "message": "Pin the country this source uses for unattended scheduled syncs"
+    "message": "Manage this source's country instances — each keeps its own archive and schedule"
   },
   "archive_country_sub": {
-    "message": "Which countries should a scheduled, unattended sync cover? Pick one or more. None = automatic. Interactive runs always use whichever tab you're on."
+    "message": "Pick the countries you use. Each becomes its own instance with a separate archive and schedule, so their documents never mix. One country = a single source."
   },
   "archive_country_done": {
     "message": "Done"

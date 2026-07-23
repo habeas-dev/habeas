@@ -3,7 +3,7 @@
 // a SW-runnable sink (drive/http) -> mark -> notify. This is triggered by the user's own
 // login, not a background job while they're away.
 import { chrome } from './lib/ext.js';
-import { getConfig } from './lib/config.js';
+import { getConfig, saveConfig } from './lib/config.js';
 import { registerCapture } from './lib/capture.js';
 import { loadAuth, hasAuth, capturePathAllowed } from './lib/authstore.js';
 import { pushDiag, recordingNet, pushReqCtx, redactReqVal as rcRedactVal } from './lib/diag.js';
@@ -17,6 +17,7 @@ import { getHandle } from './lib/fs.js';
 import { nextOccurrence } from './lib/schedule.js';
 import { acceptsDoc, sinkAcceptsArtifact, sinkAcceptsSource, bakeLearned, adoptDetailMeta } from './sinks/format.js';
 import { outputsForSink, outputsOf, resolveOutput, storeKeyOf } from './lib/outputs.js';
+import { storeIdOf, migrateBrandDomains } from './lib/instances.js';
 import { getAdapters } from './adapters/index.js';
 import { hasConsent } from './lib/consent.js';
 import { badgeWorking, badgeCount, badgeError, badgeClear, setStatus } from './lib/badge.js';
@@ -36,6 +37,8 @@ import { autoDebounced, retainAutoDebounce, isLoginNavigation, needsTabEscalatio
     const cfg = await getConfig();
     const adapters = await getAdapters();
     for (const d of (cfg.datasources || []).filter((x) => x.enabled)) { const a = adapters[d.adapter]; if (a) await registerCapture(a); }
+    // One-time: fan a legacy "one datasource pinned to several countries (brandDomains[])" into per-country instances.
+    if (migrateBrandDomains(cfg, adapters)) await saveConfig(cfg);
     // One-time: re-normalize stored records to the current schema (bank balanceAfter/valueDate; Trade Republic
     // investment@2) and reset read/write sink ledgers so the next Sync re-pushes the corrected records.
     runStoreMigration(adapters).then((r) => {
@@ -422,6 +425,9 @@ async function runAutoRoutes(matches, tabId, triggerUrl) {
     const ds = cfg.datasources.find((d) => d.id === route.datasource && d.enabled);
     const adapter = ds && adapters[ds.adapter];
     if (!adapter || !matches(adapter)) continue;
+    // A brand INSTANCE only auto-runs on ITS country's tab: logging into amazon.es must not trigger the
+    // amazon.com instance (each has its own store + schedule). No triggerUrl (capture-only) → don't gate.
+    if (ds.brandDomain && Array.isArray(adapter.domains) && triggerUrl) { let h = ''; try { h = new URL(triggerUrl).host; } catch (e) {} if (h && !(h === ds.brandDomain || h.endsWith('.' + ds.brandDomain))) continue; }
     // The navigation that triggered us is the source's own login page → the user isn't authenticated yet.
     // Skip (a session-gated prelude would 400) and wait for the post-login navigation to fire us again.
     if (triggerUrl && isLoginNavigation(adapter, triggerUrl)) continue;
@@ -490,19 +496,6 @@ function hasObservableBearer(adapter) {
 let sweeping = false;
 let sweepController = null; // AbortController for the running sweep (so the popup can stop it)
 function stopSweep() { if (sweepController) { try { sweepController.abort(); } catch (e) {} } }
-// A brand source pinned to SEVERAL countries (ds.brandDomains) runs once per country in an unattended sweep /
-// scheduled run — there's no tab to infer the domain, so each country is opened + listed in turn. Non-brand or
-// single-country sources run once. Used only on the unattended paths (interactive runs follow the user's tab).
-async function runRouteCountries(ds, adapter, sink, opts = {}) {
-  const countries = (adapter && Array.isArray(adapter.domains) && Array.isArray(ds.brandDomains) && ds.brandDomains.length) ? ds.brandDomains : [undefined];
-  let agg = null;
-  for (const c of countries) {
-    if (opts.signal && opts.signal.aborted) break;
-    const r = await runRoute(ds, adapter, sink, { ...opts, brandDomain: c });
-    agg = agg ? { ...r, new: (agg.new || 0) + (r.new || 0), status: (r.status === 'done' || agg.status === 'done') ? 'done' : r.status } : r;
-  }
-  return agg || { status: 'done', new: 0 };
-}
 async function sweepAllSources() {
   if (sweeping) return { status: 'busy' };
   sweeping = true;
@@ -529,7 +522,7 @@ async function sweepAllSources() {
       sources++;
       setStatus(t('status_listing', [adapter.name || ds.adapter]));
       await appendLog({ kind: 'sweep', datasource: ds.id, status: 'listing' }); // incremental: "syncing X…" in the log
-      let res = await runRouteCountries(ds, adapter, sink, { kind: 'sweep', signal }); // 1) unattended (per brand country)
+      let res = await runRoute(ds, adapter, sink, { kind: 'sweep', signal }); // 1) unattended; each instance pins its own country
       if (signal.aborted) break; // don't open login tabs / escalate after a stop
       if (res.status === 'nosession') {
         // No captured session → open/navigate the login page (foregrounded) so the user CAN authenticate.
@@ -606,7 +599,7 @@ async function reconcileFromDelivered(ds, adapter) {
   const name = adapter.name || ds.adapter;
   let upgraded = 0;
   for (const o of outputsOf(adapter)) {
-    const sk = storeKeyOf(adapter.id, o.stream);
+    const sk = storeKeyOf(storeIdOf(ds, adapter), o.stream);
     const service = adapter.service || ds.adapter;
     const stream = o.stream;
     for (const sink of readable) {
@@ -659,7 +652,7 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
     let sent = 0, accepted = 0;
     for (const [sid, list] of byStream) {
       if (opts.signal && opts.signal.aborted) break; // Stop pressed
-      const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(adapter.id, sid);
+      const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(storeIdOf(ds, adapter), sid);
       const docs = list.filter((dd) => dd && dd.internalId != null).map((dd) => {
         const rec = dd.record || {};
         // category MUST be on the doc top-level: acceptsDoc(sink, doc) reads doc.category. Fall back to the source's default.
@@ -685,7 +678,7 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
         for (const d of batch) d.record = bakeLearned(d);
         emitProgress(ds.id, batch.map((d) => ({ internalId: d.internalId, stream: sid, record: d.record, delivered: sink.id }))); // live: flip cards to "saved"
         try { await recordDelivered(sk, batch, { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store best-effort */ }
-        try { await rememberDocMeta(adapter.id, batch.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined }))); } catch (e) {}
+        try { await rememberDocMeta(storeIdOf(ds, adapter), batch.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined }))); } catch (e) {}
         for (const d of batch) files.delete(d.internalId); // bound memory
         sent += batch.length;
       };
@@ -746,10 +739,10 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     if (!auth || ctxMissing) { await appendLog({ ...base, status: 'nosession' }); await badgeClear(); setStatus(t('status_nosession', [name])); return { status: 'nosession' }; }
     // Auto/sweep runs unattended (a tab is already open post-login) → reuse it. A MANUAL/interactive run (the
     // Archive's "Save") opens the site tab if none exists, so the page-context fetch inherits the session.
-    // A brand source may run for a SPECIFIC country this invocation (opts.brandDomain — the per-country loop of a
-    // scheduled/sweep run), else the datasource's single pinned country. Interactive runs still follow the tab.
-    const countryDs = { brandDomain: opts.brandDomain }; // set by runRouteCountries for a scheduled per-country run; interactive follows the tab
-    const net = opts.net || (opts.interactive ? await ensureSiteFetch(adapter, { open: true, ds: countryDs }) : await resolveSiteFetch(adapter));
+    // A brand source instance is pinned to a SINGLE country (ds.brandDomain) — its own store, ledger and
+    // schedule. An unattended run (no tab) opens that country; an interactive run still follows the user's tab.
+    const countryDs = { brandDomain: opts.brandDomain || ds.brandDomain };
+    const net = opts.net || (opts.interactive ? await ensureSiteFetch(adapter, { open: true, ds: countryDs }) : await resolveSiteFetch(adapter, countryDs));
     adapter = withBrandHost(adapter, net, countryDs); // brand (multi-TLD) source → api.host = the tab's domain, or the pinned country
     const brandCountry = (Array.isArray(adapter.domains) ? adapter.domains.find((d) => (adapter.api.host || '').includes(d)) : null) || null; // tag records with the country they came from
     const delivered = await deliveredSet(ds.id, sink.id);
@@ -762,7 +755,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     let totalNew = 0;
     for (const sid of streamIds) {
       if (opts.signal && opts.signal.aborted) break; // Sync-all was stopped
-      const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(adapter.id, sid); const fmts = fmtsFor(sid);
+      const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(storeIdOf(ds, adapter), sid); const fmts = fmtsFor(sid);
       // onProgress → live per-page status (visible in an open popup during a Sync-all sweep). signal → stop.
       // ds.groups = the user's saved account allow-list (grouped sources): auto/sweep only ever touch those.
       const all = await listInventory(eff, auth, net, { groupId: opts.groupId, groups: (ds.groups && ds.groups.length) ? ds.groups : undefined, signal: opts.signal, onProgress: (p) => setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])) }); // opts.groupId → one account; opts.groups → allow-list
@@ -791,7 +784,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
         for (const d of batch) d.record = bakeLearned(d); // persist the real date/amount learned from the detail
         emitProgress(ds.id, batch.map((d) => ({ internalId: d.internalId, stream: sid, record: d.record, delivered: sink.id }))); // live: flip cards to "saved"
         try { await recordDelivered(sk, batch, { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store is best-effort */ } // write-through to the canonical store
-        try { await rememberDocMeta(adapter.id, batch.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, returnStatus: d.returnStatus || undefined }))); } catch (e) { /* best-effort */ }
+        try { await rememberDocMeta(storeIdOf(ds, adapter), batch.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, returnStatus: d.returnStatus || undefined }))); } catch (e) { /* best-effort */ }
         for (const d of batch) files.delete(d.internalId); // bound memory across a large sweep
         totalNew += batch.length;
       };
@@ -907,7 +900,7 @@ async function onScheduleAlarm(id) {
 
   await appendLog({ kind: 'schedule', datasource: s.datasource, sink: s.sink, status: 'running' });
   let res;
-  try { res = await runRouteCountries(ds, adapter, sink, { kind: 'schedule' }); }
+  try { res = await runRoute(ds, adapter, sink, { kind: 'schedule' }); }
   catch (e) { res = { status: 'error', error: (e && e.message) || String(e) }; }
   st.lastRun = nowMs(); st.lastStatus = res.status;
 
@@ -1002,7 +995,7 @@ async function listGroupsForGrant(origin, payload) {
   const adapter = ds && adapters[ds.adapter];
   if (!adapter) return { ok: false, status: 'error', error: 'route not found' };
   if (!adapter.api.groups) return { ok: true, status: 'ok', groups: [] }; // this source has no groups
-  const net = await resolveSiteFetch(adapter).catch(() => null);
+  const net = await resolveSiteFetch(adapter, ds).catch(() => null);
   if (!net || !(await hasLiveSession(adapter))) {
     // Need a logged-in tab on the source site to enumerate in-session; open one and ask to retry.
     const tab = await chrome.tabs.create({ url: siteBaseUrl(adapter), active: true }).catch(() => null);
@@ -1081,7 +1074,7 @@ function injectCapture(tabId) {
 }
 
 async function runExternalCollect(grant, ds, adapter, sink, tabId, groupId) {
-  const net = tabId ? await resolveSiteFetch(adapter).catch(() => null) : null;
+  const net = tabId ? await resolveSiteFetch(adapter, ds).catch(() => null) : null;
   return runRoute(ds, adapter, sink, { kind: 'ext', origin: grant.origin, interactive: true, net: net || undefined, groupId });
 }
 

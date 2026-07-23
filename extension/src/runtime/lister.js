@@ -4,6 +4,7 @@
 // with no saved allow-list, a `pickGroup` callback (the account picker). It never touches the DOM itself.
 import { listInventory } from './inventory.js';
 import { withBrandHost } from '../lib/pagefetch.js';
+import { storeIdOf } from '../lib/instances.js';
 import { resolveOutput, storeKeyOf, outputsOf } from '../lib/outputs.js';
 import { putItems, getRecords } from '../lib/store.js';
 
@@ -32,7 +33,7 @@ export async function listSourceInto(adapter, opts = {}) {
   for (const sid of streamIds) {
     if (opts.signal && opts.signal.aborted) break;
     const eff = resolveOutput(adapter, sid);
-    const sk = storeKeyOf(adapter.id, sid);
+    const sk = storeKeyOf(storeIdOf(ds, adapter), sid);
     if (opts.onStream) opts.onStream(sid, eff, sk);
     const groupId = filter ? undefined : (opts.pickGroup ? await opts.pickGroup(eff, auth, net) : undefined);
     const known = (await getRecords(sk).catch(() => [])).map((r) => r.internalId).filter((x) => x != null);

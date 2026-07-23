@@ -2398,10 +2398,10 @@
     "message": "País"
   },
   "archive_country_hint": {
-    "message": "Fija el país que usa esta fuente en las sincronizaciones programadas desatendidas"
+    "message": "Gestiona las instancias por país de esta fuente — cada una con su propio archivo y programación"
   },
   "archive_country_sub": {
-    "message": "¿Qué países debe cubrir una sincronización programada y desatendida? Elige uno o varios. Ninguno = automático. Los usos interactivos siempre usan la pestaña en la que estés."
+    "message": "Elige los países que usas. Cada uno se convierte en su propia instancia con archivo y programación separados, así sus documentos nunca se mezclan. Un solo país = una única fuente."
   },
   "archive_country_done": {
     "message": "Hecho"

@@ -270,32 +270,39 @@ export function makePageFetch(tabId, adapter) {
 
 // Find an open tab on the source's site and return a page-bound fetch (or null if none is open —
 // the caller then falls back to a direct extension fetch, which works for non-anti-bot APIs).
-export async function resolveSiteFetch(adapter) {
-  const tab = await findSiteTab(adapter);
+export async function resolveSiteFetch(adapter, ds) {
+  const tab = await findSiteTab(adapter, ds);
   if (!tab) return null;
   const pf = makePageFetch(tab.id, adapter);
   try { pf.origin = new URL(tab.url).origin; } catch (e) {} // the domain this session is on — for brand (multi-TLD) sources
   return pf;
 }
 
-// For a brand (multi-TLD) source, resolve api.host to the domain the user's tab is on (the in-page fetch runs in
-// THAT tab, so its cookies match). When there's no tab — an UNATTENDED scheduled run — fall back to the country
-// the datasource is pinned to (ds.brandDomain, chosen by the user). A single-domain source is returned unchanged.
+// For a brand (multi-TLD) source, resolve api.host. A datasource pinned to a country (an INSTANCE — ds.brandDomain)
+// ALWAYS uses that country: its store, ledger and session are that country's, so the tab must not override it.
+// An UNPINNED source follows the domain of the tab the user is on (the in-page fetch runs in THAT tab, so cookies
+// match). A single-domain source is returned unchanged.
 export function withBrandHost(adapter, net, ds) {
   if (!adapter || !Array.isArray(adapter.domains) || !adapter.domains.length) return adapter;
-  let host = (net && net.origin) || null;
-  if (!host && ds && ds.brandDomain && adapter.domains.includes(ds.brandDomain)) host = 'https://www.' + ds.brandDomain;
+  const pinned = ds && ds.brandDomain && adapter.domains.includes(ds.brandDomain) ? 'https://www.' + ds.brandDomain : null;
+  const host = pinned || (net && net.origin) || null;
   return host ? { ...adapter, api: { ...adapter.api, host } } : adapter;
 }
 
-// The open browser tab (if any) sitting on the source's site — the in-session context to fetch through.
-async function findSiteTab(adapter) {
+// The open browser tab (if any) sitting on the source's site — the in-session context to fetch through. For a
+// pinned brand INSTANCE, only a tab on THAT country counts (an amazon.es tab must not serve the amazon.com
+// instance — it would write .es data into the .com store).
+async function findSiteTab(adapter, ds) {
+  const pinned = ds && ds.brandDomain && Array.isArray(adapter.domains) && adapter.domains.includes(ds.brandDomain) ? ds.brandDomain : null;
   const pats = [];
-  if (adapter.domain) pats.push(`*://*.${adapter.domain}/*`, `*://${adapter.domain}/*`);
-  for (const d of adapter.domains || []) pats.push(`*://*.${d}/*`, `*://${d}/*`); // brand TLDs (amazon.es/.com/.de…)
-  for (const m of adapter.match || []) {
-    const h = String(m).replace(/^[a-z]+:\/\//i, '').replace(/[:/].*$/, '');
-    if (h && !pats.some((p) => p.endsWith('//' + h + '/*') || p.endsWith('.' + h + '/*'))) pats.push(`*://${h}/*`);
+  if (pinned) { pats.push(`*://*.${pinned}/*`, `*://${pinned}/*`); }
+  else {
+    if (adapter.domain) pats.push(`*://*.${adapter.domain}/*`, `*://${adapter.domain}/*`);
+    for (const d of adapter.domains || []) pats.push(`*://*.${d}/*`, `*://${d}/*`); // brand TLDs (amazon.es/.com/.de…)
+    for (const m of adapter.match || []) {
+      const h = String(m).replace(/^[a-z]+:\/\//i, '').replace(/[:/].*$/, '');
+      if (h && !pats.some((p) => p.endsWith('//' + h + '/*') || p.endsWith('.' + h + '/*'))) pats.push(`*://${h}/*`);
+    }
   }
   let tabs = [];
   try { tabs = await chrome.tabs.query({ url: pats }); } catch (e) {}
@@ -329,7 +336,7 @@ export function siteBaseUrl(adapter, ds) {
 // none exists (so the session is available — the user may need to log in there) and waits for it to load.
 // This is what makes a source recover from "no tab → CSRF/auth failure" instead of silently failing.
 export async function ensureSiteFetch(adapter, { open = false, ds } = {}) {
-  const existing = await resolveSiteFetch(adapter);
+  const existing = await resolveSiteFetch(adapter, ds);
   if (existing || !open) return existing;
   const url = siteBaseUrl(adapter, ds);
   let tab; try { tab = await chrome.tabs.create({ url, active: true }); } catch (e) { return null; }

@@ -20,6 +20,7 @@ import { loadAuth } from '../lib/authstore.js';
 import { recordDelivered, getRecords, countLive, putItems, listSources, getSource } from '../lib/store.js';
 import { isRetrievable } from '../lib/retrieve.js';
 import { outputsOf, resolveOutput, storeKeyOf } from '../lib/outputs.js';
+import { storeIdOf } from '../lib/instances.js';
 import { esc } from '../lib/esc.js';
 import { inventoryView, distinctBy } from '../lib/inventoryview.js';
 
@@ -59,7 +60,7 @@ async function init() {
   ADAPTERS = await getAdapters();
   const cfg = await getConfig();
   const enabled = cfg.datasources.filter((d) => d.enabled);
-  $('#ds').innerHTML = enabled.map((d) => `<option value="${esc(d.id)}">${esc(d.id)}</option>`).join('') || '<option value="">—</option>';
+  $('#ds').innerHTML = enabled.map((d) => { const a = ADAPTERS[d.adapter]; const tld = d.brandDomain ? ' (' + d.brandDomain.replace(/^[^.]*\./, '').toUpperCase() + ')' : ''; return `<option value="${esc(d.id)}">${esc(((a && a.name) || d.id) + tld)}</option>`; }).join('') || '<option value="">—</option>';
   await populateSinks(cfg);
   renderOutputs(adapterFor($('#ds').value, cfg).adapter);
   if (!enabled.length) $('#status').textContent = t('no_datasources');
@@ -174,7 +175,7 @@ async function onManageAccounts() {
   if (!(await hasConsent(adapter))) { $('#status').textContent = t('needs_consent'); return; }
   const auth = await getAuth(adapter);
   if (!auth) { // no captured session yet → open the login tab so the token is captured, then retry
-    await ensureSiteFetch(adapter, { open: true });
+    await ensureSiteFetch(adapter, { open: true, ds });
     $('#status').textContent = t('login_wait');
     return;
   }
@@ -182,7 +183,7 @@ async function onManageAccounts() {
   // Do NOT open a foreground tab here: it steals focus and CLOSES the popup, taking the account dialog with
   // it. Reuse an already-open site tab if there is one; otherwise pass null so listGroups fetches directly
   // from the extension (host permission → no CORS; auth.cookies:false → no oversized-cookie 413).
-  let net; try { net = await ensureSiteFetch(adapter, { open: false }); } catch (e) {}
+  let net; try { net = await ensureSiteFetch(adapter, { open: false, ds }); } catch (e) {}
   let selected;
   try { selected = await manageAccounts(gAdapters, auth, net, (ds && ds.groups) || null); }
   catch (e) { $('#status').textContent = t('accounts_failed') + (e && e.message ? ' — ' + e.message : ''); return; }
@@ -321,10 +322,10 @@ const docsFromStore = (records) => records.map((r) => ({
 
 // Show/hide the "Load from store" button for the selected source (only when the store has records for it).
 async function refreshStoreButton() {
-  const cfg = await getConfig(); const { adapter } = adapterFor($('#ds').value, cfg);
+  const cfg = await getConfig(); const { ds, adapter } = adapterFor($('#ds').value, cfg);
   // Items live per stream store key → sum across the source's streams.
   const streamIds = adapter ? [...new Set(outputsOf(adapter).map((o) => o.stream))] : [];
-  let n = 0; for (const sid of streamIds) n += await countLive(storeKeyOf(adapter.id, sid)).catch(() => 0);
+  let n = 0; for (const sid of streamIds) n += await countLive(storeKeyOf(storeIdOf(ds, adapter), sid)).catch(() => 0);
   // Both the offline "Load from store" and the "Full history" (re-scan vs the incremental default) only
   // make sense once the store has items for this source; otherwise List already does a full extraction.
   if ($('#load-store')) $('#load-store').hidden = !n;
@@ -355,15 +356,15 @@ async function onSyncAll() {
 }
 
 async function onLoadStore() {
-  const cfg = await getConfig(); const { adapter } = adapterFor($('#ds').value, cfg);
+  const cfg = await getConfig(); const { ds, adapter } = adapterFor($('#ds').value, cfg);
   if (!adapter) return;
-  const known = await getDocMeta(adapter.id);
+  const known = await getDocMeta(storeIdOf(ds, adapter));
   const outs = selectedOutputs(adapter);
   const streamIds = [...new Set(outs.map((o) => o.stream))];
   const fmtsFor = (sid) => outs.filter((o) => o.stream === sid).map((o) => o.format);
   const rows = [];
   for (const sid of streamIds) {
-    const sk = storeKeyOf(adapter.id, sid); const fmts = fmtsFor(sid);
+    const sk = storeKeyOf(storeIdOf(ds, adapter), sid); const fmts = fmtsFor(sid);
     for (const d of docsFromStore(await getRecords(sk))) { d._stream = sid; d._streamName = streamNameOf(adapter, sid); d._storeKey = sk; d._formats = fmts; d._files = fileInfo(adapter, d); rows.push(d); }
   }
   inventory = rows.sort((a, b) => ((a.date || '') < (b.date || '') ? 1 : -1));
@@ -404,7 +405,7 @@ async function onList(mode, opts = {}) {
     // you log in, and AUTO-RESUME listing the moment it's captured — no second click. Two paths because the
     // popup closes when you click into the login tab: a live listener (popup still open) + a pending marker
     // re-checked when you reopen the popup (popup closed).
-    await ensureSiteFetch(adapter, { open: true });
+    await ensureSiteFetch(adapter, { open: true, ds });
     $('#status').textContent = t('login_wait');
     await setPendingList($('#ds').value, mode);
     watchAuthResume(adapter, mode);
@@ -413,7 +414,7 @@ async function onList(mode, opts = {}) {
   await clearPendingList($('#ds').value); // have a session now → drop any stale "resume after login" marker
   const sinkId = $('#sink').value;
   const delivered = sinkId ? await deliveredSet($('#ds').value, sinkId) : {};
-  const known = await getDocMeta(adapter.id);
+  const known = await getDocMeta(storeIdOf(ds, adapter));
   // A source can expose several outputs (streams×formats). List ONCE per stream (formats share the items);
   // the store keys per stream. Each row is tagged with its stream + the selected formats (used on send).
   const outs = selectedOutputs(adapter);
@@ -422,7 +423,7 @@ async function onList(mode, opts = {}) {
   const key = (d) => (d._stream || '') + '|' + d.internalId;
   const tag = (d, sid, sk) => { d._stream = sid; d._streamName = streamNameOf(adapter, sid); d._storeKey = sk; d._formats = fmtsFor(sid); d._files = fileInfo(adapter, d); return d; };
   const acc = new Map();
-  for (const sid of streamIds) { const sk = storeKeyOf(adapter.id, sid); for (const d of docsFromStore(await getRecords(sk))) if (groupAllowed(ds, d.group)) acc.set(key(tag(d, sid, sk)), d); }
+  for (const sid of streamIds) { const sk = storeKeyOf(storeIdOf(ds, adapter), sid); for (const d of docsFromStore(await getRecords(sk))) if (groupAllowed(ds, d.group)) acc.set(key(tag(d, sid, sk)), d); }
   const rebuild = () => { inventory = [...acc.values()].sort((a, b) => ((a.date || '') < (b.date || '') ? 1 : -1)); enrichMeta(inventory, known); };
   const bars = () => { $('#sendbar').hidden = !inventory.length; $('#selbar').hidden = !inventory.length; };
   rebuild(); await render(delivered); bars();
@@ -432,7 +433,7 @@ async function onList(mode, opts = {}) {
   let newTotal = 0;
   let listSid = null; // which stream was listing when a failure was thrown (for the diagnostic)
   try {
-    const net = await ensureSiteFetch(adapter, { open: true });
+    const net = await ensureSiteFetch(adapter, { open: true, ds });
     // The SAME shared core the Archive's Refresh uses (runtime/lister.js). The popup just wires its live
     // per-page rendering + the transient account picker into the callbacks.
     const res = await listSourceInto(adapter, {
@@ -566,7 +567,7 @@ async function onSend() {
   aborter = new AbortController();
   busy(true);
   await badgeWorking();
-  const net = await ensureSiteFetch(adapter, { open: true });
+  const net = await ensureSiteFetch(adapter, { open: true, ds });
   // A doc belongs to one stream and carries the formats the user selected (`_formats`). Each format
   // resolves to its own effective adapter (its own api.pdf/artifact) — a statement's PDF and Excel are
   // two artifacts of the SAME item. `outFor(d, fmt)` gives the effective adapter for one (stream, format).
@@ -656,7 +657,7 @@ async function onSend() {
       await markDelivered($('#ds').value, sink.id, eligible.map((c) => c.internalId));
     }
     // Persist the real dates + amounts we learned from the details (source-level) so future listings show them.
-    await rememberDocMeta(adapter.id, eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, returnStatus: d.returnStatus || undefined })));
+    await rememberDocMeta(storeIdOf(ds, adapter), eligible.map((d) => ({ internalId: d.internalId, date: /^\d{4}-\d{2}-\d{2}/.test(d.date || '') ? d.date : undefined, total: typeof d.total === 'number' ? d.total : undefined, returnStatus: d.returnStatus || undefined })));
     // Write-through to the canonical store: every delivered item's normalized record is recorded once, so a
     // second sink / consumer / device can be served from the store instead of re-extracting (canonical-store.md).
     // Items live per STREAM store key (formats share items) → group and record under each stream's key.
@@ -790,8 +791,8 @@ async function loadSourceDocs(base) {
   $('#docs-status').textContent = t('docs_loading');
   const cfg = await getConfig();
   const retrievableSinks = (cfg.sinks || []).filter((s) => isRetrievable(s));
-  const ds = cfg.datasources.find((d) => d.adapter === base) || cfg.datasources.find((d) => d.id === base);
-  const dsId = (ds && ds.id) || base;                           // delivery ledger is keyed by the DATASOURCE id
+  const ds = cfg.datasources.find((d) => d.id === base) || cfg.datasources.find((d) => d.adapter === base);
+  const dsId = (ds && ds.id) || base;                           // delivery ledger is keyed by the DATASOURCE id (= the store base)
   const adapter = (ds && ADAPTERS[ds.adapter]) || ADAPTERS[base] || null;
   const known = await getDocMeta(base).catch(() => ({}));
   const keys = (await listSources()).filter((k) => String(k).split(':')[0] === base);

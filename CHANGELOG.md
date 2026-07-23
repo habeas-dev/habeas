@@ -28,11 +28,18 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   Refunded/Reembolsado/Erstattet…) plus a currency capture that takes a symbol before or after the amount.
   Verified for Spain, beta elsewhere; testers in other countries confirm the total label/currency, date parsing
   and refund words (open items in the source `notes`). `domains` covers 18 Amazon TLDs.
-- **Multiple active countries for a brand source** (`background.js`, `runtime/lister.js`, `ui/archive.js`). A user
-  with, say, amazon.es AND amazon.com can now pin several countries (the country picker is multi-select →
-  `ds.brandDomains`); an unattended scheduled/sweep run lists each country in turn (`runRouteCountries`).
-  Interactive runs still follow whichever tab you're on. Every record is tagged with the country it came from
-  (`record.country`) and the Archive shows it (ES/COM) on each card, so the mixed store stays distinguishable.
+- **Country instances — a brand source installed once per country, each fully independent** (`lib/instances.js`,
+  `lib/store.js` callers, `background.js`, `runtime/lister.js`, `lib/pagefetch.js`, `ui/archive.js`, `ui/popup.js`,
+  `ui/options.js`). A user with amazon.es AND amazon.com installs the SAME source as two instances (datasources
+  `amazon` + `amazon@amazon.com`), each with its **own archive, delivery ledger and schedule** — so their
+  documents never mix and one can be automatic while the other is manual. The canonical-store / ledger identity
+  moved from the adapter id to the **datasource id** (`storeIdOf`); existing single-country installs keep the bare
+  id, so nothing migrates. The 🌍 picker in the Archive now **manages the instance set** (add/remove a country);
+  each instance node shows its TLD, and the auto-sync + scheduler lists them separately (Amazon (ES) / Amazon
+  (COM)). A pinned instance always targets its own country — even interactively on another Amazon tab it won't
+  write one country's data into another's store. Records are still tagged with `record.country`. The earlier
+  "several countries under one datasource" shape (`ds.brandDomains`) auto-migrates to instances on startup.
+  Covered by `test/instances.test.mjs` + `test/brandhost.test.mjs`.
 - **Experimental (beta) sources can be published and tested** (`registry`, `ui/marketplace.*`, sources catalog).
   A source drafted but not yet verified against a real account (e.g. DeGiro, derived from woob's endpoint map)
   can now ship flagged `beta: true` instead of being hidden — otherwise nobody with the account could ever test
