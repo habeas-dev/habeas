@@ -1141,8 +1141,10 @@ async function collectForGrant(origin, payload) {
   if (payload && payload.fromStore) {
     const groupId = payload.group != null ? String(payload.group) : undefined;
     const entry = groupId && Array.isArray(ds.groupsCache) ? ds.groupsCache.find((g) => String(g.id) === groupId) : null;
-    runExternalStoreSend(ds, adapter, sink, { label: entry && entry.label ? String(entry.label) : undefined });
-    return { ok: true, status: 'collecting', fromStore: true };
+    // Awaited: an archive-only send is fast (store read + record-only POSTs), and returning the
+    // counts lets the consumer tell "delivered N" from "nothing new in the archive".
+    const r = await runExternalStoreSend(ds, adapter, sink, { label: entry && entry.label ? String(entry.label) : undefined });
+    return { ok: r.status !== 'error', status: r.status === 'error' ? 'error' : 'done', fromStore: true, sent: r.sent || 0, found: r.found || 0, ...(r.error ? { error: r.error } : {}) };
   }
 
   const host = hostOf(adapter);
@@ -1203,6 +1205,11 @@ async function runExternalStoreSend(ds, adapter, sink, { label } = {}) {
       if (label && String(r.group || '') !== label) continue; // one account only
       picked.push({ internalId: r.internalId, record: r, stream: sid });
     }
+  }
+  if (!picked.length) {
+    // Nothing new for this route — tell the consumer apart from a delivery (found: 0).
+    await appendLog({ kind: 'ext-store', datasource: ds.id, sink: sink.id, status: 'ok', count: 0 });
+    return { status: 'done', sent: 0, found: 0, accepted: 0 };
   }
   return sendStoredDocs(ds, adapter, sink, picked, { noOpen: true });
 }

@@ -83,8 +83,11 @@ yet are sent (per-route dedupe as always); per-item files (PDFs) come along only
 happens to be open — records always deliver.
 
 ```js
-await habeas('collect', { grantId, fromStore: true });          // → { ok:true, status:'collecting', fromStore:true }
+await habeas('collect', { grantId, fromStore: true });          // → { ok:true, status:'done', fromStore:true, sent, found }
 await habeas('collect', { grantId, group, fromStore: true });   // one account only
+// `found` = new-for-this-route documents in the archive; `sent` = actually delivered.
+// found === 0 → the archive holds nothing new (collect from the source first, or check the
+// Habeas Documents browser). status:'error' + error on a delivery failure (e.g. sink rejected).
 ```
 
 Collection lists the source, delivers only **new** documents (Habeas dedupes per route), and POSTs
