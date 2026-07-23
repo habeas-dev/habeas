@@ -1569,6 +1569,19 @@ function mapDoc(adapter, p, group) {
   // per-period index + raw date + raw amount, so re-runs dedupe (same input → same id).
   if ((doc.internalId == null || doc.internalId === '') && adapter.api && adapter.api.list && adapter.api.list.periods)
     doc.internalId = [group && (group.accountNumber != null ? group.accountNumber : group.id), p._period, p._idx, p.date, p.amount].filter((x) => x != null && x !== '').join('|');
+  // `list.idOverride`: replace the internalId with a STABLE natural key for the items matching `when`, when the
+  // source's own id is NOT stable across syncs. ING re-lists a still-pending CARD charge with a fresh
+  // transactionLocalUUID every sync → duplicates; keying those by {date|amount|productId} instead makes re-runs
+  // (and the pending→settled transition) dedupe. Account movements (no `status`) keep their stable UUID, so
+  // genuine same-day/same-amount repeats there stay distinct. `when.present` gates on a field's existence.
+  const io = adapter.api && adapter.api.list && adapter.api.list.idOverride;
+  if (io && io.template && io.when && io.when.field) {
+    const wv = get(p, io.when.field);
+    const match = io.when.present === true ? (wv != null && wv !== '')
+      : io.when.present === false ? (wv == null || wv === '')
+        : (Array.isArray(io.when.values) ? io.when.values.map(String).includes(String(wv)) : false);
+    if (match) { const nid = io.template.replace(/\{([^}]+)\}/g, (_, path) => { const v = get(p, path); return v == null ? '' : String(v); }); if (nid) doc.internalId = nid; }
+  }
   // Date fields → ISO (textual/locale, also epoch ms/s). `valueDate` is the bank movement's value date
   // (distinct from the booked `date`), promoted to a canonical field when a source maps it.
   for (const k of ['date', 'valueDate']) if (doc[k] != null && doc[k] !== '') doc[k] = normalizeDate(doc[k]);
