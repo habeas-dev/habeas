@@ -18,6 +18,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   "experimental" pill, a toggle to hide them, and a confirm-on-install warning that they're unverified. First one
   in: **DeGiro** (`degiro`, beta), credited to woob's DeGiro module under AGPL.
 
+### Changed
+- **A source with a single category defaults to month grouping in the Archive** (`ui/archive.js`). Grouping by
+  category made no sense when every document shares one category (Amazon is all `marketplace` → one giant
+  bucket); those now open grouped by month. Multi-category sources (Carrefour: grocery/fuel/retail) still default
+  to category.
+
 ## [0.7.0] — 2026-07-22
 
 ### Added

@@ -904,7 +904,10 @@ async function openSource(base) {
   await loadDocs(base);
   if (CUR !== base) return; // navigated away mid-load
   const entry = INDEX.find((x) => x.base === base);
-  GROUPMODE = isBankish(entry && entry.adapter) ? 'month' : 'category';
+  // Default grouping: by month for banks OR any source with a single category (grouping by category would be one
+  // useless bucket — e.g. Amazon is all "marketplace"); by category when the source spans several (Carrefour).
+  const cats = new Set(CURDOCS.map((r) => r.record && r.record.category).filter((c) => c != null));
+  GROUPMODE = isBankish(entry && entry.adapter) || cats.size <= 1 ? 'month' : 'category';
   renderRail(); renderDocs();
 }
 function goIndex() { CUR = null; renderRail(); renderIndex(); }
