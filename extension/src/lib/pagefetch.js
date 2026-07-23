@@ -181,7 +181,7 @@ export function makePageMtop(tabId) {
   };
 }
 
-export function makePageFetch(tabId, adapter) {
+export function makePageFetch(tabId, adapter, foregroundOn401 = false) {
   // Some SPAs (WSO2/Akamai-fronted, e.g. FECI) keep the bearer in the page's localStorage and rotate it, so
   // CAPTURING it from a seen request is fragile (missing after a browser restart, or if we list before the
   // SPA made an authed call). `auth.tokenFromStorage {key,field,scheme,header}` reads it FRESH from localStorage
@@ -254,7 +254,9 @@ export function makePageFetch(tabId, adapter) {
     out = out || { ok: false, status: 0, error: 'no result' };
     // A 401 means the session/token isn't usable (the SPA hasn't minted its CSRF token yet, or the session
     // expired) — bring the source's tab to the FRONT so the user sees it and can log in / let the SPA re-auth.
-    if (out.status === 401 && !fronted) { fronted = true; foregroundTab(tabId); }
+    // ONLY on an interactive (user-initiated) op: stealing focus during an unattended sweep/schedule/auto run
+    // would be jarring (Chrome jumping to a tab "sin venir a cuento").
+    if (foregroundOn401 && out.status === 401 && !fronted) { fronted = true; foregroundTab(tabId); }
     return {
       ok: out.ok, status: out.status, sentHeaders: out.sentHeaders, sentToken: out.sentToken,
       text: async () => out.text || out.error || '',
@@ -279,10 +281,10 @@ async function foregroundTab(tabId) {
 
 // Find an open tab on the source's site and return a page-bound fetch (or null if none is open —
 // the caller then falls back to a direct extension fetch, which works for non-anti-bot APIs).
-export async function resolveSiteFetch(adapter, ds) {
+export async function resolveSiteFetch(adapter, ds, foregroundOn401 = false) {
   const tab = await findSiteTab(adapter, ds);
   if (!tab) return null;
-  const pf = makePageFetch(tab.id, adapter);
+  const pf = makePageFetch(tab.id, adapter, foregroundOn401);
   try { pf.origin = new URL(tab.url).origin; } catch (e) {} // the domain this session is on — for brand (multi-TLD) sources
   return pf;
 }
@@ -349,14 +351,14 @@ export function siteBaseUrl(adapter, ds) {
 // A page-bound fetch for the source's site. Reuses an open tab; with { open:true }, LAUNCHES one when
 // none exists (so the session is available — the user may need to log in there) and waits for it to load.
 // This is what makes a source recover from "no tab → CSRF/auth failure" instead of silently failing.
-export async function ensureSiteFetch(adapter, { open = false, ds } = {}) {
-  const existing = await resolveSiteFetch(adapter, ds);
+export async function ensureSiteFetch(adapter, { open = false, ds, foreground = false } = {}) {
+  const existing = await resolveSiteFetch(adapter, ds, foreground);
   if (existing || !open) return existing;
   const url = siteBaseUrl(adapter, ds);
   let tab; try { tab = await chrome.tabs.create({ url, active: true }); } catch (e) { return null; }
   if (!tab || tab.id == null) return null;
   await waitTabComplete(tab.id);
-  const pf = makePageFetch(tab.id, adapter);
+  const pf = makePageFetch(tab.id, adapter, foreground);
   try { pf.origin = new URL(tab.url || url).origin; } catch (e) {}
   return pf;
 }

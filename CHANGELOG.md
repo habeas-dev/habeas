@@ -67,6 +67,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   failing when clicked). Older documents with no recorded exts still show every format (backward-compatible).
 
 ### Fixed
+- **Chrome no longer jumps to a source tab during unattended syncs** (`lib/pagefetch.js`, `background.js`). The
+  401→foreground-tab behavior now fires ONLY on a user-initiated run (manual save / external collect), never on
+  a background sweep, schedule or auto-sync — those were stealing focus “sin venir a cuento”.
 - **Approving an external proposal no longer wipes the datasource's saved state** (`ui/authorize.js`). The
   datasource `upsert` replaced the whole object, destroying the user's account selection
   (`ds.groups`/`groupLabels`), brand pinning and groups cache when a consumer connection was approved. It now
@@ -96,7 +99,7 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   destination / scope rows are hidden for a `list-sources` request (there is nothing to show), but the
   `hidden` attribute was defeated by the `.kv { display:grid }` author rule — a `[hidden]{display:none
   !important}` override makes it effective.
-- **A 401 while fetching a source brings its tab to the front** (`lib/pagefetch.js`). When an
+- **A 401 on a USER-initiated fetch brings the source tab to the front** (`lib/pagefetch.js`). When an
   in-page request comes back 401 (the session/CSRF token is not usable yet — e.g. PayPal before its SPA has
   minted the token, or an expired session), the source's tab is surfaced once so the user can see it and log
   in / let the SPA re-authenticate, instead of the operation just failing silently.

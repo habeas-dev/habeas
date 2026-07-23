@@ -771,7 +771,10 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     // A brand source instance is pinned to a SINGLE country (ds.brandDomain) — its own store, ledger and
     // schedule. An unattended run (no tab) opens that country; an interactive run still follows the user's tab.
     const countryDs = { brandDomain: opts.brandDomain || ds.brandDomain };
-    const net = opts.net || (opts.interactive ? await ensureSiteFetch(adapter, { open: true, ds: countryDs }) : await resolveSiteFetch(adapter, countryDs));
+    // Only a USER-initiated run (manual save / external collect) may surface the tab on a 401 — never an
+    // unattended sweep/schedule/auto (that caused Chrome to jump to the tab out of nowhere).
+    const fg = opts.kind === 'manual' || opts.kind === 'ext';
+    const net = opts.net || (opts.interactive ? await ensureSiteFetch(adapter, { open: true, ds: countryDs, foreground: fg }) : await resolveSiteFetch(adapter, countryDs, fg));
     adapter = withBrandHost(adapter, net, countryDs); // brand (multi-TLD) source → api.host = the tab's domain, or the pinned country
     const brandCountry = (Array.isArray(adapter.domains) ? adapter.domains.find((d) => (adapter.api.host || '').includes(d)) : null) || null; // tag records with the country they came from
     const delivered = await deliveredSet(ds.id, sink.id);
