@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.8.1] — 2026-07-24
+
 ### Fixed
 - **A source-switch race can no longer cross-contaminate the canonical store** (`runtime/lister.js`,
   `ui/archive.js`). Fast-switching sources mid-operation could hand the list-into-store core a mismatched
