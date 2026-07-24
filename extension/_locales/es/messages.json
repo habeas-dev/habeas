@@ -2770,13 +2770,13 @@
     "message": "Dónde se guardan — tu archivo"
   },
   "opt_ov_store_vs_p": {
-    "message": "Tu copia maestra única. Cada documento que Habeas extrae acaba aquí, en un único lugar que tú eliges (este navegador, una carpeta o la nube). Solo hay un archivo."
+    "message": "Tu catálogo único de todo lo que Habeas extrae — los datos de cada documento (fecha, importe, comercio, categoría…), en un solo lugar que tú eliges (este navegador, una carpeta o la nube). Se rellena solo al listar una fuente. Guarda las fichas y anota dónde fue cada fichero — no los PDF/Excel originales en sí."
   },
   "opt_ov_dests_vs_h": {
-    "message": "Destinos — copias adicionales que envías fuera"
+    "message": "Destinos — a dónde van los ficheros"
   },
   "opt_ov_dests_vs_p": {
-    "message": "Copias opcionales y adicionales que se envían a otro sitio — una carpeta compartida, un disco en la nube o una app conectada. Puedes tener varios, y cada uno solo recibe copias; tu archivo permanece intacto."
+    "message": "A dónde se envían los ficheros de los documentos cuando los envías. «Descargar» los guarda en tu equipo; una carpeta o la nube los deja ahí (y Habeas puede volver a mostrártelos desde ahí). Puedes tener varios — el archivo de arriba solo recuerda qué se entregó y dónde."
   },
   "opt_services_title": {
     "message": "Servicios"

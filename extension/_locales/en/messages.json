@@ -2770,13 +2770,13 @@
     "message": "Where they’re kept — your archive"
   },
   "opt_ov_store_vs_p": {
-    "message": "Your one master copy. Every document Habeas extracts lands here, in a single place you choose (this browser, a folder, or the cloud). There is exactly one archive."
+    "message": "Your single catalog of everything Habeas extracts — the data of each document (date, amount, merchant, category…), kept in one place you choose (this browser, a folder, or the cloud). It fills automatically as you list a source. It holds the records and tracks where each file went — not the original PDF/Excel files themselves."
   },
   "opt_ov_dests_vs_h": {
-    "message": "Destinations — extra copies you send out"
+    "message": "Destinations — where the files go"
   },
   "opt_ov_dests_vs_p": {
-    "message": "Optional, additional copies pushed somewhere else — a shared folder, a cloud drive, or a connected app. You can have several, and each only ever receives copies; your archive stays intact."
+    "message": "Where the actual document files are sent when you send them. “Download” saves them to your computer; a folder or the cloud keeps them there (and Habeas can show them back to you from it). You can have several — the archive above just remembers what was delivered where."
   },
   "opt_services_title": {
     "message": "Services"
