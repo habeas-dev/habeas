@@ -40,3 +40,5 @@ export const appendItems = backend.appendItems;
 export const listSources = backend.listSources;
 export const clearSource = backend.clearSource;
 export const hasItems = backend.hasItems;
+export const getConfig = backend.getConfig;
+export const putConfig = backend.putConfig;

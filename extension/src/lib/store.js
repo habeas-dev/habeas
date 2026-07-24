@@ -65,6 +65,11 @@ export async function markGone(sourceId, ids, reason) {
 }
 
 export async function listSources() { try { return await (await backendFor()).listSources(); } catch (e) { return []; } }
+// A device-portable CONFIG snapshot stored ALONGSIDE the documents (so a cloud-backed store carries the user's
+// setup — datasources' account/output/schedule settings, sinks WITHOUT secrets, routes — to another machine). Not
+// every backend implements it (best-effort); secrets never go here (they live in the encrypted, device-local store).
+export async function putConfigSnapshot(snapshot) { try { const b = await backendFor(); return typeof b.putConfig === 'function' ? await b.putConfig(snapshot) : false; } catch (e) { return false; } }
+export async function getConfigSnapshot() { try { const b = await backendFor(); return typeof b.getConfig === 'function' ? await b.getConfig() : null; } catch (e) { return null; } }
 // Public read helpers stay tolerant (a flaky/unconnected cloud backend must not crash the popup's normal
 // list flow) — they degrade to null/empty. The store BROWSER calls a backend's loadSource DIRECTLY so it
 // can surface the real failure reason (see ui/store-browser.js).

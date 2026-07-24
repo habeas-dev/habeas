@@ -8,6 +8,7 @@ import { registerCapture } from './lib/capture.js';
 import { loadAuth, hasAuth, capturePathAllowed } from './lib/authstore.js';
 import { pushDiag, recordingNet, pushReqCtx, redactReqVal as rcRedactVal } from './lib/diag.js';
 import { deliveredSet, markDelivered, appendLog, rememberDocMeta } from './lib/state.js';
+import { applyStoredConfigIfNewer, writeSnapshotIfChanged } from './lib/configsync.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
 import { resolveSiteFetch, ensureSiteFetch, recoverSession, withBrandHost, findSiteTab, foregroundTab } from './lib/pagefetch.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
@@ -45,6 +46,10 @@ import { autoDebounced, retainAutoDebounce, isLoginNavigation, needsTabEscalatio
       if (r && r.records) appendLog({ kind: 'migrate', ok: true, msg: `Re-normalized ${r.records} stored record(s) across ${r.changed.length} source(s); reset ${r.resets} delivery ledger(s).` });
     }).catch(() => {});
   } catch (e) {}
+  // Cross-device config: adopt a NEWER config snapshot from the (cloud-backed) canonical store, so this machine
+  // picks up the account/output/schedule settings + destinations configured elsewhere. Best-effort; the cascade
+  // below (capture/schedule re-arm on the resulting config change) applies the merged config.
+  applyStoredConfigIfNewer().catch(() => {});
   // One-time: encrypt any pairing-token headers left plaintext in config by older versions.
   migrateSinkHeaders().catch(() => {});
   syncWebRequestCapture();
@@ -55,9 +60,11 @@ import { autoDebounced, retainAutoDebounce, isLoginNavigation, needsTabEscalatio
   checkContribReplies(); // check once on startup so a reply that arrived while closed notifies promptly
 })();
 // Re-sync the webRequest capture filter + the schedule alarms when the config changes.
+let __snapTimer = 0;
+function scheduleConfigSnapshot() { try { clearTimeout(__snapTimer); } catch (e) {} __snapTimer = setTimeout(() => { writeSnapshotIfChanged().catch(() => {}); }, 3000); }
 chrome.storage.onChanged.addListener((ch, area) => {
   if (area === 'local' && (ch['habeas:config'] || ch['habeas:sources'])) syncWebRequestCapture();
-  if (area === 'local' && ch['habeas:config']) syncSchedules().catch(() => {});
+  if (area === 'local' && ch['habeas:config']) { syncSchedules().catch(() => {}); scheduleConfigSnapshot(); } // push the change to the store for other devices (debounced; writeSnapshotIfChanged skips the apply echo)
   if (area === 'local' && ch['habeas:learn']) syncLearnAssetCapture().catch(() => {});
 });
 // The download planner: chrome.alarms wakes the SW at each schedule's fire time (a browser that was closed

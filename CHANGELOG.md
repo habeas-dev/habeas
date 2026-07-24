@@ -11,6 +11,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Cross-device config: the canonical store carries your setup** (`lib/configsync.js`, `lib/store*.js`,
+  `background.js`). A copy of your configuration — datasources (account allow-list, output selection, schedule),
+  destinations (WITHOUT secrets — only `secret://` refs), and auto-sync routes — is written into the store next to
+  the documents as a reserved `_config` blob. A cloud-backed store (Drive/Dropbox/folder/…) then carries it to
+  another machine, where on startup a NEWER snapshot is merged in (newest-wins per entry, local-only kept) so
+  everything works as configured. Secrets are never synced — a new device re-authenticates its destinations. The
+  reserved blob is hidden from the source listing (never rendered or orphan-pruned).
 - **Sinks can filter by document TYPE, not just category** (`sinks/format.js`, `ui/sinkform.js`). `sink.accepts`
   gained a `schemas` axis (`transaction`/`invoice`/`receipt`/`investment`), so a destination meant for transactions
   is no longer offered — or sent — invoice-only sources. The http-sink form takes an "Accepts types" field; the

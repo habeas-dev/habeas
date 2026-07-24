@@ -116,7 +116,14 @@ export function makeShardedStore(prim) {
     }
   }
 
-  async function listSources() { return prim.listSourceIds(); }
+  async function listSources() { return (await prim.listSourceIds()).filter((id) => !String(id).startsWith('_')); } // hide reserved ids (e.g. _config)
+
+  // A device-portable CONFIG snapshot lives alongside the documents (so a cloud-backed store carries the setup to
+  // another machine). It's a single reserved blob (`_config/config`), NOT sharded item data — kept out of the
+  // source listing above so the Archive never renders or orphan-prunes it.
+  const CONFIG_ID = '_config', CONFIG_SHARD = 'config';
+  async function getConfig() { try { return await prim.readShard(CONFIG_ID, CONFIG_SHARD); } catch (e) { return null; } }
+  async function putConfig(snapshot) { try { await prim.writeShard(CONFIG_ID, CONFIG_SHARD, snapshot); return true; } catch (e) { return false; } }
 
   async function clearSource(id) { await prim.removeSource(id).catch(() => {}); await prim.removeLegacy(id).catch(() => {}); }
 
@@ -129,7 +136,7 @@ export function makeShardedStore(prim) {
     return !!(legacy && legacy.items && Object.keys(legacy.items).length);
   }
 
-  return { loadSource, saveSource, appendItems, listSources, clearSource, hasItems };
+  return { loadSource, saveSource, appendItems, listSources, clearSource, hasItems, getConfig, putConfig };
 }
 
 // Adapt a PATH-based backend (folder/dropbox/webdav/s3) to the semantic shard ops. The backend supplies plain
