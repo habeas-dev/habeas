@@ -19,6 +19,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   no longer leaks movements from accounts the user didn't pick.
 
 ### Added
+- **Activity log errors are readable and actionable** (`ui/activity.js`, `ui/activity.html`, `runtime/inventory.js`,
+  `background.js`). A failed list/groups request now carries structured fields (HTTP status, operation, request
+  URL), so the log shows a plain-language message ("Your ING session has expired — sign in again"), the exact
+  endpoint that failed (`list · host/path · 401`), and actions: **Sign in to <source>** (opens the source site to
+  re-capture the session) and **Technical details** (the raw response, on demand) — instead of dumping the raw
+  401 HTML page. Consecutive identical errors collapse into one ×N row, and the source id no longer breaks
+  character-by-character (the message column was starving it).
 - **Update community sources from the Services list** (`ui/options.js`, reuses `registry/client.js`). Settings
   now checks the community catalog (best-effort, offline-safe) and flags each installed source that has a newer,
   compatible version with an "update available" pill and an **Update** button — plus a banner with **Update all**.

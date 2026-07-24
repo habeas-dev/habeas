@@ -670,6 +670,36 @@
       }
     }
   },
+  "this_source": {
+    "message": "this service"
+  },
+  "log_err_auth": {
+    "message": "Your $SOURCE$ session has expired or you’re signed out — sign in again to resume.",
+    "placeholders": { "source": { "content": "$1" } }
+  },
+  "log_err_gone": {
+    "message": "The service refused the request (code $N$) — the document may no longer be available.",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "log_err_server": {
+    "message": "The service had a problem (code $N$). It’s usually temporary — try again later.",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "log_err_http": {
+    "message": "The request was rejected (code $N$).",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "log_err_other": {
+    "message": "The request failed: $MSG$",
+    "placeholders": { "msg": { "content": "$1" } }
+  },
+  "log_action_login": {
+    "message": "Sign in to $SOURCE$",
+    "placeholders": { "source": { "content": "$1" } }
+  },
+  "log_action_details": {
+    "message": "Technical details"
+  },
   "status_listing": {
     "message": "Checking $NAME$…",
     "placeholders": {

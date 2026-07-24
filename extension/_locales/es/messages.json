@@ -670,6 +670,36 @@
       }
     }
   },
+  "this_source": {
+    "message": "este servicio"
+  },
+  "log_err_auth": {
+    "message": "Tu sesión de $SOURCE$ ha caducado o has cerrado sesión — vuelve a iniciar sesión para continuar.",
+    "placeholders": { "source": { "content": "$1" } }
+  },
+  "log_err_gone": {
+    "message": "El servicio rechazó la petición (código $N$) — puede que el documento ya no esté disponible.",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "log_err_server": {
+    "message": "El servicio tuvo un problema (código $N$). Suele ser temporal — inténtalo más tarde.",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "log_err_http": {
+    "message": "La petición fue rechazada (código $N$).",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "log_err_other": {
+    "message": "La petición falló: $MSG$",
+    "placeholders": { "msg": { "content": "$1" } }
+  },
+  "log_action_login": {
+    "message": "Iniciar sesión en $SOURCE$",
+    "placeholders": { "source": { "content": "$1" } }
+  },
+  "log_action_details": {
+    "message": "Detalles técnicos"
+  },
   "status_listing": {
     "message": "Comprobando $NAME$…",
     "placeholders": {

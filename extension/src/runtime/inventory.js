@@ -225,7 +225,11 @@ async function fetchGroupItems(adapter, auth, net) {
     if (method === 'POST' && g.body != null) { init.body = fillTmpl(g.body, null, auth, g.params || {}); init.headers['content-type'] = g.contentType || 'application/x-www-form-urlencoded'; }
     if (g.referer) init.referrer = g.referer;
     const res = await withReferer(url, g.referer || null, () => NET(url, init));
-    if (!res.ok) throw new Error('groups ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120) + ' [sent: ' + (res.sentHeaders || Object.keys(init.headers || {})).join(',') + ']' + tokenStatus(res));
+    if (!res.ok) {
+      const err = new Error('groups ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120) + ' [sent: ' + (res.sentHeaders || Object.keys(init.headers || {})).join(',') + ']' + tokenStatus(res));
+      err.http = res.status; err.op = 'groups'; err.url = url;
+      throw err;
+    }
     const items = isHtml ? extractListItems(await res.text(), g) : (get(await res.json(), g.itemsPath) || []);
     for (const it of items) out.push(it);
   }
@@ -1322,7 +1326,12 @@ async function fetchList(adapter, auth, params, net, group) {
   const res = await withReferer(url, referer, () => NET(url, init));
   // On failure, include which header NAMES we sent (never values) — so a diagnostic report shows whether
   // e.g. `authorization` reached the request, without the contributor needing DevTools.
-  if (!res.ok) throw new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160) + ' [sent: ' + (res.sentHeaders || Object.keys(init.headers || {})).join(',') + ']' + tokenStatus(res));
+  if (!res.ok) {
+    const sent = (res.sentHeaders || Object.keys(init.headers || {})).join(',');
+    const err = new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160) + ' [sent: ' + sent + ']' + tokenStatus(res));
+    err.http = res.status; err.op = 'list'; err.url = url; // structured bits so the activity log can show a clean, actionable message
+    throw err;
+  }
   // Server-rendered list (no JSON API): parse the items out of the page HTML.
   if (html) return { __items: extractListItems(await res.text(), list) };
   return await res.json();

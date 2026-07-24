@@ -765,7 +765,7 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
   } catch (e) {
     const msg = (e && e.message) || String(e);
     pushDiag(adapter.id, { phase: 'send', message: msg });
-    await appendLog({ kind: 'manual', datasource: ds.id, sink: sink.id, status: 'error', error: msg });
+    await appendLog({ kind: 'manual', datasource: ds.id, sink: sink.id, status: 'error', error: msg, ...errFields(e) });
     await badgeError(); setStatus(t('status_error', [name, msg.slice(0, 80)]));
     return { status: 'error', error: msg };
   }
@@ -895,7 +895,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
       setStatus(t('status_challenged', [name]));
       return { status: 'challenged' };
     }
-    await appendLog({ ...base, status: 'error', error: msg });
+    await appendLog({ ...base, status: 'error', error: msg, ...errFields(e) });
     if (kind === 'auto') notify(t('notify_autoerr', [msg]));
     await badgeError();
     setStatus(t('status_error', [name, msg.slice(0, 80)]));
@@ -985,6 +985,16 @@ function senderOrigin(sender) {
   if (!sender) return '';
   if (sender.origin) return sender.origin; // Chrome MV3: authoritative page origin of the content script
   try { return new URL(sender.url).origin; } catch (e) { return ''; }
+}
+
+// Pull the structured bits off a thrown HTTP error (set by runtime/inventory.js) so the activity log can render a
+// clean, actionable message + the exact request that failed, instead of a raw HTML body dump.
+function errFields(e) {
+  const f = {};
+  if (e && e.http != null) f.http = e.http;
+  if (e && e.op) f.op = e.op;
+  if (e && e.url) f.url = e.url;
+  return f;
 }
 
 const siteBaseUrl = (adapter) => {

@@ -11,16 +11,26 @@
       margin: 0 0 8px; text-transform: capitalize; letter-spacing: .01em; }
     .day ul { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 12px;
       overflow: hidden; background: var(--surface); }
-    .row { display: grid; grid-template-columns: 54px 78px 1fr auto; gap: 12px; align-items: center;
+    .row { display: grid; grid-template-columns: 52px 62px minmax(72px,140px) 1fr; gap: 12px; align-items: start;
       padding: 11px 15px; border-top: 1px solid var(--line); font-size: 13px; }
     .row:first-child { border-top: 0; }
     .time { color: var(--muted); font-variant-numeric: tabular-nums; }
-    .kind { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
-    .src { font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
-    .det { color: var(--muted); text-align: right; overflow-wrap: anywhere; }
-    .row.err .det { color: #c0392b; }
+    .kind { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding-top: 1px; }
+    /* the source id: keep it on ONE line (was breaking char-by-char when the message column starved it) */
+    .src { font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .det { color: var(--muted); text-align: left; min-width: 0; }
     .row.warn .det { color: var(--accent, #e08a3c); }
+    /* rich error cell: plain-language message, the exact endpoint, actions, and an on-demand raw dump */
+    .det .msg { display: block; color: #c0392b; font-weight: 600; }
+    .det .count { font-weight: 700; color: var(--muted); font-size: 11px; }
+    .det .ep { display: block; margin-top: 3px; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px;
+      color: var(--muted); word-break: break-all; }
+    .det .acts { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 7px; }
+    .det .acts .link { font-size: 12.5px; }
+    .det .raw { display: block; margin-top: 7px; white-space: pre-wrap; word-break: break-word; font-size: 11px;
+      background: var(--brand-50); color: var(--muted); padding: 7px 9px; border-radius: 6px; max-height: 170px; overflow: auto; }
     .empty { text-align: center; color: var(--muted); padding: 70px 20px; font-size: 14px; }
+    @media (prefers-color-scheme: dark) { .det .msg { color: #ec8a82; } }
   </style>
 </head>
 <body>
