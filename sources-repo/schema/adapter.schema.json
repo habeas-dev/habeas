@@ -904,14 +904,23 @@
             },
             "items": {
               "anyOf": [
-                { "$ref": "#/$defs/rows" },
+                {
+                  "$ref": "#/$defs/rows"
+                },
                 {
                   "type": "object",
                   "additionalProperties": false,
                   "description": "[detail json] Line items from a JSON detail: `path` (dotted, get()-style) to the array + per-element `fields` (each a dotted path).",
                   "properties": {
-                    "path": { "type": "string" },
-                    "fields": { "type": "object", "additionalProperties": { "type": "string" } }
+                    "path": {
+                      "type": "string"
+                    },
+                    "fields": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
                   }
                 }
               ]
@@ -1108,6 +1117,10 @@
         "row": {
           "type": "string",
           "description": "Class marker splitting the HTML into per-item blocks; fields extract from each block."
+        },
+        "within": {
+          "type": "string",
+          "description": "Narrow to ONE container (a <table> bearing this class) before parsing rows — so a page with several tables extracts only the chosen one. No match -> the whole page."
         },
         "section": {
           "type": "object",

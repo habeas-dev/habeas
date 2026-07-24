@@ -1,0 +1,62 @@
+{
+  "id": "pagatelia-es",
+  "name": "Pagatelia — facturas",
+  "service": "pagatelia",
+  "trust": "community",
+  "domain": "pagatelia.com",
+  "country": "ES",
+  "version": "2026-07-24",
+  "minVersion": "0.7.0.48",
+  "categories": [
+    "tolls"
+  ],
+  "contributors": [
+    "David Marín Carreño"
+  ],
+  "match": [
+    "https://portal.pagatelia.com/*"
+  ],
+  "auth": {
+    "mode": "cookie",
+    "replayHeaders": []
+  },
+  "api": {
+    "host": "https://portal.pagatelia.com",
+    "list": {
+      "from": "html",
+      "path": "/micuenta/consumos",
+      "paging": "none",
+      "rows": {
+        "within": "grid",
+        "each": "<tr\\b[^>]*>[\\s\\S]*?</tr>",
+        "fields": {
+          "date": {
+            "sel": "billDate",
+            "endOfMonth": true
+          },
+          "number": {
+            "sel": "billNumber"
+          },
+          "total": {
+            "sel": "billAmount"
+          },
+          "billId": {
+            "re": "bill/download/([0-9]+)"
+          }
+        }
+      }
+    },
+    "pdf": {
+      "path": "/micuenta/bill/download/{billId}",
+      "method": "GET",
+      "ext": "pdf"
+    }
+  },
+  "fields": {
+    "internalId": "billId",
+    "date": "date",
+    "number": "number",
+    "total": "total"
+  },
+  "schema": "invoice@1"
+}
