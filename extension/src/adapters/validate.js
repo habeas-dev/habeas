@@ -132,6 +132,14 @@ export const CATEGORIES = [
   'other',
 ];
 const CATSET = new Set(CATEGORIES);
+// Closest valid categories to a typo (e.g. "toll" → "tolls") — prefix/substring match, best few.
+const nearestCats = (bad) => { const b = String(bad).toLowerCase(); return CATEGORIES.filter((c) => c.startsWith(b) || b.startsWith(c) || c.includes(b) || b.includes(c)).slice(0, 3); };
+// A helpful "unknown category" message: each bad value with a suggestion, then the FULL allowed catalog inline
+// (the author shouldn't have to open a doc to see the valid values).
+function unknownCatMsg(label, bad) {
+  const parts = bad.map((c) => { const s = nearestCats(c); return c + (s.length ? ` (did you mean: ${s.join(', ')}?)` : ''); });
+  return `${label}: ${parts.join('; ')} — allowed categories: ${CATEGORIES.join(', ')}`;
+}
 
 export function validateAdapter(adapter) {
   const errors = [];
@@ -146,11 +154,11 @@ export function validateAdapter(adapter) {
     req(Array.isArray(adapter.match) && adapter.match.length > 0, 'match[] required');
     req(Array.isArray(adapter.categories) && adapter.categories.length > 0, 'categories[] required');
     const badCats = (adapter.categories || []).filter((c) => !CATSET.has(c));
-    req(!badCats.length, `unknown categor${badCats.length > 1 ? 'ies' : 'y'}: ${badCats.join(', ')} — use the allowed catalog (see docs/categories.md)`);
+    req(!badCats.length, unknownCatMsg(`unknown categor${badCats.length > 1 ? 'ies' : 'y'}`, badCats));
     if (adapter.categorize) {
       const czVals = [adapter.categorize.default, ...Object.values(adapter.categorize.map || {})].filter((v) => v != null);
       const badCz = czVals.filter((c) => !CATSET.has(c));
-      req(!badCz.length, `categorize maps to unknown categor${badCz.length > 1 ? 'ies' : 'y'}: ${badCz.join(', ')}`);
+      req(!badCz.length, unknownCatMsg(`categorize maps to unknown categor${badCz.length > 1 ? 'ies' : 'y'}`, badCz));
     }
     const api = adapter.api || {};
     // https everywhere; http only for loopback (local dev/testing sources — can't be MITM'd off-box).
