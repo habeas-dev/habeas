@@ -1219,13 +1219,20 @@ async function runExternalStoreSend(ds, adapter, sink, { label, force } = {}) {
   const sid0 = storeIdOf(ds, adapter);
   const delivered = force ? {} : await deliveredSet(ds.id, sink.id).catch(() => ({}));
   const streams = [...new Set(outputsOf(adapter).map((o) => o.stream))];
+  // Respect the user's account selection (popup's "Cuentas" picker): the archive
+  // holds records from EVERY account ever collected, but a store-send must only
+  // deliver the accounts the user picked — same allow-list list-groups + collect
+  // honor. Records carry `record.group` = the account LABEL (groupLabelOf).
+  const allowLabels = Array.isArray(ds.groupLabels) && ds.groupLabels.length ? new Set(ds.groupLabels.map(String)) : null;
   const picked = [];
   for (const sid of streams) {
     const sk = storeKeyOf(sid0, sid);
     let recs; try { recs = await getRecords(sk, { delivered }); } catch (e) { continue; }
     for (const r of recs || []) {
       if (!r || r.internalId == null) continue;
-      if (label && String(r.group || '') !== label) continue; // one account only
+      const grp = String(r.group || '');
+      if (label) { if (grp !== label) continue; }            // one account only
+      else if (allowLabels && grp && !allowLabels.has(grp)) continue; // excluded account (no group → allowed, e.g. integrated statement)
       picked.push({ internalId: r.internalId, record: r, stream: sid });
     }
   }

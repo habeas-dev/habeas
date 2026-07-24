@@ -10,6 +10,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **Archive-only external send respects the account selection** (`background.js` `runExternalStoreSend`). The
+  canonical store holds records from every account ever collected, but a `collect fromStore` (with no specific
+  `group`) delivered ALL of them — ignoring the user's saved account allow-list (`ds.groupLabels`), the one
+  `list-groups` and source collection already honor. It now filters store records to the selected accounts
+  (records with no group, e.g. an integrated statement, still pass), so a consumer's "re-send whole archive"
+  no longer leaks movements from accounts the user didn't pick.
+
 ### Added
 - **Destinations that also back the archive are flagged as such** (`ui/options.js`). A cloud archive backend
   (Dropbox/WebDAV/S3) reuses one of your configured destinations as its transport, so the same connection showed
