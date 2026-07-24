@@ -1000,6 +1000,7 @@ function errFields(e) {
     const now = e.token.now || Math.floor(Date.now() / 1000);
     f.tokenState = (e.token.exp - now) >= 0 ? 'valid' : 'expired';
   }
+  if (e && e.authForm) f.authForm = e.authForm; // the SHAPE of the authorization we replayed (jwt / bearer-nonjwt / basic / none)
   return f;
 }
 

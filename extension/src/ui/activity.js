@@ -46,6 +46,9 @@ function humanError(e) {
     // the browser session lives on) is a DIFFERENT thing from the session ending — and a valid-token 401 is "something else".
     if (e.tokenState === 'expired') return t('log_err_token_expired', [name]);
     if (e.tokenState === 'valid') return t('log_err_auth_valid', [name]);
+    // A 401 where the authorization we replayed wasn't a real user JWT (empty / non-JWT bearer / Basic): the token
+    // never went out as expected — not an expiry. Distinct guidance from the generic "you need to be signed in".
+    if (e.authForm && e.authForm !== 'jwt') return t('log_err_token_missing', [name]);
     return t('log_err_auth', [name]);
   }
   if (s === 404 || s === 406) return t('log_err_gone', [String(s)]);

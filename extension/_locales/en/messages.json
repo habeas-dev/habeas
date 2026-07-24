@@ -685,6 +685,10 @@
     "message": "$SOURCE$ rejected the request even though the access token was still valid — likely a temporary block or a missing session detail, not an expired login. See the technical details.",
     "placeholders": { "source": { "content": "$1" } }
   },
+  "log_err_token_missing": {
+    "message": "No valid $SOURCE$ access token went out with this request — Habeas may not have a current one captured. Open $SOURCE$ (signed in) so a fresh token is captured, then try again.",
+    "placeholders": { "source": { "content": "$1" } }
+  },
   "log_err_gone": {
     "message": "The service refused the request (code $N$) — the document may no longer be available.",
     "placeholders": { "n": { "content": "$1" } }

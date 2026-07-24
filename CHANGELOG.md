@@ -19,6 +19,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   no longer leaks movements from accounts the user didn't pick.
 
 ### Added
+- **Auth-failure diagnostics record the replayed authorization's shape** (`lib/pagefetch.js`, `runtime/inventory.js`,
+  `background.js`, `ui/activity.js`). Beyond the JWT's expiry, a 401/403 now records the *form* of the authorization
+  header we sent — `jwt` / `bearer-nonjwt` / `basic` / `none` (never the value). When no real user JWT went out, the
+  log says "no valid access token went out — open <source> so a fresh token is captured" (distinct from an expiry),
+  and the raw details end with `[auth <form>]`. Pinpoints a 401 caused by the wrong/empty token being replayed
+  rather than a genuine session problem.
 - **Auth errors distinguish an expired saved token from an ended session** (`runtime/inventory.js`, `background.js`,
   `ui/activity.js`). The runtime already decodes the replayed JWT's `exp`; a 401/403 now reports whether that token
   was expired or still valid. The log says the right thing: an expired short-lived bank token (while your login is

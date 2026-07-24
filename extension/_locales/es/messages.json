@@ -685,6 +685,10 @@
     "message": "$SOURCE$ rechazó la petición aunque el token de acceso seguía siendo válido — probablemente un bloqueo temporal o falta algún dato de sesión, no una sesión caducada. Mira los detalles técnicos.",
     "placeholders": { "source": { "content": "$1" } }
   },
+  "log_err_token_missing": {
+    "message": "No salió un token de acceso válido de $SOURCE$ en esta petición — puede que Habeas no tenga uno vigente capturado. Abre $SOURCE$ (con la sesión iniciada) para capturar uno nuevo y reinténtalo.",
+    "placeholders": { "source": { "content": "$1" } }
+  },
   "log_err_gone": {
     "message": "El servicio rechazó la petición (código $N$) — puede que el documento ya no esté disponible.",
     "placeholders": { "n": { "content": "$1" } }

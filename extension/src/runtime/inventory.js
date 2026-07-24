@@ -226,8 +226,8 @@ async function fetchGroupItems(adapter, auth, net) {
     if (g.referer) init.referrer = g.referer;
     const res = await withReferer(url, g.referer || null, () => NET(url, init));
     if (!res.ok) {
-      const err = new Error('groups ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120) + ' [sent: ' + (res.sentHeaders || Object.keys(init.headers || {})).join(',') + ']' + tokenStatus(res));
-      err.http = res.status; err.op = 'groups'; err.url = url; err.token = res.sentToken || null;
+      const err = new Error('groups ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120) + ' [sent: ' + (res.sentHeaders || Object.keys(init.headers || {})).join(',') + ']' + tokenStatus(res) + authInfo(res));
+      err.http = res.status; err.op = 'groups'; err.url = url; err.token = res.sentToken || null; err.authForm = res.authForm || null;
       throw err;
     }
     const items = isHtml ? extractListItems(await res.text(), g) : (get(await res.json(), g.itemsPath) || []);
@@ -595,6 +595,12 @@ const tmplGroupRaw = (str, group) => (group ? String(str).replace(/\{group\.([^}
 // Dates use the browser's LOCAL calendar (what the SPA itself computed), date-only, so no timezone shift.
 // Human-readable status of the SENT bearer (from the page fetch decoding its own claims) — exp/iss only,
 // never the token, so a failed auth request says whether the token was expired or fresh in the diagnostic.
+// The shape of the authorization header we sent (jwt / bearer-nonjwt / basic / none) — surfaced when NO decodable
+// JWT went out, which is the tell-tale of "a token was replayed but it wasn't the real user bearer".
+export function authInfo(res) {
+  const f = res && res.authForm;
+  return f && f !== 'jwt' ? ' [auth ' + f + ']' : '';
+}
 export function tokenStatus(res) {
   const t = res && res.sentToken; if (!t || t.exp == null) return "";
   const now = t.now || Math.floor(Date.now() / 1000);
@@ -1328,8 +1334,8 @@ async function fetchList(adapter, auth, params, net, group) {
   // e.g. `authorization` reached the request, without the contributor needing DevTools.
   if (!res.ok) {
     const sent = (res.sentHeaders || Object.keys(init.headers || {})).join(',');
-    const err = new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160) + ' [sent: ' + sent + ']' + tokenStatus(res));
-    err.http = res.status; err.op = 'list'; err.url = url; err.token = res.sentToken || null; // structured bits (+ the replayed JWT's exp) so the log can classify the 401
+    const err = new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160) + ' [sent: ' + sent + ']' + tokenStatus(res) + authInfo(res));
+    err.http = res.status; err.op = 'list'; err.url = url; err.token = res.sentToken || null; err.authForm = res.authForm || null; // structured bits (+ the replayed JWT's exp / auth shape) so the log can classify the 401
     throw err;
   }
   // Server-rendered list (no JSON API): parse the items out of the page HTML.
