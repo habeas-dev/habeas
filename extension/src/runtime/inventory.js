@@ -1439,13 +1439,17 @@ export function parseHtmlItems(html, cfg) {
   return out;
 }
 function extractField(block, s) {
+  let v = '';
   try {
-    if (s.re) { const m = block.match(new RegExp(s.re, 'i')); return m ? String(m[1] != null ? m[1] : m[0]).trim() : ''; }
-    if (s.attr) { const m = block.match(new RegExp(escapeRe(s.attr) + '\\s*=\\s*["\']([^"\']*)["\']', 'i')); return m ? m[1].trim() : ''; }
-    if (s.tag) { const m = block.match(new RegExp('<' + s.tag + '\\b[^>]*>([\\s\\S]*?)<\\/' + s.tag + '>', 'i')); return m ? stripTags(m[1]) : ''; }
-    if (s.sel) { const m = block.match(new RegExp('class=["\'][^"\']*\\b' + escapeRe(s.sel) + '\\b[^"\']*["\'][^>]*>([\\s\\S]*?)<', 'i')); return m ? stripTags(m[1]) : ''; }
-  } catch (e) {}
-  return '';
+    if (s.re) { const m = block.match(new RegExp(s.re, 'i')); v = m ? String(m[1] != null ? m[1] : m[0]).trim() : ''; }
+    else if (s.attr) { const m = block.match(new RegExp(escapeRe(s.attr) + '\\s*=\\s*["\']([^"\']*)["\']', 'i')); v = m ? m[1].trim() : ''; }
+    else if (s.tag) { const m = block.match(new RegExp('<' + s.tag + '\\b[^>]*>([\\s\\S]*?)<\\/' + s.tag + '>', 'i')); v = m ? stripTags(m[1]) : ''; }
+    else if (s.sel) { const m = block.match(new RegExp('class=["\'][^"\']*\\b' + escapeRe(s.sel) + '\\b[^"\']*["\'][^>]*>([\\s\\S]*?)<', 'i')); v = m ? stripTags(m[1]) : ''; }
+  } catch (e) { v = ''; }
+  // `endOfMonth`: the value indicates a MONTH; emit that month's LAST day (Pagatelia: the invoice's emission date
+  // is the last day of the month shown). Handles MM/YYYY, DD/MM/YYYY, YYYY-MM and "mes [de] año".
+  if (v && s.endOfMonth) v = endOfMonth(v);
+  return v;
 }
 const unescapeHtml = (s) => String(s).replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 // Bootstrap JSON embedded in a page: <script> blobs (Next/Nuxt/JSON-LD) AND React/Inertia
@@ -1535,6 +1539,20 @@ const MONTHS = {};
   ['october', 'oct', 'octubre'], ['november', 'nov', 'noviembre'], ['december', 'dec', 'diciembre', 'dic'],
 ].forEach((names, i) => names.forEach((n) => { MONTHS[n] = i + 1; }));
 const pad2 = (n) => String(n).padStart(2, '0');
+// The LAST day of the month a value denotes — for sources whose date column shows a month (or a date whose
+// month is what matters) and the real date is that month's end. Robust to MM/YYYY, DD/MM/YYYY, YYYY-MM[-DD],
+// "mes [de] año"; falls back to normalizeDate's month if none of those parse.
+export function endOfMonth(v) {
+  if (v == null || v === '') return v;
+  const s = String(v).trim().toLowerCase();
+  let y, mo, m;
+  if ((m = s.match(/(\d{4})[-/.](\d{1,2})(?:[-/.]\d{1,2})?$/))) { y = +m[1]; mo = +m[2]; }              // YYYY-MM[-DD]
+  else if ((m = s.match(/(\d{1,2})[-/.](\d{4})$/))) { mo = +m[1]; y = +m[2]; }                          // MM/YYYY (also the tail of DD/MM/YYYY)
+  else if ((m = s.match(/([a-záéíóúñ]{3,})\.?\s+(?:de\s+)?(\d{4})/))) { mo = MONTHS[m[1]]; y = +m[2]; }  // "julio 2026" / "julio de 2026"
+  if (!y || !mo || mo < 1 || mo > 12) { const iso = String(normalizeDate(v)); const mm = iso.match(/^(\d{4})-(\d{2})/); if (mm) { y = +mm[1]; mo = +mm[2]; } }
+  if (!y || !mo) return normalizeDate(v);
+  return `${y}-${pad2(mo)}-${pad2(new Date(y, mo, 0).getDate())}`; // day 0 of month (mo as 0-indexed next) = last day of mo
+}
 export function normalizeDate(v) {
   if (v == null || v === '') return v;
   const s = String(v).trim();

@@ -4,7 +4,7 @@ import carrefour from '../src/adapters/carrefour-es.js';
 import mart from './fixtures/examplemart-es.js';
 import bank from './fixtures/examplebank-es.js';
 import energy from './fixtures/exampleenergy-es.js';
-import { listInventory, listGroups, fetchDocument, fetchDetail, fetchPdf, normalizeDate, normalizeAmount, parseHtmlItems, artifactKinds, fetchArtifact } from '../src/runtime/inventory.js';
+import { listInventory, listGroups, fetchDocument, fetchDetail, fetchPdf, normalizeDate, normalizeAmount, parseHtmlItems, artifactKinds, fetchArtifact, endOfMonth } from '../src/runtime/inventory.js';
 import { sinkAcceptsArtifact } from '../src/sinks/format.js';
 
 const auth = { authorization: 'bearer eyJx' };
@@ -305,6 +305,24 @@ test('artifactKinds drops a document a doc cannot fill (Dia ticket with no invoi
   assert.deepEqual(artifactKinds(adapter).map((k) => k.kind), ['data', 'document']); // adapter-level: both possible
   assert.deepEqual(artifactKinds(adapter, withInv).map((k) => k.kind), ['data', 'document']);
   assert.deepEqual(artifactKinds(adapter, noInv).map((k) => k.kind), ['data']); // no invoice → no document artifact
+});
+
+test('endOfMonth: a month value → that month\'s last day (Pagatelia invoice emission date)', () => {
+  assert.equal(endOfMonth('07/2026'), '2026-07-31');   // MM/YYYY
+  assert.equal(endOfMonth('24/07/2026'), '2026-07-31'); // DD/MM/YYYY → month's last day (not the day shown)
+  assert.equal(endOfMonth('2026-02'), '2026-02-28');   // YYYY-MM (non-leap Feb)
+  assert.equal(endOfMonth('2024-02'), '2024-02-29');   // leap Feb
+  assert.equal(endOfMonth('julio de 2026'), '2026-07-31'); // Spanish month name
+  assert.equal(endOfMonth('Julio 2026'), '2026-07-31');    // capitalized, no "de"
+  assert.equal(endOfMonth(''), '');
+});
+
+test('a rows field can carry endOfMonth (extractField applies it)', () => {
+  const html = '<table class="grid"><tr class="row"><td class="billDate">24/07/2026</td><td class="billNumber">FRA-1</td></tr></table>';
+  const items = parseHtmlItems(html, { within: 'grid', each: '<tr\\b[^>]*>[\\s\\S]*?</tr>', fields: { date: { sel: 'billDate', endOfMonth: true }, number: { sel: 'billNumber' } } });
+  assert.equal(items.length, 1);
+  assert.equal(items[0].date, '2026-07-31'); // snapped to the month's last day
+  assert.equal(items[0].number, 'FRA-1');    // other fields unaffected
 });
 
 test('synthetic monthly statement: a store re-download derives {year}/{month} from the record date', async () => {
