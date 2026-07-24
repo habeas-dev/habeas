@@ -647,8 +647,16 @@ function openDrawer(r) {
   const acts = [];
   if (r.formats.length) for (const sink of r.delivered) for (const f of r.formats) { const pv = PREVIEWABLE.has((f.ext || '').toLowerCase()); acts.push(actBtn(pv ? '👁' : '⬇', t(pv ? 'archive_preview_from' : 'open_from', [sinkLabel(sink)]), (r.formats.length > 1 ? f.name : f.ext.toUpperCase()), `open:${sink.id}:${f.ext}`, true)); }
   if (acts.length) body += `<div class="actions">${acts.join('')}</div>`;
-  else if (r.delivered.length) body += `<div class="actions-note">${esc(t('archive_delivered_data'))}</div>`;
-  else body += `<div class="actions-note">${esc(t('archive_no_dest'))}</div>`;
+  else {
+    // No openable file. Distinguish a DOCUMENT stream (statement/invoice — it should have a PDF, just not here
+    // yet) from a genuinely record-only MOVEMENT (a bank line whose data rode the manifest). Calling a statement
+    // "a movement" is wrong: its file simply wasn't fetched (e.g. the source's auth failed at send time).
+    const canFile = fileFormatsFor(r.adapter, r._stream).length > 0;
+    const note = !r.delivered.length ? (canFile ? 'archive_file_notyet' : 'archive_no_dest')
+      : canFile ? 'archive_file_missing'
+      : 'archive_delivered_data';
+    body += `<div class="actions-note">${esc(t(note))}</div>`;
+  }
   body += `<div class="detail" id="dw-detail" hidden></div>`; // filled from the stored JSON detail on demand
   body += `<button class="rawtoggle" id="rawtoggle">${esc(t('archive_raw_show'))}</button><pre class="raw" id="rawbox" hidden></pre>`;
   const b = $('#dw-body'); b.innerHTML = body;

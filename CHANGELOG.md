@@ -18,6 +18,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   (records with no group, e.g. an integrated statement, still pass), so a consumer's "re-send whole archive"
   no longer leaks movements from accounts the user didn't pick.
 
+### Fixed
+- **A statement/invoice with no fetched file is no longer called "a movement"** (`ui/archive.js`). The archive
+  drawer showed "This is a movement — no separate file to open" for any delivered document without an openable
+  file — including an integrated bank statement whose PDF simply wasn't fetched (e.g. the source's session failed
+  at send time). It now distinguishes a document-producing stream (statement/invoice) from a genuinely record-only
+  movement: the former says its file isn't available here yet and to re-sync, only the latter says "it's a movement".
+
 ### Changed
 - **Archive format badges reflect what a document actually has** (`ui/archive.js`, `ui/archive.html`). A document
   no longer shows a solid PDF/XLS badge just because its stream *could* produce that format. A **solid** badge now

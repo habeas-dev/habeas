@@ -2370,6 +2370,12 @@
   "archive_delivered_data": {
     "message": "Es un movimiento — sus datos se entregaron dentro del manifiesto, así que no hay un archivo propio que abrir."
   },
+  "archive_file_missing": {
+    "message": "Este documento tiene un archivo (p. ej. un PDF), pero aún no está disponible aquí — no se descargó al enviarlo (por ejemplo, si falló la sesión de la fuente). Vuelve a sincronizar la fuente para descargarlo."
+  },
+  "archive_file_notyet": {
+    "message": "Este documento tiene un archivo (p. ej. un PDF) que aún no se ha descargado. Envíalo a un destino para descargar y guardar el archivo."
+  },
   "archive_save_to": {
     "message": "Guardar en"
   },

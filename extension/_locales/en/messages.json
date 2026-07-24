@@ -2370,6 +2370,12 @@
   "archive_delivered_data": {
     "message": "This is a movement — its data was delivered inside the manifest, so there is no separate file to open."
   },
+  "archive_file_missing": {
+    "message": "This document has a file (e.g. a PDF), but it isn’t available here yet — it wasn’t fetched at send time (for example the source’s session failed). Re-sync the source to download it."
+  },
+  "archive_file_notyet": {
+    "message": "This document has a file (e.g. a PDF) that hasn’t been fetched yet. Send it to a destination to download and keep the file."
+  },
   "archive_save_to": {
     "message": "Save to"
   },
