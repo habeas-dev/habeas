@@ -19,6 +19,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   no longer leaks movements from accounts the user didn't pick.
 
 ### Fixed
+- **"Learn from a web page" now works on data-in-the-HTML sites (SSR / `<div>` card grids)** (`content/bridge.js`,
+  `runtime/infer.js`). Record mode captured the page's own HTML only when it contained `<table>/<li>/<article>`
+  tags, so a portal that lays its rows out as `<div>` cards (e.g. Pagatelia) produced zero samples — nothing to
+  learn from. The capture gate now also fires on a repeated row/card **class** (div/span grids), and the inference
+  gained a repeated-block path: when there's no `<table>`, it finds the per-row class, scores candidates by
+  closeness to the visible-date count + per-row completeness (so an inner column class doesn't win), and drafts a
+  `row`-based `from:'html'` list the runtime's `parseHtmlItems` consumes as-is.
 - **Re-downloading a synthetic monthly statement (e.g. ING's integrated extract) now fetches its PDF**
   (`runtime/inventory.js`). The statement's PDF URL is templated by `{year}`/`{month}`, which live on the transient
   synthetic list item — gone once the doc is loaded from the archive. Without `keepRaw` they couldn't be recovered,

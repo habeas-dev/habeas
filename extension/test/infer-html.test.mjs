@@ -150,6 +150,54 @@ test('the plain-link drafted rows parse via parseHtmlItems (date/total/href), he
   assert.equal(items[1].href, '/invoices/INV-1002.pdf');
 });
 
+// --- Third SYNTHETIC fixture: a NON-table server-rendered page — each document is a <div> "card" sharing a
+// per-row class (no <table>/<li>). All values INVENTED. Exercises the repeated-block (card grid) inference.
+const cardHtml = `
+<html><body>
+<div class="listado-facturas">
+  <div class="factura-card">
+    <span class="fcol fcol-desc">Peaje mensual</span>
+    <span class="fcol fcol-fecha">12/06/2026</span>
+    <span class="fcol fcol-importe">18,40 €</span>
+    <a class="btn-descargar" href="/docs/f-a1b2c3.pdf">Descargar</a>
+  </div>
+  <div class="factura-card">
+    <span class="fcol fcol-desc">Peaje mensual</span>
+    <span class="fcol fcol-fecha">12/05/2026</span>
+    <span class="fcol fcol-importe">21,15 €</span>
+    <a class="btn-descargar" href="/docs/f-d4e5f6.pdf">Descargar</a>
+  </div>
+  <div class="factura-card">
+    <span class="fcol fcol-desc">Peaje mensual</span>
+    <span class="fcol fcol-fecha">12/04/2026</span>
+    <span class="fcol fcol-importe">9,90 €</span>
+    <a class="btn-descargar" href="/docs/f-90ab12.pdf">Descargar</a>
+  </div>
+</div>
+</body></html>`;
+const cardSample = { url: 'https://portal.example.es/mis-facturas', method: 'GET', status: 200, reqHeaders: {}, kind: 'html', html: cardHtml, fromHtml: true };
+
+test('infers a from:html list from a NON-table <div> card grid (repeated-class rows)', () => {
+  const r = draftAdapterFromSamples([cardSample], { domain: 'example.es', pageHost: 'portal.example.es' });
+  assert.ok(r.ok, r.reason);
+  assert.equal(r.draft.api.list.from, 'html');
+  assert.ok(r.draft.api.list.rows.row, 'a rows.row (class-split) config is produced'); // not table-based
+  assert.equal(r.draft.api.list.rows.row, 'factura-card', 'picks the card class, not an inner column');
+  assert.equal(r.draft.api.pdf.method, 'GET');
+  assert.equal(r.draft.fields.internalId, 'href');
+  assert.ok(validateAdapter(r.draft).ok, validateAdapter(r.draft).errors.join('; '));
+});
+
+test('the <div> card rows parse via parseHtmlItems (date/total/href per card)', () => {
+  const r = draftAdapterFromSamples([cardSample], { domain: 'example.es', pageHost: 'portal.example.es' });
+  const items = parseHtmlItems(cardHtml, r.draft.api.list.rows);
+  assert.equal(items.length, 3);
+  assert.equal(items[0].date, '12/06/2026');
+  assert.equal(items[0].total, '18,40 €');
+  assert.equal(items[0].href, '/docs/f-a1b2c3.pdf');
+  assert.equal(items[2].href, '/docs/f-90ab12.pdf');
+});
+
 // Regression: a JSON sample and an HTML sample together — both candidates are offered, JSON path
 // still works unchanged.
 test('HTML inference coexists with JSON inference (regression)', () => {

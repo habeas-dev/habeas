@@ -197,8 +197,12 @@ const classAnchor = (base, cap) => escRe(base) + '_\\d+\\b[^>]*>\\s*' + cap;
 // found (caller logs & skips — see TODO for non-table repeated blocks).
 function inferHtmlRows(html) {
   const H = String(html || '');
+  return inferHtmlTable(H) || inferHtmlBlocks(H); // a <table> of rows, else a repeated <div>/<li> card grid
+}
+// Classic "one document per <tr>" table inference.
+function inferHtmlTable(H) {
   const tbl = largestTable(H);
-  if (!tbl || tbl.trs.length < 2) return null; // TODO: repeated non-<table> blocks (cards/list items)
+  if (!tbl || tbl.trs.length < 2) return null;
   const dataTrs = tbl.trs.filter((tr) => !/<th\b/i.test(tr) && (H_DATE_RE.test(stripHtml(tr)) || H_MONEY_RE.test(stripHtml(tr))));
   if (!dataTrs.length) return null;
   const rep = dataTrs.find((tr) => H_DATE_RE.test(stripHtml(tr))) || dataTrs[0];
@@ -291,6 +295,45 @@ function inferHtmlRows(html) {
   const has = (n) => fields.some((f) => f.name === n);
   const internalId = has('href') ? 'href' : has('number') ? 'number' : has('id_factura') ? 'id_factura' : 'date';
   return { rows, pdf, items, internalId, hasNumber: has('number'), hasTotal: has('total') };
+}
+
+// Repeated-block inference (NON-table): many modern portals render each document as a <div>/<li> "card" sharing
+// a per-row class rather than a <table>. Find the class whose blocks carry a date, and draft a `row`-based
+// `rows` config (parseHtmlItems splits on that class) — validated against the real parser, like the table path.
+function inferHtmlBlocks(H) {
+  // Count class tokens; a per-row/card class repeats several times (but isn't a page-wide utility on everything).
+  const counts = Object.create(null);
+  for (const m of H.matchAll(/class=["']([^"']+)["']/gi)) for (const c of m[1].split(/\s+/)) if (c.length > 2) counts[c] = (counts[c] || 0) + 1;
+  const cands = Object.keys(counts).filter((c) => counts[c] >= 3 && counts[c] <= 600).sort((a, b) => counts[b] - counts[a]).slice(0, 40);
+  const pdfHref = /<a\b[^>]*href=["'][^"']*\.pdf/i.test(H);
+  const HREF = 'href=["\']([^"\']*\\.pdf[^"\']*)["\']';
+  const nDates = (stripHtml(H).match(new RegExp(H_DATE, 'g')) || []).length || 1; // ≈ one doc per VISIBLE date (ignore dates inside href URLs) → the true row count
+  // SCORE every candidate. The right row/card class yields ONE row per document; an inner column class
+  // over-segments (more rows than dates) or splits mid-card (fewer fields). So reward closeness to nDates most,
+  // then per-row completeness (date+total+pdf) — never the raw field COUNT, which would reward over-segmentation.
+  let best = null, bestScore = -Infinity;
+  for (const rowClass of cands) {
+    const probeFields = { date: { re: H_DATE }, total: { re: H_MONEY } };
+    if (pdfHref) probeFields.href = { re: HREF };
+    let probe = [];
+    try { probe = parseHtmlItems(H, { row: rowClass, require: ['date'], fields: probeFields }); } catch (e) { continue; }
+    const dated = probe.filter((it) => it.date).length;
+    if (dated < 2) continue;
+    const totals = probe.filter((it) => it.total).length, hrefs = probe.filter((it) => it.href).length;
+    const completeness = (totals + hrefs) / dated; // 0..2, per-row richness (scale-free)
+    const score = -Math.abs(dated - nDates) * 10 + completeness;
+    if (score > bestScore) { bestScore = score; best = { rowClass, hasTotal: totals > 0, hasHref: hrefs > 0 }; }
+  }
+  if (!best) return null;
+  const fields = { date: { re: H_DATE } };
+  if (best.hasTotal) fields.total = { re: H_MONEY };
+  let pdf = null;
+  if (best.hasHref) { fields.href = { re: HREF }; pdf = { path: '{internalId}', method: 'GET', ext: 'pdf' }; }
+  const rows = { row: best.rowClass, require: ['date'], fields };
+  let items = [];
+  try { items = parseHtmlItems(H, rows); } catch (e) { return null; }
+  if (items.length < 2) return null;
+  return { rows, pdf, items, internalId: fields.href ? 'href' : 'date', hasNumber: false, hasTotal: !!fields.total };
 }
 
 // Page/offset paging for an HTML list: from a `page`-like query param OR (AJAX POST) request body.

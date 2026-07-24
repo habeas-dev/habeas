@@ -51,14 +51,25 @@
     captureMainHtml();
   }
 
-  // Pure server-rendered (SSR) pages carry their data as HTML tables/rows in the document itself —
-  // no XHR to sample. Capture the rendered document HTML (capped) so the inference can draft a
-  // from:'html' source from it too. Only sent when the page actually contains repeated markup, and
-  // never includes cookies (outerHTML doesn't expose document.cookie).
+  // Pure server-rendered (SSR) pages carry their data as HTML rows in the document itself — no XHR to sample.
+  // Capture the rendered document HTML (capped) so the inference can draft a from:'html' source from it too.
+  // Only sent when the page shows REPEATED markup, and never includes cookies (outerHTML doesn't expose them).
+  function hasRepeatedRows(html) {
+    // Semantic list/table tags are an immediate yes; otherwise many modern portals lay rows out as <div>/<span>
+    // grids — detect a class token that repeats a lot (the per-row card/row class), so a div-based list qualifies.
+    if (/<(table|tbody|tr|li|article|section|dl)\b/i.test(html)) return true;
+    const counts = Object.create(null); const re = /class\s*=\s*["']([^"']+)["']/gi;
+    let m, seen = 0;
+    while ((m = re.exec(html)) && seen < 6000) {
+      seen++;
+      for (const c of m[1].split(/\s+/)) { if (c.length > 2 && (counts[c] = (counts[c] || 0) + 1) >= 6) return true; }
+    }
+    return false;
+  }
   function captureMainHtml() {
     try {
       const html = (document.documentElement && document.documentElement.outerHTML) || '';
-      if (html && /<(table|tbody|tr|li|article|section)\b/i.test(html)) {
+      if (html && hasRepeatedRows(html)) {
         chrome.runtime.sendMessage({ type: 'habeas:sample', domain: PAGE_DOMAIN, sample: { url: location.href, method: 'GET', status: 200, reqHeaders: {}, kind: 'html', html: html.length > 500000 ? html.slice(0, 500000) : html, fromHtml: true } });
       }
     } catch (e) {}
