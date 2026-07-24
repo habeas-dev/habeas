@@ -307,6 +307,24 @@ test('artifactKinds drops a document a doc cannot fill (Dia ticket with no invoi
   assert.deepEqual(artifactKinds(adapter, noInv).map((k) => k.kind), ['data']); // no invoice → no document artifact
 });
 
+test('itemsPath `a[].b` flattens a list nested one-per-group (PepeEnergy periods[].invoices)', async () => {
+  // Two periods; one holds two invoices (a grouped bill) → 3 items total after flattening.
+  const data = { periods: [
+    { code: 'P1', invoices: [{ id: 1, code: 'E-1', invoice_date: '2026-06-30', total_amount: 40, contract_id: 900 }] },
+    { code: 'P2', invoices: [
+      { id: 2, code: 'E-2', invoice_date: '2026-05-31', total_amount: 30, contract_id: 900 },
+      { id: 3, code: 'E-3', invoice_date: '2026-05-15', total_amount: 5, contract_id: 900 },
+    ] },
+    'chart-label', // a non-object period element must be skipped, not crash
+  ] };
+  const adapter = { id: 'x', api: { host: 'https://x.es', list: { path: '/inv', itemsPath: 'periods[].invoices', paging: 'none' } }, fields: { internalId: 'id', number: 'code', date: 'invoice_date', total: 'total_amount' }, schema: 'invoice@1' };
+  const net = async () => ({ ok: true, status: 200, sentHeaders: [], text: async () => JSON.stringify(data), json: async () => data });
+  const docs = await listInventory(adapter, {}, net, {});
+  assert.equal(docs.length, 3, 'all invoices across periods');
+  assert.deepEqual(docs.map((d) => d.internalId).sort(), [1, 2, 3]);
+  assert.equal(docs.find((d) => d.internalId === 1).record.total, 40);
+});
+
 test('endOfMonth: a month value → that month\'s last day (Pagatelia invoice emission date)', () => {
   assert.equal(endOfMonth('07/2026'), '2026-07-31');   // MM/YYYY
   assert.equal(endOfMonth('24/07/2026'), '2026-07-31'); // DD/MM/YYYY → month's last day (not the day shown)

@@ -1523,10 +1523,21 @@ function getItems(data, list) {
   const p = itemsPathOf(list);
   if (Array.isArray(p)) {
     let firstArr = null;
-    for (const cand of p) { const v = get(data, cand); if (Array.isArray(v)) { if (v.length) return v; if (firstArr == null) firstArr = v; } }
+    for (const cand of p) { const v = flattenPath(data, cand); if (Array.isArray(v)) { if (v.length) return v; if (firstArr == null) firstArr = v; } }
     return firstArr || [];
   }
-  return get(data, p) || [];
+  return flattenPath(data, p) || [];
+}
+// itemsPath with a `[].` marker MAPs over an array and flattens the sub-path from each element — for a list
+// nested one-per-group (PepeEnergy: `periods[].invoices` = every period's invoices). Recurses for deeper nesting.
+// A plain path (or `key[field=value]` selector) has no `[].`, so `get` handles it unchanged.
+function flattenPath(data, path) {
+  if (typeof path !== 'string' || path.indexOf('[].') < 0) return get(data, path);
+  const i = path.indexOf('[].');
+  const parent = get(data, path.slice(0, i));
+  if (!Array.isArray(parent)) return [];
+  const sub = path.slice(i + 3);
+  return parent.flatMap((e) => { const v = flattenPath(e, sub); return Array.isArray(v) ? v : (v != null ? [v] : []); });
 }
 
 // Normalize a date value to ISO (YYYY-MM-DD). Handles ISO/ISO-datetime, epoch s/ms, textual months

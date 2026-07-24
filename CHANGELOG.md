@@ -19,6 +19,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   no longer leaks movements from accounts the user didn't pick.
 
 ### Added
+- **`itemsPath` flatten marker `a[].b`** (`runtime/inventory.js`). A list nested one-per-group — each element of
+  array `a` holding a sub-array `b` — is flattened into a single item list with `itemsPath: "a[].b"` (e.g.
+  PepeEnergy's `periods[].invoices`). Non-array/absent elements are skipped; recurses for deeper nesting. A plain
+  path or a `key[field=value]` selector is unaffected.
 - **`endOfMonth` date transform for `from:html` rows** (`runtime/inventory.js`). A rows field can carry
   `endOfMonth: true` — the extracted value denotes a month and the emitted date is that month's **last day**
   (e.g. a source whose invoice emission date is the last day of the month shown). Handles `MM/YYYY`,
