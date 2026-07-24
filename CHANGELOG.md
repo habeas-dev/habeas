@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-07-24
+
 ### Fixed
 - **Archive-only external send respects the account selection** (`background.js` `runExternalStoreSend`). The
   canonical store holds records from every account ever collected, but a `collect fromStore` (with no specific
