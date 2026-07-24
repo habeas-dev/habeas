@@ -1514,6 +1514,33 @@
       }
     }
   },
+  "advanced_options": {
+    "message": "Advanced options"
+  },
+  "update": {
+    "message": "Update"
+  },
+  "update_available": {
+    "message": "update available"
+  },
+  "update_all": {
+    "message": "Update all"
+  },
+  "updates_available_n": {
+    "message": "$COUNT$ updates available for your services",
+    "placeholders": { "count": { "content": "$1" } }
+  },
+  "updating": {
+    "message": "Updating…"
+  },
+  "update_failed": {
+    "message": "Update failed: $MSG$",
+    "placeholders": { "msg": { "content": "$1" } }
+  },
+  "src_update_to": {
+    "message": "Update from v$FROM$ to v$TO$",
+    "placeholders": { "from": { "content": "$1" }, "to": { "content": "$2" } }
+  },
   "edit_json": {
     "message": "Edit JSON"
   },

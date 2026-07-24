@@ -1514,6 +1514,33 @@
       }
     }
   },
+  "advanced_options": {
+    "message": "Opciones avanzadas"
+  },
+  "update": {
+    "message": "Actualizar"
+  },
+  "update_available": {
+    "message": "actualización disponible"
+  },
+  "update_all": {
+    "message": "Actualizar todas"
+  },
+  "updates_available_n": {
+    "message": "$COUNT$ actualizaciones disponibles para tus servicios",
+    "placeholders": { "count": { "content": "$1" } }
+  },
+  "updating": {
+    "message": "Actualizando…"
+  },
+  "update_failed": {
+    "message": "Fallo al actualizar: $MSG$",
+    "placeholders": { "msg": { "content": "$1" } }
+  },
+  "src_update_to": {
+    "message": "Actualizar de v$FROM$ a v$TO$",
+    "placeholders": { "from": { "content": "$1" }, "to": { "content": "$2" } }
+  },
   "edit_json": {
     "message": "Editar JSON"
   },

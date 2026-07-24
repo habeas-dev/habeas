@@ -20,12 +20,17 @@ import { readSinkRecords } from '../sinks/sinks.js';
 import { esc } from '../lib/esc.js';
 import { nextOccurrence, describeSchedule, validateSpec } from '../lib/schedule.js';
 import { getSubmitter, markSeen, unreadCount } from '../lib/submitter.js';
-import { getMyHandoffs, getHandoffThread, replyHandoff } from '../registry/client.js';
+import { getMyHandoffs, getHandoffThread, replyHandoff, fetchIndex, installFromEntry } from '../registry/client.js';
+import { meetsMinVersion } from '../lib/version.js';
 import { formatDiag, clearDiag, readReqCtx, clearReqCtx, formatReqCtx } from '../lib/diag.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { scrubText } from '../lib/redact.js';
 
 let CATALOG = {};
+// Community-catalog update detection for the Services list: entries fetched once (best-effort, cached), and a
+// map of installed id → newer catalog entry for the ones with a compatible update available.
+let CAT_ENTRIES = null;
+let UPDATES = {};
 const $ = (s) => document.querySelector(s);
 const flag = (code) => !code ? '' : code === 'global' ? '🌐' : (/^[A-Za-z]{2}$/.test(code) ? code.toUpperCase().replace(/./g, (c) => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)) : '');
 
@@ -74,6 +79,45 @@ function confirmConsent(desc) {
   });
 }
 
+// --- Community-source updates: the SAME catalog the marketplace uses, surfaced right in the Services list so a
+// non-technical user can update without leaving Settings. Best-effort + offline-safe (no network → no banner).
+function isOutdated(installed, entry) {
+  return !!installed && !!entry && !!entry.version && (!installed.version || String(entry.version) > String(installed.version));
+}
+async function checkUpdates(force) {
+  try { if (force || !CAT_ENTRIES) CAT_ENTRIES = await fetchIndex(); }
+  catch (e) { CAT_ENTRIES = CAT_ENTRIES || []; return; } // offline → keep whatever we had, show nothing new
+  const installed = await getAdapters();
+  const next = {};
+  // Only offer an update the running extension can actually run (minVersion gate), same as the marketplace.
+  for (const e of CAT_ENTRIES) if (isOutdated(installed[e.id], e) && meetsMinVersion(e.minVersion)) next[e.id] = e;
+  UPDATES = next;
+  render();
+}
+function renderUpdatesBanner() {
+  const box = $('#ds-updates'); if (!box) return;
+  const ids = Object.keys(UPDATES);
+  if (!ids.length) { box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  box.innerHTML = `<div class="upd-banner"><span>⬆ ${t('updates_available_n', [String(ids.length)])}</span><button id="upd-all" class="update">${t('update_all')}</button></div>`;
+  const all = $('#upd-all'); if (all) all.onclick = () => updateAllSources(ids, all);
+}
+async function updateSource(id, btn) {
+  const entry = (CAT_ENTRIES || []).find((e) => e.id === id); if (!entry) return;
+  if (btn) { btn.disabled = true; btn.textContent = t('updating'); }
+  try { await installFromEntry(entry); }
+  catch (e) { alert(t('update_failed', [(e && e.message) || String(e)])); if (btn) btn.disabled = false; return; }
+  await checkUpdates(true); // re-read the catalog + re-render (the just-updated source drops out of UPDATES)
+}
+async function updateAllSources(ids, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = t('updating'); }
+  for (const id of ids) {
+    const entry = (CAT_ENTRIES || []).find((e) => e.id === id);
+    if (entry) { try { await installFromEntry(entry); } catch (e) { /* skip failures; the rest still update */ } }
+  }
+  await checkUpdates(true);
+}
+
 async function render() {
   const cfg = await getConfig();
   CATALOG = await getAdapters();
@@ -88,24 +132,38 @@ async function render() {
     const builtin = isBuiltinSource(a.id);
     const trust = builtin && a.trust === 'first-party' ? t('trust_first_party') : t('trust_community');
     const cats = (a.categories || []).join(', ');
+    const upd = UPDATES[a.id]; // a compatible newer version is available in the catalog
     const hay = [a.name, a.id, a.service, a.domain, cats].join(' ').toLowerCase();
     const manage = builtin ? '' : `<div class="src-manage">`
       + `<button class="link" data-edit="${esc(a.id)}">${t('edit_json')}</button>`
       + `<button class="link" data-exp="${esc(a.id)}">${t('export_source')}</button>`
       + `<button class="link" data-share="${esc(a.id)}">${t('share_source')}</button>`
       + `<button class="link danger" data-delsrc="${esc(a.id)}">${t('remove')}</button></div>`;
-    return `<div class="src-card${on ? ' on' : ''}" data-hay="${esc(hay)}">
-      <div class="src-info">
-        <div class="src-title"><b>${esc(a.name)}</b> <span class="pill type">${trust}</span></div>
-        <div class="src-meta muted">${a.country ? flag(a.country) + ' ' : ''}${cats ? esc(cats) + ' · ' : ''}<code>${esc(a.id)}</code>${a.version ? ` · <span class="ver">v${esc(String(a.version))}</span>` : ''}</div>
+    // Friendly by default (name + trust + categories + the one primary action); the technical id/version and
+    // the power-user actions (edit JSON / export / share / delete) hide behind an "Advanced options" disclosure.
+    return `<div class="src-card svc${on ? ' on' : ''}" data-hay="${esc(hay)}">
+      <div class="src-row">
+        <div class="src-info">
+          <div class="src-title"><b>${esc(a.name)}</b> <span class="pill type">${trust}</span>${upd ? ` <span class="pill upd">${t('update_available')}</span>` : ''}</div>
+          ${cats || a.country ? `<div class="src-meta muted">${a.country ? flag(a.country) + ' ' : ''}${esc(cats)}</div>` : ''}
+        </div>
+        <div class="src-actions">
+          ${upd ? `<button class="update" data-upd="${esc(a.id)}" title="${esc(t('src_update_to', [String(a.version || '?'), String(upd.version)]))}">⬆ ${t('update')}</button>` : ''}
+          <button data-ds="${esc(a.id)}" data-on="${on ? 1 : 0}" class="${on ? '' : 'primary'}">${on ? t('deactivate') : t('activate')}</button>
+        </div>
       </div>
-      <div class="src-actions">
-        <button data-ds="${esc(a.id)}" data-on="${on ? 1 : 0}" class="${on ? '' : 'primary'}">${on ? t('deactivate') : t('activate')}</button>
-        ${manage}
-      </div>
+      <details class="src-adv">
+        <summary>${t('advanced_options')}</summary>
+        <div class="src-adv-body">
+          <div class="src-tech muted"><code>${esc(a.id)}</code>${a.version ? ` · <span class="ver">v${esc(String(a.version))}</span>` : ''}</div>
+          ${manage}
+        </div>
+      </details>
     </div>`;
   }).join('');
   filterSources();
+  renderUpdatesBanner();
+  $('#ds').querySelectorAll('[data-upd]').forEach((b) => b.onclick = () => updateSource(b.dataset.upd, b));
   $('#ds').querySelectorAll('[data-edit]').forEach((b) => b.onclick = async () => {
     const edited = await editJson(CATALOG[b.dataset.edit]);
     if (edited) { await saveSource(edited); render(); }
@@ -694,6 +752,7 @@ renderFields();
 render();
 watchThemeIcon();
 renderContributions().catch(() => {}); // populate the "My contributions" unread badge on load
+checkUpdates().catch(() => {}); // best-effort: flag Services that have a newer version in the community catalog
 
 // Download planner form: reflect field changes in the live preview; add a schedule.
 (function initPlanner() {

@@ -19,6 +19,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   no longer leaks movements from accounts the user didn't pick.
 
 ### Added
+- **Update community sources from the Services list** (`ui/options.js`, reuses `registry/client.js`). Settings
+  now checks the community catalog (best-effort, offline-safe) and flags each installed source that has a newer,
+  compatible version with an "update available" pill and an **Update** button — plus a banner with **Update all**.
+  No need to open the marketplace to stay current.
+- **Services cards redesigned for non-technical users** (`ui/options.js`, `ui/theme.css`). Each card leads with
+  the essentials (name, trust badge, categories, one Activate/Deactivate button); the technical id + version and
+  the power-user actions (Edit JSON / Export / Share / Delete) are tucked behind a collapsible **Advanced options**
+  disclosure — nothing removed. Also fixes ids/versions being broken mid-word by the global code wrap.
 - **Destinations that also back the archive are flagged as such** (`ui/options.js`). A cloud archive backend
   (Dropbox/WebDAV/S3) reuses one of your configured destinations as its transport, so the same connection showed
   up in both *Where they’re kept* and *Destinations* with no hint they were the same thing. That destination now
