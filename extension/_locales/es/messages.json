@@ -2750,6 +2750,28 @@
   "opt_ov_auto_off": {
     "message": "Desactivado"
   },
+  "opt_ov_dests_n": {
+    "message": "$COUNT$ configurados",
+    "placeholders": { "count": { "content": "$1" } }
+  },
+  "opt_ov_dests_none": {
+    "message": "Ninguno aún"
+  },
+  "opt_ov_diff_h": {
+    "message": "Archivo frente a destinos"
+  },
+  "opt_ov_store_vs_h": {
+    "message": "Dónde se guardan — tu archivo"
+  },
+  "opt_ov_store_vs_p": {
+    "message": "Tu copia maestra única. Cada documento que Habeas extrae acaba aquí, en un único lugar que tú eliges (este navegador, una carpeta o la nube). Solo hay un archivo."
+  },
+  "opt_ov_dests_vs_h": {
+    "message": "Destinos — copias adicionales que envías fuera"
+  },
+  "opt_ov_dests_vs_p": {
+    "message": "Copias opcionales y adicionales que se envían a otro sitio — una carpeta compartida, un disco en la nube o una app conectada. Puedes tener varios, y cada uno solo recibe copias; tu archivo permanece intacto."
+  },
   "opt_services_title": {
     "message": "Servicios"
   },

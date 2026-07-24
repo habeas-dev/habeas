@@ -53,6 +53,15 @@
     .dest-meta code { font-size: 11.5px }
     .dest-actions { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 2px; border-top: 1px solid var(--line); margin-top: 1px }
     .dest-actions button { font-size: 12.5px; padding: 5px 11px }
+    /* home: how the archive differs from destinations */
+    .ov-explain { margin-top: 24px }
+    .ov-explain > h3 { font-family: var(--font-head); font-size: 15px; margin: 0 0 9px }
+    .oe-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px }
+    @media (max-width: 640px) { .oe-pair { grid-template-columns: 1fr } }
+    .oe-item { display: flex; gap: 12px; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; background: var(--surface) }
+    .oe-ic { font-size: 22px; flex: none; line-height: 1.2 }
+    .oe-item b { display: block; font-family: var(--font-head); font-size: 14.5px; margin-bottom: 3px }
+    .oe-item .p { font-size: 13px; color: var(--muted); line-height: 1.5 }
   </style>
 </head>
 <body>
@@ -93,7 +102,16 @@
           <div class="ov-grid" style="margin-top:16px">
             <div class="ov-card"><div class="ic">🔌</div><h3 data-i18n="opt_nav_services"></h3><div class="v" id="ov-services"></div><button class="link2" data-goto="services" data-i18n="opt_ov_manage"></button></div>
             <div class="ov-card"><div class="ic">🗄️</div><h3 data-i18n="opt_ov_storage_h"></h3><div class="v" id="ov-storage"></div><button class="link2" data-goto="storage" data-i18n="opt_ov_change"></button></div>
+            <div class="ov-card"><div class="ic">📤</div><h3 data-i18n="opt_nav_dests"></h3><div class="v" id="ov-dests"></div><button class="link2" data-goto="dests" data-i18n="opt_ov_manage"></button></div>
             <div class="ov-card"><div class="ic">🔄</div><h3 data-i18n="opt_nav_auto"></h3><div class="v" id="ov-auto"></div><button class="link2" data-goto="auto" data-i18n="opt_ov_manage"></button></div>
+          </div>
+
+          <div class="ov-explain">
+            <h3 data-i18n="opt_ov_diff_h"></h3>
+            <div class="oe-pair">
+              <div class="oe-item"><span class="oe-ic">🗄️</span><div><b data-i18n="opt_ov_store_vs_h"></b><div class="p" data-i18n="opt_ov_store_vs_p"></div></div></div>
+              <div class="oe-item"><span class="oe-ic">📤</span><div><b data-i18n="opt_ov_dests_vs_h"></b><div class="p" data-i18n="opt_ov_dests_vs_p"></div></div></div>
+            </div>
           </div>
         </section>
 

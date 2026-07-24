@@ -658,6 +658,8 @@ async function renderOverview() {
   const set = (id, txt) => { const el = $(id); if (el) el.textContent = txt; };
   set('#ov-services', nEnabled ? t('opt_ov_services_n', [String(nEnabled)]) : t('opt_ov_services_none'));
   set('#ov-storage', backend === 'local' ? t('opt_ov_store_localv') : t('opt_ov_store_cloud', [t('store_' + backend)]));
+  const nSinks = (cfg.sinks || []).length;
+  set('#ov-dests', nSinks ? t('opt_ov_dests_n', [String(nSinks)]) : t('opt_ov_dests_none'));
   set('#ov-auto', nAuto ? t('opt_ov_auto_on', [String(nAuto)]) : t('opt_ov_auto_off'));
   const s1 = nEnabled > 0, s2 = backend !== 'local', s3 = nAuto > 0;
   const fr = $('#firstrun'); if (fr) fr.hidden = (s1 && s2 && s3);

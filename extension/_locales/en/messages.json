@@ -2750,6 +2750,28 @@
   "opt_ov_auto_off": {
     "message": "Off"
   },
+  "opt_ov_dests_n": {
+    "message": "$COUNT$ configured",
+    "placeholders": { "count": { "content": "$1" } }
+  },
+  "opt_ov_dests_none": {
+    "message": "None yet"
+  },
+  "opt_ov_diff_h": {
+    "message": "Archive vs. destinations"
+  },
+  "opt_ov_store_vs_h": {
+    "message": "Where they’re kept — your archive"
+  },
+  "opt_ov_store_vs_p": {
+    "message": "Your one master copy. Every document Habeas extracts lands here, in a single place you choose (this browser, a folder, or the cloud). There is exactly one archive."
+  },
+  "opt_ov_dests_vs_h": {
+    "message": "Destinations — extra copies you send out"
+  },
+  "opt_ov_dests_vs_p": {
+    "message": "Optional, additional copies pushed somewhere else — a shared folder, a cloud drive, or a connected app. You can have several, and each only ever receives copies; your archive stays intact."
+  },
   "opt_services_title": {
     "message": "Services"
   },

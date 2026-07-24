@@ -11,6 +11,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Settings home shows destinations + explains archive vs. destinations** (`ui/options.html`, `ui/options.js`).
+  The overview grid gained a *Destinations* card (count + jump-to), and a new "Archive vs. destinations" block
+  spells out the difference: the archive is your single master copy of every extracted document, while
+  destinations are optional extra copies pushed elsewhere — so the two rail sections no longer read as duplicates.
 - **A dedicated "Destinations" section in Settings** (`ui/options.html`, `ui/options.js`). The configured
   destinations (sinks) moved out of *Advanced* into their own left-rail section, laid out as one card per
   destination — a type icon, the friendly name, its type/id/URL, and inline Rename / Set-default / Remove
