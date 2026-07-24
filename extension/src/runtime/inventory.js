@@ -673,9 +673,10 @@ function fillDocTmpl(str, doc, id, csrf, auth) {
     const isGroup = k.indexOf('group.') === 0;
     const rk = isGroup ? k.slice(6) : k;
     let v = isGroup ? (doc && doc._group ? get(doc._group, rk) : undefined) : (doc && doc._raw ? get(doc._raw, k) : undefined);
-    // Store re-download of a synthetic doc: the transient _group/_raw are gone — recover the value from the
-    // persisted record (and its keepRaw `extra`, which captured the group's derived fields + the period window),
-    // and finally DERIVE the monthly period tokens ({year}/{month}/…) from the record's date if still missing.
+    // Store re-download of a synthetic/grouped doc: the transient _group/_raw are gone — recover the value from the
+    // persisted record: the group's scalar fields (record.groupFields, so {group.*} resolves off the Archive), then
+    // the record (+ keepRaw `extra`), then DERIVE the monthly period tokens ({year}/{month}/…) from the record's date.
+    if (v == null && isGroup && doc && doc.record && doc.record.groupFields) v = get(doc.record.groupFields, rk);
     if (v == null && doc && doc.record) { v = get(doc.record, rk); if (v == null && doc.record.extra) v = get(doc.record.extra, rk); if (v == null) v = derivedPeriodField(rk, doc.record); }
     return v == null ? m : tid(fmt ? fmtDateStr(v, fmt) : v);
   });
@@ -863,8 +864,9 @@ function tmplResolvable(str, doc) {
     const isGroup = k.indexOf('group.') === 0;
     const rk = isGroup ? k.slice(6) : k;
     let v = isGroup ? (doc && doc._group ? get(doc._group, rk) : undefined) : (doc && doc._raw ? get(doc._raw, k) : undefined);
-    // Match fillDocTmpl: a doc loaded from the store has no _group/_raw but its persisted record (+ keepRaw
-    // `extra`) carries the same values, so the artifact is still resolvable. Period tokens derive from the date.
+    // Match fillDocTmpl: a doc loaded from the store has no _group/_raw but its persisted record carries the same
+    // values — the group's scalars (record.groupFields), the record (+ keepRaw `extra`), or a date-derived period.
+    if (v == null && isGroup && doc && doc.record && doc.record.groupFields) v = get(doc.record.groupFields, rk);
     if (v == null && doc && doc.record) { v = get(doc.record, rk); if (v == null && doc.record.extra) v = get(doc.record.extra, rk); if (v == null) v = derivedPeriodField(rk, doc.record); }
     if (v == null || v === '') return false;
   }

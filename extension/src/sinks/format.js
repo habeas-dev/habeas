@@ -102,6 +102,17 @@ export function buildRecord(d, adapter) {
   const uf = adapter && adapter.api && adapter.api.pdf && adapter.api.pdf.urlField;
   const pdfUrl = uf && d._raw ? uf.split('.').reduce((o, k) => (o == null ? o : o[k]), d._raw) : null;
   const withPdfUrl = (r) => (pdfUrl != null && pdfUrl !== '' ? { ...r, pdfUrl: String(pdfUrl) } : r);
+  // `groupFields` = the group's (account/contract/…) SCALAR fields, persisted so a grouped source whose pdf/detail
+  // path uses `{group.*}` can still build the URL when the row is re-downloaded from the store (no `_group`). Only
+  // added when a `{group.*}` token is actually used, so records for other sources stay byte-identical.
+  const usesGroupToken = (obj) => !!obj && JSON.stringify(obj).indexOf('{group.') >= 0;
+  const needsGroupFields = usesGroupToken(adapter && adapter.api && adapter.api.pdf) || usesGroupToken(adapter && adapter.api && adapter.api.detail);
+  const withGroupFields = (r) => {
+    if (!needsGroupFields || !d._group || typeof d._group !== 'object') return r;
+    const gf = {};
+    for (const [k, v] of Object.entries(d._group)) if (k[0] !== '_' && (v == null || typeof v !== 'object')) gf[k] = v;
+    return Object.keys(gf).length ? { ...r, groupFields: gf } : r;
+  };
   // `extra` = any field the adapter mapped that the schema didn't already place in the record (e.g. a bank
   // movement's concept, balance, reference, issuer, "more info" from a detail fetch). Carried verbatim under
   // record.extra so no captured detail is lost. Keyed off "not already in r" so it's per-schema automatically;
@@ -126,7 +137,7 @@ export function buildRecord(d, adapter) {
     }
     return Object.keys(extra).length ? { ...r, extra } : r;
   };
-  const done = (r) => withExtra(withPdfUrl(withGroup(withNumber(r))));
+  const done = (r) => withExtra(withGroupFields(withPdfUrl(withGroup(withNumber(r)))));
   if (kind === 'transaction') {
     const r = { internalId: d.internalId, date: d.date, amount: money(d.amount ?? d.total), currency, category: d.category, description: d.description ?? d.label ?? '', counterparty: d.counterparty ?? d.party ?? '', direction: d.direction ?? dirOf(d.amount ?? d.total), source: d.source, type: d.type };
     // Carry any extra per-movement data a card source captures (merchant city, card mask…) so nothing is lost.
@@ -157,7 +168,7 @@ export function buildRecord(d, adapter) {
     // row loaded from the store shows it instead of the opaque internalId. Omitted when absent so
     // existing invoice records stay byte-identical.
     if (d.description != null && d.description !== '') r.description = d.description;
-    return withExtra(withPdfUrl(withGroup(r)));
+    return withExtra(withGroupFields(withPdfUrl(withGroup(r))));
   }
   // receipt@1 (default) — unchanged shape (number appended only when present).
   return done({ internalId: d.internalId, date: d.date, total: money(d.total), currency, category: d.category, store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type });

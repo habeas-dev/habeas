@@ -307,6 +307,33 @@ test('artifactKinds drops a document a doc cannot fill (Dia ticket with no invoi
   assert.deepEqual(artifactKinds(adapter, noInv).map((k) => k.kind), ['data']); // no invoice → no document artifact
 });
 
+test('a grouped source persists groupFields so {group.*} in the PDF resolves from the store (Archive re-download)', async () => {
+  const adapter = {
+    id: 'g', service: 'g', schema: 'invoice@1',
+    api: {
+      host: 'https://x.es',
+      groups: { path: '/accts', itemsPath: 'accounts', fields: { id: 'id', name: 'label', contract: 'contract_id' } },
+      list: { path: '/accts/{group.id}/inv', itemsPath: 'items', paging: 'none' },
+      pdf: { path: '/contracts/{group.contract}/inv/{internalId}/download', method: 'GET', ext: 'pdf' },
+    },
+    fields: { internalId: 'id', date: 'date', total: 'amount' },
+  };
+  const accts = { accounts: [{ id: 'A1', label: 'Casa', contract_id: 555 }] };
+  const items = { items: [{ id: 'INV9', date: '2026-06-30', amount: 40 }] };
+  const net = async (u) => { const b = u.endsWith('/accts') ? accts : items; return { ok: true, status: 200, sentHeaders: [], text: async () => JSON.stringify(b), json: async () => b }; };
+  const docs = await listInventory(adapter, {}, net, {});
+  assert.equal(docs.length, 1);
+  assert.equal(docs[0].record.groupFields.contract, 555, 'group scalars persisted on the record');
+  // A doc loaded from the store: record only, NO _group/_raw (as the Archive re-download passes it)
+  const storeDoc = { internalId: docs[0].record.internalId, record: docs[0].record };
+  assert.ok(artifactKinds(adapter, storeDoc).some((k) => k.kind === 'document'), '{group.contract} resolvable off the store');
+  let url = '';
+  globalThis.fetch = async (u) => { url = u; return { ok: true, status: 200, blob: async () => new Blob(['%PDF']), text: async () => '' }; };
+  await fetchPdf(adapter, {}, storeDoc);
+  delete globalThis.fetch;
+  assert.equal(url, 'https://x.es/contracts/555/inv/INV9/download'); // group contract rebuilt from the record
+});
+
 test('itemsPath `a[].b` flattens a list nested one-per-group (PepeEnergy periods[].invoices)', async () => {
   // Two periods; one holds two invoices (a grouped bill) → 3 items total after flattening.
   const data = { periods: [

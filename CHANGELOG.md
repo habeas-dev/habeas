@@ -19,6 +19,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   no longer leaks movements from accounts the user didn't pick.
 
 ### Added
+- **Grouped sources persist `groupFields` so `{group.*}` resolves off the store** (`sinks/format.js`,
+  `runtime/inventory.js`). A grouped source (bank accounts, energy contracts) whose `pdf`/`detail` path uses a
+  `{group.*}` token silently dropped the artifact when the document was re-downloaded from the Archive — the
+  store-loaded row has no transient `_group`. The record now carries the group's scalar fields (only when a
+  `{group.*}` token is actually used, so other records stay byte-identical), and both `tmplResolvable` and
+  `fillDocTmpl` fall back to them — so `{group.contract}`-style PDFs work from the Archive, not just a fresh list.
 - **`itemsPath` flatten marker `a[].b`** (`runtime/inventory.js`). A list nested one-per-group — each element of
   array `a` holding a sub-array `b` — is flattened into a single item list with `itemsPath: "a[].b"` (e.g.
   PepeEnergy's `periods[].invoices`). Non-array/absent elements are skipped; recurses for deeper nesting. A plain
