@@ -440,6 +440,12 @@
   "default_sink": {
     "message": "default"
   },
+  "dest_is_archive": {
+    "message": "also your archive"
+  },
+  "dest_is_archive_hint": {
+    "message": "This is the same connection your archive is kept on (chosen under “Where they’re kept”). It’s one connection playing two roles — not a duplicate."
+  },
   "set_default": {
     "message": "Set default"
   },

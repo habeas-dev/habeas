@@ -11,6 +11,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Destinations that also back the archive are flagged as such** (`ui/options.js`). A cloud archive backend
+  (Dropbox/WebDAV/S3) reuses one of your configured destinations as its transport, so the same connection showed
+  up in both *Where they’re kept* and *Destinations* with no hint they were the same thing. That destination now
+  carries an "also your archive" badge (with an explaining tooltip), so it no longer reads as a duplicate.
 - **Settings home shows destinations + explains archive vs. destinations** (`ui/options.html`, `ui/options.js`).
   The overview grid gained a *Destinations* card (count + jump-to), and a new "Archive vs. destinations" block
   spells out the difference: the archive is your single master copy of every extracted document, while

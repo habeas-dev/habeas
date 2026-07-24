@@ -440,6 +440,12 @@
   "default_sink": {
     "message": "por defecto"
   },
+  "dest_is_archive": {
+    "message": "también tu archivo"
+  },
+  "dest_is_archive_hint": {
+    "message": "Es la misma conexión en la que se guarda tu archivo (elegida en «Dónde se guardan»). Es una conexión con dos papeles, no un duplicado."
+  },
   "set_default": {
     "message": "Por defecto"
   },

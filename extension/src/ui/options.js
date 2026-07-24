@@ -132,17 +132,21 @@ async function render() {
   });
 
   const defSink = (await chrome.storage.local.get('habeas:defaultsink'))['habeas:defaultsink'] || '';
+  // A cloud archive backend (dropbox/webdav/s3) reuses one of these very destinations as its transport — flag
+  // it so the same Dropbox/WebDAV/S3 connection doesn't look like it's mysteriously listed twice.
+  const archiveSinkId = (await getStoreConfig().catch(() => ({}))).sinkId || '';
   const SINK_IC = { download: '⬇️', 'local-folder': '📁', drive: '☁️', dropbox: '📦', webdav: '🌐', s3: '🪣', http: '🔗' };
   const SINK_TL = { download: 'sink_download', 'local-folder': 'sink_local', drive: 'sink_drive', http: 'sink_http', webdav: 'sink_webdav', s3: 'sink_s3', dropbox: 'sink_dropbox' };
   $('#sinks').innerHTML = cfg.sinks.map((s) => {
     const isDef = s.id === defSink;
+    const isArchive = !!archiveSinkId && s.id === archiveSinkId;
     const typeLabel = t(SINK_TL[s.type]) || s.type;
     const detail = s.type === 'local-folder' ? esc(s.folderName || '—') : (s.url ? esc(s.url) : '');
     return `<div class="dest-card${isDef ? ' is-default' : ''}">
       <div class="dest-top">
         <div class="dest-ic">${SINK_IC[s.type] || '📤'}</div>
         <div class="dest-id">
-          <div class="dest-name">${esc(s.name || s.id)}${isDef ? ` <span class="pill sent">★ ${t('default_sink')}</span>` : ''}</div>
+          <div class="dest-name">${esc(s.name || s.id)}${isDef ? ` <span class="pill sent">★ ${t('default_sink')}</span>` : ''}${isArchive ? ` <span class="pill type" title="${esc(t('dest_is_archive_hint'))}">🗄️ ${t('dest_is_archive')}</span>` : ''}</div>
           <div class="dest-meta">${esc(typeLabel)}${s.name ? ` · <code>${esc(s.id)}</code>` : ''}${detail ? ` · ${detail}` : ''}</div>
         </div>
       </div>
