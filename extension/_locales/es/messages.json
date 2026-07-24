@@ -674,7 +674,15 @@
     "message": "este servicio"
   },
   "log_err_auth": {
-    "message": "Tu sesión de $SOURCE$ ha caducado o has cerrado sesión — vuelve a iniciar sesión para continuar.",
+    "message": "$SOURCE$ necesita que hayas iniciado sesión — ábrelo para que Habeas use la sesión activa.",
+    "placeholders": { "source": { "content": "$1" } }
+  },
+  "log_err_token_expired": {
+    "message": "El acceso guardado a $SOURCE$ había caducado (los bancos emiten tokens de muy corta duración, aunque tu sesión siga activa). Abre $SOURCE$ para capturar uno nuevo.",
+    "placeholders": { "source": { "content": "$1" } }
+  },
+  "log_err_auth_valid": {
+    "message": "$SOURCE$ rechazó la petición aunque el token de acceso seguía siendo válido — probablemente un bloqueo temporal o falta algún dato de sesión, no una sesión caducada. Mira los detalles técnicos.",
     "placeholders": { "source": { "content": "$1" } }
   },
   "log_err_gone": {
@@ -694,7 +702,7 @@
     "placeholders": { "msg": { "content": "$1" } }
   },
   "log_action_login": {
-    "message": "Iniciar sesión en $SOURCE$",
+    "message": "Abrir $SOURCE$",
     "placeholders": { "source": { "content": "$1" } }
   },
   "log_action_details": {

@@ -994,6 +994,12 @@ function errFields(e) {
   if (e && e.http != null) f.http = e.http;
   if (e && e.op) f.op = e.op;
   if (e && e.url) f.url = e.url;
+  // Whether the JWT we replayed was itself expired — the difference between "your session ended" and "the saved
+  // short-lived bank token had lapsed even though the browser session is fine". Lets the log say the right thing.
+  if (e && e.token && e.token.exp != null) {
+    const now = e.token.now || Math.floor(Date.now() / 1000);
+    f.tokenState = (e.token.exp - now) >= 0 ? 'valid' : 'expired';
+  }
   return f;
 }
 

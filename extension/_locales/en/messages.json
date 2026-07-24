@@ -674,7 +674,15 @@
     "message": "this service"
   },
   "log_err_auth": {
-    "message": "Your $SOURCE$ session has expired or you’re signed out — sign in again to resume.",
+    "message": "$SOURCE$ needs you signed in — open it so Habeas can use the live session.",
+    "placeholders": { "source": { "content": "$1" } }
+  },
+  "log_err_token_expired": {
+    "message": "Habeas’s saved access to $SOURCE$ had expired (banks issue very short-lived tokens, even while your login stays active). Open $SOURCE$ so a fresh one is captured.",
+    "placeholders": { "source": { "content": "$1" } }
+  },
+  "log_err_auth_valid": {
+    "message": "$SOURCE$ rejected the request even though the access token was still valid — likely a temporary block or a missing session detail, not an expired login. See the technical details.",
     "placeholders": { "source": { "content": "$1" } }
   },
   "log_err_gone": {
@@ -694,7 +702,7 @@
     "placeholders": { "msg": { "content": "$1" } }
   },
   "log_action_login": {
-    "message": "Sign in to $SOURCE$",
+    "message": "Open $SOURCE$",
     "placeholders": { "source": { "content": "$1" } }
   },
   "log_action_details": {

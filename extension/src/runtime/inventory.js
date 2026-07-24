@@ -227,7 +227,7 @@ async function fetchGroupItems(adapter, auth, net) {
     const res = await withReferer(url, g.referer || null, () => NET(url, init));
     if (!res.ok) {
       const err = new Error('groups ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120) + ' [sent: ' + (res.sentHeaders || Object.keys(init.headers || {})).join(',') + ']' + tokenStatus(res));
-      err.http = res.status; err.op = 'groups'; err.url = url;
+      err.http = res.status; err.op = 'groups'; err.url = url; err.token = res.sentToken || null;
       throw err;
     }
     const items = isHtml ? extractListItems(await res.text(), g) : (get(await res.json(), g.itemsPath) || []);
@@ -1329,7 +1329,7 @@ async function fetchList(adapter, auth, params, net, group) {
   if (!res.ok) {
     const sent = (res.sentHeaders || Object.keys(init.headers || {})).join(',');
     const err = new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160) + ' [sent: ' + sent + ']' + tokenStatus(res));
-    err.http = res.status; err.op = 'list'; err.url = url; // structured bits so the activity log can show a clean, actionable message
+    err.http = res.status; err.op = 'list'; err.url = url; err.token = res.sentToken || null; // structured bits (+ the replayed JWT's exp) so the log can classify the 401
     throw err;
   }
   // Server-rendered list (no JSON API): parse the items out of the page HTML.

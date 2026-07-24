@@ -40,7 +40,14 @@ const STATUS_CLASS = { error: 'err', none: 'muted', nosession: 'warn', challenge
 // A plain-language summary of an error, keyed off the HTTP status the runtime attached (never the raw HTML body).
 function humanError(e) {
   const s = Number(e.http) || 0;
-  if (s === 401 || s === 403) return t('log_err_auth', [nameOf(e.datasource) || t('this_source')]);
+  const name = nameOf(e.datasource) || t('this_source');
+  if (s === 401 || s === 403) {
+    // The runtime told us whether the JWT we replayed had itself expired. A short-lived bank token lapsing (while
+    // the browser session lives on) is a DIFFERENT thing from the session ending — and a valid-token 401 is "something else".
+    if (e.tokenState === 'expired') return t('log_err_token_expired', [name]);
+    if (e.tokenState === 'valid') return t('log_err_auth_valid', [name]);
+    return t('log_err_auth', [name]);
+  }
   if (s === 404 || s === 406) return t('log_err_gone', [String(s)]);
   if (s >= 500) return t('log_err_server', [String(s)]);
   if (s) return t('log_err_http', [String(s)]);

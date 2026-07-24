@@ -19,9 +19,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   no longer leaks movements from accounts the user didn't pick.
 
 ### Added
+- **Auth errors distinguish an expired saved token from an ended session** (`runtime/inventory.js`, `background.js`,
+  `ui/activity.js`). The runtime already decodes the replayed JWT's `exp`; a 401/403 now reports whether that token
+  was expired or still valid. The log says the right thing: an expired short-lived bank token (while your login is
+  still active) → "saved access had expired, open <source> to refresh"; a 401 with a *valid* token → "rejected
+  though the token was valid — likely a temporary block or missing session detail, not an expired login". So a
+  puzzling 401 no longer gets mislabeled as "your session expired".
 - **Activity log errors are readable and actionable** (`ui/activity.js`, `ui/activity.html`, `runtime/inventory.js`,
   `background.js`). A failed list/groups request now carries structured fields (HTTP status, operation, request
-  URL), so the log shows a plain-language message ("Your ING session has expired — sign in again"), the exact
+  URL), so the log shows a plain-language message, the exact
   endpoint that failed (`list · host/path · 401`), and actions: **Sign in to <source>** (opens the source site to
   re-capture the session) and **Technical details** (the raw response, on demand) — instead of dumping the raw
   401 HTML page. Consecutive identical errors collapse into one ×N row, and the source id no longer breaks
