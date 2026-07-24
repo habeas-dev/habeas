@@ -1,0 +1,69 @@
+{
+  "id": "pepeenergy-es",
+  "name": "Pepe Energy — facturas",
+  "service": "pepeenergy",
+  "trust": "community",
+  "domain": "pepeenergy.com",
+  "country": "ES",
+  "version": "2026-07-24.6",
+  "minVersion": "0.8.0",
+  "categories": [
+    "energy"
+  ],
+  "contributors": [
+    "David Marín Carreño"
+  ],
+  "match": [
+    "https://clientes.pepeenergy.com/*"
+  ],
+  "auth": {
+    "mode": "cookie",
+    "replayHeaders": [
+      "x-client-type",
+      "x-client-auth",
+      "x-client-version",
+      "x-client-version-web"
+    ]
+  },
+  "api": {
+    "host": "https://clientes.pepeenergy.com",
+    "groups": {
+      "path": "/api/v1.2/places",
+      "itemsPath": "places",
+      "headers": {
+        "x-client-type": "web",
+        "x-client-auth": "customers"
+      },
+      "fields": {
+        "id": "id",
+        "name": "supply_point_address",
+        "contract": "electricity_contract_id"
+      }
+    },
+    "list": {
+      "path": "/api/v1.2/places/{group.id}/invoices/by_period?kind=all",
+      "itemsPath": "periods[].invoices",
+      "paging": "none",
+      "headers": {
+        "x-client-type": "web",
+        "x-client-auth": "customers"
+      }
+    },
+    "pdf": {
+      "path": "/api/v1.2/contracts/electricity/{group.contract}/invoices/{internalId}/download",
+      "method": "GET",
+      "ext": "pdf",
+      "headers": {
+        "x-client-type": "web",
+        "x-client-auth": "customers"
+      }
+    }
+  },
+  "fields": {
+    "internalId": "id",
+    "number": "code",
+    "date": "invoice_date",
+    "total": "total_amount"
+  },
+  "schema": "invoice@1"
+}
