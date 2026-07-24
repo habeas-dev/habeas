@@ -71,9 +71,12 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 async function saveAuth(host, path, headers) {
   const key = 'auth:' + host;
   const o = await chrome.storage.session.get(key);
-  const cur = o[key] || { merged: {}, byPath: {}, ctx: {} };
+  const cur = o[key] || { merged: {}, byPath: {}, ctx: {}, at: {} };
   cur.merged = { ...cur.merged, ...headers };
-  if (path) cur.byPath[path] = { ...(cur.byPath[path] || {}), ...headers };
+  cur.at = cur.at || {};
+  const nowIso = new Date().toISOString(); // when this token/headers were (re)captured — so a 401 can show its age
+  cur.at.__merged = nowIso;
+  if (path) { cur.byPath[path] = { ...(cur.byPath[path] || {}), ...headers }; cur.at[path] = nowIso; }
   await chrome.storage.session.set({ [key]: cur });
 }
 async function saveContext(host, name, value) {

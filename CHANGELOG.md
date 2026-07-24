@@ -19,6 +19,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   no longer leaks movements from accounts the user didn't pick.
 
 ### Added
+- **Auth-failure diagnostics show when the replayed token was captured** (`background.js` `saveAuth`,
+  `runtime/inventory.js`). Captured auth headers now carry a per-path timestamp; a 401/403 appends `[captured
+  N min ago]` to the raw details. A token captured well before a fresh login is proof the new session wasn't
+  re-captured for that endpoint (vs. a freshly-captured token still being rejected, which points elsewhere). Also
+  the `[auth <form>]` tag now always shows (previously hidden when the form was `jwt`).
 - **Auth-failure diagnostics record the replayed authorization's shape** (`lib/pagefetch.js`, `runtime/inventory.js`,
   `background.js`, `ui/activity.js`). Beyond the JWT's expiry, a 401/403 now records the *form* of the authorization
   header we sent — `jwt` / `bearer-nonjwt` / `basic` / `none` (never the value). When no real user JWT went out, the

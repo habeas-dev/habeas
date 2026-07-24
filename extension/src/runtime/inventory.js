@@ -226,7 +226,7 @@ async function fetchGroupItems(adapter, auth, net) {
     if (g.referer) init.referrer = g.referer;
     const res = await withReferer(url, g.referer || null, () => NET(url, init));
     if (!res.ok) {
-      const err = new Error('groups ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120) + ' [sent: ' + (res.sentHeaders || Object.keys(init.headers || {})).join(',') + ']' + tokenStatus(res) + authInfo(res));
+      const err = new Error('groups ' + res.status + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120) + ' [sent: ' + (res.sentHeaders || Object.keys(init.headers || {})).join(',') + ']' + tokenStatus(res) + authInfo(res) + captureAgeInfo(auth, url));
       err.http = res.status; err.op = 'groups'; err.url = url; err.token = res.sentToken || null; err.authForm = res.authForm || null;
       throw err;
     }
@@ -595,11 +595,21 @@ const tmplGroupRaw = (str, group) => (group ? String(str).replace(/\{group\.([^}
 // Dates use the browser's LOCAL calendar (what the SPA itself computed), date-only, so no timezone shift.
 // Human-readable status of the SENT bearer (from the page fetch decoding its own claims) — exp/iss only,
 // never the token, so a failed auth request says whether the token was expired or fresh in the diagnostic.
-// The shape of the authorization header we sent (jwt / bearer-nonjwt / basic / none) — surfaced when NO decodable
-// JWT went out, which is the tell-tale of "a token was replayed but it wasn't the real user bearer".
+// The shape of the authorization header we sent (jwt / bearer-nonjwt / basic / none). Always surfaced now — the
+// tell-tale case (a token replayed that wasn't the real user bearer) was being hidden when the form was 'jwt'.
 export function authInfo(res) {
   const f = res && res.authForm;
-  return f && f !== 'jwt' ? ' [auth ' + f + ']' : '';
+  return f ? ' [auth ' + f + ']' : '';
+}
+// How long ago the replayed headers were captured (per exact path, else the merged set). A 401 whose token was
+// captured well BEFORE a fresh login proves the new session wasn't re-captured for that endpoint.
+export function captureAgeInfo(auth, url) {
+  if (!auth || !auth.at) return '';
+  let p = ''; try { p = new URL(url).pathname; } catch (e) {}
+  const at = (p && auth.at[p]) || auth.at.__merged;
+  if (!at) return '';
+  const min = Math.round((Date.now() - new Date(at).getTime()) / 60000);
+  return ' [captured ' + (min < 1 ? '<1' : min) + 'min ago]';
 }
 export function tokenStatus(res) {
   const t = res && res.sentToken; if (!t || t.exp == null) return "";
@@ -1334,7 +1344,7 @@ async function fetchList(adapter, auth, params, net, group) {
   // e.g. `authorization` reached the request, without the contributor needing DevTools.
   if (!res.ok) {
     const sent = (res.sentHeaders || Object.keys(init.headers || {})).join(',');
-    const err = new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160) + ' [sent: ' + sent + ']' + tokenStatus(res) + authInfo(res));
+    const err = new Error('list ' + res.status + ' — ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160) + ' [sent: ' + sent + ']' + tokenStatus(res) + authInfo(res) + captureAgeInfo(auth, url));
     err.http = res.status; err.op = 'list'; err.url = url; err.token = res.sentToken || null; err.authForm = res.authForm || null; // structured bits (+ the replayed JWT's exp / auth shape) so the log can classify the 401
     throw err;
   }
