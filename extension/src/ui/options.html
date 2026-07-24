@@ -53,14 +53,15 @@
     .dest-meta code { font-size: 11.5px }
     .dest-actions { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 2px; border-top: 1px solid var(--line); margin-top: 1px }
     .dest-actions button { font-size: 12.5px; padding: 5px 11px }
-    /* home: how the archive differs from destinations */
-    .ov-explain { margin-top: 24px }
-    .ov-explain > h3 { font-family: var(--font-head); font-size: 15px; margin: 0 0 9px }
+    /* home: how the archive differs from destinations — INFORMATIONAL, not actionable like the 4 cards above */
+    .ov-explain { margin-top: 22px; border-top: 1px dashed var(--line); padding-top: 16px }
+    .ov-explain > h3 { display: flex; align-items: center; gap: 7px; font-family: var(--font-head); font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin: 0 0 10px }
+    .ov-explain > h3::before { content: "ℹ️"; font-size: 14px }
     .oe-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px }
     @media (max-width: 640px) { .oe-pair { grid-template-columns: 1fr } }
-    .oe-item { display: flex; gap: 12px; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; background: var(--surface) }
-    .oe-ic { font-size: 22px; flex: none; line-height: 1.2 }
-    .oe-item b { display: block; font-family: var(--font-head); font-size: 14.5px; margin-bottom: 3px }
+    .oe-item { display: flex; gap: 12px; border: 1px dashed var(--line); border-left: 3px solid var(--brand-500); border-radius: 12px; padding: 13px 15px; background: var(--brand-50) }
+    .oe-ic { font-size: 20px; flex: none; line-height: 1.2; opacity: .85 }
+    .oe-item b { display: block; font-family: var(--font-head); font-size: 14px; margin-bottom: 3px }
     .oe-item .p { font-size: 13px; color: var(--muted); line-height: 1.5 }
   </style>
 </head>

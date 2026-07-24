@@ -28,7 +28,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   spells out the difference accurately: the archive is your single **catalog of records** (the data of each
   document, filled automatically on list — not the original files), while destinations are **where the actual
   document files are sent** (Download → your computer; a folder/cloud → kept there). Corrects an earlier draft of
-  this copy that wrongly implied the files themselves live in the archive.
+  this copy that wrongly implied the files themselves live in the archive. The two cards are styled as an
+  informational callout (ℹ️ eyebrow, dashed/accented tint) so they read as an explainer, not as another of the
+  four actionable overview cards.
 - **A dedicated "Destinations" section in Settings** (`ui/options.html`, `ui/options.js`). The configured
   destinations (sinks) moved out of *Advanced* into their own left-rail section, laid out as one card per
   destination — a type icon, the friendly name, its type/id/URL, and inline Rename / Set-default / Remove
