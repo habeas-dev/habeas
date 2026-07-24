@@ -19,6 +19,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   no longer leaks movements from accounts the user didn't pick.
 
 ### Fixed
+- **Re-downloading a synthetic monthly statement (e.g. ING's integrated extract) now fetches its PDF**
+  (`runtime/inventory.js`). The statement's PDF URL is templated by `{year}`/`{month}`, which live on the transient
+  synthetic list item — gone once the doc is loaded from the archive. Without `keepRaw` they couldn't be recovered,
+  so the artifact was silently dropped ("no document for this item") and nothing downloaded. The period tokens
+  (`{year}`/`{month}`/`{period}`/`{fromDate}`/`{toDate}`) are now derived from the stored record's date in both the
+  resolvability check and the URL fill, so a store re-download rebuilds the statement URL — no re-listing needed.
 - **A statement/invoice with no fetched file is no longer called "a movement"** (`ui/archive.js`). The archive
   drawer showed "This is a movement — no separate file to open" for any delivered document without an openable
   file — including an integrated bank statement whose PDF simply wasn't fetched (e.g. the source's session failed

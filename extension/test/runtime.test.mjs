@@ -307,6 +307,18 @@ test('artifactKinds drops a document a doc cannot fill (Dia ticket with no invoi
   assert.deepEqual(artifactKinds(adapter, noInv).map((k) => k.kind), ['data']); // no invoice → no document artifact
 });
 
+test('synthetic monthly statement: a store re-download derives {year}/{month} from the record date', async () => {
+  // extracto-integrado shape: PDF path templated by {year}/{month}; no keepRaw, so a re-downloaded doc has no _raw.
+  const adapter = { api: { host: 'https://ing.example', pdf: { path: '/statement?year={year}&month={month}', ext: 'pdf' } }, fields: {}, schema: 'invoice@1' };
+  const stored = { internalId: '2026-06', record: { date: '2026-06-30', number: '2026-06', description: 'Extracto 2026-06' } }; // from the store: record only, no _raw
+  // artifactKinds must still see a document (previously {year}/{month} were unresolvable → PDF silently dropped).
+  assert.deepEqual(artifactKinds(adapter, stored).map((k) => k.kind), ['document']);
+  let url = '';
+  globalThis.fetch = async (u) => { url = u; return { ok: true, status: 200, blob: async () => new Blob(['%PDF']), text: async () => '' }; };
+  await fetchPdf(adapter, {}, stored);
+  assert.equal(url, 'https://ing.example/statement?year=2026&month=6'); // derived, not literal {year}/{month}
+});
+
 test('a source can override the request Accept via headers (pdf + detail)', async () => {
   let acc = '';
   globalThis.fetch = async (u, i) => { acc = (i.headers || {}).accept; return { ok: true, status: 200, text: async () => '{}', blob: async () => new Blob(['%PDF']) }; };

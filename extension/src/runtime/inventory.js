@@ -674,8 +674,9 @@ function fillDocTmpl(str, doc, id, csrf, auth) {
     const rk = isGroup ? k.slice(6) : k;
     let v = isGroup ? (doc && doc._group ? get(doc._group, rk) : undefined) : (doc && doc._raw ? get(doc._raw, k) : undefined);
     // Store re-download of a synthetic doc: the transient _group/_raw are gone — recover the value from the
-    // persisted record (and its keepRaw `extra`, which captured the group's derived fields + the period window).
-    if (v == null && doc && doc.record) { v = get(doc.record, rk); if (v == null && doc.record.extra) v = get(doc.record.extra, rk); }
+    // persisted record (and its keepRaw `extra`, which captured the group's derived fields + the period window),
+    // and finally DERIVE the monthly period tokens ({year}/{month}/…) from the record's date if still missing.
+    if (v == null && doc && doc.record) { v = get(doc.record, rk); if (v == null && doc.record.extra) v = get(doc.record.extra, rk); if (v == null) v = derivedPeriodField(rk, doc.record); }
     return v == null ? m : tid(fmt ? fmtDateStr(v, fmt) : v);
   });
 }
@@ -839,6 +840,21 @@ const documentCfg = (api) => api.document || (api.detail && api.detail.as ? api.
 // True unless a {field.path} placeholder (other than {internalId}) is missing from this doc's raw item.
 // Lets a per-doc-conditional artifact (Dia's invoice PDF needs {invoices.0}) be skipped for docs that
 // don't have it (a ticket with no invoice) instead of firing a malformed request.
+// The period tokens a synthetic MONTHLY document uses ({year},{month},{period},{fromDate},{toDate}) are all
+// recoverable from the stored record's date (a monthly statement's date is that month's last day) — so a store
+// re-download can rebuild the statement URL even when the source didn't `keepRaw` the transient synthetic fields.
+function derivedPeriodField(rk, record) {
+  if (!record || !['year', 'month', 'period', 'fromDate', 'toDate'].includes(rk)) return undefined;
+  const d = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(record.date || ''));
+  const p = /^(\d{4})-(\d{2})/.exec(String(record.number || record.internalId || '')); // "YYYY-MM…" period id
+  const y = (d && d[1]) || (p && p[1]); const mo = (d && d[2]) || (p && p[2]);
+  if (!y || !mo) return undefined;
+  if (rk === 'year') return y;
+  if (rk === 'month') return String(Number(mo)); // synthItems emits "6", not "06"
+  if (rk === 'period') return y + '-' + mo;
+  if (rk === 'fromDate') return y + '-' + mo + '-01';
+  return d ? d[0] : new Date(Date.UTC(Number(y), Number(mo), 0)).toISOString().slice(0, 10); // toDate = month's last day
+}
 function tmplResolvable(str, doc) {
   // Only {word.word} tokens are templates (matches fillDocTmpl); a JSON body's own braces ({"from":…}) are not.
   for (const m of String(str || '').matchAll(/\{([\w.]+)\}/g)) {
@@ -848,8 +864,8 @@ function tmplResolvable(str, doc) {
     const rk = isGroup ? k.slice(6) : k;
     let v = isGroup ? (doc && doc._group ? get(doc._group, rk) : undefined) : (doc && doc._raw ? get(doc._raw, k) : undefined);
     // Match fillDocTmpl: a doc loaded from the store has no _group/_raw but its persisted record (+ keepRaw
-    // `extra`) carries the same values, so the artifact is still resolvable.
-    if (v == null && doc && doc.record) { v = get(doc.record, rk); if (v == null && doc.record.extra) v = get(doc.record.extra, rk); }
+    // `extra`) carries the same values, so the artifact is still resolvable. Period tokens derive from the date.
+    if (v == null && doc && doc.record) { v = get(doc.record, rk); if (v == null && doc.record.extra) v = get(doc.record.extra, rk); if (v == null) v = derivedPeriodField(rk, doc.record); }
     if (v == null || v === '') return false;
   }
   return true;
