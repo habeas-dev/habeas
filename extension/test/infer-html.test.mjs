@@ -198,6 +198,49 @@ test('the <div> card rows parse via parseHtmlItems (date/total/href per card)', 
   assert.equal(items[2].href, '/docs/f-90ab12.pdf');
 });
 
+// --- Fourth SYNTHETIC fixture: a page with TWO tables (the "wrong" bigger one + the invoices one). All
+// values INVENTED. The user must be able to pick the second table; each table is its own candidate, scoped
+// to its class so the runtime doesn't merge sibling rows.
+const twoTablesHtml = `
+<html><body>
+<h2>Vehículos</h2>
+<table class="tabla-vehiculos">
+  <tr><th>Matrícula</th><th>Alta</th></tr>
+  <tr><td>1234-ABC</td><td>01/01/2025</td></tr>
+  <tr><td>5678-DEF</td><td>02/02/2025</td></tr>
+  <tr><td>9012-GHI</td><td>03/03/2025</td></tr>
+  <tr><td>3456-JKL</td><td>04/04/2025</td></tr>
+</table>
+<h2>Facturas</h2>
+<table class="tabla-facturas">
+  <tr><th>Fecha</th><th>Importe</th><th>PDF</th></tr>
+  <tr><td>12/06/2026</td><td>18,40 €</td><td><a href="/f/a1b2.pdf">PDF</a></td></tr>
+  <tr><td>12/05/2026</td><td>21,15 €</td><td><a href="/f/c3d4.pdf">PDF</a></td></tr>
+</table>
+</body></html>`;
+const twoSample = { url: 'https://portal.example.es/area', method: 'GET', status: 200, reqHeaders: {}, kind: 'html', html: twoTablesHtml, fromHtml: true };
+
+test('a page with TWO tables offers BOTH as candidates (biggest is only the default)', () => {
+  const cands = listCandidates([twoSample]);
+  assert.equal(cands.length, 2, 'both tables are selectable candidates');
+  assert.equal(cands[0].count, 4); // vehículos (4 rows) is bigger → the auto-picked default
+  assert.ok(cands.some((c) => c.keys.includes('total')), 'the facturas table is offered too');
+});
+
+test('picking the OTHER (invoices) table drafts it, scoped to its class (no sibling-row bleed)', () => {
+  const cands = listCandidates([twoSample]);
+  const facturas = cands.find((c) => c.keys.includes('total'));
+  assert.ok(facturas);
+  const r = draftAdapterFromSamples([twoSample], { domain: 'example.es', pageHost: 'portal.example.es' }, { key: facturas.key });
+  assert.ok(r.ok, r.reason);
+  assert.equal(r.draft.api.list.rows.within, 'tabla-facturas'); // scoped to the chosen table
+  const items = parseHtmlItems(twoTablesHtml, r.draft.api.list.rows); // run against the WHOLE page
+  assert.equal(items.length, 2, 'only the invoices table rows — the vehicle table is excluded');
+  assert.equal(items[0].date, '12/06/2026');
+  assert.equal(items[0].total, '18,40 €');
+  assert.equal(items[0].href, '/f/a1b2.pdf');
+});
+
 // Regression: a JSON sample and an HTML sample together — both candidates are offered, JSON path
 // still works unchanged.
 test('HTML inference coexists with JSON inference (regression)', () => {

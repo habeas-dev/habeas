@@ -19,6 +19,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   no longer leaks movements from accounts the user didn't pick.
 
 ### Fixed
+- **"Learn from a web page": pick between several tables on one page** (`runtime/infer.js`, `runtime/inventory.js`).
+  A page with two tables produced a single candidate (the biggest), so the author couldn't choose the other one.
+  The HTML inference now emits one candidate PER table (and the author UI's list dropdown / value-search already
+  select among them), each scoped to its table's class via a new `rows.within` so a sibling table's rows don't
+  bleed into the chosen one at extraction time.
+- **Unknown-category errors list the allowed catalog + suggest the nearest** (`adapters/validate.js`). Instead of
+  pointing to a doc, the validator now shows every allowed category inline and suggests the closest valid one
+  (e.g. "toll" → "did you mean: tolls?").
 - **"Learn from a web page" now works on data-in-the-HTML sites (SSR / `<div>` card grids)** (`content/bridge.js`,
   `runtime/infer.js`). Record mode captured the page's own HTML only when it contained `<table>/<li>/<article>`
   tags, so a portal that lays its rows out as `<div>` cards (e.g. Pagatelia) produced zero samples — nothing to

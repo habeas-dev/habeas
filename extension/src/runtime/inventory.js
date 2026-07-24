@@ -1392,6 +1392,12 @@ export function parseHtmlItems(html, cfg) {
   // Collapse whitespace so patterns are robust to the huge \r\n+indent runs in server-rendered (AEM)
   // markup — otherwise a bounded gap in an `each` regex (link → label) never reaches its target.
   html = String(html || '').replace(/\s+/g, ' ');
+  // `within`: narrow to ONE container (a table bearing this class) before parsing rows — so a page with several
+  // tables extracts only the chosen one's rows (the author picked a specific table). No match → parse the whole page.
+  if (cfg.within) {
+    const m = html.match(new RegExp('<table\\b[^>]*class=["\'][^"\']*\\b' + escapeRe(cfg.within) + '\\b[\\s\\S]*?<\\/table>', 'i'));
+    if (m) html = m[0];
+  }
   // Sectioned items: split by a section marker (e.g. each shipment header), read section-level fields from
   // the section, and merge them into every item found within it (item fields win on conflict). Lets each
   // item inherit a property of its container — e.g. an order's items each carry their shipment's return

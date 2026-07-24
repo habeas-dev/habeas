@@ -172,13 +172,15 @@ const GAP = '[\\s\\S]{0,2500}?';
 const mode = (arr) => { const m = {}; let best = null, bn = 0; for (const x of arr) { m[x] = (m[x] || 0) + 1; if (m[x] > bn) { bn = m[x]; best = x; } } return best; };
 const htmlBody = (s) => (s && (s.kind === 'html' || typeof s.html === 'string') ? s.html : null);
 
-// The largest <table> (by row count) and its rows. Most services render "one document per <tr>".
-function largestTable(html) {
-  const tables = (String(html || '').match(/<table[\s\S]*?<\/table>/gi) || [])
+// Every <table> with ≥2 rows, biggest first — a page can show several (e.g. Pagatelia's two tables), each a
+// candidate the user picks between. Most services render "one document per <tr>".
+function allTables(html) {
+  return (String(html || '').match(/<table[\s\S]*?<\/table>/gi) || [])
     .map((t) => ({ html: t, trs: t.match(/<tr[\s\S]*?<\/tr>/gi) || [] }))
+    .filter((t) => t.trs.length >= 2)
     .sort((a, b) => b.trs.length - a.trs.length);
-  return tables[0] || null;
 }
+function largestTable(html) { return allTables(html)[0] || null; }
 function rowCells(tr) {
   return [...String(tr).matchAll(/<(td|th)\b([^>]*)>([\s\S]*?)<\/\1>/gi)]
     .map((m) => ({ tag: m[1].toLowerCase(), attrs: m[2] || '', inner: m[3] || '', text: stripHtml(m[3]), offset: m.index }));
@@ -197,11 +199,19 @@ const classAnchor = (base, cap) => escRe(base) + '_\\d+\\b[^>]*>\\s*' + cap;
 // found (caller logs & skips — see TODO for non-table repeated blocks).
 function inferHtmlRows(html) {
   const H = String(html || '');
-  return inferHtmlTable(H) || inferHtmlBlocks(H); // a <table> of rows, else a repeated <div>/<li> card grid
+  return inferHtmlTable(H, largestTable(H)) || inferHtmlBlocks(H); // biggest <table>, else a <div>/<li> card grid
 }
-// Classic "one document per <tr>" table inference.
-function inferHtmlTable(H) {
-  const tbl = largestTable(H);
+// ALL usable list candidates in one HTML body: one per <table>, or (no table) the best repeated-block grid —
+// so a page with several tables offers several candidates for the picker, not just the biggest.
+function inferHtmlCandidates(html) {
+  const H = String(html || '');
+  const out = [];
+  for (const tbl of allTables(H)) { const r = inferHtmlTable(H, tbl); if (r && r.items.length) out.push(r); }
+  if (!out.length) { const b = inferHtmlBlocks(H); if (b && b.items.length) out.push(b); } // no <table> → card grid
+  return out;
+}
+// Classic "one document per <tr>" table inference for a SPECIFIC table.
+function inferHtmlTable(H, tbl) {
   if (!tbl || tbl.trs.length < 2) return null;
   const dataTrs = tbl.trs.filter((tr) => !/<th\b/i.test(tr) && (H_DATE_RE.test(stripHtml(tr)) || H_MONEY_RE.test(stripHtml(tr))));
   if (!dataTrs.length) return null;
@@ -285,11 +295,16 @@ function inferHtmlTable(H) {
   const rowsFields = {};
   fields.forEach((f, i) => { rowsFields[f.name] = { group: i + 1 }; });
   const rows = { each, fields: rowsFields };
+  // Scope to THIS table by a distinctive class on its <table> tag (skip generic/utility tokens), so at runtime a
+  // sibling table on the same page doesn't bleed into the rows. No usable class → unscoped (works for a lone table).
+  const tblClass = (/<table\b[^>]*class=["']([^"']+)["']/i.exec(tbl.html) || [])[1] || '';
+  const within = tblClass.split(/\s+/).find((c) => c.length > 3 && !/^(table|row|col|grid|list|responsive|striped|hover|bordered)$/i.test(c));
+  if (within) rows.within = within;
 
-  // Validate the generated regex against the SAME html via the real runtime parser (no fork). If it
-  // yields nothing, the heuristic failed — bail so we never emit a broken source.
+  // Validate the generated regex via the real runtime parser (no fork), scoped to THIS table's markup so a
+  // second table on the page doesn't merge into this candidate's rows. Yields nothing → heuristic failed, bail.
   let items = [];
-  try { items = parseHtmlItems(H, rows); } catch (e) { return null; }
+  try { items = parseHtmlItems(tbl.html, rows); } catch (e) { return null; }
   if (!items.length) return null;
 
   const has = (n) => fields.some((f) => f.name === n);
@@ -361,11 +376,15 @@ function collectHtml(samples) {
   for (const s of samples || []) {
     const html = htmlBody(s);
     if (!html) continue;
-    let info; try { info = inferHtmlRows(html); } catch (e) { info = null; }
-    if (!info || !info.items.length) continue;
+    let infos = []; try { infos = inferHtmlCandidates(html); } catch (e) { infos = []; }
     let host = '', path = '';
     try { const u = new URL(s.url); host = u.host; path = u.pathname; } catch (e) {}
-    out.push({ isHtml: true, key: keyOf(s.url, '#html'), s, host, path, info, len: info.items.length, item: info.items[0], items: info.items });
+    // One candidate per table/grid in the page (distinct key by index) — so a page with several tables offers
+    // several picks, and the user can select the right one in the author UI's list dropdown / search.
+    infos.forEach((info, i) => {
+      if (!info || !info.items.length) return;
+      out.push({ isHtml: true, key: keyOf(s.url, '#html:' + i), s, host, path, info, len: info.items.length, item: info.items[0], items: info.items });
+    });
   }
   return out.sort((a, b) => b.len - a.len);
 }
