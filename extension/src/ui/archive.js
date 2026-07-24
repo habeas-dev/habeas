@@ -749,6 +749,9 @@ async function deliver(sinkId, opts = {}) {
     chrome.storage.onChanged.removeListener(onStatus);
     endOp();
     await reloadCurrent(); // just this source — not a full-tree re-hydrate
+    // Docs already delivered (ledger-skipped, so no exts recorded this run) would keep showing "PDF?" until a
+    // manual scan. Resolve them now: probe the retrievable destination for the formats each doc actually has.
+    if (PENDING_FMT && isRetrievable(sink)) { try { await scanFormats(); } catch (e) {} }
   }
 }
 // Pull NEW documents for the current source into the store — no destination. The Archive becomes self-sufficient:
@@ -998,6 +1001,8 @@ async function sendSelected(sinkId, opts = {}) {
     endOp();
     PICKED.clear(); SELECTING = false;
     await reloadCurrent(); // just this source — not a full-tree re-hydrate
+    // Resolve any still-"PDF?" cards (ledger-skipped docs got no exts this run) by probing the retrievable sink.
+    if (PENDING_FMT && isRetrievable(sink)) { try { await scanFormats(); } catch (e) {} }
   }
 }
 

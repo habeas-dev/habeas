@@ -25,6 +25,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   `DD/MM/YYYY`, `YYYY-MM[-DD]` and "mes [de] año" (case-insensitive). Applied in `extractField`.
 
 ### Fixed
+- **Archive cards resolve "PDF?" after a save/re-download** (`ui/archive.js`). Documents already delivered (so
+  the send skipped them and recorded no formats this run) kept showing an unconfirmed "PDF?" badge until a manual
+  format scan. After a save / re-download to a retrievable destination (Dropbox/folder/WebDAV/S3), the archive now
+  auto-runs the format scan for any still-pending cards (metadata probe, no re-download), so the badges go solid
+  on their own.
 - **"Learn from a web page": pick between several tables on one page** (`runtime/infer.js`, `runtime/inventory.js`).
   A page with two tables produced a single candidate (the biggest), so the author couldn't choose the other one.
   The HTML inference now emits one candidate PER table (and the author UI's list dropdown / value-search already
