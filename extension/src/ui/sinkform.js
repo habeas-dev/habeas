@@ -28,7 +28,7 @@ export const storeCapable = (type) => !!(SINK_TYPES.find((x) => x.value === type
 // The per-type input fields (HTML for the fields container). Moved verbatim from options.js#renderFields.
 export function renderSinkFields(type) {
   if (type === 'http') {
-    return `id:<input id="sid" size="8"> url:<input id="surl" size="22"> token:<input id="stok" size="10"> <label>${t('sink_accepts')}</label><input id="saccepts" size="14" placeholder="grocery,fuel">`;
+    return `id:<input id="sid" size="8"> url:<input id="surl" size="22"> token:<input id="stok" size="10"> <label>${t('sink_accepts')}</label><input id="saccepts" size="14" placeholder="grocery,fuel"> <label>${t('sink_accepts_types')}</label><input id="sacctypes" size="14" placeholder="transaction,invoice">`;
   } else if (type === 'webdav') {
     return `id:<input id="sid" size="8"> <label>${t('webdav_url')}</label><input id="surl" size="24" placeholder="https://host/remote.php/dav/files/me/Habeas"> <label>${t('webdav_user')}</label><input id="swuser" size="10"> <label>${t('webdav_pass')}</label><input id="swpass" type="password" size="10">`;
   } else if (type === 's3') {
@@ -66,7 +66,8 @@ export async function buildSinkFromForm(root, type) {
     sink.url = val('surl').trim(); sink.tokenRef = 'secret://' + id;
     if (val('stok').trim()) await setSecret(id, val('stok').trim());
     const acc = (val('saccepts') || '').split(',').map((x) => x.trim()).filter(Boolean);
-    if (acc.length) sink.accepts = { categories: acc };
+    const accTypes = (val('sacctypes') || '').split(',').map((x) => x.trim()).filter(Boolean); // document TYPES (invoice/transaction/…)
+    if (acc.length || accTypes.length) sink.accepts = { ...(acc.length ? { categories: acc } : {}), ...(accTypes.length ? { schemas: accTypes } : {}) };
   } else if (type === 'webdav') {
     sink.url = val('surl').trim();
     sink.username = val('swuser').trim() || undefined;

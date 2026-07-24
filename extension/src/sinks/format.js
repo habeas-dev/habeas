@@ -245,12 +245,28 @@ function buildInvestment2(d, currency) {
 // Source-level compatibility: does this sink accept documents from this source at all?
 // A sink with no `accepts` takes everything (download/local/drive). A sink may restrict by
 // category and/or an explicit source-id allowlist.
+// The schema KIND of a schema string ('invoice@1' → 'invoice'); the document TYPE a sink can filter by.
+export const schemaKind = (s) => String(s || '').split('@')[0];
+// Every document kind a source produces (base schema + each stream's) — so a sink can accept only transactions.
+export function sourceSchemaKinds(adapter) {
+  const set = new Set();
+  if (adapter && adapter.schema) set.add(schemaKind(adapter.schema));
+  for (const s of (adapter && adapter.streams) || []) if (s && s.schema) set.add(schemaKind(s.schema));
+  return [...set];
+}
+// Whether a sink (with an optional `accepts` filter) will take documents from this source. `accepts` has three
+// axes — categories (grocery/fuel…), sources (explicit source ids), schemas (document TYPE: invoice/transaction/
+// receipt/investment). A bare `accepts.sources` id is an explicit allow; otherwise EVERY axis that's set must pass
+// (so a transactions-only sink `{schemas:['transaction']}` is NOT offered an invoice source). No `accepts` → all.
 export function sinkAcceptsSource(sink, adapter) {
   const a = sink && sink.accepts;
-  if (!a || (!(a.categories && a.categories.length) && !(a.sources && a.sources.length))) return true;
-  if (a.sources && a.sources.includes(adapter.id)) return true;
-  const cats = adapter.categories || [];
-  return !!(a.categories && a.categories.some((c) => cats.includes(c)));
+  if (!a) return true;
+  if (a.sources && a.sources.length && a.sources.includes(adapter.id)) return true; // explicit per-source allow
+  const checks = [];
+  if (a.categories && a.categories.length) checks.push(a.categories.some((c) => (adapter.categories || []).includes(c)));
+  if (a.schemas && a.schemas.length) { const kinds = sourceSchemaKinds(adapter); checks.push(a.schemas.some((s) => kinds.includes(schemaKind(s)))); }
+  if (!checks.length) return !(a.sources && a.sources.length); // only `sources` set (and unmatched) → reject; nothing set → accept
+  return checks.every(Boolean);
 }
 // Artifact filter: which artifact kinds ('data' | 'document') this sink takes. No `accepts.artifacts`
 // → all (generic file sinks store both the JSON and the presentable HTML/PDF).

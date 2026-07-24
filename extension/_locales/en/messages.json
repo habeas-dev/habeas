@@ -612,6 +612,9 @@
   "sink_accepts": {
     "message": "Accepts:"
   },
+  "sink_accepts_types": {
+    "message": "Accepts types"
+  },
   "none_compatible": {
     "message": "No compatible documents for this destination."
   },

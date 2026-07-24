@@ -10,6 +10,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **Sinks can filter by document TYPE, not just category** (`sinks/format.js`, `ui/sinkform.js`). `sink.accepts`
+  gained a `schemas` axis (`transaction`/`invoice`/`receipt`/`investment`), so a destination meant for transactions
+  is no longer offered — or sent — invoice-only sources. The http-sink form takes an "Accepts types" field; the
+  offer filters (popup, Archive) and per-output send selection honor it (AND across whichever axes are set; an
+  explicit `accepts.sources` id still overrides).
+
 ### Fixed
 - **Re-enabling or updating a source no longer wipes its per-source settings** (`ui/options.js`). `upsert` REPLACES
   a datasource entry, so enabling a source or installing a source update (from Mis contribuciones / the marketplace)

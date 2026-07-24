@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sinkAcceptsArtifact, sourceFormats, pathFor, mergeRecords, adoptDetailMeta, bakeLearned, acceptsDoc } from '../src/sinks/format.js';
+import { sinkAcceptsArtifact, sourceFormats, pathFor, mergeRecords, adoptDetailMeta, bakeLearned, acceptsDoc, sinkAcceptsSource } from '../src/sinks/format.js';
 
 // acceptsDoc reads doc.category (top-level). A doc built from the store MUST copy category up from its record,
 // or a sink with an accepts.categories filter rejects every stored doc → "nothing sent".
@@ -67,4 +67,19 @@ test('sinkAcceptsArtifact filters by artifact kind AND format (ext)', () => {
 test('sourceFormats returns the distinct exts of the artifact kinds', () => {
   assert.deepEqual(sourceFormats([{ kind: 'data', ext: 'json' }, { kind: 'document', ext: 'pdf' }]), ['json', 'pdf']);
   assert.deepEqual(sourceFormats([{ kind: 'document', ext: 'xls' }]), ['xls']);
+});
+
+test('sinkAcceptsSource: a document-TYPE filter (accepts.schemas) excludes an incompatible source', () => {
+  const invoiceSrc = { id: 'pepeenergy-es', categories: ['energy'], schema: 'invoice@1' };
+  const txnSrc = { id: 'bank-es', categories: ['banking'], schema: 'transaction@1' };
+  const multi = { id: 'wizink-es', categories: ['card'], streams: [{ schema: 'transaction@1' }, { schema: 'invoice@1' }] };
+  const txnSink = { type: 'http', accepts: { schemas: ['transaction'] } };
+  assert.equal(sinkAcceptsSource(txnSink, txnSrc), true, 'transaction source accepted');
+  assert.equal(sinkAcceptsSource(txnSink, invoiceSrc), false, 'invoice-only source NOT offered to a transactions sink');
+  assert.equal(sinkAcceptsSource(txnSink, multi), true, 'a source with a transaction stream is offered');
+  // no accepts → everything; explicit source allow overrides the type filter
+  assert.equal(sinkAcceptsSource({ type: 'http' }, invoiceSrc), true);
+  assert.equal(sinkAcceptsSource({ type: 'http', accepts: { schemas: ['transaction'], sources: ['pepeenergy-es'] } }, invoiceSrc), true, 'explicit source allow wins');
+  // combined axes are AND: category must ALSO match when both are set
+  assert.equal(sinkAcceptsSource({ type: 'http', accepts: { schemas: ['transaction'], categories: ['grocery'] } }, txnSrc), false, 'banking != grocery → rejected');
 });
