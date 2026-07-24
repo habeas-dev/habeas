@@ -10,6 +10,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Removed
+- **The "Open the saved ones" bulk button in the Archive selection bar** (`ui/archive.js`). It opened up to 12
+  selected documents' files in new browser tabs at once — tab-spam that silently did nothing for any selected doc
+  not delivered to a readable destination. Opening/previewing a saved file stays a per-document action in its
+  drawer, where it belongs.
+
 ## [0.8.1] — 2026-07-24
 
 ### Fixed

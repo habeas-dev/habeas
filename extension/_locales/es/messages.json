@@ -474,7 +474,11 @@
   },
   "auto_on_n": {
     "message": "auto → $1 destino(s)",
-    "placeholders": { "1": { "content": "$1" } }
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
   },
   "sink_name_ph": {
     "message": "nombre (opcional)"
@@ -708,39 +712,75 @@
   },
   "log_err_auth": {
     "message": "$SOURCE$ necesita que hayas iniciado sesión — ábrelo para que Habeas use la sesión activa.",
-    "placeholders": { "source": { "content": "$1" } }
+    "placeholders": {
+      "source": {
+        "content": "$1"
+      }
+    }
   },
   "log_err_token_expired": {
     "message": "El acceso guardado a $SOURCE$ había caducado (los bancos emiten tokens de muy corta duración, aunque tu sesión siga activa). Abre $SOURCE$ para capturar uno nuevo.",
-    "placeholders": { "source": { "content": "$1" } }
+    "placeholders": {
+      "source": {
+        "content": "$1"
+      }
+    }
   },
   "log_err_auth_valid": {
     "message": "$SOURCE$ rechazó la petición aunque el token de acceso seguía siendo válido — probablemente un bloqueo temporal o falta algún dato de sesión, no una sesión caducada. Mira los detalles técnicos.",
-    "placeholders": { "source": { "content": "$1" } }
+    "placeholders": {
+      "source": {
+        "content": "$1"
+      }
+    }
   },
   "log_err_token_missing": {
     "message": "No salió un token de acceso válido de $SOURCE$ en esta petición — puede que Habeas no tenga uno vigente capturado. Abre $SOURCE$ (con la sesión iniciada) para capturar uno nuevo y reinténtalo.",
-    "placeholders": { "source": { "content": "$1" } }
+    "placeholders": {
+      "source": {
+        "content": "$1"
+      }
+    }
   },
   "log_err_gone": {
     "message": "El servicio rechazó la petición (código $N$) — puede que el documento ya no esté disponible.",
-    "placeholders": { "n": { "content": "$1" } }
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
   },
   "log_err_server": {
     "message": "El servicio tuvo un problema (código $N$). Suele ser temporal — inténtalo más tarde.",
-    "placeholders": { "n": { "content": "$1" } }
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
   },
   "log_err_http": {
     "message": "La petición fue rechazada (código $N$).",
-    "placeholders": { "n": { "content": "$1" } }
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
   },
   "log_err_other": {
     "message": "La petición falló: $MSG$",
-    "placeholders": { "msg": { "content": "$1" } }
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
   },
   "log_action_login": {
     "message": "Abrir $SOURCE$",
-    "placeholders": { "source": { "content": "$1" } }
+    "placeholders": {
+      "source": {
+        "content": "$1"
+      }
+    }
   },
   "log_action_details": {
     "message": "Detalles técnicos"
@@ -1603,18 +1643,33 @@
   },
   "updates_available_n": {
     "message": "$COUNT$ actualizaciones disponibles para tus servicios",
-    "placeholders": { "count": { "content": "$1" } }
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
   },
   "updating": {
     "message": "Actualizando…"
   },
   "update_failed": {
     "message": "Fallo al actualizar: $MSG$",
-    "placeholders": { "msg": { "content": "$1" } }
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
   },
   "src_update_to": {
     "message": "Actualizar de v$FROM$ a v$TO$",
-    "placeholders": { "from": { "content": "$1" }, "to": { "content": "$2" } }
+    "placeholders": {
+      "from": {
+        "content": "$1"
+      },
+      "to": {
+        "content": "$2"
+      }
+    }
   },
   "edit_json": {
     "message": "Editar JSON"
@@ -1837,7 +1892,11 @@
   },
   "market_beta_confirm": {
     "message": "«$SOURCE$» es experimental y aún no se ha verificado contra una cuenta real. Puede que no funcione. ¿Instalarla y ayudar a probarla?",
-    "placeholders": { "source": { "content": "$1" } }
+    "placeholders": {
+      "source": {
+        "content": "$1"
+      }
+    }
   },
   "market_install": {
     "message": "Instalar"
@@ -2321,9 +2380,6 @@
   "archive_selected_suffix": {
     "message": "seleccionados"
   },
-  "archive_open_saved": {
-    "message": "Abrir los guardados"
-  },
   "archive_clear": {
     "message": "Cancelar"
   },
@@ -2383,17 +2439,6 @@
     "placeholders": {
       "n": {
         "content": "$1"
-      }
-    }
-  },
-  "archive_open_capped": {
-    "message": "Abiertos $N$ de $TOTAL$ (límite)",
-    "placeholders": {
-      "n": {
-        "content": "$1"
-      },
-      "total": {
-        "content": "$2"
       }
     }
   },
@@ -2619,45 +2664,93 @@
   },
   "archive_scan_pending": {
     "message": "$1 documento(s) entregado(s) sin comprobar sus formatos de fichero.",
-    "placeholders": { "1": { "content": "$1" } }
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
   },
   "archive_scan_progress": {
     "message": "Escaneando formatos — $1 de $2…",
-    "placeholders": { "1": { "content": "$1" }, "2": { "content": "$2" } }
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      },
+      "2": {
+        "content": "$2"
+      }
+    }
   },
   "archive_scan_ok": {
     "message": "Escaneados $1 documento(s)",
-    "placeholders": { "1": { "content": "$1" } }
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
   },
   "archive_reconcile_running": {
     "message": "Recuperando datos reales del destino…"
   },
   "op_retrying": {
     "message": "Se cortó la conexión — reintentando ($N$/$TOTAL$)…",
-    "placeholders": { "n": { "content": "$1" }, "total": { "content": "$2" } }
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
+    }
   },
   "reconcile_reading": {
     "message": "Leyendo lo ya guardado en $SINK$…",
-    "placeholders": { "sink": { "content": "$1" } }
+    "placeholders": {
+      "sink": {
+        "content": "$1"
+      }
+    }
   },
   "reconcile_reading_none": {
     "message": "Nada más rico que recuperar en $SINK$",
-    "placeholders": { "sink": { "content": "$1" } }
+    "placeholders": {
+      "sink": {
+        "content": "$1"
+      }
+    }
   },
   "reconcile_saving": {
     "message": "Recuperando datos: $N$/$TOTAL$ · $NAME$…",
-    "placeholders": { "n": { "content": "$1" }, "total": { "content": "$2" }, "name": { "content": "$3" } }
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      },
+      "name": {
+        "content": "$3"
+      }
+    }
   },
   "archive_reconcile_ok": {
     "message": "Recuperados datos de $N$ documentos",
-    "placeholders": { "n": { "content": "$1" } }
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
   },
   "archive_reconcile_none": {
     "message": "No se encontraron datos más ricos en el destino"
   },
   "archive_reconcile_err": {
     "message": "No se pudieron recuperar las fechas: $ERR$",
-    "placeholders": { "err": { "content": "$1" } }
+    "placeholders": {
+      "err": {
+        "content": "$1"
+      }
+    }
   },
   "archive_reconcile_nods": {
     "message": "Esta fuente no está configurada como origen de datos"
@@ -2869,7 +2962,11 @@
   },
   "opt_ov_dests_n": {
     "message": "$COUNT$ configurados",
-    "placeholders": { "count": { "content": "$1" } }
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
   },
   "opt_ov_dests_none": {
     "message": "Ninguno aún"

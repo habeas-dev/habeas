@@ -474,7 +474,11 @@
   },
   "auto_on_n": {
     "message": "auto → $1 destination(s)",
-    "placeholders": { "1": { "content": "$1" } }
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
   },
   "no_sw_sinks": {
     "message": "(no Drive/HTTP destinations)"
@@ -708,39 +712,75 @@
   },
   "log_err_auth": {
     "message": "$SOURCE$ needs you signed in — open it so Habeas can use the live session.",
-    "placeholders": { "source": { "content": "$1" } }
+    "placeholders": {
+      "source": {
+        "content": "$1"
+      }
+    }
   },
   "log_err_token_expired": {
     "message": "Habeas’s saved access to $SOURCE$ had expired (banks issue very short-lived tokens, even while your login stays active). Open $SOURCE$ so a fresh one is captured.",
-    "placeholders": { "source": { "content": "$1" } }
+    "placeholders": {
+      "source": {
+        "content": "$1"
+      }
+    }
   },
   "log_err_auth_valid": {
     "message": "$SOURCE$ rejected the request even though the access token was still valid — likely a temporary block or a missing session detail, not an expired login. See the technical details.",
-    "placeholders": { "source": { "content": "$1" } }
+    "placeholders": {
+      "source": {
+        "content": "$1"
+      }
+    }
   },
   "log_err_token_missing": {
     "message": "No valid $SOURCE$ access token went out with this request — Habeas may not have a current one captured. Open $SOURCE$ (signed in) so a fresh token is captured, then try again.",
-    "placeholders": { "source": { "content": "$1" } }
+    "placeholders": {
+      "source": {
+        "content": "$1"
+      }
+    }
   },
   "log_err_gone": {
     "message": "The service refused the request (code $N$) — the document may no longer be available.",
-    "placeholders": { "n": { "content": "$1" } }
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
   },
   "log_err_server": {
     "message": "The service had a problem (code $N$). It’s usually temporary — try again later.",
-    "placeholders": { "n": { "content": "$1" } }
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
   },
   "log_err_http": {
     "message": "The request was rejected (code $N$).",
-    "placeholders": { "n": { "content": "$1" } }
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
   },
   "log_err_other": {
     "message": "The request failed: $MSG$",
-    "placeholders": { "msg": { "content": "$1" } }
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
   },
   "log_action_login": {
     "message": "Open $SOURCE$",
-    "placeholders": { "source": { "content": "$1" } }
+    "placeholders": {
+      "source": {
+        "content": "$1"
+      }
+    }
   },
   "log_action_details": {
     "message": "Technical details"
@@ -1603,18 +1643,33 @@
   },
   "updates_available_n": {
     "message": "$COUNT$ updates available for your services",
-    "placeholders": { "count": { "content": "$1" } }
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
   },
   "updating": {
     "message": "Updating…"
   },
   "update_failed": {
     "message": "Update failed: $MSG$",
-    "placeholders": { "msg": { "content": "$1" } }
+    "placeholders": {
+      "msg": {
+        "content": "$1"
+      }
+    }
   },
   "src_update_to": {
     "message": "Update from v$FROM$ to v$TO$",
-    "placeholders": { "from": { "content": "$1" }, "to": { "content": "$2" } }
+    "placeholders": {
+      "from": {
+        "content": "$1"
+      },
+      "to": {
+        "content": "$2"
+      }
+    }
   },
   "edit_json": {
     "message": "Edit JSON"
@@ -1837,7 +1892,11 @@
   },
   "market_beta_confirm": {
     "message": "“$SOURCE$” is experimental and hasn't been verified against a real account yet. It may not work. Install it and help test it?",
-    "placeholders": { "source": { "content": "$1" } }
+    "placeholders": {
+      "source": {
+        "content": "$1"
+      }
+    }
   },
   "market_install": {
     "message": "Install"
@@ -2321,9 +2380,6 @@
   "archive_selected_suffix": {
     "message": "selected"
   },
-  "archive_open_saved": {
-    "message": "Open the saved ones"
-  },
   "archive_clear": {
     "message": "Clear"
   },
@@ -2383,17 +2439,6 @@
     "placeholders": {
       "n": {
         "content": "$1"
-      }
-    }
-  },
-  "archive_open_capped": {
-    "message": "Opened $N$ of $TOTAL$ (limit)",
-    "placeholders": {
-      "n": {
-        "content": "$1"
-      },
-      "total": {
-        "content": "$2"
       }
     }
   },
@@ -2619,45 +2664,93 @@
   },
   "archive_scan_pending": {
     "message": "$1 delivered document(s) haven't had their file formats checked yet.",
-    "placeholders": { "1": { "content": "$1" } }
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
   },
   "archive_scan_progress": {
     "message": "Scanning formats — $1 of $2…",
-    "placeholders": { "1": { "content": "$1" }, "2": { "content": "$2" } }
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      },
+      "2": {
+        "content": "$2"
+      }
+    }
   },
   "archive_scan_ok": {
     "message": "Scanned $1 document(s)",
-    "placeholders": { "1": { "content": "$1" } }
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
   },
   "archive_reconcile_running": {
     "message": "Recovering real data from the destination…"
   },
   "op_retrying": {
     "message": "Connection dropped — retrying ($N$/$TOTAL$)…",
-    "placeholders": { "n": { "content": "$1" }, "total": { "content": "$2" } }
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
+    }
   },
   "reconcile_reading": {
     "message": "Reading what's already saved in $SINK$…",
-    "placeholders": { "sink": { "content": "$1" } }
+    "placeholders": {
+      "sink": {
+        "content": "$1"
+      }
+    }
   },
   "reconcile_reading_none": {
     "message": "Nothing richer to recover in $SINK$",
-    "placeholders": { "sink": { "content": "$1" } }
+    "placeholders": {
+      "sink": {
+        "content": "$1"
+      }
+    }
   },
   "reconcile_saving": {
     "message": "Recovering data: $N$/$TOTAL$ · $NAME$…",
-    "placeholders": { "n": { "content": "$1" }, "total": { "content": "$2" }, "name": { "content": "$3" } }
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      },
+      "name": {
+        "content": "$3"
+      }
+    }
   },
   "archive_reconcile_ok": {
     "message": "Recovered data for $N$ documents",
-    "placeholders": { "n": { "content": "$1" } }
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
   },
   "archive_reconcile_none": {
     "message": "No richer data found in the destination"
   },
   "archive_reconcile_err": {
     "message": "Couldn't recover dates: $ERR$",
-    "placeholders": { "err": { "content": "$1" } }
+    "placeholders": {
+      "err": {
+        "content": "$1"
+      }
+    }
   },
   "archive_reconcile_nods": {
     "message": "This source isn't configured as a datasource"
@@ -2869,7 +2962,11 @@
   },
   "opt_ov_dests_n": {
     "message": "$COUNT$ configured",
-    "placeholders": { "count": { "content": "$1" } }
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
   },
   "opt_ov_dests_none": {
     "message": "None yet"

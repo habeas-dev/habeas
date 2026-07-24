@@ -549,14 +549,14 @@ async function renderDocs() {
   // missing invoice PDF) may still offer a button. Offer to scan (the destination probe isn't auto-run).
   if (PENDING_FMT) head += `<div class="fmtnotice" style="margin:8px 0;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);font-size:13px;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap">🔎 ${esc(t('archive_scan_pending', [String(PENDING_FMT)]))} <button id="scan-pending" class="refbtn">${esc(t('archive_scan'))}</button></div>`;
   // Selection bar: send the picked documents to any compatible destination (with a caret for "Re-download from
-  // site" per destination), open their saved files, or clear.
+  // site" per destination), or clear. (Opening a saved file is a per-document action in its drawer, not a bulk
+  // tab-spam here.)
   const sendBtns = sinks.map((s) => `<button class="go" data-sendsel="${esc(s.id)}">${sinkIcon(s)} ${esc(t('archive_send_to', [sinkLabel(s)]))}</button>`).join('');
   const sendMore = sinks.length ? `<span class="refwrap"><button id="sel-more" class="go caret2" aria-haspopup="menu" aria-label="${esc(t('archive_redownload'))}" title="${esc(t('archive_redownload'))}">▾</button><div id="selmenu" class="refmenu up" hidden role="menu"><div class="menuhead">${esc(t('archive_redownload'))}</div>${sinks.map((s) => `<button data-sendredl="${esc(s.id)}"><span class="ic">${sinkIcon(s)}</span> ${esc(t('archive_redownload_to', [sinkLabel(s)]))}</button>`).join('')}</div></span>` : '';
   const selbar = `<div class="selbar"><b id="selcount">0</b> <span>${esc(t('archive_selected_suffix'))}</span>
     <button class="pick" id="selall">${esc(t('archive_select_all'))}</button>
     <button class="pick" id="selnone">${esc(t('archive_select_none'))}</button>
     ${sendBtns}${sendMore}
-    <button class="go" id="selopen">${esc(t('archive_open_saved'))}</button>
     <button class="clr" id="selclear">${esc(t('archive_clear'))}</button></div>`;
   if (LAZY_OBS) { LAZY_OBS.disconnect(); LAZY_OBS = null; } // drop any prior source's lazy renderer
   m.innerHTML = head + '<div id="arch-groups"></div>' + selbar;
@@ -1105,7 +1105,6 @@ function wire() {
     if (ev.target.closest('#selnone')) { selectAllVisible(false); return; }
     if (ev.target.closest('#seltoggle')) { toggleSelecting(); return; }
     if (ev.target.closest('#selclear')) { PICKED.clear(); SELECTING = false; renderDocs(); return; }
-    if (ev.target.closest('#selopen')) { batchOpen(); return; }
     // Group header checkbox → select/deselect every document in that month/category/store at once.
     const gchk = ev.target.closest('[data-gchk]'); if (gchk && SELECTING) {
       const grp = gchk.closest('.mgroup'); const cards = [...grp.querySelectorAll('.dcard')];
@@ -1135,13 +1134,6 @@ function wire() {
     })().catch(() => {});
   });
 }
-function batchOpen() {
-  const picks = CURDOCS.filter((r) => PICKED.has(r.internalId) && r.delivered.length && r.formats.length);
-  const CAP = 12;
-  picks.slice(0, CAP).forEach((r) => openFile(r, r.delivered[0].id, r.formats[0].ext));
-  $('#astatus').textContent = picks.length > CAP ? t('archive_open_capped', [String(CAP), String(picks.length)]) : '';
-}
-
 async function onSync() {
   const b = $('#sync');
   b.disabled = true; beginOp(() => chrome.runtime.sendMessage({ type: 'habeas:sync-stop' })); // Stop → stop the sweep
