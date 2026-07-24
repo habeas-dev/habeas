@@ -21,6 +21,13 @@ import { putItems, getRecords } from '../lib/store.js';
 // Returns { listed, new }.
 export async function listSourceInto(adapter, opts = {}) {
   const ds = opts.ds || {};
+  // INVARIANT: the datasource's declared adapter MUST match the adapter being listed. A UI race (two sources'
+  // operations interleaving on a fast source-switch) could hand this a MISMATCHED pair — writing e.g. Raisin's
+  // items (its `movimientos` stream) under PepeEnergy's store id (`pepeenergy-es:movimientos`), cross-contaminating
+  // the canonical store. Refuse the write so a concurrent misclick can never bleed one source's data into another.
+  if (ds.id && ds.adapter && adapter && adapter.id && ds.adapter !== adapter.id) {
+    throw new Error('source/datasource mismatch: datasource ' + ds.id + ' is adapter ' + ds.adapter + ', not ' + adapter.id + ' — refusing to write (would cross-contaminate the store)');
+  }
   const auth = opts.auth, net = opts.net;
   adapter = withBrandHost(adapter, net, ds); // brand (multi-TLD) source → api.host = the tab's domain, or the pinned country
   const brandCountry = (Array.isArray(adapter.domains) ? adapter.domains.find((d) => ((adapter.api && adapter.api.host) || '').includes(d)) : null) || null;

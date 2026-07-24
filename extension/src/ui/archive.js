@@ -271,7 +271,9 @@ async function reloadCurrent() {
   const s = INDEX.find((x) => x.base === CUR);
   if (s) {
     s.keys = keys;
-    s.ds = (CFG.datasources || []).find((d) => d.adapter === CUR) || (CFG.datasources || []).find((d) => d.id === CUR) || s.ds; // pick up a just-saved account allow-list
+    // Resolve the datasource by THIS entry's own base — never the live `CUR`, which a fast source-switch can flip
+    // mid-await, leaving s.ds pointing at another source's datasource (the seed of a cross-source store race).
+    s.ds = (CFG.datasources || []).find((d) => d.adapter === s.base) || (CFG.datasources || []).find((d) => d.id === s.base) || s.ds; // pick up a just-saved account allow-list
     let count = 0, lastDate = ''; const accSet = new Set();
     for (const key of keys) {
       const src = await getSource(key).catch(() => null); if (!src || !src.items) continue;

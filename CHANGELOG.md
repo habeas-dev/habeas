@@ -10,6 +10,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **A source-switch race can no longer cross-contaminate the canonical store** (`runtime/lister.js`,
+  `ui/archive.js`). Fast-switching sources mid-operation could hand the list-into-store core a mismatched
+  datasource/adapter pair, writing one source's items under another's store id (seen as `pepeenergy-es:movimientos`
+  — PepeEnergy's id with Raisin's stream). `listSourceInto` now refuses a pair whose `ds.adapter` ≠ `adapter.id`,
+  and the Archive resolves each entry's datasource by its own base rather than the live `CUR` (which a switch flips
+  mid-await) — so a concurrent misclick can't bleed one source's documents into another.
+
 ## [0.8.0] — 2026-07-24
 
 ### Fixed

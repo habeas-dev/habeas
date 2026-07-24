@@ -10,6 +10,19 @@ const json = (o) => ({ ok: true, status: 200, json: async () => o, text: async (
 const AUTH = { byPath: {}, merged: {} };
 const flatAdapter = () => ({ id: 'flat', schema: 'receipt@1', api: { host: 'https://h.example', list: { paging: 'none', itemsPath: 'items' } }, fields: { internalId: 'id', date: 'd' } });
 
+test('refuses a mismatched datasource/adapter pair — never cross-contaminates the store (race guard)', async () => {
+  setBackend(mem());
+  let hit = false;
+  const net = async () => { hit = true; return json({ items: [{ id: '1', d: '2026-01-01' }] }); };
+  // A race hands adapter=flat but ds declaring a DIFFERENT adapter (as if PepeEnergy's ds met Raisin's adapter).
+  await assert.rejects(
+    () => listSourceInto(flatAdapter(), { auth: AUTH, net, ds: { id: 'pepeenergy-es', adapter: 'raisin' } }),
+    /mismatch/,
+  );
+  assert.equal(hit, false, 'bails before any network/store write');
+  assert.deepEqual(await getRecords('pepeenergy-es'), [], 'nothing written under the wrong id');
+});
+
 test('lists a flat source into the store and reports counts', async () => {
   setBackend(mem());
   const net = async () => json({ items: [{ id: '1', d: '2026-01-01' }, { id: '2', d: '2026-02-01' }] });
