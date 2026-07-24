@@ -50,3 +50,16 @@ test('applyStoredConfigIfNewer adopts a newer snapshot once, then not again (and
   // The apply set the sig to the merged config → a snapshot write right after must NOT echo it back.
   assert.equal(await writeSnapshotIfChanged(null, 6000), false, 'apply echo is not pushed back');
 });
+
+test('migrate carries the _config snapshot to the target backend (but never overwrites a newer one)', async () => {
+  const { migrate } = await import('../src/lib/store.js');
+  const mk = (snap) => { let s = snap || null; return { async listSources() { return []; }, async loadSource() { return null; }, async saveSource() {}, async getConfig() { return s; }, async putConfig(x) { s = x; return true; }, peek: () => s }; };
+  const from = mk(buildSnapshot({ datasources: [{ id: 'a', enabled: true }], sinks: [], routes: [] }, 9000));
+  const to = mk(null);
+  await migrate(from, to);
+  assert.equal(to.peek().savedAt, 9000, 'snapshot copied on move');
+  // a target with a NEWER snapshot is not clobbered
+  const to2 = mk(buildSnapshot({ datasources: [], sinks: [], routes: [] }, 99999));
+  await migrate(from, to2);
+  assert.equal(to2.peek().savedAt, 99999, 'newer target snapshot preserved');
+});

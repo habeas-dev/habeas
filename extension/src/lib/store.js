@@ -115,6 +115,15 @@ export async function migrate(from, to) {
     const cur = (await to.loadSource(id)) || emptySource(data.meta);
     await to.saveSource(id, mergeSources(cur, data));
   }
+  // Carry the portable CONFIG snapshot too (a reserved blob outside listSources), so moving the store to a new
+  // backend takes the user's setup with it — the target's newest-wins merge on next startup then adopts it.
+  try {
+    const snap = typeof from.getConfig === 'function' ? await from.getConfig() : null;
+    if (snap && snap.savedAt && typeof to.putConfig === 'function') {
+      const dst = await to.getConfig().catch(() => null);
+      if (!dst || !(dst.savedAt > snap.savedAt)) await to.putConfig(snap); // don't overwrite a newer snapshot already there
+    }
+  } catch (e) {}
   return ids.length;
 }
 

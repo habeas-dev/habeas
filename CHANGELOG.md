@@ -12,7 +12,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ### Added
 - **Cross-device config: the canonical store carries your setup** (`lib/configsync.js`, `lib/store*.js`,
-  `background.js`). A copy of your configuration — datasources (account allow-list, output selection, schedule),
+  `background.js`). A store MOVE to a new backend also carries the config snapshot (without clobbering a newer one
+  already there). A copy of your configuration — datasources (account allow-list, output selection, schedule),
   destinations (WITHOUT secrets — only `secret://` refs), and auto-sync routes — is written into the store next to
   the documents as a reserved `_config` blob. A cloud-backed store (Drive/Dropbox/folder/…) then carries it to
   another machine, where on startup a NEWER snapshot is merged in (newest-wins per entry, local-only kept) so
