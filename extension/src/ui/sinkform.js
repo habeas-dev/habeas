@@ -7,6 +7,8 @@ import { setSecret } from '../lib/secrets.js';
 import { putHandle } from '../lib/fs.js';
 import { driveSignIn, driveConnected, redirectUri } from '../sinks/drive.js';
 import { dropboxConnect, dropboxConnected, dropboxRedirectUri } from '../sinks/dropbox.js';
+import { emailHostFor } from '../sinks/email.js';
+import { chrome } from '../lib/ext.js';
 import { t } from '../lib/i18n.js';
 import { esc } from '../lib/esc.js';
 
@@ -19,6 +21,7 @@ export const SINK_TYPES = [
   { value: 'webdav', i18n: 'sink_webdav', store: true },
   { value: 's3', i18n: 'sink_s3', store: true },
   { value: 'dropbox', i18n: 'sink_dropbox', store: true },
+  { value: 'email', i18n: 'sink_email' },
 ];
 export const storeCapable = (type) => !!(SINK_TYPES.find((x) => x.value === type) || {}).store;
 
@@ -36,6 +39,18 @@ export function renderSinkFields(type) {
   } else if (type === 'drive') {
     return `id:<input id="sid" size="8"> <label>${t('client_id_optional')}</label><input id="sclient" size="26">`
       + `<div style="flex-basis:100%;margin-top:6px"><small>${t('redirect_hint')}</small><br><code>${redirectUri()}</code></div>`;
+  } else if (type === 'email') {
+    return `id:<input id="sid" size="6"> <label>${t('email_provider')}</label><select id="emprov">`
+      + `<option value="resend">Resend</option><option value="postmark">Postmark</option><option value="brevo">Brevo</option><option value="smtp2go">SMTP2GO</option><option value="mailgun">Mailgun</option><option value="ses">Amazon SES</option></select>`
+      + ` <label>${t('email_from')}</label><input id="emfrom" size="16" placeholder="you@yourdomain.com">`
+      + ` <label>${t('email_to')}</label><input id="emto" size="16" placeholder="a@b.com, c@d.com">`
+      + ` <label>${t('email_key')}</label><input id="emkey" type="password" size="12">`
+      + ` <label>${t('email_domain')}</label><input id="emdomain" size="10" placeholder="mg.you.com">`
+      + ` <label>${t('email_region')}</label><input id="emregion" size="8" placeholder="eu-west-1">`
+      + ` <label>${t('email_akey')}</label><input id="emakey" size="10">`
+      + ` <label>${t('email_secret')}</label><input id="emsecret" type="password" size="10">`
+      + ` <label>${t('email_subject')}</label><input id="emsubject" size="14" placeholder="Habeas — {service} ({n})">`
+      + `<div style="flex-basis:100%;margin-top:4px"><small>${t('email_hint')}</small></div>`;
   }
   return `id:<input id="sid" size="8">`;
 }
@@ -70,6 +85,19 @@ export async function buildSinkFromForm(root, type) {
   } else if (type === 'drive') {
     sink.clientId = val('sclient').trim() || undefined;
     sink.rootFolderName = 'Habeas';
+  } else if (type === 'email') {
+    sink.provider = val('emprov') || 'resend';
+    sink.from = val('emfrom').trim();
+    sink.to = val('emto').trim();
+    const sub = val('emsubject').trim(); if (sub) sink.subject = sub;
+    const region = val('emregion').trim(); if (region) sink.region = region;
+    if (sink.provider === 'mailgun') sink.domain = val('emdomain').trim();
+    if (sink.provider === 'ses') {
+      sink.accessKeyId = val('emakey').trim();
+      if (val('emsecret')) { sink.secretRef = 'secret://' + id; await setSecret(id, val('emsecret').trim()); }
+    } else if (val('emkey')) { sink.apiKeyRef = 'secret://' + id; await setSecret(id, val('emkey').trim()); }
+    // The SW fetch to the provider needs host permission (else CORS blocks it) — ask now, in the Add gesture.
+    try { const host = emailHostFor(sink); if (host && chrome.permissions) await chrome.permissions.request({ origins: [host + '/*'] }); } catch (e) {}
   } else if (type === 'local-folder') {
     if (!window.showDirectoryPicker) { alert(t('fs_unsupported')); return null; }
     try { const handle = await window.showDirectoryPicker({ mode: 'readwrite' }); await putHandle('dir:' + id, handle); sink.folderName = handle.name; }

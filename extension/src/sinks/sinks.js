@@ -9,9 +9,10 @@ import { makeZip } from '../lib/zip.js';
 import { pathFor, buildManifest, toRecords, mergeRecords, jsonBlob, today } from './format.js';
 import { driveWrite, driveRead } from './drive.js';
 import { dropboxWrite, dropboxRetrieve } from './dropbox.js';
+import { emailWrite } from './email.js';
 import { makeShardedStore, pathPrim } from '../lib/store/sharded.js';
 
-export function listSinkTypes() { return ['download', 'local-folder', 'drive', 'http', 'webdav', 's3', 'dropbox']; }
+export function listSinkTypes() { return ['download', 'local-folder', 'drive', 'http', 'webdav', 's3', 'dropbox', 'email']; }
 
 export async function writeToSink(sink, docs, files, opts = {}) {
   const impl = IMPL[sink.type];
@@ -68,6 +69,9 @@ const IMPL = {
 
   // Dropbox — content-API uploads + cumulative manifest (see dropbox.js).
   dropbox: (sink, docs, files, opts) => dropboxWrite(sink, docs, files, opts),
+
+  // Email — one email per send batch, files attached, via the user's own provider API key (see email.js).
+  email: (sink, docs, files, opts) => emailWrite(sink, docs, files, opts),
 
   // HTTP consumer (Tiquetera / Cuéntamo): POST normalized records + available PDFs.
   async http(sink, docs, files, opts = {}) {

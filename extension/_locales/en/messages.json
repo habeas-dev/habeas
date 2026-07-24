@@ -554,6 +554,39 @@
   "sink_dropbox": {
     "message": "Dropbox"
   },
+  "sink_email": {
+    "message": "Email"
+  },
+  "email_provider": {
+    "message": "Provider"
+  },
+  "email_from": {
+    "message": "From"
+  },
+  "email_to": {
+    "message": "To"
+  },
+  "email_key": {
+    "message": "API key"
+  },
+  "email_domain": {
+    "message": "Domain (Mailgun)"
+  },
+  "email_region": {
+    "message": "Region (Mailgun eu · SES eu-west-1)"
+  },
+  "email_akey": {
+    "message": "Access key ID (SES)"
+  },
+  "email_secret": {
+    "message": "Secret (SES)"
+  },
+  "email_subject": {
+    "message": "Subject"
+  },
+  "email_hint": {
+    "message": "Sends one email per batch with the documents attached, using YOUR provider account — the key is stored encrypted and data goes straight to the provider. The sender must be verified with that provider. API key: Resend/Postmark/Brevo/SMTP2GO/Mailgun. Domain: Mailgun only. Access key + secret + region: Amazon SES only."
+  },
   "connect_dropbox": {
     "message": "Connect Dropbox"
   },

@@ -554,6 +554,39 @@
   "sink_dropbox": {
     "message": "Dropbox"
   },
+  "sink_email": {
+    "message": "Correo electrónico"
+  },
+  "email_provider": {
+    "message": "Proveedor"
+  },
+  "email_from": {
+    "message": "De"
+  },
+  "email_to": {
+    "message": "Para"
+  },
+  "email_key": {
+    "message": "Clave de API"
+  },
+  "email_domain": {
+    "message": "Dominio (Mailgun)"
+  },
+  "email_region": {
+    "message": "Región (Mailgun eu · SES eu-west-1)"
+  },
+  "email_akey": {
+    "message": "ID de clave de acceso (SES)"
+  },
+  "email_secret": {
+    "message": "Secreto (SES)"
+  },
+  "email_subject": {
+    "message": "Asunto"
+  },
+  "email_hint": {
+    "message": "Envía un correo por lote con los documentos adjuntos, usando TU cuenta de proveedor — la clave se guarda cifrada y los datos van directos al proveedor. El remitente debe estar verificado en ese proveedor. Clave de API: Resend/Postmark/Brevo/SMTP2GO/Mailgun. Dominio: solo Mailgun. Clave de acceso + secreto + región: solo Amazon SES."
+  },
   "connect_dropbox": {
     "message": "Conectar Dropbox"
   },

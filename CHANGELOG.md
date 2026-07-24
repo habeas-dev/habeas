@@ -39,6 +39,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   saved document never claims a file it may not have.
 
 ### Added
+- **Email destination — one email per batch with the files attached** (`sinks/email.js`, wired through
+  `sinks/sinks.js`, `ui/sinkform.js`, `ui/options.*`, `ui/archive.js`). A new `email` sink sends the documents of
+  a send batch as attachments (one document → one email; several sent together → one email with all of them) plus
+  the normalized-records manifest. MV3 has no raw SMTP, so it drives a provider's HTTP send API with the **user's
+  own API key** (stored encrypted, like the S3/WebDAV/Dropbox sinks) — data goes straight from the browser to the
+  provider, nothing through Habeas. Providers: **Resend, Postmark, Brevo, SMTP2GO, Mailgun** (HTTP JSON/multipart)
+  and **Amazon SES** (SigV4 + raw MIME). SW-runnable, so it works with automatic mode. Only user-creatable in
+  Settings — never proposable by a site (external-hooks still allow only an origin-bound `http` sink).
 - **Auth-failure diagnostics show when the replayed token was captured** (`background.js` `saveAuth`,
   `runtime/inventory.js`). Captured auth headers now carry a per-path timestamp; a 401/403 appends `[captured
   N min ago]` to the raw details. A token captured well before a fresh login is proof the new session wasn't

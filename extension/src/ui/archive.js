@@ -725,7 +725,7 @@ function detailHtml(view, record) {
 const sinkLabel = (s) => s.name || s.id || s.type;
 // Software destinations the background can deliver to unattended (mirrors the Auto-sync tab). 'download' and
 // 'local-folder' need a page/user context, so they're not offered as an on-demand archive save.
-const AUTO_SINK_TYPES = new Set(['drive', 'http', 'webdav', 's3', 'dropbox']);
+const AUTO_SINK_TYPES = new Set(['drive', 'http', 'webdav', 's3', 'dropbox', 'email']);
 const SINK_ICON = { drive: '☁️', dropbox: '🗄️', s3: '🪣', webdav: '🌐', http: '🔗' };
 const sinkIcon = (s) => SINK_ICON[s.type] || '📤';
 function compatibleSinks(adapter) { return adapter ? (CFG.sinks || []).filter((s) => AUTO_SINK_TYPES.has(s.type) && sinkAcceptsSource(s, adapter)) : []; }

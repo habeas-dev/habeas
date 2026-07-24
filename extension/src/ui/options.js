@@ -193,8 +193,8 @@ async function render() {
   // A cloud archive backend (dropbox/webdav/s3) reuses one of these very destinations as its transport — flag
   // it so the same Dropbox/WebDAV/S3 connection doesn't look like it's mysteriously listed twice.
   const archiveSinkId = (await getStoreConfig().catch(() => ({}))).sinkId || '';
-  const SINK_IC = { download: '⬇️', 'local-folder': '📁', drive: '☁️', dropbox: '📦', webdav: '🌐', s3: '🪣', http: '🔗' };
-  const SINK_TL = { download: 'sink_download', 'local-folder': 'sink_local', drive: 'sink_drive', http: 'sink_http', webdav: 'sink_webdav', s3: 'sink_s3', dropbox: 'sink_dropbox' };
+  const SINK_IC = { download: '⬇️', 'local-folder': '📁', drive: '☁️', dropbox: '📦', webdav: '🌐', s3: '🪣', http: '🔗', email: '✉️' };
+  const SINK_TL = { download: 'sink_download', 'local-folder': 'sink_local', drive: 'sink_drive', http: 'sink_http', webdav: 'sink_webdav', s3: 'sink_s3', dropbox: 'sink_dropbox', email: 'sink_email' };
   $('#sinks').innerHTML = cfg.sinks.map((s) => {
     const isDef = s.id === defSink;
     const isArchive = !!archiveSinkId && s.id === archiveSinkId;
@@ -267,7 +267,7 @@ async function render() {
     finally { b.disabled = false; }
   });
 
-  const swSinks = cfg.sinks.filter((s) => ['drive', 'http', 'webdav', 's3', 'dropbox'].includes(s.type));
+  const swSinks = cfg.sinks.filter((s) => ['drive', 'http', 'webdav', 's3', 'dropbox', 'email'].includes(s.type));
   const enabledDs = cfg.datasources.filter((d) => d.enabled);
   // Auto-sync now supports N destinations per source: one auto route per (datasource, sink). `routesOf` lists
   // them all; a source is "on" if it has any. The canonical archive is written on every delivery, so picking a
