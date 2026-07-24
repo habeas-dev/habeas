@@ -10,6 +10,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **Re-enabling or updating a source no longer wipes its per-source settings** (`ui/options.js`). `upsert` REPLACES
+  a datasource entry, so enabling a source or installing a source update (from Mis contribuciones / the marketplace)
+  reset the saved account allow-list (`groups`/`groupLabels`), output selection and schedule to defaults. Both call
+  sites now merge with the existing entry (like the site-authorize path already did), preserving what the user set.
+
 ### Removed
 - **The "Open the saved ones" bulk button in the Archive selection bar** (`ui/archive.js`). It opened up to 12
   selected documents' files in new browser tabs at once — tab-spam that silently did nothing for any selected doc

@@ -185,7 +185,10 @@ async function render() {
     // Grant host permissions + register the in-session capture bridge so the token/DNI is captured on
     // the login site (must be in this user gesture). Non-fatal if declined — cookie sources still work.
     if (adapter) { await requestCapturePermissions(adapter); await registerCapture(adapter); }
-    await upsert('datasources', { id: b.dataset.ds, adapter: b.dataset.ds, enabled: true, options: {} });
+    // Preserve any existing per-source settings (account allow-list groups/groupLabels, output selection, schedule)
+    // — upsert REPLACES the whole entry, so re-enabling a source must not wipe what the user configured before.
+    const prevDs = (await getConfig()).datasources.find((x) => x.id === b.dataset.ds);
+    await upsert('datasources', { options: {}, ...(prevDs || {}), id: b.dataset.ds, adapter: b.dataset.ds, enabled: true });
     render();
   });
 
@@ -539,7 +542,10 @@ async function installContribSource(adapter) {
   await saveSource(adapter);
   if (needsConsent(adapter) && !(await hasConsent(adapter))) { if (!(await confirmConsent(consentDescriptor(adapter)))) return false; await grantConsent(adapter); }
   try { await requestCapturePermissions(adapter); await registerCapture(adapter); } catch (e) {}
-  await upsert('datasources', { id: adapter.id, adapter: adapter.id, enabled: true, options: {} });
+  // Preserve existing per-source settings on re-install/update (account allow-list, outputs, schedule) — upsert
+  // REPLACES the entry, so a source update (from Mis contribuciones / marketplace) must not reset the config.
+  const prevDs = (await getConfig()).datasources.find((x) => x.id === adapter.id);
+  await upsert('datasources', { options: {}, ...(prevDs || {}), id: adapter.id, adapter: adapter.id, enabled: true });
   return true;
 }
 // A "Report a problem" message shows the contributor ONLY a plain sentence; the raw technical diagnostic (a
