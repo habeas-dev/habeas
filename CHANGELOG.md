@@ -18,6 +18,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   (records with no group, e.g. an integrated statement, still pass), so a consumer's "re-send whole archive"
   no longer leaks movements from accounts the user didn't pick.
 
+### Added
+- **`endOfMonth` date transform for `from:html` rows** (`runtime/inventory.js`). A rows field can carry
+  `endOfMonth: true` — the extracted value denotes a month and the emitted date is that month's **last day**
+  (e.g. a source whose invoice emission date is the last day of the month shown). Handles `MM/YYYY`,
+  `DD/MM/YYYY`, `YYYY-MM[-DD]` and "mes [de] año" (case-insensitive). Applied in `extractField`.
+
 ### Fixed
 - **"Learn from a web page": pick between several tables on one page** (`runtime/infer.js`, `runtime/inventory.js`).
   A page with two tables produced a single candidate (the biggest), so the author couldn't choose the other one.
