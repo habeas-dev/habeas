@@ -18,6 +18,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   (records with no group, e.g. an integrated statement, still pass), so a consumer's "re-send whole archive"
   no longer leaks movements from accounts the user didn't pick.
 
+### Changed
+- **Archive format badges reflect what a document actually has** (`ui/archive.js`, `ui/archive.html`). A document
+  no longer shows a solid PDF/XLS badge just because its stream *could* produce that format. A **solid** badge now
+  means the file is confirmed present (recorded at send time or by a format scan); an unconfirmed potential format
+  shows faint as **"PDF?"/"XLS?"** with a tooltip, and resolves to solid or disappears once you scan formats. So a
+  saved document never claims a file it may not have.
+
 ### Added
 - **Auth-failure diagnostics show when the replayed token was captured** (`background.js` `saveAuth`,
   `runtime/inventory.js`). Captured auth headers now carry a per-path timestamp; a 401/403 appends `[captured

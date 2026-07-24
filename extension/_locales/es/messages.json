@@ -2569,6 +2569,9 @@
   "archive_scan": {
     "message": "Escanear formatos"
   },
+  "fmt_unconfirmed": {
+    "message": "Sin confirmar — puede que este documento no tenga este archivo. Escanea los formatos para comprobarlo."
+  },
   "archive_scan_hint": {
     "message": "Comprueba en el destino qué formatos de fichero tiene realmente cada documento, para que un formato que un documento no tenga (p. ej. sin PDF de factura) deje de mostrar su botón"
   },

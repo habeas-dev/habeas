@@ -2569,6 +2569,9 @@
   "archive_scan": {
     "message": "Scan file formats"
   },
+  "fmt_unconfirmed": {
+    "message": "Not confirmed yet — this document may not have this file. Scan file formats to check."
+  },
   "archive_scan_hint": {
     "message": "Check the destination for which file formats each document actually has, so a format a document lacks (e.g. no invoice PDF) stops offering its button"
   },

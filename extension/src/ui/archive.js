@@ -312,8 +312,9 @@ async function loadDocs(base) {
         const set = deliveredCache[ck] || (deliveredCache[ck] = await deliveredSet(dsId, sink.id).catch(() => ({})));
         if (set[internalId]) delivered.push(sink);
       }
-      // Per-doc formats: hide a format the doc doesn't actually have (an old Amazon order with no invoice PDF).
-      // `known[id].exts` = the exts actually delivered (recorded at send time); absent (older docs) → show all.
+      // Per-doc formats. `known[id].exts` = the exts actually CONFIRMED (recorded at send time / by a format scan).
+      // Scanned → badge only what the doc really has (solid). Unscanned → the stream's potential formats, but marked
+      // uncertain ("PDF?") so a saved doc never claims a file it may not have; a scan resolves them to solid or gone.
       const km = known[internalId];
       const scanned = !!(km && Array.isArray(km.exts));
       const dfmts = scanned ? formats.filter((f) => km.exts.includes(f.ext)) : formats;
@@ -608,7 +609,8 @@ function cardHtml(r) {
   const i = CURDOCS.indexOf(r);
   const c = catOf(r.record.category);
   const mv = money(r.record);
-  const fmts = r.formats.length ? r.formats.map((f) => `<span class="fmt">${esc((f.ext || '').toUpperCase())}</span>`).join('') : '';
+  // Solid badge = the doc really has this file (scanned); "PDF?" (faint) = a potential format not yet confirmed.
+  const fmts = r.formats.length ? r.formats.map((f) => `<span class="fmt${r._scanned ? '' : ' pend'}"${r._scanned ? '' : ` title="${esc(t('fmt_unconfirmed'))}"`}>${esc((f.ext || '').toUpperCase())}${r._scanned ? '' : '?'}</span>`).join('') : '';
   const st = r.delivered.length
     ? `<span class="status sent" title="${esc(t('archive_status_saved_hint', [r.delivered.map(sinkLabel).join(', ')]))}"><span class="d"></span>${esc(t('archive_status_saved'))}</span>`
     : `<span class="status new" title="${esc(t('archive_status_local_hint'))}"><span class="d"></span>${esc(t('archive_status_local'))}</span>`;
@@ -638,7 +640,7 @@ function openDrawer(r) {
   if (r.record.group) rows.push([t('archive_field_account'), r.record.group]);
   const cp = nameOf(r.record.counterparty) || nameOf(r.record.description); if (cp) rows.push([t('archive_field_concept'), cp]);
   if (r.record.type) rows.push([t('archive_field_type'), String(r.record.type)]);
-  if (r.formats.length) rows.push([t('archive_field_files'), r.formats.map((f) => (f.ext || '').toUpperCase()).join(' · ')]);
+  if (r.formats.length) rows.push([t('archive_field_files'), r.formats.map((f) => (f.ext || '').toUpperCase() + (r._scanned ? '' : '?')).join(' · ')]);
   let body = `<dl class="kvx">${rows.map(([k, v, cls]) => `<dt>${esc(k)}</dt><dd${cls ? ` style="color:var(--${cls === 'neg' ? 'neg' : 'pos'})"` : ''}>${esc(String(v))}</dd>`).join('')}</dl>`;
   // actions: open each delivered FILE (real). A record-only movement (a bank line) has no file — its data
   // rode the manifest — so it gets an honest note, not a broken "open". Nothing delivered → the sync note.
