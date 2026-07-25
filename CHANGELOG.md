@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.8.2] — 2026-07-25
+
 ### Added
 - **Cross-device config: the canonical store carries your setup** (`lib/configsync.js`, `lib/store*.js`,
   `background.js`). A store MOVE to a new backend also carries the config snapshot (without clobbering a newer one
