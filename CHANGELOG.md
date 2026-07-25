@@ -10,6 +10,17 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.8.6] — 2026-07-25
+
+### Fixed
+- **WiZink card movements no longer duplicate.** Their internal id was `account|period|POSITION|date|amount`, and the
+  positional index shifted every time a new movement appeared (or a charge moved from the unbilled month to a
+  statement), so the same movement re-listed under a fresh id and piled up. They're now keyed by a **stable natural
+  key** (`account|date|amount|description`) with a per-import ordinal for genuinely-identical same-day repeats — so
+  re-lists and the unbilled→billed transition dedupe. `list.idOverride` templates can now reference `{group.*}`, so a
+  grouped source keys movements per account. (Existing duplicates already stored must be cleared once from the
+  canonical-store inspector; the fix prevents new ones.)
+
 ## [0.8.5] — 2026-07-25
 
 ### Changed

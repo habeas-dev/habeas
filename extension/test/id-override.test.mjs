@@ -61,3 +61,39 @@ test('account movements (no status) are NOT overridden — genuine same-day/amou
   const docs = await listInventory(ADAPTER, AUTH, netOf([acct('a1'), acct('a2')]));
   assert.deepEqual(ids(docs), ['a1', 'a2']); // kept apart by their stable UUID, never merged
 });
+
+// idOverride can key by {group.accountNumber} so a GROUPED source (WiZink card movements — no per-row id) keeps
+// same-day/same-amount movements from DIFFERENT accounts distinct, and dedupes each account's own re-lists.
+// Synthetic. Two accounts each with an identical €50 charge on the same day.
+const GROUPED = {
+  id: 'gr', service: 'gr', schema: 'transaction@1', currency: 'EUR',
+  api: {
+    host: 'https://g.test',
+    groups: { path: '/accounts', itemsPath: 'accounts', fields: { id: 'id', accountNumber: 'accountNumber' } },
+    list: { path: '/accounts/{group.id}/tx', itemsPath: 'transactions', paging: 'none',
+      idOverride: { when: { field: 'amount', present: true }, template: '{group.accountNumber}|{date}|{amount}' } },
+  },
+  fields: { internalId: '', date: 'date', amount: 'amount' },
+};
+const gAuth = { byPath: {}, merged: {} };
+const gNet = (byAcct) => async (url) => {
+  const u = new URL(url);
+  if (u.pathname === '/accounts') return { ok: true, status: 200, json: async () => ({ accounts: [{ id: 'A', accountNumber: 'ACC-A' }, { id: 'B', accountNumber: 'ACC-B' }] }) };
+  const m = u.pathname.match(/^\/accounts\/([^/]+)\/tx$/);
+  if (m) return { ok: true, status: 200, json: async () => ({ transactions: byAcct[m[1]] || [] }) };
+  return { ok: false, status: 404, json: async () => ({}) };
+};
+
+test('grouped idOverride: identical charges in different accounts get account-scoped, distinct ids', async () => {
+  const tx = { A: [{ date: '2026-07-20', amount: -50 }], B: [{ date: '2026-07-20', amount: -50 }] };
+  const docs = await listInventory(GROUPED, gAuth, gNet(tx));
+  assert.deepEqual(ids(docs), ['ACC-A|2026-07-20|-50|0', 'ACC-B|2026-07-20|-50|0'], 'the account is part of the key');
+});
+
+test('grouped idOverride: re-listing the same account dedupes; a new movement does not shift existing ids', async () => {
+  const known = ['ACC-A|2026-07-20|-50|0', 'ACC-B|2026-07-20|-50|0'];
+  // A gains a NEW distinct charge on another day; the existing €50 charges must still dedupe (no _idx to shift)
+  const tx = { A: [{ date: '2026-07-21', amount: -9 }, { date: '2026-07-20', amount: -50 }], B: [{ date: '2026-07-20', amount: -50 }] };
+  const docs = await listInventory(GROUPED, gAuth, gNet(tx), { knownIds: known });
+  assert.deepEqual(ids(docs), ['ACC-A|2026-07-21|-9|0'], 'only the genuinely-new movement is new');
+});

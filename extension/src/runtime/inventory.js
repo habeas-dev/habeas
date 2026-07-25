@@ -1675,7 +1675,10 @@ function mapDoc(adapter, p, group) {
       : io.when.present === false ? (wv == null || wv === '')
         : (Array.isArray(io.when.values) ? io.when.values.map(String).includes(String(wv)) : false);
     if (match) {
-      const base = io.template.replace(/\{([^}]+)\}/g, (_, path) => { const v = get(p, path); return v == null ? '' : String(v); });
+      // Resolve {…} against the raw item AND its group (so a grouped source can key by {group.accountNumber} —
+      // WiZink card movements have no per-row id and must be keyed per account, not just by date/amount/text).
+      const ctx = group ? { ...p, group } : p;
+      const base = io.template.replace(/\{([^}]+)\}/g, (_, path) => { const v = get(ctx, path); return v == null ? '' : String(v); });
       if (base) { const st = adapter._idxState || (adapter._idxState = new Map()); const n = st.get(base) || 0; st.set(base, n + 1); doc.internalId = base + '|' + n; }
     }
   }

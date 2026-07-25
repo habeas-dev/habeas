@@ -5,7 +5,7 @@
   "trust": "first-party",
   "domain": "wizink.es",
   "country": "ES",
-  "version": "2026-07-10",
+  "version": "2026-07-25",
   "currency": "EUR",
   "categories": [
     "card",
@@ -125,11 +125,18 @@
               }
             }
           },
-          "maxAgeDays": 90
+          "maxAgeDays": 90,
+          "idOverride": {
+            "template": "{group.accountNumber}|{date}|{amount}|{description}",
+            "when": {
+              "field": "amount",
+              "present": true
+            }
+          }
         }
       },
       "fields": {
-        "internalId": "{group.accountNumber}|{_period}|{_idx}|{date}|{amount}",
+        "internalId": "{group.accountNumber}|{date}|{amount}|{description}",
         "date": "date",
         "amount": "amount",
         "description": "description",
@@ -216,5 +223,5 @@
       "changes": "Fuente unificada: reemplaza las tres fuentes WiZink (movimientos, extractos-PDF, extractos-Excel) por un único source con salidas seleccionables (stream × formato). El stream «Movimientos» captura las transacciones de tarjeta; el stream «Extractos» ofrece cada extracto en PDF o Excel compartiendo el mismo listado. Requiere la extensión 0.1.52+ (soporte de salidas)."
     }
   ],
-  "minVersion": "0.1.52"
+  "minVersion": "0.8.6"
 }
