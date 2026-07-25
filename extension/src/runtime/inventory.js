@@ -92,6 +92,15 @@ function withinAgeDays(dateStr, days) {
   if (isNaN(t)) return true;
   return (Date.now() - t) <= days * 86400000;
 }
+// A time-ordered (newest-first) paged list has run entirely PAST its maxAgeDays window when every doc a page just
+// contributed is older than the cut. Stop then, instead of fetching ever-older pages the source will only discard
+// (and that can trip a bank's >N-day extra-auth wall — ING re-requesting movements past 90 days). Only engages
+// when the source declares maxAgeDays (its explicit "don't go past N days" intent) and the whole page is datable.
+function pagedPastWindow(all, preLen, list) {
+  if (!list.maxAgeDays) return false;
+  const page = all.slice(preLen);
+  return page.length > 0 && page.every((d) => d.date && !withinAgeDays(d.date, list.maxAgeDays));
+}
 
 export async function listInventory(adapter, auth, net, opts) {
   const list = (adapter.api && adapter.api.list) || {};
@@ -311,9 +320,11 @@ async function pageList(adapter, auth, net, group, opts) {
     let dryStreak = 0;
     for (let g = 0; g < maxPages; g++) {
       if (stop()) break;
+      const pre = all.length;
       const data = await call({ ...range, ...baseParams, [pageParam]: page });
       const added = collect(adapter, data, seen, all, group);
       report({ page: g + 1 });
+      if (pagedPastWindow(all, pre, list)) break; // whole page older than maxAgeDays → stop the newest-first walk
       // A page that adds NOTHING NEW (empty, OR — incrementally — all-known) is a candidate stop. For a
       // year-partitioned list (pageParam yearOffset) an empty/known year in the MIDDLE (e.g. 2025 with no
       // purchases, or the current year already in the store) doesn't mean older years are done, so tolerate
@@ -328,11 +339,13 @@ async function pageList(adapter, auth, net, group, opts) {
     let offset = list.offsetStart ?? 0;
     for (let g = 0; g < maxPages; g++) {
       if (stop()) break;
+      const pre = all.length;
       const data = await call({ ...range, ...baseParams, [offsetParam]: offset });
       const items = getItems(data, list);
       const added = collect(adapter, data, seen, all, group);
       report({ page: g + 1 });
       if (!items.length || !added) break;
+      if (pagedPastWindow(all, pre, list)) break; // fetched a full page older than maxAgeDays → don't page further back
       offset += step;
     }
   } else if (paging === 'cursor') {

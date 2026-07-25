@@ -10,6 +10,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **Movement lists stop at their `maxAgeDays` window instead of paging past it.** An offset/page-paged, newest-first
+  list (ING card & account movements) kept fetching ever-older pages that were then discarded — re-requesting
+  movements past ING's ~90-day extra-auth wall. It now stops as soon as a whole page falls outside the window.
+
 ## [0.8.6] — 2026-07-25
 
 ### Fixed
