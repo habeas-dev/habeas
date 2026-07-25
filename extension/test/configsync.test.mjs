@@ -63,3 +63,12 @@ test('migrate carries the _config snapshot to the target backend (but never over
   await migrate(from, to2);
   assert.equal(to2.peek().savedAt, 99999, 'newer target snapshot preserved');
 });
+
+test('missingAdapterIds: community adapters a config uses but the device lacks (built-ins present are ignored)', async () => {
+  const { missingAdapterIds } = await import('../src/lib/configsync.js');
+  const cfg = { datasources: [{ id: 'ing-es', adapter: 'ing-es' }, { id: 'pepeenergy-es', adapter: 'pepeenergy-es' }, { id: 'carrefour-es', adapter: 'carrefour-es' }] };
+  const installed = { 'carrefour-es': {} }; // only carrefour is installed here
+  assert.deepEqual(missingAdapterIds(cfg, installed).sort(), ['ing-es', 'pepeenergy-es']);
+  assert.deepEqual(missingAdapterIds({ datasources: [] }, {}), []);
+  assert.deepEqual(missingAdapterIds(cfg, { 'ing-es': {}, 'pepeenergy-es': {}, 'carrefour-es': {} }), []); // all present
+});
