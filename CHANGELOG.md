@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.8.3] — 2026-07-25
+
 ### Added
 - **A synced config auto-installs its marketplace sources** (`lib/configsync.js`). When a config snapshot from
   another device is applied, any community source it uses but this machine doesn't have is installed from the
