@@ -29,7 +29,7 @@ import { validateProposal, originHost, enabledSources } from './lib/exthooks.js'
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant, revokeGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
 import { runStoreMigration } from './lib/migrate.js';
-import { autoDebounced, retainAutoDebounce, isLoginNavigation, needsTabEscalation, sweepSinkId, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
+import { autoDebounced, retainAutoDebounce, autoBackoffMs, isLoginNavigation, needsTabEscalation, sweepSinkId, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
 
 // On startup, (re)register the in-session capture bridge for every enabled source (dynamic content
 // scripts can be dropped on an extension update). Idempotent; needs the host permission already granted.
@@ -451,21 +451,33 @@ async function runAutoRoutes(matches, tabId, triggerUrl) {
     const sink = cfg.sinks.find((s) => s.id === route.sink);
     if (!sink || sink.type === 'download' || sink.type === 'local-folder') continue; // need a page
     const dk = 'autoLast:' + route.id;
-    const o = await chrome.storage.session.get(dk);
-    if (autoDebounced(o[dk], Date.now())) continue;
+    const cdk = 'autoCd:' + route.id;
+    const st = await chrome.storage.session.get([dk, cdk]);
+    if (autoDebounced(st[dk], Date.now())) continue;
+    // A repeatedly-failing source is in a growing backoff cooldown → skip until it expires (stops the ING 401 loop).
+    if (st[cdk] && st[cdk].until && Date.now() < st[cdk].until) continue;
     // Don't run on a Cloudflare/anti-bot interstitial — the real session isn't available yet. When the
     // challenge passes, the page reloads → onUpdated fires again → this runs on the real site.
     if (tabId != null) { if (challenge === null) challenge = await isChallenged(tabId); if (challenge) return; }
     running.add(route.id);
     await chrome.storage.session.set({ [dk]: Date.now() });
-    // Release the debounce on a transient/auth failure (e.g. the run fired on the login page before the
-    // session was ready → csrf 400) so the user's real login re-triggers a retry at once; only a
-    // completed run holds the 10-min window. Keeps a first, premature failure from muting the source.
+    // On a completed run: hold the 10-min debounce + clear the failure backoff. On a transient/auth failure:
+    // release the debounce (a real login can retry) BUT bump a growing backoff cooldown so a persistently-failing
+    // source (ING's 401 loop) stops hammering — the first failure still retries at once, each further one waits longer.
     runRoute(ds, adapter, sink)
-      .then((res) => (retainAutoDebounce(res && res.status) ? null : chrome.storage.session.remove(dk)))
-      .catch(() => chrome.storage.session.remove(dk))
+      .then((res) => onAutoResult(route.id, res && res.status))
+      .catch(() => onAutoResult(route.id, 'error'))
       .finally(() => running.delete(route.id));
   }
+}
+// Record an auto-run's outcome: a completed run clears the failure backoff; a failure releases the run debounce
+// (a fresh login can retry) and bumps a growing per-route cooldown so a source that keeps failing stops hammering.
+async function onAutoResult(routeId, status) {
+  const dk = 'autoLast:' + routeId, cdk = 'autoCd:' + routeId;
+  if (retainAutoDebounce(status)) { await chrome.storage.session.remove(cdk); return; } // success → clear the backoff
+  await chrome.storage.session.remove(dk); // failure → drop the debounce so a real login retries (the cooldown still gates it)
+  const n = (((await chrome.storage.session.get(cdk))[cdk] || {}).n || 0) + 1;
+  await chrome.storage.session.set({ [cdk]: { n, until: Date.now() + autoBackoffMs(n) } });
 }
 // Trigger B: the user navigated to the source's site — works for cookie sources too (no JWT to capture).
 const maybeAutoRunForSite = (host, tabId, url) => runAutoRoutes((a) => siteMatches(a, host), tabId, url);

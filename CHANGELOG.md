@@ -10,6 +10,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Changed
+- **Auto-sync backs off after repeated failures.** A source whose auto-run keeps failing (e.g. a bank session the
+  server rejects with 401) no longer retries on every token capture — the first failure still retries at once, but
+  each further consecutive failure doubles a per-source cooldown (2 min → … → capped at 2 h). Stops a failing
+  source from flooding the activity log. A completed run clears the backoff.
+
 ## [0.8.3] — 2026-07-25
 
 ### Added

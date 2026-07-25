@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 // Pure scheduling policy for the background auto-sync runner — no chrome shim needed.
-const { autoDebounced, retainAutoDebounce, isLoginNavigation, needsTabEscalation, sweepSinkId, AUTO_DEBOUNCE_MS } = await import('../src/lib/autosync.js');
+const { autoDebounced, retainAutoDebounce, autoBackoffMs, isLoginNavigation, needsTabEscalation, sweepSinkId, AUTO_DEBOUNCE_MS, AUTO_BACKOFF_BASE_MS, AUTO_BACKOFF_CAP_MS } = await import('../src/lib/autosync.js');
 
 test('sweepSinkId: auto-route sink wins, then the source favorite, then the global default', () => {
   assert.equal(sweepSinkId('x', { x: 'auto' }, { x: 'fav' }, 'def'), 'auto');
@@ -64,4 +64,14 @@ test('retainAutoDebounce: a transient/auth failure releases it so the next login
   for (const s of ['error', 'challenged', 'nosession']) {
     assert.equal(retainAutoDebounce(s), false, `status ${s} must release the debounce`);
   }
+});
+
+test('autoBackoffMs: first failure retries at once, then doubles, capped', () => {
+  assert.equal(autoBackoffMs(0), 0);
+  assert.equal(autoBackoffMs(1), 0, 'a first failure must not mute the source (a real login retries it)');
+  assert.equal(autoBackoffMs(2), AUTO_BACKOFF_BASE_MS, '2nd failure → base cooldown');
+  assert.equal(autoBackoffMs(3), AUTO_BACKOFF_BASE_MS * 2);
+  assert.equal(autoBackoffMs(4), AUTO_BACKOFF_BASE_MS * 4);
+  assert.equal(autoBackoffMs(50), AUTO_BACKOFF_CAP_MS, 'a persistent failure (ING 401 loop) tops out at the cap');
+  assert.ok(autoBackoffMs(10) <= AUTO_BACKOFF_CAP_MS, 'never exceeds the cap');
 });

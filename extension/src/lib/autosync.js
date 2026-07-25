@@ -19,6 +19,17 @@ export function autoDebounced(lastAt, now, debounceMs = AUTO_DEBOUNCE_MS) {
   return lastAt != null && now - lastAt < debounceMs;
 }
 
+// Exponential backoff for a REPEATEDLY-failing auto-run, so a source whose session keeps getting rejected (ING's
+// 401 loop) stops hammering. The FIRST failure still retries at once — a premature pre-login failure must not mute
+// a source — but each further consecutive failure doubles the cooldown, up to a cap.
+export const AUTO_BACKOFF_BASE_MS = 2 * 60 * 1000;   // 2 min after the 2nd consecutive failure
+export const AUTO_BACKOFF_CAP_MS = 2 * 60 * 60 * 1000; // capped at 2 h
+export function autoBackoffMs(fails) {
+  const n = Math.max(0, fails | 0);
+  if (n <= 1) return 0; // 1st failure → retry immediately (a real login re-fires it)
+  return Math.min(AUTO_BACKOFF_BASE_MS * Math.pow(2, n - 2), AUTO_BACKOFF_CAP_MS);
+}
+
 // Is this completed navigation the source's own LOGIN page (so the user isn't authenticated yet)? A
 // cookie source has no JWT to key a "session ready" trigger on, so the auto-run fires on every completed
 // navigation — including the login page, where a session-gated prelude would 400. Skip that one and wait
