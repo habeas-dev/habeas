@@ -5,8 +5,8 @@
   "trust": "community",
   "domain": "ingdirect.es",
   "country": "ES",
-  "version": "2026-07-23.3",
-  "minVersion": "0.7.0.25",
+  "version": "2026-07-25",
+  "minVersion": "0.8.4",
   "categories": [
     "banking"
   ],
@@ -29,7 +29,8 @@
     "replayHeaders": [
       "authorization",
       "x-ing-extendedsessioncontext"
-    ]
+    ],
+    "pageOnly": true
   },
   "api": {
     "host": "https://api.ing.ingdirect.es"

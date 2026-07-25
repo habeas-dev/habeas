@@ -33,9 +33,20 @@ async function throttleGate(throttle, url) {
   if (LAST_CALL.has(host) && since < target) await new Promise((r) => setTimeout(r, target - since));
   LAST_CALL.set(host, Date.now());
 }
-export function netFetch(net, throttle) {
+export function netFetch(net, adapter, opts = {}) {
+  const throttle = opts.noThrottle ? null : (adapter && adapter.throttle);
+  // A "page-only" source (its API sits behind a WAF/Akamai edge that validates Origin/Referer — e.g. ING) MUST
+  // run its replay in the site's page context: a direct extension (service-worker) fetch carries the wrong Origin
+  // (`chrome-extension://…`, Sec-Fetch-Site: cross-site) and the edge answers a bare "401 Authorization Required".
+  // So never fall back to the SW fetch for it — surface the page fetch's own result instead of leaking cross-origin.
+  const noFallback = !!(adapter && adapter.auth && adapter.auth.pageOnly);
   const base = net
-    ? async (u, i) => { let r; try { r = await net(u, i); } catch (e) { r = null; } if (!r || r.status === 0) { try { return await fetch(u, i); } catch (e) { if (r) return r; throw e; } } return r; }
+    ? async (u, i) => {
+        let r; try { r = await net(u, i); } catch (e) { r = null; }
+        if ((!r || r.status === 0) && !noFallback) { try { return await fetch(u, i); } catch (e) { if (r) return r; throw e; } }
+        if (!r) throw new Error('page fetch unavailable (pageOnly source needs its site open)');
+        return r;
+      }
     : (u, i) => fetch(u, i);
   if (!throttle || !(throttle.minMs > 0)) return base;
   return async (u, i) => { await throttleGate(throttle, u); return base(u, i); };
@@ -159,7 +170,7 @@ export async function listInventory(adapter, auth, net, opts) {
 // CSRF prelude: GET a page and extract a token (e.g. WiZink's securityToken hidden input / JS var) with
 // a regex (adapter.api.csrf.match, capture group 1). Reused as {csrf} in POST bodies and PDF URLs.
 async function fetchCsrf(adapter, auth, net) {
-  const NET = netFetch(net, adapter && adapter.throttle);
+  const NET = netFetch(net, adapter);
   const c = adapter.api.csrf;
   const host = c.host ? absHost(c.host) : adapter.api.host;
   const url = host + c.path;
@@ -205,7 +216,7 @@ export async function listGroups(adapter, auth, net) {
   return out;
 }
 async function fetchGroupItems(adapter, auth, net) {
-  const NET = netFetch(net, adapter && adapter.throttle);
+  const NET = netFetch(net, adapter);
   const g = adapter.api.groups;
   const host = g.host ? absHost(g.host) : adapter.api.host;
   const isHtml = g.from === 'html';
@@ -541,7 +552,7 @@ async function pageListPeriods(adapter, auth, net, group, opts) {
 // POST one period page (current / dates / past) and return its raw HTML. Mirrors fetchList's request
 // shape: query string = periodCfg.params, form body = periodCfg.body with {group.*}/{csrf}/{period} filled.
 async function fetchPeriodHtml(adapter, auth, net, group, periodCfg, extra) {
-  const NET = netFetch(net, adapter && adapter.throttle);
+  const NET = netFetch(net, adapter);
   const list = adapter.api.list;
   const path = tmplGroup(list.path, group);
   const params = periodCfg.params || {};
@@ -950,7 +961,7 @@ function base64ToBlob(b64, mime) {
 }
 
 export async function fetchPdf(adapter, auth, docOrId, net) {
-  const NET = netFetch(net, adapter && adapter.throttle);
+  const NET = netFetch(net, adapter);
   const doc = docOrId && typeof docOrId === 'object' ? docOrId : null;
   const internalId = doc ? doc.internalId : docOrId;
   const pdf = adapter.api.pdf;
@@ -1169,7 +1180,7 @@ async function inlineAssets(html, baseUrl, NET) {
   return html;
 }
 async function fetchHtmlDoc(adapter, auth, internalId, net) {
-  const NET = netFetch(net, adapter && adapter.throttle);
+  const NET = netFetch(net, adapter);
   const d = adapter.api.detail;
   const host = d.host ? absHost(d.host) : adapter.api.host;
   const path = d.path.split('{internalId}').join(tid(internalId));
@@ -1231,7 +1242,7 @@ export function extractDetailFields(text, cfg) {
 }
 
 export async function fetchDetail(adapter, auth, docOrId, net) {
-  const NET = netFetch(net, adapter && adapter.throttle);
+  const NET = netFetch(net, adapter);
   const doc = docOrId && typeof docOrId === 'object' ? docOrId : null;
   const internalId = doc ? doc.internalId : docOrId;
   const d = adapter.api.detail;
@@ -1283,7 +1294,7 @@ async function maybeKeepAlive(adapter, auth, net) {
   if (now - (KA_LAST.get(host) || 0) < (ka.everyMs || 120000)) return;
   KA_LAST.set(host, now);
   try {
-    const NET = netFetch(net, null); // never throttle the keep-alive
+    const NET = netFetch(net, adapter, { noThrottle: true }); // never throttle the keep-alive
     const method = (ka.method || 'POST').toUpperCase();
     const cookie = adapter.auth && adapter.auth.mode === 'cookie';
     const init = { method, headers: { accept: 'application/json', ...(ka.headers || {}), ...headersFor(auth, ka.path.split('?')[0], true /*allow captured replay headers (cookie sources only ever capture replayHeaders like x-device-id, never a token)*/) }, credentials: credOf(adapter) };
@@ -1308,7 +1319,7 @@ async function maybeKeepAlive(adapter, auth, net) {
 async function fetchAbsList(adapter, auth, rawUrl, net) {
   let u = String(rawUrl).replace(/^http:\/\//i, 'https://').replace(/:80(?=[/?]|$)/, '');
   assertAllowedDocHost(adapter, u);
-  const NET = netFetch(net, adapter && adapter.throttle);
+  const NET = netFetch(net, adapter);
   let pth; try { pth = new URL(u).pathname; } catch (e) { pth = u.split('?')[0]; }
   const cookie = adapter.auth && adapter.auth.mode === 'cookie';
   const list = adapter.api.list || {};
@@ -1319,7 +1330,7 @@ async function fetchAbsList(adapter, auth, rawUrl, net) {
 }
 
 async function fetchList(adapter, auth, params, net, group) {
-  const NET = netFetch(net, adapter && adapter.throttle);
+  const NET = netFetch(net, adapter);
   const list = adapter.api.list;
   const html = list.from === 'html';
   // {group.*} in the list path / param values / referer → the account (group) currently being listed.

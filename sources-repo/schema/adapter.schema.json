@@ -336,6 +336,10 @@
             }
           },
           "description": "Read the bearer FRESH from localStorage on every request (for rotating/short-lived tokens): {key, field?, scheme?, header?}."
+        },
+        "pageOnly": {
+          "type": "boolean",
+          "description": "The API sits behind a WAF/Akamai edge that validates Origin/Referer; replay only from the site's page context (never a service-worker fetch)."
         }
       }
     },

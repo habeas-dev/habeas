@@ -815,6 +815,10 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     const countryDs = { brandDomain: opts.brandDomain || ds.brandDomain };
     const net = opts.net || (opts.interactive ? await ensureSiteFetch(adapter, { open: true, ds: countryDs }) : await resolveSiteFetch(adapter, countryDs));
     netRef = net;
+    // A pageOnly source (WAF/Akamai edge that checks Origin — ING) can ONLY be fetched through its open site tab; a
+    // direct extension fetch would 401 at the edge. With no tab, don't run (and don't leak a cross-origin SW fetch)
+    // — report nosession so the user opens the site, exactly as if the session were missing.
+    if (!net && adapter.auth && adapter.auth.pageOnly) { await appendLog({ ...base, status: 'nosession' }); await badgeClear(); setStatus(t('status_nosession', [name])); return { status: 'nosession' }; }
     adapter = withBrandHost(adapter, net, countryDs); // brand (multi-TLD) source → api.host = the tab's domain, or the pinned country
     const brandCountry = (Array.isArray(adapter.domains) ? adapter.domains.find((d) => (adapter.api.host || '').includes(d)) : null) || null; // tag records with the country they came from
     const delivered = await deliveredSet(ds.id, sink.id);

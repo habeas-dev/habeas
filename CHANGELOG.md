@@ -10,6 +10,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.8.4] — 2026-07-25
+
+### Fixed
+- **A WAF-fronted source (ING) no longer 401s in auto-sync.** Its API sits behind an Akamai edge that validates the
+  request Origin; a replay run from the extension service worker carries the wrong Origin and the edge answers a bare
+  "401 Authorization Required". Such a source is now marked `auth.pageOnly` and is fetched **only** through its open
+  site tab (matching the SPA's Origin) — never via a cross-origin service-worker fetch, and it no longer falls back to
+  one. With no site tab open it reports "session needed" (open the site) instead of looping on 401.
+
 ### Changed
 - **Auto-sync backs off after repeated failures.** A source whose auto-run keeps failing (e.g. a bank session the
   server rejects with 401) no longer retries on every token capture — the first failure still retries at once, but
