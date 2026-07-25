@@ -10,6 +10,17 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.8.5] — 2026-07-25
+
+### Changed
+- **Cross-origin sources fetch only in-page, by default.** The ING fix is now general: any source whose API host
+  differs from its site host (`api.x.com` vs `x.com` — almost all of them) is treated as page-context-only, because a
+  direct service-worker fetch always carries the extension's Origin and a WAF/edge (Akamai/Cloudflare/…) rejects it
+  with a bare 401. Such a source is fetched through its open site tab; with a live session but no tab it reports the
+  new **`notab`** state ("open the site"), and a **Sync all** sweep escalates by opening the tab and retrying in-page —
+  no per-source flag needed. A verified CORS-open API opts out with `auth.swFetchOk` (set on Carrefour's apigee) to
+  keep unattended/headless fetches; `auth.pageOnly` still forces it on. Replaces the ING-specific 0.8.4 flag.
+
 ## [0.8.4] — 2026-07-25
 
 ### Fixed

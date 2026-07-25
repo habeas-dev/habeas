@@ -694,6 +694,7 @@ async function renderActivity() {
     const detail = e.status === 'error' ? t('st_error', [e.error || ''])
       : e.status === 'none' ? t('st_none')
       : e.status === 'nosession' ? t('st_nosession')
+      : e.status === 'notab' ? t('st_notab')
       : e.status === 'challenged' ? t('st_challenged')
       : e.status === 'listing' ? t('st_listing')
       : e.status === 'stopped' ? t('st_stopped')

@@ -23,6 +23,9 @@ export default {
   auth: {
     tokenMatch: 'eyJ',
     replayHeaders: ['authorization', 'x-xsrf-token', 'x-csrf-token', 'requestorigin', 'sessionid'],
+    // pro.api.carrefour.es is a CORS-open apigee gateway (not behind Cloudflare) → a direct service-worker fetch
+    // works headlessly; opt out of the cross-origin "page-only" default so unattended sweeps don't open a tab.
+    swFetchOk: true,
   },
   api: {
     host: 'https://pro.api.carrefour.es',

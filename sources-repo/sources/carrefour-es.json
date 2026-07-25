@@ -31,7 +31,8 @@
       "x-csrf-token",
       "requestorigin",
       "sessionid"
-    ]
+    ],
+    "swFetchOk": true
   },
   "api": {
     "host": "https://pro.api.carrefour.es",
@@ -71,7 +72,7 @@
     "source": "orderSource"
   },
   "schema": "receipt@1",
-  "version": "2026-07-08",
+  "version": "2026-07-25",
   "changelog": [
     {
       "version": "2026-07-08",

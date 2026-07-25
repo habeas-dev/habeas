@@ -9,6 +9,7 @@ import { buildRecord } from '../sinks/format.js';
 import { applyNormalize } from '../lib/normalize.js';
 import { chrome } from '../lib/ext.js';
 import { registrableDomain, hostOf } from '../adapters/validate.js';
+import { needsPageContext } from '../lib/autosync.js';
 import { esc as escH } from '../lib/esc.js';
 
 // Every fetcher goes through the site's tab (in-session: cookies + cf_clearance + fingerprint, so anti-bot
@@ -35,11 +36,11 @@ async function throttleGate(throttle, url) {
 }
 export function netFetch(net, adapter, opts = {}) {
   const throttle = opts.noThrottle ? null : (adapter && adapter.throttle);
-  // A "page-only" source (its API sits behind a WAF/Akamai edge that validates Origin/Referer — e.g. ING) MUST
-  // run its replay in the site's page context: a direct extension (service-worker) fetch carries the wrong Origin
+  // A page-context source (cross-origin API behind a WAF/Akamai edge that validates Origin — e.g. ING) MUST run
+  // its replay in the site's page context: a direct extension (service-worker) fetch carries the wrong Origin
   // (`chrome-extension://…`, Sec-Fetch-Site: cross-site) and the edge answers a bare "401 Authorization Required".
   // So never fall back to the SW fetch for it — surface the page fetch's own result instead of leaking cross-origin.
-  const noFallback = !!(adapter && adapter.auth && adapter.auth.pageOnly);
+  const noFallback = needsPageContext(adapter);
   const base = net
     ? async (u, i) => {
         let r; try { r = await net(u, i); } catch (e) { r = null; }

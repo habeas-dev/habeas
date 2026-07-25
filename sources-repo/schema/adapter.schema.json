@@ -340,6 +340,10 @@
         "pageOnly": {
           "type": "boolean",
           "description": "The API sits behind a WAF/Akamai edge that validates Origin/Referer; replay only from the site's page context (never a service-worker fetch)."
+        },
+        "swFetchOk": {
+          "type": "boolean",
+          "description": "The API is CORS-open and does not validate Origin; allow a direct service-worker (headless) fetch, opting out of the cross-origin page-only default."
         }
       }
     },

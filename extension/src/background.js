@@ -29,7 +29,7 @@ import { validateProposal, originHost, enabledSources } from './lib/exthooks.js'
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant, revokeGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
 import { runStoreMigration } from './lib/migrate.js';
-import { autoDebounced, retainAutoDebounce, autoBackoffMs, isLoginNavigation, needsTabEscalation, sweepSinkId, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
+import { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isLoginNavigation, needsTabEscalation, sweepSinkId, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
 
 // On startup, (re)register the in-session capture bridge for every enabled source (dynamic content
 // scripts can be dropped on an extension update). Idempotent; needs the host permission already granted.
@@ -815,10 +815,11 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     const countryDs = { brandDomain: opts.brandDomain || ds.brandDomain };
     const net = opts.net || (opts.interactive ? await ensureSiteFetch(adapter, { open: true, ds: countryDs }) : await resolveSiteFetch(adapter, countryDs));
     netRef = net;
-    // A pageOnly source (WAF/Akamai edge that checks Origin — ING) can ONLY be fetched through its open site tab; a
-    // direct extension fetch would 401 at the edge. With no tab, don't run (and don't leak a cross-origin SW fetch)
-    // — report nosession so the user opens the site, exactly as if the session were missing.
-    if (!net && adapter.auth && adapter.auth.pageOnly) { await appendLog({ ...base, status: 'nosession' }); await badgeClear(); setStatus(t('status_nosession', [name])); return { status: 'nosession' }; }
+    // A page-context source (cross-origin API behind a WAF that checks Origin — ING) can ONLY be fetched through
+    // its open site tab; a direct extension fetch would 401 at the edge. With a live session but no tab, report
+    // 'notab' (NOT a hard failure): the sweep escalates by opening the site tab and retrying in-page, and a manual
+    // run already opens the tab. Never leak a cross-origin SW fetch that would come back as a misleading 401.
+    if (!net && needsPageContext(adapter)) { await appendLog({ ...base, status: 'notab' }); await badgeClear(); setStatus(t('status_notab', [name])); return { status: 'notab' }; }
     adapter = withBrandHost(adapter, net, countryDs); // brand (multi-TLD) source → api.host = the tab's domain, or the pinned country
     const brandCountry = (Array.isArray(adapter.domains) ? adapter.domains.find((d) => (adapter.api.host || '').includes(d)) : null) || null; // tag records with the country they came from
     const delivered = await deliveredSet(ds.id, sink.id);

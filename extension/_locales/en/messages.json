@@ -3088,5 +3088,16 @@
         "content": "$1"
       }
     }
+  },
+  "status_notab": {
+    "message": "$NAME$: open the site to sync",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "st_notab": {
+    "message": "site not open"
   }
 }

@@ -30,6 +30,30 @@ export function autoBackoffMs(fails) {
   return Math.min(AUTO_BACKOFF_BASE_MS * Math.pow(2, n - 2), AUTO_BACKOFF_CAP_MS);
 }
 
+// The bare host of a URL / match pattern / domain (strips scheme, `*.`, port, path). '' when empty.
+function hostFrom(s) {
+  return String(s || '').replace(/^[a-z]+:\/\//i, '').replace(/^\*\./, '').replace(/[:/?#].*$/, '').toLowerCase();
+}
+// Must this source's session replay run INSIDE its site's page context (never a direct service-worker fetch)?
+// A SW fetch ALWAYS carries the extension's Origin (`chrome-extension://…`, Sec-Fetch-Site: cross-site). An API
+// whose host differs from the site's own host sees that as a cross-origin request, and a WAF/edge (Akamai,
+// Cloudflare, F5…) rejects it with a bare "401 Authorization Required" — the exact failure ING hit. So a
+// cross-origin API is page-only BY DEFAULT (only the page reproduces the SPA's real Origin); a same-host API is
+// not. Explicit flags override the heuristic: `auth.pageOnly:true` forces it on, `auth.swFetchOk:true` (a
+// verified CORS-open API, e.g. Carrefour's apigee) forces it off so unattended/headless SW fetches keep working.
+export function needsPageContext(adapter) {
+  const au = (adapter && adapter.auth) || {};
+  if (au.pageOnly) return true;
+  if (au.swFetchOk) return false;
+  const apiHost = hostFrom(adapter && adapter.api && adapter.api.host);
+  if (!apiHost) return false;
+  const siteHosts = [];
+  for (const m of (adapter && adapter.match) || []) siteHosts.push(hostFrom(m));
+  if (adapter && adapter.domain) siteHosts.push(hostFrom(adapter.domain));
+  for (const d of (adapter && adapter.domains) || []) siteHosts.push(hostFrom(d));
+  return siteHosts.length ? !siteHosts.includes(apiHost) : false; // cross-origin (different host) → needs the page
+}
+
 // Is this completed navigation the source's own LOGIN page (so the user isn't authenticated yet)? A
 // cookie source has no JWT to key a "session ready" trigger on, so the auto-run fires on every completed
 // navigation — including the login page, where a session-gated prelude would 400. Skip that one and wait
@@ -64,7 +88,9 @@ export function retainAutoDebounce(status) {
 const AUTHISH = /csrf|(^|\D)40[13](\D|$)|challenge|captcha|datadome|akam|token|sesi|session|login|forbidden|unauthor/i;
 export function needsTabEscalation(res) {
   if (!res) return false;
-  if (res.status === 'challenged' || res.status === 'nosession') return true;
+  // 'notab' = a page-only source that had a live session but no open tab → opening the site tab and retrying
+  // in-page is exactly the fix (unlike 'nosession', which needs the user to actually log in).
+  if (res.status === 'challenged' || res.status === 'nosession' || res.status === 'notab') return true;
   return res.status === 'error' && AUTHISH.test(String(res.error || ''));
 }
 

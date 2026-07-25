@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 // Pure scheduling policy for the background auto-sync runner — no chrome shim needed.
-const { autoDebounced, retainAutoDebounce, autoBackoffMs, isLoginNavigation, needsTabEscalation, sweepSinkId, AUTO_DEBOUNCE_MS, AUTO_BACKOFF_BASE_MS, AUTO_BACKOFF_CAP_MS } = await import('../src/lib/autosync.js');
+const { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isLoginNavigation, needsTabEscalation, sweepSinkId, AUTO_DEBOUNCE_MS, AUTO_BACKOFF_BASE_MS, AUTO_BACKOFF_CAP_MS } = await import('../src/lib/autosync.js');
 
 test('sweepSinkId: auto-route sink wins, then the source favorite, then the global default', () => {
   assert.equal(sweepSinkId('x', { x: 'auto' }, { x: 'fav' }, 'def'), 'auto');
@@ -74,4 +74,26 @@ test('autoBackoffMs: first failure retries at once, then doubles, capped', () =>
   assert.equal(autoBackoffMs(4), AUTO_BACKOFF_BASE_MS * 4);
   assert.equal(autoBackoffMs(50), AUTO_BACKOFF_CAP_MS, 'a persistent failure (ING 401 loop) tops out at the cap');
   assert.ok(autoBackoffMs(10) <= AUTO_BACKOFF_CAP_MS, 'never exceeds the cap');
+});
+
+test('needsPageContext: a cross-origin API (api.x ≠ site host) is page-only by default; same-host is not', () => {
+  // ING: api.ing.ingdirect.es vs the site ing.ingdirect.es → cross-origin → needs the page context
+  assert.equal(needsPageContext({ match: ['https://ing.ingdirect.es/*'], domain: 'ingdirect.es', api: { host: 'https://api.ing.ingdirect.es' } }), true);
+  // Same host for site and API → a same-origin request → a SW fetch is fine
+  assert.equal(needsPageContext({ match: ['https://www.x.com/*'], domain: 'x.com', api: { host: 'https://www.x.com' } }), false);
+  // No hosts to compare → don't force page-only
+  assert.equal(needsPageContext({ api: {} }), false);
+});
+
+test('needsPageContext: explicit flags override the cross-origin heuristic', () => {
+  const crossOrigin = { match: ['https://www.carrefour.es/*'], domain: 'carrefour.es', api: { host: 'https://pro.api.carrefour.es' } };
+  assert.equal(needsPageContext(crossOrigin), true, 'cross-origin default');
+  assert.equal(needsPageContext({ ...crossOrigin, auth: { swFetchOk: true } }), false, 'swFetchOk opts a CORS-open API out');
+  const sameHost = { match: ['https://x.com/*'], domain: 'x.com', api: { host: 'https://x.com' } };
+  assert.equal(needsPageContext({ ...sameHost, auth: { pageOnly: true } }), true, 'pageOnly forces it on');
+});
+
+test('needsTabEscalation: a notab result escalates (open the site tab and retry in-page)', () => {
+  assert.equal(needsTabEscalation({ status: 'notab' }), true);
+  assert.equal(needsTabEscalation({ status: 'done' }), false);
 });
