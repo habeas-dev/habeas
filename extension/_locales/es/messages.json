@@ -3099,5 +3099,44 @@
   },
   "st_notab": {
     "message": "sitio sin abrir"
+  },
+  "vault_title": {
+    "message": "Bóveda de credenciales"
+  },
+  "vault_help": {
+    "message": "Reutiliza las credenciales de tus destinos (un token de exportador a Cuéntamo/Tiquetera, cabeceras de sinks HTTP, claves de almacenamiento en nube) entre navegadores. Se cifran con una contraseña que eliges y se guardan —solo cifradas— en el almacén canónico; sin la contraseña son inservibles. Tu sesión bancaria nunca se incluye."
+  },
+  "vault_pass_ph_set": {
+    "message": "Elige una contraseña"
+  },
+  "vault_pass_ph_unlock": {
+    "message": "Introduce tu contraseña"
+  },
+  "vault_enable": {
+    "message": "Sincronizar credenciales"
+  },
+  "vault_unlock": {
+    "message": "Restaurar credenciales"
+  },
+  "vault_change": {
+    "message": "Cambiar contraseña"
+  },
+  "vault_lock": {
+    "message": "Bloquear"
+  },
+  "vault_unlocked": {
+    "message": "✓ Credenciales sincronizadas (desbloqueadas en este navegador)"
+  },
+  "vault_locked_note": {
+    "message": "Este almacén ya tiene una bóveda de credenciales cifrada. Introduce tu contraseña para restaurar tus destinos en este navegador."
+  },
+  "vault_bad_pass": {
+    "message": "Contraseña incorrecta — no se importó nada."
+  },
+  "vault_need_pass": {
+    "message": "Introduce una contraseña."
+  },
+  "vault_err": {
+    "message": "No se pudo guardar la bóveda."
   }
 }

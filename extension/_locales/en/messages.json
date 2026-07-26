@@ -3099,5 +3099,44 @@
   },
   "st_notab": {
     "message": "site not open"
+  },
+  "vault_title": {
+    "message": "Credentials vault"
+  },
+  "vault_help": {
+    "message": "Reuse your destinations' credentials (a Cuéntamo/Tiquetera exporter token, HTTP-sink headers, cloud-storage keys) across browsers. They're encrypted under a passphrase you choose and stored — only as ciphertext — in the canonical store; without the passphrase they're useless. Your bank session is never included."
+  },
+  "vault_pass_ph_set": {
+    "message": "Choose a passphrase"
+  },
+  "vault_pass_ph_unlock": {
+    "message": "Enter your passphrase"
+  },
+  "vault_enable": {
+    "message": "Sync credentials"
+  },
+  "vault_unlock": {
+    "message": "Restore credentials"
+  },
+  "vault_change": {
+    "message": "Change passphrase"
+  },
+  "vault_lock": {
+    "message": "Lock"
+  },
+  "vault_unlocked": {
+    "message": "✓ Credentials synced (unlocked on this browser)"
+  },
+  "vault_locked_note": {
+    "message": "This store already has an encrypted credentials vault. Enter your passphrase to restore your destinations on this browser."
+  },
+  "vault_bad_pass": {
+    "message": "Wrong passphrase — nothing was imported."
+  },
+  "vault_need_pass": {
+    "message": "Enter a passphrase."
+  },
+  "vault_err": {
+    "message": "Couldn't save the vault."
   }
 }

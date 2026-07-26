@@ -124,6 +124,11 @@ export function makeShardedStore(prim) {
   const CONFIG_ID = '_config', CONFIG_SHARD = 'config';
   async function getConfig() { try { return await prim.readShard(CONFIG_ID, CONFIG_SHARD); } catch (e) { return null; } }
   async function putConfig(snapshot) { try { await prim.writeShard(CONFIG_ID, CONFIG_SHARD, snapshot); return true; } catch (e) { return false; } }
+  // The portable, passphrase-ENCRYPTED secrets vault (secretsync.js) — another reserved blob. Only ciphertext ever
+  // lands here; without the user's passphrase it is useless, so it's safe even in a cloud-backed store.
+  const SECRETS_ID = '_secrets', SECRETS_SHARD = 'vault';
+  async function getSecrets() { try { return await prim.readShard(SECRETS_ID, SECRETS_SHARD); } catch (e) { return null; } }
+  async function putSecrets(blob) { try { await prim.writeShard(SECRETS_ID, SECRETS_SHARD, blob); return true; } catch (e) { return false; } }
 
   async function clearSource(id) { await prim.removeSource(id).catch(() => {}); await prim.removeLegacy(id).catch(() => {}); }
 
@@ -136,7 +141,7 @@ export function makeShardedStore(prim) {
     return !!(legacy && legacy.items && Object.keys(legacy.items).length);
   }
 
-  return { loadSource, saveSource, appendItems, listSources, clearSource, hasItems, getConfig, putConfig };
+  return { loadSource, saveSource, appendItems, listSources, clearSource, hasItems, getConfig, putConfig, getSecrets, putSecrets };
 }
 
 // Adapt a PATH-based backend (folder/dropbox/webdav/s3) to the semantic shard ops. The backend supplies plain

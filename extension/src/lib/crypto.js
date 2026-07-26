@@ -33,3 +33,20 @@ export async function decryptValue(key, payload) {
 
 // A payload is one of our encrypted envelopes (vs a legacy plaintext string).
 export const isEncrypted = (x) => !!x && typeof x === 'object' && x.v === 1 && typeof x.iv === 'string' && typeof x.ct === 'string';
+
+// A random salt (b64) for a passphrase KDF — not secret, stored beside the ciphertext.
+export const randomSaltB64 = (n = 16) => toB64(crypto.getRandomValues(new Uint8Array(n)));
+
+// Derive an AES-GCM key from a USER passphrase (PBKDF2-SHA256). Unlike the device-local non-extractable
+// key, this is reproducible on any device from the same passphrase + salt — it's what makes the secrets
+// vault portable across browsers. `extractable` so the derived key can be cached (raw) in memory-only
+// storage.session for the session, avoiding a re-prompt on every secret change; never persisted to disk.
+export async function deriveKeyFromPassphrase(passphrase, saltB64, { iterations = 310000, extractable = true } = {}) {
+  const base = await crypto.subtle.importKey('raw', te.encode(String(passphrase)), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: fromB64(saltB64), iterations, hash: 'SHA-256' },
+    base, { name: 'AES-GCM', length: 256 }, extractable, ['encrypt', 'decrypt']);
+}
+// Round-trip an AES-GCM key to/from raw b64 (for caching a passphrase-derived key in storage.session).
+export async function exportKeyB64(key) { return toB64(await crypto.subtle.exportKey('raw', key)); }
+export function importKeyB64(b64) { return crypto.subtle.importKey('raw', fromB64(b64), { name: 'AES-GCM' }, true, ['encrypt', 'decrypt']); }

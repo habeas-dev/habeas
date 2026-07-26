@@ -10,6 +10,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **Portable credentials vault — reuse your destinations across browsers.** Settings → Storage → *Credentials vault*:
+  set a passphrase to sync your destinations' credentials (a Cuéntamo/Tiquetera exporter token, HTTP-sink headers,
+  cloud-storage keys) across devices. They're encrypted under the passphrase (PBKDF2 → AES-GCM) and only the
+  ciphertext is written to the canonical store — safe even on a cloud backend, useless without the passphrase. On
+  another browser, enter the same passphrase once to restore them. In-session changes re-sync automatically; the
+  passphrase is never persisted (the derived key lives only in memory-only `storage.session`). The bank session token
+  is never included (rule #3). The vault travels with the store when you move it.
+
 ### Fixed
 - **Cookie reset works again when syncing from the Archive.** A `resetCookies` source (WiZink corrupts its own
   cookies) is repaired by wiping them + reopening a clean login on an auth failure — the popup did this but the

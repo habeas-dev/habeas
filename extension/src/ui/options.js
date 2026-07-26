@@ -16,6 +16,7 @@ import { saveSource } from '../adapters/index.js';
 import { editJson } from './jsoneditor.js';
 import { getGrants, revokeGrant } from '../lib/grants.js';
 import { getStoreConfig, moveStoreTo, putItems } from '../lib/store.js';
+import { enableVault, unlockVault, lockVault, vaultStatus } from '../lib/secretsync.js';
 import { readSinkRecords } from '../sinks/sinks.js';
 import { esc } from '../lib/esc.js';
 import { nextOccurrence, describeSchedule, validateSpec } from '../lib/schedule.js';
@@ -438,7 +439,7 @@ async function moveStore() {
   // interactively here (once) — after this the cached token is reused silently for all store writes.
   if (b === 'drive' && !(await driveConnected())) { try { await driveSignIn(); } catch (e) { $('#store-status').textContent = t('store_move_err', [(e && e.message) || String(e)]); return; } }
   $('#store-status').textContent = t('store_moving');
-  try { const n = await moveStoreTo(cfg); $('#store-status').textContent = t('store_moved', [String(n)]); }
+  try { const n = await moveStoreTo(cfg); $('#store-status').textContent = t('store_moved', [String(n)]); renderVault(); } // the vault moved with the store → re-read its state
   catch (e) { $('#store-status').textContent = t('store_move_err', [(e && e.message) || String(e)]); }
 }
 async function renderStore() {
@@ -447,6 +448,43 @@ async function renderStore() {
   const readable = (await getConfig()).sinks.filter((s) => s.type === 'local-folder' || s.type === 'drive');
   const sel = $('#store-import-sink');
   if (sel) { sel.innerHTML = readable.map((s) => `<option value="${esc(s.id)}">${esc(s.id)} (${esc(s.type)})</option>`).join('') || `<option value="">—</option>`; $('#store-import').disabled = !readable.length; }
+  renderVault();
+}
+
+// The portable secrets vault (secretsync.js): set a passphrase to sync destination credentials across browsers,
+// or enter it on a new device to restore them. Renders one of three states — enable / unlock / unlocked.
+function vaultForm(mode) {
+  const row = document.createElement('div'); row.className = 'row'; row.style.cssText = 'align-items:center;gap:8px;flex-wrap:wrap';
+  const inp = document.createElement('input'); inp.type = 'password'; inp.autocomplete = 'new-password'; inp.size = 22;
+  inp.placeholder = t(mode === 'unlock' ? 'vault_pass_ph_unlock' : 'vault_pass_ph_set');
+  const btn = document.createElement('button'); btn.className = 'primary'; btn.textContent = t(mode === 'unlock' ? 'vault_unlock' : 'vault_enable');
+  const status = document.createElement('span'); status.className = 'muted';
+  btn.onclick = async () => {
+    const pass = inp.value; if (!pass) { status.textContent = t('vault_need_pass'); return; }
+    btn.disabled = true; status.textContent = '';
+    try {
+      if (mode === 'unlock') { const r = await unlockVault(pass); if (r.ok) return renderVault(); status.textContent = t('vault_bad_pass'); }
+      else { const ok = await enableVault(pass); if (ok) return renderVault(); status.textContent = t('vault_err'); }
+    } finally { btn.disabled = false; }
+  };
+  row.append(inp, btn, status);
+  return row;
+}
+async function renderVault() {
+  const box = $('#vault-box'); if (!box) return;
+  box.textContent = '';
+  const st = await vaultStatus().catch(() => ({}));
+  if (st.unlocked) {
+    const row = document.createElement('div'); row.className = 'row'; row.style.cssText = 'align-items:center;gap:8px;flex-wrap:wrap';
+    const ok = document.createElement('span'); ok.className = 'muted'; ok.textContent = t('vault_unlocked');
+    const chg = document.createElement('button'); chg.type = 'button'; chg.textContent = t('vault_change'); chg.onclick = () => { box.textContent = ''; box.append(vaultForm('enable')); };
+    const lock = document.createElement('button'); lock.type = 'button'; lock.textContent = t('vault_lock'); lock.onclick = async () => { await lockVault(); renderVault(); };
+    row.append(ok, chg, lock); box.append(row);
+  } else if (st.remote) {
+    const note = document.createElement('p'); note.className = 'note'; note.textContent = t('vault_locked_note'); box.append(note, vaultForm('unlock'));
+  } else {
+    box.append(vaultForm('enable'));
+  }
 }
 
 // Rehydrate the canonical store from a sink's already-delivered records — so existing data lands in the

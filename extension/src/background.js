@@ -9,6 +9,7 @@ import { loadAuth, hasAuth, capturePathAllowed } from './lib/authstore.js';
 import { pushDiag, recordingNet, pushReqCtx, redactReqVal as rcRedactVal } from './lib/diag.js';
 import { deliveredSet, markDelivered, appendLog, rememberDocMeta } from './lib/state.js';
 import { applyStoredConfigIfNewer, writeSnapshotIfChanged } from './lib/configsync.js';
+import { syncVaultIfUnlocked } from './lib/secretsync.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
 import { resolveSiteFetch, ensureSiteFetch, recoverSession, withBrandHost, findSiteTab, foregroundTab } from './lib/pagefetch.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
@@ -62,9 +63,14 @@ import { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isL
 // Re-sync the webRequest capture filter + the schedule alarms when the config changes.
 let __snapTimer = 0;
 function scheduleConfigSnapshot() { try { clearTimeout(__snapTimer); } catch (e) {} __snapTimer = setTimeout(() => { writeSnapshotIfChanged().catch(() => {}); }, 3000); }
+let __vaultTimer = 0;
+// A local secret changed → if the portable vault is unlocked this session, re-encrypt + re-upload it (debounced),
+// so a credential added/updated on this device reaches the others. No-op when the vault is locked/disabled.
+function scheduleVaultSync() { try { clearTimeout(__vaultTimer); } catch (e) {} __vaultTimer = setTimeout(() => { syncVaultIfUnlocked().catch(() => {}); }, 3000); }
 chrome.storage.onChanged.addListener((ch, area) => {
   if (area === 'local' && (ch['habeas:config'] || ch['habeas:sources'])) syncWebRequestCapture();
   if (area === 'local' && ch['habeas:config']) { syncSchedules().catch(() => {}); scheduleConfigSnapshot(); } // push the change to the store for other devices (debounced; writeSnapshotIfChanged skips the apply echo)
+  if (area === 'local' && ch['habeas:secrets']) scheduleVaultSync();
   if (area === 'local' && ch['habeas:learn']) syncLearnAssetCapture().catch(() => {});
 });
 // The download planner: chrome.alarms wakes the SW at each schedule's fire time (a browser that was closed

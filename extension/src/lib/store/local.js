@@ -42,3 +42,5 @@ export const clearSource = backend.clearSource;
 export const hasItems = backend.hasItems;
 export const getConfig = backend.getConfig;
 export const putConfig = backend.putConfig;
+export const getSecrets = backend.getSecrets;
+export const putSecrets = backend.putSecrets;

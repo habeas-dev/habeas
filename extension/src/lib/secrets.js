@@ -34,6 +34,23 @@ export async function decryptString(payload) {
   try { return await decryptValue(await getKey(), payload); } catch { return null; }
 }
 
+// The full plaintext secrets map {name: value} — for building the portable, passphrase-encrypted vault
+// (secretsync.js). Decrypts each entry with the device key. The caller MUST re-encrypt it under the user's
+// passphrase before it touches the store; it is never logged or persisted in the clear.
+export async function exportAllSecrets() {
+  const o = await chrome.storage.local.get(KEY);
+  const s = o[KEY] || {};
+  const out = {};
+  for (const name of Object.keys(s)) { const v = await getSecret(name); if (v != null) out[name] = v; }
+  return out;
+}
+// Merge a decrypted vault back into the local device-encrypted secrets store (each re-encrypted at rest with
+// THIS device's key). Used when unlocking the vault on another browser. Overwrites by name (vault wins).
+export async function importSecrets(map) {
+  for (const [name, value] of Object.entries(map || {})) await setSecret(name, value);
+  return Object.keys(map || {}).length;
+}
+
 export async function getSecret(ref) {
   if (!ref) return null;
   const name = String(ref).replace(/^secret:\/\//, '');

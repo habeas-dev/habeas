@@ -70,6 +70,10 @@ export async function listSources() { try { return await (await backendFor()).li
 // every backend implements it (best-effort); secrets never go here (they live in the encrypted, device-local store).
 export async function putConfigSnapshot(snapshot) { try { const b = await backendFor(); return typeof b.putConfig === 'function' ? await b.putConfig(snapshot) : false; } catch (e) { return false; } }
 export async function getConfigSnapshot() { try { const b = await backendFor(); return typeof b.getConfig === 'function' ? await b.getConfig() : null; } catch (e) { return null; } }
+// The portable, passphrase-ENCRYPTED secrets vault (secretsync.js) — a reserved blob beside the config snapshot.
+// Only ciphertext is ever stored; safe even on a cloud backend (useless without the user's passphrase).
+export async function putSecretsBlob(blob) { try { const b = await backendFor(); return typeof b.putSecrets === 'function' ? await b.putSecrets(blob) : false; } catch (e) { return false; } }
+export async function getSecretsBlob() { try { const b = await backendFor(); return typeof b.getSecrets === 'function' ? await b.getSecrets() : null; } catch (e) { return null; } }
 // Public read helpers stay tolerant (a flaky/unconnected cloud backend must not crash the popup's normal
 // list flow) — they degrade to null/empty. The store BROWSER calls a backend's loadSource DIRECTLY so it
 // can surface the real failure reason (see ui/store-browser.js).
@@ -122,6 +126,14 @@ export async function migrate(from, to) {
     if (snap && snap.savedAt && typeof to.putConfig === 'function') {
       const dst = await to.getConfig().catch(() => null);
       if (!dst || !(dst.savedAt > snap.savedAt)) await to.putConfig(snap); // don't overwrite a newer snapshot already there
+    }
+  } catch (e) {}
+  // Carry the encrypted secrets vault too (newest-wins by `at`), so moving the store keeps the portable credentials.
+  try {
+    const vault = typeof from.getSecrets === 'function' ? await from.getSecrets() : null;
+    if (vault && typeof to.putSecrets === 'function') {
+      const dst = await to.getSecrets().catch(() => null);
+      if (!dst || !((dst.at || 0) > (vault.at || 0))) await to.putSecrets(vault);
     }
   } catch (e) {}
   return ids.length;
