@@ -23,7 +23,7 @@ import { manageAccounts } from './accountpicker.js';
 import { pickGroup } from './grouppicker.js';
 import { hasConsent } from '../lib/consent.js';
 import { loadAuth } from '../lib/authstore.js';
-import { ensureSiteFetch, siteBaseUrl } from '../lib/pagefetch.js';
+import { ensureSiteFetch, siteBaseUrl, recoverSession } from '../lib/pagefetch.js';
 import { challengeUrlOf } from '../lib/render.js';
 import { pushDiag } from '../lib/diag.js';
 import { applyI18n, t } from '../lib/i18n.js';
@@ -786,7 +786,10 @@ async function refreshSource(mode) {
       try { await chrome.tabs.create({ url: cUrl || siteBaseUrl(adapter), active: true }); } catch (e2) {}
       $('#astatus').textContent = t('archive_refresh_challenge', [entry.name]);
     } else if (/csrf|4\d\d|5\d\d|forbidden|unauthor|sign ?in|log ?in|session|not logged/i.test(msg)) {
-      $('#astatus').textContent = t('archive_refresh_nosession', [entry.name]);
+      // Repair the login: for a resetCookies source (WiZink corrupts its own cookies) wipe them, and open/point
+      // the site tab at its sign-in page so the user can re-authenticate — the popup did this, the Archive didn't.
+      const cleared = await recoverSession(adapter);
+      $('#astatus').textContent = cleared ? t('cookies_cleared', [String(cleared)]) : t('archive_refresh_nosession', [entry.name]);
     } else { $('#astatus').textContent = t('archive_refresh_err', [msg]); }
   } finally {
     endOp();

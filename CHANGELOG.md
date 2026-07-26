@@ -10,6 +10,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **Cookie reset works again when syncing from the Archive.** A `resetCookies` source (WiZink corrupts its own
+  cookies) is repaired by wiping them + reopening a clean login on an auth failure — the popup did this but the
+  Archive's refresh didn't, so a WiZink login could get stuck. The Archive now runs the same recovery.
+
 ## [0.8.6] — 2026-07-25
 
 ### Fixed
