@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-07-26
+
 ### Added
 - **Portable credentials vault — reuse your destinations across browsers.** Settings → Storage → *Credentials vault*:
   set a passphrase to sync your destinations' credentials (a Cuéntamo/Tiquetera exporter token, HTTP-sink headers,
