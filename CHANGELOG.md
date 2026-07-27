@@ -11,6 +11,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Changed
+- **Record mode opens inline, not in a new tab.** In *Record & contribute*, “Create a source (record mode)” is now
+  an accordion that embeds the recorder (author page) right in Settings; re-record and the team's guided-capture
+  requests open there too. No more losing the Settings page or spawning tabs.
+
 - **Settings: the “Advanced” section is now “Record & contribute”**, holding the record-mode flow (capture a
   site's session → build a source) plus the tracker for recordings you've contributed. Writing/importing a
   service definition from JSON stays in **Services** (“Create / import a service definition”), since that isn't a

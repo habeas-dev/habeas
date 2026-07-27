@@ -548,8 +548,19 @@ if (!window.showDirectoryPicker) {
 $('#stype').onchange = renderFields;
 $('#addsink').onclick = addSink;
 { const oa = $('#open-archive'); if (oa) oa.onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/archive.html') }); }
-$('#create').onclick = () => { location.href = 'author.html'; };
 $('#browse').onclick = () => { location.href = 'marketplace.html'; };
+// Record mode (author.html) renders INLINE in the "Record & contribute" accordion, not a new tab. The summary
+// toggles it; opening for the first time lazy-loads the page. openAuthor() (re)loads it with params (re-record /
+// guided capture) and expands + scrolls to it.
+function openAuthor(query = '') {
+  const acc = $('#record-acc'), fr = $('#author-frame');
+  if (!acc || !fr) { location.href = 'author.html' + query; return; } // fallback if the accordion isn't present
+  fr.src = 'author.html' + query;
+  acc.open = true;
+  acc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+{ const acc = $('#record-acc'), fr = $('#author-frame');
+  if (acc && fr) acc.addEventListener('toggle', () => { if (acc.open && !fr.getAttribute('src')) fr.src = 'author.html'; }); }
 $('#ds-search').oninput = filterSources;
 $('#auto-search').oninput = filterRoutes;
 $('#store-backend').onchange = renderStoreFields;
@@ -601,7 +612,7 @@ async function renderContributions() {
     </div>`;
   }).join('');
   wrap.querySelectorAll('[data-thread]').forEach((b) => { b.onclick = () => openThread(b.dataset.thread); });
-  wrap.querySelectorAll('[data-rerec]').forEach((b) => { b.onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/author.html') + '?url=' + encodeURIComponent('https://' + b.dataset.rerec + '/') }); });
+  wrap.querySelectorAll('[data-rerec]').forEach((b) => { b.onclick = () => openAuthor('?url=' + encodeURIComponent('https://' + b.dataset.rerec + '/')); });
 }
 // One-click install of the source the team authored from this recording — so the contributor can test it
 // without touching any JSON. Saves it, grants consent + capture perms, and enables it as a datasource.
@@ -691,10 +702,10 @@ async function openThread(id) {
       const cr = data.messages[cq.dataset.capreq] && data.messages[cq.dataset.capreq].captureRequest;
       if (!cr) return;
       const site = 'https://www.' + (data.domain || '') + '/';
-      const url = chrome.runtime.getURL('src/ui/author.html') + '?url=' + encodeURIComponent(site)
+      const query = '?url=' + encodeURIComponent(site)
         + '&guide=' + encodeURIComponent(cr.instruction) + (cr.endpoint ? '&endpoint=' + encodeURIComponent(cr.endpoint) : '')
         + '&handoff=' + encodeURIComponent(id); // attach the recording back to THIS handoff (same thread)
-      try { chrome.tabs.create({ url }); } catch (e) { location.href = url; }
+      openAuthor(query); // inline in the accordion, not a new tab
     }
   };
   // Backward compatibility: a source attached BEFORE version messages existed has no timeline card — show the
