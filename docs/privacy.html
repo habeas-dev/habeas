@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Habeas — Privacy Policy</title>
-  <meta name="description" content="How Habeas handles your data: local-first, no credential storage, and Google user data used only to write your own exported documents to your Drive." />
+  <meta name="description" content="How Habeas handles your data: local-first, no stored logins, and Google user data used only to write your own exported documents to your Drive." />
   <link rel="icon" type="image/svg+xml" href="logo.svg" />
   <link rel="stylesheet" href="style.css" />
   <style>
@@ -70,8 +70,13 @@
         ledger (to avoid re-downloading), and a local activity log — stored on your device
         (<code>storage.local</code>) and never sent anywhere by Habeas.</li>
     </ul>
-    <p><strong>Habeas never reads, stores, transmits, or autofills your credentials.</strong> You log in yourself,
-      including any MFA. There is no background scraping while you are away.</p>
+    <p><strong>Habeas never reads, stores, transmits, or autofills the credentials you log in with.</strong> You
+      log in yourself, including any MFA. There is no background scraping while you are away.</p>
+    <p>The access you set up for a <em>destination</em> — a Dropbox/Drive/S3 token, an HTTP endpoint's key — is a
+      separate thing, and never includes your login to any source. It stays under your control: an optional
+      <strong>Credentials Vault</strong> can keep it encrypted under a passphrase only you hold (only that
+      ciphertext is ever stored — useless without your passphrase), so you can reuse your destinations across
+      browsers.</p>
 
     <h2>2. Where your data goes (destinations)</h2>
     <p>Nothing leaves your browser unless you select a destination for a document. The destinations are:</p>
@@ -164,8 +169,13 @@
         <li><strong>Ajustes</strong>, registro de entregas y log de actividad, guardados en tu dispositivo y que
           Habeas no envía a ningún sitio.</li>
       </ul>
-      <p><strong>Habeas nunca lee, guarda, transmite ni autocompleta tus credenciales.</strong> Inicias sesión tú
-        mismo (MFA incluido). No hay scraping en segundo plano mientras no estás.</p>
+      <p><strong>Habeas nunca lee, guarda, transmite ni autocompleta las credenciales con las que inicias
+        sesión.</strong> Inicias sesión tú mismo (MFA incluido). No hay scraping en segundo plano mientras no estás.</p>
+      <p>El acceso que configuras para un <em>destino</em> —un token de Dropbox/Drive/S3, la clave de un endpoint
+        HTTP— es otra cosa distinta, y nunca incluye tu login a ninguna fuente. Queda bajo tu control: una
+        <strong>Bóveda de credenciales</strong> opcional puede guardarlo cifrado bajo una contraseña que solo tú
+        tienes (solo se almacena ese cifrado, inservible sin tu contraseña), para reutilizar tus destinos entre
+        navegadores.</p>
 
       <h2>2. A dónde van tus datos</h2>
       <p>Nada sale del navegador salvo que elijas un destino: <strong>Descarga</strong>, <strong>Carpeta
