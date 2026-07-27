@@ -731,9 +731,11 @@
                 "format": {
                   "enum": [
                     "iso",
-                    "date"
+                    "date",
+                    "epoch",
+                    "epochMs"
                   ],
-                  "description": "iso = full ISO timestamp (default), date = YYYY-MM-DD."
+                  "description": "iso = full ISO timestamp (default), date = YYYY-MM-DD, epoch = Unix seconds, epochMs = Unix ms."
                 }
               }
             },

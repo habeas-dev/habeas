@@ -1,0 +1,43 @@
+{
+  "id": "pepephone-es",
+  "name": "Pepephone — facturas",
+  "service": "pepephone",
+  "country": "ES",
+  "trust": "community",
+  "version": "2026-07-27",
+  "minVersion": "0.9.2",
+  "schema": "invoice@1",
+  "categories": ["telecom"],
+  "match": ["https://www.pepephone.com/*"],
+  "domain": "pepephone.com",
+  "auth": {
+    "mode": "bearer",
+    "replayHeaders": ["authorization"],
+    "tokenFromStorage": { "key": "PEPE_AUTH_TOKEN", "header": "authorization", "scheme": "Bearer" }
+  },
+  "api": {
+    "host": "https://services.pepephone.com",
+    "list": {
+      "path": "/v1/invoice",
+      "itemsPath": "invoices",
+      "paging": "none",
+      "params": { "v": 3 },
+      "range": { "from": "start", "to": "end", "format": "epoch" },
+      "window": "10y",
+      "keep": { "field": "serviceType", "values": ["PPH"] }
+    },
+    "pdf": {
+      "path": "/v1/invoice/{internalId}?serviceType={serviceType}",
+      "base64Field": "content",
+      "ext": "pdf"
+    }
+  },
+  "fields": {
+    "internalId": "number",
+    "number": "number",
+    "date": "date",
+    "total": "total",
+    "type": "typeDescription"
+  },
+  "keepRaw": true
+}

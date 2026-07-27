@@ -11,6 +11,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Time-windowed list ranges can be sent as Unix epoch** (`api.list.range.format: "epoch"` / `"epochMs"`), for
+  APIs that take `start`/`end` as epoch seconds/ms rather than ISO dates (Pepephone's `/v1/invoice?start&end`).
+
+### Added
 - **Edit an http sink's category filter after creation** (`ui/options.js`). A sink's `accepts.categories` could
   only be set when creating it; a stale/leftover filter (e.g. one that excludes `investment`) then silently
   blocked whole categories on every delivery, with no way to fix it but recreating the destination. Each http

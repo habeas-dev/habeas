@@ -1722,7 +1722,13 @@ function rangeParams(list) {
   if (!list.range) return {};
   const now = new Date();
   const from = new Date(Date.now() - windowMs(list.window));
-  const fmt = (dt) => (list.range.format === 'date' ? dt.toISOString().slice(0, 10) : dt.toISOString());
+  const fmt = (dt) => {
+    const f = list.range.format;
+    if (f === 'epoch') return Math.floor(dt.getTime() / 1000); // Unix seconds (Pepephone /v1/invoice?start&end)
+    if (f === 'epochMs') return dt.getTime();
+    if (f === 'date') return dt.toISOString().slice(0, 10);
+    return dt.toISOString();
+  };
   const out = {};
   if (list.range.from) out[list.range.from] = fmt(from);
   if (list.range.to) out[list.range.to] = fmt(now);
