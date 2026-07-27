@@ -11,9 +11,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Changed
-- **Settings: “Advanced” is now “Contributions”**, and the source-authoring tools (Create a source [record mode],
-  Import, Paste JSON) moved there from the Services tab — so everything about recording a site's session and
-  building/contributing a source lives in one place. Services now focuses on the sources you use.
+- **Settings: the “Advanced” section is now “Record & contribute”**, holding the record-mode flow (capture a
+  site's session → build a source) plus the tracker for recordings you've contributed. Writing/importing a
+  service definition from JSON stays in **Services** (“Create / import a service definition”), since that isn't a
+  contribution. Recording lives with contributing; using and defining services lives in Services.
 
 ### Added
 - **“Sync all” is now configurable — membership + order.** Settings → Automatic sync: pick which sources the

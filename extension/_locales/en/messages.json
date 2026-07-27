@@ -2889,7 +2889,7 @@
     "message": "Privacy"
   },
   "opt_nav_advanced": {
-    "message": "Contributions"
+    "message": "Record & contribute"
   },
   "opt_home_title": {
     "message": "Your setup at a glance"
@@ -2999,10 +2999,10 @@
     "message": "+ Add a service"
   },
   "opt_services_adv": {
-    "message": "Create a source"
+    "message": "Create / import a service definition"
   },
   "opt_services_adv_help": {
-    "message": "Create your own source, or import one shared with you."
+    "message": "Write a source definition by hand, or import one shared with you as JSON."
   },
   "opt_storage_title": {
     "message": "Where your documents are kept"
@@ -3150,5 +3150,11 @@
   },
   "sweep_down": {
     "message": "Move down"
+  },
+  "opt_contrib_record": {
+    "message": "Record a site to build a source"
+  },
+  "opt_contrib_record_help": {
+    "message": "Capture a site's session in your browser and turn it into a source you can test and contribute back to the community."
   }
 }

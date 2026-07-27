@@ -2889,7 +2889,7 @@
     "message": "Privacidad"
   },
   "opt_nav_advanced": {
-    "message": "Contribuciones"
+    "message": "Grabar y contribuir"
   },
   "opt_home_title": {
     "message": "Tu configuración de un vistazo"
@@ -2999,10 +2999,10 @@
     "message": "+ Añadir un servicio"
   },
   "opt_services_adv": {
-    "message": "Crear una fuente"
+    "message": "Crear / importar definición de servicio"
   },
   "opt_services_adv_help": {
-    "message": "Crea tu propia fuente, o importa una que te hayan pasado."
+    "message": "Escribe una definición de fuente a mano, o importa una que te hayan compartido en JSON."
   },
   "opt_storage_title": {
     "message": "Dónde se guardan tus documentos"
@@ -3150,5 +3150,11 @@
   },
   "sweep_down": {
     "message": "Bajar"
+  },
+  "opt_contrib_record": {
+    "message": "Graba un sitio para crear una fuente"
+  },
+  "opt_contrib_record_help": {
+    "message": "Captura la sesión de un sitio en tu navegador y conviértela en una fuente que puedes probar y contribuir a la comunidad."
   }
 }
