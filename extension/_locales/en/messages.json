@@ -3104,7 +3104,7 @@
     "message": "Credentials vault"
   },
   "vault_help": {
-    "message": "Reuse your destinations' credentials (a Cuéntamo/Tiquetera exporter token, HTTP-sink headers, cloud-storage keys) across browsers. They're encrypted under a passphrase you choose and stored — only as ciphertext — in the canonical store; without the passphrase they're useless. Your bank session is never included."
+    "message": "Reuse the credentials of the external sites you send your data to (HTTP-endpoint tokens, cloud-storage keys for S3/WebDAV/Dropbox, email-provider API keys) across browsers. They're encrypted under a passphrase you choose and stored — only as ciphertext — in the canonical store; without the passphrase they're useless. Your bank session is never included."
   },
   "vault_pass_ph_set": {
     "message": "Choose a passphrase"

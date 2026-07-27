@@ -3104,7 +3104,7 @@
     "message": "Bóveda de credenciales"
   },
   "vault_help": {
-    "message": "Reutiliza las credenciales de tus destinos (un token de exportador a Cuéntamo/Tiquetera, cabeceras de sinks HTTP, claves de almacenamiento en nube) entre navegadores. Se cifran con una contraseña que eliges y se guardan —solo cifradas— en el almacén canónico; sin la contraseña son inservibles. Tu sesión bancaria nunca se incluye."
+    "message": "Reutiliza entre navegadores las credenciales de los sitios externos a los que envías tus datos (tokens de endpoints HTTP, claves de almacenamiento en nube para S3/WebDAV/Dropbox, claves de API de proveedores de correo). Se cifran con una contraseña que eliges y se guardan —solo cifradas— en el almacén canónico; sin la contraseña son inservibles. Tu sesión bancaria nunca se incluye."
   },
   "vault_pass_ph_set": {
     "message": "Elige una contraseña"

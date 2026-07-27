@@ -1,5 +1,5 @@
-// Portable secrets vault — reuse your destinations' credentials (a Cuéntamo/Tiquetera exporter's pairing token,
-// HTTP-sink headers, S3/WebDAV/Dropbox creds) across browsers. The device-local secrets store (secrets.js) is
+// Portable secrets vault — reuse across browsers the credentials of the external sites you send data TO (HTTP
+// destination-endpoint tokens/headers, S3/WebDAV/Dropbox keys, email-provider API keys). The device-local store (secrets.js) is
 // encrypted with a NON-extractable key that never leaves the browser, so it can't be synced. Instead this builds a
 // SEPARATE bundle encrypted under a USER passphrase (PBKDF2 → AES-GCM) and stores only that ciphertext in the
 // canonical store, beside the config snapshot. On another device the user enters the same passphrase once; the
