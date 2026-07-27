@@ -10,6 +10,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **The Archive's “Refresh” now shows progress.** It reported page-by-page for paginated sources but sat silent for
+  a single-call source (e.g. Pepephone lists years of invoices in one request) and during the store write — looking
+  frozen on a long refresh. It now shows the phase — “Listing …”, per-page counts, then “Saving N documents …” — so a
+  long refresh visibly advances instead of jumping straight from start to finish.
+
 ### Added
 - **`api.list.expand`** — expand each list item into its sub-array elements (one document, and one PDF, per
   sub-element), inheriting the parent's fields. Lets a monthly invoice made of several sub-invoices download all of

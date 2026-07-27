@@ -3224,5 +3224,24 @@
   },
   "archive_field_gross": {
     "message": "Gross"
+  },
+  "archive_listing": {
+    "message": "Listing $NAME$…",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_saving_n": {
+    "message": "Saving $N$ documents from $NAME$ to the archive…",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "name": {
+        "content": "$2"
+      }
+    }
   }
 }

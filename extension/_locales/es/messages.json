@@ -3224,5 +3224,24 @@
   },
   "archive_field_gross": {
     "message": "Bruto"
+  },
+  "archive_listing": {
+    "message": "Listando $NAME$…",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_saving_n": {
+    "message": "Guardando $N$ documentos de $NAME$ en el archivo…",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "name": {
+        "content": "$2"
+      }
+    }
   }
 }

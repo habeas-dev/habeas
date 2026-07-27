@@ -383,6 +383,7 @@ async function pageList(adapter, auth, net, group, opts) {
     }
   } else { // 'none' — single request
     collect(adapter, await call({ ...range, ...baseParams }), seen, all, group);
+    report({ page: 1, docs: all }); // emit once so a single-call source still reports its document count
   }
   return all; // sorted by the caller (listInventory) across all groups
 }

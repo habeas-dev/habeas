@@ -797,7 +797,11 @@ async function refreshSource(mode) {
     const res = await listSourceInto(adapter, {
       auth, net, ds: entry.ds, mode, signal: aborter.signal,
       pickGroup: (eff, a, n) => pickGroup(eff, a, n),
-      onProgress: (sid, eff, sk, { page, docs }) => { $('#astatus').textContent = t('status_listing_page', [entry.name, String(page || ''), String((docs && docs.length) || '')]); },
+      onProgress: (sid, eff, sk, p) => {
+        if (p.phase === 'save') $('#astatus').textContent = t('archive_saving_n', [String(p.count || 0), entry.name]);
+        else if (p.page) $('#astatus').textContent = t('status_listing_page', [entry.name, String(p.page), String((p.docs && p.docs.length) || 0)]);
+        else $('#astatus').textContent = t('archive_listing', [entry.name]); // phase 'list' — before the (slow) call
+      },
     });
     $('#astatus').textContent = res.new ? t('archive_refresh_ok', [String(res.new)]) : t('archive_refresh_none');
   } catch (e) {

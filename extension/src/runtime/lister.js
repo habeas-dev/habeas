@@ -42,13 +42,15 @@ export async function listSourceInto(adapter, opts = {}) {
     const eff = resolveOutput(adapter, sid);
     const sk = storeKeyOf(storeIdOf(ds, adapter), sid);
     if (opts.onStream) opts.onStream(sid, eff, sk);
+    const prog = opts.onProgress ? (p) => opts.onProgress(sid, eff, sk, p) : undefined;
+    if (prog) prog({ phase: 'list' }); // so the UI shows "listing…" immediately, before the (possibly slow) call
     const groupId = filter ? undefined : (opts.pickGroup ? await opts.pickGroup(eff, auth, net) : undefined);
     const known = (await getRecords(sk).catch(() => [])).map((r) => r.internalId).filter((x) => x != null);
     const knownSet = new Set(known.map(String));
     const fresh = await listInventory(eff, auth, net, {
       groupId, groups: filter, signal: opts.signal,
       knownIds: opts.mode === 'full' ? null : known, // incremental early-stop unless a full re-scan
-      onProgress: opts.onProgress ? (p) => opts.onProgress(sid, eff, sk, p) : undefined,
+      onProgress: prog,
     });
     if (brandCountry) for (const d of fresh) if (d.record) d.record.country = brandCountry; // tag which country each record came from
     if (opts.onFresh) opts.onFresh(sid, eff, sk, fresh);
@@ -57,6 +59,7 @@ export async function listSourceInto(adapter, opts = {}) {
     // opened). Don't persist them at list time (a successful download proves a month exists and stores it).
     const synthetic = eff.api && eff.api.list && eff.api.list.paging === 'synthetic';
     if (!synthetic && items.length) {
+      if (prog) prog({ phase: 'save', count: items.length }); // writing to the store can be slow (cloud backend) — show it
       try { await putItems(sk, items.map((d) => ({ internalId: d.internalId, record: d.record })), { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) { /* store best-effort */ }
     }
     listed += items.length;
