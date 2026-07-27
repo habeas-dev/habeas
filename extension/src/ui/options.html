@@ -84,7 +84,7 @@
         <button role="tab" data-nav="dests"><span class="ic">📤</span> <span data-i18n="opt_nav_dests"></span></button>
         <button role="tab" data-nav="auto"><span class="ic">🔄</span> <span data-i18n="opt_nav_auto"></span></button>
         <button role="tab" data-nav="privacy"><span class="ic">🛡️</span> <span data-i18n="opt_nav_privacy"></span></button>
-        <button role="tab" data-nav="advanced"><span class="ic">⚙️</span> <span data-i18n="opt_nav_advanced"></span></button>
+        <button role="tab" data-nav="advanced"><span class="ic">🧩</span> <span data-i18n="opt_nav_advanced"></span></button>
       </nav>
 
       <div class="opanel">
@@ -126,14 +126,6 @@
           <div id="ds-updates" hidden></div>
           <div id="ds" class="src-list"></div>
           <p id="ds-empty" class="muted" hidden data-i18n="no_sources_match"></p>
-          <div class="subhead" data-i18n="opt_services_adv"></div>
-          <p class="note" data-i18n="opt_services_adv_help"></p>
-          <div class="toolbar">
-            <button id="create" data-i18n="create_source"></button>
-            <button id="import" data-i18n="import_source"></button>
-            <button id="paste" data-i18n="paste_source"></button>
-            <input id="importfile" type="file" accept="application/json" hidden />
-          </div>
         </section>
 
         <!-- ══ STORAGE (canonical store) ══ -->
@@ -268,6 +260,15 @@
         <!-- ══ ADVANCED (destinations + contributions) ══ -->
         <section class="osec" data-sec="advanced" role="tabpanel">
           <div class="ohead"><h2 data-i18n="opt_nav_advanced"></h2><p data-i18n="opt_advanced_intro"></p></div>
+
+          <div class="subhead" data-i18n="opt_services_adv"></div>
+          <p class="note" data-i18n="opt_services_adv_help"></p>
+          <div class="toolbar">
+            <button id="create" class="primary" data-i18n="create_source"></button>
+            <button id="import" data-i18n="import_source"></button>
+            <button id="paste" data-i18n="paste_source"></button>
+            <input id="importfile" type="file" accept="application/json" hidden />
+          </div>
 
           <div class="subhead" data-i18n="contrib_title"></div>
           <p class="note" data-i18n="contrib_help"></p>

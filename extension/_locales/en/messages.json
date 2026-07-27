@@ -2889,7 +2889,7 @@
     "message": "Privacy"
   },
   "opt_nav_advanced": {
-    "message": "Advanced"
+    "message": "Contributions"
   },
   "opt_home_title": {
     "message": "Your setup at a glance"
@@ -2999,7 +2999,7 @@
     "message": "+ Add a service"
   },
   "opt_services_adv": {
-    "message": "For advanced users"
+    "message": "Create a source"
   },
   "opt_services_adv_help": {
     "message": "Create your own source, or import one shared with you."
@@ -3047,7 +3047,7 @@
     "message": "It’s open source (AGPL-3.0): anyone can audit what it does."
   },
   "opt_advanced_intro": {
-    "message": "Create your own sources and manage your contributions."
+    "message": "Create your own sources by recording a site's session, and track the recordings you've contributed to Habeas."
   },
   "opt_dests_help": {
     "message": "Beyond your archive, you can send copies of your documents to a folder, the cloud, or an app."

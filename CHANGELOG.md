@@ -10,6 +10,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Changed
+- **Settings: “Advanced” is now “Contributions”**, and the source-authoring tools (Create a source [record mode],
+  Import, Paste JSON) moved there from the Services tab — so everything about recording a site's session and
+  building/contributing a source lives in one place. Services now focuses on the sources you use.
+
 ### Added
 - **“Sync all” is now configurable — membership + order.** Settings → Automatic sync: pick which sources the
   on-demand “Sync all” sweep runs (a per-source checkbox) and drag them into the order you want (↑/↓). The sweep

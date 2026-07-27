@@ -2889,7 +2889,7 @@
     "message": "Privacidad"
   },
   "opt_nav_advanced": {
-    "message": "Avanzado"
+    "message": "Contribuciones"
   },
   "opt_home_title": {
     "message": "Tu configuración de un vistazo"
@@ -2999,7 +2999,7 @@
     "message": "+ Añadir un servicio"
   },
   "opt_services_adv": {
-    "message": "Para usuarios avanzados"
+    "message": "Crear una fuente"
   },
   "opt_services_adv_help": {
     "message": "Crea tu propia fuente, o importa una que te hayan pasado."
@@ -3047,7 +3047,7 @@
     "message": "Es código abierto (AGPL-3.0): cualquiera puede auditar qué hace."
   },
   "opt_advanced_intro": {
-    "message": "Crea tus propias fuentes y gestiona tus contribuciones."
+    "message": "Crea tus propias fuentes grabando la sesión de un sitio, y sigue las grabaciones que has contribuido a Habeas."
   },
   "opt_dests_help": {
     "message": "Además de tu archivo, puedes enviar copias de tus documentos a una carpeta, la nube o una app."
