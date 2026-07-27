@@ -1530,11 +1530,19 @@ export function keepFilter(items, keep) {
 // a monthly invoice made of several sub-invoices yield one document (and one PDF) per sub-invoice (Pepephone).
 export function expandItems(items, expand) {
   if (!expand || !expand.path || !Array.isArray(items)) return items;
+  // `drop`: parent fields the sub-element must NOT inherit — a sub-specific field the sub omits should stay
+  // EMPTY, not fall back to the parent's value (Pepephone: a sub-invoice with no own `total` must not show the
+  // month total). The sub still overrides whatever it does provide.
+  const drop = Array.isArray(expand.drop) ? expand.drop : [];
   const out = [];
   for (const it of items) {
     const subs = get(it, expand.path);
     if (Array.isArray(subs) && subs.length) {
-      for (const s of subs) { const m = { ...it, ...(s && typeof s === 'object' ? s : {}) }; delete m[expand.path]; out.push(m); }
+      for (const s of subs) {
+        const base = { ...it }; for (const d of drop) delete base[d];
+        const m = { ...base, ...(s && typeof s === 'object' ? s : {}) }; delete m[expand.path];
+        out.push(m);
+      }
     } else out.push(it);
   }
   return out;

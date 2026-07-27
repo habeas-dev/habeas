@@ -817,6 +817,13 @@
                 "path": {
                   "type": "string",
                   "description": "Dotted path to a per-item sub-array (e.g. subInvoices); each item is replaced by one item per sub-element, inheriting the parent's fields (the sub wins on conflict). Empty/absent → the item is kept as-is."
+                },
+                "drop": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Parent fields a sub-element must NOT inherit (a sub-specific field the sub omits stays empty instead of falling back to the parent's value, e.g. total)."
                 }
               },
               "description": "Expand each item into its sub-array elements (one document per sub-item), inheriting parent fields."

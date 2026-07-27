@@ -4,7 +4,7 @@
   "service": "pepephone",
   "country": "ES",
   "trust": "community",
-  "version": "2026-07-27.1",
+  "version": "2026-07-27.2",
   "minVersion": "0.9.2",
   "schema": "invoice@1",
   "categories": [
@@ -31,7 +31,10 @@
       "path": "/v1/invoice",
       "itemsPath": "invoices",
       "expand": {
-        "path": "subInvoices"
+        "path": "subInvoices",
+        "drop": [
+          "total"
+        ]
       },
       "paging": "none",
       "params": {

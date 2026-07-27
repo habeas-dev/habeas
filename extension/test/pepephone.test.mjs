@@ -42,3 +42,15 @@ test('lists one doc per PPH sub-invoice; excludes the PPE (energy) invoice', asy
   const dev = docs.find((d) => d.internalId === '2026-06-DEV');
   assert.equal(dev.total, 10); assert.equal(dev.record.total, 10);
 });
+
+test('expandItems drop: a sub without its own total does NOT inherit the parent total (stays empty)', () => {
+  const items = [{ number: 'M', date: 1, total: 42.9, subInvoices: [
+    { number: 'M', typeDescription: 'Línea' },          // no own total → must NOT become 42.9
+    { number: 'D', total: 10, typeDescription: 'Disp.' }, // own total wins
+  ] }];
+  const out = expandItems(items, { path: 'subInvoices', drop: ['total'] });
+  assert.equal(out[0].total, undefined, 'sub without total is empty, not the month total');
+  assert.equal(out[1].total, 10);
+  // without drop it WOULD wrongly inherit the parent total (the bug being fixed)
+  assert.equal(expandItems(items, { path: 'subInvoices' })[0].total, 42.9);
+});
