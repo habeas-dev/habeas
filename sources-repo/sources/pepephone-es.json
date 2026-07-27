@@ -4,28 +4,51 @@
   "service": "pepephone",
   "country": "ES",
   "trust": "community",
-  "version": "2026-07-27",
+  "version": "2026-07-27.1",
   "minVersion": "0.9.2",
   "schema": "invoice@1",
-  "categories": ["telecom"],
-  "match": ["https://www.pepephone.com/*"],
+  "categories": [
+    "telecom"
+  ],
+  "match": [
+    "https://www.pepephone.com/*"
+  ],
   "domain": "pepephone.com",
   "auth": {
     "mode": "bearer",
-    "replayHeaders": ["authorization"],
-    "tokenFromStorage": { "key": "PEPE_AUTH_TOKEN", "header": "authorization", "scheme": "Bearer" }
+    "replayHeaders": [
+      "authorization"
+    ],
+    "tokenFromStorage": {
+      "key": "PEPE_AUTH_TOKEN",
+      "header": "authorization",
+      "scheme": "Bearer"
+    }
   },
   "api": {
     "host": "https://services.pepephone.com",
     "list": {
       "path": "/v1/invoice",
       "itemsPath": "invoices",
-      "expand": { "path": "subInvoices" },
+      "expand": {
+        "path": "subInvoices"
+      },
       "paging": "none",
-      "params": { "v": 3 },
-      "range": { "from": "start", "to": "end", "format": "epoch" },
+      "params": {
+        "v": 3
+      },
+      "range": {
+        "from": "start",
+        "to": "end",
+        "format": "epoch"
+      },
       "window": "10y",
-      "keep": { "field": "serviceType", "values": ["PPH"] }
+      "keep": {
+        "field": "serviceType",
+        "values": [
+          "PPH"
+        ]
+      }
     },
     "pdf": {
       "path": "/v1/invoice/{internalId}?serviceType={serviceType}",
