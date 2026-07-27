@@ -3159,5 +3159,61 @@
   },
   "sweep_drag": {
     "message": "Drag to reorder"
+  },
+  "trade_side_buy": {
+    "message": "Buy"
+  },
+  "trade_side_sell": {
+    "message": "Sell"
+  },
+  "trade_side_dividend": {
+    "message": "Dividend"
+  },
+  "trade_side_split": {
+    "message": "Split"
+  },
+  "trade_side_transfer_in": {
+    "message": "Transfer in"
+  },
+  "trade_side_transfer_out": {
+    "message": "Transfer out"
+  },
+  "trade_side_interest": {
+    "message": "Interest"
+  },
+  "trade_side_deposit": {
+    "message": "Deposit"
+  },
+  "trade_side_withdrawal": {
+    "message": "Withdrawal"
+  },
+  "trade_side_fee": {
+    "message": "Fee"
+  },
+  "trade_side_tax": {
+    "message": "Tax"
+  },
+  "trade_side_other": {
+    "message": "Other"
+  },
+  "trade_units": {
+    "message": "$N$ shares",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_field_operation": {
+    "message": "Operation"
+  },
+  "archive_field_units": {
+    "message": "Shares"
+  },
+  "archive_field_price": {
+    "message": "Unit price"
+  },
+  "archive_field_gross": {
+    "message": "Gross"
   }
 }

@@ -1,5 +1,6 @@
 import { chrome } from '../lib/ext.js';
 import { getConfig, saveConfig } from '../lib/config.js';
+import { displayName, displayAmount } from '../lib/recdisplay.js';
 import { manageAccounts } from './accountpicker.js';
 import { listInventory, artifactKinds, fetchArtifact, documentExt } from '../runtime/inventory.js';
 import { listSourceInto } from '../runtime/lister.js';
@@ -316,8 +317,8 @@ const nameOf = (v) => (v && typeof v === 'object') ? (v.name || v.nombre || v.de
 // Marked _fromStore so send delivers them WITHOUT fetching documents (a projection of what we already have).
 const docsFromStore = (records) => records.map((r) => ({
   internalId: r.internalId, record: r, _fromStore: true,
-  date: r.date, total: r.total ?? r.amount, currency: r.currency, category: r.category, type: r.type, returnStatus: r.returnStatus, group: r.group || '',
-  storeName: nameOf(r.store && r.store.name) || nameOf(r.storeName), label: nameOf(r.store && r.store.name) || nameOf(r.issuer) || nameOf(r.counterparty) || nameOf(r.description) || '',
+  date: r.date, total: r.total ?? r.amount ?? r.netAmount ?? r.grossAmount, currency: r.currency, category: r.category, type: r.type, returnStatus: r.returnStatus, group: r.group || '',
+  storeName: nameOf(r.store && r.store.name) || nameOf(r.storeName), label: displayName(r),
 }));
 
 // Show/hide the "Load from store" button for the selected source (only when the store has records for it).
@@ -511,9 +512,9 @@ const rowHtml = (d, i, delivered) => {
      <td>${esc((d.date || '').slice(0, 10))}</td>
      <td class="col-group">${esc(groupLabel(d))}</td>
      <td><span class="pill type">${esc(d.type || '')}</span>${d.returnStatus ? ` <span class="pill returned" title="${esc(d.returnStatus)}">↩ ${esc(d.returnStatus)}</span>` : ''}</td>
-     <td>${esc(d.storeName || d.label || d._streamName || d.internalId || '')}</td>
+     <td>${esc(d.storeName || d.label || (d.record && displayName(d.record)) || d._streamName || d.internalId || '')}</td>
      <td class="files">${renderFiles(d)}</td>
-     <td class="r">${fmt(d.total ?? d.amount, d.currency || (d.record && d.record.currency))}</td>
+     <td class="r">${fmt(d.total ?? d.amount ?? (d.record && displayAmount(d.record)), d.currency || (d.record && d.record.currency))}</td>
      <td>${sent ? `<span class="pill sent" title="${esc(t('pill_sent_hint'))}">${t('pill_sent')}</span>` : `<span class="pill new" title="${esc(t('pill_new_hint'))}">${t('pill_new')}</span>`}</td>
    </tr>`;
 };
@@ -711,7 +712,7 @@ let docsRows = null;       // flattened rows, or null = not loaded yet
 let docsFiltered = [];     // currently-rendered subset (index target for row handlers)
 
 const sinkLabel = (s) => s.name || s.id || s.type;
-const docStore = (r) => nameOf(r.store && r.store.name) || nameOf(r.storeName) || nameOf(r.issuer) || nameOf(r.counterparty) || nameOf(r.description) || '';
+const docStore = displayName; // instrument (investments) → store/issuer/counterparty/description (recdisplay.js)
 
 // Quick hero: a friendly landing that frames the popup as the fast lane to the visual Archive. Cheap — reads
 // only the store's source keys (no per-source item load), so opening the popup stays snappy. Chips deep-link
@@ -835,7 +836,7 @@ function populateDocsGroups() {
 }
 
 function docRowHtml(r, i) {
-  const money = esc(fmt(r.record.total ?? r.record.amount, r.record.currency));
+  const money = esc(fmt(displayAmount(r.record), r.record.currency));
   // One badge per (sink × file format). A record-only stream (a bank movement) has no file → the badge is
   // non-clickable (.nofile). A statement stream with PDF+Excel gets one openable badge per format.
   const badges = r.delivered.length

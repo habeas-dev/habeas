@@ -10,6 +10,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **Investment/broker trades now display meaningfully.** A `recordType: "trade"` document used to show as its
+  category (“Banking”) with no amount. It now shows the **traded product** (stock/fund name, else ticker/ISIN),
+  the **money invested or divested** (the trade's net/gross settlement, signed by side — buy out, sell/dividend
+  in), and the **number of shares** — on the card and in the drawer (which also lists operation, unit price, gross
+  and ISIN). Same in the popup document list. Shared, unit-tested display helpers (`lib/recdisplay.js`).
+
 ### Changed
 - **The recorder is now built into Settings (no new tab, no iframe).** *Record & contribute* renders the whole
   record-mode flow — record a site → map fields → test → save → send to the team — natively in the section, one

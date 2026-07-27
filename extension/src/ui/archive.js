@@ -9,6 +9,7 @@ import { chrome } from '../lib/ext.js';
 import { getConfig, saveConfig } from '../lib/config.js';
 import { getAdapters } from '../adapters/index.js';
 import { listSources, getSource, getStoreConfig, deleteSource } from '../lib/store.js';
+import { instrumentLabel, displayName, displayAmount, SIDE_DIR, sideKey, isInvestmentRec } from '../lib/recdisplay.js';
 import { useDriveStore, useFolderStore, useSinkStore, useHttpStore, folderStoreAvailable } from '../lib/storesetup.js';
 import { mountSinkForm, connectSink, needsConnect, storeCapable } from './sinkform.js';
 import { deliveredSet, getDocMeta, rememberDocMeta } from '../lib/state.js';
@@ -111,13 +112,21 @@ const catLabel = (c) => { const x = catOf(c); return ESLANG ? x.es : x.en; };
 
 // ---- small helpers ----
 const nameOf = (v) => (v && typeof v === 'object') ? (v.name || v.nombre || v.descripcion || '') : (v == null ? '' : String(v));
-const storeOf = (r) => nameOf(r.store && r.store.name) || nameOf(r.storeName) || nameOf(r.issuer) || nameOf(r.counterparty) || nameOf(r.description) || '';
+// Record name/instrument/direction helpers live in lib/recdisplay.js (shared with the popup, unit-tested).
+const storeOf = displayName; // instrument (investments) → store/issuer/counterparty/description chain
 function titleOf(r) { return storeOf(r) || catLabel(r.category) || (r.type ? String(r.type) : '—'); }
+// A localized word for an investment side/kind (buy/sell/dividend…); falls back to the raw side when unmapped
+// (t() returns the key on a miss). Direction + amount come from recdisplay (SIDE_DIR / displayAmount).
+function sideLabel(r) { const s = sideKey(r); if (!s) return ''; const k = 'trade_side_' + s; const lbl = t(k); return lbl === k ? s.replace(/_/g, ' ') : lbl; }
+// Units affected (shares/participations) — for a trade's subtitle. Locale number, e.g. "12 acc." / "12 sh.".
+function unitsLabel(r) { const u = r.units; if (u == null || u === '' || isNaN(Number(u))) return ''; return t('trade_units', [new Intl.NumberFormat(ESLANG ? 'es-ES' : 'en-US', { maximumFractionDigits: 6 }).format(Number(u))]); }
 function fmtMoney(n, cur) { try { return new Intl.NumberFormat(ESLANG ? 'es-ES' : 'en-US', { style: 'currency', currency: cur || 'EUR' }).format(n); } catch (e) { return (typeof n === 'number' ? n.toFixed(2) : n) + ' ' + (cur || 'EUR'); } }
 function money(r) {
-  let n = (typeof r.total === 'number') ? r.total : (typeof r.amount === 'number' ? r.amount : null);
+  // displayAmount() also picks up an investment@2 settlement (netAmount/grossAmount) — the sum invested/divested.
+  let n = displayAmount(r);
   if (n == null) return { txt: '', cls: '' };
-  const dir = r.direction; let cls = '';
+  const dir = r.direction || SIDE_DIR[sideKey(r)] || ''; // a trade has no `direction` → derive it from its side
+  let cls = '';
   if (dir === 'out') { cls = 'neg'; n = -Math.abs(n); }
   else if (dir === 'in') { cls = 'pos'; n = Math.abs(n); }
   else if (n < 0) { cls = 'neg'; }
@@ -619,7 +628,11 @@ function cardHtml(r) {
   // Month grouping already shows the year in the group header; Category/Store don't → put the year on the card.
   const dstr = GROUPMODE === 'month' ? dateShort(r.record.date) : dateShortY(r.record.date);
   const country = r.record.country ? esc(String(r.record.country).replace(/^[^.]*\./, '').toUpperCase()) : ''; // brand multi-country → show the TLD (ES/COM)
-  const sub = [dstr, country, r.record.group && ACCOUNT === '' ? esc(r.record.group) : ''].filter(Boolean).join(' · ');
+  // For an investment record (recordType trade/cash) surface the operation (buy/sell/dividend…) and, for a trade,
+  // the number of shares — right on the card. Gated to investment records so a receipt's `type` never leaks here.
+  const isInv = isInvestmentRec(r.record);
+  const sub = [dstr, country, isInv ? esc(sideLabel(r.record)) : '', isInv ? esc(unitsLabel(r.record)) : '',
+    r.record.group && ACCOUNT === '' ? esc(r.record.group) : ''].filter(Boolean).join(' · ');
   return `<button class="dcard${PICKED.has(r.internalId) ? ' picked' : ''}" data-i="${i}">
     <span class="chk">✓</span>
     <span class="tile ${c.f}">${c.i}</span>
@@ -636,12 +649,21 @@ function openDrawer(r) {
   $('#dw-title').textContent = titleOf(r.record);
   $('#dw-sub').textContent = [dateLong(r.record.date), r.record.group].filter(Boolean).join(' · ');
   const mv = money(r.record);
+  const isInv = isInvestmentRec(r.record);
   const rows = [];
   if (mv.txt) rows.push([t('archive_field_amount'), mv.txt, mv.cls]);
+  // Investment@2 detail: operation, shares, unit price, gross (pre-fee) and ISIN — the "what was traded" story.
+  if (isInv) {
+    const sl = sideLabel(r.record); if (sl) rows.push([t('archive_field_operation'), sl]);
+    const ul = unitsLabel(r.record); if (ul) rows.push([t('archive_field_units'), ul]);
+    if (typeof r.record.price === 'number') rows.push([t('archive_field_price'), fmtMoney(r.record.price, r.record.currency)]);
+    if (typeof r.record.grossAmount === 'number' && r.record.grossAmount !== r.record.netAmount) rows.push([t('archive_field_gross'), fmtMoney(r.record.grossAmount, r.record.currency)]);
+    const isin = r.record.instrument && r.record.instrument.isin; if (isin) rows.push(['ISIN', String(isin)]);
+  }
   if (r.record.category) rows.push([t('archive_field_category'), catLabel(r.record.category)]);
   if (r.record.group) rows.push([t('archive_field_account'), r.record.group]);
   const cp = nameOf(r.record.counterparty) || nameOf(r.record.description); if (cp) rows.push([t('archive_field_concept'), cp]);
-  if (r.record.type) rows.push([t('archive_field_type'), String(r.record.type)]);
+  if (r.record.type && !isInv) rows.push([t('archive_field_type'), String(r.record.type)]);
   if (r.formats.length) rows.push([t('archive_field_files'), r.formats.map((f) => (f.ext || '').toUpperCase() + (r._scanned ? '' : '?')).join(' · ')]);
   let body = `<dl class="kvx">${rows.map(([k, v, cls]) => `<dt>${esc(k)}</dt><dd${cls ? ` style="color:var(--${cls === 'neg' ? 'neg' : 'pos'})"` : ''}>${esc(String(v))}</dd>`).join('')}</dl>`;
   // actions: open each delivered FILE (real). A record-only movement (a bank line) has no file — its data

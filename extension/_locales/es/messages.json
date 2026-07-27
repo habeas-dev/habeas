@@ -3159,5 +3159,61 @@
   },
   "sweep_drag": {
     "message": "Arrastra para reordenar"
+  },
+  "trade_side_buy": {
+    "message": "Compra"
+  },
+  "trade_side_sell": {
+    "message": "Venta"
+  },
+  "trade_side_dividend": {
+    "message": "Dividendo"
+  },
+  "trade_side_split": {
+    "message": "Split"
+  },
+  "trade_side_transfer_in": {
+    "message": "Traspaso entrante"
+  },
+  "trade_side_transfer_out": {
+    "message": "Traspaso saliente"
+  },
+  "trade_side_interest": {
+    "message": "Interés"
+  },
+  "trade_side_deposit": {
+    "message": "Ingreso"
+  },
+  "trade_side_withdrawal": {
+    "message": "Retirada"
+  },
+  "trade_side_fee": {
+    "message": "Comisión"
+  },
+  "trade_side_tax": {
+    "message": "Impuesto"
+  },
+  "trade_side_other": {
+    "message": "Otro"
+  },
+  "trade_units": {
+    "message": "$N$ acciones",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_field_operation": {
+    "message": "Operación"
+  },
+  "archive_field_units": {
+    "message": "Acciones"
+  },
+  "archive_field_price": {
+    "message": "Precio unitario"
+  },
+  "archive_field_gross": {
+    "message": "Bruto"
   }
 }
