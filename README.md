@@ -67,7 +67,7 @@ Everything happens locally.
 
 No remote login.
 
-No credential vault.
+No stored logins — you sign in to each site yourself.
 
 No cloud scraper.
 
@@ -162,7 +162,7 @@ Unlike traditional aggregators:
 
 - you log in yourself;
 - MFA remains unchanged;
-- credentials never leave your browser;
+- your site logins never leave your browser;
 - Habeas operates no aggregation servers;
 - your data goes only where you choose.
 
@@ -253,7 +253,10 @@ Habeas is designed to help users exercise their own data rights.
 
 It operates entirely within the user's authenticated browser session.
 
-It never stores credentials.
+It never stores the credentials you use to log in — you sign in yourself, in your own session. (The optional
+**Credentials Vault** stores only your **destination** access — a Dropbox/S3 token, an HTTP endpoint's key —
+encrypted under a passphrase only you hold, so you can reuse your *sinks* across browsers; it never touches
+your login to any source.)
 
 It never performs remote logins.
 
