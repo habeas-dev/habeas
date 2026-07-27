@@ -498,6 +498,15 @@
   "sink_rename_prompt": {
     "message": "Visible name for this destination (blank to clear):"
   },
+  "sink_accepts_edit": {
+    "message": "Edit filter"
+  },
+  "sink_accepts_edit_hint": {
+    "message": "Limit which document categories this destination accepts (blank = accept all)"
+  },
+  "sink_accepts_prompt": {
+    "message": "Accepted categories, comma-separated (e.g. banking,card,investment). Leave blank to accept everything:"
+  },
   "enable_ds_first": {
     "message": "Enable a data source to configure auto."
   },

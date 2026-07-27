@@ -218,6 +218,7 @@ async function render() {
         ${s.type === 'dropbox' ? `<button data-dbxconn="${esc(s.id)}">${t('connect_dropbox')}</button>` : ''}
         ${s.type === 'local-folder' ? `<button data-folder="${esc(s.id)}">${t('change_folder')}</button>` : ''}
         <button data-rename="${esc(s.id)}" title="${esc(t('sink_rename_hint'))}">${t('sink_rename')}</button>
+        ${s.type === 'http' ? `<button data-editaccepts="${esc(s.id)}" title="${esc(t('sink_accepts_edit_hint'))}">${t('sink_accepts_edit')}</button>` : ''}
         <button data-default="${esc(s.id)}" title="${esc(t('set_default_hint'))}">${isDef ? t('unset_default') : t('set_default')}</button>
         <button data-del="${esc(s.id)}">${t('remove')}</button>
       </div>
@@ -228,6 +229,22 @@ async function render() {
     const nm = prompt(t('sink_rename_prompt'), s.name || '');
     if (nm == null) return; // cancelled
     const v = nm.trim(); if (v) s.name = v; else delete s.name;
+    await upsert('sinks', s); render();
+  });
+  // Editar el filtro de categorías de un sink http (accepts.categories): permite
+  // ajustarlo o VACIARLO (aceptar todo) sin recrear el destino. Preserva accepts.schemas.
+  $('#sinks').querySelectorAll('[data-editaccepts]').forEach((b) => b.onclick = async () => {
+    const c = await getConfig(); const s = (c.sinks || []).find((x) => x.id === b.dataset.editaccepts); if (!s) return;
+    const cur = (s.accepts && Array.isArray(s.accepts.categories)) ? s.accepts.categories.join(', ') : '';
+    const inp = prompt(t('sink_accepts_prompt'), cur);
+    if (inp == null) return; // cancelled
+    const cats = inp.split(',').map((x) => x.trim()).filter(Boolean);
+    const schemas = (s.accepts && Array.isArray(s.accepts.schemas)) ? s.accepts.schemas : [];
+    if (cats.length || schemas.length) {
+      s.accepts = { ...(cats.length ? { categories: cats } : {}), ...(schemas.length ? { schemas } : {}) };
+    } else {
+      delete s.accepts; // sin categorías ni esquemas → acepta todo
+    }
     await upsert('sinks', s); render();
   });
   $('#sinks').querySelectorAll('[data-default]').forEach((b) => b.onclick = async () => {

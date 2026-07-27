@@ -495,6 +495,15 @@
   "sink_rename_prompt": {
     "message": "Nombre visible para este destino (vacío para quitarlo):"
   },
+  "sink_accepts_edit": {
+    "message": "Editar filtro"
+  },
+  "sink_accepts_edit_hint": {
+    "message": "Limita qué categorías de documento acepta este destino (vacío = acepta todo)"
+  },
+  "sink_accepts_prompt": {
+    "message": "Categorías aceptadas, separadas por comas (p. ej. banking,card,investment). Déjalo vacío para aceptar todo:"
+  },
   "no_sw_sinks": {
     "message": "(sin destinos Drive/HTTP)"
   },

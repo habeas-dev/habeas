@@ -10,6 +10,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **Edit an http sink's category filter after creation** (`ui/options.js`). A sink's `accepts.categories` could
+  only be set when creating it; a stale/leftover filter (e.g. one that excludes `investment`) then silently
+  blocked whole categories on every delivery, with no way to fix it but recreating the destination. Each http
+  sink card now has an **Edit filter** button: adjust the accepted categories or leave it blank to accept
+  everything (schemas preserved).
+
 ### Fixed
 - **Investment/broker trades now display meaningfully.** A `recordType: "trade"` document used to show as its
   category (“Banking”) with no amount. It now shows the **traded product** (stock/fund name, else ticker/ISIN),
