@@ -3156,5 +3156,8 @@
   },
   "opt_contrib_record_help": {
     "message": "Captura la sesión de un sitio en tu navegador y conviértela en una fuente que puedes probar y contribuir a la comunidad."
+  },
+  "sweep_drag": {
+    "message": "Arrastra para reordenar"
   }
 }

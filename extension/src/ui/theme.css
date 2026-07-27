@@ -216,3 +216,21 @@ tbody tr[data-sent="1"] td { color: var(--muted); }
   .pill.file { background: rgba(42,125,109,.22); color: #8fd3c2; }
   code { background: #17231f; }
 }
+
+/* Recorder (Record & contribute) — shared by author.html and the embedded Settings section */
+.rec .maprow, .maprow { display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center; margin: 4px 0; }
+.maprow label { color: var(--muted); }
+.inp { display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center; margin: 4px 0; }
+#samplecount { font-weight: 600; }
+#preview tbody tr[data-i] { cursor: pointer; }
+#preview tbody tr[data-i]:hover { background: rgba(127, 127, 127, 0.10); }
+#preview tbody tr.sel { background: rgba(127, 127, 127, 0.18); }
+#docpreview { max-height: 320px; overflow: auto; margin-top: 4px; font-family: ui-monospace, monospace; font-size: 12px; line-height: 1.5; }
+#docpreview details { margin-left: 2px; }
+#docpreview summary { cursor: pointer; user-select: none; }
+#docpreview .tc { margin-left: 10px; border-left: 1px solid var(--line); padding-left: 8px; }
+#docpreview .tk { color: var(--muted); }
+#docpreview .ts { color: #2e7d32; }
+#docpreview .tnum { color: #1565c0; }
+#docpreview .tb, #docpreview .tn { color: #8e44ad; }
+#docpreview .tmeta { color: var(--muted); }

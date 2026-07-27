@@ -15,7 +15,11 @@ import { bumpSourceVersion } from '../registry/share.js';
 import { grantConsent } from '../lib/consent.js';
 import { esc } from '../lib/esc.js';
 
-const $ = (s) => document.querySelector(s);
+// The recorder can render as its own page (author.html) OR embedded natively in Settings → Record & contribute.
+// All DOM lookups go through a scoped ROOT (the container element) so both hosts work without an iframe.
+let ROOT = null;
+const $ = (s) => (ROOT || document).querySelector(s);
+const $$ = (s) => [...(ROOT || document).querySelectorAll(s)];
 const fmt = (n) => (typeof n === 'number' ? n.toFixed(2) : n ?? '');
 let LEARN = null;         // { domain, origin }
 let candidates = [];      // detected source field paths
@@ -50,26 +54,31 @@ const sampleOf = (v) => { const s = String(v ?? ''); return s.length > 26 ? s.sl
 
 let GUIDE = null; // a targeted capture request from the team: { instruction, endpoint }
 
-async function init() {
+// Initialise the recorder inside `root` (the container holding RECORDER_HTML). `params` carries what used to
+// come from the page URL: { url, guide, endpoint, base, handoff }. Called by author.html (standalone) AND by
+// options.js (embedded in Settings) — same logic, no iframe. Safe to re-call to re-apply params (re-record).
+export async function initAuthor(root, params = {}) {
+  ROOT = root || document;
   applyI18n();
-  try { const pre = new URLSearchParams(location.search).get('url'); if (pre && /^https?:\/\//.test(pre)) $('#url').value = pre; } catch (e) {} // ?url= prefill (e.g. re-record from My contributions)
-  // Guided capture request (?guide=<instruction>[&endpoint=<hint>]): show the plain instruction prominently
+  try { const pre = params.url; if (pre && /^https?:\/\//.test(pre)) $('#url').value = pre; } catch (e) {} // url prefill (e.g. re-record from My contributions)
+  // Guided capture request ({ guide:<instruction>, endpoint:<hint> }): show the plain instruction prominently
   // and, once the hinted endpoint appears in the capture, confirm it — so a non-technical contributor knows
   // they did exactly what the team needs before sending. Built with textContent (team text is never HTML).
   try {
-    const p = new URLSearchParams(location.search); const g = p.get('guide');
+    const g = params.guide;
+    const old = $('#guideban'); if (old) old.remove(); // re-init: drop a previous banner rather than stack
     if (g) {
-      GUIDE = { instruction: g, endpoint: p.get('endpoint') || '', handoff: p.get('handoff') || '' };
-      const box = document.createElement('div');
+      GUIDE = { instruction: g, endpoint: params.endpoint || '', handoff: params.handoff || '' };
+      const box = document.createElement('div'); box.id = 'guideban';
       box.style.cssText = 'margin:10px 0;padding:12px 14px;border:2px solid var(--accent,#c9792b);border-radius:10px;background:var(--accent-100,#fff3e6)';
       const h = document.createElement('b'); h.textContent = '🎯 ' + t('author_guide_title');
       const inst = document.createElement('div'); inst.style.marginTop = '4px'; inst.textContent = g;
       const done = document.createElement('div'); done.id = 'guidedone'; done.hidden = true; done.style.cssText = 'margin-top:6px;font-weight:600;color:var(--brand-600,#2a7d6d)'; done.textContent = '✓ ' + t('author_guide_done');
       box.append(h, inst, done);
-      document.body.insertBefore(box, document.body.firstChild);
+      ROOT.insertBefore(box, ROOT.firstChild);
     }
   } catch (e) {}
-  $('#opts').onclick = () => chrome.runtime.openOptionsPage();
+  { const o = $('#opts'); if (o) o.onclick = () => chrome.runtime.openOptionsPage(); } // removed when embedded in Settings
   $('#start').onclick = onStart;
   $('#stop').onclick = onStop;
   $('#analyze').onclick = onAnalyze;
@@ -84,7 +93,7 @@ async function init() {
   $('#f_schema').onchange = () => renderFieldMap(collectFields());
   // "Complete an existing source" mode: ?base=<id> loads that source; drafting then ADDS a stream to it
   // (a contributor recording a product the author lacks — a card, an investment) instead of a new source.
-  const baseId = new URLSearchParams(location.search).get('base');
+  const baseId = params.base;
   if (baseId) {
     try { BASE = (await getAdapters())[baseId] || null; } catch (e) {}
     if (BASE) {
@@ -127,7 +136,7 @@ async function refreshLive() {
   const [samples, ws] = await Promise.all([getSamples(LEARN.domain), getWsFrames(LEARN.domain)]);
   const s = summarizeCapture(samples, ws);
   // Guided capture: light up "✓ got what the team needs" as soon as the hinted endpoint is captured.
-  if (GUIDE && GUIDE.endpoint) { const done = document.getElementById('guidedone'); if (done) done.hidden = !samples.some((x) => String(x.url || '').includes(GUIDE.endpoint)); }
+  if (GUIDE && GUIDE.endpoint) { const done = $('#guidedone'); if (done) done.hidden = !samples.some((x) => String(x.url || '').includes(GUIDE.endpoint)); }
   $('#live').hidden = false;
   $('#livecounts').innerHTML = ''; // built from escaped numbers below
   const count = (n, label) => { const d = document.createElement('span'); d.textContent = String(n); const sm = document.createElement('span'); sm.style.cssText = 'font-size:12px;font-weight:400;color:#888;margin-left:4px'; sm.textContent = label; d.appendChild(sm); return d; };
@@ -175,7 +184,7 @@ function renderOrphans(orphans) {
 }
 async function onOrphanSend() {
   if (!PENDING_BUNDLE) return;
-  const chosen = [...document.querySelectorAll('#orphanlist input:checked')].map((c) => c.dataset.orphan);
+  const chosen = $$('#orphanlist input:checked').map((c) => c.dataset.orphan);
   const bundle = chosen.length ? revealOrphans(PENDING_BUNDLE, chosen) : PENDING_BUNDLE;
   $('#orphanpanel').hidden = true; PENDING_BUNDLE = null;
   await submitBundle(bundle);
@@ -338,7 +347,7 @@ function renderFieldMap(current) {
 
 function collectFields() {
   const fields = {};
-  document.querySelectorAll('#fieldmap [data-field]').forEach((s) => { if (s.value) fields[s.dataset.field] = s.value; });
+  $$('#fieldmap [data-field]').forEach((s) => { if (s.value) fields[s.dataset.field] = s.value; });
   return fields;
 }
 
@@ -510,4 +519,125 @@ async function onAugment() {
   } catch (e) { $('#status').textContent = t('author_invalid', [(e && e.message) || String(e)]); }
 }
 
-init();
+
+// The recorder markup — one source of truth for both hosts (author.html standalone + the embedded Settings
+// section). The host provides a container (`<div class="app">`), sets its innerHTML to this, then calls
+// initAuthor(container, params). i18n is applied by initAuthor (data-i18n / data-i18n-ph).
+export const RECORDER_HTML = `
+    <div id="augbanner" class="card" hidden style="border-color:#2e7d3288">
+      <strong data-i18n="author_completing_h"></strong>
+      <span id="augbase"></span>
+      <p class="muted" data-i18n="author_completing_sub" style="margin:6px 0 0"></p>
+    </div>
+
+    <div class="section-title"><h2 data-i18n="author_step1"></h2></div>
+    <div class="card">
+      <div class="row">
+        <input id="url" size="34" data-i18n-ph="author_url_ph" />
+        <button id="start" class="primary" data-i18n="author_start"></button>
+        <button id="stop" hidden data-i18n="author_stop"></button>
+        <span id="learnstatus" class="muted"></span>
+      </div>
+      <div class="tips" style="margin-top:10px">
+        <b data-i18n="author_tips_title"></b>
+        <ol class="muted" style="margin:6px 0 0 18px">
+          <li data-i18n="author_tip_pages"></li>
+          <li data-i18n="author_tip_detail"></li>
+          <li data-i18n="author_tip_pdf"></li>
+          <li data-i18n="author_tip_wait"></li>
+        </ol>
+        <p class="muted" data-i18n="author_note_advanced" style="margin:10px 0 0"></p>
+      </div>
+    </div>
+
+    <div id="live" class="card" hidden style="border-color:#c62828aa">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="livedot" style="width:10px;height:10px;border-radius:50%;background:#e53935;display:inline-block"></span>
+        <strong id="livetitle" data-i18n="author_live_recording"></strong>
+      </div>
+      <div id="livecounts" style="display:flex;gap:16px;margin:10px 0;font-size:22px;font-weight:700"></div>
+      <div id="livebadges" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
+      <p id="livehint" class="muted" style="margin:0"></p>
+      <div id="sharerow" hidden style="margin-top:12px;border-top:1px solid #333;padding-top:10px">
+        <div class="inp" style="margin-bottom:8px"><label data-i18n="author_handle_label"></label>
+          <input id="handle" data-i18n-ph="author_handle_ph" maxlength="60" size="24" />
+        </div>
+        <button id="sendteam" class="primary" data-i18n="author_send_team"></button>
+        <button id="sharepreview" data-i18n="author_share_preview"></button>
+        <button id="share" data-i18n="author_share"></button>
+        <span id="sharestatus" class="muted"></span>
+        <p class="muted" data-i18n="author_share_note" style="margin:8px 0 0;font-size:12px"></p>
+        <div id="orphanpanel" hidden style="margin-top:10px;border:1px solid #b8860b;border-radius:6px;padding:10px">
+          <p class="muted" data-i18n="author_orphan_intro" style="margin:0 0 8px;font-size:12px"></p>
+          <div id="orphanlist" style="font-size:13px"></div>
+          <div style="margin-top:8px"><button id="orphansend" class="primary" data-i18n="author_orphan_send"></button>
+            <button id="orphancancel" data-i18n="author_orphan_cancel"></button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title"><h2 data-i18n="author_step2"></h2></div>
+    <div class="card">
+      <div class="row">
+        <button id="analyze" data-i18n="author_analyze"></button>
+        <span class="muted"><span id="samplecount">0</span> <span data-i18n="author_samples"></span></span>
+      </div>
+
+      <div id="mapper" hidden style="margin-top:12px">
+        <div class="inp"><label data-i18n="author_find_label"></label>
+          <span class="row"><input id="f_find" data-i18n-ph="author_find_ph" size="22"><button id="findbtn" data-i18n="author_find"></button><span id="findstatus" class="muted"></span></span>
+        </div>
+        <div class="inp" id="listpickrow" hidden><label data-i18n="author_which_list"></label><select id="f_list"></select></div>
+        <div class="muted" id="listhint" hidden data-i18n="author_list_hint" style="margin:-4px 0 8px"></div>
+        <div class="inp" id="groupspickrow" hidden><label data-i18n="author_groups_label"></label><select id="f_groups"></select></div>
+        <div class="inp" id="multistreamrow"><label></label><button id="multistream" class="accent" type="button" hidden data-i18n="author_multistream"></button></div>
+        <p class="muted" data-i18n="author_map_intro"></p>
+        <div class="inp"><label data-i18n="author_kind"></label>
+          <select id="f_schema">
+            <option value="receipt@1" data-i18n="kind_receipt"></option>
+            <option value="invoice@1" data-i18n="kind_invoice"></option>
+            <option value="transaction@1" data-i18n="kind_transaction"></option>
+            <option value="investment@1" data-i18n="kind_investment"></option>
+          </select>
+        </div>
+        <div class="inp"><label data-i18n="author_categories"></label><input id="f_cats" placeholder="grocery,retail" /></div>
+
+        <div class="section-title" style="margin-top:12px"><h3 data-i18n="author_fields"></h3></div>
+        <div id="fieldmap"></div>
+
+        <details style="margin-top:12px">
+          <summary data-i18n="author_advanced"></summary>
+          <div class="inp"><label data-i18n="author_id"></label><input id="f_id" /></div>
+          <div class="inp"><label data-i18n="author_name"></label><input id="f_name" /></div>
+          <div class="inp"><label data-i18n="author_apihost"></label><input id="f_host" /></div>
+          <div class="inp"><label data-i18n="author_listpath"></label><input id="f_path" /></div>
+          <div class="inp"><label data-i18n="author_itemspath"></label><input id="f_items" /></div>
+          <div class="inp"><label data-i18n="author_paging"></label>
+            <select id="f_paging">
+              <option value="none">none</option><option value="page">page</option>
+              <option value="offset">offset</option>
+              <option value="cursor">cursor</option><option value="offsets">offsets</option>
+              <option value="years">years</option>
+            </select>
+          </div>
+          <div class="inp"><label data-i18n="author_pdfpath"></label><input id="f_pdf" placeholder="/…/{externalId}/pdf" /></div>
+          <div class="inp"><label data-i18n="author_detailpath"></label><input id="f_detail" placeholder="/…/{internalId}" /></div>
+          <div class="inp"><label></label><button id="editjson" type="button" data-i18n="edit_json"></button></div>
+        </details>
+
+        <div class="row" style="margin-top:14px">
+          <button id="test" data-i18n="author_test"></button>
+          <button id="augment" class="accent" hidden data-i18n="author_augment"></button>
+          <button id="save" class="accent" data-i18n="author_save"></button>
+          <span id="status" class="muted"></span>
+        </div>
+        <table id="preview" style="margin-top:10px"><thead><tr>
+          <th data-i18n="th_date"></th><th data-i18n="th_store"></th>
+          <th class="r" data-i18n="th_amount"></th><th data-i18n="th_type"></th>
+        </tr></thead><tbody></tbody></table>
+        <div id="docwrap" hidden style="margin-top:10px">
+          <b data-i18n="author_doc_preview"></b>
+          <div id="docpreview"></div>
+        </div>
+      </div>
+    </div>`;

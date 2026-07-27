@@ -3156,5 +3156,8 @@
   },
   "opt_contrib_record_help": {
     "message": "Capture a site's session in your browser and turn it into a source you can test and contribute back to the community."
+  },
+  "sweep_drag": {
+    "message": "Drag to reorder"
   }
 }

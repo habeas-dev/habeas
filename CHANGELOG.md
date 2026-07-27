@@ -11,9 +11,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Changed
-- **Record mode opens inline, not in a new tab.** In *Record & contribute*, “Create a source (record mode)” is now
-  an accordion that embeds the recorder (author page) right in Settings; re-record and the team's guided-capture
-  requests open there too. No more losing the Settings page or spawning tabs.
+- **The recorder is now built into Settings (no new tab, no iframe).** *Record & contribute* renders the whole
+  record-mode flow — record a site → map fields → test → save → send to the team — natively in the section, one
+  consistent interface with the contributions tracker below it. Re-record and the team's guided-capture requests
+  open there too. (The recorder markup + logic is shared with the standalone author page via one module.)
 
 - **Settings: the “Advanced” section is now “Record & contribute”**, holding the record-mode flow (capture a
   site's session → build a source) plus the tracker for recordings you've contributed. Writing/importing a
@@ -22,9 +23,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ### Added
 - **“Sync all” is now configurable — membership + order.** Settings → Automatic sync: pick which sources the
-  on-demand “Sync all” sweep runs (a per-source checkbox) and drag them into the order you want (↑/↓). The sweep
-  used to fire every enabled source in config order; now it runs exactly the opted-in ones, in your chosen order.
-  Both settings live on the source, so they sync to your other browsers with the rest of the config.
+  on-demand “Sync all” sweep runs (a per-source checkbox) and reorder them by drag'n'drop or the ↑/↓ arrows. The
+  sweep used to fire every enabled source in config order; now it runs exactly the opted-in ones, in your chosen
+  order. Both settings live on the source, so they sync to your other browsers with the rest of the config.
 
 ## [0.9.1] — 2026-07-27
 

@@ -17,6 +17,7 @@ import { editJson } from './jsoneditor.js';
 import { getGrants, revokeGrant } from '../lib/grants.js';
 import { getStoreConfig, moveStoreTo, putItems } from '../lib/store.js';
 import { enableVault, unlockVault, lockVault, vaultStatus } from '../lib/secretsync.js';
+import { RECORDER_HTML, initAuthor } from './author.js';
 import { readSinkRecords } from '../sinks/sinks.js';
 import { esc } from '../lib/esc.js';
 import { nextOccurrence, describeSchedule, validateSpec } from '../lib/schedule.js';
@@ -332,8 +333,9 @@ async function renderSweep(cfg) {
     .sort((a, b) => (a.o - b.o) || (a.i - b.i)).map((x) => x.d);
   box.innerHTML = ranked.map((d, idx) => {
     const inc = d.sweep !== false;
-    return `<div class="src-card" style="${inc ? '' : 'opacity:.55'}">
+    return `<div class="src-card sweep-row" draggable="true" data-sweep-id="${esc(d.id)}" style="${inc ? '' : 'opacity:.55'}">
       <div class="src-row" style="align-items:center;gap:8px">
+        <span class="draghandle" title="${esc(t('sweep_drag'))}" aria-hidden="true">⠿</span>
         <label class="destchk" style="flex:1"><input type="checkbox" data-sweep-inc="${esc(d.id)}"${inc ? ' checked' : ''}> <b>${esc(nameOf(d))}</b> <code class="muted">${esc(d.id)}</code></label>
         <button data-sweep-up="${esc(d.id)}" title="${esc(t('sweep_up'))}"${idx === 0 ? ' disabled' : ''}>↑</button>
         <button data-sweep-down="${esc(d.id)}" title="${esc(t('sweep_down'))}"${idx === ranked.length - 1 ? ' disabled' : ''}>↓</button>
@@ -348,6 +350,25 @@ async function renderSweep(cfg) {
   });
   box.querySelectorAll('[data-sweep-up]').forEach((b) => b.onclick = () => move(b.dataset.sweepUp, -1));
   box.querySelectorAll('[data-sweep-down]').forEach((b) => b.onclick = () => move(b.dataset.sweepDown, 1));
+  // Drag'n'drop reordering (alongside the arrows): drop BEFORE/AFTER a row by pointer position, then persist.
+  let dragId = null;
+  box.querySelectorAll('[data-sweep-id]').forEach((card) => {
+    card.addEventListener('dragstart', (e) => { dragId = card.dataset.sweepId; card.classList.add('dragging'); try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragId); } catch (x) {} });
+    card.addEventListener('dragend', () => { dragId = null; box.querySelectorAll('.dragging,.dragover').forEach((el) => el.classList.remove('dragging', 'dragover')); });
+    card.addEventListener('dragover', (e) => { e.preventDefault(); try { e.dataTransfer.dropEffect = 'move'; } catch (x) {} card.classList.add('dragover'); });
+    card.addEventListener('dragleave', () => card.classList.remove('dragover'));
+    card.addEventListener('drop', (e) => {
+      e.preventDefault(); card.classList.remove('dragover');
+      const targetId = card.dataset.sweepId;
+      if (!dragId || dragId === targetId) return;
+      const ids = orderedIds.slice();
+      ids.splice(ids.indexOf(dragId), 1); // remove the dragged id first
+      const rect = card.getBoundingClientRect();
+      const after = e.clientY > rect.top + rect.height / 2; // drop below the midpoint → after this row
+      ids.splice(ids.indexOf(targetId) + (after ? 1 : 0), 0, dragId);
+      persistOrder(ids);
+    });
+  });
 }
 
 // ---- Download planner UI ----------------------------------------------------------------------------
@@ -549,18 +570,22 @@ $('#stype').onchange = renderFields;
 $('#addsink').onclick = addSink;
 { const oa = $('#open-archive'); if (oa) oa.onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/archive.html') }); }
 $('#browse').onclick = () => { location.href = 'marketplace.html'; };
-// Record mode (author.html) renders INLINE in the "Record & contribute" accordion, not a new tab. The summary
-// toggles it; opening for the first time lazy-loads the page. openAuthor() (re)loads it with params (re-record /
-// guided capture) and expands + scrolls to it.
-function openAuthor(query = '') {
-  const acc = $('#record-acc'), fr = $('#author-frame');
-  if (!acc || !fr) { location.href = 'author.html' + query; return; } // fallback if the accordion isn't present
-  fr.src = 'author.html' + query;
-  acc.open = true;
-  acc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+// The recorder (author.js) renders NATIVELY in the "Record & contribute" section — no iframe, no new tab. Its
+// markup (RECORDER_HTML) is injected once and initAuthor wires it against the Settings DOM. openAuthor(params)
+// re-applies params (re-record / guided capture: { url, guide, endpoint, base, handoff }) and scrolls to it.
+let recReady = false;
+function ensureRecorder() {
+  const root = $('#rec-root'); if (!root) return null;
+  if (!recReady) { root.innerHTML = RECORDER_HTML; recReady = true; }
+  return root;
 }
-{ const acc = $('#record-acc'), fr = $('#author-frame');
-  if (acc && fr) acc.addEventListener('toggle', () => { if (acc.open && !fr.getAttribute('src')) fr.src = 'author.html'; }); }
+function openAuthor(params = {}) {
+  const root = ensureRecorder(); if (!root) return;
+  initAuthor(root, params);
+  root.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+// Mount the recorder on load so an in-progress recording (habeas:learn) is restored + the tool is ready in place.
+{ const root = ensureRecorder(); if (root) initAuthor(root, {}); }
 $('#ds-search').oninput = filterSources;
 $('#auto-search').oninput = filterRoutes;
 $('#store-backend').onchange = renderStoreFields;
@@ -612,7 +637,7 @@ async function renderContributions() {
     </div>`;
   }).join('');
   wrap.querySelectorAll('[data-thread]').forEach((b) => { b.onclick = () => openThread(b.dataset.thread); });
-  wrap.querySelectorAll('[data-rerec]').forEach((b) => { b.onclick = () => openAuthor('?url=' + encodeURIComponent('https://' + b.dataset.rerec + '/')); });
+  wrap.querySelectorAll('[data-rerec]').forEach((b) => { b.onclick = () => openAuthor({ url: 'https://' + b.dataset.rerec + '/' }); });
 }
 // One-click install of the source the team authored from this recording — so the contributor can test it
 // without touching any JSON. Saves it, grants consent + capture perms, and enables it as a datasource.
@@ -702,10 +727,8 @@ async function openThread(id) {
       const cr = data.messages[cq.dataset.capreq] && data.messages[cq.dataset.capreq].captureRequest;
       if (!cr) return;
       const site = 'https://www.' + (data.domain || '') + '/';
-      const query = '?url=' + encodeURIComponent(site)
-        + '&guide=' + encodeURIComponent(cr.instruction) + (cr.endpoint ? '&endpoint=' + encodeURIComponent(cr.endpoint) : '')
-        + '&handoff=' + encodeURIComponent(id); // attach the recording back to THIS handoff (same thread)
-      openAuthor(query); // inline in the accordion, not a new tab
+      // attach the recording back to THIS handoff (same thread) — inline in the section, not a new tab
+      openAuthor({ url: site, guide: cr.instruction, endpoint: cr.endpoint || '', handoff: id });
     }
   };
   // Backward compatibility: a source attached BEFORE version messages existed has no timeline card — show the
