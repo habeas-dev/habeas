@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.2] — 2026-07-27
+
 ### Fixed
 - **Sending stored documents no longer needlessly opens the source.** When you send already-saved documents to a
   destination (e.g. 6 Trade Republic statements → Cuéntamo, with the files already in Dropbox), Habeas now reads
