@@ -34,8 +34,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName)
-          echo "Latest release: $tag"
+          # The HIGHEST published version only — never an older one. Pick by semver (sort -V), not GitHub's
+          # "Latest" heuristic (which can key off date and mislead after a re-tag): if 0.9.0 and 0.9.1 both
+          # failed to upload, only 0.9.1 is ever retried.
+          tag=$(gh release list --repo "$GITHUB_REPOSITORY" --json tagName,isDraft,isPrerelease \
+                  --jq '.[] | select(.isDraft==false and .isPrerelease==false) | .tagName' | sort -V | tail -1)
+          echo "Highest release: $tag"
+          [ -n "$tag" ] || { echo 'no release to retry'; exit 0; }
           gh release download "$tag" --repo "$GITHUB_REPOSITORY" --pattern 'habeas-*.zip' --dir dist
           zip=$(ls dist/habeas-*.zip 2>/dev/null | head -1)
           echo "Zip: ${zip:-<none>}"
