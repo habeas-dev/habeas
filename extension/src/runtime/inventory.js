@@ -1523,7 +1523,25 @@ export function keepFilter(items, keep) {
   if (keep.prefix) { const pre = Array.isArray(keep.prefix) ? keep.prefix : [keep.prefix]; out = out.filter((p) => { const v = String(val(p) ?? ''); return pre.some((x) => v.startsWith(x)); }); }
   return out;
 }
+// list.expand {path}: replace each item that has a non-empty sub-array at `path` with one item PER sub-element,
+// each merged onto its parent (parent fields — an invoice's date/serviceType — inherited; the sub's own fields
+// win; the sub-array itself is dropped from the result). An item with no/empty sub-array is kept unchanged. Lets
+// a monthly invoice made of several sub-invoices yield one document (and one PDF) per sub-invoice (Pepephone).
+export function expandItems(items, expand) {
+  if (!expand || !expand.path || !Array.isArray(items)) return items;
+  const out = [];
+  for (const it of items) {
+    const subs = get(it, expand.path);
+    if (Array.isArray(subs) && subs.length) {
+      for (const s of subs) { const m = { ...it, ...(s && typeof s === 'object' ? s : {}) }; delete m[expand.path]; out.push(m); }
+    } else out.push(it);
+  }
+  return out;
+}
 function getItems(data, list) {
+  return expandItems(collectItems(data, list), list && list.expand);
+}
+function collectItems(data, list) {
   // Component-keyed responses (AliExpress mtop): the items aren't an array but sibling OBJECT keys sharing a
   // prefix (data.data.pc_om_list_order_<id>). `itemsFromKeys {at, prefix, sub?}` collects each such value
   // (optionally its `sub` field) into an array, in insertion order.

@@ -806,6 +806,20 @@
                   "description": "One past statement's movements; body may template {period} = the statement date."
                 }
               }
+            },
+            "expand": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "path"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Dotted path to a per-item sub-array (e.g. subInvoices); each item is replaced by one item per sub-element, inheriting the parent's fields (the sub wins on conflict). Empty/absent → the item is kept as-is."
+                }
+              },
+              "description": "Expand each item into its sub-array elements (one document per sub-item), inheriting parent fields."
             }
           }
         },

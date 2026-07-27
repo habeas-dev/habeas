@@ -20,6 +20,7 @@
     "list": {
       "path": "/v1/invoice",
       "itemsPath": "invoices",
+      "expand": { "path": "subInvoices" },
       "paging": "none",
       "params": { "v": 3 },
       "range": { "from": "start", "to": "end", "format": "epoch" },

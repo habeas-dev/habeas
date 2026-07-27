@@ -11,6 +11,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **`api.list.expand`** — expand each list item into its sub-array elements (one document, and one PDF, per
+  sub-element), inheriting the parent's fields. Lets a monthly invoice made of several sub-invoices download all of
+  them (Pepephone: a month's line + device sub-invoices).
+
+### Added
 - **Time-windowed list ranges can be sent as Unix epoch** (`api.list.range.format: "epoch"` / `"epochMs"`), for
   APIs that take `start`/`end` as epoch seconds/ms rather than ISO dates (Pepephone's `/v1/invoice?start&end`).
 
