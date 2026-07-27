@@ -3,6 +3,9 @@
 > Working context for the **Habeas** repo. Develop it independently of Tiquetera/Cuéntamo
 > (those are separate apps that merely *consume* Habeas output).
 
+> Non-Claude agents (Codex, Cursor, …) should read [`AGENTS.md`](AGENTS.md) — the vendor-neutral
+> summary of this file (commands, rules, layout). This file has the fullest context.
+
 ## What this is
 
 **Habeas** is an open-source (AGPL-3.0) **Manifest V3 browser extension** (Chrome/Chromium

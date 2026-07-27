@@ -3,6 +3,10 @@
 Thanks for helping people reclaim their own data. The most valuable contribution
 is usually a **new adapter**.
 
+> **Working with an AI coding assistant** (Codex, Cursor, Aider, Gemini, Claude Code…)? Read
+> **[AGENTS.md](AGENTS.md)** first — it's the concise, safe onboarding for agents (build/test commands,
+> the non-negotiable rules, repo layout, and where to go deeper).
+
 ## Contributing an adapter
 
 Adapters (aka **sources**) are **declarative data, not code** — plain JS objects interpreted by a

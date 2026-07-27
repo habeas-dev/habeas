@@ -242,6 +242,9 @@ There are many ways to contribute:
 
 Contributions of all sizes are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+**Using an AI coding assistant?** Start at **[AGENTS.md](AGENTS.md)** — the vendor-neutral onboarding for
+Codex, Cursor, Aider, Gemini CLI, etc. (Claude Code additionally reads [CLAUDE.md](CLAUDE.md) automatically).
+
 ---
 
 # Legal
