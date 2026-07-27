@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.1] — 2026-07-27
+
 ### Changed
 - Reworded the credentials-vault help: it syncs the credentials of the external sites you send data to (HTTP
   destination tokens/headers, S3/WebDAV/Dropbox keys, email-provider API keys) — not specifically a consumer-app token.
