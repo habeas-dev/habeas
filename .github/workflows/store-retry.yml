@@ -1,0 +1,57 @@
+name: Store retry (Chrome Web Store)
+
+# Chrome Web Store rejects a new package while the PREVIOUS submission is still "in review / ready to
+# publish" (ITEM_NOT_UPDATABLE). The tag build's upload is best-effort, so a milestone released during that
+# window never reaches the store until someone re-submits. This scheduled job re-attempts the upload of the
+# LATEST GitHub release zip every few hours until it lands, then quietly no-ops.
+#
+# Why re-attempting is safe (no churn, no accidental re-review): CWS requires the uploaded version to be
+# strictly GREATER than the published one, so once the latest release is live a re-upload is rejected as a
+# no-op; while a predecessor is in review it returns ITEM_NOT_UPDATABLE — also a no-op. It only does real work
+# when the store is genuinely BEHIND and the queue has cleared. Firefox/AMO isn't retried here: it accepts new
+# versions immediately on the tag build (no in-review queue block), so it's never left behind.
+#
+# The step is continue-on-error, so a no-op cycle keeps the JOB green (no failure notifications) — the red ✗ on
+# the upload step is just informational. Firefox is unaffected.
+
+on:
+  schedule:
+    - cron: '23 */6 * * *' # every 6 hours
+  workflow_dispatch: {} # manual "try the store now" button
+
+permissions:
+  contents: read # read + download the latest release asset
+
+jobs:
+  cws-retry:
+    runs-on: ubuntu-latest
+    env:
+      HAS_CWS: ${{ secrets.CWS_REFRESH_TOKEN != '' }}
+    steps:
+      - name: Download the latest release zip
+        if: env.HAS_CWS == 'true'
+        id: dl
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName)
+          echo "Latest release: $tag"
+          gh release download "$tag" --repo "$GITHUB_REPOSITORY" --pattern 'habeas-*.zip' --dir dist
+          zip=$(ls dist/habeas-*.zip 2>/dev/null | head -1)
+          echo "Zip: ${zip:-<none>}"
+          echo "path=$zip" >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+
+      - name: Re-attempt Chrome Web Store upload
+        if: env.HAS_CWS == 'true' && steps.dl.outputs.path != ''
+        # No-op when the store is already current (version not greater → rejected) or a predecessor is still in
+        # review (ITEM_NOT_UPDATABLE). Only publishes when CWS is genuinely behind and the queue is clear.
+        continue-on-error: true
+        uses: mnao305/chrome-extension-upload@v5.0.0
+        with:
+          file-path: ${{ steps.dl.outputs.path }}
+          extension-id: ${{ secrets.CWS_EXTENSION_ID }}
+          client-id: ${{ secrets.CWS_CLIENT_ID }}
+          client-secret: ${{ secrets.CWS_CLIENT_SECRET }}
+          refresh-token: ${{ secrets.CWS_REFRESH_TOKEN }}
+          publish: true
