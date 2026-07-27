@@ -3138,5 +3138,17 @@
   },
   "vault_err": {
     "message": "No se pudo guardar la bóveda."
+  },
+  "opt_sweep_title": {
+    "message": "«Sincronizar todo» — qué orígenes y en qué orden"
+  },
+  "opt_sweep_help": {
+    "message": "Elige qué orígenes ejecuta la sincronización «Sincronizar todo» bajo demanda, y ordénalos con las flechas. Los no marcados se omiten en «Sincronizar todo» (puedes seguir sincronizándolos de uno en uno)."
+  },
+  "sweep_up": {
+    "message": "Subir"
+  },
+  "sweep_down": {
+    "message": "Bajar"
   }
 }

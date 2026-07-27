@@ -30,7 +30,7 @@ import { validateProposal, originHost, enabledSources } from './lib/exthooks.js'
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant, revokeGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
 import { runStoreMigration } from './lib/migrate.js';
-import { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isLoginNavigation, needsTabEscalation, sweepSinkId, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
+import { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isLoginNavigation, needsTabEscalation, sweepSinkId, orderedSweepSources, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
 
 // On startup, (re)register the in-session capture bridge for every enabled source (dynamic content
 // scripts can be dropped on an extension update). Idempotent; needs the host permission already granted.
@@ -543,7 +543,8 @@ async function sweepAllSources() {
     const swRunnable = (s) => !!s && s.type !== 'download' && s.type !== 'local-folder';
     await badgeWorking();
     let sources = 0, totalNew = 0, needLogin = 0, errors = 0, noSink = 0;
-    for (const ds of (cfg.datasources || []).filter((d) => d.enabled)) {
+    // Only the sources the user opted INTO the sweep (ds.sweep !== false), in their chosen order (ds.sweepOrder).
+    for (const ds of orderedSweepSources(cfg.datasources)) {
       if (signal.aborted) break; // stopped by the user
       const adapter = adapters[ds.adapter];
       if (!adapter || !(await hasConsent(adapter))) continue;

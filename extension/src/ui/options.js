@@ -317,6 +317,37 @@ async function render() {
     : `<p class="muted">${t('no_grants')}</p>`;
   $('#grants').querySelectorAll('[data-revoke]').forEach((b) => b.onclick = async () => { await revokeGrant(b.dataset.revoke); render(); });
   await renderPlanner(cfg);
+  await renderSweep(cfg);
+}
+
+// "Sync all" (on-demand sweep) membership + order. Each enabled source can be included/excluded (ds.sweep) and
+// moved up/down (ds.sweepOrder); the sweep then runs exactly these, in this order (orderedSweepSources). Both
+// fields live on the datasource, so they sync to other devices with the rest of the config.
+async function renderSweep(cfg) {
+  const box = $('#sweep-list'); if (!box) return;
+  const nameOf = (d) => (CATALOG[d.adapter] && CATALOG[d.adapter].name) || d.id;
+  const enabled = cfg.datasources.filter((d) => d.enabled);
+  if (!enabled.length) { box.innerHTML = `<p class="muted">${t('enable_ds_first')}</p>`; return; }
+  const ranked = enabled.map((d, i) => ({ d, i, o: Number.isFinite(d.sweepOrder) ? d.sweepOrder : Infinity }))
+    .sort((a, b) => (a.o - b.o) || (a.i - b.i)).map((x) => x.d);
+  box.innerHTML = ranked.map((d, idx) => {
+    const inc = d.sweep !== false;
+    return `<div class="src-card" style="${inc ? '' : 'opacity:.55'}">
+      <div class="src-row" style="align-items:center;gap:8px">
+        <label class="destchk" style="flex:1"><input type="checkbox" data-sweep-inc="${esc(d.id)}"${inc ? ' checked' : ''}> <b>${esc(nameOf(d))}</b> <code class="muted">${esc(d.id)}</code></label>
+        <button data-sweep-up="${esc(d.id)}" title="${esc(t('sweep_up'))}"${idx === 0 ? ' disabled' : ''}>↑</button>
+        <button data-sweep-down="${esc(d.id)}" title="${esc(t('sweep_down'))}"${idx === ranked.length - 1 ? ' disabled' : ''}>↓</button>
+      </div>
+    </div>`;
+  }).join('');
+  const orderedIds = ranked.map((d) => d.id);
+  const persistOrder = async (ids) => { const c = await getConfig(); c.datasources.forEach((d) => { const i = ids.indexOf(d.id); if (i >= 0) d.sweepOrder = i; }); await saveConfig(c); render(); };
+  const move = (id, delta) => { const ids = orderedIds.slice(); const i = ids.indexOf(id); const j = i + delta; if (i >= 0 && j >= 0 && j < ids.length) { [ids[i], ids[j]] = [ids[j], ids[i]]; persistOrder(ids); } };
+  box.querySelectorAll('[data-sweep-inc]').forEach((cb) => cb.onchange = async () => {
+    const c = await getConfig(); const d = c.datasources.find((x) => x.id === cb.dataset.sweepInc); if (d) d.sweep = cb.checked; await saveConfig(c); render();
+  });
+  box.querySelectorAll('[data-sweep-up]').forEach((b) => b.onclick = () => move(b.dataset.sweepUp, -1));
+  box.querySelectorAll('[data-sweep-down]').forEach((b) => b.onclick = () => move(b.dataset.sweepDown, 1));
 }
 
 // ---- Download planner UI ----------------------------------------------------------------------------

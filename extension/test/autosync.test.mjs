@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 // Pure scheduling policy for the background auto-sync runner — no chrome shim needed.
-const { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isLoginNavigation, needsTabEscalation, sweepSinkId, AUTO_DEBOUNCE_MS, AUTO_BACKOFF_BASE_MS, AUTO_BACKOFF_CAP_MS } = await import('../src/lib/autosync.js');
+const { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, orderedSweepSources, isLoginNavigation, needsTabEscalation, sweepSinkId, AUTO_DEBOUNCE_MS, AUTO_BACKOFF_BASE_MS, AUTO_BACKOFF_CAP_MS } = await import('../src/lib/autosync.js');
 
 test('sweepSinkId: auto-route sink wins, then the source favorite, then the global default', () => {
   assert.equal(sweepSinkId('x', { x: 'auto' }, { x: 'fav' }, 'def'), 'auto');
@@ -96,4 +96,19 @@ test('needsPageContext: explicit flags override the cross-origin heuristic', () 
 test('needsTabEscalation: a notab result escalates (open the site tab and retry in-page)', () => {
   assert.equal(needsTabEscalation({ status: 'notab' }), true);
   assert.equal(needsTabEscalation({ status: 'done' }), false);
+});
+
+test('orderedSweepSources: only opted-in enabled sources, ordered by sweepOrder then config position', () => {
+  const ds = [
+    { id: 'a', enabled: true, sweepOrder: 2 },
+    { id: 'b', enabled: true, sweepOrder: 0 },
+    { id: 'c', enabled: true },                 // no order → after the ordered ones
+    { id: 'd', enabled: true, sweep: false },   // opted OUT → excluded
+    { id: 'e', enabled: false, sweepOrder: 1 }, // disabled → excluded
+    { id: 'f', enabled: true },                 // no order → keeps config position (after c)
+  ];
+  assert.deepEqual(orderedSweepSources(ds).map((d) => d.id), ['b', 'a', 'c', 'f']);
+  assert.deepEqual(orderedSweepSources([]).map((d) => d.id), []);
+  // default (no sweep field) = included
+  assert.deepEqual(orderedSweepSources([{ id: 'x', enabled: true }]).map((d) => d.id), ['x']);
 });

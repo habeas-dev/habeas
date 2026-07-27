@@ -3138,5 +3138,17 @@
   },
   "vault_err": {
     "message": "Couldn't save the vault."
+  },
+  "opt_sweep_title": {
+    "message": "“Sync all” — which sources and in what order"
+  },
+  "opt_sweep_help": {
+    "message": "Choose which sources the on-demand “Sync all” runs, and drag them into the order you want with the arrows. Unchecked sources are skipped by “Sync all” (you can still sync them individually)."
+  },
+  "sweep_up": {
+    "message": "Move up"
+  },
+  "sweep_down": {
+    "message": "Move down"
   }
 }

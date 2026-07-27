@@ -94,6 +94,18 @@ export function needsTabEscalation(res) {
   return res.status === 'error' && AUTHISH.test(String(res.error || ''));
 }
 
+// The sources the on-demand "Sync all" sweep runs, IN ORDER. A source is included unless it opted out
+// (`ds.sweep === false`); order is by `ds.sweepOrder` (a number, lower first), with any source that has no
+// order kept AFTER the ordered ones in its existing config position (stable). Pure → unit-tested. Both fields
+// live on the datasource, so they ride the existing config sync to other devices for free.
+export function orderedSweepSources(datasources) {
+  return (datasources || [])
+    .filter((d) => d && d.enabled && d.sweep !== false)
+    .map((d, i) => ({ d, i, o: Number.isFinite(d.sweepOrder) ? d.sweepOrder : Infinity }))
+    .sort((a, b) => (a.o - b.o) || (a.i - b.i))
+    .map((x) => x.d);
+}
+
 // Which sink a "Sync all" sweep delivers a source to, in priority order: its explicit auto-route sink,
 // else the source's remembered favorite, else the global default sink. '' when none resolves (the source
 // is then reported as having no destination rather than silently skipped). Lets the sweep cover EVERY

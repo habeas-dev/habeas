@@ -10,6 +10,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **“Sync all” is now configurable — membership + order.** Settings → Automatic sync: pick which sources the
+  on-demand “Sync all” sweep runs (a per-source checkbox) and drag them into the order you want (↑/↓). The sweep
+  used to fire every enabled source in config order; now it runs exactly the opted-in ones, in your chosen order.
+  Both settings live on the source, so they sync to your other browsers with the rest of the config.
+
 ## [0.9.1] — 2026-07-27
 
 ### Changed
