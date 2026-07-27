@@ -12,6 +12,7 @@ import { applyStoredConfigIfNewer, writeSnapshotIfChanged } from './lib/configsy
 import { syncVaultIfUnlocked } from './lib/secretsync.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
 import { resolveSiteFetch, ensureSiteFetch, recoverSession, withBrandHost, findSiteTab, foregroundTab } from './lib/pagefetch.js';
+import { retrieveDelivered } from './lib/retrieve.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink, readSinkRecords } from './sinks/sinks.js';
 import { recordDelivered, putItems, getRecords } from './lib/store.js';
@@ -714,12 +715,27 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
   setStatus(t('status_fetching', [String(found), name]));
   try {
     const auth = await authFor(adapter);
-    // Open the site tab only if the outputs can produce FILES (a per-item PDF/Excel needs the page-context
-    // fetch); a records-only send never fetches. opts.force ("Re-download from site") always opens it.
-    // opts.noOpen (archive-only external sync) never opens one — files come along only if a tab is already there.
     const wantsDocs = opts.force || outputsOf(adapter).some((o) => artifactKinds(resolveOutput(adapter, o.id)).length);
-    const net = auth ? await ensureSiteFetch(adapter, { open: wantsDocs && !opts.noOpen, ds }).catch(() => null) : null; // null → records-only delivery still works
-    adapter = withBrandHost(adapter, net, ds); // brand (multi-TLD) source → api.host = the tab's domain, or the pinned country
+    // GENERAL RULE: only touch the SOURCE when a file isn't already available elsewhere. The records came from the
+    // archive; each file may already sit in a retrievable store it was delivered to (Dropbox/WebDAV/S3 — the
+    // default sink or any other) → read it back from there instead of re-fetching from the source (which would
+    // open the site and need its live session). local-folder needs a page handle the service worker lacks; the
+    // TARGET sink is skipped; opts.force ("Re-download from site") bypasses retrieval to fetch fresh.
+    const cfg = await getConfig();
+    const SW_RETRIEVABLE = new Set(['dropbox', 'webdav', 's3']);
+    const stores = opts.force ? [] : (cfg.sinks || []).filter((s) => s.id !== sink.id && SW_RETRIEVABLE.has(s.type));
+    const retrieveArt = async (d, ext) => {
+      const rec = { ...(d.record || {}), internalId: d.internalId, date: d.date ?? (d.record && d.record.date), group: d.group ?? (d.record && d.record.group) };
+      for (const st of stores) { try { const r = await retrieveDelivered(st, adapter, rec, ext, { only: true }); if (r && r.blob) return { blob: r.blob, ext: r.ext || ext }; } catch (e) {} }
+      return null;
+    };
+    // The source page-fetch, opened LAZILY — only when a file genuinely can't be read back from a store. So a
+    // send of documents already in Dropbox never opens the source. undefined = unresolved, null = resolved-none.
+    let net;
+    const ensureNet = async () => {
+      if (net === undefined) { net = auth ? await ensureSiteFetch(adapter, { open: wantsDocs && !opts.noOpen, ds }).catch(() => null) : null; adapter = withBrandHost(adapter, net, ds); }
+      return net;
+    };
     // The RECORDS were passed in from the Archive page (which already read the store) → no store re-read here,
     // so a Dropbox/folder-backed archive that the service worker can't list still works. Group by stream.
     const byStream = new Map();
@@ -759,7 +775,7 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
         sent += acked.length;
         rejectedCount += batch.length - acked.length;
       };
-      if (net) for (const d of eligible) {
+      if (wantsDocs) for (const d of eligible) {
         if (opts.signal && opts.signal.aborted) break; // Stop pressed — stop before the next doc (flushed chunks are safe)
         const arts = [];
         for (const fmt of (fmts.length ? fmts : [''])) {
@@ -768,12 +784,18 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
           const avail = artifactKinds(oeff, d); // per-doc: skip a document kind this item lacks
           for (const k of kinds) {
             if (!avail.some((a) => a.kind === k.kind)) continue;
-            const rc = recordingNet(net);
-            try { arts.push(await fetchArtifact(oeff, auth, d, rc.net, renderPage, k.kind)); }
-            catch (e) { const msg = (e && e.message) || String(e); if (!/no document for this (item|source)|no PDF for this source/i.test(msg)) pushDiag(adapter.id, { phase: 'document', output: sid, item: d.date || d.internalId, message: msg, method: rc.ref.last && rc.ref.last.method, url: rc.ref.last && rc.ref.last.url, status: rc.ref.last && rc.ref.last.status }); }
+            const ext = k.ext || documentExt(oeff) || 'pdf';
+            let art = await retrieveArt(d, ext); // 1. read the already-delivered file back from a store (Dropbox…)
+            if (!art) {                          // 2. not stored anywhere → fetch from the SOURCE (opens the site lazily)
+              const nf = await ensureNet();
+              if (nf) { const rc = recordingNet(nf);
+                try { art = await fetchArtifact(oeff, auth, d, rc.net, renderPage, k.kind); }
+                catch (e) { const msg = (e && e.message) || String(e); if (!/no document for this (item|source)|no PDF for this source/i.test(msg)) pushDiag(adapter.id, { phase: 'document', output: sid, item: d.date || d.internalId, message: msg, method: rc.ref.last && rc.ref.last.method, url: rc.ref.last && rc.ref.last.url, status: rc.ref.last && rc.ref.last.status }); } }
+            }
+            if (art) arts.push(art);
           }
         }
-        await adoptRealDate(adapter, sid, auth, d, arts, net); // real date/amount from the JSON detail (fetched for adoption even if the sink filters it out)
+        if (net) await adoptRealDate(adapter, sid, auth, d, arts, net); // only if we actually opened the source (a retrieved file already carries the stored date)
         if (arts.length) files.set(d.internalId, arts);
         emitProgress(ds.id, [{ internalId: d.internalId, stream: sid, record: bakeLearned(d) }]); // live: the card shows the real date now
         setStatus(t('status_downloading', [String(++n), String(eligible.length), sink.id])); // live counter

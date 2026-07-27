@@ -11,6 +11,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Fixed
+- **Sending stored documents no longer needlessly opens the source.** When you send already-saved documents to a
+  destination (e.g. 6 Trade Republic statements → Cuéntamo, with the files already in Dropbox), Habeas now reads
+  each file back from a retrievable store it was delivered to (Dropbox/WebDAV/S3) and only opens the source site as
+  a last resort — for files that aren't stored anywhere. The general rule: touch the source only when the file/info
+  isn't already in the archive or a store. (“Re-download from site” still fetches fresh on purpose.)
+
+### Fixed
 - **A sub-invoice no longer inherits its parent's total.** `api.list.expand` gained a `drop` list — parent fields a
   sub-element must not inherit — so a sub-invoice with no own amount stays empty instead of showing the whole
   month's total (Pepephone).
