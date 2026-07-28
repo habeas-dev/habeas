@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.4] — 2026-07-28
+
 ### Fixed
 - **WiZink cookie-reset works again (partitioned cookies).** The `resetCookies` wipe silently stopped removing
   WiZink's session cookies once they moved to a partitioned (`Partitioned`/`__Host-`, CHIPS) form:
