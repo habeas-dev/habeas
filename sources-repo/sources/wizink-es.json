@@ -5,7 +5,7 @@
   "trust": "first-party",
   "domain": "wizink.es",
   "country": "ES",
-  "version": "2026-07-25",
+  "version": "2026-07-28",
   "currency": "EUR",
   "categories": [
     "card",
@@ -18,7 +18,8 @@
     "mode": "cookie",
     "replayHeaders": [],
     "resetCookies": true,
-    "loginUrl": "https://www.wizink.es/login"
+    "loginUrl": "https://www.wizink.es/login",
+    "readyUrl": "https://www.wizink.es/clientes/posicion-global"
   },
   "api": {
     "host": "https://www.wizink.es",
@@ -223,5 +224,5 @@
       "changes": "Fuente unificada: reemplaza las tres fuentes WiZink (movimientos, extractos-PDF, extractos-Excel) por un único source con salidas seleccionables (stream × formato). El stream «Movimientos» captura las transacciones de tarjeta; el stream «Extractos» ofrece cada extracto en PDF o Excel compartiendo el mismo listado. Requiere la extensión 0.1.52+ (soporte de salidas)."
     }
   ],
-  "minVersion": "0.8.6"
+  "minVersion": "0.9.3"
 }
