@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.6] — 2026-07-28
+
 ### Added
 - **Getting-started walkthrough.** A first-run checklist at the top of the Archive home guides new users through
   the four steps — add a source, log in & collect, choose a destination, turn on automatic mode — with a
