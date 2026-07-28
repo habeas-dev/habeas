@@ -31,7 +31,7 @@ import { validateProposal, originHost, enabledSources } from './lib/exthooks.js'
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant, revokeGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
 import { runStoreMigration } from './lib/migrate.js';
-import { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isLoginNavigation, isReadyNavigation, needsTabEscalation, sweepSinkId, orderedSweepSources, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
+import { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isLoginNavigation, isReadyNavigation, needsTabEscalation, wantsCookieReset, sweepSinkId, orderedSweepSources, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
 
 // On startup, (re)register the in-session capture bridge for every enabled source (dynamic content
 // scripts can be dropped on an extension update). Idempotent; needs the host permission already granted.
@@ -565,9 +565,11 @@ async function sweepAllSources() {
         if (signal.aborted) break;
         let res = await runRoute(ds, adapter, sink, { kind: 'sweep', signal }); // unattended; each instance pins its own country
         if (signal.aborted) break; // don't open login tabs / escalate after a stop
-        if (res.status === 'nosession') {
-          // No captured session → open/navigate the login page so the user CAN authenticate. Stop trying the
-          // remaining sinks for this source (they'd all hit the same dead session); resume on capture.
+        if (res.status === 'nosession' || wantsCookieReset(adapter, res)) {
+          // No captured session, OR a resetCookies source (WiZink) failed on auth with corrupted cookies →
+          // WIPE its cookies and open/navigate the login page so the user CAN authenticate. Stop trying the
+          // remaining sinks for this source (they'd all hit the same dead session); resume on capture. Without
+          // the wipe, a resetCookies source would just tab-retry the same bad cookies below and never recover.
           try { await recoverSession(adapter); } catch (e) {}
           needLogin++; break;
         } else if (needsTabEscalation(res)) {

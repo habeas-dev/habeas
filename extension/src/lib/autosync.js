@@ -113,6 +113,18 @@ export function retainAutoDebounce(status) {
   return status === 'done';
 }
 
+// A `resetCookies` source (WiZink corrupts its own session cookies) can only recover from an AUTH failure by
+// WIPING the cookies and forcing a clean re-login — an unattended sweep that merely reopens the tab and
+// retries just replays the same bad cookies and fails again. This picks the auth-ish failures where such a
+// source should wipe-and-relogin instead of tab-retrying. Anti-bot challenges are deliberately EXCLUDED:
+// wiping would drop the anti-bot clearance cookie and make the challenge worse (that path stays a retry).
+const COOKIE_RESET_AUTH = /csrf|(^|\D)40[13](\D|$)|unauthor|forbidden|not logged|sign ?in|log ?in|(^|\W)session/i;
+export function wantsCookieReset(adapter, res) {
+  if (!(adapter && adapter.auth && adapter.auth.resetCookies && res)) return false;
+  if (res.status === 'nosession') return true;
+  return res.status === 'error' && COOKIE_RESET_AUTH.test(String(res.error || ''));
+}
+
 // In a "sync all" sweep each source is first tried UNATTENDED (no tab — an existing tab if any, else a
 // direct extension fetch). Should we then open the source's tab and retry in-session? A session/anti-bot
 // failure means the direct fetch lacked the live session; opening the tab often succeeds when the session

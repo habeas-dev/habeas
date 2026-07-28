@@ -5,9 +5,18 @@ import assert from 'node:assert/strict';
 const removed = [];
 globalThis.chrome = {
   cookies: {
-    getAll: async ({ domain }) => (domain === 'wizink.es'
-      ? [{ name: 'a', domain: '.wizink.es', path: '/', secure: true }, { name: 'b', domain: 'www.wizink.es', path: '/x', secure: false }]
-      : []),
+    // Partitioned cookies (CHIPS) are returned ONLY when a partitionKey is supplied — mirrors Chrome. The
+    // WiZink session cookie 'sess' lives in the https://www.wizink.es partition; the unpartitioned getAll
+    // (no partitionKey) never sees it, which is why the wipe silently stopped removing it.
+    getAll: async ({ domain, partitionKey }) => {
+      if (domain !== 'wizink.es') return [];
+      if (partitionKey) {
+        return partitionKey.topLevelSite === 'https://www.wizink.es'
+          ? [{ name: 'sess', domain: 'www.wizink.es', path: '/', secure: true, partitionKey }]
+          : [];
+      }
+      return [{ name: 'a', domain: '.wizink.es', path: '/', secure: true }, { name: 'b', domain: 'www.wizink.es', path: '/x', secure: false }];
+    },
     remove: async (o) => { removed.push(o); },
   },
 };
@@ -22,12 +31,17 @@ test('siteBaseUrl prefers openUrl (the account/purchases page), then loginUrl, t
   assert.equal(siteBaseUrl({ match: ['https://www.example.com/*'], api: { host: 'https://api.example.com' } }), 'https://www.example.com/');
 });
 
-test('clearSiteCookies removes every cookie for the domain (subdomains + http/https)', async () => {
+test('clearSiteCookies removes every cookie for the domain (subdomains + http/https + partitioned)', async () => {
   const n = await clearSiteCookies('wizink.es');
-  assert.equal(n, 2);
+  assert.equal(n, 3); // a, b (unpartitioned) + sess (partitioned)
   assert.equal(removed[0].url, 'https://wizink.es/');
   assert.equal(removed[1].url, 'http://www.wizink.es/x');
   assert.equal(removed[0].name, 'a');
+  // the partitioned session cookie is removed WITH its partitionKey (remove fails silently without it)
+  const sess = removed.find((r) => r.name === 'sess');
+  assert.ok(sess, 'partitioned cookie was removed');
+  assert.equal(sess.url, 'https://www.wizink.es/');
+  assert.deepEqual(sess.partitionKey, { topLevelSite: 'https://www.wizink.es' });
 });
 
 test('clearSiteCookies returns 0 for an unknown domain', async () => {

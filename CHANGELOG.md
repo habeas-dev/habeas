@@ -10,6 +10,17 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **WiZink cookie-reset works again (partitioned cookies).** The `resetCookies` wipe silently stopped removing
+  WiZink's session cookies once they moved to a partitioned (`Partitioned`/`__Host-`, CHIPS) form:
+  `chrome.cookies.getAll` without a `partitionKey` never returns partitioned cookies, and `remove` needs their
+  key. `clearSiteCookies` now also enumerates the site's own CHIPS partitions and removes those (with their
+  `partitionKey`), so a corrupted WiZink session can be cleared and re-logged-in as before.
+- **Unattended runs wipe cookies for a `resetCookies` source on auth failure.** In a Sync-all sweep, a WiZink
+  auth failure was classified as a generic error and merely reopened the tab to retry with the same bad
+  cookies. It now wipes-and-relogins (like the manual List / Archive paths), instead of looping. Anti-bot
+  challenges are excluded (wiping would drop the clearance cookie).
+
 ## [0.9.3] — 2026-07-28
 
 ### Added

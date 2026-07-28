@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 // Pure scheduling policy for the background auto-sync runner — no chrome shim needed.
-const { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, orderedSweepSources, isLoginNavigation, isReadyNavigation, needsTabEscalation, sweepSinkId, AUTO_DEBOUNCE_MS, AUTO_BACKOFF_BASE_MS, AUTO_BACKOFF_CAP_MS } = await import('../src/lib/autosync.js');
+const { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, orderedSweepSources, isLoginNavigation, isReadyNavigation, needsTabEscalation, wantsCookieReset, sweepSinkId, AUTO_DEBOUNCE_MS, AUTO_BACKOFF_BASE_MS, AUTO_BACKOFF_CAP_MS } = await import('../src/lib/autosync.js');
 
 test('sweepSinkId: auto-route sink wins, then the source favorite, then the global default', () => {
   assert.equal(sweepSinkId('x', { x: 'auto' }, { x: 'fav' }, 'def'), 'auto');
@@ -131,6 +131,24 @@ test('needsPageContext: explicit flags override the cross-origin heuristic', () 
   assert.equal(needsPageContext({ ...crossOrigin, auth: { swFetchOk: true } }), false, 'swFetchOk opts a CORS-open API out');
   const sameHost = { match: ['https://x.com/*'], domain: 'x.com', api: { host: 'https://x.com' } };
   assert.equal(needsPageContext({ ...sameHost, auth: { pageOnly: true } }), true, 'pageOnly forces it on');
+});
+
+const resetCookiesSrc = { auth: { resetCookies: true } };
+const plainSrc = { auth: {} };
+
+test('wantsCookieReset: a resetCookies source wipes on an AUTH failure (unattended run) instead of tab-retrying', () => {
+  assert.equal(wantsCookieReset(resetCookiesSrc, { status: 'error', error: 'csrf token not found (not logged in?)' }), true);
+  assert.equal(wantsCookieReset(resetCookiesSrc, { status: 'error', error: 'csrf 401' }), true);
+  assert.equal(wantsCookieReset(resetCookiesSrc, { status: 'error', error: 'list 403 forbidden' }), true);
+  assert.equal(wantsCookieReset(resetCookiesSrc, { status: 'nosession' }), true);
+});
+
+test('wantsCookieReset: NOT for a challenge, a non-auth error, or a non-resetCookies source', () => {
+  assert.equal(wantsCookieReset(resetCookiesSrc, { status: 'challenged' }), false);          // anti-bot: wiping drops the clearance cookie
+  assert.equal(wantsCookieReset(resetCookiesSrc, { status: 'error', error: 'parse failed: bad json' }), false);
+  assert.equal(wantsCookieReset(resetCookiesSrc, { status: 'done', new: 2 }), false);
+  assert.equal(wantsCookieReset(plainSrc, { status: 'error', error: 'csrf 401' }), false);   // source doesn't reset cookies
+  assert.equal(wantsCookieReset(resetCookiesSrc, null), false);
 });
 
 test('needsTabEscalation: a notab result escalates (open the site tab and retry in-page)', () => {

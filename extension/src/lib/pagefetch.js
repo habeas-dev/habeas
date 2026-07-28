@@ -385,14 +385,32 @@ export async function recoverSession(adapter) {
 
 // Remove every cookie for a registrable domain (and its subdomains). Needs the `cookies` permission +
 // host access for the domain. Used to recover from a site whose corrupted cookies block a fresh login.
+// IMPORTANT: also clears PARTITIONED cookies (CHIPS). chrome.cookies.getAll WITHOUT a partitionKey returns
+// only unpartitioned cookies, and remove needs the matching partitionKey — so a site that moved its session
+// cookie to a `Partitioned`/`__Host-` form (WiZink) would leave the wipe removing nothing. We enumerate the
+// site's own partitions (the top-level site is the source's own origin variants) and remove those too.
 export async function clearSiteCookies(domain) {
   if (!(chrome.cookies && domain)) return 0;
-  let all = [];
-  try { all = await chrome.cookies.getAll({ domain }); } catch (e) { return 0; }
+  const bare = domain.replace(/^\./, '');
+  const collected = [];
+  const gather = async (filter) => {
+    try { const cs = await chrome.cookies.getAll(filter); if (Array.isArray(cs)) collected.push(...cs); } catch (e) {}
+  };
+  await gather({ domain });                                                   // unpartitioned (+ subdomains)
+  for (const site of new Set([`https://${bare}`, `https://www.${bare}`])) {   // this site's own CHIPS partitions
+    await gather({ domain, partitionKey: { topLevelSite: site } });
+  }
+  const seen = new Set();
   let n = 0;
-  for (const c of all) {
+  for (const c of collected) {
+    const pk = c.partitionKey ? JSON.stringify(c.partitionKey) : '';
+    const key = c.name + '|' + c.domain + '|' + c.path + '|' + pk;
+    if (seen.has(key)) continue; // the same cookie can surface from more than one gather
+    seen.add(key);
     const url = (c.secure ? 'https://' : 'http://') + c.domain.replace(/^\./, '') + c.path;
-    try { await chrome.cookies.remove({ url, name: c.name, storeId: c.storeId }); n++; } catch (e) {}
+    const rm = { url, name: c.name, storeId: c.storeId };
+    if (c.partitionKey) rm.partitionKey = c.partitionKey; // remove a partitioned cookie only WITH its key
+    try { await chrome.cookies.remove(rm); n++; } catch (e) {}
   }
   return n;
 }
