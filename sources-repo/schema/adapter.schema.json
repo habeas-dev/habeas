@@ -297,6 +297,13 @@
           "pattern": "^https://",
           "description": "Sign-in page to open when no session is available (e.g. https://www.wizink.es/login). Defaults to the site root derived from match/api.host."
         },
+        "readyUrl": {
+          "oneOf": [
+            { "type": "string", "pattern": "^https://" },
+            { "type": "array", "items": { "type": "string", "pattern": "^https://" } }
+          ],
+          "description": "Hold auto-sync until the tab is on the source's data view — a single https URL or an array of them (ready when ANY matches by host + path prefix + hash-route prefix, ignoring the trailing id). For SPAs that fire capturable requests on earlier screens (e.g. ING's data only exists at https://ing.ingdirect.es/pfm/#producto/<session-uuid>). Omit → every navigation is treated as ready."
+        },
         "replayHeaders": {
           "type": "array",
           "items": {
