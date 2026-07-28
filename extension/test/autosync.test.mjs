@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 // Pure scheduling policy for the background auto-sync runner — no chrome shim needed.
-const { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, orderedSweepSources, isLoginNavigation, isReadyNavigation, needsTabEscalation, wantsCookieReset, sweepSinkId, AUTO_DEBOUNCE_MS, AUTO_BACKOFF_BASE_MS, AUTO_BACKOFF_CAP_MS } = await import('../src/lib/autosync.js');
+const { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, orderedSweepSources, isLoginNavigation, isReadyNavigation, needsTabEscalation, wantsCookieReset, loginErrorNeedsCookieReset, sweepSinkId, AUTO_DEBOUNCE_MS, AUTO_BACKOFF_BASE_MS, AUTO_BACKOFF_CAP_MS } = await import('../src/lib/autosync.js');
 
 test('sweepSinkId: auto-route sink wins, then the source favorite, then the global default', () => {
   assert.equal(sweepSinkId('x', { x: 'auto' }, { x: 'fav' }, 'def'), 'auto');
@@ -39,6 +39,28 @@ test('isLoginNavigation: no loginUrl declared, or no url → never a login navig
   assert.equal(isLoginNavigation({ auth: {} }, 'https://www.wizink.es/login'), false);
   assert.equal(isLoginNavigation(wizink, ''), false);
   assert.equal(isLoginNavigation(wizink, undefined), false);
+});
+
+// WiZink: a resetCookies source whose LOGIN page returns 400 when its own cookies are corrupted.
+const wz = { auth: { resetCookies: true, loginUrl: 'https://www.wizink.es/login', resetCookiesOnLoginStatus: 400 } };
+
+test('loginErrorNeedsCookieReset: login URL + the declared status (400) + resetCookies → wipe', () => {
+  assert.equal(loginErrorNeedsCookieReset(wz, 'https://www.wizink.es/login', 400), true);
+  assert.equal(loginErrorNeedsCookieReset(wz, 'https://www.wizink.es/login?x=1', 400), true);
+});
+
+test('loginErrorNeedsCookieReset: NOT for other statuses, other URLs, or a missing config', () => {
+  assert.equal(loginErrorNeedsCookieReset(wz, 'https://www.wizink.es/login', 200), false); // login loaded fine
+  assert.equal(loginErrorNeedsCookieReset(wz, 'https://www.wizink.es/login', 500), false); // not the declared status
+  assert.equal(loginErrorNeedsCookieReset(wz, 'https://www.wizink.es/clientes/posicion-global', 400), false); // not the login page
+  assert.equal(loginErrorNeedsCookieReset({ auth: { resetCookies: true, loginUrl: 'https://www.wizink.es/login' } }, 'https://www.wizink.es/login', 400), false); // no status declared
+  assert.equal(loginErrorNeedsCookieReset({ auth: { loginUrl: 'https://www.wizink.es/login', resetCookiesOnLoginStatus: 400 } }, 'https://www.wizink.es/login', 400), false); // resetCookies not set
+});
+
+test('loginErrorNeedsCookieReset: the status may be an array of codes', () => {
+  const multi = { auth: { resetCookies: true, loginUrl: 'https://www.wizink.es/login', resetCookiesOnLoginStatus: [400, 409] } };
+  assert.equal(loginErrorNeedsCookieReset(multi, 'https://www.wizink.es/login', 409), true);
+  assert.equal(loginErrorNeedsCookieReset(multi, 'https://www.wizink.es/login', 401), false);
 });
 
 // A source (ING) whose data only exists once a specific hash-routed SPA view has fully loaded.

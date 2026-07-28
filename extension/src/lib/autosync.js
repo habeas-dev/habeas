@@ -70,6 +70,20 @@ export function isLoginNavigation(adapter, url) {
   } catch (e) { return false; }
 }
 
+// A resetCookies source (WiZink) corrupts its OWN session cookies; when they're bad, its login page itself
+// fails to load with a telltale status (WiZink: HTTP 400 on GET /login). Detecting that main_frame response
+// is the cleanest "the stored session is the problem" signal — the background then wipes the cookies and
+// reloads a clean login. Declarative: `auth.resetCookiesOnLoginStatus` (a status code, or an array of them);
+// requires `resetCookies:true` + a `loginUrl`, and the URL must be the login page (reuses the login-path match).
+export function loginErrorNeedsCookieReset(adapter, url, statusCode) {
+  const au = adapter && adapter.auth;
+  if (!au || !au.resetCookies || !au.loginUrl) return false;
+  const want = au.resetCookiesOnLoginStatus;
+  const codes = Array.isArray(want) ? want : (want == null ? [] : [want]);
+  if (!codes.includes(statusCode)) return false;
+  return isLoginNavigation(adapter, url);
+}
+
 // Does `url` match a single ready-view pattern? Same host, path prefix, and — for a hash-routed SPA — the
 // declared hash-route prefix (the trailing id/params are ignored).
 function readyUrlMatch(url, pattern) {

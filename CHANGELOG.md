@@ -10,6 +10,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **`auth.resetCookiesOnLoginStatus` — wipe cookies when the login page reports corruption.** A `resetCookies`
+  source can declare the HTTP status its `loginUrl` returns when the stored cookies are corrupted (WiZink: 400
+  on GET `/login`). The background watches that main_frame response and, on the declared status, clears the
+  site's cookies and reloads a clean sign-in — no need to fail an operation first. Loop-guarded (reloads only
+  when cookies were actually cleared, at most once per tab per 15 s) and GET-only (submitting bad credentials
+  never wipes the session).
+
 ## [0.9.4] — 2026-07-28
 
 ### Fixed

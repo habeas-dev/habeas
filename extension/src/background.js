@@ -11,7 +11,7 @@ import { deliveredSet, markDelivered, appendLog, rememberDocMeta } from './lib/s
 import { applyStoredConfigIfNewer, writeSnapshotIfChanged } from './lib/configsync.js';
 import { syncVaultIfUnlocked } from './lib/secretsync.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
-import { resolveSiteFetch, ensureSiteFetch, recoverSession, withBrandHost, findSiteTab, foregroundTab } from './lib/pagefetch.js';
+import { resolveSiteFetch, ensureSiteFetch, recoverSession, clearSiteCookies, withBrandHost, findSiteTab, foregroundTab } from './lib/pagefetch.js';
 import { retrieveDelivered } from './lib/retrieve.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink, readSinkRecords } from './sinks/sinks.js';
@@ -31,7 +31,7 @@ import { validateProposal, originHost, enabledSources } from './lib/exthooks.js'
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant, revokeGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
 import { runStoreMigration } from './lib/migrate.js';
-import { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isLoginNavigation, isReadyNavigation, needsTabEscalation, wantsCookieReset, sweepSinkId, orderedSweepSources, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
+import { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isLoginNavigation, isReadyNavigation, needsTabEscalation, wantsCookieReset, loginErrorNeedsCookieReset, sweepSinkId, orderedSweepSources, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
 
 // On startup, (re)register the in-session capture bridge for every enabled source (dynamic content
 // scripts can be dropped on an extension update). Idempotent; needs the host permission already granted.
@@ -55,6 +55,7 @@ import { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isL
   // One-time: encrypt any pairing-token headers left plaintext in config by older versions.
   migrateSinkHeaders().catch(() => {});
   syncWebRequestCapture();
+  syncLoginErrorWatch(); // watch a resetCookies source's login page for its "corrupted cookies" status (WiZink 400)
   syncLearnAssetCapture().catch(() => {}); // (re)arm record-mode document capture if a recording is in progress
   syncSchedules().catch(() => {}); // (re)arm the download planner's alarms; overdue ones fire the catch-up
   runAutoMaintenance().catch(() => {}); // version-gated: recover real data from cloud destinations, once, unattended
@@ -69,7 +70,7 @@ let __vaultTimer = 0;
 // so a credential added/updated on this device reaches the others. No-op when the vault is locked/disabled.
 function scheduleVaultSync() { try { clearTimeout(__vaultTimer); } catch (e) {} __vaultTimer = setTimeout(() => { syncVaultIfUnlocked().catch(() => {}); }, 3000); }
 chrome.storage.onChanged.addListener((ch, area) => {
-  if (area === 'local' && (ch['habeas:config'] || ch['habeas:sources'])) syncWebRequestCapture();
+  if (area === 'local' && (ch['habeas:config'] || ch['habeas:sources'])) { syncWebRequestCapture(); syncLoginErrorWatch(); }
   if (area === 'local' && ch['habeas:config']) { syncSchedules().catch(() => {}); scheduleConfigSnapshot(); } // push the change to the store for other devices (debounced; writeSnapshotIfChanged skips the apply echo)
   if (area === 'local' && ch['habeas:secrets']) scheduleVaultSync();
   if (area === 'local' && ch['habeas:learn']) syncLearnAssetCapture().catch(() => {});
@@ -243,6 +244,50 @@ async function syncWebRequestCapture() {
   catch (e) { try { chrome.webRequest.onSendHeaders.addListener(onWebRequestHeaders, { urls }, ['requestHeaders']); } catch (e2) {} }
   // Pair the response status back to each stashed request context (see RC_PENDING / stashReqCtx).
   try { chrome.webRequest.onHeadersReceived.addListener(onReqCtxResponse, { urls }); } catch (e) {}
+}
+
+// ---- resetCookies: wipe on a login-page error status (WiZink) -----------------------------------------
+// WiZink corrupts its OWN session cookies; when they're bad, GETting /login returns HTTP 400. We watch the
+// login page of every enabled `resetCookies` source that declares `auth.resetCookiesOnLoginStatus` and, on
+// that status, wipe the site's cookies and reload — giving the user a clean sign-in. Guards against a loop:
+// reload ONLY when we actually cleared cookies (a non-cookie 400 clears 0 → no reload), and at most once per
+// tab per 15 s. Restricted to GET main_frame so submitting bad credentials (a POST) never wipes the session.
+const loginResetAt = new Map(); // tabId -> ts of the last reset (best-effort; SW recycle just relaxes the guard)
+async function onLoginErrorResponse(details) {
+  try {
+    if (details.type !== 'main_frame' || details.method !== 'GET' || details.tabId == null || details.tabId < 0) return;
+    const prev = loginResetAt.get(details.tabId);
+    if (prev && Date.now() - prev < 15000) return;
+    const cfg = await getConfig();
+    const adapters = await getAdapters();
+    for (const d of (cfg.datasources || []).filter((x) => x.enabled)) {
+      const a = adapters[d.adapter];
+      if (!loginErrorNeedsCookieReset(a, details.url, details.statusCode)) continue;
+      const cleared = await clearSiteCookies(a.domain || hostOf(a));
+      if (cleared > 0) {
+        loginResetAt.set(details.tabId, Date.now());
+        try { await chrome.tabs.reload(details.tabId); } catch (e) {}
+        try { await appendLog({ kind: 'auth', datasource: d.id, status: 'cookies_cleared', new: cleared }); } catch (e) {}
+      }
+      break; // one source per login host
+    }
+  } catch (e) {}
+}
+// (Re)register the login-error watcher, scoped to the login paths of resetCookies sources that opt in.
+async function syncLoginErrorWatch() {
+  if (!(chrome.webRequest && chrome.webRequest.onCompleted)) return;
+  try { chrome.webRequest.onCompleted.removeListener(onLoginErrorResponse); } catch (e) {}
+  const cfg = await getConfig();
+  const adapters = await getAdapters();
+  const urlSet = new Set();
+  for (const d of (cfg.datasources || []).filter((x) => x.enabled)) {
+    const a = adapters[d.adapter], au = a && a.auth;
+    if (!au || !au.resetCookies || au.resetCookiesOnLoginStatus == null || !au.loginUrl) continue;
+    try { const u = new URL(au.loginUrl); urlSet.add(`*://${u.host}${u.pathname}*`); } catch (e) {}
+  }
+  const urls = [...urlSet];
+  if (!urls.length) return;
+  try { chrome.webRequest.onCompleted.addListener(onLoginErrorResponse, { urls, types: ['main_frame'] }); } catch (e) {}
 }
 
 // ---- record-mode document capture --------------------------------------------------------------------

@@ -292,6 +292,13 @@
           "type": "boolean",
           "description": "When a tab is opened for a logged-out session, wipe the site's cookies first — recovers from a site that corrupts its own cookies and 500s the login (e.g. WiZink). Needs the `cookies` permission."
         },
+        "resetCookiesOnLoginStatus": {
+          "oneOf": [
+            { "type": "integer" },
+            { "type": "array", "items": { "type": "integer" } }
+          ],
+          "description": "For a resetCookies source: an HTTP status (or array) that GETting loginUrl returns when the stored cookies are corrupted (WiZink: 400). On that main_frame response the extension wipes the cookies and reloads a clean login. Needs resetCookies:true + loginUrl."
+        },
         "loginUrl": {
           "type": "string",
           "pattern": "^https://",
