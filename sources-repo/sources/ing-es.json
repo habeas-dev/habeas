@@ -31,7 +31,10 @@
       "x-ing-extendedsessioncontext"
     ],
     "pageOnly": true,
-    "readyUrl": "https://ing.ingdirect.es/pfm/#producto/"
+    "readyUrl": [
+      "https://ing.ingdirect.es/pfm/#producto/",
+      "https://ing.ingdirect.es/pfm/#overall-position"
+    ]
   },
   "api": {
     "host": "https://api.ing.ingdirect.es"

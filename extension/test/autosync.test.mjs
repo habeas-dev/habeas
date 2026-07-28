@@ -66,6 +66,21 @@ test('isReadyNavigation: a readyUrl is declared but the URL is not visible → n
   assert.equal(isReadyNavigation(ing, undefined), false);
 });
 
+// readyUrl may be an ARRAY of views: ready when the URL matches ANY of them.
+const multi = { auth: { readyUrl: ['https://ing.ingdirect.es/pfm/#producto/', 'https://ing.ingdirect.es/app/#/cuentas'] } };
+
+test('isReadyNavigation: an array of readyUrls is ready when ANY entry matches', () => {
+  assert.equal(isReadyNavigation(multi, 'https://ing.ingdirect.es/pfm/#producto/uuid-1'), true);   // 1st entry
+  assert.equal(isReadyNavigation(multi, 'https://ing.ingdirect.es/app/#/cuentas/123'), true);       // 2nd entry
+  assert.equal(isReadyNavigation(multi, 'https://ing.ingdirect.es/pfm/#dashboard'), false);         // neither
+  assert.equal(isReadyNavigation(multi, ''), false);                                                // no URL
+});
+
+test('isReadyNavigation: an empty array (or array of empties) declares no gate → always ready', () => {
+  assert.equal(isReadyNavigation({ auth: { readyUrl: [] } }, 'https://ing.ingdirect.es/pfm/#dashboard'), true);
+  assert.equal(isReadyNavigation({ auth: { readyUrl: [''] } }, 'https://ing.ingdirect.es/pfm/#dashboard'), true);
+});
+
 test('autoDebounced: a route that never ran (or whose debounce was cleared) may run', () => {
   assert.equal(autoDebounced(undefined, 1_000), false);
   assert.equal(autoDebounced(null, 1_000), false);

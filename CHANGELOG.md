@@ -12,10 +12,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ### Added
 - **`auth.readyUrl` — hold auto-sync until a source's data view has fully loaded.** A source whose SPA fires
-  authenticated (capturable) requests on earlier screens can now declare the view its data actually lives behind;
-  auto-sync waits for that view (same host + path prefix + hash-route prefix) instead of firing on the first token
-  it sees. Fixes ING being "too eager" — it no longer requests movements/statements until the PFM product view
-  (`…/pfm/#producto/<session-uuid>`) is open. Inert on sources that don't declare it (fully backward-compatible).
+  authenticated (capturable) requests on earlier screens can now declare the view(s) its data actually lives
+  behind — a single URL or an array of them; auto-sync waits until the tab is on ANY of them (matched by host +
+  path prefix + hash-route prefix) instead of firing on the first token it sees. Fixes ING being "too eager" — it
+  no longer requests movements/statements until the PFM product view (`…/pfm/#producto/<session-uuid>`) is open.
+  Inert on sources that don't declare it (fully backward-compatible).
 
 ## [0.9.2] — 2026-07-27
 

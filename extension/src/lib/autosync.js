@@ -70,20 +70,11 @@ export function isLoginNavigation(adapter, url) {
   } catch (e) { return false; }
 }
 
-// The INVERSE of the login gate. Some SPAs fire authenticated (capturable) requests on EARLY screens too,
-// but a source's real data only exists once a specific view has fully loaded. Running auto-sync on those
-// early captures asks the API for data before the session/view is ready (ING is "too eager": its movements
-// and statements only appear once the PFM product view is open, at …/pfm/#producto/<session-uuid>). When a
-// source declares `auth.readyUrl`, hold auto-run until the trigger URL matches it — same host, path prefix,
-// and, for a hash-routed SPA, the declared hash-route prefix (the trailing id/params are ignored). No
-// readyUrl → every navigation counts as ready (default; fully backward-compatible). A declared gate with no
-// visible URL returns false: we can't confirm we're on the ready view, so we wait rather than fire early.
-export function isReadyNavigation(adapter, url) {
-  const ready = adapter && adapter.auth && adapter.auth.readyUrl;
-  if (!ready) return true;
-  if (!url) return false;
+// Does `url` match a single ready-view pattern? Same host, path prefix, and — for a hash-routed SPA — the
+// declared hash-route prefix (the trailing id/params are ignored).
+function readyUrlMatch(url, pattern) {
   try {
-    const a = new URL(url), b = new URL(ready);
+    const a = new URL(url), b = new URL(pattern);
     if (a.host !== b.host) return false;
     const p = a.pathname.replace(/\/+$/, ''), q = b.pathname.replace(/\/+$/, '');
     if (!(p === q || p.startsWith(q + '/'))) return false;
@@ -93,6 +84,23 @@ export function isReadyNavigation(adapter, url) {
     }
     return true;
   } catch (e) { return false; }
+}
+
+// The INVERSE of the login gate. Some SPAs fire authenticated (capturable) requests on EARLY screens too,
+// but a source's real data only exists once a specific view has fully loaded. Running auto-sync on those
+// early captures asks the API for data before the session/view is ready (ING is "too eager": its movements
+// and statements only appear once the PFM product view is open, at …/pfm/#producto/<session-uuid>). When a
+// source declares `auth.readyUrl` — a single pattern OR an array of them — hold auto-run until the trigger
+// URL matches ANY declared view (same host, path prefix, and for a hash-routed SPA the declared hash-route
+// prefix; the trailing id/params are ignored). No readyUrl → every navigation counts as ready (default;
+// fully backward-compatible). A declared gate with no visible URL returns false: we can't confirm we're on a
+// ready view, so we wait rather than fire early.
+export function isReadyNavigation(adapter, url) {
+  const ready = adapter && adapter.auth && adapter.auth.readyUrl;
+  const patterns = (Array.isArray(ready) ? ready : [ready]).filter(Boolean);
+  if (!patterns.length) return true; // no gate → always ready
+  if (!url) return false;            // gate declared but URL not visible → not confirmed ready
+  return patterns.some((pat) => readyUrlMatch(url, pat));
 }
 
 // After a run, KEEP the debounce (true) or release it so the next trigger retries immediately (false)?
