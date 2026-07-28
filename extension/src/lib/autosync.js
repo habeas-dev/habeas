@@ -70,6 +70,31 @@ export function isLoginNavigation(adapter, url) {
   } catch (e) { return false; }
 }
 
+// The INVERSE of the login gate. Some SPAs fire authenticated (capturable) requests on EARLY screens too,
+// but a source's real data only exists once a specific view has fully loaded. Running auto-sync on those
+// early captures asks the API for data before the session/view is ready (ING is "too eager": its movements
+// and statements only appear once the PFM product view is open, at …/pfm/#producto/<session-uuid>). When a
+// source declares `auth.readyUrl`, hold auto-run until the trigger URL matches it — same host, path prefix,
+// and, for a hash-routed SPA, the declared hash-route prefix (the trailing id/params are ignored). No
+// readyUrl → every navigation counts as ready (default; fully backward-compatible). A declared gate with no
+// visible URL returns false: we can't confirm we're on the ready view, so we wait rather than fire early.
+export function isReadyNavigation(adapter, url) {
+  const ready = adapter && adapter.auth && adapter.auth.readyUrl;
+  if (!ready) return true;
+  if (!url) return false;
+  try {
+    const a = new URL(url), b = new URL(ready);
+    if (a.host !== b.host) return false;
+    const p = a.pathname.replace(/\/+$/, ''), q = b.pathname.replace(/\/+$/, '');
+    if (!(p === q || p.startsWith(q + '/'))) return false;
+    if (b.hash) { // SPA hash route (e.g. #producto/<id>): require the declared prefix, ignore the id
+      const ah = a.hash.replace(/^#/, ''), bh = b.hash.replace(/^#/, '');
+      return ah === bh || ah.startsWith(bh);
+    }
+    return true;
+  } catch (e) { return false; }
+}
+
 // After a run, KEEP the debounce (true) or release it so the next trigger retries immediately (false)?
 // A transient/auth failure must release it: the auto-run can fire on the source's login page BEFORE the
 // user authenticates (the CSRF prelude then 400s), or hit an anti-bot challenge, or find no captured

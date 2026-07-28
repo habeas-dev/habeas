@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 // Pure scheduling policy for the background auto-sync runner — no chrome shim needed.
-const { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, orderedSweepSources, isLoginNavigation, needsTabEscalation, sweepSinkId, AUTO_DEBOUNCE_MS, AUTO_BACKOFF_BASE_MS, AUTO_BACKOFF_CAP_MS } = await import('../src/lib/autosync.js');
+const { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, orderedSweepSources, isLoginNavigation, isReadyNavigation, needsTabEscalation, sweepSinkId, AUTO_DEBOUNCE_MS, AUTO_BACKOFF_BASE_MS, AUTO_BACKOFF_CAP_MS } = await import('../src/lib/autosync.js');
 
 test('sweepSinkId: auto-route sink wins, then the source favorite, then the global default', () => {
   assert.equal(sweepSinkId('x', { x: 'auto' }, { x: 'fav' }, 'def'), 'auto');
@@ -39,6 +39,31 @@ test('isLoginNavigation: no loginUrl declared, or no url → never a login navig
   assert.equal(isLoginNavigation({ auth: {} }, 'https://www.wizink.es/login'), false);
   assert.equal(isLoginNavigation(wizink, ''), false);
   assert.equal(isLoginNavigation(wizink, undefined), false);
+});
+
+// A source (ING) whose data only exists once a specific hash-routed SPA view has fully loaded.
+const ing = { auth: { readyUrl: 'https://ing.ingdirect.es/pfm/#producto/' } };
+
+test('isReadyNavigation: the declared ready view (hash route + id) is ready → run', () => {
+  assert.equal(isReadyNavigation(ing, 'https://ing.ingdirect.es/pfm/#producto/9f1c-2a3b-uuid'), true);
+  assert.equal(isReadyNavigation(ing, 'https://ing.ingdirect.es/pfm/#producto/'), true);
+});
+
+test('isReadyNavigation: an EARLIER screen (wrong/no hash route) is not ready → hold auto-run', () => {
+  assert.equal(isReadyNavigation(ing, 'https://ing.ingdirect.es/pfm/#dashboard'), false); // overview, data not loaded yet
+  assert.equal(isReadyNavigation(ing, 'https://ing.ingdirect.es/pfm/'), false);            // shell loaded, no product view
+  assert.equal(isReadyNavigation(ing, 'https://ing.ingdirect.es/login'), false);           // login page
+  assert.equal(isReadyNavigation(ing, 'https://otra.ingdirect.es/pfm/#producto/x'), false); // other host
+});
+
+test('isReadyNavigation: no readyUrl declared → every navigation is ready (backward-compatible)', () => {
+  assert.equal(isReadyNavigation({ auth: {} }, 'https://example.com/'), true);
+  assert.equal(isReadyNavigation(wizink, 'https://www.wizink.es/clientes/posicion-global'), true);
+});
+
+test('isReadyNavigation: a readyUrl is declared but the URL is not visible → not confirmed ready', () => {
+  assert.equal(isReadyNavigation(ing, ''), false);
+  assert.equal(isReadyNavigation(ing, undefined), false);
 });
 
 test('autoDebounced: a route that never ran (or whose debounce was cleared) may run', () => {

@@ -5,7 +5,7 @@
   "trust": "community",
   "domain": "ingdirect.es",
   "country": "ES",
-  "version": "2026-07-25",
+  "version": "2026-07-28",
   "minVersion": "0.8.4",
   "categories": [
     "banking"
@@ -30,7 +30,8 @@
       "authorization",
       "x-ing-extendedsessioncontext"
     ],
-    "pageOnly": true
+    "pageOnly": true,
+    "readyUrl": "https://ing.ingdirect.es/pfm/#producto/"
   },
   "api": {
     "host": "https://api.ing.ingdirect.es"

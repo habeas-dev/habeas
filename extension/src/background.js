@@ -31,7 +31,7 @@ import { validateProposal, originHost, enabledSources } from './lib/exthooks.js'
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant, revokeGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
 import { runStoreMigration } from './lib/migrate.js';
-import { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isLoginNavigation, needsTabEscalation, sweepSinkId, orderedSweepSources, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
+import { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isLoginNavigation, isReadyNavigation, needsTabEscalation, sweepSinkId, orderedSweepSources, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
 
 // On startup, (re)register the in-session capture bridge for every enabled source (dynamic content
 // scripts can be dropped on an extension update). Idempotent; needs the host permission already granted.
@@ -449,6 +449,10 @@ async function runAutoRoutes(matches, tabId, triggerUrl) {
     // The navigation that triggered us is the source's own login page → the user isn't authenticated yet.
     // Skip (a session-gated prelude would 400) and wait for the post-login navigation to fire us again.
     if (triggerUrl && isLoginNavigation(adapter, triggerUrl)) continue;
+    // Some SPAs expose a source's data only once a specific view has finished loading, yet fire capturable
+    // requests on earlier screens (ING is "too eager" — its data lives behind the PFM product view). When the
+    // source declares auth.readyUrl, wait until the trigger URL is that view before running.
+    if (!isReadyNavigation(adapter, triggerUrl)) continue;
     if (!(await hasConsent(adapter))) continue; // community/cross-domain source not yet consented
     // For a source with an observable bearer, require that the token has actually been captured before
     // running: the bearer only exists after login, so this is the robust "the user is logged in" signal —
