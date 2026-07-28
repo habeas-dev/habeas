@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.5] — 2026-07-28
+
 ### Added
 - **`auth.resetCookiesOnLoginStatus` — wipe cookies when the login page reports corruption.** A `resetCookies`
   source can declare the HTTP status its `loginUrl` returns when the stored cookies are corrupted (WiZink: 400
