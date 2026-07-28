@@ -89,6 +89,22 @@
     .wz-btn.ghost{border-color:transparent;color:var(--muted)}
     .wz-status{font-size:12.5px;color:var(--muted);margin-top:10px;min-height:1em}
     .wz-status:empty{display:none}
+    /* Getting-started walkthrough (first-run checklist) */
+    .gs{border:1px solid var(--brand-100);border-radius:16px;padding:20px 22px;margin-bottom:24px;background:var(--surface)}
+    .gs-head{display:flex;gap:14px;align-items:flex-start}
+    .gs-head h2{font-family:var(--font-head);font-weight:700;font-size:19px;margin:0}
+    .gs-head p{color:var(--muted);margin:5px 0 0;font-size:14px;line-height:1.5;max-width:64ch}
+    .gs-prog{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap;flex:none;padding-top:4px}
+    .gs-steps{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+    .gs-step{display:flex;gap:12px;align-items:flex-start}
+    .gs-num{flex:none;width:26px;height:26px;border-radius:100px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--muted);background:var(--surface-2)}
+    .gs-step.done .gs-num{background:var(--brand-600);border-color:transparent;color:#fff}
+    .gs-step.next .gs-num{border-color:var(--brand-500);color:var(--brand-600)}
+    .gs-body h3{font-family:var(--font-head);font-weight:600;font-size:14.5px;margin:2px 0 0}
+    .gs-step.done .gs-body h3{color:var(--muted);text-decoration:line-through}
+    .gs-body p{color:var(--muted);font-size:13px;line-height:1.45;margin:3px 0 0;max-width:64ch}
+    .gs-cta{margin-top:9px}
+    .gs-foot{display:flex;justify-content:flex-end;margin-top:14px}
     .wz-modal{position:fixed;inset:0;background:rgba(6,20,17,.5);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px}
     .wz-modalbox{min-width:320px;max-width:min(680px,94vw);max-height:86vh;overflow:auto}
     .wz-modalbox h3{font-family:var(--font-head);margin:0 0 2px;font-size:17px}

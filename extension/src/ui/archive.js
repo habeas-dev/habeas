@@ -45,6 +45,7 @@ let LAZY_OBS = null;             // IntersectionObserver rendering more document
 const PICKED = new Set();
 let STORE_LOCAL = false;        // the canonical store is still the default per-browser backend (→ first-run wizard)
 let ONBOARD_DISMISSED = false;  // the user chose to keep the local store
+let GS_DISMISSED = false;       // the getting-started walkthrough was dismissed (or all steps completed)
 let CURRENT_STOP = null;        // how to stop the in-progress action (local abort, or a background message)
 
 // A long action (Refresh / Save / Send / Sync) started/ended — show the Stop button + the busy cursor.
@@ -386,6 +387,41 @@ function node(id, icon, name, count, on, fam) {
     <span class="nm">${esc(name)}</span><span class="cnt">${cnt}</span></button>`;
 }
 
+// Getting-started walkthrough: a first-run checklist at the top of the Archive home that lights up as the user
+// completes each step (add a source → log in & collect → pick a destination → turn on auto). It reads REAL
+// config/state so it self-updates as steps land, guides ONE step at a time (the CTA shows on the next
+// actionable step), and disappears once every step is done or the user dismisses it (remembered in storage).
+function gettingStartedCard() {
+  if (GS_DISMISSED) return '';
+  const steps = [
+    { done: (CFG.datasources || []).length > 0, title: t('gs_s1_title'), body: t('gs_s1_body'), cta: t('gs_s1_cta'), act: 'sources' },
+    { done: INDEX.length > 0, title: t('gs_s2_title'), body: t('gs_s2_body'), cta: t('gs_s2_cta'), act: 'collect' },
+    { done: (CFG.sinks || []).length > 0, title: t('gs_s3_title'), body: t('gs_s3_body'), cta: t('gs_s3_cta'), act: 'dest' },
+    { done: (CFG.routes || []).some((r) => r.mode === 'auto'), title: t('gs_s4_title'), body: t('gs_s4_body'), cta: t('gs_s4_cta'), act: 'auto' },
+  ];
+  const doneN = steps.filter((s) => s.done).length;
+  if (doneN === steps.length) return ''; // fully set up → nothing to show
+  const nextIdx = steps.findIndex((s) => !s.done);
+  const rows = steps.map((s, i) => {
+    const cls = s.done ? 'done' : (i === nextIdx ? 'next' : '');
+    const badge = s.done ? '✓' : String(i + 1);
+    const cta = (i === nextIdx) ? `<div class="gs-cta"><button class="wz-btn primary" data-gs="${s.act}">${esc(s.cta)}</button></div>` : '';
+    return `<li class="gs-step ${cls}"><span class="gs-num">${badge}</span><div class="gs-body"><h3>${esc(s.title)}</h3><p>${esc(s.body)}</p>${cta}</div></li>`;
+  }).join('');
+  return `<div class="gs" id="gs">
+    <div class="gs-head"><span class="wz-ic">🚀</span><div><h2>${esc(t('gs_title'))}</h2><p>${esc(t('gs_sub'))}</p></div><span class="gs-prog">${esc(t('gs_progress', [String(doneN), String(steps.length)]))}</span></div>
+    <ol class="gs-steps">${rows}</ol>
+    <div class="gs-foot"><button class="wz-btn ghost" data-gs="dismiss">${esc(t('gs_dismiss'))}</button></div>
+  </div>`;
+}
+async function onGettingStarted(act) {
+  if (act === 'dismiss') { GS_DISMISSED = true; try { await chrome.storage.local.set({ 'habeas:gs-dismissed': true }); } catch (e) {} renderIndex(); return; }
+  if (act === 'sources') { location.href = 'marketplace.html'; return; }        // browse + install a community source
+  if (act === 'collect') { onSync(); return; }                                   // Sync all → collect from every source
+  if (act === 'dest') { openSinkModal(); return; }                               // add any destination (shared sink form)
+  if (act === 'auto') { chrome.runtime.openOptionsPage(); return; }              // auto routes are configured in Settings
+}
+
 // First-run assistant: shown at the top of the index while the canonical store is still the default per-browser
 // backend. Explains the "archive" (canonical store), recommends a cloud folder for multi-device access, and sets
 // it up in one click — reusing lib/storesetup.js (the tested moveStoreTo/driveSignIn/putHandle primitives).
@@ -462,6 +498,7 @@ function openSinkModal(preType) {
         } else {
           CFG = await getConfig(); // a delivery-only destination (download / local folder) — added, can't host the archive
           status.textContent = t('onboard_sink_added');
+          if (CUR === null) renderIndex(); // refresh the index behind the modal (e.g. the getting-started checklist)
         }
       } catch (e) { status.textContent = t('onboard_err', [(e && e.message) || String(e)]); }
     },
@@ -473,8 +510,8 @@ function renderIndex() {
   CUR = null; ACCOUNT = ''; SELECTING = false; PICKED.clear();
   $('#main').classList.remove('selecting');
   const m = $('#main');
-  if (!INDEX.length) { m.innerHTML = wizardCard() + emptyState(t('archive_empty_title'), t('archive_empty_sub')); return; }
-  let html = wizardCard() + `<div class="idx-head"><h1>${esc(t('archive_index_title'))}</h1><p>${esc(t('archive_index_sub'))}</p></div>`;
+  if (!INDEX.length) { m.innerHTML = gettingStartedCard() + wizardCard() + emptyState(t('archive_empty_title'), t('archive_empty_sub')); return; }
+  let html = gettingStartedCard() + wizardCard() + `<div class="idx-head"><h1>${esc(t('archive_index_title'))}</h1><p>${esc(t('archive_index_sub'))}</p></div>`;
   html += '<div class="idx-grid">';
   for (const s of INDEX) {
     const c = catOf(s.primaryCat);
@@ -1116,6 +1153,7 @@ function wire() {
     if (LP_SWALLOW) { LP_SWALLOW = false; return; } // eat the click that follows a long-press
     const wa = ev.target.closest('[data-add]'); if (wa) { openSinkModal(wa.dataset.add || undefined); return; }
     const ws = ev.target.closest('[data-store]'); if (ws) { onStoreSetup(ws.dataset.store, ws.dataset.sink); return; }
+    const gsb = ev.target.closest('[data-gs]'); if (gsb) { onGettingStarted(gsb.dataset.gs); return; }
     const sc = ev.target.closest('.srccard'); if (sc) { openSource(sc.dataset.src); return; }
     const gb = ev.target.closest('[data-gb]'); if (gb) { GROUPMODE = gb.dataset.gb; renderDocs(); return; }
     const sv = ev.target.closest('[data-save]'); if (sv) { deliver(sv.dataset.save); return; }
@@ -1192,6 +1230,7 @@ async function init() {
   // First-run assistant: the store is still the default per-browser backend AND the user hasn't dismissed it.
   try { STORE_LOCAL = ((await getStoreConfig()).backend || 'local') === 'local'; } catch (e) {}
   try { ONBOARD_DISMISSED = !!(await chrome.storage.local.get('habeas:onboard-dismissed'))['habeas:onboard-dismissed']; } catch (e) {}
+  try { GS_DISMISSED = !!(await chrome.storage.local.get('habeas:gs-dismissed'))['habeas:gs-dismissed']; } catch (e) {}
   wire();
   const want = new URLSearchParams(location.search).get('src');
   // 1) Paint REAL data instantly from the local cache — sources, counts, accounts — before touching the store.

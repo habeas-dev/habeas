@@ -2879,6 +2879,58 @@
   "onboard_sink_added": {
     "message": "Destination added. (It stores delivered documents; it can’t host the archive itself.)"
   },
+  "gs_title": {
+    "message": "Getting started"
+  },
+  "gs_sub": {
+    "message": "Four steps to pull your own documents out of a service and keep them where you choose. You log in yourself — Habeas never sees your password."
+  },
+  "gs_progress": {
+    "message": "$done$ of $total$ done",
+    "placeholders": {
+      "done": { "content": "$1" },
+      "total": { "content": "$2" }
+    }
+  },
+  "gs_s1_title": {
+    "message": "Add your first source"
+  },
+  "gs_s1_body": {
+    "message": "Pick the service you want your data from (a shop, bank, or provider) from the community catalog."
+  },
+  "gs_s1_cta": {
+    "message": "Browse sources"
+  },
+  "gs_s2_title": {
+    "message": "Log in and collect"
+  },
+  "gs_s2_body": {
+    "message": "Open the service in your browser and sign in yourself — solving any MFA or CAPTCHA as usual. Then collect: your documents appear here in the archive."
+  },
+  "gs_s2_cta": {
+    "message": "Sync all now"
+  },
+  "gs_s3_title": {
+    "message": "Choose where they go"
+  },
+  "gs_s3_body": {
+    "message": "Add a destination — a local folder, Google Drive, Dropbox, WebDAV, S3 or an app. Nothing leaves your browser until you pick one."
+  },
+  "gs_s3_cta": {
+    "message": "Add a destination"
+  },
+  "gs_s4_title": {
+    "message": "Turn on automatic mode"
+  },
+  "gs_s4_body": {
+    "message": "Optional: let Habeas sync new documents the moment you log in, and sweep every source on demand."
+  },
+  "gs_s4_cta": {
+    "message": "Open settings"
+  },
+  "gs_dismiss": {
+    "message": "Dismiss"
+  },
   "opt_nav_home": {
     "message": "Home"
   },
