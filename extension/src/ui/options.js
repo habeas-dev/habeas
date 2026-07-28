@@ -586,6 +586,12 @@ if (!window.showDirectoryPicker) {
 $('#stype').onchange = renderFields;
 $('#addsink').onclick = addSink;
 { const oa = $('#open-archive'); if (oa) oa.onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/archive.html') }); }
+// Re-show the getting-started walkthrough: clear its dismissed flag, then open the Archive with ?gs=1 so it
+// renders even when every step is already done (the checklist normally hides once complete).
+{ const g = $('#show-gs'); if (g) g.onclick = async () => {
+  try { await chrome.storage.local.remove('habeas:gs-dismissed'); } catch (e) {}
+  try { await chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/archive.html') + '?gs=1' }); } catch (e) { location.href = 'archive.html?gs=1'; }
+}; }
 $('#browse').onclick = () => { location.href = 'marketplace.html'; };
 // The recorder (author.js) renders NATIVELY in the "Record & contribute" section — no iframe, no new tab. Its
 // markup (RECORDER_HTML) is injected once and initAuthor wires it against the Settings DOM. openAuthor(params)

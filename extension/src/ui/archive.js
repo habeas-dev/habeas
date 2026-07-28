@@ -46,6 +46,7 @@ const PICKED = new Set();
 let STORE_LOCAL = false;        // the canonical store is still the default per-browser backend (→ first-run wizard)
 let ONBOARD_DISMISSED = false;  // the user chose to keep the local store
 let GS_DISMISSED = false;       // the getting-started walkthrough was dismissed (or all steps completed)
+let GS_FORCE = false;           // ?gs=1 (reopened from Settings) → show the checklist even when fully complete
 let CURRENT_STOP = null;        // how to stop the in-progress action (local abort, or a background message)
 
 // A long action (Refresh / Save / Send / Sync) started/ended — show the Stop button + the busy cursor.
@@ -392,7 +393,7 @@ function node(id, icon, name, count, on, fam) {
 // config/state so it self-updates as steps land, guides ONE step at a time (the CTA shows on the next
 // actionable step), and disappears once every step is done or the user dismisses it (remembered in storage).
 function gettingStartedCard() {
-  if (GS_DISMISSED) return '';
+  if (GS_DISMISSED && !GS_FORCE) return '';
   const steps = [
     { done: (CFG.datasources || []).length > 0, title: t('gs_s1_title'), body: t('gs_s1_body'), cta: t('gs_s1_cta'), act: 'sources' },
     { done: INDEX.length > 0, title: t('gs_s2_title'), body: t('gs_s2_body'), cta: t('gs_s2_cta'), act: 'collect' },
@@ -400,7 +401,7 @@ function gettingStartedCard() {
     { done: (CFG.routes || []).some((r) => r.mode === 'auto'), title: t('gs_s4_title'), body: t('gs_s4_body'), cta: t('gs_s4_cta'), act: 'auto' },
   ];
   const doneN = steps.filter((s) => s.done).length;
-  if (doneN === steps.length) return ''; // fully set up → nothing to show
+  if (doneN === steps.length && !GS_FORCE) return ''; // fully set up → hide (unless reopened from Settings)
   const nextIdx = steps.findIndex((s) => !s.done);
   const rows = steps.map((s, i) => {
     const cls = s.done ? 'done' : (i === nextIdx ? 'next' : '');
@@ -415,7 +416,7 @@ function gettingStartedCard() {
   </div>`;
 }
 async function onGettingStarted(act) {
-  if (act === 'dismiss') { GS_DISMISSED = true; try { await chrome.storage.local.set({ 'habeas:gs-dismissed': true }); } catch (e) {} renderIndex(); return; }
+  if (act === 'dismiss') { GS_DISMISSED = true; GS_FORCE = false; try { await chrome.storage.local.set({ 'habeas:gs-dismissed': true }); } catch (e) {} renderIndex(); return; }
   if (act === 'sources') { location.href = 'marketplace.html'; return; }        // browse + install a community source
   if (act === 'collect') { onSync(); return; }                                   // Sync all → collect from every source
   if (act === 'dest') { openSinkModal(); return; }                               // add any destination (shared sink form)
@@ -1232,7 +1233,9 @@ async function init() {
   try { ONBOARD_DISMISSED = !!(await chrome.storage.local.get('habeas:onboard-dismissed'))['habeas:onboard-dismissed']; } catch (e) {}
   try { GS_DISMISSED = !!(await chrome.storage.local.get('habeas:gs-dismissed'))['habeas:gs-dismissed']; } catch (e) {}
   wire();
-  const want = new URLSearchParams(location.search).get('src');
+  const params = new URLSearchParams(location.search);
+  if (params.get('gs') === '1') { GS_FORCE = true; GS_DISMISSED = false; } // reopened from Settings → show it
+  const want = params.get('src');
   // 1) Paint REAL data instantly from the local cache — sources, counts, accounts — before touching the store.
   const cache = await loadCache();
   if (cache && Object.keys((cache.sources) || {}).length) {

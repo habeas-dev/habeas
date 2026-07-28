@@ -3050,6 +3050,15 @@
   "opt_ov_dests_vs_p": {
     "message": "A dónde se envían los ficheros de los documentos cuando los envías. «Descargar» los guarda en tu equipo; una carpeta o la nube los deja ahí (y Habeas puede volver a mostrártelos desde ahí). Puedes tener varios — el archivo de arriba solo recuerda qué se entregó y dónde."
   },
+  "opt_show_gs_h": {
+    "message": "Primeros pasos"
+  },
+  "opt_show_gs_p": {
+    "message": "Vuelve a mostrar el tutorial de bienvenida en la parte superior de tu archivo."
+  },
+  "opt_show_gs": {
+    "message": "Ver primeros pasos"
+  },
   "opt_services_title": {
     "message": "Servicios"
   },

@@ -14,7 +14,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 - **Getting-started walkthrough.** A first-run checklist at the top of the Archive home guides new users through
   the four steps — add a source, log in & collect, choose a destination, turn on automatic mode — with a
   one-click action on the next step. It reads real config/state so each step checks off as you complete it,
-  shows progress (`n of 4 done`), and disappears once you're set up or dismiss it. Fully localized (en/es).
+  shows progress (`n of 4 done`), and disappears once you're set up or dismiss it. Reopenable any time from
+  **Settings → Home → Show walkthrough** (shows the checklist even when fully complete). Fully localized (en/es).
 
 ## [0.9.5] — 2026-07-28
 

@@ -3050,6 +3050,15 @@
   "opt_ov_dests_vs_p": {
     "message": "Where the actual document files are sent when you send them. “Download” saves them to your computer; a folder or the cloud keeps them there (and Habeas can show them back to you from it). You can have several — the archive above just remembers what was delivered where."
   },
+  "opt_show_gs_h": {
+    "message": "Getting started"
+  },
+  "opt_show_gs_p": {
+    "message": "Show the first-run walkthrough again at the top of your archive."
+  },
+  "opt_show_gs": {
+    "message": "Show walkthrough"
+  },
   "opt_services_title": {
     "message": "Services"
   },
