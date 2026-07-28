@@ -66,6 +66,9 @@
       <p>In theory, people are supposed to have access to their own information. In everyday life, that promise often stops at a website dashboard. The service may not provide an API, may not support bulk export, or may make automation fail behind anti-bot systems.</p>
       <p>Just as importantly, many existing workarounds ask users to trust yet another intermediary with their credentials and their history. That solves one barrier by creating another.</p>
 
+      <h2 id="captcha">Why can a site still show you a CAPTCHA?</h2>
+      <p>Because Habeas works inside your own already-open session, most of the time you never hit anti-bot friction. But Habeas makes no promise of immunity: it does not try to defeat those systems, and behind aggressive defenses a collection can simply fail. If a site does show a challenge, you solve it yourself — exactly as you would while browsing by hand. That is a deliberate limit, not a bug.</p>
+
       <h2>Why should users have direct control?</h2>
       <p>Your records are not valuable only on the website that generated them. You may need them for budgeting, accounting, taxes, switching apps, or simply keeping your own archive. Direct control matters because access should not depend on whether a platform decides to keep a convenient export button forever.</p>
       <p>Habeas is built around the idea that people should be able to exercise their rights with tools they can inspect, run themselves, and point at destinations they trust.</p>
@@ -94,6 +97,10 @@
       <p>Habeas runs where the website already knows it is talking to you: inside your own authenticated browser session. That means you log in yourself, handle MFA yourself, and keep your credentials to yourself.</p>
       <p>This architecture is not a technical gimmick. It is a consequence of the project's values. If the goal is to give users more control, the tool should avoid unnecessary intermediaries, avoid storing your logins, and keep the flow understandable.</p>
 
+      <h2 id="psd2">Why a browser extension instead of official open-banking (PSD2) channels?</h2>
+      <p>For payment-account data, regulated open-banking APIs — reached through licensed aggregators — are the canonical path, and where they serve you well they are often the better choice. Habeas does not try to replace them there.</p>
+      <p>But PSD2 covers only payment accounts. It does not reach store and credit cards, investment or pension statements, invoices, or receipts — the long tail of records that services still lock behind a dashboard. Aggregators also ask you to delegate access to a third-party server; Habeas runs in your own session, stores no credentials, and lets you resolve MFA yourself. It initiates no payments and aggregates nothing on a server, so it is not a PSD2-regulated actor — it is a personal data-portability tool (GDPR Article 20) that you run yourself.</p>
+
       <div class="box"><strong>In short:</strong> Habeas is designed so that trust is earned through architecture, not requested through a password prompt.</div>
     </div>
 
@@ -111,6 +118,9 @@
       <h2>¿Por qué la portabilidad de datos actual no basta?</h2>
       <p>En teoría, las personas deberían poder acceder a su propia información. En la vida real, esa promesa muchas veces se queda en un panel web. El servicio puede no tener API, no ofrecer exportación masiva o hacer que la automatización falle detrás de sistemas anti-bot.</p>
       <p>Y además, muchos atajos existentes piden confiar tus credenciales y tu historial a otro intermediario. Eso resuelve una barrera creando otra.</p>
+
+      <h2 id="captcha">¿Por qué una web puede mostrarte aún un CAPTCHA?</h2>
+      <p>Como Habeas funciona dentro de tu propia sesión ya abierta, la mayoría de las veces no te topas con fricción anti-bot. Pero Habeas no promete inmunidad: no intenta burlar esos sistemas y, tras defensas agresivas, una recogida puede simplemente fallar. Si una web muestra un reto, lo resuelves tú, igual que navegando a mano. Es un límite deliberado, no un fallo.</p>
 
       <h2>¿Por qué importa el control directo?</h2>
       <p>Tus registros no solo valen dentro de la web que los generó. Puedes necesitarlos para contabilidad, impuestos, cambiar de app o simplemente mantener tu propio archivo. El control directo importa porque el acceso no debería depender de que una plataforma decida mantener para siempre un botón de exportación cómodo.</p>
@@ -139,6 +149,10 @@
       <h2>¿Por qué la arquitectura sigue esos principios?</h2>
       <p>Habeas se ejecuta donde la web ya sabe que está hablando contigo: dentro de tu propia sesión autenticada del navegador. Eso significa que inicias sesión tú, resuelves la MFA tú y mantienes tus credenciales para ti.</p>
       <p>Esta arquitectura no es un truco técnico. Es una consecuencia de los valores del proyecto. Si el objetivo es dar más control a los usuarios, la herramienta debe evitar intermediarios innecesarios, evitar guardar tus logins y mantener el flujo comprensible.</p>
+
+      <h2 id="psd2">¿Por qué una extensión del navegador y no los canales oficiales de open banking (PSD2)?</h2>
+      <p>Para los datos de cuentas de pago, las API reguladas de open banking —a través de agregadores con licencia— son la vía canónica y, cuando te sirven bien, suelen ser la mejor opción. Habeas no intenta sustituirlas ahí.</p>
+      <p>Pero PSD2 solo cubre cuentas de pago. No llega a las tarjetas de tienda y de crédito, los extractos de inversión o de pensiones, las facturas ni los tickets: la larga cola de registros que los servicios siguen guardando tras un panel. Los agregadores, además, te piden delegar el acceso a un servidor de terceros; Habeas se ejecuta en tu propia sesión, no guarda credenciales y te deja resolver la MFA a ti. No inicia pagos ni agrega nada en un servidor, así que no es un actor regulado por PSD2: es una herramienta de portabilidad de datos personales (art. 20 del RGPD) que ejecutas tú.</p>
 
       <div class="box"><strong>En corto:</strong> Habeas está diseñado para que la confianza se gane por su arquitectura, no porque te pida una contraseña.</div>
     </div>
