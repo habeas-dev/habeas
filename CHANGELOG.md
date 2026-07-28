@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.3] — 2026-07-28
+
 ### Added
 - **`auth.readyUrl` — hold auto-sync until a source's data view has fully loaded.** A source whose SPA fires
   authenticated (capturable) requests on earlier screens can now declare the view(s) its data actually lives
