@@ -1075,6 +1075,15 @@
   "authz_ls_note": {
     "message": "Esto revela la lista de sources habilitados al sitio que lo pide. Podrás revocarlo cuando quieras en Ajustes, Integraciones de sitios."
   },
+  "authz_sink_intro": {
+    "message": "Una web quiere registrarse como destino al que puedes enviar datos. Esto NO le permite pedir nada: solo recibe lo que tú decidas dirigirle. Eliges qué sources enviarle después, desde Ajustes."
+  },
+  "authz_sink_note": {
+    "message": "Solo tu propia web puede registrar su propio destino (ligado al origen). No se comparte ningún source hasta que le diriges uno. Puedes quitarlo cuando quieras en Ajustes, Integraciones de sitios."
+  },
+  "int_empty_note": {
+    "message": "Conectado como destino. Dirige aquí los sources que quieras enviar desde la sección Destinos — este sitio solo los recibe, no puede pedirlos por su cuenta."
+  },
   "authz_allow": {
     "message": "Permitir"
   },
@@ -1097,7 +1106,22 @@
     "message": "Integraciones de sitios"
   },
   "grants_help": {
-    "message": "Sitios a los que has permitido iniciar recolecciones hacia su propio dominio. Revoca cuando quieras."
+    "message": "Sitios web conectados con Habeas. De cada uno ves las fuentes que puede PEDIR cuando quiera (revocable) y las que se le ENVÍAN desde Habeas — esas el sitio solo las recibe, no puede pedirlas por su cuenta."
+  },
+  "int_pull_title": {
+    "message": "Este sitio puede pedir"
+  },
+  "int_pull_note": {
+    "message": "Le diste permiso para ir a buscar estas fuentes hacia su propio dominio cuando lo pida. Puedes revocar cualquiera cuando quieras."
+  },
+  "int_push_title": {
+    "message": "Se envía a este sitio"
+  },
+  "int_push_note": {
+    "message": "Configuraste estas fuentes para que se le entreguen. Las envía Habeas — automáticamente o cuando sincronizas —; el sitio solo las recibe, no puede pedirlas por su cuenta."
+  },
+  "int_push_disabled": {
+    "message": "fuente desactivada"
   },
   "no_grants": {
     "message": "Aún no hay integraciones."

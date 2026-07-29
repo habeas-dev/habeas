@@ -25,6 +25,18 @@ async function init() {
     $('#allow').onclick = () => resolve(true, req);
     return;
   }
+  if (req.kind === 'register-sink') {
+    // Consent to become a DESTINATION only — no source, no scope, no pull capability. Show the
+    // destination URL + its editable name; the user routes sources to it later, from Settings.
+    $('#intro').textContent = t('authz_sink_intro');
+    $('#note').textContent = t('authz_sink_note');
+    $('#dest').textContent = req.sink.url;
+    $('#namein').value = (req.sink && req.sink.name) || originHost(req.origin);
+    for (const id of ['row-source', 'row-scope']) { const el = document.getElementById(id); if (el) el.hidden = true; }
+    $('#deny').onclick = () => resolve(false, req);
+    $('#allow').onclick = () => resolve(true, req);
+    return;
+  }
   const adapters = await getAdapters();
   const adapter = adapters[req.source];
   $('#source').textContent = (adapter && adapter.name) || req.source;
@@ -39,10 +51,31 @@ async function init() {
 async function resolve(allow, req, adapter) {
   const cleanup = () => chrome.storage.session.remove(['extreq:' + reqId, 'extls:' + req.origin]);
   if (!allow) {
-    await appendLog({ kind: req.kind === 'list-sources' ? 'authz-listsources' : 'authz', origin: req.origin, source: req.source, status: 'denied' });
+    await appendLog({ kind: req.kind === 'list-sources' ? 'authz-listsources' : (req.kind === 'register-sink' ? 'authz-sink' : 'authz'), origin: req.origin, source: req.source, status: 'denied' });
     await cleanup();
     $('#status').textContent = t('authz_denied'); disable();
     setTimeout(() => window.close(), 800);
+    return;
+  }
+  if (req.kind === 'register-sink') {
+    // Register the destination ONLY: upsert the origin-bound sink, no route and no grant. The user
+    // wires sources to it from Settings afterwards. Re-registration keeps a previously-paired token
+    // when the site omits headers (same rule as a re-proposal).
+    const sinkId = sinkIdForOrigin(req.origin);
+    const editedName = (($('#namein') && $('#namein').value) || '').trim();
+    const sink = { id: sinkId, name: editedName || originHost(req.origin), type: 'http', url: req.sink.url };
+    if (req.sink.headers) sink.headers = req.sink.headers;
+    else {
+      const cfg = await getConfig();
+      const prev = (cfg.sinks || []).find((s) => s.id === sinkId);
+      if (prev && prev.headersRef) sink.headersRef = prev.headersRef;
+      else if (prev && prev.headers) sink.headers = prev.headers;
+    }
+    await upsert('sinks', await secureSinkHeaders(sink));
+    await appendLog({ kind: 'authz-sink', origin: req.origin, sink: originHost(req.origin), status: 'granted' });
+    await cleanup();
+    $('#status').textContent = t('authz_granted'); disable();
+    setTimeout(() => window.close(), 900);
     return;
   }
   if (req.kind === 'list-sources') {

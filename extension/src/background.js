@@ -27,7 +27,7 @@ import { badgeWorking, badgeCount, badgeError, badgeClear, setStatus } from './l
 import { t } from './lib/i18n.js';
 import { getSubmitter } from './lib/submitter.js';
 import { getMyHandoffs } from './registry/client.js';
-import { validateProposal, originHost, enabledSources, sinkIdForOrigin } from './lib/exthooks.js';
+import { validateProposal, validateSink, originHost, enabledSources, sinkIdForOrigin } from './lib/exthooks.js';
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant, revokeGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
 import { runStoreMigration } from './lib/migrate.js';
@@ -1120,6 +1120,7 @@ const siteBaseUrl = (adapter) => {
 async function handleExt(api, payload, origin) {
   if (!origin) return { ok: false, status: 'error', error: 'no origin' };
   if (api === 'propose-workflow') return proposeWorkflow(origin, payload);
+  if (api === 'register-sink') return registerSink(origin, payload);
   if (api === 'collect') return collectForGrant(origin, payload);
   if (api === 'list-groups') return listGroupsForGrant(origin, payload);
   if (api === 'list-sources') return listSourcesForOrigin(origin);
@@ -1285,6 +1286,23 @@ async function proposeWorkflow(origin, payload) {
   return { ok: true, status: 'pending', requestId: reqId };
 }
 
+// Register the caller as a DESTINATION (sink) with NO source and NO grant: the site just declares
+// "you can send data here", and the user routes whichever sources they want to it later, from
+// Settings (push model). Origin-bound + consent-gated exactly like a proposal, but it never grants
+// the site any pull capability. The consent screen (authorize.js, kind:'register-sink') upserts the
+// sink on approval. Re-registering (e.g. to rotate the token) is fine — same origin-bound sink id.
+async function registerSink(origin, payload) {
+  const v = validateSink(origin, payload);
+  if (!v.ok) return { ok: false, status: 'denied', error: v.error };
+  const reqId = 'sk_' + crypto.randomUUID();
+  await chrome.storage.session.set({ ['extreq:' + reqId]: { kind: 'register-sink', origin, sink: v.sink, at: Date.now() } });
+  const url = chrome.runtime.getURL('src/ui/authorize.html?req=' + reqId);
+  try { await chrome.windows.create({ url, type: 'popup', width: 540, height: 520 }); }
+  catch (e) { try { await chrome.tabs.create({ url }); } catch (e2) {} }
+  await appendLog({ kind: 'authz-sink', origin, status: 'pending' });
+  return { ok: true, status: 'pending', requestId: reqId };
+}
+
 async function extStatus(origin) {
   // Route grants only: a capability grant (kind:'list-sources') has no source/sink and would
   // surface at the consumer as a phantom connection with an empty source.
@@ -1292,10 +1310,16 @@ async function extStatus(origin) {
   // `routes` = the full delivery config pointed at this sink (incl. routes wired by hand in Settings,
   // which have no grant). `grants` stays the ACTIONABLE list (each carries a grantId for collect/revoke).
   const routes = await routesForOrigin(origin);
+  // `sink` = whether this origin is registered as a destination at all (via register-sink OR a past
+  // proposal). Lets a consumer confirm pairing even before any source is routed to it.
+  const cfg = await getConfig();
+  const s = (cfg.sinks || []).find((x) => x.id === sinkIdForOrigin(origin));
+  const sink = s ? { registered: true, ...(s.name ? { name: s.name } : {}) } : { registered: false };
   return {
     ok: true,
     grants: grants.map((g) => ({ grantId: g.id, source: g.datasourceId, sinkOrigin: originHost(origin) })),
     routes,
+    sink,
   };
 }
 

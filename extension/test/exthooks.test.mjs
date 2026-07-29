@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sinkIsOriginBound, validateProposal, sinkIdForOrigin, enabledSources } from '../src/lib/exthooks.js';
+import { sinkIsOriginBound, validateProposal, validateSink, sinkIdForOrigin, enabledSources } from '../src/lib/exthooks.js';
 
 test('origin-bound: the sink URL host must equal the requesting origin (https, or http on loopback)', () => {
   assert.ok(sinkIsOriginBound('https://tiquetera.app', 'https://tiquetera.app/ingest'));
@@ -40,6 +40,17 @@ test('validateProposal accepts an origin-bound http sink, rejects the rest', () 
   assert.ok(!validateProposal('https://tiquetera.app', { source: '', sink: { type: 'http', url: 'https://tiquetera.app/i' } }).ok);
   assert.ok(!validateProposal('', { source: 'x', sink: { type: 'http', url: 'https://x.app/i' } }).ok);
   assert.ok(!validateProposal('https://tiquetera.app', { source: 'x', sink: { type: 'drive' } }).ok);
+});
+
+test('validateSink accepts an origin-bound http sink with NO source, rejects the rest', () => {
+  const good = validateSink('https://cuentamo.app', { sink: { type: 'http', url: 'https://cuentamo.app/ingest', name: 'Cuéntamo' } });
+  assert.ok(good.ok, 'origin-bound sink, no source needed');
+  assert.equal(good.sink.url, 'https://cuentamo.app/ingest');
+  assert.equal(good.sink.name, 'Cuéntamo');
+  assert.ok(!validateSink('https://cuentamo.app', { sink: { type: 'http', url: 'https://evil.com/x' } }).ok, 'cross-origin rejected');
+  assert.ok(!validateSink('https://cuentamo.app', { sink: { type: 'drive' } }).ok, 'non-http sink rejected');
+  assert.ok(!validateSink('', { sink: { type: 'http', url: 'https://x.app/i' } }).ok, 'no origin rejected');
+  assert.ok(!validateSink('https://cuentamo.app', {}).ok, 'missing sink rejected');
 });
 
 test('sinkIdForOrigin is stable and host-derived', () => {

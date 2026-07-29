@@ -42,6 +42,19 @@ export function validateProposal(origin, msg) {
   return { ok: true, sink: { type: 'http', url: sink.url, ...(name ? { name } : {}), ...(headers ? { headers } : {}) }, filter };
 }
 
+// Validate a register-sink request — a site registering itself as a DESTINATION with no source and no
+// grant (the user routes sources to it later, from Settings). Same origin-binding + name sanitization as
+// a proposal, minus the source/filter. Returns { ok, error?, sink? }.
+export function validateSink(origin, msg) {
+  if (!origin) return { ok: false, error: 'no origin' };
+  const sink = msg && msg.sink;
+  if (!sink || sink.type !== 'http' || typeof sink.url !== 'string') return { ok: false, error: 'sink must be an http sink with a url' };
+  if (!sinkIsOriginBound(origin, sink.url)) return { ok: false, error: 'origin-bound: the sink URL host must equal the requesting origin' };
+  const headers = sink.headers && typeof sink.headers === 'object' ? sink.headers : undefined;
+  const name = typeof sink.name === 'string' ? sink.name.replace(/[\r\n\t]+/g, ' ').trim().slice(0, 40) : '';
+  return { ok: true, sink: { type: 'http', url: sink.url, ...(name ? { name } : {}), ...(headers ? { headers } : {}) } };
+}
+
 // A short, stable id for a sink derived from its origin host (so re-proposals reuse the same sink).
 export function sinkIdForOrigin(origin) {
   return 'ext-' + originHost(origin).replace(/[^a-z0-9]/gi, '-');

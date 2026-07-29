@@ -1075,6 +1075,15 @@
   "authz_ls_note": {
     "message": "This reveals the list of enabled sources to the requesting site. You can revoke it anytime in Settings, Site integrations."
   },
+  "authz_sink_intro": {
+    "message": "A website wants to register as a destination you can send data to. This does NOT let it fetch anything: it only receives what you choose to route to it. You pick which sources to send from Settings, afterwards."
+  },
+  "authz_sink_note": {
+    "message": "Only your own site can register its own destination (origin-bound). No source is shared until you route one to it. Remove it anytime in Settings, Site integrations."
+  },
+  "int_empty_note": {
+    "message": "Connected as a destination. Route the sources you want to send here from the Destinations section — this site only receives them, it can't fetch them itself."
+  },
   "authz_allow": {
     "message": "Allow"
   },
@@ -1097,7 +1106,22 @@
     "message": "Site integrations"
   },
   "grants_help": {
-    "message": "Sites you've allowed to trigger collection to their own domain. Revoke any at any time."
+    "message": "Websites connected to Habeas. For each you see the sources it can FETCH on demand (revocable) and the sources SENT to it from Habeas — the site only receives those, it can't pull them itself."
+  },
+  "int_pull_title": {
+    "message": "This site can fetch"
+  },
+  "int_pull_note": {
+    "message": "You allowed it to go and fetch these sources into its own domain, on demand. Revoke any at any time."
+  },
+  "int_push_title": {
+    "message": "Sent to this site"
+  },
+  "int_push_note": {
+    "message": "You configured these to be delivered here. Habeas sends them — automatically, or when you sync — ; the site only receives them, it can't fetch them itself."
+  },
+  "int_push_disabled": {
+    "message": "source off"
   },
   "no_grants": {
     "message": "No site integrations yet."

@@ -79,7 +79,9 @@ function habeas(api, payload) {
 }
 ```
 
-There are **five** APIs: `list-sources`, `propose-workflow`, `status`, `list-groups`, `collect`.
+There are **six** APIs: `list-sources`, `propose-workflow`, `register-sink`, `status`, `list-groups`,
+`collect` (plus `revoke-grant`). `propose-workflow` is the *pull* model (you fetch a source);
+`register-sink` is the *push* model (you register as a destination and the user routes sources to you).
 
 ---
 
@@ -122,11 +124,18 @@ const res = await habeas('propose-workflow', {
 `status:'pending'` means the consent screen is open. Learn the outcome by polling **status**:
 
 ```js
-const { grants } = await habeas('status');   // only grants belonging to YOUR origin
-// grants: [{ grantId, source, sinkOrigin }]
+const { grants, routes, sink } = await habeas('status');   // origin-bound
+// grants: [{ grantId, source, sinkOrigin }]                // what YOU can trigger (has a grantId)
+// routes: [{ source, name, categories, mode, enabled, … }] // ALL sources routed to you, incl. ones the
+//                                                           // user wired by hand (no grant → push only)
+// sink:   { registered, name? }                            // are you registered as a destination at all
 ```
 
 Once a grant for your `source` appears, you have a `grantId` to collect with.
+
+**Don't want to pick a source?** Use `register-sink` instead of `propose-workflow` to register only your
+destination (no source, no grant); the user then routes sources to you from Habeas's Settings and they
+show up in `status.routes`. See [`consumers/external-hooks.md`](../consumers/external-hooks.md) §A′.
 
 ## 4. (Optional) List accounts/portfolios (`list-groups`)
 

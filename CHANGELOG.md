@@ -17,6 +17,16 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   (which have no grant). Origin-bound, public metadata only (source id/name/service/categories/trust/mode/
   enabled), never data. Lets a sink (e.g. Cuéntamo) show the user everything currently routed to it, not just
   what it set up itself — in the same poll it already makes. Documented in `consumers/external-hooks.md`.
+- **`register-sink` hook** (`background.js`, `authorize.js`, `content/extbridge.js`, `lib/exthooks.js`): a
+  site can register itself as a **destination** with NO source and NO grant — the push counterpart to
+  `propose-workflow`. Origin-bound + consent-gated; on approval it upserts the origin's sink (with the
+  site's delivery credential) but grants nothing, so the site can only RECEIVE what the user later routes to
+  it from Settings. `status` gained `sink: { registered, name? }` so a consumer can confirm the pairing even
+  before any source is routed. Documented in `consumers/external-hooks.md` §A′ and `docs/INTEGRATION.md`.
+- **Site integrations settings** now group each connected site into "This site can fetch" (grant-backed,
+  pull, revocable) vs "Sent to this site" (routes with no grant, push — delivered by Habeas), and show
+  destinations registered via `register-sink` even before any source is routed. Plain-language copy replaces
+  the previous `origin · source → itself` jargon.
 
 ## [0.9.6] — 2026-07-28
 

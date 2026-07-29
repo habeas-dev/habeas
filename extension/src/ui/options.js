@@ -324,15 +324,48 @@ async function render() {
     render();
   });
 
+  // Site integrations, grouped BY SITE and split into the two ways a source reaches it:
+  //  · "This site can FETCH" — grant-backed routes: the site pulls them on demand (revocable).
+  //  · "SENT to this site"   — routes to the site's sink WITHOUT a grant: Habeas delivers them
+  //    (auto-sync, or when the user syncs); the site only receives, it can't pull them itself.
+  // Keeping the two visibly apart is the whole point: a bare grant list hid the manual/auto routes
+  // and made "one connection = all my sources" look true when it isn't.
   const grants = await getGrants();
-  $('#grants').innerHTML = grants.length
-    ? grants.map((g) => {
-      let originHost = g.origin; try { originHost = new URL(g.origin).host; } catch (e) {}
+  const srcName = (dsId) => { const ds = (cfg.datasources || []).find((d) => d.id === dsId); return (ds && CATALOG[ds.adapter] && CATALOG[ds.adapter].name) || (CATALOG[dsId] && CATALOG[dsId].name) || dsId; };
+  const siteIds = new Set();
+  for (const s of (cfg.sinks || [])) if (String(s.id).startsWith('ext-')) siteIds.add(s.id);
+  for (const g of grants) if (g.sinkId) siteIds.add(g.sinkId);
+  const sinkName = (id) => { const s = (cfg.sinks || []).find((x) => x.id === id); return (s && (s.name || s.id)) || String(id).replace(/^ext-/, ''); };
+  const row = (inner) => `<div class="row" style="display:flex;align-items:center;gap:8px;padding:4px 0">${inner}</div>`;
+  const group = (title, note, rows) => `<div style="margin-top:8px"><div style="font-weight:600">${esc(title)}</div><p class="muted" style="margin:2px 0 4px">${esc(note)}</p>${rows}</div>`;
+  const siteCards = [...siteIds].map((sid) => {
+    const pull = grants.filter((g) => g.datasourceId && g.sinkId === sid);
+    const pullSet = new Set(pull.map((g) => g.datasourceId));
+    const push = (cfg.routes || []).filter((r) => r.sink === sid && r.datasource && !pullSet.has(r.datasource));
+    const known = (cfg.sinks || []).some((s) => s.id === sid);
+    // A registered destination with no sources routed yet: show it so the user knows the pairing
+    // succeeded and that the next step is to route sources to it (from the Destinations section).
+    if (!pull.length && !push.length) {
+      if (!known) return '';
+      return `<div class="card" style="display:block"><div style="font-weight:600;margin-bottom:2px">🌐 ${esc(sinkName(sid))}</div><p class="muted" style="margin:2px 0 0">${esc(t('int_empty_note'))}</p></div>`;
+    }
+    const pullRows = pull.length ? group(t('int_pull_title'), t('int_pull_note'), pull.map((g) => {
       const used = g.lastUsedAt ? `<span class="muted">${esc(String(g.lastUsedAt).slice(0, 10))}</span>` : '';
-      const label = g.kind === 'list-sources' ? t('grant_line_listsources', [originHost]) : t('grant_line', [originHost, g.datasourceId]);
-      return `<div class="card row"><b style="flex:1">${esc(label)}</b>${used}<button data-revoke="${esc(g.id)}">${t('grant_revoke')}</button></div>`;
-    }).join('')
-    : `<p class="muted">${t('no_grants')}</p>`;
+      return row(`<b style="flex:1">${esc(srcName(g.datasourceId))}</b>${used}<button data-revoke="${esc(g.id)}">${t('grant_revoke')}</button>`);
+    }).join('')) : '';
+    const pushRows = push.length ? group(t('int_push_title'), t('int_push_note'), push.map((r) => {
+      const ds = (cfg.datasources || []).find((d) => d.id === r.datasource);
+      const off = ds && ds.enabled === false ? ` <span class="pill">${esc(t('int_push_disabled'))}</span>` : '';
+      return row(`<b style="flex:1">${esc(srcName(r.datasource))}</b>${off}`);
+    }).join('')) : '';
+    return `<div class="card" style="display:block"><div style="font-weight:600;margin-bottom:2px">🌐 ${esc(sinkName(sid))}</div>${pullRows}${pushRows}</div>`;
+  }).filter(Boolean);
+  // Capability grants (list-sources) have no sink/source — list them plainly at the end.
+  const capRows = grants.filter((g) => g.kind === 'list-sources').map((g) => {
+    let originHost = g.origin; try { originHost = new URL(g.origin).host; } catch (e) {}
+    return `<div class="card row"><b style="flex:1">${esc(t('grant_line_listsources', [originHost]))}</b><button data-revoke="${esc(g.id)}">${t('grant_revoke')}</button></div>`;
+  }).join('');
+  $('#grants').innerHTML = (siteCards.join('') + capRows) || `<p class="muted">${t('no_grants')}</p>`;
   $('#grants').querySelectorAll('[data-revoke]').forEach((b) => b.onclick = async () => { await revokeGrant(b.dataset.revoke); render(); });
   await renderPlanner(cfg);
   await renderSweep(cfg);
