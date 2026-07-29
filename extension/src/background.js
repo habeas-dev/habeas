@@ -27,7 +27,7 @@ import { badgeWorking, badgeCount, badgeError, badgeClear, setStatus } from './l
 import { t } from './lib/i18n.js';
 import { getSubmitter } from './lib/submitter.js';
 import { getMyHandoffs } from './registry/client.js';
-import { validateProposal, originHost, enabledSources } from './lib/exthooks.js';
+import { validateProposal, originHost, enabledSources, sinkIdForOrigin } from './lib/exthooks.js';
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant, revokeGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
 import { runStoreMigration } from './lib/migrate.js';
@@ -1128,6 +1128,35 @@ async function handleExt(api, payload, origin) {
   return { ok: false, status: 'error', error: 'unknown api' };
 }
 
+// The sources CURRENTLY ROUTED to the caller's OWN sink — regardless of how the route was created
+// (external-hooks propose/consent OR configured by hand in Habeas's Settings). Origin-bound: only
+// routes whose sink is the origin's own sink; PUBLIC metadata only (source id/name/service/categories/
+// trust + route mode), never accounts, documents or data. No cross-origin leak: a site only ever sees
+// what feeds its own sink. Surfaced as `status.routes` so a consumer gets the full delivery picture
+// (not just its grant-backed routes) in the same poll it already makes.
+async function routesForOrigin(origin) {
+  const sinkId = sinkIdForOrigin(origin);
+  const [cfg, adapters] = await Promise.all([getConfig(), getAdapters()]);
+  const seen = new Set();
+  const sources = [];
+  for (const r of (cfg.routes || [])) {
+    if (!r || r.sink !== sinkId || !r.datasource || seen.has(r.datasource)) continue;
+    seen.add(r.datasource);
+    const ds = (cfg.datasources || []).find((d) => d.id === r.datasource);
+    const a = adapters[(ds && ds.adapter) || r.datasource];
+    sources.push({
+      source: r.datasource,
+      name: (a && (a.name || a.id)) || r.datasource,
+      service: (a && (a.service || a.id)) || r.datasource,
+      categories: a && Array.isArray(a.categories) ? a.categories.slice() : [],
+      trust: (a && a.trust) || 'community',
+      mode: r.mode || 'external',
+      enabled: !!(ds && ds.enabled),
+    });
+  }
+  return sources;
+}
+
 // A consumer may revoke ITS OWN grant (pure scope reduction — no consent needed; origin-bound like
 // everything else). The route's datasource/sink config stays in Habeas (it's the user's); only this
 // origin's capability to trigger it goes away.
@@ -1260,7 +1289,14 @@ async function extStatus(origin) {
   // Route grants only: a capability grant (kind:'list-sources') has no source/sink and would
   // surface at the consumer as a phantom connection with an empty source.
   const grants = (await grantsForOrigin(origin)).filter((g) => g.datasourceId);
-  return { ok: true, grants: grants.map((g) => ({ grantId: g.id, source: g.datasourceId, sinkOrigin: originHost(origin) })) };
+  // `routes` = the full delivery config pointed at this sink (incl. routes wired by hand in Settings,
+  // which have no grant). `grants` stays the ACTIONABLE list (each carries a grantId for collect/revoke).
+  const routes = await routesForOrigin(origin);
+  return {
+    ok: true,
+    grants: grants.map((g) => ({ grantId: g.id, source: g.datasourceId, sinkOrigin: originHost(origin) })),
+    routes,
+  };
 }
 
 async function collectForGrant(origin, payload) {

@@ -10,6 +10,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **`status` now returns `routes`** (`background.js`): alongside the existing `grants` (the actionable,
+  grant-backed routes a consumer established via propose/consent), `status` now also reports `routes` — the
+  full delivery config pointed at the caller's sink, INCLUDING routes the user wired by hand in Settings
+  (which have no grant). Origin-bound, public metadata only (source id/name/service/categories/trust/mode/
+  enabled), never data. Lets a sink (e.g. Cuéntamo) show the user everything currently routed to it, not just
+  what it set up itself — in the same poll it already makes. Documented in `consumers/external-hooks.md`.
+
 ## [0.9.6] — 2026-07-28
 
 ### Added

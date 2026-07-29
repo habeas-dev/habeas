@@ -59,9 +59,20 @@ const res = await habeas('propose-workflow', {
 `status:'pending'` means the consent screen is open. Poll **status** to learn the outcome:
 
 ```js
-const { grants } = await habeas('status');   // only ROUTE grants belonging to YOUR origin
-// grants: [{ grantId, source, sinkOrigin }]  (the list-sources capability grant is not listed)
+const { grants, routes } = await habeas('status');
+// grants: [{ grantId, source, sinkOrigin }]  — the routes YOU established via propose/consent.
+//         These are ACTIONABLE: each grantId feeds `collect` / `list-groups` / `revoke-grant`.
+//         (the list-sources capability grant is not listed.)
+// routes: [{ source, name, service, categories, trust, mode, enabled }]  — the full delivery config
+//         pointed at your sink, INCLUDING routes the user wired by hand in Habeas's Settings (which
+//         have no grant). mode: 'external' (via propose/consent) | 'auto' | 'manual'. Origin-bound
+//         and PUBLIC metadata only — never accounts, documents or data. Use it to show the user
+//         everything currently routed to you, not just what you set up through the consent flow.
 ```
+
+`grants` and `routes` answer different questions — "what can I trigger" vs "what is configured to reach
+me". A source you connected appears in both; a source the user routed to you by hand appears only in
+`routes` (no grantId, so you cannot `collect` it — the user drives it from Habeas).
 
 **Connecting a second source?** Omit `sink.headers` in the new proposal: your origin's sink keeps the
 pairing credential it already stores (you only ever saw the token once, so absence means "don't change
