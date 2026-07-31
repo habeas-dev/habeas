@@ -3191,6 +3191,28 @@
       }
     }
   },
+  "status_noperm": {
+    "message": "$NAME$: grant site access to sync",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "notify_noperm": {
+    "message": "$NAME$: site access was revoked (e.g. after a browser or add-on update). Click to open Settings and re-enable it.",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "src_needs_access": {
+    "message": "Site access needed"
+  },
+  "src_grant_access": {
+    "message": "Grant site access"
+  },
   "st_notab": {
     "message": "site not open"
   },

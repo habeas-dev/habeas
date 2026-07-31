@@ -3191,6 +3191,28 @@
       }
     }
   },
+  "status_noperm": {
+    "message": "$NAME$: concede acceso al sitio para sincronizar",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "notify_noperm": {
+    "message": "$NAME$: se revocó el acceso al sitio (p. ej. tras actualizar el navegador o el add-on). Pulsa para abrir Ajustes y volver a activarlo.",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "src_needs_access": {
+    "message": "Falta acceso al sitio"
+  },
+  "src_grant_access": {
+    "message": "Conceder acceso al sitio"
+  },
   "st_notab": {
     "message": "sitio sin abrir"
   },

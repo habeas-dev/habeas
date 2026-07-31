@@ -4,7 +4,7 @@
 // login, not a background job while they're away.
 import { chrome } from './lib/ext.js';
 import { getConfig, saveConfig } from './lib/config.js';
-import { registerCapture } from './lib/capture.js';
+import { registerCapture, hasCapturePermissions } from './lib/capture.js';
 import { loadAuth, hasAuth, capturePathAllowed } from './lib/authstore.js';
 import { pushDiag, recordingNet, pushReqCtx, redactReqVal as rcRedactVal } from './lib/diag.js';
 import { deliveredSet, markDelivered, appendLog, rememberDocMeta } from './lib/state.js';
@@ -888,6 +888,17 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     // incorrecto"). Treat it as no-session → the sweep opens the login page; retries once fully logged in.
     const ctxMissing = ((adapter.auth && adapter.auth.context) || []).some((c) => !(auth && auth.ctx && auth.ctx[c.name] != null && auth.ctx[c.name] !== ''));
     if (!auth || ctxMissing) { await appendLog({ ...base, status: 'nosession' }); await badgeClear(); setStatus(t('status_nosession', [name])); return { status: 'nosession' }; }
+    // The source's OPTIONAL host permissions can be silently revoked by a browser/add-on update (a Firefox
+    // temporary-add-on reload wipes them) — the page-context fetch would then die with a cryptic "Missing host
+    // permission for the tab". The background can't re-request (no user gesture), so DETECT the loss, log it as
+    // its own soft status, and tell the user to re-grant it in Settings (one click there re-requests). Not a hard
+    // error, doesn't escalate (opening a tab can't fix a permission), and the notification opens Settings.
+    if (!(await hasCapturePermissions(adapter))) {
+      await appendLog({ ...base, status: 'noperm' }); await badgeError();
+      if (kind === 'auto') notify(t('notify_noperm', [name]), 'noperm');
+      setStatus(t('status_noperm', [name]));
+      return { status: 'noperm' };
+    }
     // Auto/sweep runs unattended (a tab is already open post-login) → reuse it. A MANUAL/interactive run (the
     // Archive's "Save") opens the site tab if none exists, so the page-context fetch inherits the session.
     // A brand source instance is pinned to a SINGLE country (ds.brandDomain) — its own store, ledger and
@@ -1454,10 +1465,19 @@ async function runPendingExternalCollects(host) {
   }
 }
 
-function notify(message) {
-  try { chrome.notifications.create({ type: 'basic', iconUrl: 'icon-128.png', title: 'Habeas', message }); }
+function notify(message, kind) {
+  // `kind` tags an actionable notification whose click opens Settings (e.g. 'noperm' → re-grant site access).
+  const id = kind ? 'habeas-' + kind + ':' + Date.now() : undefined;
+  try { chrome.notifications.create(id, { type: 'basic', iconUrl: 'icon-128.png', title: 'Habeas', message }); }
   catch (e) {}
 }
+// A tagged notification (e.g. site-access revoked) is a call to action — open Settings, where a single click
+// re-requests the permission (the user gesture the background lacks).
+try {
+  chrome.notifications.onClicked.addListener((id) => {
+    if (typeof id === 'string' && id.startsWith('habeas-')) { try { chrome.runtime.openOptionsPage(); } catch (e) {} try { chrome.notifications.clear(id); } catch (e) {} }
+  });
+} catch (e) {}
 
 // Let a contributor know — without opening Settings — when the Habeas team replies to one of their
 // handoffs. Polls their own submissions (by pseudonymous id), notifies ONCE per new team reply, and

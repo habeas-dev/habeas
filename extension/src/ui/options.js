@@ -10,7 +10,7 @@ import { applyI18n, t } from '../lib/i18n.js';
 import { getAdapters, removeSource, isBuiltinSource } from '../adapters/index.js';
 import { getStoredSources } from '../adapters/loader.js';
 import { needsConsent, hasConsent, grantConsent, consentDescriptor } from '../lib/consent.js';
-import { requestCapturePermissions, registerCapture, unregisterCapture } from '../lib/capture.js';
+import { requestCapturePermissions, registerCapture, unregisterCapture, hasCapturePermissions } from '../lib/capture.js';
 import { exportSource, buildShareUrl, importFromFile } from '../registry/share.js';
 import { saveSource } from '../adapters/index.js';
 import { editJson } from './jsoneditor.js';
@@ -127,6 +127,11 @@ async function render() {
   const isOn = (a) => cfg.datasources.some((d) => d.id === a.id && d.enabled);
   // Order: enabled sources first, then alphabetically by name — so the list is scannable, not random.
   const sources = Object.values(CATALOG).sort((a, b) => (isOn(b) - isOn(a)) || (a.name || a.id).localeCompare(b.name || b.id));
+  // Enabled sources whose OPTIONAL host permissions were revoked (a browser/add-on update — notably a Firefox
+  // temporary-add-on reload — silently drops them). Auto-sync then fails with "Missing host permission for the
+  // tab"; surface a one-click re-grant here (requestCapturePermissions needs this button's user gesture).
+  const missingPerm = new Set();
+  for (const a of sources) { if (isOn(a) && !(await hasCapturePermissions(a))) missingPerm.add(a.id); }
   $('#ds').innerHTML = sources.map((a) => {
     const on = isOn(a);
     // Only BUILT-IN sources can carry the audited "first-party" label; a user-imported source is always
@@ -146,10 +151,11 @@ async function render() {
     return `<div class="src-card svc${on ? ' on' : ''}" data-hay="${esc(hay)}">
       <div class="src-row">
         <div class="src-info">
-          <div class="src-title"><b>${esc(a.name)}</b> <span class="pill type">${trust}</span>${upd ? ` <span class="pill upd">${t('update_available')}</span>` : ''}</div>
+          <div class="src-title"><b>${esc(a.name)}</b> <span class="pill type">${trust}</span>${upd ? ` <span class="pill upd">${t('update_available')}</span>` : ''}${missingPerm.has(a.id) ? ` <span class="pill warn">${t('src_needs_access')}</span>` : ''}</div>
           ${cats || a.country ? `<div class="src-meta muted">${a.country ? flag(a.country) + ' ' : ''}${esc(cats)}</div>` : ''}
         </div>
         <div class="src-actions">
+          ${missingPerm.has(a.id) ? `<button class="primary" data-grant="${esc(a.id)}" title="${esc(t('src_needs_access'))}">${t('src_grant_access')}</button>` : ''}
           ${upd ? `<button class="update" data-upd="${esc(a.id)}" title="${esc(t('src_update_to', [String(a.version || '?'), String(upd.version)]))}">⬆ ${t('update')}</button>` : ''}
           <button data-ds="${esc(a.id)}" data-on="${on ? 1 : 0}" class="${on ? '' : 'primary'}">${on ? t('deactivate') : t('activate')}</button>
         </div>
@@ -165,6 +171,13 @@ async function render() {
   }).join('');
   filterSources();
   renderUpdatesBanner();
+  $('#ds').querySelectorAll('[data-grant]').forEach((b) => b.onclick = async () => {
+    // Re-grant the source's revoked host permissions (this click is the user gesture permissions.request needs),
+    // and re-register the capture bridge (also dropped when permissions were lost). Then re-render to clear the warning.
+    const adapter = CATALOG[b.dataset.grant];
+    if (adapter) { try { await requestCapturePermissions(adapter); await registerCapture(adapter); } catch (e) {} }
+    render();
+  });
   $('#ds').querySelectorAll('[data-upd]').forEach((b) => b.onclick = () => updateSource(b.dataset.upd, b));
   $('#ds').querySelectorAll('[data-edit]').forEach((b) => b.onclick = async () => {
     const edited = await editJson(CATALOG[b.dataset.edit]);

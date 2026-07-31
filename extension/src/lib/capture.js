@@ -21,6 +21,15 @@ export async function requestCapturePermissions(adapter) {
   try { return await chrome.permissions.request({ origins: originsFor(adapter) }); } catch (e) { return false; }
 }
 
+// Are the source's host permissions currently granted? These are OPTIONAL permissions the user granted on
+// enable — and a browser/add-on update (notably a Firefox temporary add-on reload) can silently REVOKE them.
+// The background can't re-request (no user gesture), so an unattended run must DETECT the loss and surface it
+// instead of failing the page-context fetch with a cryptic "Missing host permission for the tab". Defaults to
+// true if the check itself can't run, so this only ever ADDS a clear signal, never blocks an otherwise-fine run.
+export async function hasCapturePermissions(adapter) {
+  try { return await chrome.permissions.contains({ origins: originsFor(adapter) }); } catch (e) { return true; }
+}
+
 // Register (or update) the capture scripts on the source's login site(s): the hook runs in the page's
 // MAIN world (so a strict page CSP can't block it — banks often refuse a chrome-extension: <script>),
 // and bridge runs in the ISOLATED world (for chrome.runtime/storage). They talk via window.postMessage.

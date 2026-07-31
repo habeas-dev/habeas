@@ -10,6 +10,17 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.8] — 2026-07-31
+
+### Added
+- **Detect & recover revoked site access (`noperm`).** A source's OPTIONAL host permissions can be silently
+  revoked by a browser/add-on update — notably a **Firefox temporary add-on reload** — after which auto-sync
+  died with a cryptic `groups 0 Missing host permission for the tab`. An unattended run now checks
+  `permissions.contains` first (`lib/capture.js#hasCapturePermissions`); if access was lost it logs a distinct
+  `noperm` status and fires an actionable notification (click → opens Settings). Settings flags each affected
+  source with a **"Site access needed"** pill + a one-click **"Grant site access"** button that re-requests the
+  permission (the user gesture the background lacks) and re-registers the capture bridge. Localized (en/es).
+
 ## [0.9.7] — 2026-07-31
 
 ### Added
