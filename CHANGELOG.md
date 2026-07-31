@@ -10,7 +10,17 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.7] — 2026-07-31
+
 ### Added
+- **Declarative transient-failure retry (`retry` in `netFetch`, `runtime/inventory.js`).** A source can opt into
+  a bounded retry for a service whose edge returns INTERMITTENT failures its own SPA silently rides out:
+  `retry: { status:[…], max, delayMs, bodyMatch? }`. `bodyMatch` gates on the response body so a transient edge
+  error (e.g. a raw gateway HTML `401 Authorization Required`) is retried while a genuine (JSON) auth failure is
+  surfaced at once for re-login. First user: **ING España** — its `api.ing.ingdirect.es` edge 401s the SAME
+  authenticated request (same bearer, same session cookies, browser-agnostic) one call and 200s it the next (a
+  load-balancer pool race), which previously aborted the whole sync at account enumeration. Confirmed via
+  mitmproxy A/B that neither `baggage`, cookies, nor the token were the cause — purely intermittent.
 - **`status` now returns `routes`** (`background.js`): alongside the existing `grants` (the actionable,
   grant-backed routes a consumer established via propose/consent), `status` now also reports `routes` — the
   full delivery config pointed at the caller's sink, INCLUDING routes the user wired by hand in Settings

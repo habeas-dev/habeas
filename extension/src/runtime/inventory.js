@@ -49,8 +49,23 @@ export function netFetch(net, adapter, opts = {}) {
         return r;
       }
     : (u, i) => fetch(u, i);
-  if (!throttle || !(throttle.minMs > 0)) return base;
-  return async (u, i) => { await throttleGate(throttle, u); return base(u, i); };
+  const attempt = (!throttle || !(throttle.minMs > 0)) ? base : async (u, i) => { await throttleGate(throttle, u); return base(u, i); };
+  // Bounded retry for a service whose edge returns INTERMITTENT failures the way its own SPA silently rides out
+  // (ING's "ING Webserver" gateway 401s the SAME authed request one call and 200s it the next — a load-balancer
+  // pool race). Opt-in per source via `retry: {status:[…], max, delayMs, bodyMatch?}`. `bodyMatch` gates on the
+  // response body so a transient edge 401 (raw HTML) is retried but a genuine (JSON) auth 401 is surfaced at once
+  // for re-login. Only page-context sources set this, whose responses cache their body (text() is re-readable).
+  const retry = adapter && adapter.retry;
+  if (!retry || !Array.isArray(retry.status) || !retry.status.length) return attempt;
+  const max = Math.max(1, retry.max || 3);
+  return async (u, i) => {
+    for (let n = 0; ; n++) {
+      const r = await attempt(u, i);
+      if (r.ok || n >= max || !retry.status.includes(r.status)) return r;
+      if (retry.bodyMatch) { let b = ''; try { b = await r.text(); } catch (e) {} if (String(b).indexOf(retry.bodyMatch) < 0) return r; }
+      if (retry.delayMs > 0) await new Promise((res) => setTimeout(res, retry.delayMs));
+    }
+  };
 }
 
 // Cookie policy for the source's own API calls. Default 'include' (a cookie-authed source needs its

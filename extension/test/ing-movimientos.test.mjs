@@ -42,6 +42,48 @@ const net = async (url) => {
 
 test('ING adapter validates', () => { const v = validateAdapter(FULL); assert.ok(v.ok, JSON.stringify(v)); });
 
+// Mirror the official SPA as closely as possible: it sends `baggage: bsi.ch=Transactional,bsi.ep=WEB` on
+// every api.ing.ingdirect.es call, so we replay it too (captured by the background webRequest observer,
+// like x-ing-extendedsessioncontext) — defensive against future edge/WAF tightening.
+test('ING declares baggage for replay (mirror the official SPA)', () => {
+  assert.ok(FULL.auth.replayHeaders.includes('baggage'), 'auth.replayHeaders must include "baggage"');
+});
+
+// ING's edge ("ING Webserver") returns INTERMITTENT 401s on api.ing.ingdirect.es — the SAME request (same
+// bearer, same 36 cookies) is 401 one moment and 200 the next (load-balancer/pool routing race: note the
+// dual lb-3-p-288 / lb-4-p-288 + x-pool-from-dc cookies). The official SPA retries transparently; Habeas must
+// too, or it aborts on the first 401 at the account-enumeration step. Retry is gated on the raw "Authorization
+// Required" edge-HTML body so a genuine (JSON) token-expiry 401 is NOT retried but surfaced for re-login.
+test('ING declares a bounded retry on the transient edge 401', () => {
+  assert.ok(FULL.retry && Array.isArray(FULL.retry.status) && FULL.retry.status.includes(401), 'source must declare retry on 401');
+  assert.ok(FULL.retry.bodyMatch, 'retry must be gated on the edge-HTML body (bodyMatch)');
+});
+
+const edge401 = () => ({ ok: false, status: 401, text: async () => '<html><head><title>401 Authorization Required</title></head><body>ING Webserver</body></html>', json: async () => ({}) });
+
+test('ING retries a transient edge 401 on /position-keeping and recovers', async () => {
+  const FAST = { ...MOV, retry: { ...MOV.retry, delayMs: 1 } };
+  let pk = 0;
+  const flaky = async (url, init) => {
+    if (/\/position-keeping$/.test(new URL(url).pathname)) { pk++; if (pk <= 2) return edge401(); }
+    return net(url, init);
+  };
+  const groups = await listGroups(FAST, auth, flaky);
+  assert.ok(groups.find((g) => g.id === 'acc-1'), 'accounts should enumerate after retry');
+  assert.ok(pk >= 3, 'should have retried /position-keeping past the transient 401s');
+});
+
+test('ING does NOT retry a genuine (JSON) 401 — surfaces for re-login', async () => {
+  const FAST = { ...MOV, retry: { ...MOV.retry, delayMs: 1 } };
+  let pk = 0;
+  const jsonExpired = async (url) => {
+    if (/\/position-keeping$/.test(new URL(url).pathname)) { pk++; return { ok: false, status: 401, text: async () => '{"error":"token_expired"}', json: async () => ({}) }; }
+    return net(url);
+  };
+  await assert.rejects(() => listGroups(FAST, auth, jsonExpired));
+  assert.equal(pk, 1, 'a JSON 401 (no edge-HTML body) must not be retried');
+});
+
 test('ING enumerates accounts with IBAN from typed identifiers[]', async () => {
   const groups = await listGroups(MOV, auth, net);
   assert.equal(groups.find((g) => g.id === 'acc-1').iban, 'ES1111111111111111111111');
