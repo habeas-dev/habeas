@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.10] — 2026-08-05
+
 ### Changed
 - **Config sync now ADOPTS the remote snapshot instead of overwriting it (`configsync.js`).** Completing the
   "adopt a remote canonical ledger, never clobber it with a local copy" invariant: `writeSnapshotIfChanged`
