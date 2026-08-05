@@ -4,6 +4,14 @@
 // (Drive/Dropbox/folder/…) then carries it to another machine, where it's merged in so "everything works as
 // configured". Conflict policy: newest-wins per entry (by the snapshot's `savedAt`), union otherwise (a local-only
 // source/sink/route is never dropped). Secrets are NEVER synced — a new device re-authenticates its destinations.
+//
+// THE METHOD — adopt a remote canonical ledger, never clobber it with a local copy. This is the invariant across
+// the whole store layer: a device that connects to a shared/remote store READS it as the source of truth and only
+// ever MERGES into it (union on write, newest-wins per id) — the local view can never SHRINK the shared state.
+// It holds for the documents (store/sharded.js: append-merge; a full saveSource prunes only on an explicit
+// {prune:true}; a partial read never resaves) AND here for the config snapshot (writeSnapshotIfChanged unions the
+// remote in before writing). Deletions are therefore intentionally NOT propagated by sync — losing another
+// device's data is never an accident; removing something is always an explicit, device-local action.
 import { chrome } from './ext.js';
 import { getConfig, saveConfig } from './config.js';
 import { getConfigSnapshot, putConfigSnapshot } from './store.js';
@@ -76,13 +84,24 @@ export async function applyStoredConfigIfNewer() {
   return true;
 }
 // Write the current config to the store IF it actually changed since the last write/apply (not the apply echo).
+// ADOPT-then-write: never overwrite the shared snapshot with a bare local copy. A device that hasn't pulled the
+// remote yet (applyStoredConfigIfNewer is fire-and-forget on startup) or that simply has fewer sinks/sources would
+// otherwise SHRINK the shared snapshot for every device. So read the remote and UNION it under the local config
+// (local wins per-id on a genuine edit), then write that superset. Trade-off: a removal doesn't propagate through
+// the snapshot (the safe default the store already takes — never drop another device's config); a per-device
+// removal stays local. `savedAt` still bumps so peers adopt the merged result.
 export async function writeSnapshotIfChanged(cfg, nowMs) {
   const c = cfg || (await getConfig());
   const sig = configSig(c);
   const st = await syncState();
   if (sig === st.sig) return false; // unchanged (or equals what we just applied) → nothing to push
   const at = nowMs || Date.now();
-  const ok = await putConfigSnapshot(buildSnapshot(c, at));
-  if (ok) await setSyncState({ at, sig });
+  let toWrite = c;
+  try {
+    const remote = await getConfigSnapshot(); // adopt what's already there so a smaller local view can't clobber it
+    if (remote && (remote.datasources || remote.sinks || remote.routes)) toWrite = mergeSnapshot(remote, c);
+  } catch (e) { /* store unreadable → write the local copy (best-effort, same as before) */ }
+  const ok = await putConfigSnapshot(buildSnapshot(toWrite, at));
+  if (ok) await setSyncState({ at, sig }); // sig of the LOCAL config — so the next real local edit is detected
   return ok;
 }

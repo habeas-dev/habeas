@@ -39,6 +39,23 @@ test('writeSnapshotIfChanged writes on a real change and skips the unchanged (no
   assert.equal(SNAP.savedAt, 3000);
 });
 
+// The METHOD: a device must ADOPT the remote canonical config, never overwrite it with a bare local copy. A
+// device that hasn't pulled yet (fire-and-forget on startup) or simply has fewer sinks/sources must not SHRINK
+// the shared snapshot. writeSnapshotIfChanged reads the remote and unions it under the local edit (local wins).
+test('writeSnapshotIfChanged ADOPTS the remote snapshot — never shrinks it with a local-only copy', async () => {
+  reset();
+  // The shared snapshot already carries device-B's extra source + sink.
+  SNAP = buildSnapshot({ datasources: [{ id: 'a', enabled: true }, { id: 'fromB', enabled: true }], sinks: [{ id: 'sB', type: 'drive' }], routes: [{ id: 'rB', datasource: 'fromB', sink: 'sB', mode: 'auto' }] }, 5000);
+  // THIS device only knows source 'a' and just edited it — a strictly smaller local view.
+  mem['habeas:config'] = { datasources: [{ id: 'a', enabled: true, groups: ['acc1'] }], sinks: [], routes: [] };
+  assert.equal(await writeSnapshotIfChanged(null, 9000), true, 'a real local change → write');
+  assert.ok(SNAP.datasources.find((d) => d.id === 'fromB'), 'remote-only source preserved (not clobbered)');
+  assert.ok(SNAP.sinks.find((s) => s.id === 'sB'), 'remote-only sink preserved');
+  assert.ok(SNAP.routes.find((r) => r.id === 'rB'), 'remote-only route preserved');
+  assert.deepEqual(SNAP.datasources.find((d) => d.id === 'a').groups, ['acc1'], 'the local edit still wins on the shared id');
+  assert.equal(SNAP.savedAt, 9000);
+});
+
 test('applyStoredConfigIfNewer adopts a newer snapshot once, then not again (and no echo write)', async () => {
   reset();
   mem['habeas:config'] = { datasources: [{ id: 'a', enabled: true }], sinks: [], routes: [] };

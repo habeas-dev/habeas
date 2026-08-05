@@ -10,6 +10,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Changed
+- **Config sync now ADOPTS the remote snapshot instead of overwriting it (`configsync.js`).** Completing the
+  "adopt a remote canonical ledger, never clobber it with a local copy" invariant: `writeSnapshotIfChanged`
+  reads the shared config snapshot and unions it under the local config (local wins per-id on a genuine edit)
+  before writing, so a device that hasn't pulled yet — or simply has fewer sinks/sources — can no longer SHRINK
+  the shared snapshot for every device. Removals are intentionally not propagated by sync (never lose another
+  device's config by accident; removal stays an explicit device-local action). The same invariant already
+  governs the document store (append-merge; prune only on explicit delete; partial reads never resave).
+
 ## [0.9.9] — 2026-08-05
 
 ### Fixed
