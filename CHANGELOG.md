@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.9] — 2026-08-05
+
 ### Fixed
 - **Data-loss guard: a device with fewer sources can no longer wipe a shared cloud store.** Reconnecting a
   cloud-backed canonical store (e.g. Dropbox) on a second browser that lacked the community adapters deleted
