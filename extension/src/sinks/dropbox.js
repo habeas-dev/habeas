@@ -67,8 +67,10 @@ async function dropboxToken(sink) {
 // Cross-browser OAuth WITHOUT launchWebAuthFlow: open the authorize URL in a tab and read the code off the
 // redirect to the (single, stable, registered) habeas.dev bounce. This is required for Firefox — since FF75
 // launchWebAuthFlow refuses any redirect_uri other than the per-install getRedirectURL(), which can't be
-// pre-registered. Reading tab.url needs host permission for the bounce origin; the optional https://*/*
-// grant covers it (requested here in the Connect click gesture if not already granted).
+// pre-registered. Reading tab.url needs host permission for the bounce origin: the DEFAULT habeas.dev bounce
+// is a STATIC host_permission (granted at install), because a runtime permissions.request is dropped on
+// Firefox when the Connect handler already awaited (gesture lost) → the tab.url was unreadable and connect
+// hung at the bounce. A custom self-hoster bounce still relies on the runtime request below (best-effort).
 function authViaTab(authUrl, bounce, nonce) {
   return new Promise((resolve, reject) => {
     let tabId = null, done = false;

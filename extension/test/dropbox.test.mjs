@@ -3,7 +3,23 @@
 // (no IndexedDB/chrome.identity in node) and mocks the Dropbox HTTP API.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { generateSecretKey } from '../src/lib/crypto.js';
+
+// The Dropbox connect flow reads the ?code off the bounce tab's URL (tabs.onUpdated). Reading tab.url needs
+// host permission for the bounce origin — and there is no `tabs` permission. Firefox only honors a runtime
+// permissions.request inside the click gesture, which the connect handlers lose across their pre-connect
+// awaits → the permission wasn't granted → tab.url was unreadable → connect hung at the bounce ("window
+// closed"). The bounce is the extension's OWN domain, so it must be a STATIC host permission (granted at
+// install, gesture-independent, cross-browser).
+test('manifest grants static host access to the Dropbox OAuth bounce origin', () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const manifest = JSON.parse(readFileSync(join(here, '../manifest.json'), 'utf8'));
+  const hp = manifest.host_permissions || [];
+  assert.ok(hp.includes('https://habeas.dev/*'), 'host_permissions must include https://habeas.dev/* (the OAuth bounce)');
+});
 
 const LOCAL = {};
 globalThis.chrome = { storage: { local: {

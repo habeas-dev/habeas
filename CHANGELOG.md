@@ -10,6 +10,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **Dropbox connect on Firefox ("window closed").** The OAuth flow reads the `?code` off the bounce tab's URL
+  (`habeas.dev/oauth/dropbox.html`) via `tabs.onUpdated`, which needs host permission for that origin (there is
+  no `tabs` permission). It was requested at runtime — but Firefox only honors `permissions.request` inside the
+  click gesture, which the Connect handlers lose across their pre-connect `await`s, so the grant silently
+  failed → `tab.url` was unreadable → connect hung at the bounce and, on closing the tab, reported "window
+  closed". `habeas.dev` (the extension's own OAuth bounce) is now a **static `host_permission`**, granted at
+  install and gesture-independent. Chrome was unaffected (broad `https://*/*` already granted).
+
 ## [0.9.8] — 2026-07-31
 
 ### Added
