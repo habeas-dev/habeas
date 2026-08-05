@@ -8,7 +8,7 @@
 import { chrome } from '../lib/ext.js';
 import { getConfig, saveConfig } from '../lib/config.js';
 import { getAdapters } from '../adapters/index.js';
-import { listSources, getSource, getStoreConfig, deleteSource } from '../lib/store.js';
+import { listSources, getSource, getStoreConfig } from '../lib/store.js';
 import { instrumentLabel, displayName, displayAmount, SIDE_DIR, sideKey, isInvestmentRec } from '../lib/recdisplay.js';
 import { useDriveStore, useFolderStore, useSinkStore, useHttpStore, folderStoreAvailable } from '../lib/storesetup.js';
 import { mountSinkForm, connectSink, needsConnect, storeCapable } from './sinkform.js';
@@ -229,10 +229,12 @@ async function buildIndex() {
   const keys = await listSources();
   const cs = ((await loadCache()) || {}).sources || {};
   const storeBases = [...new Set(keys.map((k) => String(k).split(':')[0]))];
-  // ORPHAN store keys — a base with stored data but NO installed adapter AND no configured datasource, left over
-  // from a removed/renamed source (raisin-es → raisin). Don't render them, and auto-clean their store data.
-  const orphans = storeBases.filter((b) => !isRenderable(b));
-  if (orphans.length) { for (const key of keys) { if (orphans.includes(String(key).split(':')[0])) { try { await deleteSource(key); } catch (e) {} } } }
+  // ORPHAN store keys — a base with stored data but NO installed adapter AND no configured datasource on THIS
+  // device. They are HIDDEN from the index (via isRenderable below) but NEVER auto-deleted: on a shared/cloud
+  // store a base can be unrenderable HERE (a community adapter not installed, or the cross-device config snapshot
+  // not yet synced) yet fully valid on another device — auto-deleting it wiped the shared store for every device
+  // (a reconnect on a second browser deleted every community source). Removing a genuinely-renamed/orphan source
+  // is an explicit action in the store inspector (ui/store-browser.js), not an unattended index build.
   // Also list every ENABLED, installed datasource — even with no stored docs yet — so the Archive is a complete
   // source manager: a freshly-installed source shows up and can be Refreshed to pull its first documents (this is
   // what lets the Archive replace the popup's Sources list).

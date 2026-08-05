@@ -110,7 +110,7 @@ export async function renormalizeStore(adapters) {
     let eff; try { eff = resolveOutput(base, streamId); } catch (e) { eff = base; }
     if (!needsMigration(eff)) continue;
     let data; try { data = await backend.loadSource(storeKey); } catch (e) { continue; }
-    if (!data || !data.items) continue;
+    if (!data || !data.items || data.__partial) continue; // a partial/failed read must not drive a pruning resave
     const ver = base.version || eff.version || '';
     let dirty = false;
     for (const entry of Object.values(data.items)) {

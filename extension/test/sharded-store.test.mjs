@@ -129,15 +129,47 @@ test('listSources returns both sharded sources and legacy ones', async () => {
   assert.deepEqual((await s.listSources()).sort(), ['amazon-es', 'dia-es']);
 });
 
-test('saveSource prunes shards for months that no longer have items', async () => {
+test('saveSource({prune:true}) prunes shards for months that no longer have items', async () => {
   const b = memBackend(); const s = makeShardedStore(b);
   await s.appendItems('x', [entry('A1', '2025-01-15'), entry('A3', '2025-03-02')]);
   const data = await s.loadSource('x');
   delete data.items.A3;
-  await s.saveSource('x', data);
+  await s.saveSource('x', data, { prune: true });
   assert.ok(!has(b, 'x', '2025-03'), 'the emptied March shard is pruned');
   assert.ok(has(b, 'x', '2025-01'));
   assert.deepEqual(ids(await s.loadSource('x')), ['A1']);
+});
+
+// INVARIANT (data-loss guard): a populated source is NEVER emptied/shrunk by a DEFAULT full write — only an
+// EXPLICIT { prune:true } (a user delete/clear) may drop months. This is what stops a stale/empty device view
+// (a config not yet synced across devices, a partial load) from wiping a SHARED cloud store. Regression: reconnecting
+// Dropbox on a second browser (which lacked the community adapters) deleted every community source's shards.
+test('saveSource does NOT prune by default: an empty save over a populated source keeps every shard', async () => {
+  const b = memBackend(); const s = makeShardedStore(b);
+  await s.appendItems('x', [entry('A1', '2025-01-15'), entry('A3', '2025-03-02')]);
+  await s.saveSource('x', { meta: {}, items: {} }); // an empty/stale view must not wipe it
+  assert.ok(has(b, 'x', '2025-01') && has(b, 'x', '2025-03'), 'populated shards survive an empty default save');
+  assert.deepEqual(ids(await s.loadSource('x')), ['A1', 'A3']);
+});
+
+test('saveSource does NOT drop months absent from a strict-subset save (no prune flag)', async () => {
+  const b = memBackend(); const s = makeShardedStore(b);
+  await s.appendItems('x', [entry('A1', '2025-01-15'), entry('A3', '2025-03-02')]);
+  const data = await s.loadSource('x'); delete data.items.A3; // March dropped from the in-memory view only
+  await s.saveSource('x', data); // no flag → additive/overwrite-only, never removes March
+  assert.ok(has(b, 'x', '2025-03'), 'the absent March shard is NOT pruned without an explicit prune');
+  assert.deepEqual(ids(await s.loadSource('x')), ['A1', 'A3']);
+});
+
+test('a partial load (a shard read throws) does not trigger a pruning resave', async () => {
+  const b = memBackend(); const s = makeShardedStore(b);
+  await s.appendItems('x', [entry('A1', '2025-01-15'), entry('A3', '2025-03-02')]);
+  b.legacy.set('x', { meta: {}, items: {} }); // force heal=true so loadSource would otherwise resave (and prune)
+  const good = b.readShard.bind(b);
+  b.readShard = async (id, name) => { if (id === 'x' && name === '2025-03') throw new Error('transient read fail'); return good(id, name); };
+  const data = await s.loadSource('x');
+  assert.equal(data.__partial, true, 'the load is flagged partial');
+  assert.ok(has(b, 'x', '2025-03'), 'the unread March shard is NOT pruned by a heal resave');
 });
 
 test('hasItems is a cheap existence probe (listing only, no shard reads)', async () => {

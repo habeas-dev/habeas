@@ -86,7 +86,7 @@ export async function deleteStoreItems(sourceId, ids) {
   if (!src || !src.items) return 0;
   let n = 0;
   for (const id of ids || []) { if (src.items[String(id)]) { delete src.items[String(id)]; n++; } }
-  if (n) await backend.saveSource(sourceId, src);
+  if (n) await backend.saveSource(sourceId, src, { prune: true }); // explicit item delete → may shrink shards
   return n;
 }
 // Empty a source's store entirely (keeps its meta). A full backend "delete file/entry" isn't part of the
@@ -94,7 +94,7 @@ export async function deleteStoreItems(sourceId, ids) {
 export async function clearStoreSource(sourceId) {
   const backend = await backendFor();
   const src = await backend.loadSource(sourceId);
-  await backend.saveSource(sourceId, { meta: (src && src.meta) || {}, items: {} });
+  await backend.saveSource(sourceId, { meta: (src && src.meta) || {}, items: {} }, { prune: true }); // explicit clear
 }
 // Fully remove a source's store entry so it stops being listed (the local backend deletes the key; cloud
 // backends that don't implement a delete are emptied as a fallback). Used to auto-clean orphan keys left behind
@@ -102,7 +102,7 @@ export async function clearStoreSource(sourceId) {
 export async function deleteSource(sourceId) {
   const backend = await backendFor();
   if (typeof backend.clearSource === 'function') { try { return await backend.clearSource(sourceId); } catch (e) { /* fall through to empty */ } }
-  try { await backend.saveSource(sourceId, { meta: {}, items: {} }); } catch (e) {}
+  try { await backend.saveSource(sourceId, { meta: {}, items: {} }, { prune: true }); } catch (e) {} // explicit delete fallback
 }
 export async function getRecords(sourceId, opts) { try { return project(await (await backendFor()).loadSource(sourceId), opts); } catch (e) { return project(null, opts); } }
 export async function getViews(sourceId, delivered) { try { return views(await (await backendFor()).loadSource(sourceId), delivered); } catch (e) { return views(null, delivered); } }

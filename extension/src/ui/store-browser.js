@@ -131,7 +131,7 @@ async function onDeleteItems() {
   if (!backend || !sourceId || !ids.length) return;
   if (!confirm(`Borrar ${ids.length} item(s) del almacén de «${sourceId}»? No se puede deshacer.`)) return;
   const src = await backend.loadSource(sourceId);
-  if (src && src.items) { for (const id of ids) delete src.items[String(id)]; await backend.saveSource(sourceId, src); }
+  if (src && src.items) { for (const id of ids) delete src.items[String(id)]; await backend.saveSource(sourceId, src, { prune: true }); } // explicit inspector delete
   await render();
 }
 
@@ -140,7 +140,7 @@ async function onClearSource() {
   if (!backend || !sourceId) return;
   if (!confirm(`Vaciar TODO el almacén de «${sourceId}»? Se borran todos sus registros. No se puede deshacer.`)) return;
   const src = await backend.loadSource(sourceId);
-  await backend.saveSource(sourceId, { ...emptySource((src && src.meta) || {}), items: {} });
+  await backend.saveSource(sourceId, { ...emptySource((src && src.meta) || {}), items: {} }, { prune: true }); // explicit clear-all
   await render();
 }
 

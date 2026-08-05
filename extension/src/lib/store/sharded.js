@@ -54,15 +54,21 @@ export function makeShardedStore(prim) {
     if (legacy && legacy.items) { data = mergeSources(data, legacy); heal = true; } // legacy blob → reformat into shards
     // Read every month shard CONCURRENTLY (a source with years of history has dozens; sequential round-trips to a
     // cloud backend were the slow part of opening it). Bounded fan-out so a cloud backend isn't hammered.
-    const shards = await mapLimit(names, 8, (n) => prim.readShard(id, n).catch(() => null));
+    // Distinguish a shard READ FAILURE (a cloud blip / 401) from a genuinely-empty shard: a failure returns the
+    // sentinel and marks the assembly PARTIAL. A partial assembly must never drive a pruning resave, and callers
+    // that do their own resave (migrate) must skip it — else a transient read error would permanently drop months.
+    const READ_ERR = Symbol('shard-read-error');
+    let partial = false;
+    const shards = await mapLimit(names, 8, (n) => prim.readShard(id, n).catch(() => READ_ERR));
     for (let k = 0; k < names.length; k++) {
-      const sh = shards[k]; if (!sh || !sh.items) continue;
+      const sh = shards[k]; if (sh === READ_ERR) { partial = true; continue; } if (!sh || !sh.items) continue;
       data = mergeSources(data, { meta: {}, items: sh.items });
       if (!heal) for (const e of Object.values(sh.items)) if (periodOf(e) !== names[k]) { heal = true; break; } // an entry in the wrong shard
     }
-    if (heal && (!opts || opts.interactive !== false)) {
+    if (heal && !partial && (!opts || opts.interactive !== false)) {
       try { await saveSource(id, data); } catch (e) { /* no token/permission for a write → serve the read-only assembly */ }
     }
+    if (partial) data.__partial = true; // a caller that resaves (migrate) must bail on this
     return data;
   }
 
@@ -73,14 +79,18 @@ export function makeShardedStore(prim) {
     return byPeriod;
   }
 
-  // Full write (migrate/move/clear/repair/reformat): re-split into month shards, prune stale ones, drop legacy.
-  async function saveSource(id, data) {
+  // Full write: re-split into month shards and overwrite them. `opts.prune` (default OFF) is REQUIRED to remove
+  // shards/_meta absent from `data` — only an EXPLICIT delete/clear passes it. Without it, saveSource is
+  // additive/overwrite-only and can NEVER drop a whole month, so an empty or PARTIAL `data` (a failed load, a
+  // stale device view, a config not yet synced) cannot empty a populated source — the shared-store data-loss guard.
+  async function saveSource(id, data, opts) {
+    const prune = !!(opts && opts.prune);
     const byPeriod = bucket(data);
     const want = new Set(Object.keys(byPeriod));
-    for (const n of await prim.listShardNames(id).catch(() => [])) if (!want.has(n)) await prim.removeShard(id, n).catch(() => {}); // prune emptied months
+    if (prune) for (const n of await prim.listShardNames(id).catch(() => [])) if (!want.has(n)) await prim.removeShard(id, n).catch(() => {}); // prune emptied months (explicit only)
     for (const p of want) await prim.writeShard(id, p, { items: byPeriod[p] });
     const meta = (data && data.meta) || {};
-    if (Object.keys(meta).length) await prim.writeShard(id, META, { meta }); else await prim.removeShard(id, META).catch(() => {});
+    if (Object.keys(meta).length) await prim.writeShard(id, META, { meta }); else if (prune) await prim.removeShard(id, META).catch(() => {});
     await prim.removeLegacy(id).catch(() => {}); // superseded by the shards
   }
 

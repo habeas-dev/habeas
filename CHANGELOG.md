@@ -11,6 +11,17 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Fixed
+- **Data-loss guard: a device with fewer sources can no longer wipe a shared cloud store.** Reconnecting a
+  cloud-backed canonical store (e.g. Dropbox) on a second browser that lacked the community adapters deleted
+  **every community source's shard index** from the SHARED store (delivered PDFs were untouched; only the
+  `_store/<source>/` index folders were removed). Root cause: the Archive's orphan auto-cleanup
+  (`ui/archive.js#buildIndex`) judged "orphan" against THIS device's installed adapters/config and
+  `deleteSource`'d anything unrenderable — fatal on a shared store where a source is valid on another device.
+  Three layers now enforce the invariant *a populated source is never emptied/shrunk except by an explicit
+  delete*: (A) orphan store keys are **hidden, never auto-deleted**; (B) sharded `saveSource` prunes shards
+  only with an explicit `{prune:true}` (passed by the real delete/clear paths) — a default/empty/partial write
+  can no longer drop a month; (C) a shard **read failure** now marks the load `__partial` so a transient cloud
+  blip can't drive a pruning resave (`store/sharded.js`, `lib/migrate.js`). Guarded by store tests.
 - **Dropbox connect on Firefox ("window closed").** The OAuth flow reads the `?code` off the bounce tab's URL
   (`habeas.dev/oauth/dropbox.html`) via `tabs.onUpdated`, which needs host permission for that origin (there is
   no `tabs` permission). It was requested at runtime — but Firefox only honors `permissions.request` inside the
