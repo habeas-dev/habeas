@@ -503,6 +503,9 @@ test('each guide is substantive, self-describing and correctly marked up', async
       assert.ok(!intros.has(page.intro), `${where}: its intro is duplicated from another page`);
       intros.add(page.intro);
       assert.ok(!/\bslug\b|undefined|\[object/.test(page.intro), `${where}: intro looks like a template leak`);
+      // A visitor whose service is not covered must leave with something: record mode is the answer,
+      // and without it these pages are a dead end for exactly the people worth converting.
+      assert.match(page.html, /record mode|modo grabación/i, `${where}: does not mention record mode`);
     }
   }
 });

@@ -58,6 +58,8 @@ const LANGS = {
       free: (name) => `Free and open source (AGPL-3.0). Install the extension and enable the “${name}” source from Settings → Browse sources.`,
       faqH: 'Frequently asked questions',
       siblings: (group) => `More ${group.toLowerCase()} guides`,
+      teachH: 'Your service is not on the list?',
+      teachBody: 'Habeas can learn a new one <strong>without any code</strong>. Record mode watches the site’s own API while you browse it normally and drafts the source for you; you test it against your own account, and then keep it to yourself or share it so everyone gets it. That is where most of the catalog came from.',
       indexTitle: 'How to download your documents, service by service',
       indexIntro: 'A guide per service: what Habeas extracts from it, in what formats, and what it does not cover.',
       indexAll: 'See the full source catalog',
@@ -106,6 +108,8 @@ const LANGS = {
       free: (name) => `Gratis y de código abierto (AGPL-3.0). Instala la extensión y activa la fuente «${name}» desde Ajustes → Explorar fuentes.`,
       faqH: 'Preguntas frecuentes',
       siblings: (group) => `Más guías de ${group.toLowerCase()}`,
+      teachH: '¿Tu servicio no está en la lista?',
+      teachBody: 'Habeas puede aprender uno nuevo <strong>sin programar nada</strong>. El modo grabación observa la propia API del sitio mientras navegas con normalidad y te redacta la fuente; la pruebas contra tu propia cuenta y luego te la quedas o la compartes para que la tenga todo el mundo. De ahí sale la mayor parte del catálogo.',
       indexTitle: 'Cómo descargar tus documentos, servicio a servicio',
       indexIntro: 'Una guía por servicio: qué extrae Habeas de él, en qué formatos y qué no cubre.',
       indexAll: 'Ver el catálogo completo de fuentes',
@@ -272,7 +276,10 @@ ${siblings.length ? `    <h2>${esc(t.siblings(groupOf(meta)[lang]))}</h2>
 ${siblings.map((sb) => `      <li><a href="${LANGS[lang].path(sb.slug)}">${esc(sb.h1)}</a></li>`).join('\n')}
     </ul>
 
-` : ''}    <h2>${esc(t.other)}</h2>
+` : ''}    <h2>${esc(t.teachH)}</h2>
+    <p>${t.teachBody}</p>
+
+    <h2>${esc(t.other)}</h2>
     <p>${t.otherBody}</p>
   </main>
 </body>
@@ -344,6 +351,9 @@ ${t.nav.map(([href, label]) => `        <a href="${href}">${esc(label)}</a>`).jo
     <p class="lead">${esc(t.indexIntro)}</p>
 
 ${sections}
+
+    <h2>${esc(t.teachH)}</h2>
+    <p>${t.teachBody}</p>
 
     <p style="margin-top:32px"><a href="/sources.html">${esc(t.indexAll)} →</a></p>
   </main>
