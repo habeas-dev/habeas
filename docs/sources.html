@@ -26,7 +26,7 @@
     .src .foot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 8px; }
     .src .rate { font-size: .86rem; color: var(--muted, #888); }
     .src a.view { font-size: .82rem; }
-    .src a.guide { font-size: .82rem; }
+    .src a.guide { display: block; font-size: .82rem; margin-top: 8px; }
     .note { color: var(--muted, #888); margin-top: 28px; line-height: 1.6; }
   </style>
   <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
@@ -69,6 +69,7 @@
   <main class="doc">
     <h1 data-t="title">Sources</h1>
     <p class="sub" data-t="intro">The catalog of sources you can install in the Habeas extension. Each one describes — as data, never code — how to read your own documents from a service, within your own session. First-party sources are audited; community ones are contributed and open to ratings &amp; scrutiny.</p>
+    <p class="guide-index" style="margin:0 0 18px"><a href="/download/" data-t="guideIndex" data-umami-event="guide-index">Browse the how-to guides</a> →</p>
     <div class="filters" style="margin:0 0 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <label><span data-t="country">Country:</span> <select id="country"></select></label>
       <label><span data-t="format">Format:</span> <select id="format"></select></label>
@@ -86,31 +87,36 @@
         <div class="top"><span class="name">Bip&amp;Drive — facturas</span><span class="pill fp">first-party</span></div>
         <div class="meta">🇪🇸 bipdrive · bipdrive.com</div>
         <div class="cats"><span class="cat">tolls</span><span class="cat fmt">pdf</span></div>
-        <div class="foot"><span class="rate">no ratings yet</span><a class="guide" href="/es/descargar/facturas-bipdrive">Cómo descargar →</a><a class="view" href="https://habeas-dev.github.io/sources/bipdrive-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="bipdrive-es">View JSON →</a></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/bipdrive-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="bipdrive-es">View JSON →</a></div>
+        <a class="guide" href="/download/bipdrive-invoices.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">CaixaBank Consumer — extractos</span><span class="pill fp">first-party</span></div>
         <div class="meta">🇪🇸 caixabank-consumer · caixabankconsumer.com</div>
         <div class="cats"><span class="cat">card</span><span class="cat fmt">pdf</span></div>
-        <div class="foot"><span class="rate">no ratings yet</span><a class="guide" href="/es/descargar/extractos-caixabank-consumer">Cómo descargar →</a><a class="view" href="https://habeas-dev.github.io/sources/caixabank-consumer-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="caixabank-consumer-es">View JSON →</a></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/caixabank-consumer-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="caixabank-consumer-es">View JSON →</a></div>
+        <a class="guide" href="/download/caixabank-consumer-statements.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">Carrefour España — tickets</span><span class="pill fp">first-party</span></div>
         <div class="meta">🇪🇸 carrefour · carrefour.es</div>
         <div class="cats"><span class="cat">grocery</span><span class="cat">fuel</span><span class="cat">retail</span><span class="cat fmt">pdf</span></div>
-        <div class="foot"><span class="rate">no ratings yet</span><a class="guide" href="/es/descargar/tickets-carrefour">Cómo descargar →</a><a class="view" href="https://habeas-dev.github.io/sources/carrefour-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="carrefour-es">View JSON →</a></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/carrefour-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="carrefour-es">View JSON →</a></div>
+        <a class="guide" href="/download/carrefour-receipts.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">IKEA España — compras y tiquets</span><span class="pill fp">first-party</span></div>
         <div class="meta">🇪🇸 ikea · ikea.com</div>
         <div class="cats"><span class="cat">home</span><span class="cat fmt">pdf</span></div>
-        <div class="foot"><span class="rate">no ratings yet</span><a class="guide" href="/es/descargar/tickets-ikea">Cómo descargar →</a><a class="view" href="https://habeas-dev.github.io/sources/ikea-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="ikea-es">View JSON →</a></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/ikea-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="ikea-es">View JSON →</a></div>
+        <a class="guide" href="/download/ikea-receipts.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">WiZink España</span><span class="pill fp">first-party</span></div>
         <div class="meta">🇪🇸 wizink · wizink.es</div>
         <div class="cats"><span class="cat">card</span><span class="cat">banking</span></div>
-        <div class="foot"><span class="rate">no ratings yet</span><a class="guide" href="/es/descargar/extractos-wizink">Cómo descargar →</a><a class="view" href="https://habeas-dev.github.io/sources/wizink-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="wizink-es">View JSON →</a></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/wizink-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="wizink-es">View JSON →</a></div>
+        <a class="guide" href="/download/wizink-statements.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">AliExpress</span><span class="pill ">community</span></div>
@@ -128,7 +134,8 @@
         <div class="top"><span class="name">Decathlon España — tickets</span><span class="pill ">community</span></div>
         <div class="meta">🇪🇸 decathlon · decathlon.es</div>
         <div class="cats"><span class="cat">sports</span><span class="cat fmt">json</span></div>
-        <div class="foot"><span class="rate">no ratings yet</span><a class="guide" href="/es/descargar/tickets-decathlon">Cómo descargar →</a><a class="view" href="https://habeas-dev.github.io/sources/decathlon-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="decathlon-es">View JSON →</a></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/decathlon-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="decathlon-es">View JSON →</a></div>
+        <a class="guide" href="/download/decathlon-receipts.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">DeGiro</span><span class="pill ">community</span><span class="pill beta">experimental</span></div>
@@ -140,13 +147,15 @@
         <div class="top"><span class="name">Dia España — tickets</span><span class="pill ">community</span></div>
         <div class="meta">🇪🇸 dia · dia.es</div>
         <div class="cats"><span class="cat">grocery</span><span class="cat fmt">json</span><span class="cat fmt">pdf</span></div>
-        <div class="foot"><span class="rate">no ratings yet</span><a class="guide" href="/es/descargar/tickets-dia">Cómo descargar →</a><a class="view" href="https://habeas-dev.github.io/sources/dia-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="dia-es">View JSON →</a></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/dia-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="dia-es">View JSON →</a></div>
+        <a class="guide" href="/download/dia-receipts.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">Financiera El Corte Inglés</span><span class="pill ">community</span></div>
         <div class="meta">🇪🇸 financiera-elcorteingles · financieraelcorteingles.es</div>
         <div class="cats"><span class="cat">card</span><span class="cat">loan</span></div>
-        <div class="foot"><span class="rate">no ratings yet</span><a class="guide" href="/es/descargar/extractos-financiera-el-corte-ingles">Cómo descargar →</a><a class="view" href="https://habeas-dev.github.io/sources/financiera-elcorteingles-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="financiera-elcorteingles-es">View JSON →</a></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/financiera-elcorteingles-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="financiera-elcorteingles-es">View JSON →</a></div>
+        <a class="guide" href="/download/financiera-el-corte-ingles-statements.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">Hover — Receipts</span><span class="pill ">community</span></div>
@@ -158,13 +167,15 @@
         <div class="top"><span class="name">ING España</span><span class="pill ">community</span></div>
         <div class="meta">🇪🇸 ing · ingdirect.es</div>
         <div class="cats"><span class="cat">banking</span></div>
-        <div class="foot"><span class="rate">no ratings yet</span><a class="guide" href="/es/descargar/movimientos-ing">Cómo descargar →</a><a class="view" href="https://habeas-dev.github.io/sources/ing-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="ing-es">View JSON →</a></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/ing-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="ing-es">View JSON →</a></div>
+        <a class="guide" href="/download/ing-transactions.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">Leroy Merlin España</span><span class="pill ">community</span></div>
         <div class="meta">🇪🇸 leroymerlin · leroymerlin.es</div>
         <div class="cats"><span class="cat">diy</span></div>
-        <div class="foot"><span class="rate">no ratings yet</span><a class="guide" href="/es/descargar/tickets-leroy-merlin">Cómo descargar →</a><a class="view" href="https://habeas-dev.github.io/sources/leroymerlin-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="leroymerlin-es">View JSON →</a></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/leroymerlin-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="leroymerlin-es">View JSON →</a></div>
+        <a class="guide" href="/download/leroy-merlin-receipts.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">N26</span><span class="pill ">community</span><span class="pill beta">experimental</span></div>
@@ -176,13 +187,15 @@
         <div class="top"><span class="name">Openbank España</span><span class="pill ">community</span></div>
         <div class="meta">🇪🇸 openbank · openbank.es</div>
         <div class="cats"><span class="cat">banking</span></div>
-        <div class="foot"><span class="rate">no ratings yet</span><a class="guide" href="/es/descargar/movimientos-openbank">Cómo descargar →</a><a class="view" href="https://habeas-dev.github.io/sources/openbank-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="openbank-es">View JSON →</a></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/openbank-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="openbank-es">View JSON →</a></div>
+        <a class="guide" href="/download/openbank-transactions.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">Pagatelia — facturas</span><span class="pill ">community</span></div>
         <div class="meta">🇪🇸 pagatelia · pagatelia.com</div>
         <div class="cats"><span class="cat">tolls</span><span class="cat fmt">pdf</span></div>
-        <div class="foot"><span class="rate">no ratings yet</span><a class="guide" href="/es/descargar/facturas-pagatelia">Cómo descargar →</a><a class="view" href="https://habeas-dev.github.io/sources/pagatelia-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="pagatelia-es">View JSON →</a></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/pagatelia-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="pagatelia-es">View JSON →</a></div>
+        <a class="guide" href="/download/pagatelia-invoices.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">PayPal</span><span class="pill ">community</span></div>
@@ -194,13 +207,15 @@
         <div class="top"><span class="name">Pepe Energy — facturas</span><span class="pill ">community</span></div>
         <div class="meta">🇪🇸 pepeenergy · pepeenergy.com</div>
         <div class="cats"><span class="cat">energy</span><span class="cat fmt">pdf</span></div>
-        <div class="foot"><span class="rate">no ratings yet</span><a class="guide" href="/es/descargar/facturas-pepe-energy">Cómo descargar →</a><a class="view" href="https://habeas-dev.github.io/sources/pepeenergy-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="pepeenergy-es">View JSON →</a></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/pepeenergy-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="pepeenergy-es">View JSON →</a></div>
+        <a class="guide" href="/download/pepe-energy-invoices.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">Pepephone — facturas</span><span class="pill ">community</span></div>
         <div class="meta">🇪🇸 pepephone · pepephone.com</div>
         <div class="cats"><span class="cat">telecom</span><span class="cat fmt">pdf</span></div>
-        <div class="foot"><span class="rate">no ratings yet</span><a class="guide" href="/es/descargar/facturas-pepephone">Cómo descargar →</a><a class="view" href="https://habeas-dev.github.io/sources/pepephone-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="pepephone-es">View JSON →</a></div>
+        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/pepephone-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="pepephone-es">View JSON →</a></div>
+        <a class="guide" href="/download/pepephone-invoices.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">Raisin</span><span class="pill ">community</span></div>
@@ -231,6 +246,8 @@
       en: {
         title: 'Sources',
         intro: 'The catalog of sources you can install in the Habeas extension. Each one describes — as data, never code — how to read your own documents from a service, within your own session. First-party sources are audited; community ones are contributed and open to ratings & scrutiny.',
+        guide: 'How to download',
+        guideIndex: 'Browse the how-to guides',
         cta: 'Install any of these from the extension: Settings → Browse sources. Contribute a new one at github.com/habeas-dev/sources.',
         loading: 'Loading the catalog…',
         failed: 'Couldn’t load the catalog right now. See it on GitHub: github.com/habeas-dev/sources.',
@@ -243,6 +260,8 @@
       es: {
         title: 'Fuentes',
         intro: 'El catálogo de fuentes que puedes instalar en la extensión Habeas. Cada una describe —como datos, nunca código— cómo leer tus propios documentos de un servicio, dentro de tu propia sesión. Las first-party están auditadas; las de la comunidad son aportadas y abiertas a valoraciones y escrutinio.',
+        guide: 'Cómo descargar',
+        guideIndex: 'Ver las guías paso a paso',
         cta: 'Instala cualquiera desde la extensión: Ajustes → Explorar fuentes. Aporta una nueva en github.com/habeas-dev/sources.',
         loading: 'Cargando el catálogo…',
         failed: 'No se pudo cargar el catálogo ahora mismo. Míralo en GitHub: github.com/habeas-dev/sources.',
@@ -260,7 +279,7 @@
     const flag = (code) => !code ? '' : code === 'global' ? '🌐' : (/^[A-Za-z]{2}$/.test(code) ? code.toUpperCase().replace(/./g, (c) => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)) : '');
 
     // Sources with a Spanish how-to page under /es/descargar/.
-    const GUIDES = {"carrefour-es": "tickets-carrefour", "dia-es": "tickets-dia", "ikea-es": "tickets-ikea", "decathlon-es": "tickets-decathlon", "leroymerlin-es": "tickets-leroy-merlin", "ing-es": "movimientos-ing", "openbank-es": "movimientos-openbank", "wizink-es": "extractos-wizink", "caixabank-consumer-es": "extractos-caixabank-consumer", "financiera-elcorteingles-es": "extractos-financiera-el-corte-ingles", "bipdrive-es": "facturas-bipdrive", "pagatelia-es": "facturas-pagatelia", "pepeenergy-es": "facturas-pepe-energy", "pepephone-es": "facturas-pepephone"};
+    const GUIDES = {"carrefour-es": {"en": "carrefour-receipts", "es": "tickets-carrefour"}, "dia-es": {"en": "dia-receipts", "es": "tickets-dia"}, "ikea-es": {"en": "ikea-receipts", "es": "tickets-ikea"}, "decathlon-es": {"en": "decathlon-receipts", "es": "tickets-decathlon"}, "leroymerlin-es": {"en": "leroy-merlin-receipts", "es": "tickets-leroy-merlin"}, "ing-es": {"en": "ing-transactions", "es": "movimientos-ing"}, "openbank-es": {"en": "openbank-transactions", "es": "movimientos-openbank"}, "wizink-es": {"en": "wizink-statements", "es": "extractos-wizink"}, "caixabank-consumer-es": {"en": "caixabank-consumer-statements", "es": "extractos-caixabank-consumer"}, "financiera-elcorteingles-es": {"en": "financiera-el-corte-ingles-statements", "es": "extractos-financiera-el-corte-ingles"}, "bipdrive-es": {"en": "bipdrive-invoices", "es": "facturas-bipdrive"}, "pagatelia-es": {"en": "pagatelia-invoices", "es": "facturas-pagatelia"}, "pepeenergy-es": {"en": "pepe-energy-invoices", "es": "facturas-pepe-energy"}, "pepephone-es": {"en": "pepephone-invoices", "es": "facturas-pepephone"}};
 
     function card(s) {
       const t = STR[LANG];
@@ -273,7 +292,7 @@
         <div class="top"><span class="name">${esc(s.name)}</span><span class="pill ${fp ? 'fp' : ''}">${fp ? t.fp : t.community}</span>${s.beta ? `<span class="pill beta">${t.beta}</span>` : ''}</div>
         <div class="meta">${s.country ? flag(s.country) + ' ' : ''}${esc(s.service)} · ${esc(s.domain)}</div>
         <div class="cats">${cats}${fmts}</div>
-        <div class="foot"><span class="rate">${rate}</span>${GUIDES[s.id] ? `<a class="guide" href="/es/descargar/${GUIDES[s.id]}">${LANG === 'es' ? 'Cómo descargar' : 'How to download'} →</a>` : ''}<a class="view" href="${esc(s.url)}" rel="noopener" data-umami-event="source-view" data-umami-event-source="${esc(s.id)}">${t.view} →</a></div>
+        <div class="foot"><span class="rate">${rate}</span><a class="view" href="${esc(s.url)}" rel="noopener" data-umami-event="source-view" data-umami-event-source="${esc(s.id)}">${t.view} →</a></div>${GUIDES[s.id] ? `<a class="guide" href="${LANG === 'es' ? '/es/descargar/' + GUIDES[s.id].es : '/download/' + GUIDES[s.id].en}.html" data-umami-event="guide" data-umami-event-source="${esc(s.id)}">${t.guide} →</a>` : ''}
       </div>`;
     }
 
@@ -281,6 +300,8 @@
       const t = STR[LANG];
       document.querySelectorAll('[data-t]').forEach((el) => { const v = t[el.getAttribute('data-t')]; if (typeof v === 'string') el.textContent = v; });
       document.querySelectorAll('.langswitch button[data-lang]').forEach((b) => b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === LANG)));
+      const gi = document.querySelector('.guide-index a');
+      if (gi) gi.setAttribute('href', LANG === 'es' ? '/es/descargar/' : '/download/');
       const list = document.getElementById('list'), msg = document.getElementById('msg');
       // Keep the STATIC pre-rendered list while loading and if the fetch fails — so a client with JS but no
       // network (or before the catalog arrives) still sees the baked snapshot rather than an empty page.

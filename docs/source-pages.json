@@ -1,0 +1,225 @@
+{
+  "_comment": [
+    "Curated copy for the per-source landing pages, one entry per language.",
+    "docs/tools/build-source-pages.mjs merges this with the live registry (streams, formats, gaps,",
+    "trust) and writes /<lang-path>/<slug>.html per source per language, cross-linked by hreflang.",
+    "A source WITHOUT an entry here gets NO page: pages spun from a template with only registry data",
+    "would be doorway content, which Google's spam policies name explicitly. Every claim must be",
+    "verifiable — describe what the documents are and what Habeas produces, never invent steps for a",
+    "service's own UI."
+  ],
+  "carrefour-es": {
+    "brand": "Carrefour",
+    "en": {
+      "slug": "carrefour-receipts",
+      "docs": "purchase receipts",
+      "h1": "How to download your Carrefour receipts",
+      "intro": "Carrefour keeps your hypermarket, petrol-station and online-order receipts in your account, but offers no way to download them all at once: you have to open and save them one by one.",
+      "note": "Carrefour only keeps the PDF for recent receipts. Older ones still show in your history, but their PDF is gone: Habeas still exports them as metadata (date, amount, store, category), which is all the service retains of them."
+    },
+    "es": {
+      "slug": "tickets-carrefour",
+      "docs": "tickets de compra",
+      "h1": "Cómo descargar tus tickets de Carrefour",
+      "intro": "Carrefour guarda tus tickets de hipermercado, gasolinera y pedidos online en tu cuenta, pero no ofrece ninguna forma de descargarlos todos de golpe: hay que abrirlos y guardarlos uno a uno.",
+      "note": "Carrefour solo conserva el PDF de los tickets recientes. Los más antiguos siguen apareciendo en tu historial, pero su PDF ya no existe: Habeas los exporta igualmente como metadatos (fecha, importe, tienda, categoría), que es todo lo que el servicio conserva de ellos."
+    }
+  },
+  "dia-es": {
+    "brand": "Dia",
+    "en": {
+      "slug": "dia-receipts",
+      "docs": "purchase receipts",
+      "h1": "How to download your Dia receipts",
+      "intro": "Your Dia purchase history lives in your account, receipt by receipt. There is no bulk export and no way to move it into a spreadsheet."
+    },
+    "es": {
+      "slug": "tickets-dia",
+      "docs": "tickets de compra",
+      "h1": "Cómo descargar tus tickets de Dia",
+      "intro": "Tu historial de compra en Dia está en tu cuenta, ticket a ticket. No hay exportación masiva ni una forma de llevártelo a una hoja de cálculo."
+    }
+  },
+  "ikea-es": {
+    "brand": "IKEA",
+    "en": {
+      "slug": "ikea-receipts",
+      "docs": "receipts and purchases",
+      "h1": "How to download your IKEA receipts and purchases",
+      "intro": "IKEA keeps your purchases and receipts in your account, but saving them means opening each one in turn."
+    },
+    "es": {
+      "slug": "tickets-ikea",
+      "docs": "tiquets y compras",
+      "h1": "Cómo descargar tus tiquets y compras de IKEA",
+      "intro": "IKEA conserva tus compras y tiquets en tu cuenta, pero para guardarlos hay que ir entrando en cada uno."
+    }
+  },
+  "decathlon-es": {
+    "brand": "Decathlon",
+    "en": {
+      "slug": "decathlon-receipts",
+      "docs": "purchase receipts",
+      "h1": "How to download your Decathlon receipts",
+      "intro": "Decathlon keeps your purchase history tied to your account, with no option to export the whole thing."
+    },
+    "es": {
+      "slug": "tickets-decathlon",
+      "docs": "tickets de compra",
+      "h1": "Cómo descargar tus tickets de Decathlon",
+      "intro": "Decathlon guarda tu historial de compras asociado a tu cuenta, pero sin una opción de exportarlo entero."
+    }
+  },
+  "leroymerlin-es": {
+    "brand": "Leroy Merlin",
+    "en": {
+      "slug": "leroy-merlin-receipts",
+      "docs": "receipts and orders",
+      "h1": "How to download your Leroy Merlin receipts and orders",
+      "intro": "Leroy Merlin keeps in-store receipts separate from online orders. Both live in your account and neither can be downloaded in bulk."
+    },
+    "es": {
+      "slug": "tickets-leroy-merlin",
+      "docs": "tickets y pedidos",
+      "h1": "Cómo descargar tus tickets y pedidos de Leroy Merlin",
+      "intro": "Leroy Merlin separa los tickets de tienda de los pedidos online. Ambos están en tu cuenta y ninguno se puede descargar en bloque."
+    }
+  },
+  "ing-es": {
+    "brand": "ING",
+    "en": {
+      "slug": "ing-transactions",
+      "docs": "transactions and statements",
+      "h1": "How to download your ING transactions and statements",
+      "intro": "ING lets you view your transactions and download monthly statements, but one account and one month at a time. Pulling a whole year, or several accounts together, is repetitive manual work.",
+      "note": "If you hold several accounts, Habeas lets you choose which ones the export covers and remembers that choice between syncs."
+    },
+    "es": {
+      "slug": "movimientos-ing",
+      "docs": "movimientos y extractos",
+      "h1": "Cómo descargar tus movimientos y extractos de ING",
+      "intro": "ING te deja ver tus movimientos y descargar extractos mensuales, pero cuenta por cuenta y mes a mes. Reunir un año entero, o varias cuentas a la vez, es un trabajo manual repetitivo.",
+      "note": "Si tienes varias cuentas, Habeas te deja elegir cuáles entran en la exportación y recuerda esa selección entre sincronizaciones."
+    }
+  },
+  "openbank-es": {
+    "brand": "Openbank",
+    "en": {
+      "slug": "openbank-transactions",
+      "docs": "transactions and statements",
+      "h1": "How to download your Openbank transactions and statements",
+      "intro": "Openbank shows your transactions on its website and lets you download individual documents, but not gather them into a single file you can work with."
+    },
+    "es": {
+      "slug": "movimientos-openbank",
+      "docs": "movimientos y extractos",
+      "h1": "Cómo descargar tus movimientos y extractos de Openbank",
+      "intro": "Openbank muestra tus movimientos en su web y permite descargar documentos sueltos, pero no reunirlos en un único archivo con el que puedas trabajar."
+    }
+  },
+  "wizink-es": {
+    "brand": "WiZink",
+    "en": {
+      "slug": "wizink-statements",
+      "docs": "card transactions and statements",
+      "h1": "How to download your WiZink transactions and statements",
+      "intro": "WiZink publishes one statement per period plus a transaction list. Getting the full history means downloading each statement separately."
+    },
+    "es": {
+      "slug": "extractos-wizink",
+      "docs": "movimientos y extractos de tarjeta",
+      "h1": "Cómo descargar tus movimientos y extractos de WiZink",
+      "intro": "WiZink publica un extracto por periodo y un listado de movimientos. Para tener el histórico completo hay que ir descargando cada extracto por separado."
+    }
+  },
+  "caixabank-consumer-es": {
+    "brand": "CaixaBank Consumer",
+    "en": {
+      "slug": "caixabank-consumer-statements",
+      "docs": "card statements",
+      "h1": "How to download your CaixaBank Consumer statements",
+      "intro": "Your CaixaBank Consumer card statements are available as PDFs, one per period, with no combined download."
+    },
+    "es": {
+      "slug": "extractos-caixabank-consumer",
+      "docs": "extractos de tarjeta",
+      "h1": "Cómo descargar tus extractos de CaixaBank Consumer",
+      "intro": "Los extractos de tu tarjeta de CaixaBank Consumer están disponibles en PDF, uno por periodo, sin opción de descarga conjunta."
+    }
+  },
+  "financiera-elcorteingles-es": {
+    "brand": "Financiera El Corte Inglés",
+    "en": {
+      "slug": "financiera-el-corte-ingles-statements",
+      "docs": "transactions, instalments and statements",
+      "h1": "How to download your Financiera El Corte Inglés transactions and statements",
+      "intro": "The El Corte Inglés card has three things worth keeping: the transactions, the payment instalments and the monthly statements. Each lives on its own screen."
+    },
+    "es": {
+      "slug": "extractos-financiera-el-corte-ingles",
+      "docs": "movimientos, aplazamientos y extractos",
+      "h1": "Cómo descargar tus movimientos y extractos de Financiera El Corte Inglés",
+      "intro": "La tarjeta de El Corte Inglés tiene tres cosas distintas que interesan: los movimientos, los aplazamientos de pago y los extractos mensuales. Cada uno vive en su propia pantalla."
+    }
+  },
+  "bipdrive-es": {
+    "brand": "Bip&Drive",
+    "en": {
+      "slug": "bipdrive-invoices",
+      "docs": "toll invoices",
+      "h1": "How to download your Bip&Drive invoices",
+      "intro": "Bip&Drive issues one invoice per period covering your tolls and parking. They are all in your customer area, as PDFs, one at a time."
+    },
+    "es": {
+      "slug": "facturas-bipdrive",
+      "docs": "facturas de peaje",
+      "h1": "Cómo descargar tus facturas de Bip&Drive",
+      "intro": "Bip&Drive emite una factura por periodo con tus peajes y aparcamientos. Están todas en tu área de cliente, en PDF y de una en una."
+    }
+  },
+  "pagatelia-es": {
+    "brand": "Pagatelia",
+    "en": {
+      "slug": "pagatelia-invoices",
+      "docs": "toll invoices",
+      "h1": "How to download your Pagatelia invoices",
+      "intro": "Pagatelia builds up one invoice per period for tolls and car parks. Recovering the full history means downloading them one by one."
+    },
+    "es": {
+      "slug": "facturas-pagatelia",
+      "docs": "facturas de peaje",
+      "h1": "Cómo descargar tus facturas de Pagatelia",
+      "intro": "Pagatelia acumula una factura por periodo de peajes y parkings. Recuperar el histórico completo significa descargarlas una a una."
+    }
+  },
+  "pepeenergy-es": {
+    "brand": "Pepe Energy",
+    "en": {
+      "slug": "pepe-energy-invoices",
+      "docs": "electricity and gas bills",
+      "h1": "How to download your Pepe Energy bills",
+      "intro": "Your Pepe Energy bills sit in your customer area as PDFs. If you need several years — for a tax return, a subsidy, or to compare consumption — you go one by one."
+    },
+    "es": {
+      "slug": "facturas-pepe-energy",
+      "docs": "facturas de luz y gas",
+      "h1": "Cómo descargar tus facturas de Pepe Energy",
+      "intro": "Tus facturas de Pepe Energy están en tu área de cliente en PDF. Si necesitas varios años —para la declaración, para una ayuda, o para comparar consumos— hay que ir una por una."
+    }
+  },
+  "pepephone-es": {
+    "brand": "Pepephone",
+    "en": {
+      "slug": "pepephone-invoices",
+      "docs": "mobile and broadband bills",
+      "h1": "How to download your Pepephone bills",
+      "intro": "Pepephone publishes a monthly bill in your customer area. There is no way to ask for them all together."
+    },
+    "es": {
+      "slug": "facturas-pepephone",
+      "docs": "facturas de móvil y fibra",
+      "h1": "Cómo descargar tus facturas de Pepephone",
+      "intro": "Pepephone publica una factura mensual en tu área de cliente. No hay forma de pedirlas todas juntas."
+    }
+  }
+}

@@ -415,59 +415,99 @@ test('landing page omits the source preview when the catalog cannot be loaded', 
   assert.equal(document.__sourceList.innerHTML, '');
 });
 
-test('per-source landing pages are generated only where there is curated copy', async () => {
-  const copies = JSON.parse(await fs.readFile(path.join(docsDir, 'source-pages.es.json'), 'utf8'));
+const GUIDE_LANGS = { en: 'download', es: path.join('es', 'descargar') };
+
+async function loadGuideCopy() {
+  return JSON.parse(await fs.readFile(path.join(docsDir, 'source-pages.json'), 'utf8'));
+}
+
+test('per-source landing pages exist in every language, and only where there is curated copy', async () => {
+  const copies = await loadGuideCopy();
   const ids = Object.keys(copies).filter((k) => !k.startsWith('_'));
-  const dir = path.join(docsDir, 'es', 'descargar');
-  const files = (await fs.readdir(dir)).filter((f) => f.endsWith('.html'));
 
-  // One page per curated entry, and no orphans: a page with no copy behind it would be the
-  // template-spun doorway content this generator exists to avoid.
-  assert.equal(files.length, ids.length, 'page count does not match curated entries');
-  for (const id of ids) {
-    assert.ok(copies[id].slug, `${id}: no slug`);
-    assert.ok(files.includes(`${copies[id].slug}.html`), `${id}: no page for slug ${copies[id].slug}`);
+  for (const [lang, dir] of Object.entries(GUIDE_LANGS)) {
+    const files = (await fs.readdir(path.join(docsDir, dir))).filter((f) => f.endsWith('.html'));
+    // One page per curated entry plus the index; no orphans, since a page with no copy behind it
+    // would be exactly the template-spun doorway content the generator exists to avoid.
+    assert.equal(files.length, ids.length + 1, `${lang}: page count does not match curated entries + index`);
+    assert.ok(files.includes('index.html'), `${lang}: no index page`);
+    const slugs = new Set();
+    for (const id of ids) {
+      const slug = copies[id][lang]?.slug;
+      assert.ok(slug, `${id}: no ${lang} slug — every source must exist in every language`);
+      assert.ok(files.includes(`${slug}.html`), `${id}: no ${lang} page for ${slug}`);
+      slugs.add(slug);
+    }
+    assert.equal(slugs.size, ids.length, `${lang}: two sources share a slug`);
   }
-
-  const slugs = new Set(ids.map((id) => copies[id].slug));
-  assert.equal(slugs.size, ids.length, 'two sources share a slug');
 });
 
 test('each source page is substantive, self-describing and correctly marked up', async () => {
-  const dir = path.join(docsDir, 'es', 'descargar');
-  const files = (await fs.readdir(dir)).filter((f) => f.endsWith('.html'));
-  const intros = new Set();
+  const copies = await loadGuideCopy();
+  for (const [lang, dir] of Object.entries(GUIDE_LANGS)) {
+    const files = (await fs.readdir(path.join(docsDir, dir))).filter((f) => f.endsWith('.html') && f !== 'index.html');
+    const intros = new Set();
+    for (const file of files) {
+      const html = await fs.readFile(path.join(docsDir, dir, file), 'utf8');
+      const url = `https://habeas.dev/${dir.split(path.sep).join('/')}/${file}`;
+      const where = `${lang}/${file}`;
 
-  for (const file of files) {
-    const html = await fs.readFile(path.join(dir, file), 'utf8');
-    const url = `https://habeas.dev/es/descargar/${file.replace(/\.html$/, '')}`;
+      assert.match(html, new RegExp(`<html lang="${lang}">`), `${where}: wrong lang`);
+      assert.equal((html.match(/<h1/g) || []).length, 1, `${where}: needs exactly one h1`);
+      assert.ok(html.includes(`<link rel="canonical" href="${url}"`), `${where}: canonical does not match its path`);
+      assert.match(html, /data-umami-event="install"[^>]*data-umami-event-source="/, `${where}: install CTA not attributed`);
 
-    assert.match(html, /<html lang="es">/, `${file}: not marked as Spanish`);
-    assert.equal((html.match(/<h1/g) || []).length, 1, `${file}: needs exactly one h1`);
-    assert.ok(html.includes(`<link rel="canonical" href="${url}"`), `${file}: canonical does not match its path`);
-    assert.match(html, /data-umami-event="install"[^>]*data-umami-event-source="/, `${file}: install CTA not attributed`);
+      // Both languages must point at each other, so neither ever dead-ends into the other.
+      for (const other of Object.keys(GUIDE_LANGS)) {
+        assert.match(html, new RegExp(`hreflang="${other}"`), `${where}: no ${other} alternate`);
+      }
+      assert.match(html, /hreflang="x-default"/, `${where}: no x-default`);
 
-    const block = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
-    assert.ok(block, `${file}: no JSON-LD`);
-    assert.equal(JSON.parse(block[1])['@type'], 'FAQPage', `${file}: JSON-LD is not a FAQPage`);
+      const block = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+      assert.ok(block, `${where}: no JSON-LD`);
+      assert.equal(JSON.parse(block[1])['@type'], 'FAQPage', `${where}: JSON-LD is not a FAQPage`);
 
-    const text = html.replace(/<(script|style)[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]*>/g, ' ')
-      .replace(/\s+/g, ' ').trim();
-    assert.ok(text.length > 1500, `${file}: only ${text.length} chars — too thin to be worth indexing`);
+      const text = html.replace(/<(script|style)[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ').trim();
+      assert.ok(text.length > 1500, `${where}: only ${text.length} chars — too thin to be worth indexing`);
 
-    // The opening paragraph must be about that service, not boilerplate shared across pages.
-    const intro = html.match(/<p class="lead">(.*?)<\/p>/s)?.[1];
-    assert.ok(intro, `${file}: no intro`);
-    assert.ok(!intros.has(intro), `${file}: its intro is duplicated from another page`);
-    intros.add(intro);
+      const intro = html.match(/<p class="lead">(.*?)<\/p>/s)?.[1];
+      assert.ok(intro, `${where}: no intro`);
+      assert.ok(!intros.has(intro), `${where}: its intro is duplicated from another page`);
+      intros.add(intro);
+    }
+  }
+
+  // Copy must actually differ between languages, or one of them is untranslated boilerplate.
+  for (const [id, entry] of Object.entries(copies)) {
+    if (id.startsWith('_')) continue;
+    assert.notEqual(entry.en.h1, entry.es.h1, `${id}: en and es share an h1`);
+    assert.notEqual(entry.en.intro, entry.es.intro, `${id}: en and es share an intro`);
   }
 });
 
-test('the catalog links to every generated source page', async () => {
-  const copies = JSON.parse(await fs.readFile(path.join(docsDir, 'source-pages.es.json'), 'utf8'));
+test('guides are reachable: index groups them, siblings cross-link, catalog links in', async () => {
+  const copies = await loadGuideCopy();
+  const ids = Object.keys(copies).filter((k) => !k.startsWith('_'));
+
+  for (const [lang, dir] of Object.entries(GUIDE_LANGS)) {
+    const index = await fs.readFile(path.join(docsDir, dir, 'index.html'), 'utf8');
+    for (const id of ids) {
+      assert.ok(index.includes(`${copies[id][lang].slug}.html`), `${lang} index does not list ${id}`);
+    }
+    // Every guide must link at least one sibling; an orphan page gets no topical signal at all.
+    for (const id of ids) {
+      const html = await fs.readFile(path.join(docsDir, dir, `${copies[id][lang].slug}.html`), 'utf8');
+      const others = ids.filter((o) => o !== id)
+        .filter((o) => html.includes(`${copies[o][lang].slug}.html`));
+      assert.ok(others.length > 0, `${lang}/${id}: links no sibling guide`);
+    }
+  }
+
+  // The catalog is the entry point: it links the index and every guide.
   const sources = await fs.readFile(path.join(docsDir, 'sources.html'), 'utf8');
-  for (const [id, copy] of Object.entries(copies)) {
-    if (id.startsWith('_')) continue;
-    assert.ok(sources.includes(`/es/descargar/${copy.slug}`), `sources.html does not link ${copy.slug}`);
+  assert.match(sources, /href="\/download\/"/, 'sources.html does not link the guide index');
+  for (const id of ids) {
+    assert.ok(sources.includes(`${copies[id].en.slug}.html`), `sources.html does not link ${id}`);
   }
 });

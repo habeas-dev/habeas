@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>How to download your Pepe Energy bills — Habeas</title>
+  <meta name="description" content="Your Pepe Energy bills sit in your customer area as PDFs. Habeas downloads them from inside your own browser session, without ever storing your password." />
+  <link rel="canonical" href="https://habeas.dev/download/pepe-energy-invoices.html" />
+  <link rel="alternate" hreflang="en" href="https://habeas.dev/download/pepe-energy-invoices.html" />
+  <link rel="alternate" hreflang="es" href="https://habeas.dev/es/descargar/facturas-pepe-energy.html" />
+  <link rel="alternate" hreflang="x-default" href="https://habeas.dev/download/pepe-energy-invoices.html" />
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
+    .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
+    .doc h3 { font-size: 1.02rem; margin: 20px 0 6px; }
+    .doc p, .doc li { line-height: 1.65; }
+    .doc ul { padding-left: 1.2em; }
+    .doc .lead { color: var(--muted, #888); margin: 0 0 24px; }
+    .doc .box { border: 1px solid var(--line, #3333); border-radius: 10px; padding: 14px 16px; margin: 18px 0; }
+    .doc .cta { display: flex; gap: 10px; flex-wrap: wrap; margin: 24px 0 8px; }
+    .doc a { color: inherit; }
+  </style>
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://habeas.dev/download/pepe-energy-invoices.html" />
+  <meta property="og:title" content="How to download your Pepe Energy bills — Habeas" />
+  <meta property="og:description" content="Your Pepe Energy bills sit in your customer area as PDFs. Habeas downloads them from inside your own browser session, without ever storing your password." />
+  <meta property="og:image" content="https://habeas.dev/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:site_name" content="Habeas" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "inLanguage": "en",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Does Habeas store my Pepe Energy password?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. You sign in yourself, on the usual website, including any verification code. Habeas reuses the session your browser already has open and never reads or stores your credentials."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is my data sent to a server?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Everything happens inside your browser. Documents only go to the destination you pick: a download, a folder on your machine, your own Google Drive or Dropbox, or an endpoint you configure."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What format do I get the documents in?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The original documents exactly as the service issues them (PDF), together with a manifest holding the normalised data."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is it free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Habeas is free software under the AGPL-3.0 licence and its code is public on GitHub."
+      }
+    }
+  ]
+}
+  </script>
+  <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
+  <script defer src="https://analytics.habeas.dev/script.js" data-website-id="84a75f7a-c014-4ce8-a3be-1f8dd1899a28" data-domains="habeas.dev"></script>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="/logo-light.svg" />
+        <img class="logo" src="/logo.svg" alt="Habeas" />
+      </picture>
+      <span class="name">Habeas</span>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/why-habeas.html">Why Habeas</a>
+        <a href="/sources.html">Sources</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="doc">
+    <h1>How to download your Pepe Energy bills</h1>
+    <p class="lead">Your Pepe Energy bills sit in your customer area as PDFs. If you need several years — for a tax return, a subsidy, or to compare consumption — you go one by one.</p>
+
+    <h2>What you get</h2>
+    <p>Habeas is an open-source browser extension that collects your documents from Pepe Energy and saves them wherever you choose. From this source it extracts:</p>
+    <ul>
+        <li><strong>electricity and gas bills</strong> — each document with its date, amount, currency and numbering.</li>
+    </ul>
+
+    <h2>How it works</h2>
+    <p>It is not a service that connects to pepeenergy.com on its own. It runs <strong>inside your own browser</strong>, reusing the session you already have open:</p>
+    <ul>
+      <li>You go to pepeenergy.com and sign in yourself, as always, with your MFA or whatever code you use.</li>
+      <li>Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does.</li>
+      <li>You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own.</li>
+    </ul>
+    <p><strong>Your password is never read, never stored and never sent anywhere</strong>, and nothing runs in the background while you are away. This is a <strong>community</strong> source: its definition is public and reviewable, and it runs under the same security rules as every other.</p>
+
+    <div class="cta">
+      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="pepeenergy-es">Install on Chrome</a>
+      <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="pepeenergy-es">Install on Firefox</a>
+    </div>
+    <p class="lead">Free and open source (AGPL-3.0). Install the extension and enable the “Pepe Energy — facturas” source from Settings → Browse sources.</p>
+
+    <h2>Frequently asked questions</h2>
+    <h3>Does Habeas store my Pepe Energy password?</h3>
+    <p>No. You sign in yourself, on the usual website, including any verification code. Habeas reuses the session your browser already has open and never reads or stores your credentials.</p>
+    <h3>Is my data sent to a server?</h3>
+    <p>No. Everything happens inside your browser. Documents only go to the destination you pick: a download, a folder on your machine, your own Google Drive or Dropbox, or an endpoint you configure.</p>
+    <h3>What format do I get the documents in?</h3>
+    <p>The original documents exactly as the service issues them (PDF), together with a manifest holding the normalised data.</p>
+    <h3>Is it free?</h3>
+    <p>Yes. Habeas is free software under the AGPL-3.0 licence and its code is public on GitHub.</p>
+
+    <h2>More utilities guides</h2>
+    <ul>
+      <li><a href="/download/pepephone-invoices.html">How to download your Pepephone bills</a></li>
+    </ul>
+
+    <h2>Other sources</h2>
+    <p>Habeas works with more Spanish and international services. <a href="/sources.html">See the full catalog</a> or read <a href="/why-habeas.html">why Habeas exists</a>.</p>
+  </main>
+</body>
+</html>
