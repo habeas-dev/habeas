@@ -113,6 +113,7 @@ git -C "$SC" pull --ff-only
 cp sources-repo/sources/<changed>.json  "$SC/sources/"     # + schema/, scripts/ if they changed
 (cd "$SC" && node scripts/build-index.mjs)          # rebuild index.json
 (cd "$SC" && node scripts/ci-validate.mjs)          # MUST be N/N valid
+(cd "$SC" && node scripts/check-versions.mjs)       # every version MUST be ABOVE the live one
 git -C "$SC" add -A
 # the clone doesn't inherit this repo's git config — set your own identity (or configure the clone once)
 git -C "$SC" -c user.name="$(git config user.name)" -c user.email="$(git config user.email)" commit -F - <<'MSG'
@@ -137,7 +138,11 @@ supports (e.g. a new `api.list.paging` mode), sync that check from `extension/sr
 the registry clone's `scripts/validate.js` (it's a zero-dependency copy) before publishing.
 
 Per-source fields that matter:
-- **`version`** — a date string (`YYYY-MM-DD`, or `YYYY-MM-DD.N` for a same-day re-publish). Compared
+- **`version`** — a date string (`YYYY-MM-DD`, or `YYYY-MM-DD.N` for a same-day re-publish). **A version
+  identifies one exact content, permanently — never publish different bytes under one that already
+  exists.** Take the suffix from the LIVE catalog, not from the local file
+  (`node scripts/check-versions.mjs next <id>`): deriving it locally is how the same `.N` gets used twice,
+  and a repeated version updates the catalog while reaching nobody. Compared
   **lexicographically** (`marketplace.js#isOutdated` uses `String(a) > String(b)`), so bump it or the
   marketplace won't offer the update.
 - **`minVersion`** — gates by the running extension version (`lib/version.js#cmpVersion`, numeric dotted).

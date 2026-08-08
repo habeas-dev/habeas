@@ -5,7 +5,7 @@
   "trust": "community",
   "domain": "ingdirect.es",
   "country": "ES",
-  "version": "2026-08-08.1",
+  "version": "2026-08-08.2",
   "minVersion": "0.9.11.4",
   "categories": [
     "banking"
@@ -202,7 +202,7 @@
   ],
   "changelog": [
     {
-      "version": "2026-08-08.1",
+      "version": "2026-08-08.2",
       "changes": "Ventana a 89 días (no 90): el límite de ING cuenta el día de hoy, así que el día más antiguo válido es hoy−89 y pedir hoy−90 se sale por uno. Requiere extensión 0.9.11.4, que además recorta el fromDate del informe mensual a la ventana en vez de pedir desde el día 1 del mes."
     },
     {
