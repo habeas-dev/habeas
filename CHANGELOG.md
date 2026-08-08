@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.12] — 2026-08-08
+
 ### Fixed
 - **The monthly statement of the month that straddles a rolling window is no longer rejected**
   (`runtime/inventory.js`, `group-months`). A month was included when its LAST day fell inside the

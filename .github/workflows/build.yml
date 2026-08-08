@@ -74,6 +74,7 @@ jobs:
         run: echo "path=$(ls dist/*.zip | head -1)" >> "$GITHUB_OUTPUT"
 
       - name: Upload to Chrome Web Store (publish)
+        id: cws
         if: (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch') && env.HAS_CWS == 'true'
         # Best-effort: a store hiccup (e.g. ITEM_NOT_UPDATABLE while a prior version is still in review)
         # must NOT fail the release or skip the sibling AMO step — the GitHub Release + zip already shipped.
@@ -90,6 +91,24 @@ jobs:
       # --- Firefox Add-ons (AMO) submission (milestone v* tags / manual dispatch) --------------------
       # web-ext sign --channel=listed submits a new version to AMO for review (goes live after approval).
       # Self-skips until the AMO_* secrets are set. The same MV3 zip source-dir loads in Firefox too.
+      # continue-on-error leaves the run green, so a failed upload used to be invisible unless you read the
+      # log — a release could look shipped while the store never received it. Say so loudly instead.
+      - name: Report the Chrome Web Store outcome
+        if: always() && steps.cws.outcome != 'skipped'
+        run: |
+          if [ "${{ steps.cws.outcome }}" = "success" ]; then
+            echo "✅ Chrome Web Store: uploaded" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning title=Chrome Web Store upload failed::The release and the GitHub asset shipped, but the store did NOT receive this version. Common cause: ITEM_NOT_UPDATABLE while a prior version is still in review. Upload dist/*.zip by hand once it clears."
+            {
+              echo "### ⚠️ Chrome Web Store: NOT uploaded"
+              echo ""
+              echo "The GitHub Release and its zip shipped; the store did not receive this version."
+              echo "Most often \`ITEM_NOT_UPDATABLE\` — a prior version still in review."
+              echo "Upload the attached zip by hand once it clears, or re-run this workflow."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Submit to Firefox Add-ons (AMO)
         if: (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch') && env.HAS_AMO == 'true'
         # Best-effort, and independent of the CWS step above (continue-on-error) so each store publishes
