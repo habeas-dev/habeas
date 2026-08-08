@@ -82,6 +82,7 @@
         <div class="meta">🌐 amazon · amazon.com</div>
         <div class="cats"><span class="cat">marketplace</span><span class="cat fmt">json</span><span class="cat fmt">pdf</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/amazon.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="amazon">View JSON →</a></div>
+        <a class="guide" href="/download/amazon-invoices.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">Bip&amp;Drive — facturas</span><span class="pill fp">first-party</span></div>
@@ -123,6 +124,7 @@
         <div class="meta">🌐 aliexpress · aliexpress.com</div>
         <div class="cats"><span class="cat">marketplace</span><span class="cat">retail</span><span class="cat fmt">html</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/aliexpress.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="aliexpress">View JSON →</a></div>
+        <a class="guide" href="/download/aliexpress-orders.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">American Express</span><span class="pill ">community</span><span class="pill beta">experimental</span></div>
@@ -162,6 +164,7 @@
         <div class="meta">🌐 hover · hover.com</div>
         <div class="cats"><span class="cat">domains</span><span class="cat fmt">json</span><span class="cat fmt">html</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/hover-com.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="hover-com">View JSON →</a></div>
+        <a class="guide" href="/download/hover-receipts.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">ING España</span><span class="pill ">community</span></div>
@@ -202,6 +205,7 @@
         <div class="meta">paypal · paypal.com</div>
         <div class="cats"><span class="cat">banking</span><span class="cat fmt">json</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/paypal.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="paypal">View JSON →</a></div>
+        <a class="guide" href="/download/paypal-transactions.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">Pepe Energy — facturas</span><span class="pill ">community</span></div>
@@ -222,18 +226,21 @@
         <div class="meta">🌐 raisin · raisin.com</div>
         <div class="cats"><span class="cat">banking</span><span class="cat">investment</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/raisin.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="raisin">View JSON →</a></div>
+        <a class="guide" href="/download/raisin-statements.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">Revolut</span><span class="pill ">community</span></div>
         <div class="meta">🌐 revolut · revolut.com</div>
         <div class="cats"><span class="cat">banking</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/revolut.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="revolut">View JSON →</a></div>
+        <a class="guide" href="/download/revolut-statements.html">How to download →</a>
       </div>
       <div class="src">
         <div class="top"><span class="name">Trade Republic</span><span class="pill ">community</span></div>
         <div class="meta">🌐 traderepublic · traderepublic.com</div>
         <div class="cats"><span class="cat">banking</span><span class="cat">investment</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/traderepublic.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="traderepublic">View JSON →</a></div>
+        <a class="guide" href="/download/trade-republic-statements.html">How to download →</a>
       </div>
       <!-- SOURCES:END --></div>
     <p id="msg" class="note"></p>
@@ -279,7 +286,7 @@
     const flag = (code) => !code ? '' : code === 'global' ? '🌐' : (/^[A-Za-z]{2}$/.test(code) ? code.toUpperCase().replace(/./g, (c) => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)) : '');
 
     // Sources with a Spanish how-to page under /es/descargar/.
-    const GUIDES = {"carrefour-es": {"en": "carrefour-receipts", "es": "tickets-carrefour"}, "dia-es": {"en": "dia-receipts", "es": "tickets-dia"}, "ikea-es": {"en": "ikea-receipts", "es": "tickets-ikea"}, "decathlon-es": {"en": "decathlon-receipts", "es": "tickets-decathlon"}, "leroymerlin-es": {"en": "leroy-merlin-receipts", "es": "tickets-leroy-merlin"}, "ing-es": {"en": "ing-transactions", "es": "movimientos-ing"}, "openbank-es": {"en": "openbank-transactions", "es": "movimientos-openbank"}, "wizink-es": {"en": "wizink-statements", "es": "extractos-wizink"}, "caixabank-consumer-es": {"en": "caixabank-consumer-statements", "es": "extractos-caixabank-consumer"}, "financiera-elcorteingles-es": {"en": "financiera-el-corte-ingles-statements", "es": "extractos-financiera-el-corte-ingles"}, "bipdrive-es": {"en": "bipdrive-invoices", "es": "facturas-bipdrive"}, "pagatelia-es": {"en": "pagatelia-invoices", "es": "facturas-pagatelia"}, "pepeenergy-es": {"en": "pepe-energy-invoices", "es": "facturas-pepe-energy"}, "pepephone-es": {"en": "pepephone-invoices", "es": "facturas-pepephone"}};
+    const GUIDES = {"aliexpress":{"en":"aliexpress-orders","es":"pedidos-aliexpress"},"amazon":{"en":"amazon-invoices","es":"facturas-amazon"},"bipdrive-es":{"en":"bipdrive-invoices","es":"facturas-bipdrive"},"caixabank-consumer-es":{"en":"caixabank-consumer-statements","es":"extractos-caixabank-consumer"},"carrefour-es":{"en":"carrefour-receipts","es":"tickets-carrefour"},"decathlon-es":{"en":"decathlon-receipts","es":"tickets-decathlon"},"dia-es":{"en":"dia-receipts","es":"tickets-dia"},"financiera-elcorteingles-es":{"en":"financiera-el-corte-ingles-statements","es":"extractos-financiera-el-corte-ingles"},"hover-com":{"en":"hover-receipts","es":"facturas-hover"},"ikea-es":{"en":"ikea-receipts","es":"tickets-ikea"},"ing-es":{"en":"ing-transactions","es":"movimientos-ing"},"leroymerlin-es":{"en":"leroy-merlin-receipts","es":"tickets-leroy-merlin"},"openbank-es":{"en":"openbank-transactions","es":"movimientos-openbank"},"pagatelia-es":{"en":"pagatelia-invoices","es":"facturas-pagatelia"},"paypal":{"en":"paypal-transactions","es":"movimientos-paypal"},"pepeenergy-es":{"en":"pepe-energy-invoices","es":"facturas-pepe-energy"},"pepephone-es":{"en":"pepephone-invoices","es":"facturas-pepephone"},"raisin":{"en":"raisin-statements","es":"extractos-raisin"},"revolut":{"en":"revolut-statements","es":"extractos-revolut"},"traderepublic":{"en":"trade-republic-statements","es":"extractos-trade-republic"},"wizink-es":{"en":"wizink-statements","es":"extractos-wizink"}};
 
     function card(s) {
       const t = STR[LANG];

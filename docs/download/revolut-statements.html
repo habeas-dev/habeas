@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>How to download your WiZink transactions and statements — Habeas</title>
-  <meta name="description" content="WiZink publishes one statement per period plus a transaction list. Habeas downloads them from inside your own browser session, without ever storing your password." />
-  <link rel="canonical" href="https://habeas.dev/download/wizink-statements.html" />
-  <link rel="alternate" hreflang="en" href="https://habeas.dev/download/wizink-statements.html" />
-  <link rel="alternate" hreflang="es" href="https://habeas.dev/es/descargar/extractos-wizink.html" />
-  <link rel="alternate" hreflang="x-default" href="https://habeas.dev/download/wizink-statements.html" />
+  <title>How to download your Revolut transactions and statements — Habeas</title>
+  <meta name="description" content="Revolut offers statements as PDF or CSV, one period at a time. Habeas downloads them from inside your own browser session, without ever storing your password." />
+  <link rel="canonical" href="https://habeas.dev/download/revolut-statements.html" />
+  <link rel="alternate" hreflang="en" href="https://habeas.dev/download/revolut-statements.html" />
+  <link rel="alternate" hreflang="es" href="https://habeas.dev/es/descargar/extractos-revolut.html" />
+  <link rel="alternate" hreflang="x-default" href="https://habeas.dev/download/revolut-statements.html" />
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="stylesheet" href="/style.css" />
   <style>
@@ -24,9 +24,9 @@
     .doc a { color: inherit; }
   </style>
   <meta property="og:type" content="article" />
-  <meta property="og:url" content="https://habeas.dev/download/wizink-statements.html" />
-  <meta property="og:title" content="How to download your WiZink transactions and statements — Habeas" />
-  <meta property="og:description" content="WiZink publishes one statement per period plus a transaction list. Habeas downloads them from inside your own browser session, without ever storing your password." />
+  <meta property="og:url" content="https://habeas.dev/download/revolut-statements.html" />
+  <meta property="og:title" content="How to download your Revolut transactions and statements — Habeas" />
+  <meta property="og:description" content="Revolut offers statements as PDF or CSV, one period at a time. Habeas downloads them from inside your own browser session, without ever storing your password." />
   <meta property="og:image" content="https://habeas.dev/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -40,7 +40,7 @@
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "Does Habeas store my WiZink password?",
+      "name": "Does Habeas store my Revolut password?",
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "No. You sign in yourself, on the usual website, including any verification code. Habeas reuses the session your browser already has open and never reads or stores your credentials."
@@ -59,7 +59,7 @@
       "name": "What format do I get the documents in?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "The original documents exactly as the service issues them (PDF, Excel), together with a manifest holding the normalised data."
+        "text": "The original documents exactly as the service issues them (PDF, CSV), together with a manifest holding the normalised data."
       }
     },
     {
@@ -95,38 +95,38 @@
   </header>
 
   <main class="doc">
-    <h1>How to download your WiZink transactions and statements</h1>
-    <p class="lead">WiZink publishes one statement per period plus a transaction list. Getting the full history means downloading each statement separately.</p>
+    <h1>How to download your Revolut transactions and statements</h1>
+    <p class="lead">Revolut offers statements as PDF or CSV, one period at a time. Building a continuous history, or keeping it alongside your other accounts, still means going back every month and downloading by hand.</p>
 
     <h2>What you get</h2>
-    <p>Habeas is an open-source browser extension that collects your documents from WiZink and saves them wherever you choose. From this source it extracts:</p>
+    <p>Habeas is an open-source browser extension that collects your documents from Revolut and saves them wherever you choose. From this source it extracts:</p>
     <ul>
-        <li><strong>movimientos</strong> — each movement with its date, amount, currency, description and counterparty.</li>
-        <li><strong>extractos</strong> · PDF or Excel — each document with its date, amount, currency and numbering.</li>
+        <li><strong>transactions</strong> — each movement with its date, amount, currency, description and counterparty.</li>
+        <li><strong>extracto</strong> · PDF or CSV — each document with its date, amount, currency and numbering.</li>
     </ul>
 
     <h2>How it works</h2>
-    <p>It is not a service that connects to wizink.es on its own. It runs <strong>inside your own browser</strong>, reusing the session you already have open:</p>
+    <p>It is not a service that connects to revolut.com on its own. It runs <strong>inside your own browser</strong>, reusing the session you already have open:</p>
     <ul>
-      <li>You go to wizink.es and sign in yourself, as always, with your MFA or whatever code you use.</li>
+      <li>You go to revolut.com and sign in yourself, as always, with your MFA or whatever code you use.</li>
       <li>Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does.</li>
       <li>You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own.</li>
     </ul>
-    <p><strong>Your password is never read, never stored and never sent anywhere</strong>, and nothing runs in the background while you are away. This is an <strong>audited</strong> source, verified by the project against the real service.</p>
+    <p><strong>Your password is never read, never stored and never sent anywhere</strong>, and nothing runs in the background while you are away. This is a <strong>community</strong> source: its definition is public and reviewable, and it runs under the same security rules as every other.</p>
 
     <div class="cta">
-      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="wizink-es">Install on Chrome</a>
-      <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="wizink-es">Install on Firefox</a>
+      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="revolut">Install on Chrome</a>
+      <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="revolut">Install on Firefox</a>
     </div>
-    <p class="lead">Free and open source (AGPL-3.0). Install the extension and enable the “WiZink España” source from Settings → Browse sources.</p>
+    <p class="lead">Free and open source (AGPL-3.0). Install the extension and enable the “Revolut” source from Settings → Browse sources.</p>
 
     <h2>Frequently asked questions</h2>
-    <h3>Does Habeas store my WiZink password?</h3>
+    <h3>Does Habeas store my Revolut password?</h3>
     <p>No. You sign in yourself, on the usual website, including any verification code. Habeas reuses the session your browser already has open and never reads or stores your credentials.</p>
     <h3>Is my data sent to a server?</h3>
     <p>No. Everything happens inside your browser. Documents only go to the destination you pick: a download, a folder on your machine, your own Google Drive or Dropbox, or an endpoint you configure.</p>
     <h3>What format do I get the documents in?</h3>
-    <p>The original documents exactly as the service issues them (PDF, Excel), together with a manifest holding the normalised data.</p>
+    <p>The original documents exactly as the service issues them (PDF, CSV), together with a manifest holding the normalised data.</p>
     <h3>Is it free?</h3>
     <p>Yes. Habeas is free software under the AGPL-3.0 licence and its code is public on GitHub.</p>
 
@@ -138,8 +138,8 @@
       <li><a href="/download/openbank-transactions.html">How to download your Openbank transactions and statements</a></li>
       <li><a href="/download/paypal-transactions.html">How to download your PayPal transaction history</a></li>
       <li><a href="/download/raisin-statements.html">How to download your Raisin transactions, deposits and documents</a></li>
-      <li><a href="/download/revolut-statements.html">How to download your Revolut transactions and statements</a></li>
       <li><a href="/download/trade-republic-statements.html">How to download your Trade Republic transactions and statements</a></li>
+      <li><a href="/download/wizink-statements.html">How to download your WiZink transactions and statements</a></li>
     </ul>
 
     <h2>Other sources</h2>

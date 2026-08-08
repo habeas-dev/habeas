@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cómo descargar tus facturas de Pepephone — Habeas</title>
-  <meta name="description" content="Pepephone publica una factura mensual en tu área de cliente. Habeas los descarga desde tu propia sesión del navegador, sin guardar tu contraseña." />
-  <link rel="canonical" href="https://habeas.dev/es/descargar/facturas-pepephone.html" />
-  <link rel="alternate" hreflang="en" href="https://habeas.dev/download/pepephone-invoices.html" />
-  <link rel="alternate" hreflang="es" href="https://habeas.dev/es/descargar/facturas-pepephone.html" />
-  <link rel="alternate" hreflang="x-default" href="https://habeas.dev/download/pepephone-invoices.html" />
+  <title>Cómo descargar tus pedidos y recibos de AliExpress — Habeas</title>
+  <meta name="description" content="AliExpress guarda tu historial de pedidos en tu cuenta, pero el recibo de cada uno vive en su propia pantalla y no hay forma de llevártelos todos. Habeas los descarga desde tu propia sesión del navegador, sin guardar tu contraseña." />
+  <link rel="canonical" href="https://habeas.dev/es/descargar/pedidos-aliexpress.html" />
+  <link rel="alternate" hreflang="en" href="https://habeas.dev/download/aliexpress-orders.html" />
+  <link rel="alternate" hreflang="es" href="https://habeas.dev/es/descargar/pedidos-aliexpress.html" />
+  <link rel="alternate" hreflang="x-default" href="https://habeas.dev/download/aliexpress-orders.html" />
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="stylesheet" href="/style.css" />
   <style>
@@ -24,9 +24,9 @@
     .doc a { color: inherit; }
   </style>
   <meta property="og:type" content="article" />
-  <meta property="og:url" content="https://habeas.dev/es/descargar/facturas-pepephone.html" />
-  <meta property="og:title" content="Cómo descargar tus facturas de Pepephone — Habeas" />
-  <meta property="og:description" content="Pepephone publica una factura mensual en tu área de cliente. Habeas los descarga desde tu propia sesión del navegador, sin guardar tu contraseña." />
+  <meta property="og:url" content="https://habeas.dev/es/descargar/pedidos-aliexpress.html" />
+  <meta property="og:title" content="Cómo descargar tus pedidos y recibos de AliExpress — Habeas" />
+  <meta property="og:description" content="AliExpress guarda tu historial de pedidos en tu cuenta, pero el recibo de cada uno vive en su propia pantalla y no hay forma de llevártelos todos. Habeas los descarga desde tu propia sesión del navegador, sin guardar tu contraseña." />
   <meta property="og:image" content="https://habeas.dev/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -40,7 +40,7 @@
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "¿Habeas guarda mi contraseña de Pepephone?",
+      "name": "¿Habeas guarda mi contraseña de AliExpress?",
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "No. Inicias sesión tú, en la web de siempre, incluido cualquier código de verificación. Habeas reutiliza la sesión que tu navegador ya tiene abierta y nunca lee ni almacena tus credenciales."
@@ -59,7 +59,7 @@
       "name": "¿En qué formato obtengo los documentos?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Los documentos originales tal cual los emite el servicio (PDF), acompañados de un manifiesto con los datos ya normalizados."
+        "text": "Los documentos originales tal cual los emite el servicio (HTML), acompañados de un manifiesto con los datos ya normalizados."
       }
     },
     {
@@ -95,44 +95,46 @@
   </header>
 
   <main class="doc">
-    <h1>Cómo descargar tus facturas de Pepephone</h1>
-    <p class="lead">Pepephone publica una factura mensual en tu área de cliente. No hay forma de pedirlas todas juntas.</p>
+    <h1>Cómo descargar tus pedidos y recibos de AliExpress</h1>
+    <p class="lead">AliExpress guarda tu historial de pedidos en tu cuenta, pero el recibo de cada uno vive en su propia pantalla y no hay forma de llevártelos todos.</p>
 
     <h2>Qué obtienes</h2>
-    <p>Habeas es una extensión de navegador de código abierto que recoge tus documentos de Pepephone y los guarda donde tú digas. De esta fuente extrae:</p>
+    <p>Habeas es una extensión de navegador de código abierto que recoge tus documentos de AliExpress y los guarda donde tú digas. De esta fuente extrae:</p>
     <ul>
-        <li><strong>facturas de móvil y fibra</strong> — cada documento con su fecha, importe, moneda y numeración.</li>
+        <li><strong>recibos de pedidos</strong> — cada compra con su fecha, importe, moneda, tienda y categoría.</li>
     </ul>
 
     <h2>Cómo funciona</h2>
-    <p>No es un servicio que se conecte a pepephone.com por su cuenta. Funciona <strong>dentro de tu propio navegador</strong>, aprovechando la sesión que ya tienes abierta:</p>
+    <p>No es un servicio que se conecte a aliexpress.com por su cuenta. Funciona <strong>dentro de tu propio navegador</strong>, aprovechando la sesión que ya tienes abierta:</p>
     <ul>
-      <li>Entras en pepephone.com y te identificas tú, como siempre, con tu MFA o el código que uses.</li>
+      <li>Entras en aliexpress.com y te identificas tú, como siempre, con tu MFA o el código que uses.</li>
       <li>Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web.</li>
       <li>Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio.</li>
     </ul>
     <p><strong>Tu contraseña nunca se lee, ni se guarda, ni se envía a ningún sitio</strong>, y no hay ningún proceso trabajando en segundo plano mientras no estás. Es una fuente <strong>de la comunidad</strong>: su definición es pública y revisable, y funciona bajo las mismas reglas de seguridad que el resto.</p>
 
     <div class="cta">
-      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="pepephone-es">Instalar en Chrome</a>
-      <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="pepephone-es">Instalar en Firefox</a>
+      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="aliexpress">Instalar en Chrome</a>
+      <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="aliexpress">Instalar en Firefox</a>
     </div>
-    <p class="lead">Gratis y de código abierto (AGPL-3.0). Instala la extensión y activa la fuente «Pepephone — facturas» desde Ajustes → Explorar fuentes.</p>
+    <p class="lead">Gratis y de código abierto (AGPL-3.0). Instala la extensión y activa la fuente «AliExpress» desde Ajustes → Explorar fuentes.</p>
 
     <h2>Preguntas frecuentes</h2>
-    <h3>¿Habeas guarda mi contraseña de Pepephone?</h3>
+    <h3>¿Habeas guarda mi contraseña de AliExpress?</h3>
     <p>No. Inicias sesión tú, en la web de siempre, incluido cualquier código de verificación. Habeas reutiliza la sesión que tu navegador ya tiene abierta y nunca lee ni almacena tus credenciales.</p>
     <h3>¿Se envían mis datos a algún servidor?</h3>
     <p>No. Todo ocurre dentro de tu navegador. Los documentos van solo al destino que tú elijas: una descarga, una carpeta de tu equipo, tu propio Google Drive o Dropbox, o un endpoint que configures.</p>
     <h3>¿En qué formato obtengo los documentos?</h3>
-    <p>Los documentos originales tal cual los emite el servicio (PDF), acompañados de un manifiesto con los datos ya normalizados.</p>
+    <p>Los documentos originales tal cual los emite el servicio (HTML), acompañados de un manifiesto con los datos ya normalizados.</p>
     <h3>¿Es gratis?</h3>
     <p>Sí. Habeas es software libre con licencia AGPL-3.0 y su código es público en GitHub.</p>
 
-    <h2>Más guías de servicios y suscripciones</h2>
+    <h2>Más guías de tiendas</h2>
     <ul>
-      <li><a href="/es/descargar/facturas-hover.html">Cómo descargar tus recibos de Hover</a></li>
-      <li><a href="/es/descargar/facturas-pepe-energy.html">Cómo descargar tus facturas de Pepe Energy</a></li>
+      <li><a href="/es/descargar/facturas-amazon.html">Cómo descargar tus facturas de Amazon</a></li>
+      <li><a href="/es/descargar/tickets-decathlon.html">Cómo descargar tus tickets de Decathlon</a></li>
+      <li><a href="/es/descargar/tickets-ikea.html">Cómo descargar tus tiquets y compras de IKEA</a></li>
+      <li><a href="/es/descargar/tickets-leroy-merlin.html">Cómo descargar tus tickets y pedidos de Leroy Merlin</a></li>
     </ul>
 
     <h2>Otras fuentes</h2>

@@ -1,0 +1,86 @@
+{
+  "aliexpress": {
+    "en": "aliexpress-orders",
+    "es": "pedidos-aliexpress"
+  },
+  "amazon": {
+    "en": "amazon-invoices",
+    "es": "facturas-amazon"
+  },
+  "bipdrive-es": {
+    "en": "bipdrive-invoices",
+    "es": "facturas-bipdrive"
+  },
+  "caixabank-consumer-es": {
+    "en": "caixabank-consumer-statements",
+    "es": "extractos-caixabank-consumer"
+  },
+  "carrefour-es": {
+    "en": "carrefour-receipts",
+    "es": "tickets-carrefour"
+  },
+  "decathlon-es": {
+    "en": "decathlon-receipts",
+    "es": "tickets-decathlon"
+  },
+  "dia-es": {
+    "en": "dia-receipts",
+    "es": "tickets-dia"
+  },
+  "financiera-elcorteingles-es": {
+    "en": "financiera-el-corte-ingles-statements",
+    "es": "extractos-financiera-el-corte-ingles"
+  },
+  "hover-com": {
+    "en": "hover-receipts",
+    "es": "facturas-hover"
+  },
+  "ikea-es": {
+    "en": "ikea-receipts",
+    "es": "tickets-ikea"
+  },
+  "ing-es": {
+    "en": "ing-transactions",
+    "es": "movimientos-ing"
+  },
+  "leroymerlin-es": {
+    "en": "leroy-merlin-receipts",
+    "es": "tickets-leroy-merlin"
+  },
+  "openbank-es": {
+    "en": "openbank-transactions",
+    "es": "movimientos-openbank"
+  },
+  "pagatelia-es": {
+    "en": "pagatelia-invoices",
+    "es": "facturas-pagatelia"
+  },
+  "paypal": {
+    "en": "paypal-transactions",
+    "es": "movimientos-paypal"
+  },
+  "pepeenergy-es": {
+    "en": "pepe-energy-invoices",
+    "es": "facturas-pepe-energy"
+  },
+  "pepephone-es": {
+    "en": "pepephone-invoices",
+    "es": "facturas-pepephone"
+  },
+  "raisin": {
+    "en": "raisin-statements",
+    "es": "extractos-raisin"
+  },
+  "revolut": {
+    "en": "revolut-statements",
+    "es": "extractos-revolut"
+  },
+  "traderepublic": {
+    "en": "trade-republic-statements",
+    "es": "extractos-trade-republic"
+  },
+  "wizink-es": {
+    "en": "wizink-statements",
+    "es": "extractos-wizink"
+  }
+}

@@ -134,11 +134,16 @@ const LANGS = {
 const GROUPS = [
   { id: 'grocery',  cats: ['grocery'],                          en: 'Supermarkets',      es: 'Supermercados' },
   { id: 'retail',   cats: ['retail', 'home', 'diy', 'sports', 'marketplace'], en: 'Shops', es: 'Tiendas' },
-  { id: 'banking',  cats: ['banking', 'card', 'loan'],          en: 'Banks & cards',     es: 'Bancos y tarjetas' },
+  { id: 'banking',  cats: ['banking', 'card', 'loan', 'investment'], en: 'Banks, cards & investments', es: 'Bancos, tarjetas e inversión' },
   { id: 'tolls',    cats: ['tolls'],                            en: 'Tolls & parking',   es: 'Peajes y parking' },
-  { id: 'utility',  cats: ['energy', 'telecom'],                en: 'Utilities',         es: 'Suministros' },
+  { id: 'utility',  cats: ['energy', 'telecom', 'domains'],     en: 'Services & subscriptions', es: 'Servicios y suscripciones' },
 ];
-const groupOf = (meta) => GROUPS.find((g) => (meta.categories || []).some((c) => g.cats.includes(c))) || GROUPS[1];
+const UNGROUPED = new Set();
+const groupOf = (meta) => {
+  const hit = GROUPS.find((g) => (meta.categories || []).some((c) => g.cats.includes(c)));
+  if (!hit) UNGROUPED.add(`${meta.id} (${(meta.categories || []).join(', ') || 'no categories'})`);
+  return hit || GROUPS[1];
+};
 
 const FORMAT = { pdf: 'PDF', excel: 'Excel', json: 'JSON', html: 'HTML', xls: 'Excel', csv: 'CSV' };
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -398,5 +403,11 @@ for (const lang of Object.keys(LANGS)) {
   written++;
 }
 
+// Publish the map of generated guides so the catalog can link them without knowing how they are built.
+const guides = Object.fromEntries(resolved.map(({ id, entry }) =>
+  [id, Object.fromEntries(Object.keys(LANGS).filter((l) => entry[l]).map((l) => [l, entry[l].slug]))]));
+writeFileSync(join(DOCS, 'guides.json'), JSON.stringify(guides, null, 2) + '\n');
+
 console.log(`${written} pages written (${Object.keys(LANGS).join(', ')}) from ${resolved.length} sources`);
 if (skipped.length) console.log(`no guide: ${skipped.join(', ')}`);
+if (UNGROUPED.size) console.error(`  ! ungrouped, filed under "${GROUPS[1].en}" — add their category to GROUPS: ${[...UNGROUPED].join('; ')}`);

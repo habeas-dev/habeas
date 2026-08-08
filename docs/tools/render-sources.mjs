@@ -19,65 +19,8 @@ const flag = (code) => !code ? '' : code === 'global' ? '🌐'
   : (/^[A-Za-z]{2}$/.test(code) ? code.toUpperCase().replace(/./g, (c) => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)) : '');
 
 // Matches the page's card() markup. No live ratings in the static snapshot → "no ratings yet".
-// Sources with a Spanish how-to page: link the card to it (internal links are how these get found).
-const GUIDES = {
-  "carrefour-es": {
-    "en": "carrefour-receipts",
-    "es": "tickets-carrefour"
-  },
-  "dia-es": {
-    "en": "dia-receipts",
-    "es": "tickets-dia"
-  },
-  "ikea-es": {
-    "en": "ikea-receipts",
-    "es": "tickets-ikea"
-  },
-  "decathlon-es": {
-    "en": "decathlon-receipts",
-    "es": "tickets-decathlon"
-  },
-  "leroymerlin-es": {
-    "en": "leroy-merlin-receipts",
-    "es": "tickets-leroy-merlin"
-  },
-  "ing-es": {
-    "en": "ing-transactions",
-    "es": "movimientos-ing"
-  },
-  "openbank-es": {
-    "en": "openbank-transactions",
-    "es": "movimientos-openbank"
-  },
-  "wizink-es": {
-    "en": "wizink-statements",
-    "es": "extractos-wizink"
-  },
-  "caixabank-consumer-es": {
-    "en": "caixabank-consumer-statements",
-    "es": "extractos-caixabank-consumer"
-  },
-  "financiera-elcorteingles-es": {
-    "en": "financiera-el-corte-ingles-statements",
-    "es": "extractos-financiera-el-corte-ingles"
-  },
-  "bipdrive-es": {
-    "en": "bipdrive-invoices",
-    "es": "facturas-bipdrive"
-  },
-  "pagatelia-es": {
-    "en": "pagatelia-invoices",
-    "es": "facturas-pagatelia"
-  },
-  "pepeenergy-es": {
-    "en": "pepe-energy-invoices",
-    "es": "facturas-pepe-energy"
-  },
-  "pepephone-es": {
-    "en": "pepephone-invoices",
-    "es": "facturas-pepephone"
-  }
-};
+// Which sources have a guide page, written by build-source-pages.mjs — run that first.
+const GUIDES = JSON.parse(readFileSync(join(here, '..', 'guides.json'), 'utf8'));
 
 function card(s) {
   const fp = s.trust === 'first-party';
@@ -109,5 +52,6 @@ let html = readFileSync(HTML, 'utf8');
 const i = html.indexOf(START), j = html.indexOf(END);
 if (i < 0 || j < 0) throw new Error('markers not found in sources.html');
 html = html.slice(0, i + START.length) + cards + html.slice(j);
+html = html.replace(/(\n    const GUIDES = )[^\n]*/, `$1${JSON.stringify(GUIDES)};`);
 writeFileSync(HTML, html);
 console.log(`baked ${sources.length} sources into docs/sources.html`);

@@ -9,7 +9,7 @@
     "banking",
     "investment"
   ],
-  "version": "2026-07-21",
+  "version": "2026-08-08",
   "minVersion": "0.5.0.32",
   "keepRaw": true,
   "contributors": [
@@ -320,6 +320,10 @@
   ],
   "changelog": [
     {
+      "version": "2026-08-08",
+      "changes": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`."
+    },
+    {
       "version": "2026-07-21",
       "changes": "Declared country: \"global\" — the field was missing since the multi-market rename (raisin-es -> raisin), so the catalog showed no 🌐 badge and country filters didn't treat it as worldwide."
     },
@@ -415,5 +419,20 @@
       "fr": "Compte",
       "nl": "Rekening"
     }
-  }
+  },
+  "content": {
+    "en": {
+      "slug": "raisin-statements",
+      "docs": "transactions, deposits and documents",
+      "h1": "How to download your Raisin transactions, deposits and documents",
+      "intro": "Raisin spreads what matters across several products: the account movements, the fixed-term deposits, the savings balance and the documents for each. Each lives on its own screen, so the full picture is never in one place."
+    },
+    "es": {
+      "slug": "extractos-raisin",
+      "docs": "movimientos, depósitos y documentos",
+      "h1": "Cómo descargar tus movimientos, depósitos y documentos de Raisin",
+      "intro": "Raisin reparte lo importante entre varios productos: los movimientos de la cuenta, los depósitos a plazo, el saldo de ahorro y los documentos de cada uno. Cada cosa vive en su pantalla, así que la foto completa nunca está en un solo sitio."
+    }
+  },
+  "brand": "Raisin"
 }

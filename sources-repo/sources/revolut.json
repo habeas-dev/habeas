@@ -5,25 +5,41 @@
   "trust": "community",
   "domain": "revolut.com",
   "country": "global",
-  "categories": ["banking"],
-  "version": "2026-07-16",
+  "categories": [
+    "banking"
+  ],
+  "version": "2026-08-08",
   "minVersion": "0.3.0.24",
   "minorUnits": true,
   "keepRaw": true,
-  "throttle": { "minMs": 300, "jitterMs": 400 },
-  "match": ["https://app.revolut.com/*"],
+  "throttle": {
+    "minMs": 300,
+    "jitterMs": 400
+  },
+  "match": [
+    "https://app.revolut.com/*"
+  ],
   "openUrl": "https://app.revolut.com/home",
-  "crossDomainHosts": ["storage.googleapis.com"],
+  "crossDomainHosts": [
+    "storage.googleapis.com"
+  ],
   "auth": {
     "mode": "cookie",
-    "replayHeaders": ["x-device-id"]
+    "replayHeaders": [
+      "x-device-id"
+    ]
   },
   "api": {
     "host": "https://app.revolut.com",
     "groups": {
       "path": "/api/retail/user/current/wallet",
       "itemsPath": "pockets",
-      "fields": { "id": "id", "name": "currency", "currency": "currency", "type": "type" }
+      "fields": {
+        "id": "id",
+        "name": "currency",
+        "currency": "currency",
+        "type": "type"
+      }
     }
   },
   "streams": [
@@ -32,7 +48,12 @@
       "name": "Transacciones",
       "schema": "transaction@1",
       "normalize": {
-        "counterparty": { "from": "description", "re": ["^(?:To|From|Payment to|Payment from)\\s+(.+)$"] }
+        "counterparty": {
+          "from": "description",
+          "re": [
+            "^(?:To|From|Payment to|Payment from)\\s+(.+)$"
+          ]
+        }
       },
       "api": {
         "list": {
@@ -41,8 +62,14 @@
           "paging": "cursor",
           "cursorParam": "to",
           "cursorFromItem": "startedDate",
-          "params": { "count": "500", "internalPocketId": "{group.id}" },
-          "headers": { "x-browser-application": "WEB_CLIENT", "x-client-version": "100.0" },
+          "params": {
+            "count": "500",
+            "internalPocketId": "{group.id}"
+          },
+          "headers": {
+            "x-browser-application": "WEB_CLIENT",
+            "x-client-version": "100.0"
+          },
           "referer": "https://app.revolut.com/home"
         }
       },
@@ -63,7 +90,13 @@
       "name": "Extractos de cuenta",
       "schema": "invoice@1",
       "api": {
-        "list": { "paging": "synthetic", "synthetic": { "each": "group-months" }, "maxAgeDays": 366 }
+        "list": {
+          "paging": "synthetic",
+          "synthetic": {
+            "each": "group-months"
+          },
+          "maxAgeDays": 366
+        }
       },
       "fields": {
         "internalId": "{group.currency}-{period}",
@@ -73,15 +106,80 @@
         "description": "Extracto {group.currency} {period}"
       },
       "formats": [
-        { "id": "pdf", "name": "PDF", "api": { "pdf": { "poll": { "path": "/api/retail/user/current/statements/account-statements?from={fromDate}&to={date}&ccy={group.currency}&format=PDF&type=OFFICIAL", "statePath": "state", "readyValue": "READY", "urlField": "url", "tries": 10, "delayMs": 1500 }, "ext": "pdf", "mime": "application/pdf" } } },
-        { "id": "csv", "name": "CSV", "api": { "pdf": { "poll": { "path": "/api/retail/user/current/statements/account-statements?from={fromDate}&to={date}&ccy={group.currency}&format=CSV&type=OFFICIAL", "statePath": "state", "readyValue": "READY", "urlField": "url", "tries": 10, "delayMs": 1500 }, "ext": "csv", "mime": "text/csv" } } }
+        {
+          "id": "pdf",
+          "name": "PDF",
+          "api": {
+            "pdf": {
+              "poll": {
+                "path": "/api/retail/user/current/statements/account-statements?from={fromDate}&to={date}&ccy={group.currency}&format=PDF&type=OFFICIAL",
+                "statePath": "state",
+                "readyValue": "READY",
+                "urlField": "url",
+                "tries": 10,
+                "delayMs": 1500
+              },
+              "ext": "pdf",
+              "mime": "application/pdf"
+            }
+          }
+        },
+        {
+          "id": "csv",
+          "name": "CSV",
+          "api": {
+            "pdf": {
+              "poll": {
+                "path": "/api/retail/user/current/statements/account-statements?from={fromDate}&to={date}&ccy={group.currency}&format=CSV&type=OFFICIAL",
+                "statePath": "state",
+                "readyValue": "READY",
+                "urlField": "url",
+                "tries": 10,
+                "delayMs": 1500
+              },
+              "ext": "csv",
+              "mime": "text/csv"
+            }
+          }
+        }
       ]
     }
   ],
   "changelog": [
-    { "version": "2026-07-16", "changes": "Map the running balance (minor-unit scaled) to record.balanceAfter and the completed date to record.valueDate — promoted to canonical fields for the Cuéntamo contract. Requires extension >= 0.3.0.24." },
-    { "version": "2026-07-15.2", "changes": "Add account statements (PDF/CSV) per account × month: async-generated (poll account-statements until READY) then download the signed Google Storage URL (crossDomainHosts + consent). Statements bounded to the last ~12 months." },
-    { "version": "2026-07-15.1", "changes": "Add per-account (pocket) filter with a currency-labelled Accounts picker." },
-    { "version": "2026-07-15", "changes": "Initial: personal transactions across all accounts, paged by the `to` timestamp cursor; cookie + captured x-device-id; minor-unit amounts scaled per ISO 4217." }
-  ]
+    {
+      "version": "2026-08-08",
+      "changes": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`."
+    },
+    {
+      "version": "2026-07-16",
+      "changes": "Map the running balance (minor-unit scaled) to record.balanceAfter and the completed date to record.valueDate — promoted to canonical fields for the Cuéntamo contract. Requires extension >= 0.3.0.24."
+    },
+    {
+      "version": "2026-07-15.2",
+      "changes": "Add account statements (PDF/CSV) per account × month: async-generated (poll account-statements until READY) then download the signed Google Storage URL (crossDomainHosts + consent). Statements bounded to the last ~12 months."
+    },
+    {
+      "version": "2026-07-15.1",
+      "changes": "Add per-account (pocket) filter with a currency-labelled Accounts picker."
+    },
+    {
+      "version": "2026-07-15",
+      "changes": "Initial: personal transactions across all accounts, paged by the `to` timestamp cursor; cookie + captured x-device-id; minor-unit amounts scaled per ISO 4217."
+    }
+  ],
+  "content": {
+    "en": {
+      "slug": "revolut-statements",
+      "docs": "transactions and statements",
+      "h1": "How to download your Revolut transactions and statements",
+      "intro": "Revolut offers statements as PDF or CSV, one period at a time. Building a continuous history, or keeping it alongside your other accounts, still means going back every month and downloading by hand."
+    },
+    "es": {
+      "slug": "extractos-revolut",
+      "docs": "movimientos y extractos",
+      "h1": "Cómo descargar tus movimientos y extractos de Revolut",
+      "intro": "Revolut ofrece extractos en PDF o CSV, un periodo cada vez. Construir un histórico continuo, o mantenerlo junto al de tus otras cuentas, sigue exigiendo volver cada mes y descargar a mano."
+    }
+  },
+  "brand": "Revolut"
 }
