@@ -13,15 +13,26 @@ Copy-paste material for the **Chrome Web Store** and **Firefox Add-ons (AMO)**. 
 
 ## Name
 
-**Habeas** (optionally, where a tagline fits: **Habeas — reclaim your own data**)
+Both stores search over the **title and description**. A bare "Habeas" matches nothing anybody
+types, so the title carries the documents; the brand still leads because it is the product's name.
+
+**EN** (CWS allows 45 chars):
+> Habeas — export receipts & invoices
+
+**ES**:
+> Habeas — descarga tickets y facturas
 
 ## Short description / summary
 
-**EN** (≤132 chars, Chrome Web Store): 
-> Export your own receipts, invoices and transactions from sites that hide them — in your own browser session. Local-first, open-source.
+**EN** (≤132 chars, Chrome Web Store):
+> Download your own receipts, invoices and bank statements from sites with no export — inside your own session. Open-source.
 
-**ES**: 
-> Exporta tus tickets, facturas y transacciones de servicios que no lo permiten — en tu propia sesión. Local-first y de código abierto.
+**ES**:
+> Descarga tus tickets, facturas y extractos de servicios que no lo permiten — en tu propia sesión. Código abierto.
+
+> **Both stores support localised listings.** Publish the ES text under `es`/`es-ES`, not instead of
+> the English: every published source is Spanish, so that is where the demand is, but the default
+> listing is what most of the world sees.
 
 ## Category
 
@@ -65,6 +76,11 @@ Copy-paste material for the **Chrome Web Store** and **Firefox Add-ons (AMO)**. 
 > run. Each service's Terms may restrict automated access — complying with them is your
 > responsibility.
 >
+> **Works today with:** Carrefour España, Dia España, IKEA España, Decathlon España, Leroy Merlin
+> España, ING España, Openbank España, WiZink España, CaixaBank Consumer, Financiera El Corte Inglés,
+> Bip&Drive, Pagatelia, Pepe Energy, Pepephone, Amazon, AliExpress, PayPal, Revolut, N26, American
+> Express, Trade Republic, DeGiro, Raisin and Hover — plus any source the community adds.
+>
 > Open source: https://github.com/habeas-dev/habeas · Privacy: https://habeas.dev/privacy.html
 
 **ES**
@@ -88,9 +104,37 @@ Copy-paste material for the **Chrome Web Store** and **Firefox Add-ons (AMO)**. 
 >   abiertas a la comunidad y revisadas en abierto. Nunca código remoto.
 > • **Sin rastreadores.** Sin analítica ni telemetría; fuentes tipográficas propias.
 >
+> **Funciona ya con:** Carrefour, Dia, IKEA, Decathlon, Leroy Merlin, ING, Openbank, WiZink,
+> CaixaBank Consumer, Financiera El Corte Inglés, Bip&Drive, Pagatelia, Pepe Energy, Pepephone,
+> Amazon, AliExpress, PayPal, Revolut, N26, American Express, Trade Republic, DeGiro, Raisin y
+> Hover — además de las fuentes que aporte la comunidad.
+>
 > Habeas ejerce tu derecho de portabilidad (GDPR Art. 20) sobre tus propios datos, con software que
 > ejecutas tú. Los Términos de cada servicio pueden restringir el acceso automatizado — cumplirlos es
 > tu responsabilidad.
+>
+> Código abierto: https://github.com/habeas-dev/habeas · Privacidad: https://habeas.dev/privacy.html
+
+---
+
+## Keeping the listings in sync
+
+The **live AMO summary** drifted from this file — it read "Reclaim your own personal data from
+services that lock it behind non-automatable walls", which names no document anybody searches for.
+Treat this file as the source of truth and re-paste on every listing change.
+
+The supported-services list above is what makes in-store search surface Habeas for "carrefour",
+"ing" or "pepephone". Regenerate it whenever a source is published:
+
+```bash
+curl -s https://habeas-dev.github.io/sources/index.json | \
+  python3 -c "import json,sys; s=json.load(sys.stdin)['sources']; \
+  print(', '.join(sorted({x['name'].split('—')[0].strip() for x in s})))"
+```
+
+Store ranking also weighs installs and ratings, and both listings currently sit near zero reviews.
+Neither store allows soliciting reviews inside the extension, so this only moves once real users
+arrive — which is what the landing pages and the launch posts are for.
 
 ---
 
