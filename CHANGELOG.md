@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.11] — 2026-08-08
+
 ### Changed
 - **Store-facing name and description now say what the extension does** (`_locales/{en,es}/messages.json`).
   Chrome takes the Web Store listing's title and summary from the package — `name` and `description` in the
