@@ -13,7 +13,7 @@ globalThis.chrome = {
     onChanged: { addListener: (fn) => listeners.push(fn) },
   },
 };
-globalThis.Headers = globalThis.Headers || class { constructor(i = {}) { this.m = new Map(Object.entries(i)); } set(k, v) { this.m.set(k, v); } get(k) { return this.m.get(k); } };
+globalThis.Headers = globalThis.Headers || class { constructor(i = {}) { this.m = new Map(Object.entries(i)); } set(k, v) { this.m.set(k, v); } get(k) { return this.m.get(k); } entries() { return this.m.entries(); } };
 
 const { markInit, withDebugMark, setDebugMark, debugMarkEnabled, HEADER } = await import('../src/lib/debugmark.js');
 
@@ -33,7 +33,7 @@ test('once on, every request carries the header, tagged by source and sequence',
   assert.equal(await debugMarkEnabled(), true);
 
   const seen = [];
-  const fetcher = withDebugMark(async (url, init) => { seen.push(init.headers.get(HEADER)); return { ok: true }; }, 'ing-es');
+  const fetcher = withDebugMark(async (url, init) => { seen.push(init.headers[HEADER]); return { ok: true }; }, 'ing-es');
   await fetcher('https://example.test/a', { headers: { authorization: 'bearer x' } });
   await fetcher('https://example.test/b', {});
 
@@ -47,10 +47,29 @@ test('marking preserves the headers the source depends on', () => {
   const out = markInit(init, 'wizink-es');
   assert.equal(out.method, 'POST');
   assert.equal(out.body, '{}');
-  assert.equal(out.headers.get('authorization'), 'bearer x', 'replayed auth headers must survive');
-  assert.equal(out.headers.get('x-csrf-token'), 'c');
-  assert.ok(out.headers.get(HEADER));
+  assert.equal(out.headers.authorization, 'bearer x', 'replayed auth headers must survive');
+  assert.equal(out.headers['x-csrf-token'], 'c');
+  assert.ok(out.headers[HEADER]);
   assert.notEqual(out, init, 'the caller’s init must not be mutated');
+});
+
+test('headers stay a PLAIN OBJECT, whatever shape the caller used', () => {
+  // A page-context source (ING, and any WAF-fronted API) hands its init to the site tab, which spreads
+  // the headers: `{...new Headers(x)}` is `{}`. Returning a Headers instance here would silently drop
+  // authorization and the CSRF header, turning every replay into a 401 — a failure indistinguishable
+  // from the bug you would be chasing, caused by the debugging tool itself.
+  for (const [label, headers] of [
+    ['plain object', { authorization: 'bearer x' }],
+    ['Headers instance', new Headers({ authorization: 'bearer x' })],
+    ['entry array', [['authorization', 'bearer x']]],
+    ['absent', undefined],
+  ]) {
+    const out = markInit({ headers }, 'ing-es');
+    assert.equal(Object.getPrototypeOf(out.headers), Object.prototype, `${label}: headers must be a plain object`);
+    assert.deepEqual({ ...out.headers }, out.headers, `${label}: must survive being spread`);
+    if (headers) assert.equal({ ...out.headers }.authorization, 'bearer x', `${label}: auth header lost when spread`);
+    assert.ok({ ...out.headers }[HEADER], `${label}: the marker must survive being spread`);
+  }
 });
 
 test('the extension and the mitmproxy addon agree on the header name', async () => {

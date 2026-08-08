@@ -55,13 +55,24 @@ export function nextTag(sourceId) {
  * Add the marker to a fetch init, without disturbing anything already there.
  * Returns the init unchanged when the toggle is off, so the request stays byte-identical to what the
  * site's own SPA would send.
+ *
+ * Headers come out as a PLAIN OBJECT, never a `Headers` instance. A page-context source (ING and any
+ * other WAF-fronted API) hands its init to the site tab, which spreads it — `{...new Headers(x)}` is
+ * `{}`, so returning a Headers here would silently drop `authorization` and the CSRF header and turn
+ * every replay into a 401. That failure looks exactly like the bug you would be debugging.
  */
 export function markInit(init, sourceId) {
   const out = { ...(init || {}) };
-  const h = new Headers(out.headers || {});
-  h.set(HEADER, nextTag(sourceId));
-  out.headers = h;
+  out.headers = { ...plainHeaders(out.headers), [HEADER]: nextTag(sourceId) };
   return out;
+}
+
+/** Normalise whatever fetch accepts as `headers` into a plain object. */
+function plainHeaders(h) {
+  if (!h) return {};
+  if (typeof Headers !== 'undefined' && h instanceof Headers) return Object.fromEntries(h.entries());
+  if (Array.isArray(h)) return Object.fromEntries(h);
+  return { ...h };
 }
 
 /** Wrap a fetch-like function so every call it makes carries the marker while the toggle is on. */
