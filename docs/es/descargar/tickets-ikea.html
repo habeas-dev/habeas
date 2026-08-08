@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cómo descargar tus tiquets y compras de IKEA — Habeas</title>
+  <meta name="description" content="IKEA conserva tus compras y tiquets en tu cuenta, pero para guardarlos hay que ir entrando en cada uno. Habeas los descarga desde tu propia sesión del navegador, sin guardar tu contraseña." />
+  <link rel="canonical" href="https://habeas.dev/es/descargar/tickets-ikea" />
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
+    .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
+    .doc p, .doc li { line-height: 1.65; }
+    .doc ul { padding-left: 1.2em; }
+    .doc .lead { color: var(--muted, #888); margin: 0 0 24px; }
+    .doc .box { border: 1px solid var(--line, #3333); border-radius: 10px; padding: 14px 16px; margin: 18px 0; }
+    .doc .cta { display: flex; gap: 10px; flex-wrap: wrap; margin: 24px 0 8px; }
+    .doc a { color: inherit; }
+  </style>
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://habeas.dev/es/descargar/tickets-ikea" />
+  <meta property="og:title" content="Cómo descargar tus tiquets y compras de IKEA — Habeas" />
+  <meta property="og:description" content="IKEA conserva tus compras y tiquets en tu cuenta, pero para guardarlos hay que ir entrando en cada uno. Habeas los descarga desde tu propia sesión del navegador, sin guardar tu contraseña." />
+  <meta property="og:image" content="https://habeas.dev/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:site_name" content="Habeas" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "inLanguage": "es",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "¿Habeas guarda mi contraseña de IKEA?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Inicias sesión tú, en la web de siempre, incluido cualquier código de verificación. Habeas reutiliza la sesión que tu navegador ya tiene abierta y nunca lee ni almacena tus credenciales."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Se envían mis datos a algún servidor?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Todo ocurre dentro de tu navegador. Los documentos van solo al destino que tú elijas: una descarga, una carpeta de tu equipo, tu propio Google Drive o Dropbox, o un endpoint que configures."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿En qué formato obtengo los documentos?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Los documentos originales tal cual los emite el servicio (PDF), acompañados de un manifiesto con los datos ya normalizados."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Es gratis?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Sí. Habeas es software libre con licencia AGPL-3.0 y su código es público en GitHub."
+      }
+    }
+  ]
+}
+  </script>
+  <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
+  <script defer src="https://analytics.habeas.dev/script.js" data-website-id="84a75f7a-c014-4ce8-a3be-1f8dd1899a28" data-domains="habeas.dev"></script>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="/logo-light.svg" />
+        <img class="logo" src="/logo.svg" alt="Habeas" />
+      </picture>
+      <span class="name">Habeas</span>
+      <nav>
+        <a href="/">Inicio</a>
+        <a href="/es/por-que-habeas.html">Por qué Habeas</a>
+        <a href="/sources.html">Fuentes</a>
+        <a href="/privacy.html">Privacidad</a>
+        <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="doc">
+    <h1>Cómo descargar tus tiquets y compras de IKEA</h1>
+    <p class="lead">IKEA conserva tus compras y tiquets en tu cuenta, pero para guardarlos hay que ir entrando en cada uno.</p>
+
+    <h2>Qué obtienes</h2>
+    <p>Habeas es una extensión de navegador de código abierto que recoge tus documentos de IKEA y los guarda donde tú digas. De esta fuente extrae:</p>
+    <ul>
+        <li><strong>tiquets y compras</strong> — cada compra con su fecha, importe, moneda, tienda y categoría.</li>
+    </ul>
+
+    <h2>Cómo funciona</h2>
+    <p>No es un servicio que se conecte a ikea.com por su cuenta. Funciona <strong>dentro de tu propio navegador</strong>, aprovechando la sesión que ya tienes abierta:</p>
+    <ul>
+      <li>Entras en ikea.com y te identificas tú, como siempre, con tu MFA o el código que uses.</li>
+      <li>Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web.</li>
+      <li>Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio.</li>
+    </ul>
+    <p><strong>Tu contraseña nunca se lee, ni se guarda, ni se envía a ningún sitio</strong>, y no hay ningún proceso trabajando en segundo plano mientras no estás. Es una fuente <strong>auditada</strong> por el proyecto y verificada contra el servicio real.</p>
+
+    <div class="cta">
+      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="ikea-es">Instalar en Chrome</a>
+      <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="ikea-es">Instalar en Firefox</a>
+    </div>
+    <p class="lead">Gratis y de código abierto (AGPL-3.0). Instala la extensión y activa la fuente «IKEA España — compras y tiquets» desde Ajustes → Explorar fuentes.</p>
+
+    <h2>Preguntas frecuentes</h2>
+    <h3>¿Habeas guarda mi contraseña de IKEA?</h3>
+    <p>No. Inicias sesión tú, en la web de siempre, incluido cualquier código de verificación. Habeas reutiliza la sesión que tu navegador ya tiene abierta y nunca lee ni almacena tus credenciales.</p>
+    <h3>¿Se envían mis datos a algún servidor?</h3>
+    <p>No. Todo ocurre dentro de tu navegador. Los documentos van solo al destino que tú elijas: una descarga, una carpeta de tu equipo, tu propio Google Drive o Dropbox, o un endpoint que configures.</p>
+    <h3>¿En qué formato obtengo los documentos?</h3>
+    <p>Los documentos originales tal cual los emite el servicio (PDF), acompañados de un manifiesto con los datos ya normalizados.</p>
+    <h3>¿Es gratis?</h3>
+    <p>Sí. Habeas es software libre con licencia AGPL-3.0 y su código es público en GitHub.</p>
+
+    <h2>Otras fuentes</h2>
+    <p>Habeas funciona con más servicios españoles e internacionales. <a href="/sources.html">Mira el catálogo completo</a> o lee <a href="/es/por-que-habeas.html">por qué existe Habeas</a>.</p>
+  </main>
+</body>
+</html>

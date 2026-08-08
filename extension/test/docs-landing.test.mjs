@@ -312,21 +312,36 @@ test('robots.txt allows crawling and points at the sitemap', async () => {
 
 test('sitemap includes all public website pages', async () => {
   const sitemap = await fs.readFile(path.join(docsDir, 'sitemap.xml'), 'utf8');
-  const expectedUrls = [
-    'https://habeas.dev/',
-    'https://habeas.dev/architecture.html',
-    'https://habeas.dev/privacy.html',
-    'https://habeas.dev/sources.html',
-    'https://habeas.dev/terms.html',
-    'https://habeas.dev/why-habeas.html',
-    'https://habeas.dev/es/por-que-habeas.html',
-  ];
-
   assert.match(sitemap, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
-  for (const url of expectedUrls) {
-    assert.ok(sitemap.includes(`<loc>${url}</loc>`), `missing url ${url}`);
+
+  // Derive the expected set from the pages actually on disk rather than a hand-kept list, which
+  // silently goes stale — every generated source page would otherwise have to be added by hand.
+  const skipDirs = new Set(['tools', 'fonts', 'logos']);
+  async function walk(dir) {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    const found = [];
+    for (const e of entries) {
+      if (e.isDirectory()) { if (!skipDirs.has(e.name)) found.push(...await walk(path.join(dir, e.name))); }
+      else if (e.name.endsWith('.html')) found.push(path.join(dir, e.name));
+    }
+    return found;
   }
-  assert.equal((sitemap.match(/<loc>/g) || []).length, expectedUrls.length);
+  const files = await walk(docsDir);
+  const expected = [];
+  for (const file of files) {
+    const html = await fs.readFile(file, 'utf8');
+    if (/<meta\s+name="robots"[^>]*noindex/i.test(html)) continue;   // OAuth callbacks etc.
+    const rel = path.relative(docsDir, file).split(path.sep).join('/');
+    expected.push(`https://habeas.dev/${rel.replace(/(^|\/)index\.html$/, '$1')}`);
+  }
+
+  assert.ok(expected.length > 0, 'no indexable pages found');
+  for (const url of expected) {
+    assert.ok(sitemap.includes(`<loc>${url}</loc>`), `sitemap is missing ${url} — re-run docs/tools/build-sitemap.mjs`);
+  }
+  assert.equal((sitemap.match(/<loc>/g) || []).length, expected.length, 'sitemap holds URLs with no page behind them');
+  // Every entry needs a lastmod; without it Google has no signal that a page changed.
+  assert.equal((sitemap.match(/<lastmod>/g) || []).length, expected.length);
 });
 
 test('why habeas page is public, discoverable, and has concise philosophy content', async () => {
@@ -398,4 +413,61 @@ test('landing page omits the source preview when the catalog cannot be loaded', 
   assert.equal(document.__sourceSection.hidden, true);
   assert.equal(document.__sourceCount.textContent, '');
   assert.equal(document.__sourceList.innerHTML, '');
+});
+
+test('per-source landing pages are generated only where there is curated copy', async () => {
+  const copies = JSON.parse(await fs.readFile(path.join(docsDir, 'source-pages.es.json'), 'utf8'));
+  const ids = Object.keys(copies).filter((k) => !k.startsWith('_'));
+  const dir = path.join(docsDir, 'es', 'descargar');
+  const files = (await fs.readdir(dir)).filter((f) => f.endsWith('.html'));
+
+  // One page per curated entry, and no orphans: a page with no copy behind it would be the
+  // template-spun doorway content this generator exists to avoid.
+  assert.equal(files.length, ids.length, 'page count does not match curated entries');
+  for (const id of ids) {
+    assert.ok(copies[id].slug, `${id}: no slug`);
+    assert.ok(files.includes(`${copies[id].slug}.html`), `${id}: no page for slug ${copies[id].slug}`);
+  }
+
+  const slugs = new Set(ids.map((id) => copies[id].slug));
+  assert.equal(slugs.size, ids.length, 'two sources share a slug');
+});
+
+test('each source page is substantive, self-describing and correctly marked up', async () => {
+  const dir = path.join(docsDir, 'es', 'descargar');
+  const files = (await fs.readdir(dir)).filter((f) => f.endsWith('.html'));
+  const intros = new Set();
+
+  for (const file of files) {
+    const html = await fs.readFile(path.join(dir, file), 'utf8');
+    const url = `https://habeas.dev/es/descargar/${file.replace(/\.html$/, '')}`;
+
+    assert.match(html, /<html lang="es">/, `${file}: not marked as Spanish`);
+    assert.equal((html.match(/<h1/g) || []).length, 1, `${file}: needs exactly one h1`);
+    assert.ok(html.includes(`<link rel="canonical" href="${url}"`), `${file}: canonical does not match its path`);
+    assert.match(html, /data-umami-event="install"[^>]*data-umami-event-source="/, `${file}: install CTA not attributed`);
+
+    const block = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+    assert.ok(block, `${file}: no JSON-LD`);
+    assert.equal(JSON.parse(block[1])['@type'], 'FAQPage', `${file}: JSON-LD is not a FAQPage`);
+
+    const text = html.replace(/<(script|style)[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ').trim();
+    assert.ok(text.length > 1500, `${file}: only ${text.length} chars — too thin to be worth indexing`);
+
+    // The opening paragraph must be about that service, not boilerplate shared across pages.
+    const intro = html.match(/<p class="lead">(.*?)<\/p>/s)?.[1];
+    assert.ok(intro, `${file}: no intro`);
+    assert.ok(!intros.has(intro), `${file}: its intro is duplicated from another page`);
+    intros.add(intro);
+  }
+});
+
+test('the catalog links to every generated source page', async () => {
+  const copies = JSON.parse(await fs.readFile(path.join(docsDir, 'source-pages.es.json'), 'utf8'));
+  const sources = await fs.readFile(path.join(docsDir, 'sources.html'), 'utf8');
+  for (const [id, copy] of Object.entries(copies)) {
+    if (id.startsWith('_')) continue;
+    assert.ok(sources.includes(`/es/descargar/${copy.slug}`), `sources.html does not link ${copy.slug}`);
+  }
 });

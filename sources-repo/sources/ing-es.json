@@ -5,13 +5,12 @@
   "trust": "community",
   "domain": "ingdirect.es",
   "country": "ES",
-  "version": "2026-07-31.1",
+  "version": "2026-08-08",
   "minVersion": "0.9.7",
   "categories": [
     "banking"
   ],
   "gaps": [
-    "tarjetas",
     "inversión"
   ],
   "throttle": {
@@ -202,6 +201,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-08-08",
+      "changes": "Corrige `gaps`: los movimientos de tarjeta ya se extraen (ver 2026-07-23.3), así que solo queda inversión fuera de cobertura. El dato anterior era obsoleto y se publicaba como limitación."
+    },
     {
       "version": "2026-07-31.1",
       "changes": "Fix intermittent 401 'Authorization Required' (ING Webserver edge) that aborted the whole sync — most often at the account-enumeration step (/position-keeping). Verified via mitmproxy that the SAME authenticated request (same bearer, same 36 session cookies, browser-agnostic) returns 401 one call and 200 the next — a load-balancer/pool routing race (dual lb-3-p-288 / lb-4-p-288 + x-pool-from-dc cookies). ING's own SPA rides it out by retrying; Habeas now does the same via a bounded retry (retry: 401 ×4, 700ms), gated on the raw edge-HTML body so a genuine token-expiry (JSON) 401 still surfaces for re-login. Also replay `baggage` to mirror the SPA. Needs extension >= 0.9.7 (declarative retry in netFetch)."

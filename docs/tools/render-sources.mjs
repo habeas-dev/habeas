@@ -19,6 +19,24 @@ const flag = (code) => !code ? '' : code === 'global' ? '🌐'
   : (/^[A-Za-z]{2}$/.test(code) ? code.toUpperCase().replace(/./g, (c) => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)) : '');
 
 // Matches the page's card() markup. No live ratings in the static snapshot → "no ratings yet".
+// Sources with a Spanish how-to page: link the card to it (internal links are how these get found).
+const GUIDES = {
+  "carrefour-es": "tickets-carrefour",
+  "dia-es": "tickets-dia",
+  "ikea-es": "tickets-ikea",
+  "decathlon-es": "tickets-decathlon",
+  "leroymerlin-es": "tickets-leroy-merlin",
+  "ing-es": "movimientos-ing",
+  "openbank-es": "movimientos-openbank",
+  "wizink-es": "extractos-wizink",
+  "caixabank-consumer-es": "extractos-caixabank-consumer",
+  "financiera-elcorteingles-es": "extractos-financiera-el-corte-ingles",
+  "bipdrive-es": "facturas-bipdrive",
+  "pagatelia-es": "facturas-pagatelia",
+  "pepeenergy-es": "facturas-pepe-energy",
+  "pepephone-es": "facturas-pepephone"
+};
+
 function card(s) {
   const fp = s.trust === 'first-party';
   const cats = (s.categories || []).map((c) => `<span class="cat">${esc(c)}</span>`).join('');
@@ -27,7 +45,7 @@ function card(s) {
         <div class="top"><span class="name">${esc(s.name)}</span><span class="pill ${fp ? 'fp' : ''}">${fp ? 'first-party' : 'community'}</span>${s.beta ? '<span class="pill beta">experimental</span>' : ''}</div>
         <div class="meta">${s.country ? flag(s.country) + ' ' : ''}${esc(s.service)} · ${esc(s.domain)}</div>
         <div class="cats">${cats}${fmts}</div>
-        <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="${esc(s.url)}" rel="noopener" data-umami-event="source-view" data-umami-event-source="${esc(s.id)}">View JSON →</a></div>
+        <div class="foot"><span class="rate">no ratings yet</span>${GUIDES[s.id] ? `<a class="guide" href="/es/descargar/${GUIDES[s.id]}">Cómo descargar →</a>` : ''}<a class="view" href="${esc(s.url)}" rel="noopener" data-umami-event="source-view" data-umami-event-source="${esc(s.id)}">View JSON →</a></div>
       </div>`;
 }
 
