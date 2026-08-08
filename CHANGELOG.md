@@ -10,6 +10,18 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **The monthly statement of the month that straddles a rolling window is no longer rejected**
+  (`runtime/inventory.js`, `group-months`). A month was included when its LAST day fell inside the
+  window, but the request was still built from the month's FIRST day — which reaches outside it. A
+  service that enforces the window rejects the whole request: ING answers `401 CUSTOM_ERROR_003`
+  (JSON, from `merak-transactions-query`) for exactly that month, and only on the account types that
+  enforce it — `CURRENT_ACCOUNT` failed while the credit card and savings account of the same session
+  succeeded, which is what made it look intermittent. `fromDate` is now clamped to the window start,
+  so the month is kept rather than lost.
+- **ING's window is 89 days, not 90.** The limit counts today, so the oldest valid day is `today−89`;
+  asking for `today−90` is outside by one. (`ing-es` 2026-08-08.1, `minVersion` 0.9.11.4.)
+
 ### Added
 - **Mark Habeas's own requests, for proxy debugging** (`lib/debugmark.js`, toggle in Settings →
   Advanced, **off by default**). Adds `X-Habeas-Debug: <source-id>/<n>` to every request the runtime

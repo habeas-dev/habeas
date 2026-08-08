@@ -455,8 +455,13 @@ function synthItems(list, group) {
     for (let i = 0; i < 36; i++) {
       const first = new Date(Date.UTC(y, m - 1, 1)), last = new Date(Date.UTC(y, m, 0));
       if (last.getTime() < cutoff) break;
+      // The month that STRADDLES the cutoff is included because its last day is inside the window — but
+      // asking from its first day reaches outside it, and a service that enforces the window rejects the
+      // whole request (ING answers 401 CUSTOM_ERROR_003 for exactly that month, only on the account types
+      // that enforce it). Clamp the start to the window instead of losing the month.
+      const from = new Date(Math.max(first.getTime(), cutoff));
       if (last.getTime() < todayStart) out.push({ ...(group._raw || {}), ...gf, year: String(y), month: String(m), period: `${y}-${String(m).padStart(2, '0')}`,
-        date: last.toISOString().slice(0, 10), fromDate: first.toISOString().slice(0, 10), toDate: last.toISOString().slice(0, 10) });
+        date: last.toISOString().slice(0, 10), fromDate: from.toISOString().slice(0, 10), toDate: last.toISOString().slice(0, 10) });
       m--; if (m < 1) { m = 12; y--; }
     }
     return out;
