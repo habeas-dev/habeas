@@ -1,17 +1,21 @@
 // Tag every request Habeas makes, so it can be told apart from the site's own traffic in a proxy log.
 //
-// OFF BY DEFAULT, and it must stay that way. Two reasons, both real:
+// Pair it with `tools/mitm-habeas.py`, which is what makes the header safe to use: the addon flags the
+// flow, STRIPS the header before forwarding, and answers the CORS preflight for it. So the tag reaches
+// your proxy and nothing else.
+//
+// OFF BY DEFAULT, because without the addon it has two real costs:
 //
 //  1. It can break the source it is meant to debug. Habeas replays the SPA's own custom headers, so a
 //     cross-origin call already goes through a CORS preflight; adding one more header means the server
-//     must list it in `Access-Control-Allow-Headers` too. A strict endpoint will start failing the
-//     moment this is switched on — which looks exactly like the bug being chased.
-//  2. It makes Habeas identifiable TO THE SERVICE, not just to your proxy. The whole point of running
-//     inside the user's own session is that the traffic is the user's traffic. This deliberately gives
-//     that up, which is fine for a debugging session on your own account and wrong as a default.
+//     must list it in `Access-Control-Allow-Headers` too. A strict endpoint starts failing the moment
+//     this is switched on — which looks exactly like the bug being chased.
+//  2. It makes Habeas identifiable TO THE SERVICE. The whole point of running inside the user's own
+//     session is that the traffic is the user's traffic; a marker the service can read gives that away.
 //
-// In mitmproxy: `~hq "X-Habeas-Debug"` filters to exactly Habeas's requests. The value carries the
-// source id and a per-run counter, so a single sweep can be followed request by request.
+// Without the addon: `~hq "X-Habeas-Debug"` still filters to Habeas's requests. With it: `~c habeas`,
+// and failures are marked so they cannot be scrolled past. The value carries the source id and a
+// per-run counter, so a single sweep can be followed request by request.
 import { chrome } from './ext.js';
 
 const KEY = 'habeas:debugMark';

@@ -22,6 +22,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   allow this extra header too — turning it on can make a source start failing, which looks exactly like
   the bug being chased; and it makes Habeas identifiable to the *service*, not just to your proxy, which
   is the one thing running inside the user's own session normally avoids.
+  Both costs go away when it is paired with **`tools/mitm-habeas.py`** (new): the addon flags and
+  colours Habeas's flows (`~c habeas`), marks failed ones so they cannot be scrolled past, **strips the
+  header before forwarding** so the service never sees it, and **answers the CORS preflight for it** so
+  a strict API cannot start rejecting requests. Forwarding it to the origin stays an explicit opt-in
+  (`--set habeas_keep_header=true`), and `--set habeas_out=<file.jsonl>` appends one line per Habeas
+  request/response pair. A test pins the header name across the extension and the addon, since a drift
+  there would silently stop the stripping with no visible symptom.
 - **"Report a problem" on any installed source, from the Archive** (`ui/reportproblem.js`, button in the
   per-source toolbar). Reporting a broken source already existed, but only inside a handoff *thread* —
   it needed a submission you had made, so anyone who merely *uses* a source had no way to say it broke.

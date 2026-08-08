@@ -3419,12 +3419,12 @@
     "message": "Mark Habeas requests (proxy debugging)"
   },
   "opt_dbgmark_help": {
-    "message": "Adds an X-Habeas-Debug header to every request Habeas makes, carrying the source id and a counter, so you can tell them apart from the site’s own traffic. In mitmproxy, filter with: ~hq \"X-Habeas-Debug\""
+    "message": "Adds an X-Habeas-Debug header to every request Habeas makes, carrying the source id and a counter. Run mitmproxy with the addon shipped in the repo (tools/mitm-habeas.py): it flags and colours Habeas’s flows, strips the header before it reaches the service, and answers the CORS preflight for it."
   },
   "opt_dbgmark_label": {
     "message": "Tag Habeas’s own requests"
   },
   "opt_dbgmark_warn": {
-    "message": "Leave this off unless you are actively debugging. It can make a source start failing — Habeas already replays the site’s custom headers, so a cross-origin call is preflighted, and a strict API must allow this extra header too. It also makes Habeas identifiable to the service itself, not just to your proxy, which is the one thing running inside your own session normally avoids."
+    "message": "Use it with the addon. On its own the header goes all the way to the service — which makes Habeas identifiable to it, the one thing running inside your own session avoids — and a strict API that does not allow the extra header will start rejecting requests, which looks exactly like the bug you are chasing. With the addon neither happens. Leave it off when you are not debugging."
   }
 }

@@ -42,7 +42,9 @@ const ALLOWLIST = new Set([
 ]);
 
 // Path fragments that mean "this is a raw capture" and must never be committed anywhere.
-const CAPTURE_PATH = /(^|\/)(.*-)?capture[^/]*\.(jsonl?|har|txt)$|mitm|\.har$|obk-|har-capture/i;
+// Every branch requires a DATA extension: `mitm` used to match any path containing it, which flagged
+// the mitmproxy addon itself (tools/mitm-habeas.py) — tooling for reading captures is not a capture.
+const CAPTURE_PATH = /(^|\/)(.*-)?capture[^/]*\.(jsonl?|har|txt)$|mitm[^/]*\.(jsonl?|har|txt|dump|flows)$|\.har$|obk-[^/]*\.(jsonl?|har|txt)$|har-capture/i;
 
 const RULES = [
   { id: 'jwt', re: /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}(?:\.[A-Za-z0-9_-]+)?/g,

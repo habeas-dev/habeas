@@ -52,3 +52,21 @@ test('marking preserves the headers the source depends on', () => {
   assert.ok(out.headers.get(HEADER));
   assert.notEqual(out, init, 'the caller’s init must not be mutated');
 });
+
+test('the extension and the mitmproxy addon agree on the header name', async () => {
+  const fs = await import('node:fs/promises');
+  const path = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+  const addon = await fs.readFile(path.join(root, 'tools', 'mitm-habeas.py'), 'utf8');
+
+  // If these drift the marker silently stops being stripped, and it starts reaching the service —
+  // the exact failure the addon exists to prevent, with no visible symptom.
+  assert.match(addon, new RegExp(`HEADER = "${HEADER}"`), 'the addon must strip the header the extension sends');
+
+  // The addon must actually remove it before forwarding, and patch the preflight, or the two
+  // documented costs come back.
+  assert.match(addon, /del flow\.request\.headers\[HEADER\]/, 'the addon must strip the header before forwarding');
+  assert.match(addon, /ACAH\b[\s\S]*Access-Control-Allow-Headers/, 'the addon must answer the CORS preflight');
+  assert.match(addon, /habeas_keep_header/, 'forwarding it must stay an explicit opt-in');
+});

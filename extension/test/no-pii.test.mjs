@@ -40,3 +40,22 @@ test('scanner flags a planted account number, IBAN, and JWT', () => {
   // ...and does NOT flag the allowlisted fictitious values.
   assert.equal(scanText('codbban: "00000000991234500000"').length, 0);
 });
+
+test('the capture guard blocks dumps without blocking the tooling that reads them', async () => {
+  const { scanStaged } = await import('../../scripts/scan-pii.mjs').catch(() => ({}));
+  const src = await (await import('node:fs/promises')).readFile(
+    new URL('../../scripts/scan-pii.mjs', import.meta.url), 'utf8');
+  const m = src.match(/const CAPTURE_PATH = (\/.*\/i);/);
+  assert.ok(m, 'CAPTURE_PATH not found');
+  const re = new RegExp(m[1].slice(1, -2), 'i');
+
+  // Must still block real captures — these carry live account data.
+  for (const f of ['mitm-ing.jsonl', 'captures/mitm-carrefour.har', 'ing-capture.jsonl', 'session.har', 'obk-2026.jsonl']) {
+    assert.ok(re.test(f), `capture ${f} must be blocked`);
+  }
+  // Must not block source. `mitm` alone used to match any path containing it, which flagged the
+  // mitmproxy addon itself — a guard that cries wolf gets allowlisted into uselessness.
+  for (const f of ['tools/mitm-habeas.py', 'extension/src/lib/debugmark.js', 'docs/tools/build-sitemap.mjs']) {
+    assert.ok(!re.test(f), `source ${f} must not be flagged as a capture`);
+  }
+});

@@ -3419,12 +3419,12 @@
     "message": "Marcar las peticiones de Habeas (depuración con proxy)"
   },
   "opt_dbgmark_help": {
-    "message": "Añade una cabecera X-Habeas-Debug a cada petición que hace Habeas, con el id de la fuente y un contador, para distinguirlas del tráfico de la propia web. En mitmproxy, filtra con: ~hq \"X-Habeas-Debug\""
+    "message": "Añade una cabecera X-Habeas-Debug a cada petición que hace Habeas, con el id de la fuente y un contador. Ejecuta mitmproxy con el addon del repo (tools/mitm-habeas.py): marca y colorea los flujos de Habeas, quita la cabecera antes de que llegue al servicio y responde por ella al preflight de CORS."
   },
   "opt_dbgmark_label": {
     "message": "Etiquetar las peticiones propias de Habeas"
   },
   "opt_dbgmark_warn": {
-    "message": "Déjalo desactivado salvo que estés depurando. Puede hacer que una fuente empiece a fallar: Habeas ya replica las cabeceras propias de la web, así que una llamada cross-origin lleva preflight, y una API estricta tiene que permitir además esta cabecera. También hace a Habeas identificable para el propio servicio, no solo para tu proxy, que es justo lo que evita funcionar dentro de tu sesión."
+    "message": "Úsalo con el addon. Por sí sola, la cabecera llega hasta el servicio —lo que hace a Habeas identificable para él, justo lo que evita funcionar dentro de tu sesión— y una API estricta que no permita esa cabecera empezará a rechazar peticiones, que se parece exactamente al fallo que persigues. Con el addon no pasa ninguna de las dos cosas. Déjalo apagado cuando no estés depurando."
   }
 }
