@@ -3354,5 +3354,65 @@
         "content": "$2"
       }
     }
+  },
+  "report_title": {
+    "message": "Report a problem with $SOURCE$",
+    "placeholders": {
+      "source": {
+        "content": "$1",
+        "example": "the source name"
+      }
+    }
+  },
+  "report_sub": {
+    "message": "Habeas recorded what failed. Read it below before sending — nothing leaves your device until you press Send."
+  },
+  "report_sub_notrace": {
+    "message": "No failure was recorded for this source. You can still describe what went wrong; the report will carry your Habeas and source versions."
+  },
+  "report_note_label": {
+    "message": "What went wrong? (optional)"
+  },
+  "report_note_ph": {
+    "message": "e.g. it lists my movements but every PDF comes out empty"
+  },
+  "report_peek": {
+    "message": "See exactly what is sent"
+  },
+  "report_privacy": {
+    "message": "The trace is redacted on your device: field names and structure are kept, personal values are removed, and no passwords, tokens or page text are ever included."
+  },
+  "report_send": {
+    "message": "Send report"
+  },
+  "report_sending": {
+    "message": "Sending…"
+  },
+  "report_sent": {
+    "message": "Sent. Thank you."
+  },
+  "report_sent_thread": {
+    "message": "Added to your existing thread for this source."
+  },
+  "report_fail": {
+    "message": "Could not send: $ERR$",
+    "placeholders": {
+      "err": {
+        "content": "$1",
+        "example": "the error message"
+      }
+    }
+  },
+  "report_prefix": {
+    "message": "Problem report from the Archive."
+  },
+  "report_no_trace": {
+    "message": "no failure recorded"
+  },
+  "archive_report": {
+    "message": "Report a problem"
+  },
+  "archive_report_hint": {
+    "message": "Tell the team this source is not working, with the redacted failure trace"
   }
 }

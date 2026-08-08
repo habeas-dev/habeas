@@ -3354,5 +3354,65 @@
         "content": "$2"
       }
     }
+  },
+  "report_title": {
+    "message": "Informar de un problema con $SOURCE$",
+    "placeholders": {
+      "source": {
+        "content": "$1",
+        "example": "the source name"
+      }
+    }
+  },
+  "report_sub": {
+    "message": "Habeas ha registrado qué ha fallado. Léelo abajo antes de enviar: nada sale de tu dispositivo hasta que pulses Enviar."
+  },
+  "report_sub_notrace": {
+    "message": "No hay ningún fallo registrado para esta fuente. Puedes describir igualmente qué ha pasado; el informe llevará tu versión de Habeas y de la fuente."
+  },
+  "report_note_label": {
+    "message": "¿Qué ha fallado? (opcional)"
+  },
+  "report_note_ph": {
+    "message": "p. ej. lista mis movimientos pero todos los PDF salen vacíos"
+  },
+  "report_peek": {
+    "message": "Ver exactamente qué se envía"
+  },
+  "report_privacy": {
+    "message": "La traza se redacta en tu dispositivo: se conservan los nombres de campo y la estructura, se eliminan los valores personales, y nunca se incluyen contraseñas, tokens ni texto de la página."
+  },
+  "report_send": {
+    "message": "Enviar informe"
+  },
+  "report_sending": {
+    "message": "Enviando…"
+  },
+  "report_sent": {
+    "message": "Enviado. Gracias."
+  },
+  "report_sent_thread": {
+    "message": "Añadido a tu hilo existente para esta fuente."
+  },
+  "report_fail": {
+    "message": "No se pudo enviar: $ERR$",
+    "placeholders": {
+      "err": {
+        "content": "$1",
+        "example": "the error message"
+      }
+    }
+  },
+  "report_prefix": {
+    "message": "Informe de problema desde el Archivo."
+  },
+  "report_no_trace": {
+    "message": "sin fallo registrado"
+  },
+  "archive_report": {
+    "message": "Informar de un problema"
+  },
+  "archive_report_hint": {
+    "message": "Avisa al equipo de que esta fuente no funciona, con la traza de fallo redactada"
   }
 }

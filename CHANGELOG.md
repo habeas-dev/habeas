@@ -10,6 +10,20 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **"Report a problem" on any installed source, from the Archive** (`ui/reportproblem.js`, button in the
+  per-source toolbar). Reporting a broken source already existed, but only inside a handoff *thread* —
+  it needed a submission you had made, so anyone who merely *uses* a source had no way to say it broke.
+  This reuses the same machinery: `lib/diag.js` accumulates every failed request, `lib/redact.js` scrubs
+  it, and the report lands in the same team inbox stamped with the extension and source versions.
+  - The preview is a step, not a hidden option: nothing leaves the device before the user has seen the
+    exact text that would be sent.
+  - If the user already has a handoff for that source the report REPLIES to it. `POST /handoff`
+    supersedes any prior submission for the same source, so opening a new one would have silently
+    destroyed a recording they had contributed. A test pins this.
+  - The diagnostic is cleared only after the service accepts the report, so a failed send never loses
+    the only copy of the failure.
+
 ## [0.9.11] — 2026-08-08
 
 ### Changed

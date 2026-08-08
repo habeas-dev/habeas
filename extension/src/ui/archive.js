@@ -27,6 +27,7 @@ import { loadAuth } from '../lib/authstore.js';
 import { ensureSiteFetch, siteBaseUrl, recoverSession } from '../lib/pagefetch.js';
 import { challengeUrlOf } from '../lib/render.js';
 import { pushDiag } from '../lib/diag.js';
+import { openReportDialog } from './reportproblem.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { esc } from '../lib/esc.js';
 
@@ -592,8 +593,11 @@ async function renderDocs() {
   const isBrand = !!(entry.adapter && Array.isArray(entry.adapter.domains) && entry.adapter.domains.length);
   const cLabel = (entry.ds && entry.ds.brandDomain) ? entry.ds.brandDomain.replace(/^[^.]*\./, '').toUpperCase() : t('archive_country');
   const countryBtn = (entry.ds && isBrand) ? `<button id="country" class="refbtn" title="${esc(t('archive_country_hint'))}"><span class="ic">🌍</span> ${esc(cLabel)}</button>` : '';
+  // Report a problem — for anyone USING the source, not just whoever contributed it. The Contributions
+  // screen only offers this inside a handoff thread, which a plain user never has.
+  const reportBtn = entry.ds ? `<button id="report" class="refbtn" title="${esc(t('archive_report_hint'))}"><span class="ic">⚑</span> ${esc(t('archive_report'))}</button>` : '';
   head += `<div class="docbar"><div class="groupby">${gb('month', t('group_month'))}${gb('category', t('group_category'))}${gb('store', t('group_store'))}</div>
-    <div class="docbar-r">${countryBtn}${acctBtn}${refreshBtn}${saveGrp}<button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div></div>`;
+    <div class="docbar-r">${countryBtn}${acctBtn}${refreshBtn}${reportBtn}${saveGrp}<button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div></div>`;
   // Pending maintenance: some delivered docs haven't had their file formats scanned → a format they lack (e.g. a
   // missing invoice PDF) may still offer a button. Offer to scan (the destination probe isn't auto-run).
   if (PENDING_FMT) head += `<div class="fmtnotice" style="margin:8px 0;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);font-size:13px;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap">🔎 ${esc(t('archive_scan_pending', [String(PENDING_FMT)]))} <button id="scan-pending" class="refbtn">${esc(t('archive_scan'))}</button></div>`;
@@ -1170,6 +1174,12 @@ function wire() {
     if (ev.target.closest('#save-more')) { toggleMenu('savemenu'); return; }
     if (ev.target.closest('#accts')) { onManageAccounts(); return; }
     if (ev.target.closest('#country')) { onPickCountry(); return; }
+    if (ev.target.closest('#report')) {
+      const e = INDEX.find((x) => x.base === CUR) || {};
+      // Key by adapter.id — that is what pushDiag() writes under, and `base` can be an instance key.
+      openReportDialog((e.adapter && e.adapter.id) || CUR, e.name || CUR);
+      return;
+    }
     if (ev.target.closest('#refresh')) { closeMenus(); refreshSource(); return; }
     if (ev.target.closest('#selall')) { selectAllVisible(true); return; }
     if (ev.target.closest('#selnone')) { selectAllVisible(false); return; }

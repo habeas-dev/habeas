@@ -236,6 +236,22 @@
     .card button.primary{background:var(--brand-600);color:#fff;border-color:transparent}
 
     /* drawer */
+    /* Report a problem — a plain modal; the preview is the point, so it gets room to breathe. */
+    .reportdlg .rp-scrim{position:fixed;inset:0;background:rgba(6,20,17,.45);z-index:40}
+    .reportdlg .rp-box{position:fixed;z-index:41;top:50%;left:50%;transform:translate(-50%,-50%);width:min(620px,92vw);
+      max-height:86vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+    .reportdlg h2{margin:0 0 6px;font-size:1.1rem}
+    .reportdlg .rp-sub{margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.5}
+    .reportdlg .rp-label{display:block;font-size:13px;margin-bottom:4px}
+    .reportdlg textarea{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid var(--line);
+      border-radius:8px;background:var(--bg);color:inherit}
+    .reportdlg .rp-peek{margin:12px 0}
+    .reportdlg .rp-peek summary{cursor:pointer;font-size:13px}
+    .reportdlg .rp-peek pre{margin:8px 0 0;max-height:240px;overflow:auto;white-space:pre-wrap;word-break:break-word;
+      font-size:12px;line-height:1.45;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px}
+    .reportdlg .rp-priv{margin:10px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
+    .reportdlg .rp-actions{display:flex;align-items:center;gap:8px;justify-content:flex-end;margin-top:16px}
+    .reportdlg .rp-status{margin-right:auto;color:var(--muted);font-size:12px}
     #scrim{position:fixed;inset:0;background:rgba(6,20,17,.45);opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
     #scrim.on{opacity:1;pointer-events:auto}
     /* inline document preview (PDF/HTML/image) */
