@@ -1,9 +1,9 @@
 {
   "extName": {
-    "message": "Habeas"
+    "message": "Habeas — export receipts & invoices"
   },
   "extDesc": {
-    "message": "Reclaim your own personal data from services that lock it behind non-automatable walls — within your own session."
+    "message": "Download your own receipts, invoices and bank statements from sites with no export — in your own session. Open source."
   },
   "tagline": {
     "message": "your data, in your hands"
@@ -2912,8 +2912,12 @@
   "gs_progress": {
     "message": "$done$ of $total$ done",
     "placeholders": {
-      "done": { "content": "$1" },
-      "total": { "content": "$2" }
+      "done": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
     }
   },
   "gs_s1_title": {

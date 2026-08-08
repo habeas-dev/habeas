@@ -1,9 +1,9 @@
 {
   "extName": {
-    "message": "Habeas"
+    "message": "Habeas — descarga tickets y facturas"
   },
   "extDesc": {
-    "message": "Recupera tus propios datos personales de servicios que los esconden tras muros no automatizables — dentro de tu propia sesión."
+    "message": "Descarga tus tickets, facturas y extractos de servicios sin exportación — en tu propia sesión. Código abierto."
   },
   "tagline": {
     "message": "tus datos, en tus manos"
@@ -2912,8 +2912,12 @@
   "gs_progress": {
     "message": "$done$ de $total$ hechos",
     "placeholders": {
-      "done": { "content": "$1" },
-      "total": { "content": "$2" }
+      "done": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
     }
   },
   "gs_s1_title": {

@@ -173,17 +173,48 @@ Privacy: https://habeas.dev/privacy.html
 
 ### Spanish localised listing
 
-**Title — 36 chars**
-```
-Habeas — descarga tickets y facturas
-```
+Chrome takes the **title and summary** from the package (`_locales/es/messages.json`), so those two are
+already localised and are NOT editable in the console. Only the **description** has to be pasted by hand
+in the console's Spanish listing.
 
-**Summary — 110 chars**
+**Description (ES)**
 ```
-Descarga tus tickets, facturas y extractos de servicios sin exportación — en tu propia sesión. Código abierto.
-```
+Habeas — recupera tus propios datos, en tu propia sesión
 
-For the Spanish description, translate the block above; the service list stays as-is (proper nouns).
+Muchos servicios guardan datos que son tuyos —tickets, facturas, movimientos de tarjeta, banco o inversión— tras muros que no puedes automatizar (Cloudflare, Akamai…), sin API ni exportación. Habeas te los devuelve.
+
+A diferencia del scraping desde un servidor, Habeas funciona dentro de tu navegador real, en tu sesión ya iniciada. Gracias a eso:
+• Nunca pelea con los sistemas anti-bot: hereda tu sesión válida.
+• Nunca guarda tus contraseñas. Inicias sesión tú; el token vive solo en memoria y se borra al cerrar el navegador.
+• Resuelves el MFA/OTP en directo, exactamente como haces siempre.
+
+Es lo contrario de como operan los agregadores tipo Plaid o Tink.
+
+FUNCIONA YA CON
+Carrefour, Dia, IKEA, Decathlon, Leroy Merlin, ING, Openbank, WiZink, CaixaBank Consumer, Financiera El Corte Inglés, Bip&Drive, Pagatelia, Pepe Energy y Pepephone (España), además de Amazon, AliExpress, PayPal, Revolut, N26, American Express, Trade Republic, DeGiro, Raisin y Hover — y cualquier fuente que aporte la comunidad.
+
+TU ARCHIVO, DE FORMA VISUAL
+Todo lo que recuperas aterriza en tu Archivo: una vista clara de tus documentos, ordenados en un árbol de fuente → cuenta, con tarjetas agrupadas por mes o categoría, importes y estado. Busca, filtra por cuenta y abre cualquier documento guardado.
+
+TÚ DECIDES DÓNDE VIVE TU ARCHIVO
+Por defecto se guarda localmente en este navegador. Con un clic puedes moverlo a la nube para llegar a él desde varios dispositivos: Dropbox, Google Drive, WebDAV, S3 o una carpeta local. También puedes enviar documentos concretos a un destino: una descarga, una carpeta local o un endpoint HTTP que configures. Nada sale de tu navegador hasta que eliges un destino.
+
+LAS FUENTES SON DATOS, NO CÓDIGO
+Las fuentes son definiciones declarativas, sin código alojado en remoto, respetando las reglas de MV3. Hay fuentes auditadas por el proyecto y un catálogo comunitario en crecimiento. ¿Te falta un servicio? El modo grabación observa la propia API del sitio mientras navegas y te redacta la fuente, sin programar, y puedes compartirla con la comunidad.
+
+PRIVACIDAD Y CONTROL, DESDE EL DISEÑO
+• Local-first y código abierto (AGPL-3.0): puedes auditar exactamente qué hace.
+• Frontera de confianza por dominio: la sesión capturada de una fuente solo puede reutilizarse contra su propio servicio; cruzar dominios exige una lista blanca explícita y una pantalla de consentimiento.
+• Integraciones en tus términos: una web puede proponer un flujo de datos, pero nada se ejecuta hasta que lo apruebas, y solo de vuelta a esa misma web. Revocable cuando quieras.
+
+TU DERECHO, TUS DATOS
+Habeas se apoya en tu derecho a la portabilidad de datos (RGPD, art. 20) y en el principio de habeas data: son tus propios datos, en tu propia sesión, con software libre que ejecutas tú. Habeas no es un actor regulado por la PSD2 (no inicia pagos). Los términos de servicio de cada web pueden restringir el acceso automatizado; cumplirlos es tu responsabilidad.
+
+Sin telemetría · sin cuentas · sin contraseñas guardadas.
+
+Código abierto: https://github.com/habeas-dev/habeas
+Privacidad: https://habeas.dev/privacy.html
+```
 
 ---
 

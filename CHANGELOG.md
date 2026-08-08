@@ -10,6 +10,18 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Changed
+- **Store-facing name and description now say what the extension does** (`_locales/{en,es}/messages.json`).
+  Chrome takes the Web Store listing's title and summary from the package — `name` and `description` in the
+  manifest — not from the developer console, so they are not editable there. They read
+  "Habeas — export receipts & invoices" / "Habeas — descarga tickets y facturas" and lead with the documents
+  instead of the bare brand, which matched nothing anyone searches for in either store. Because `_locales`
+  carries both languages, the Chrome Web Store localises the listing on its own.
+
+### Added
+- **`short_name` ("Habeas")** in the manifest, so the toolbar and `chrome://extensions` keep the brand alone
+  while the store listing carries the longer, searchable name.
+
 ## [0.9.10] — 2026-08-05
 
 ### Changed
