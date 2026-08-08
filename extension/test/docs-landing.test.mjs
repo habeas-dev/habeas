@@ -156,14 +156,35 @@ test('landing page i18n keys exist in both languages', async () => {
     }
   }
 
-  assert.equal(i18n.en.title, 'Habeas — export your own data from your own session');
-  assert.equal(i18n.en.hero_h1, 'Export your own data.');
+  assert.equal(i18n.en.title, 'Download your receipts, invoices and bank statements — Habeas');
+  assert.equal(i18n.en.hero_h1, 'Download your receipts, invoices and statements.');
   assert.equal(i18n.en.nav_why, 'Why Habeas?');
   assert.equal(i18n.en.nav_architecture, 'Architecture');
   assert.equal(i18n.es.why_h2, 'Por qué Habeas es diferente');
   assert.equal(i18n.es.nav_why, 'Por qué Habeas');
   assert.equal(i18n.es.nav_architecture, 'Arquitectura');
-  assert.equal(i18n.es.hero_h1, 'Exporta tus propios datos.');
+  assert.equal(i18n.es.hero_h1, 'Descarga tus tickets, facturas y extractos.');
+});
+
+test('the headline is written for what people search, not for the brand', async () => {
+  const { i18n } = await loadLanding();
+  // The page ranked for nothing because its title and H1 described the product in the abstract
+  // ("Export your own data") — words nobody types. These assert the intent behind the current copy
+  // so a future rewrite that drops the search terms fails loudly instead of silently costing reach.
+  const wanted = {
+    en: [/receipts?/i, /invoices?/i, /statements?/i],
+    es: [/tickets?/i, /facturas?/i, /extractos?/i],
+  };
+  for (const [lang, patterns] of Object.entries(wanted)) {
+    for (const re of patterns) {
+      assert.match(i18n[lang].hero_h1, re, `${lang}.hero_h1 lost ${re}`);
+      assert.match(i18n[lang].title, re, `${lang}.title lost ${re}`);
+    }
+    // Google truncates titles around 60 characters; past that the tail is wasted.
+    assert.ok(i18n[lang].title.length <= 62, `${lang}.title is ${i18n[lang].title.length} chars, too long for a SERP`);
+    // Brand-first titles bury the terms people actually search for.
+    assert.ok(!i18n[lang].title.startsWith('Habeas'), `${lang}.title leads with the brand`);
+  }
 });
 
 test('architecture page is public and renders the canonical ARCHITECTURE.md source', async () => {

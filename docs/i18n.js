@@ -3,8 +3,8 @@
 // <title>, meta description, and every [data-i18n] element.
 const I18N = {
   en: {
-    title: 'Habeas — export your own data from your own session',
-    desc: 'Open-source browser runtime that helps you preserve your own receipts, invoices, statements and reports from your authenticated browser session — no stored logins, no server-side scraping.',
+    title: 'Download your receipts, invoices and bank statements — Habeas',
+    desc: 'Free, open-source browser extension that downloads your own receipts, invoices and bank statements from services that offer no export — inside your own session, with no stored logins.',
     nav_install: 'Install',
     nav_how: 'How it works',
     nav_why: 'Why Habeas?',
@@ -25,8 +25,8 @@ const I18N = {
     trust_body: 'Chrome will show a notice that the extension is not trusted. It applies to any developer account recently registered on the Chrome Web Store, it takes a few months to fade, and it says nothing about the code, which you can read in full.',
     trust_irony: 'There is some irony in an extension whose thesis is that your data should not depend on an intermediary’s goodwill receiving a mark of distrust from an intermediary that neither explains its criteria nor allows any appeal.',
     tagline: 'Your documents should remain yours.',
-    hero_h1: 'Export your own data.',
-    hero_sub: 'Services hold your receipts, invoices and statements but rarely offer a usable export. Habeas runs locally inside your authenticated browser session, so nothing is sent to a server and your logins are never stored.',
+    hero_h1: 'Download your receipts, invoices and statements.',
+    hero_sub: 'Many services let you see your history but give you no way to export it. Habeas runs locally inside your own authenticated browser session, so nothing is sent to a server and your logins are never stored.',
     feature_label: 'Highlights',
     feature_1: 'Runs in your browser',
     feature_2: 'No stored logins',
@@ -132,8 +132,8 @@ const I18N = {
     footer_legal: 'Habeas is a tool for exercising your own data rights (GDPR Art. 20 / habeas data). It runs in your browser, under your own login, and never sends your data or credentials to us. It is not legal advice, and some services’ terms may restrict automated access — use responsibly.',
   },
   es: {
-    title: 'Habeas — exporta tus propios datos desde tu propia sesión',
-    desc: 'Runtime open-source en el navegador que te ayuda a preservar tus tickets, facturas, extractos e informes desde tu sesión autenticada — sin guardar tus logins ni hacer scraping desde un servidor.',
+    title: 'Descarga tus tickets, facturas y extractos bancarios — Habeas',
+    desc: 'Extensión de navegador libre y de código abierto que descarga tus tickets, facturas y extractos bancarios de servicios que no ofrecen exportación — dentro de tu propia sesión y sin guardar tus contraseñas.',
     nav_install: 'Instalar',
     nav_how: 'Cómo funciona',
     nav_why: 'Por qué Habeas',
@@ -154,8 +154,8 @@ const I18N = {
     trust_irony: 'Es algo irónico que una extensión cuya tesis es que sus datos no deben depender de la buena voluntad de un intermediario reciba un sello de desconfianza de un intermediario que ni explica sus criterios ni admite recurso.',
     nav_github: 'GitHub',
     tagline: 'Tus documentos deberían seguir siendo tuyos.',
-    hero_h1: 'Exporta tus propios datos.',
-    hero_sub: 'Los servicios guardan tus tickets, facturas y extractos pero raramente ofrecen una exportación útil. Habeas corre de forma local dentro de tu sesión autenticada del navegador, sin que nada se envíe a un servidor y sin guardar tus logins.',
+    hero_h1: 'Descarga tus tickets, facturas y extractos.',
+    hero_sub: 'Muchos servicios te dejan ver tu historial pero no te dan forma de exportarlo. Habeas funciona de forma local dentro de tu propia sesión autenticada del navegador: nada se envía a un servidor y tus contraseñas nunca se guardan.',
     feature_label: 'Puntos clave',
     feature_1: 'Corre en tu navegador',
     feature_2: 'No guarda logins',
