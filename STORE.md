@@ -16,7 +16,7 @@ Copy-paste material for the **Chrome Web Store** and **Firefox Add-ons (AMO)**. 
 Both stores search over the **title and description**. A bare "Habeas" matches nothing anybody
 types, so the title carries the documents; the brand still leads because it is the product's name.
 
-**EN** (CWS allows 45 chars):
+**EN** (CWS allows 45 chars) — **live on AMO since 2026-08-08**:
 > Habeas — export receipts & invoices
 
 **ES**:
@@ -24,8 +24,11 @@ types, so the title carries the documents; the brand still leads because it is t
 
 ## Short description / summary
 
-**EN** (≤132 chars, Chrome Web Store):
-> Download your own receipts, invoices and bank statements from sites with no export — inside your own session. Open-source.
+**EN** (≤132 chars CWS / ≤250 AMO) — **live on AMO since 2026-08-08**:
+> Download your own receipts, invoices and bank statements from services that offer no export — inside your own already-signed-in session. Open source, no stored passwords.
+
+Shorten to fit the CWS 132-char limit:
+> Download your own receipts, invoices and bank statements from sites with no export — in your own session. Open source.
 
 **ES**:
 > Descarga tus tickets, facturas y extractos de servicios que no lo permiten — en tu propia sesión. Código abierto.
@@ -119,9 +122,15 @@ types, so the title carries the documents; the brand still leads because it is t
 
 ## Keeping the listings in sync
 
-The **live AMO summary** drifted from this file — it read "Reclaim your own personal data from
-services that lock it behind non-automatable walls", which names no document anybody searches for.
-Treat this file as the source of truth and re-paste on every listing change.
+**AMO is done** (2026-08-08): name, summary and the supported-services list are live. Note that
+AMO's *detailed description* is richer than the one in this file — it covers the Archive, the cloud
+store, record mode and the domain-bound trust boundary. **Do not overwrite it with the copy above**;
+the text here is the shorter CWS-oriented version. Read the live one at
+`addons.mozilla.org/en-US/developers/addon/habeas/edit` before changing either.
+
+**CWS is still pending** and has to be done by hand: Chrome forbids any extension from scripting the
+web-store origin, and the developer console lives there, so it cannot be automated from a browser
+agent. Remember that saving a listing change resubmits the item for review.
 
 The supported-services list above is what makes in-store search surface Habeas for "carrefour",
 "ing" or "pepephone". Regenerate it whenever a source is published:
