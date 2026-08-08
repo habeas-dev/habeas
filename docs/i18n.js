@@ -363,6 +363,7 @@ function apply(lang) {
   document.querySelectorAll('.langswitch button').forEach((b) => {
     b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
   });
+  globalThis.habeasLocalizeNavHrefs?.(lang);
   renderSourcePreview();
 }
 

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# OAuth callback pages carry <meta name="robots" content="noindex">; they are left crawlable so that
+# directive can actually be read.
+
+Sitemap: https://habeas.dev/sitemap.xml

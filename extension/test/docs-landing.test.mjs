@@ -141,7 +141,7 @@ test('landing page keeps the new information hierarchy', async () => {
   assert.match(html, /data-i18n="recorder_h2"/);
   assert.match(html, /data-i18n="dev_h2"/);
   assert.match(html, /class="compare-table"/);
-  assert.match(html, /<a href="\/sources\.html" data-i18n="sources_cta"><\/a>/);
+  assert.match(html, /<a href="\/sources\.html" data-i18n="sources_cta">View all supported sources →<\/a>/);
   assert.match(html, /<a href="\/why-habeas\.html" data-i18n="nav_why">Why Habeas\?<\/a>/);
   assert.match(html, /<a href="\/architecture\.html" data-i18n="nav_architecture">Architecture<\/a>/);
 });
@@ -231,6 +231,64 @@ test('secondary pages share a coherent top navigation menu', async () => {
   assert.match(navI18n, /langswitch: 'Idioma'/);
 });
 
+test('landing page ships its copy in the HTML, not only after JS runs', async () => {
+  const { html } = await loadLanding();
+  // Every [data-i18n] slot used to be an empty shell filled in at runtime, which left the served
+  // document with a few hundred characters of text. docs/tools/prerender-home.mjs bakes the English
+  // copy in; this guards against it silently regressing (e.g. a new section added by hand).
+  const empty = html.match(/data-i18n="([^"]+)"><\//g) || [];
+  assert.deepEqual(empty, [], `empty [data-i18n] slots found: ${empty.join(', ')}`);
+
+  const visibleText = html.replace(/<(script|style)[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+  assert.ok(visibleText.length > 4000, `landing carries only ${visibleText.length} chars of text in its HTML`);
+});
+
+test('every public page carries social and structured metadata', async () => {
+  const pages = ['index.html', 'why-habeas.html', 'sources.html', 'architecture.html', 'privacy.html', 'terms.html'];
+  for (const page of pages) {
+    const html = await fs.readFile(path.join(docsDir, page), 'utf8');
+    assert.match(html, /<meta property="og:image" content="https:\/\/habeas\.dev\/og-image\.png"/, `${page}: no og:image`);
+    assert.match(html, /<meta property="og:url" content="https:\/\/habeas\.dev\//, `${page}: no og:url`);
+    assert.match(html, /<meta name="twitter:card" content="summary_large_image"/, `${page}: no twitter card`);
+  }
+  // JSON-LD must parse — a malformed block is worse than none, Google discards the whole page's data.
+  for (const page of ['index.html', 'why-habeas.html', 'es/por-que-habeas.html']) {
+    const html = await fs.readFile(path.join(docsDir, page), 'utf8');
+    const block = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+    assert.ok(block, `${page}: no JSON-LD block`);
+    const data = JSON.parse(block[1]);
+    assert.equal(data['@context'], 'https://schema.org', `${page}: wrong @context`);
+  }
+});
+
+test('why-habeas is split into one indexable URL per language, linked by hreflang', async () => {
+  const [en, es] = await Promise.all([
+    fs.readFile(path.join(docsDir, 'why-habeas.html'), 'utf8'),
+    fs.readFile(path.join(docsDir, 'es', 'por-que-habeas.html'), 'utf8'),
+  ]);
+  // Neither page may carry the other language's copy: that was the duplicate-content problem.
+  assert.doesNotMatch(en, /data-lang-content/, 'English page still holds a hidden language block');
+  assert.doesNotMatch(es, /data-lang-content/, 'Spanish page still holds a hidden language block');
+  assert.match(en, /<html lang="en">/);
+  assert.match(es, /<html lang="es">/);
+  assert.match(es, /<link rel="canonical" href="https:\/\/habeas\.dev\/es\/por-que-habeas\.html"/);
+
+  for (const [page, html] of [['en', en], ['es', es]]) {
+    assert.match(html, /hreflang="en" href="https:\/\/habeas\.dev\/why-habeas\.html"/, `${page}: no en alternate`);
+    assert.match(html, /hreflang="es" href="https:\/\/habeas\.dev\/es\/por-que-habeas\.html"/, `${page}: no es alternate`);
+    assert.match(html, /hreflang="x-default"/, `${page}: no x-default`);
+  }
+});
+
+test('robots.txt allows crawling and points at the sitemap', async () => {
+  const robots = await fs.readFile(path.join(docsDir, 'robots.txt'), 'utf8');
+  assert.match(robots, /^User-agent: \*$/m);
+  assert.match(robots, /^Allow: \/$/m);
+  assert.match(robots, /^Sitemap: https:\/\/habeas\.dev\/sitemap\.xml$/m);
+  assert.doesNotMatch(robots, /^Disallow: \/$/m);
+});
+
 test('sitemap includes all public website pages', async () => {
   const sitemap = await fs.readFile(path.join(docsDir, 'sitemap.xml'), 'utf8');
   const expectedUrls = [
@@ -240,6 +298,7 @@ test('sitemap includes all public website pages', async () => {
     'https://habeas.dev/sources.html',
     'https://habeas.dev/terms.html',
     'https://habeas.dev/why-habeas.html',
+    'https://habeas.dev/es/por-que-habeas.html',
   ];
 
   assert.match(sitemap, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);

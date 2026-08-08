@@ -2,20 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://habeas.dev/</loc>
+    <lastmod>2026-08-08</lastmod>
   </url>
   <url>
     <loc>https://habeas.dev/architecture.html</loc>
+    <lastmod>2026-08-08</lastmod>
+  </url>
+  <url>
+    <loc>https://habeas.dev/es/por-que-habeas.html</loc>
+    <lastmod>2026-08-08</lastmod>
   </url>
   <url>
     <loc>https://habeas.dev/privacy.html</loc>
+    <lastmod>2026-08-08</lastmod>
   </url>
   <url>
     <loc>https://habeas.dev/sources.html</loc>
+    <lastmod>2026-08-08</lastmod>
   </url>
   <url>
     <loc>https://habeas.dev/terms.html</loc>
+    <lastmod>2026-08-08</lastmod>
   </url>
   <url>
     <loc>https://habeas.dev/why-habeas.html</loc>
+    <lastmod>2026-08-08</lastmod>
   </url>
 </urlset>

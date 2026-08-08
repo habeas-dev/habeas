@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>¿Por qué Habeas? — control del usuario, privacidad y soberanía de los datos</title>
+  <meta name="description" content="Por qué existe Habeas: para que puedas conservar tus propios tickets, facturas, extractos e informes sin ceder el control ni tus credenciales a otro intermediario." />
+  <link rel="canonical" href="https://habeas.dev/es/por-que-habeas.html" />
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
+    .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
+    .doc p, .doc li { line-height: 1.65; }
+    .doc ul { padding-left: 1.2em; }
+    .doc .lead { color: var(--muted, #888); margin: 0 0 24px; max-width: 720px; }
+    .doc .box { border: 1px solid var(--line, #3333); border-radius: 10px; padding: 14px 16px; margin: 18px 0; }
+    .doc .principles { margin-top: 24px; }
+    .doc .principles .card p { margin-top: 8px; }
+    .doc .principles .card h3 { margin: 0; }
+    .doc a { color: inherit; }
+  </style>
+  <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
+  <script defer src="https://analytics.habeas.dev/script.js" data-website-id="84a75f7a-c014-4ce8-a3be-1f8dd1899a28" data-domains="habeas.dev"></script>
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://habeas.dev/es/por-que-habeas.html" />
+  <meta property="og:title" content="¿Por qué Habeas? — control del usuario, privacidad y soberanía de los datos" />
+  <meta property="og:description" content="Por qué existe Habeas: para que puedas conservar tus propios tickets, facturas, extractos e informes sin ceder el control ni tus credenciales a otro intermediario." />
+  <meta property="og:image" content="https://habeas.dev/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Habeas — export your own data. Receipts, invoices and statements, from your own browser session." />
+  <meta property="og:site_name" content="Habeas" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="alternate" hreflang="en" href="https://habeas.dev/why-habeas.html" />
+  <link rel="alternate" hreflang="es" href="https://habeas.dev/es/por-que-habeas.html" />
+  <link rel="alternate" hreflang="x-default" href="https://habeas.dev/why-habeas.html" />
+  <!-- Structured data: 7 questions, extracted from the copy below -->
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "inLanguage": "es",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "¿Qué problema resuelve Habeas?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Habeas te ayuda a recuperar acceso práctico a tus propios registros cuando un servicio ya te deja verlos, pero te lo pone difícil para conservarlos. Te da una forma de recoger esos documentos desde tu sesión normal del navegador y guardarlos donde tú elijas."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Por qué la portabilidad de datos actual no basta?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "En teoría, las personas deberían poder acceder a su propia información. En la vida real, esa promesa muchas veces se queda en un panel web. El servicio puede no tener API, no ofrecer exportación masiva o hacer que la automatización falle detrás de sistemas anti-bot. Y además, muchos atajos existentes piden confiar tus credenciales y tu historial a otro intermediario. Eso resuelve una barrera creando otra."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Por qué una web puede mostrarte aún un CAPTCHA?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Como Habeas funciona dentro de tu propia sesión ya abierta, la mayoría de las veces no te topas con fricción anti-bot. Pero Habeas no promete inmunidad: no intenta burlar esos sistemas y, tras defensas agresivas, una recogida puede simplemente fallar. Si una web muestra un reto, lo resuelves tú, igual que navegando a mano. Es un límite deliberado, no un fallo."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Por qué importa el control directo?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tus registros no solo valen dentro de la web que los generó. Puedes necesitarlos para contabilidad, impuestos, cambiar de app o simplemente mantener tu propio archivo. El control directo importa porque el acceso no debería depender de que una plataforma decida mantener para siempre un botón de exportación cómodo. Habeas parte de la idea de que la gente debería poder ejercer sus derechos con herramientas que pueda inspeccionar, ejecutar por sí misma y conectar con destinos en los que confía."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Qué principios guían Habeas?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Soberanía de los datos Tus documentos deberían seguir siendo accesibles para ti, incluso cuando un servicio ofrece una mala experiencia de exportación. Control del usuario Tú decides cuándo recoger datos y a dónde van. Nada debería salir del navegador salvo que tú lo elijas. Privacidad desde el diseño Usar una herramienta de portabilidad no debería exigir crear otra base de datos de contraseñas, sesiones o registros personales. Transparencia y mínima confianza necesaria El modelo más seguro es el que te pide confiar en menos terceros, menos servidores y menos procesos opacos."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Por qué la arquitectura sigue esos principios?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Habeas se ejecuta donde la web ya sabe que está hablando contigo: dentro de tu propia sesión autenticada del navegador. Eso significa que inicias sesión tú, resuelves la MFA tú y mantienes tus credenciales para ti. Esta arquitectura no es un truco técnico. Es una consecuencia de los valores del proyecto. Si el objetivo es dar más control a los usuarios, la herramienta debe evitar intermediarios innecesarios, evitar guardar tus logins y mantener el flujo comprensible."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Por qué una extensión del navegador y no los canales oficiales de open banking (PSD2)?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Para los datos de cuentas de pago, las API reguladas de open banking —a través de agregadores con licencia— son la vía canónica y, cuando te sirven bien, suelen ser la mejor opción. Habeas no intenta sustituirlas ahí. Pero PSD2 solo cubre cuentas de pago. No llega a las tarjetas de tienda y de crédito, los extractos de inversión o de pensiones, las facturas ni los tickets: la larga cola de registros que los servicios siguen guardando tras un panel. Los agregadores, además, te piden delegar el acceso a un servidor de terceros; Habeas se ejecuta en tu propia sesión, no guarda credenciales y te deja resolver la MFA a ti. No inicia pagos ni agrega nada en un servidor, así que no es un actor regulado por PSD2: es una herramienta de portabilidad de datos personales (art. 20 del RGPD) que ejecutas tú. En corto: Habeas está diseñado para que la confianza se gane por su arquitectura, no porque te pida una contraseña."
+      }
+    }
+  ]
+}
+  </script>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="/logo-light.svg" />
+        <img class="logo" src="/logo.svg" alt="Habeas" />
+      </picture>
+      <span class="name">Habeas</span>
+      <nav>
+        <a href="/">Inicio</a>
+        <a href="/es/por-que-habeas.html">Por qué Habeas</a>
+        <a href="/sources.html">Fuentes</a>
+        <a href="/architecture.html">Arquitectura</a>
+        <a href="/privacy.html">Privacidad</a>
+        <a href="/terms.html">Términos</a>
+        <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <span class="langswitch" role="group" aria-label="Idioma">
+          <button data-lang="en" aria-pressed="false">EN</button>
+          <button data-lang="es" aria-pressed="true">ES</button>
+        </span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="doc">
+    <h1>¿Por qué Habeas?</h1>
+    <p class="lead">Habeas existe por una razón sencilla: las personas deberían poder conservar y mover sus propios datos sin perder aún más control en el proceso.</p>
+
+    <p>Tickets, facturas, extractos, informes de inversión y registros similares suelen ser visibles en las webs que los generaron. Pero verlos no es lo mismo que controlarlos. Muchos servicios no ofrecen una exportación útil, conservan solo parte del historial o fuerzan a descargar documento por documento.</p>
+
+    <div class="box"><strong>La brecha práctica:</strong> tus datos pueden ser tuyos en lo legal, pero en la práctica seguir siendo difíciles de conservar, reutilizar o mover a otra herramienta.</div>
+
+    <h2>¿Qué problema resuelve Habeas?</h2>
+    <p>Habeas te ayuda a recuperar acceso práctico a tus propios registros cuando un servicio ya te deja verlos, pero te lo pone difícil para conservarlos. Te da una forma de recoger esos documentos desde tu sesión normal del navegador y guardarlos donde <em>tú</em> elijas.</p>
+
+    <h2>¿Por qué la portabilidad de datos actual no basta?</h2>
+    <p>En teoría, las personas deberían poder acceder a su propia información. En la vida real, esa promesa muchas veces se queda en un panel web. El servicio puede no tener API, no ofrecer exportación masiva o hacer que la automatización falle detrás de sistemas anti-bot.</p>
+    <p>Y además, muchos atajos existentes piden confiar tus credenciales y tu historial a otro intermediario. Eso resuelve una barrera creando otra.</p>
+
+    <h2 id="captcha">¿Por qué una web puede mostrarte aún un CAPTCHA?</h2>
+    <p>Como Habeas funciona dentro de tu propia sesión ya abierta, la mayoría de las veces no te topas con fricción anti-bot. Pero Habeas no promete inmunidad: no intenta burlar esos sistemas y, tras defensas agresivas, una recogida puede simplemente fallar. Si una web muestra un reto, lo resuelves tú, igual que navegando a mano. Es un límite deliberado, no un fallo.</p>
+
+    <h2>¿Por qué importa el control directo?</h2>
+    <p>Tus registros no solo valen dentro de la web que los generó. Puedes necesitarlos para contabilidad, impuestos, cambiar de app o simplemente mantener tu propio archivo. El control directo importa porque el acceso no debería depender de que una plataforma decida mantener para siempre un botón de exportación cómodo.</p>
+    <p>Habeas parte de la idea de que la gente debería poder ejercer sus derechos con herramientas que pueda inspeccionar, ejecutar por sí misma y conectar con destinos en los que confía.</p>
+
+    <h2>¿Qué principios guían Habeas?</h2>
+    <div class="grid principles">
+      <div class="card">
+        <h3>Soberanía de los datos</h3>
+        <p>Tus documentos deberían seguir siendo accesibles para ti, incluso cuando un servicio ofrece una mala experiencia de exportación.</p>
+      </div>
+      <div class="card">
+        <h3>Control del usuario</h3>
+        <p>Tú decides cuándo recoger datos y a dónde van. Nada debería salir del navegador salvo que tú lo elijas.</p>
+      </div>
+      <div class="card">
+        <h3>Privacidad desde el diseño</h3>
+        <p>Usar una herramienta de portabilidad no debería exigir crear otra base de datos de contraseñas, sesiones o registros personales.</p>
+      </div>
+      <div class="card">
+        <h3>Transparencia y mínima confianza necesaria</h3>
+        <p>El modelo más seguro es el que te pide confiar en menos terceros, menos servidores y menos procesos opacos.</p>
+      </div>
+    </div>
+
+    <h2>¿Por qué la arquitectura sigue esos principios?</h2>
+    <p>Habeas se ejecuta donde la web ya sabe que está hablando contigo: dentro de tu propia sesión autenticada del navegador. Eso significa que inicias sesión tú, resuelves la MFA tú y mantienes tus credenciales para ti.</p>
+    <p>Esta arquitectura no es un truco técnico. Es una consecuencia de los valores del proyecto. Si el objetivo es dar más control a los usuarios, la herramienta debe evitar intermediarios innecesarios, evitar guardar tus logins y mantener el flujo comprensible.</p>
+
+    <h2 id="psd2">¿Por qué una extensión del navegador y no los canales oficiales de open banking (PSD2)?</h2>
+    <p>Para los datos de cuentas de pago, las API reguladas de open banking —a través de agregadores con licencia— son la vía canónica y, cuando te sirven bien, suelen ser la mejor opción. Habeas no intenta sustituirlas ahí.</p>
+    <p>Pero PSD2 solo cubre cuentas de pago. No llega a las tarjetas de tienda y de crédito, los extractos de inversión o de pensiones, las facturas ni los tickets: la larga cola de registros que los servicios siguen guardando tras un panel. Los agregadores, además, te piden delegar el acceso a un servidor de terceros; Habeas se ejecuta en tu propia sesión, no guarda credenciales y te deja resolver la MFA a ti. No inicia pagos ni agrega nada en un servidor, así que no es un actor regulado por PSD2: es una herramienta de portabilidad de datos personales (art. 20 del RGPD) que ejecutas tú.</p>
+
+    <div class="box"><strong>En corto:</strong> Habeas está diseñado para que la confianza se gane por su arquitectura, no porque te pida una contraseña.</div>
+    
+  </main>
+
+  <script src="/nav-i18n.js"></script>
+  <script>
+    (function () {
+      const KEY = 'habeas-lang', HERE = 'es', ALT = { en: '/why-habeas.html', es: '/es/por-que-habeas.html' };
+      document.querySelectorAll('.langswitch button[data-lang]').forEach((b) => {
+        const l = b.getAttribute('data-lang');
+        b.setAttribute('aria-pressed', String(l === HERE));
+        b.addEventListener('click', () => {
+          try { localStorage.setItem(KEY, l); } catch (e) {}
+          if (l !== HERE) location.href = ALT[l];
+        });
+      });
+      globalThis.habeasApplyTopNavLanguage?.(HERE);
+    })();
+  </script>
+</body>
+</html>

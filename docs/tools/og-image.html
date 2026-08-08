@@ -1,0 +1,69 @@
+<!doctype html>
+<!-- Source for docs/og-image.png (the Open Graph / Twitter card image). It is rendered, not shipped:
+     regenerate after editing this file with
+         chromium --headless --screenshot=docs/og-image.png --window-size=1200,630 \
+                  --hide-scrollbars --default-background-color=00000000 docs/tools/og-image.html
+     Uses the site's own self-hosted fonts and palette so the card matches the landing page. -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  @font-face { font-family: 'Inter'; font-weight: 400; src: url('../fonts/inter-400.woff2') format('woff2'); }
+  @font-face { font-family: 'Space Grotesk'; font-weight: 700; src: url('../fonts/space-700.woff2') format('woff2'); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; }
+  body {
+    background: #0e1512;
+    color: #e8f0ed;
+    font-family: 'Inter', sans-serif;
+    padding: 72px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  /* Brand-orange glow, echoing the hero's backdrop. */
+  body::after {
+    content: ''; position: absolute; right: -180px; top: -180px;
+    width: 620px; height: 620px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(224,138,60,.17) 0%, rgba(224,138,60,0) 70%);
+  }
+  .top { display: flex; align-items: center; gap: 18px; }
+  .top svg { width: 64px; height: 64px; }
+  .name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 40px; letter-spacing: -.5px; }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+    font-size: 74px; line-height: 1.08; letter-spacing: -2px; max-width: 15ch;
+  }
+  h1 em { font-style: normal; color: #e08a3c; }
+  .sub { font-size: 27px; line-height: 1.45; color: #97a8a2; max-width: 30ch; margin-top: 22px; }
+  .foot { display: flex; align-items: center; gap: 14px; font-size: 23px; color: #97a8a2; }
+  .pill { border: 1px solid #223029; border-radius: 999px; padding: 7px 18px; font-size: 20px; }
+  .dot { color: #223029; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Habeas">
+      <rect x="22" y="22" width="20" height="84" rx="2" fill="#eef4f1"/>
+      <rect x="66" y="22" width="20" height="84" rx="2" fill="#eef4f1"/>
+      <rect x="38" y="54" width="52" height="18" fill="#e08a3c"/>
+      <polygon points="88,44 110,63 88,82" fill="#e08a3c"/>
+    </svg>
+    <span class="name">Habeas</span>
+  </div>
+
+  <div>
+    <h1>Export your <em>own</em> data.</h1>
+    <p class="sub">Receipts, invoices and statements — from your own browser session.</p>
+  </div>
+
+  <div class="foot">
+    <span class="pill">Open source</span>
+    <span class="pill">No stored logins</span>
+    <span class="dot">·</span>
+    <span>habeas.dev</span>
+  </div>
+</body>
+</html>

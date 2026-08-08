@@ -8,11 +8,51 @@
   <link rel="canonical" href="https://habeas.dev/" />
   <link rel="icon" type="image/svg+xml" href="logo.svg" />
   <link rel="stylesheet" href="style.css" />
-  <meta property="og:title" content="Habeas — export your own data from your own session" />
-  <meta property="og:description" content="Open-source browser runtime that helps you preserve your own receipts, invoices, statements and reports from your authenticated browser session." />
-  <meta property="og:type" content="website" />
   <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
   <script defer src="https://analytics.habeas.dev/script.js" data-website-id="84a75f7a-c014-4ce8-a3be-1f8dd1899a28" data-domains="habeas.dev"></script>
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://habeas.dev/" />
+  <meta property="og:title" content="Habeas — export your own data from your own session" />
+  <meta property="og:description" content="Open-source browser runtime that helps you preserve your own receipts, invoices, statements and reports from your authenticated browser session — no stored logins, no server-side scraping." />
+  <meta property="og:image" content="https://habeas.dev/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Habeas — export your own data. Receipts, invoices and statements, from your own browser session." />
+  <meta property="og:site_name" content="Habeas" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <!-- Structured data: the extension itself -->
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Habeas",
+  "url": "https://habeas.dev/",
+  "applicationCategory": "BrowserApplication",
+  "operatingSystem": "Chrome, Edge, Brave, Opera, Firefox",
+  "browserRequirements": "Chromium-based browser, or Firefox 128 and newer",
+  "description": "Open-source browser extension that extracts your own receipts, invoices, statements and transaction records from services with no usable export, entirely inside your already-authenticated browser session — no stored credentials, no server-side scraping.",
+  "isAccessibleForFree": true,
+  "license": "https://www.gnu.org/licenses/agpl-3.0.html",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "EUR"
+  },
+  "downloadUrl": [
+    "https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog",
+    "https://addons.mozilla.org/firefox/addon/habeas/"
+  ],
+  "sameAs": [
+    "https://github.com/habeas-dev/habeas",
+    "https://www.producthunt.com/products/habeas"
+  ],
+  "author": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev/"
+  }
+}
+  </script>
 </head>
 <body>
   <header>
@@ -40,9 +80,9 @@
   <div class="hero">
     <img class="hero-bg-logo" src="logo-light.svg" alt="" aria-hidden="true" />
     <div class="wrap">
-      <p class="tagline" data-i18n="tagline">your data, in your hands</p>
+      <p class="tagline" data-i18n="tagline">Your documents should remain yours.</p>
       <h1 data-i18n="hero_h1">Export your own data.</h1>
-      <p class="sub" data-i18n="hero_sub"></p>
+      <p class="sub" data-i18n="hero_sub">Services hold your receipts, invoices and statements but rarely offer a usable export. Habeas runs locally inside your authenticated browser session, so nothing is sent to a server and your logins are never stored.</p>
       <div class="cta">
         <a class="btn primary" href="#install" data-i18n="cta_install" data-umami-event="hero-cta" data-umami-event-to="install">Install Habeas</a>
         <a class="btn ghost" href="#how" data-i18n="cta_how" data-umami-event="hero-cta" data-umami-event-to="how">See how it works</a>
@@ -50,12 +90,12 @@
       <p class="ph-badge" style="margin:18px 0 0">
         <a href="https://www.producthunt.com/products/habeas?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-habeas" target="_blank" rel="noopener noreferrer"><img alt="Habeas - Export your data from sites that hide it, in your session | Product Hunt" width="250" height="54" src="producthunt-badge.svg" /></a>
       </p>
-      <p id="feature-strip-label" class="sr-only" data-i18n="feature_label"></p>
+      <p id="feature-strip-label" class="sr-only" data-i18n="feature_label">Highlights</p>
       <ul class="feature-strip" aria-labelledby="feature-strip-label">
-        <li class="feature-pill" data-i18n="feature_1"></li>
-        <li class="feature-pill" data-i18n="feature_2"></li>
-        <li class="feature-pill" data-i18n="feature_3"></li>
-        <li class="feature-pill" data-i18n="feature_4"></li>
+        <li class="feature-pill" data-i18n="feature_1">Runs in your browser</li>
+        <li class="feature-pill" data-i18n="feature_2">No stored logins</li>
+        <li class="feature-pill" data-i18n="feature_3">Local-first</li>
+        <li class="feature-pill" data-i18n="feature_4">Open source</li>
       </ul>
     </div>
   </div>
@@ -63,105 +103,105 @@
   <section>
     <div class="wrap" id="sources-preview" hidden>
       <p id="sources-preview-count" class="section-badge" aria-live="polite"></p>
-      <h2 data-i18n="sources_h2"></h2>
-      <p class="lead" data-i18n="sources_lead"></p>
+      <h2 data-i18n="sources_h2">Supported sources</h2>
+      <p class="lead" data-i18n="sources_lead">Already works with multiple services.</p>
       <div id="sources-preview-list" class="srcgrid" aria-live="polite"></div>
-      <p class="sources-preview-cta"><a href="/sources.html" data-i18n="sources_cta"></a></p>
+      <p class="sources-preview-cta"><a href="/sources.html" data-i18n="sources_cta">View all supported sources →</a></p>
     </div>
   </section>
 
   <section>
     <div class="wrap">
-      <h2 data-i18n="problem_h2"></h2>
-      <p class="lead" data-i18n="problem_lead"></p>
+      <h2 data-i18n="problem_h2">The practical problem</h2>
+      <p class="lead" data-i18n="problem_lead">You may need years of receipts, invoices, bank statements, investment reports or tax documents, but many sites make that history hard to keep.</p>
       <div class="grid">
-        <div class="card"><div class="ic">🧱</div><h3 data-i18n="problem1_h"></h3><p data-i18n="problem1_b"></p></div>
-        <div class="card"><div class="ic">🧾</div><h3 data-i18n="problem2_h"></h3><p data-i18n="problem2_b"></p></div>
-        <div class="card"><div class="ic">🤖</div><h3 data-i18n="problem3_h"></h3><p data-i18n="problem3_b"></p></div>
-        <div class="card"><div class="ic">⚖️</div><h3 data-i18n="problem4_h"></h3><p data-i18n="problem4_b"></p></div>
+        <div class="card"><div class="ic">🧱</div><h3 data-i18n="problem1_h">No API or bulk export</h3><p data-i18n="problem1_b">You can see your receipts or statements on the website, but there is no usable export endpoint for you.</p></div>
+        <div class="card"><div class="ic">🧾</div><h3 data-i18n="problem2_h">One document at a time</h3><p data-i18n="problem2_b">If a PDF exists at all, you often have to open and download every receipt manually.</p></div>
+        <div class="card"><div class="ic">🤖</div><h3 data-i18n="problem3_h">Automation hits anti-bot walls</h3><p data-i18n="problem3_b">Cloudflare, Akamai and similar protections make remote scraping brittle or impossible.</p></div>
+        <div class="card"><div class="ic">⚖️</div><h3 data-i18n="problem4_h">Your right exists; the workflow does not</h3><p data-i18n="problem4_b">GDPR and habeas data support access to your own data, but everyday tooling still falls short.</p></div>
       </div>
     </div>
   </section>
 
   <section id="how" class="alt">
     <div class="wrap">
-      <h2 data-i18n="how_h2"></h2>
-      <p class="lead" data-i18n="how_lead"></p>
+      <h2 data-i18n="how_h2">How it works</h2>
+      <p class="lead" data-i18n="how_lead">Three steps, all inside your existing browser session.</p>
       <div class="grid">
-        <div class="card"><div class="ic">🔐</div><h3 data-i18n="how1_h"></h3><p data-i18n="how1_b"></p></div>
-        <div class="card"><div class="ic">🔄</div><h3 data-i18n="how2_h"></h3><p data-i18n="how2_b"></p></div>
-        <div class="card"><div class="ic">📤</div><h3 data-i18n="how3_h"></h3><p data-i18n="how3_b"></p></div>
+        <div class="card"><div class="ic">🔐</div><h3 data-i18n="how1_h">1. You log in normally</h3><p data-i18n="how1_b">Open the site and sign in as you normally would. MFA and OTP work without changes.</p></div>
+        <div class="card"><div class="ic">🔄</div><h3 data-i18n="how2_h">2. Habeas reuses that live session</h3><p data-i18n="how2_b">Habeas captures the live authenticated requests your browser already makes — the same requests the website itself uses.</p></div>
+        <div class="card"><div class="ic">📤</div><h3 data-i18n="how3_h">3. You export to your destination</h3><p data-i18n="how3_b">Download original files or send them to a folder, cloud storage or app of your choice.</p></div>
       </div>
       <div class="arch-wrap">
-        <p class="arch-motto" data-i18n="arch_motto"></p>
+        <p class="arch-motto" data-i18n="arch_motto">Websites already give you access to your data. Habeas gives you a way to keep it.</p>
         <img class="arch-diagram arch-lang-en" src="arch-en.svg" alt="Architecture: multiple Sources (retailers, banks, providers) connect to the Habeas local runtime inside your browser, which delivers to Sinks (folder, Drive, apps)" width="880" height="340">
         <img class="arch-diagram arch-lang-es" src="arch-es.svg" alt="Arquitectura: las Fuentes (comercios, bancos, proveedores) se conectan al runtime local de Habeas en tu navegador, que entrega a los Destinos (carpeta, Drive, apps)" width="880" height="340">
-        <p class="flow-note" data-i18n="flow_note"></p>
-        <p class="sr-only" data-i18n="flow_h"></p>
-        <span class="sr-only" data-i18n="flow_step_source"></span>
-        <span class="sr-only" data-i18n="flow_step_runtime"></span>
-        <span class="sr-only" data-i18n="flow_step_sink"></span>
+        <p class="flow-note" data-i18n="flow_note">Each source returns its own native documents — PDF, XLS or JSON. Habeas provides a common way to access them without converting or replacing the originals.</p>
+        <p class="sr-only" data-i18n="flow_h">Source → Habeas runtime → Sink</p>
+        <span class="sr-only" data-i18n="flow_step_source">Sources: websites holding your data (retailers, banks, providers)</span>
+        <span class="sr-only" data-i18n="flow_step_runtime">Habeas: local runtime inside your browser session</span>
+        <span class="sr-only" data-i18n="flow_step_sink">Sinks: Folder • Cloud • Apps • HTTP</span>
       </div>
     </div>
   </section>
 
   <section id="start">
     <div class="wrap">
-      <h2 data-i18n="start_h2"></h2>
-      <p class="lead" data-i18n="start_lead"></p>
+      <h2 data-i18n="start_h2">Your first extraction, in four steps</h2>
+      <p class="lead" data-i18n="start_lead">From install to saved documents — all inside your own browser session.</p>
       <div class="grid">
-        <div class="card"><div class="ic">🧩</div><h3 data-i18n="start1_h"></h3><p data-i18n="start1_b"></p></div>
-        <div class="card"><div class="ic">🔑</div><h3 data-i18n="start2_h"></h3><p data-i18n="start2_b"></p></div>
-        <div class="card"><div class="ic">📥</div><h3 data-i18n="start3_h"></h3><p data-i18n="start3_b"></p></div>
-        <div class="card"><div class="ic">🗂️</div><h3 data-i18n="start4_h"></h3><p data-i18n="start4_b"></p></div>
+        <div class="card"><div class="ic">🧩</div><h3 data-i18n="start1_h">1. Install and pick a source</h3><p data-i18n="start1_b">Add Habeas, open it, and choose the service you want — a shop, a provider, your bank.</p></div>
+        <div class="card"><div class="ic">🔑</div><h3 data-i18n="start2_h">2. Log in as always</h3><p data-i18n="start2_b">Open the site and sign in yourself; MFA and OTP work as usual. Your password is never seen or stored.</p></div>
+        <div class="card"><div class="ic">📥</div><h3 data-i18n="start3_h">3. Collect your documents</h3><p data-i18n="start3_b">Habeas lists your receipts, invoices or statements and fetches the original files — entirely inside your browser.</p></div>
+        <div class="card"><div class="ic">🗂️</div><h3 data-i18n="start4_h">4. Choose where they go</h3><p data-i18n="start4_b">Save to a folder or your cloud (Drive, Dropbox, WebDAV, S3), or send to an app. Turn on automatic mode to sync new documents on each login.</p></div>
       </div>
-      <p class="flow-note" data-i18n="start_note"></p>
+      <p class="flow-note" data-i18n="start_note">Nothing leaves your browser until you choose a destination — and you can read every line of the code.</p>
     </div>
   </section>
 
   <section>
     <div class="wrap">
-      <h2 data-i18n="source_defs_h2"></h2>
-      <p class="lead" data-i18n="source_defs_lead"></p>
+      <h2 data-i18n="source_defs_h2">An open, growing catalog of services</h2>
+      <p class="lead" data-i18n="source_defs_lead">Each service is described by a small definition file. Add a new service without changing the runtime.</p>
       <div class="grid">
-        <div class="card"><div class="ic">🧩</div><h3 data-i18n="source_defs1_h"></h3><p data-i18n="source_defs1_b"></p></div>
-        <div class="card"><div class="ic">🌱</div><h3 data-i18n="source_defs2_h"></h3><p data-i18n="source_defs2_b"></p></div>
+        <div class="card"><div class="ic">🧩</div><h3 data-i18n="source_defs1_h">Sources evolve independently</h3><p data-i18n="source_defs1_b">Each source definition covers one service and can be updated or extended without touching the rest of Habeas.</p></div>
+        <div class="card"><div class="ic">🌱</div><h3 data-i18n="source_defs2_h">Community-extended over time</h3><p data-i18n="source_defs2_b">The catalogue grows through community contributions. Every new source definition expands what everyone can access.</p></div>
       </div>
     </div>
   </section>
 
   <section class="alt">
     <div class="wrap">
-      <h2 data-i18n="recorder_h2"></h2>
-      <p class="lead" data-i18n="recorder_lead"></p>
+      <h2 data-i18n="recorder_h2">Missing a service? Help expand the catalogue.</h2>
+      <p class="lead" data-i18n="recorder_lead">If a service you use is not yet in the catalogue, there are three ways to add it — pick the one that fits you.</p>
       <div class="grid">
-        <div class="card"><div class="ic">🔒</div><h3 data-i18n="ways1_h"></h3><p data-i18n="ways1_b"></p></div>
-        <div class="card"><div class="ic">🤝</div><h3 data-i18n="ways2_h"></h3><p data-i18n="ways2_b"></p></div>
-        <div class="card"><div class="ic">🛠️</div><h3 data-i18n="ways3_h"></h3><p data-i18n="ways3_b"></p></div>
+        <div class="card"><div class="ic">🔒</div><h3 data-i18n="ways1_h">Local only</h3><p data-i18n="ways1_b">Record the session in the extension and keep the source private — it never leaves your machine, and neither does your data. No code. You can still choose to share it later.</p></div>
+        <div class="card"><div class="ic">🤝</div><h3 data-i18n="ways2_h">Assisted</h3><p data-i18n="ways2_b">Send a redacted recording (you review exactly what leaves your browser) to the Habeas team; they finish, verify and publish it — and credit you. No code.</p></div>
+        <div class="card"><div class="ic">🛠️</div><h3 data-i18n="ways3_h">Advanced (AI + proxy)</h3><p data-i18n="ways3_b">Technical contributors capture the traffic themselves and hand-author the source with any AI plus the repository, verify it offline, and open a pull request. Any service, any complexity.</p></div>
       </div>
-      <p class="flow-note" data-i18n="recorder_note"></p>
+      <p class="flow-note" data-i18n="recorder_note">The first path stays private; the other two grow the shared catalogue for everyone.</p>
     </div>
   </section>
 
   <section>
     <div class="wrap">
-      <h2 data-i18n="why_h2"></h2>
-      <p class="lead" data-i18n="why_lead"></p>
+      <h2 data-i18n="why_h2">Why Habeas is different</h2>
+      <p class="lead" data-i18n="why_lead">Traditional aggregators move the login and scraping to their servers. Habeas does not.</p>
       <div class="compare-card">
         <table class="compare-table">
           <thead>
             <tr>
               <th></th>
-              <th data-i18n="why_col_traditional"></th>
-              <th data-i18n="why_col_habeas"></th>
+              <th data-i18n="why_col_traditional">Traditional aggregators</th>
+              <th data-i18n="why_col_habeas">Habeas</th>
             </tr>
           </thead>
           <tbody>
-            <tr><th data-i18n="why_row_1"></th><td data-i18n="why_row_1_traditional"></td><td data-i18n="why_row_1_habeas"></td></tr>
-            <tr><th data-i18n="why_row_2"></th><td data-i18n="why_row_2_traditional"></td><td data-i18n="why_row_2_habeas"></td></tr>
-            <tr><th data-i18n="why_row_3"></th><td data-i18n="why_row_3_traditional"></td><td data-i18n="why_row_3_habeas"></td></tr>
-            <tr><th data-i18n="why_row_4"></th><td data-i18n="why_row_4_traditional"></td><td data-i18n="why_row_4_habeas"></td></tr>
-            <tr><th data-i18n="why_row_5"></th><td data-i18n="why_row_5_traditional"></td><td data-i18n="why_row_5_habeas"></td></tr>
+            <tr><th data-i18n="why_row_1">Stores your login</th><td data-i18n="why_row_1_traditional">Often</td><td data-i18n="why_row_1_habeas">Never</td></tr>
+            <tr><th data-i18n="why_row_2">Remote login</th><td data-i18n="why_row_2_traditional">Yes</td><td data-i18n="why_row_2_habeas">No</td></tr>
+            <tr><th data-i18n="why_row_3">Server-side scraping</th><td data-i18n="why_row_3_traditional">Yes</td><td data-i18n="why_row_3_habeas">No</td></tr>
+            <tr><th data-i18n="why_row_4">Runs in your own browser</th><td data-i18n="why_row_4_traditional">No</td><td data-i18n="why_row_4_habeas">Yes</td></tr>
+            <tr><th data-i18n="why_row_5">Local-first</th><td data-i18n="why_row_5_traditional">Rarely</td><td data-i18n="why_row_5_habeas">Yes</td></tr>
           </tbody>
         </table>
       </div>
@@ -170,12 +210,12 @@
 
   <section>
     <div class="wrap">
-      <h2 data-i18n="dest_h2"></h2>
-      <p class="lead" data-i18n="dest_lead"></p>
+      <h2 data-i18n="dest_h2">Send it where you want</h2>
+      <p class="lead" data-i18n="dest_lead">One inventory, then choose how to keep it or where to send it.</p>
       <div class="grid">
-        <div class="card"><div class="ic">📁</div><h3 data-i18n="dest1_h"></h3><p data-i18n="dest1_b"></p></div>
-        <div class="card"><div class="ic">☁️</div><h3 data-i18n="dest2_h"></h3><p data-i18n="dest2_b"></p></div>
-        <div class="card"><div class="ic">🔗</div><h3 data-i18n="dest3_h"></h3><p data-i18n="dest3_b"></p></div>
+        <div class="card"><div class="ic">📁</div><h3 data-i18n="dest1_h">Local folder</h3><p data-i18n="dest1_b">Save to a folder on your disk — or a Drive/Dropbox-synced one for cloud with zero setup.</p></div>
+        <div class="card"><div class="ic">☁️</div><h3 data-i18n="dest2_h">Cloud storage</h3><p data-i18n="dest2_b">Upload natively to Google Drive, Dropbox, or any WebDAV or S3-compatible storage — your own account, only the files Habeas creates.</p></div>
+        <div class="card"><div class="ic">🔗</div><h3 data-i18n="dest3_h">Your own app</h3><p data-i18n="dest3_b">POST normalized records and PDFs to any endpoint you configure.</p></div>
       </div>
     </div>
   </section>
@@ -183,23 +223,23 @@
   <section id="install" class="alt">
     <div class="wrap">
       <h2 data-i18n="install_h2">Install</h2>
-      <p class="lead" data-i18n="install_lead"></p>
+      <p class="lead" data-i18n="install_lead">Install from the Chrome Web Store or Firefox Add-ons — or grab the raw build from GitHub Releases.</p>
       <div class="grid">
         <div class="card">
           <div class="ic">🌐</div>
           <h3 data-i18n="install_chrome_h">Chrome &amp; Chromium</h3>
-          <p data-i18n="install_chrome_b"></p>
+          <p data-i18n="install_chrome_b">Chrome, Edge, Brave, Opera and other Chromium browsers.</p>
           <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-i18n="install_chrome_cta" data-umami-event="install" data-umami-event-store="chrome">Add to Chrome</a>
-          <p class="lead" style="font-size:.82rem;opacity:.6;margin-top:10px"><a href="https://github.com/habeas-dev/habeas/releases" data-i18n="install_soon_chrome" data-umami-event="install" data-umami-event-store="releases-chrome"></a></p>
-          <p class="trust-note" data-i18n="trust_body"></p>
-          <p class="trust-note" data-i18n="trust_irony"></p>
+          <p class="lead" style="font-size:.82rem;opacity:.6;margin-top:10px"><a href="https://github.com/habeas-dev/habeas/releases" data-i18n="install_soon_chrome" data-umami-event="install" data-umami-event-store="releases-chrome">Or get the unpacked build on GitHub Releases</a></p>
+          <p class="trust-note" data-i18n="trust_body">Chrome will show a notice that the extension is not trusted. It applies to any developer account recently registered on the Chrome Web Store, it takes a few months to fade, and it says nothing about the code, which you can read in full.</p>
+          <p class="trust-note" data-i18n="trust_irony">There is some irony in an extension whose thesis is that your data should not depend on an intermediary’s goodwill receiving a mark of distrust from an intermediary that neither explains its criteria nor allows any appeal.</p>
         </div>
         <div class="card">
           <div class="ic">🦊</div>
           <h3 data-i18n="install_firefox_h">Firefox</h3>
-          <p data-i18n="install_firefox_b"></p>
+          <p data-i18n="install_firefox_b">Firefox 128 or newer.</p>
           <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-i18n="install_firefox_cta" data-umami-event="install" data-umami-event-store="firefox">Add to Firefox</a>
-          <p class="lead" style="font-size:.82rem;opacity:.6;margin-top:10px"><a href="https://github.com/habeas-dev/habeas/releases" data-i18n="install_soon_firefox" data-umami-event="install" data-umami-event-store="releases-firefox"></a></p>
+          <p class="lead" style="font-size:.82rem;opacity:.6;margin-top:10px"><a href="https://github.com/habeas-dev/habeas/releases" data-i18n="install_soon_firefox" data-umami-event="install" data-umami-event-store="releases-firefox">Or get the unpacked build on GitHub Releases</a></p>
         </div>
       </div>
     </div>
@@ -207,14 +247,14 @@
 
   <section>
     <div class="wrap">
-      <h2 data-i18n="dev_h2"></h2>
-      <p class="lead" data-i18n="dev_lead"></p>
+      <h2 data-i18n="dev_h2">For developers</h2>
+      <p class="lead" data-i18n="dev_lead">Build on top of what users already have, without touching their credentials.</p>
       <div class="card">
         <ul class="plain-list">
-          <li data-i18n="dev_1"></li>
-          <li data-i18n="dev_2"></li>
-          <li data-i18n="dev_3"></li>
-          <li data-i18n="dev_4"></li>
+          <li data-i18n="dev_1">Integrate with Habeas once — instead of writing separate extraction logic for every website.</li>
+          <li data-i18n="dev_2">Users authenticate themselves. Your app receives what they choose to share.</li>
+          <li data-i18n="dev_3">No login secrets, no scrapers, no anti-bot maintenance on your side.</li>
+          <li data-i18n="dev_4">Sources keep their native documents; interoperability happens at the access layer.</li>
         </ul>
       </div>
     </div>
@@ -222,9 +262,9 @@
 
   <section class="alt">
     <div class="wrap">
-      <h2 data-i18n="oss_h2"></h2>
-      <p class="lead" data-i18n="oss_lead"></p>
-      <p data-i18n="oss_invite"></p>
+      <h2 data-i18n="oss_h2">Free and open source</h2>
+      <p class="lead" data-i18n="oss_lead">AGPL-3.0, built in the open, auditable by anyone, and open to contributions.</p>
+      <p data-i18n="oss_invite">Keep your documents under your control.</p>
       <a class="btn dark" href="https://github.com/habeas-dev/habeas" data-i18n="oss_cta" data-umami-event="github" data-umami-event-from="oss-section">View on GitHub</a>
     </div>
   </section>
@@ -248,10 +288,11 @@
           <button data-lang="es" aria-pressed="false">ES</button>
         </span>
       </div>
-      <p class="legal" data-i18n="footer_legal"></p>
+      <p class="legal" data-i18n="footer_legal">Habeas is a tool for exercising your own data rights (GDPR Art. 20 / habeas data). It runs in your browser, under your own login, and never sends your data or credentials to us. It is not legal advice, and some services’ terms may restrict automated access — use responsibly.</p>
     </div>
   </footer>
 
+  <script src="nav-i18n.js"></script>
   <script src="i18n.js"></script>
 </body>
 </html>
