@@ -5,7 +5,7 @@
   "trust": "community",
   "domain": "pepeenergy.com",
   "country": "ES",
-  "version": "2026-07-24.6",
+  "version": "2026-08-08",
   "minVersion": "0.8.0",
   "categories": [
     "energy"
@@ -65,5 +65,26 @@
     "date": "invoice_date",
     "total": "total_amount"
   },
-  "schema": "invoice@1"
+  "schema": "invoice@1",
+  "content": {
+    "en": {
+      "slug": "pepe-energy-invoices",
+      "docs": "electricity and gas bills",
+      "h1": "How to download your Pepe Energy bills",
+      "intro": "Your Pepe Energy bills sit in your customer area as PDFs. If you need several years — for a tax return, a subsidy, or to compare consumption — you go one by one."
+    },
+    "es": {
+      "slug": "facturas-pepe-energy",
+      "docs": "facturas de luz y gas",
+      "h1": "Cómo descargar tus facturas de Pepe Energy",
+      "intro": "Tus facturas de Pepe Energy están en tu área de cliente en PDF. Si necesitas varios años —para la declaración, para una ayuda, o para comparar consumos— hay que ir una por una."
+    }
+  },
+  "brand": "Pepe Energy",
+  "changelog": [
+    {
+      "version": "2026-08-08",
+      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+    }
+  ]
 }

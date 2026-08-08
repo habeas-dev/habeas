@@ -5,7 +5,7 @@
   "trust": "community",
   "domain": "ingdirect.es",
   "country": "ES",
-  "version": "2026-08-08",
+  "version": "2026-08-08.1",
   "minVersion": "0.9.7",
   "categories": [
     "banking"
@@ -202,6 +202,10 @@
   ],
   "changelog": [
     {
+      "version": "2026-08-08.1",
+      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+    },
+    {
       "version": "2026-08-08",
       "changes": "Corrige `gaps`: los movimientos de tarjeta ya se extraen (ver 2026-07-23.3), así que solo queda inversión fuera de cobertura. El dato anterior era obsoleto y se publicaba como limitación."
     },
@@ -221,5 +225,22 @@
       "version": "2026-07-14",
       "changes": "Initial: movements (transactions), per-account monthly statements (PDF/Excel), and the integrated monthly statement (PDF). Grouped by account, 90-day window."
     }
-  ]
+  ],
+  "content": {
+    "en": {
+      "slug": "ing-transactions",
+      "docs": "transactions and statements",
+      "h1": "How to download your ING transactions and statements",
+      "intro": "ING lets you view your transactions and download monthly statements, but one account and one month at a time. Pulling a whole year, or several accounts together, is repetitive manual work.",
+      "note": "If you hold several accounts, Habeas lets you choose which ones the export covers and remembers that choice between syncs."
+    },
+    "es": {
+      "slug": "movimientos-ing",
+      "docs": "movimientos y extractos",
+      "h1": "Cómo descargar tus movimientos y extractos de ING",
+      "intro": "ING te deja ver tus movimientos y descargar extractos mensuales, pero cuenta por cuenta y mes a mes. Reunir un año entero, o varias cuentas a la vez, es un trabajo manual repetitivo.",
+      "note": "Si tienes varias cuentas, Habeas te deja elegir cuáles entran en la exportación y recuerda esa selección entre sincronizaciones."
+    }
+  },
+  "brand": "ING"
 }

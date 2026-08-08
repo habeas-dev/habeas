@@ -4,7 +4,7 @@
   "service": "pepephone",
   "country": "ES",
   "trust": "community",
-  "version": "2026-07-27.2",
+  "version": "2026-08-08",
   "minVersion": "0.9.2",
   "schema": "invoice@1",
   "categories": [
@@ -66,5 +66,26 @@
     "total": "total",
     "type": "typeDescription"
   },
-  "keepRaw": true
+  "keepRaw": true,
+  "content": {
+    "en": {
+      "slug": "pepephone-invoices",
+      "docs": "mobile and broadband bills",
+      "h1": "How to download your Pepephone bills",
+      "intro": "Pepephone publishes a monthly bill in your customer area. There is no way to ask for them all together."
+    },
+    "es": {
+      "slug": "facturas-pepephone",
+      "docs": "facturas de móvil y fibra",
+      "h1": "Cómo descargar tus facturas de Pepephone",
+      "intro": "Pepephone publica una factura mensual en tu área de cliente. No hay forma de pedirlas todas juntas."
+    }
+  },
+  "brand": "Pepephone",
+  "changelog": [
+    {
+      "version": "2026-08-08",
+      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+    }
+  ]
 }

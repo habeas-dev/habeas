@@ -86,9 +86,13 @@
       }
     }
   ],
-  "version": "2026-07-10.3",
+  "version": "2026-08-08",
   "minVersion": "0.1.53.13",
   "changelog": [
+    {
+      "version": "2026-08-08",
+      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+    },
     {
       "version": "2026-07-10.3",
       "changes": "Tickets: no cortar al llegar a un año sin compras (stopAfterEmpty) — antes se paraba en 2025 (sin compras) y ocultaba los tickets más antiguos."
@@ -109,5 +113,20 @@
       "version": "2026-07-08",
       "changes": "Recibos vía API JSON (cookie)."
     }
-  ]
+  ],
+  "content": {
+    "en": {
+      "slug": "leroy-merlin-receipts",
+      "docs": "receipts and orders",
+      "h1": "How to download your Leroy Merlin receipts and orders",
+      "intro": "Leroy Merlin keeps in-store receipts separate from online orders. Both live in your account and neither can be downloaded in bulk."
+    },
+    "es": {
+      "slug": "tickets-leroy-merlin",
+      "docs": "tickets y pedidos",
+      "h1": "Cómo descargar tus tickets y pedidos de Leroy Merlin",
+      "intro": "Leroy Merlin separa los tickets de tienda de los pedidos online. Ambos están en tu cuenta y ninguno se puede descargar en bloque."
+    }
+  },
+  "brand": "Leroy Merlin"
 }

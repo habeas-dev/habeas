@@ -68,11 +68,30 @@
   },
   "schema": "invoice@1",
   "minVersion": "0.1.35",
-  "version": "2026-07-08",
+  "version": "2026-08-08",
   "changelog": [
+    {
+      "version": "2026-08-08",
+      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+    },
     {
       "version": "2026-07-08",
       "changes": "Versión inicial: extractos (cross-domain api.caixabankpc.com), captura de DNI, PDF por URL absoluta."
     }
-  ]
+  ],
+  "content": {
+    "en": {
+      "slug": "caixabank-consumer-statements",
+      "docs": "card statements",
+      "h1": "How to download your CaixaBank Consumer statements",
+      "intro": "Your CaixaBank Consumer card statements are available as PDFs, one per period, with no combined download."
+    },
+    "es": {
+      "slug": "extractos-caixabank-consumer",
+      "docs": "extractos de tarjeta",
+      "h1": "Cómo descargar tus extractos de CaixaBank Consumer",
+      "intro": "Los extractos de tu tarjeta de CaixaBank Consumer están disponibles en PDF, uno por periodo, sin opción de descarga conjunta."
+    }
+  },
+  "brand": "CaixaBank Consumer"
 }

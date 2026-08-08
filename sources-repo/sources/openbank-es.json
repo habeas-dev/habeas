@@ -5,7 +5,7 @@
   "trust": "community",
   "domain": "openbank.es",
   "country": "ES",
-  "version": "2026-07-16",
+  "version": "2026-08-08",
   "minVersion": "0.3.0.24",
   "categories": [
     "banking"
@@ -289,6 +289,10 @@
   ],
   "changelog": [
     {
+      "version": "2026-08-08",
+      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+    },
+    {
       "version": "2026-07-16",
       "changes": "Map the movement's running balance (saldo.importe) to record.balanceAfter (promoted to a canonical field for the Cuéntamo contract). Requires extension >= 0.3.0.24."
     },
@@ -304,5 +308,20 @@
       "version": "2026-07-14",
       "changes": "Initial: integrated monthly statements (PDF) across all accounts. Movements/cards/investments are declared gaps for community contribution."
     }
-  ]
+  ],
+  "content": {
+    "en": {
+      "slug": "openbank-transactions",
+      "docs": "transactions and statements",
+      "h1": "How to download your Openbank transactions and statements",
+      "intro": "Openbank shows your transactions on its website and lets you download individual documents, but not gather them into a single file you can work with."
+    },
+    "es": {
+      "slug": "movimientos-openbank",
+      "docs": "movimientos y extractos",
+      "h1": "Cómo descargar tus movimientos y extractos de Openbank",
+      "intro": "Openbank muestra tus movimientos en su web y permite descargar documentos sueltos, pero no reunirlos en un único archivo con el que puedas trabajar."
+    }
+  },
+  "brand": "Openbank"
 }

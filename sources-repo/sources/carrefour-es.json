@@ -72,11 +72,32 @@
     "source": "orderSource"
   },
   "schema": "receipt@1",
-  "version": "2026-07-25",
+  "version": "2026-08-08",
   "changelog": [
+    {
+      "version": "2026-08-08",
+      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+    },
     {
       "version": "2026-07-08",
       "changes": "Tickets y pedidos online (offset pagination); PDF cuando existe."
     }
-  ]
+  ],
+  "content": {
+    "en": {
+      "slug": "carrefour-receipts",
+      "docs": "purchase receipts",
+      "h1": "How to download your Carrefour receipts",
+      "intro": "Carrefour keeps your hypermarket, petrol-station and online-order receipts in your account, but offers no way to download them all at once: you have to open and save them one by one.",
+      "note": "Carrefour only keeps the PDF for recent receipts. Older ones still show in your history, but their PDF is gone: Habeas still exports them as metadata (date, amount, store, category), which is all the service retains of them."
+    },
+    "es": {
+      "slug": "tickets-carrefour",
+      "docs": "tickets de compra",
+      "h1": "Cómo descargar tus tickets de Carrefour",
+      "intro": "Carrefour guarda tus tickets de hipermercado, gasolinera y pedidos online en tu cuenta, pero no ofrece ninguna forma de descargarlos todos de golpe: hay que abrirlos y guardarlos uno a uno.",
+      "note": "Carrefour solo conserva el PDF de los tickets recientes. Los más antiguos siguen apareciendo en tu historial, pero su PDF ya no existe: Habeas los exporta igualmente como metadatos (fecha, importe, tienda, categoría), que es todo lo que el servicio conserva de ellos."
+    }
+  },
+  "brand": "Carrefour"
 }

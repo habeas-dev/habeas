@@ -294,8 +294,15 @@
         },
         "resetCookiesOnLoginStatus": {
           "oneOf": [
-            { "type": "integer" },
-            { "type": "array", "items": { "type": "integer" } }
+            {
+              "type": "integer"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
           ],
           "description": "For a resetCookies source: an HTTP status (or array) that GETting loginUrl returns when the stored cookies are corrupted (WiZink: 400). On that main_frame response the extension wipes the cookies and reloads a clean login. Needs resetCookies:true + loginUrl."
         },
@@ -306,8 +313,17 @@
         },
         "readyUrl": {
           "oneOf": [
-            { "type": "string", "pattern": "^https://" },
-            { "type": "array", "items": { "type": "string", "pattern": "^https://" } }
+            {
+              "type": "string",
+              "pattern": "^https://"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^https://"
+              }
+            }
           ],
           "description": "Hold auto-sync until the tab is on the source's data view — a single https URL or an array of them (ready when ANY matches by host + path prefix + hash-route prefix, ignoring the trailing id). For SPAs that fire capturable requests on earlier screens (e.g. ING's data only exists at https://ing.ingdirect.es/pfm/#producto/<session-uuid>). Omit → every navigation is treated as ready."
         },
@@ -1126,6 +1142,52 @@
     "itemLabel": {
       "type": "string",
       "description": "Fallback display label template when a list row has no store/issuer/etc (e.g. a source whose list encrypts everything but the id). Templated with {internalId} / {field.path}, e.g. \"Pedido {internalId}\"."
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Data this source does NOT extract, in the service's own words. Published as a limitation on the guide page, so keep it current."
+    },
+    "content": {
+      "type": "object",
+      "description": "Copy for this source's guide page on habeas.dev, one entry per language code. OPTIONAL. Anything written here is PUBLISHED as an indexed page on habeas.dev, so it must be verifiable: describe what the documents are and what Habeas extracts, never invent steps for the service's own UI. Sources flagged beta:true never get a guide page, since the extraction is not yet verified.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[a-z]{2}$": {
+          "type": "object",
+          "required": [
+            "slug",
+            "h1",
+            "intro"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "slug": {
+              "type": "string",
+              "pattern": "^[a-z0-9-]+$",
+              "description": "URL segment for this language's guide page, e.g. 'tickets-carrefour'."
+            },
+            "docs": {
+              "type": "string",
+              "description": "What the documents are called, e.g. 'tickets de compra'."
+            },
+            "h1": {
+              "type": "string",
+              "description": "Page heading, phrased as the question a reader would search."
+            },
+            "intro": {
+              "type": "string",
+              "description": "One or two sentences on why this service's documents are hard to keep."
+            },
+            "note": {
+              "type": "string",
+              "description": "Optional caveat that is specific and verifiable for this source."
+            }
+          }
+        }
+      }
     }
   },
   "$defs": {

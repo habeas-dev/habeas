@@ -5,7 +5,7 @@
   "trust": "first-party",
   "domain": "wizink.es",
   "country": "ES",
-  "version": "2026-07-28.1",
+  "version": "2026-08-08",
   "currency": "EUR",
   "categories": [
     "card",
@@ -217,6 +217,10 @@
   ],
   "changelog": [
     {
+      "version": "2026-08-08",
+      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+    },
+    {
       "version": "2026-07-10",
       "changes": "Los extractos ahora muestran una etiqueta legible («Extracto <fecha>») en lugar del identificador interno, y llevan el tipo «Extracto»."
     },
@@ -225,5 +229,20 @@
       "changes": "Fuente unificada: reemplaza las tres fuentes WiZink (movimientos, extractos-PDF, extractos-Excel) por un único source con salidas seleccionables (stream × formato). El stream «Movimientos» captura las transacciones de tarjeta; el stream «Extractos» ofrece cada extracto en PDF o Excel compartiendo el mismo listado. Requiere la extensión 0.1.52+ (soporte de salidas)."
     }
   ],
-  "minVersion": "0.9.3"
+  "minVersion": "0.9.3",
+  "content": {
+    "en": {
+      "slug": "wizink-statements",
+      "docs": "card transactions and statements",
+      "h1": "How to download your WiZink transactions and statements",
+      "intro": "WiZink publishes one statement per period plus a transaction list. Getting the full history means downloading each statement separately."
+    },
+    "es": {
+      "slug": "extractos-wizink",
+      "docs": "movimientos y extractos de tarjeta",
+      "h1": "Cómo descargar tus movimientos y extractos de WiZink",
+      "intro": "WiZink publica un extracto por periodo y un listado de movimientos. Para tener el histórico completo hay que ir descargando cada extracto por separado."
+    }
+  },
+  "brand": "WiZink"
 }

@@ -5,7 +5,7 @@
   "trust": "community",
   "domain": "pagatelia.com",
   "country": "ES",
-  "version": "2026-07-24",
+  "version": "2026-08-08",
   "minVersion": "0.7.0.48",
   "categories": [
     "tolls"
@@ -58,5 +58,26 @@
     "number": "number",
     "total": "total"
   },
-  "schema": "invoice@1"
+  "schema": "invoice@1",
+  "content": {
+    "en": {
+      "slug": "pagatelia-invoices",
+      "docs": "toll invoices",
+      "h1": "How to download your Pagatelia invoices",
+      "intro": "Pagatelia builds up one invoice per period for tolls and car parks. Recovering the full history means downloading them one by one."
+    },
+    "es": {
+      "slug": "facturas-pagatelia",
+      "docs": "facturas de peaje",
+      "h1": "Cómo descargar tus facturas de Pagatelia",
+      "intro": "Pagatelia acumula una factura por periodo de peajes y parkings. Recuperar el histórico completo significa descargarlas una a una."
+    }
+  },
+  "brand": "Pagatelia",
+  "changelog": [
+    {
+      "version": "2026-08-08",
+      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+    }
+  ]
 }

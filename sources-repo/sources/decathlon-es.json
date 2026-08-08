@@ -5,7 +5,7 @@
   "trust": "community",
   "domain": "decathlon.es",
   "country": "ES",
-  "version": "2026-07-08",
+  "version": "2026-08-08",
   "categories": [
     "sports"
   ],
@@ -57,8 +57,27 @@
   "schema": "receipt@1",
   "changelog": [
     {
+      "version": "2026-08-08",
+      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+    },
+    {
       "version": "2026-07-08",
       "changes": "Pedidos/recibos con detalle JSON."
     }
-  ]
+  ],
+  "content": {
+    "en": {
+      "slug": "decathlon-receipts",
+      "docs": "purchase receipts",
+      "h1": "How to download your Decathlon receipts",
+      "intro": "Decathlon keeps your purchase history tied to your account, with no option to export the whole thing."
+    },
+    "es": {
+      "slug": "tickets-decathlon",
+      "docs": "tickets de compra",
+      "h1": "Cómo descargar tus tickets de Decathlon",
+      "intro": "Decathlon guarda tu historial de compras asociado a tu cuenta, pero sin una opción de exportarlo entero."
+    }
+  },
+  "brand": "Decathlon"
 }

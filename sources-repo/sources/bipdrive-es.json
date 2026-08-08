@@ -61,11 +61,30 @@
     "total": "total"
   },
   "schema": "invoice@1",
-  "version": "2026-07-08",
+  "version": "2026-08-08",
   "changelog": [
+    {
+      "version": "2026-08-08",
+      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+    },
     {
       "version": "2026-07-08",
       "changes": "Facturas vía tabla AJAX (from:html); PDF por POST de formulario."
     }
-  ]
+  ],
+  "content": {
+    "en": {
+      "slug": "bipdrive-invoices",
+      "docs": "toll invoices",
+      "h1": "How to download your Bip&Drive invoices",
+      "intro": "Bip&Drive issues one invoice per period covering your tolls and parking. They are all in your customer area, as PDFs, one at a time."
+    },
+    "es": {
+      "slug": "facturas-bipdrive",
+      "docs": "facturas de peaje",
+      "h1": "Cómo descargar tus facturas de Bip&Drive",
+      "intro": "Bip&Drive emite una factura por periodo con tus peajes y aparcamientos. Están todas en tu área de cliente, en PDF y de una en una."
+    }
+  },
+  "brand": "Bip&Drive"
 }

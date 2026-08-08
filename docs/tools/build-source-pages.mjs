@@ -8,9 +8,14 @@
 // rest of the site is laid out (English at the root, Spanish under /es/). The two are cross-linked
 // by hreflang, so neither language ever dead-ends into the other.
 //
-// A source with no entry in source-pages.json gets NO page. That is deliberate: pages spun from a
-// template with nothing source-specific in them are doorway content, which Google's spam policies
-// name explicitly. Every generated page states what that source produces and what it does not cover.
+// The copy lives in each source's own definition in the registry (`content`, one entry per language),
+// so publishing a source ships its guide with it. docs/source-pages.json stays as a LOCAL OVERRIDE for
+// tweaking wording without republishing the catalog.
+//
+// A source with no `content` gets NO page, and neither does one flagged `beta: true` — those are drafts
+// not yet verified against a real capture, and a page that ranks for "how to download your X" when the
+// extraction may not work is worse than no page. Pages spun from a template with nothing
+// source-specific in them would be doorway content, which Google's spam policies name explicitly.
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -344,7 +349,7 @@ ${sections}
 
 const raw = await fetch(INDEX_URL).then((r) => r.json());
 const index = raw.sources || raw;
-const copies = JSON.parse(readFileSync(join(DOCS, 'source-pages.json'), 'utf8'));
+const overrides = JSON.parse(readFileSync(join(DOCS, 'source-pages.json'), 'utf8'));
 const byId = new Map(index.map((s) => [s.id, s]));
 
 for (const L of Object.values(LANGS)) {
@@ -357,11 +362,19 @@ for (const L of Object.values(LANGS)) {
 let written = 0;
 // Resolve every source up front: sibling links and the index both need the whole set.
 const resolved = [];
-for (const [id, entry] of Object.entries(copies)) {
-  if (id.startsWith('_')) continue;
-  const meta = byId.get(id);
-  if (!meta) { console.error(`  ! ${id}: not in the registry — skipped`); continue; }
-  resolved.push({ id, entry, meta, full: await fetch(meta.url).then((r) => r.json()) });
+const skipped = [];
+for (const meta of index) {
+  const full = await fetch(meta.url).then((r) => r.json());
+  if (meta.beta || full.beta) { if (full.content) skipped.push(`${meta.id} (beta)`); continue; }
+  const override = overrides[meta.id] || {};
+  // Registry content is the source of truth; the local file overrides it field by field.
+  const entry = { brand: override.brand || full.brand || meta.name };
+  for (const lang of Object.keys(LANGS)) {
+    const base = full.content?.[lang];
+    if (base || override[lang]) entry[lang] = { ...base, ...override[lang] };
+  }
+  if (!Object.keys(LANGS).some((l) => entry[l])) { skipped.push(`${meta.id} (no content)`); continue; }
+  resolved.push({ id: meta.id, entry, meta, full });
 }
 
 for (const { id, entry, meta, full } of resolved) {
@@ -385,6 +398,5 @@ for (const lang of Object.keys(LANGS)) {
   written++;
 }
 
-const missing = index.filter((s) => s.country === 'ES' && !copies[s.id]).map((s) => s.id);
-console.log(`${written} pages written (${Object.keys(LANGS).join(', ')})`);
-if (missing.length) console.log(`ES sources with no curated copy (no page generated): ${missing.join(', ')}`);
+console.log(`${written} pages written (${Object.keys(LANGS).join(', ')}) from ${resolved.length} sources`);
+if (skipped.length) console.log(`no guide: ${skipped.join(', ')}`);

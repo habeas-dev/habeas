@@ -9,7 +9,7 @@
   "categories": [
     "home"
   ],
-  "version": "2026-07-08",
+  "version": "2026-08-08",
   "crossDomainHosts": [
     "cssom-prod.ingka.com"
   ],
@@ -51,5 +51,26 @@
     "type": "type"
   },
   "schema": "receipt@1",
-  "minVersion": "0.1.36"
+  "minVersion": "0.1.36",
+  "content": {
+    "en": {
+      "slug": "ikea-receipts",
+      "docs": "receipts and purchases",
+      "h1": "How to download your IKEA receipts and purchases",
+      "intro": "IKEA keeps your purchases and receipts in your account, but saving them means opening each one in turn."
+    },
+    "es": {
+      "slug": "tickets-ikea",
+      "docs": "tiquets y compras",
+      "h1": "Cómo descargar tus tiquets y compras de IKEA",
+      "intro": "IKEA conserva tus compras y tiquets en tu cuenta, pero para guardarlos hay que ir entrando en cada uno."
+    }
+  },
+  "brand": "IKEA",
+  "changelog": [
+    {
+      "version": "2026-08-08",
+      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+    }
+  ]
 }

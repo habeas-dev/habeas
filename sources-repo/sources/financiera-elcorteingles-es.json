@@ -9,7 +9,7 @@
     "card",
     "loan"
   ],
-  "version": "2026-07-20.3",
+  "version": "2026-08-08",
   "minVersion": "0.5.0",
   "keepRaw": true,
   "contributors": [
@@ -145,6 +145,10 @@
   ],
   "changelog": [
     {
+      "version": "2026-08-08",
+      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+    },
+    {
       "version": "2026-07-20.3",
       "changes": "First publish to the live registry. Requires extension >= 0.5.0 (the milestone that ships declarative capturePaths, the login-safe scoped token observer, and the {date:FORMAT} document token this source relies on). Verified end-to-end by the contributor."
     },
@@ -184,5 +188,20 @@
       "version": "2026-07-16",
       "changes": "Initial (authored from a redacted handoff recording, verified live by the contributor). Multi-card (grouped by contract): card movements (transactions), aplazamientos/financing purchases, and monthly statement PDFs (generated per month, base64). Cookie session + replayed bearer + per-card eci-custom-encrypted-pan header."
     }
-  ]
+  ],
+  "content": {
+    "en": {
+      "slug": "financiera-el-corte-ingles-statements",
+      "docs": "transactions, instalments and statements",
+      "h1": "How to download your Financiera El Corte Inglés transactions and statements",
+      "intro": "The El Corte Inglés card has three things worth keeping: the transactions, the payment instalments and the monthly statements. Each lives on its own screen."
+    },
+    "es": {
+      "slug": "extractos-financiera-el-corte-ingles",
+      "docs": "movimientos, aplazamientos y extractos",
+      "h1": "Cómo descargar tus movimientos y extractos de Financiera El Corte Inglés",
+      "intro": "La tarjeta de El Corte Inglés tiene tres cosas distintas que interesan: los movimientos, los aplazamientos de pago y los extractos mensuales. Cada uno vive en su propia pantalla."
+    }
+  },
+  "brand": "Financiera El Corte Inglés"
 }
