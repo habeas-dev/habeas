@@ -41,9 +41,14 @@ jobs:
                   --jq '.[] | select(.isDraft==false and .isPrerelease==false) | .tagName' | sort -V | tail -1)
           echo "Highest release: $tag"
           [ -n "$tag" ] || { echo 'no release to retry'; exit 0; }
-          gh release download "$tag" --repo "$GITHUB_REPOSITORY" --pattern 'habeas-*.zip' --dir dist
-          zip=$(ls dist/habeas-*.zip 2>/dev/null | head -1)
+          # web-ext names the zip from the extension's `name`, so this must not assume a fixed prefix:
+          # renaming the extension (0.9.11, "Habeas — export receipts & invoices") changed it from
+          # habeas-X.Y.Z.zip to habeas_export_receipts_invoices-X.Y.Z.zip and this silently stopped
+          # finding any asset — the retry looked green while never uploading anything.
+          gh release download "$tag" --repo "$GITHUB_REPOSITORY" --pattern '*.zip' --dir dist
+          zip=$(ls dist/*.zip 2>/dev/null | head -1)
           echo "Zip: ${zip:-<none>}"
+          [ -n "$zip" ] || { echo "::error::release $tag has no .zip asset"; exit 1; }
           echo "path=$zip" >> "$GITHUB_OUTPUT"
         continue-on-error: true
 
