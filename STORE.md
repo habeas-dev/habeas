@@ -120,6 +120,73 @@ Shorten to fit the CWS 132-char limit:
 
 ---
 
+## CWS paste-ready block (plain text — the Chrome Web Store does not render Markdown)
+
+**Title (45 max) — 35 chars**
+```
+Habeas — export receipts & invoices
+```
+
+**Summary (132 max) — 118 chars**
+```
+Download your own receipts, invoices and bank statements from sites with no export — in your own session. Open source.
+```
+
+**Description**
+```
+Habeas — reclaim your own data, in your own session
+
+Many services hold data that is yours — receipts, invoices, card, bank or investment movements — behind walls you can't automate (Cloudflare, Akamai…), with neither an API nor an export. Habeas gives it back to you.
+
+Unlike server-side scraping, Habeas runs inside your real browser, in your already signed-in session. Because of that:
+• It never fights anti-bot systems: it inherits your valid session.
+• It never stores your passwords. You log in yourself; the token lives only in memory and is cleared when you close the browser.
+• You solve MFA/OTP live, exactly as you always do.
+
+It's the opposite of how aggregators like Plaid or Tink operate.
+
+WORKS TODAY WITH
+Carrefour, Dia, IKEA, Decathlon, Leroy Merlin, ING, Openbank, WiZink, CaixaBank Consumer, Financiera El Corte Inglés, Bip&Drive, Pagatelia, Pepe Energy, Pepephone (Spain), plus Amazon, AliExpress, PayPal, Revolut, N26, American Express, Trade Republic, DeGiro, Raisin and Hover — and any source the community adds.
+
+YOUR ARCHIVE, MADE VISUAL
+Everything you recover lands in your Archive: a clear view of your documents, laid out in a source → account tree, with cards grouped by month or category, amounts and status. Search, filter by account, and open any saved document.
+
+YOU DECIDE WHERE YOUR ARCHIVE LIVES
+By default it is stored locally in this browser. With one click you can move it to the cloud to reach it from several devices — Dropbox, Google Drive, WebDAV, S3, or a local folder. You can also send specific documents to a destination: a download, a local folder, or an HTTP endpoint you configure. Nothing leaves your browser until you choose a destination.
+
+SOURCES ARE DATA, NOT CODE
+Sources are declarative definitions — no remotely-hosted code, honoring MV3's rules. There are audited first-party sources and a growing community catalog. Missing a service? Record mode watches the site's own API as you browse and drafts the source for you, no coding needed, and you can share it with the community.
+
+PRIVACY AND CONTROL, BY DESIGN
+• Local-first and open source (AGPL-3.0): you can audit exactly what it does.
+• Domain-bound trust boundary: a source's captured session can only ever be replayed to its own service; crossing domains requires an explicit allow-list and a consent screen.
+• Integrations on your terms: a website can propose a data flow, but nothing runs until you approve it — and only back to that same site. Revocable anytime.
+
+YOUR RIGHT, YOUR DATA
+Habeas rests on your right to data portability (GDPR Art. 20) and the principle of habeas data: it is your own data, in your own session, through free software you run yourself. Habeas is not a PSD2-regulated actor (it initiates no payments). Each site's terms of service may restrict automated access; complying with them is your responsibility.
+
+No telemetry · no accounts · no stored passwords.
+
+Open source: https://github.com/habeas-dev/habeas
+Privacy: https://habeas.dev/privacy.html
+```
+
+### Spanish localised listing
+
+**Title — 36 chars**
+```
+Habeas — descarga tickets y facturas
+```
+
+**Summary — 110 chars**
+```
+Descarga tus tickets, facturas y extractos de servicios sin exportación — en tu propia sesión. Código abierto.
+```
+
+For the Spanish description, translate the block above; the service list stays as-is (proper nouns).
+
+---
+
 ## Keeping the listings in sync
 
 **AMO is done** (2026-08-08): name, summary and the supported-services list are live. Note that
