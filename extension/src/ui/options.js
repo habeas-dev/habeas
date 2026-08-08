@@ -27,6 +27,7 @@ import { meetsMinVersion } from '../lib/version.js';
 import { formatDiag, clearDiag, readReqCtx, clearReqCtx, formatReqCtx } from '../lib/diag.js';
 import { validateAdapter } from '../adapters/validate.js';
 import { scrubText } from '../lib/redact.js';
+import { debugMarkEnabled, setDebugMark, HEADER as DBG_HEADER } from '../lib/debugmark.js';
 
 let CATALOG = {};
 // Community-catalog update detection for the Services list: entries fetched once (best-effort, cached), and a
@@ -947,4 +948,20 @@ checkUpdates().catch(() => {}); // best-effort: flag Services that have a newer 
     await upsert('schedules', { id, datasource: ds, sink, spec, enabled: true });
     render(); // saveConfig → background re-arms the alarm
   };
+})();
+
+
+// Proxy debugging: tag Habeas's own requests so they stand out in a mitmproxy log. Off by default —
+// it can break a source whose API rejects the extra header, and it makes Habeas identifiable to the
+// service, which is exactly what running inside the user's session normally avoids.
+(async () => {
+  const cb = document.getElementById('dbgmark');
+  if (!cb) return;
+  cb.checked = await debugMarkEnabled();
+  const warn = document.getElementById('dbgmark-warn');
+  const sync = () => { if (warn) warn.style.opacity = cb.checked ? '1' : '.55'; };
+  sync();
+  cb.addEventListener('change', async () => { await setDebugMark(cb.checked); sync(); });
+  const lbl = document.querySelector('[data-i18n="opt_dbgmark_label"]');
+  if (lbl) lbl.title = DBG_HEADER;
 })();

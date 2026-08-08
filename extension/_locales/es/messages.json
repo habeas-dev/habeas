@@ -3414,5 +3414,17 @@
   },
   "archive_report_hint": {
     "message": "Avisa al equipo de que esta fuente no funciona, con la traza de fallo redactada"
+  },
+  "opt_dbgmark_title": {
+    "message": "Marcar las peticiones de Habeas (depuración con proxy)"
+  },
+  "opt_dbgmark_help": {
+    "message": "Añade una cabecera X-Habeas-Debug a cada petición que hace Habeas, con el id de la fuente y un contador, para distinguirlas del tráfico de la propia web. En mitmproxy, filtra con: ~hq \"X-Habeas-Debug\""
+  },
+  "opt_dbgmark_label": {
+    "message": "Etiquetar las peticiones propias de Habeas"
+  },
+  "opt_dbgmark_warn": {
+    "message": "Déjalo desactivado salvo que estés depurando. Puede hacer que una fuente empiece a fallar: Habeas ya replica las cabeceras propias de la web, así que una llamada cross-origin lleva preflight, y una API estricta tiene que permitir además esta cabecera. También hace a Habeas identificable para el propio servicio, no solo para tu proxy, que es justo lo que evita funcionar dentro de tu sesión."
   }
 }

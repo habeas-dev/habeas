@@ -11,6 +11,7 @@ import { chrome } from '../lib/ext.js';
 import { registrableDomain, hostOf } from '../adapters/validate.js';
 import { needsPageContext } from '../lib/autosync.js';
 import { esc as escH } from '../lib/esc.js';
+import { withDebugMark } from '../lib/debugmark.js';
 
 // Every fetcher goes through the site's tab (in-session: cookies + cf_clearance + fingerprint, so anti-bot
 // lets it through). But a page-context fetch is bound by THAT page's CSP (connect-src) and can throw a
@@ -55,17 +56,20 @@ export function netFetch(net, adapter, opts = {}) {
   // pool race). Opt-in per source via `retry: {status:[…], max, delayMs, bodyMatch?}`. `bodyMatch` gates on the
   // response body so a transient edge 401 (raw HTML) is retried but a genuine (JSON) auth 401 is surfaced at once
   // for re-login. Only page-context sources set this, whose responses cache their body (text() is re-readable).
+  // Tag every request for proxy debugging (a no-op unless the user turned it on in Settings → Advanced).
+  // Wrapping the FINAL fetcher means throttled and retried calls carry it too — one place, no gaps.
+  const mark = (fn) => withDebugMark(fn, adapter && adapter.id);
   const retry = adapter && adapter.retry;
-  if (!retry || !Array.isArray(retry.status) || !retry.status.length) return attempt;
+  if (!retry || !Array.isArray(retry.status) || !retry.status.length) return mark(attempt);
   const max = Math.max(1, retry.max || 3);
-  return async (u, i) => {
+  return mark(async (u, i) => {
     for (let n = 0; ; n++) {
       const r = await attempt(u, i);
       if (r.ok || n >= max || !retry.status.includes(r.status)) return r;
       if (retry.bodyMatch) { let b = ''; try { b = await r.text(); } catch (e) {} if (String(b).indexOf(retry.bodyMatch) < 0) return r; }
       if (retry.delayMs > 0) await new Promise((res) => setTimeout(res, retry.delayMs));
     }
-  };
+  });
 }
 
 // Cookie policy for the source's own API calls. Default 'include' (a cookie-authed source needs its

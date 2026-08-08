@@ -11,6 +11,17 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Mark Habeas's own requests, for proxy debugging** (`lib/debugmark.js`, toggle in Settings →
+  Advanced, **off by default**). Adds `X-Habeas-Debug: <source-id>/<n>` to every request the runtime
+  makes, so a mitmproxy log can be filtered to exactly Habeas's traffic (`~hq "X-Habeas-Debug"`) and a
+  sweep followed request by request. Applied at the single chokepoint every source request already goes
+  through (`runtime/inventory.js#netFetch`), wrapping the final fetcher so throttled and retried calls
+  carry it too. While the toggle is off the request is passed through untouched, byte-identical to what
+  the site's own SPA would send. It stays off by default for two reasons stated in the UI: Habeas
+  already replays the site's custom headers, so a cross-origin call is preflighted and a strict API must
+  allow this extra header too — turning it on can make a source start failing, which looks exactly like
+  the bug being chased; and it makes Habeas identifiable to the *service*, not just to your proxy, which
+  is the one thing running inside the user's own session normally avoids.
 - **"Report a problem" on any installed source, from the Archive** (`ui/reportproblem.js`, button in the
   per-source toolbar). Reporting a broken source already existed, but only inside a handoff *thread* —
   it needed a submission you had made, so anyone who merely *uses* a source had no way to say it broke.

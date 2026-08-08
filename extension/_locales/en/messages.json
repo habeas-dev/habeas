@@ -3414,5 +3414,17 @@
   },
   "archive_report_hint": {
     "message": "Tell the team this source is not working, with the redacted failure trace"
+  },
+  "opt_dbgmark_title": {
+    "message": "Mark Habeas requests (proxy debugging)"
+  },
+  "opt_dbgmark_help": {
+    "message": "Adds an X-Habeas-Debug header to every request Habeas makes, carrying the source id and a counter, so you can tell them apart from the site’s own traffic. In mitmproxy, filter with: ~hq \"X-Habeas-Debug\""
+  },
+  "opt_dbgmark_label": {
+    "message": "Tag Habeas’s own requests"
+  },
+  "opt_dbgmark_warn": {
+    "message": "Leave this off unless you are actively debugging. It can make a source start failing — Habeas already replays the site’s custom headers, so a cross-origin call is preflighted, and a strict API must allow this extra header too. It also makes Habeas identifiable to the service itself, not just to your proxy, which is the one thing running inside your own session normally avoids."
   }
 }
