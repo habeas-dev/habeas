@@ -5,7 +5,7 @@
   "trust": "community",
   "domain": "ingdirect.es",
   "country": "ES",
-  "version": "2026-08-08.2",
+  "version": "2026-08-09",
   "minVersion": "0.9.11.4",
   "categories": [
     "banking"
@@ -202,6 +202,10 @@
   ],
   "changelog": [
     {
+      "version": "2026-08-09",
+      "changes": "La guía dice ya que ING solo sirve unos 90 días de histórico y que en cuenta corriente lo aplica de forma estricta. Quien busca \"descargar mis extractos de ING\" espera su histórico completo; encontrarse tres meses sin aviso es peor que no tener página. Verificado contra una cuenta real: con el recorte del mes que cruza la ventana (extensión 0.9.12) los extractos de ese mes ya se descargan."
+    },
+    {
       "version": "2026-08-08.2",
       "changes": "Ventana a 89 días (no 90): el límite de ING cuenta el día de hoy, así que el día más antiguo válido es hoy−89 y pedir hoy−90 se sale por uno. Requiere extensión 0.9.11.4, que además recorta el fromDate del informe mensual a la ventana en vez de pedir desde el día 1 del mes."
     },
@@ -236,14 +240,14 @@
       "docs": "transactions and statements",
       "h1": "How to download your ING transactions and statements",
       "intro": "ING lets you view your transactions and download monthly statements, but one account and one month at a time. Pulling a whole year, or several accounts together, is repetitive manual work.",
-      "note": "If you hold several accounts, Habeas lets you choose which ones the export covers and remembers that choice between syncs."
+      "note": "ING serves a limited history — around 90 days — and enforces it strictly on current accounts, so Habeas brings that window rather than years back: the sooner you start, the more you keep. If you hold several accounts, it lets you choose which ones the export covers and remembers that choice between syncs."
     },
     "es": {
       "slug": "movimientos-ing",
       "docs": "movimientos y extractos",
       "h1": "Cómo descargar tus movimientos y extractos de ING",
       "intro": "ING te deja ver tus movimientos y descargar extractos mensuales, pero cuenta por cuenta y mes a mes. Reunir un año entero, o varias cuentas a la vez, es un trabajo manual repetitivo.",
-      "note": "Si tienes varias cuentas, Habeas te deja elegir cuáles entran en la exportación y recuerda esa selección entre sincronizaciones."
+      "note": "ING sirve un histórico limitado —unos 90 días— y en las cuentas corrientes lo aplica de forma estricta, así que Habeas trae ese periodo, no años atrás: cuanto antes empieces, más conservas. Si tienes varias cuentas, te deja elegir cuáles entran en la exportación y recuerda esa selección entre sincronizaciones."
     }
   },
   "brand": "ING"
