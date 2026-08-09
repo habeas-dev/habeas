@@ -4,11 +4,21 @@ Generates the 1280×800 PNGs used on the Chrome Web Store and Firefox AMO listin
 self-contained HTML mockup — so they can be regenerated (and edited/localized) whenever the UI or
 copy changes, instead of hand-capturing the live extension.
 
+## Modes
+
+- default → promo shots for the Chrome Web Store and Firefox AMO: headline, subtitle and the UI panel
+  placed in the corner.
+- `--plain` → the same panels with the headline, subtitle and footer removed and the UI centred, written
+  to `out/plain/`. For listings that want a screenshot of the application rather than a promo image
+  (AlternativeTo). Same synthetic data either way.
+
 ## Files
 - `screenshots.html` — five `<section class="shot">` panels (visual archive · popup launcher · cloud
   archive/first-run assistant · record mode · consent). Each shot shows when `document.body[data-shot="N"]`
   is set. Edit the headlines, sample data, or add a shot here; keep `SHOTS` in `render.mjs` in sync.
   All sample data is synthetic (fictional brands/banks/amounts) — safe to publish.
+  The version shown in the panels is injected from `extension/manifest.json` at render time (`.vtag`
+  spans) — it used to be hardcoded and read v0.6.0 while the extension was on 0.9.12.
 - `render.mjs` — renders each shot to `out/habeas-shot-N.png` at exactly 1280×800 (24-bit, no alpha),
   the size both stores accept.
 

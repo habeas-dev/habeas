@@ -15,6 +15,18 @@
     color:#eafcf9;padding:64px 72px}
   body[data-shot="1"] #s1,body[data-shot="2"] #s2,body[data-shot="3"] #s3,
   body[data-shot="4"] #s4,body[data-shot="5"] #s5{display:block}
+
+  /* Plain mode (body[data-plain]): drop the marketing chrome and centre the UI, for listings that want
+     a screenshot of the app rather than a promo image (AlternativeTo). Same synthetic data, same panels;
+     only the headline, subtitle and brand strip go away. The store shots keep the promo layout. */
+  body[data-plain] .brand, body[data-plain] h1.head, body[data-plain] p.sub,
+  body[data-plain] .credit { display:none }
+  /* .shot is display:none by default and only the active one is shown, so the flex centring has to be
+     scoped to the visible shot or every panel would reappear. */
+  body[data-plain][data-shot="1"] #s1, body[data-plain][data-shot="2"] #s2,
+  body[data-plain][data-shot="3"] #s3, body[data-plain][data-shot="4"] #s4,
+  body[data-plain][data-shot="5"] #s5 { display:flex; align-items:center; justify-content:center; padding:32px }
+  body[data-plain] .stage { position:static; right:auto; bottom:auto }
   .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px;opacity:.95}
   .brand .dot{width:22px;height:22px;border-radius:6px;background:#eafcf9}
   h1.head{font-size:44px;line-height:1.1;font-weight:800;margin:22px 0 8px;max-width:760px;letter-spacing:-.5px}
@@ -127,7 +139,7 @@
       </div>
     </div>
   </div>
-  <div class="credit">Local-first · open-source (AGPL-3.0) · no stored passwords · v0.6.0</div>
+  <div class="credit">Local-first · open-source (AGPL-3.0) · no stored passwords · <span class="vtag"></span></div>
 </section>
 
 <!-- 2 · popup launcher -->
@@ -148,7 +160,7 @@
             <span class="qchip">🗂️ Nordbank</span><span class="qchip">🗂️ FreshMart</span><span class="qchip">🗂️ Sportzone</span><span class="qchip">🗂️ Voltia Energy</span>
           </div>
         </div>
-        <div class="row muted" style="margin-top:14px;font-size:12px;justify-content:space-between"><span>🗒️ Activity · Advanced tools</span><span>v0.6.0</span></div>
+        <div class="row muted" style="margin-top:14px;font-size:12px;justify-content:space-between"><span>🗒️ Activity · Advanced tools</span><span><span class="vtag"></span></span></div>
       </div>
     </div>
   </div>
@@ -200,7 +212,7 @@
       </div>
     </div>
   </div>
-  <div class="credit">Drafts an auditable, declarative source — no remotely-hosted code · v0.6.0</div>
+  <div class="credit">Drafts an auditable, declarative source — no remotely-hosted code · <span class="vtag"></span></div>
 </section>
 
 <!-- 5 · consent -->
