@@ -9,6 +9,8 @@ import { emptySource } from '../lib/store/format.js';
 import { deliveredSet, forgetDeliveredItems } from '../lib/state.js';
 import { getConfig } from '../lib/config.js';
 import { esc } from '../lib/esc.js';
+import { recordsToCsv, storeSourceRecords, csvFileName } from '../lib/csv.js';
+import { t, applyI18n } from '../lib/i18n.js';
 
 const $ = (s) => document.querySelector(s);
 const money = (v, c) => (v == null || v === '' ? '' : `${v} ${c || ''}`.trim());
@@ -39,7 +41,37 @@ async function init() {
   $('#del-items').onclick = onDeleteItems;
   $('#reset-ledger').onclick = onResetLedger;
   $('#clear-source').onclick = onClearSource;
+  $('#export-csv').onclick = () => exportCsv(false);
+  $('#export-csv-all').onclick = () => exportCsv(true);
+  applyI18n(document);
   await loadBackend();
+}
+
+// Export the store to a spreadsheet — another PROJECTION of the canonical store (docs/canonical-store.md),
+// not a new copy of the data: the records are the ones already held, laid out as CSV. Tombstoned items are
+// left out (they no longer exist at the source). The generation is pure (lib/csv.js); this only downloads it.
+async function exportCsv(all) {
+  if (!backend) return;
+  const sources = all ? (await backend.listSources()).slice().sort() : [$('#source').value].filter(Boolean);
+  if (!sources.length) return;
+  const records = [];
+  for (const sourceId of sources) {
+    let src;
+    try { src = await backend.loadSource(sourceId); } catch (e) { continue; } // a broken source must not lose the rest
+    // Stamp the store key on records that carry no `source` of their own, so an all-sources export stays attributable.
+    for (const r of storeSourceRecords(src)) records.push(r.source ? r : { ...r, source: sourceId });
+  }
+  if (!records.length) { alert(t('store_export_csv_empty')); return; }
+  const name = csvFileName(all ? 'all' : sources[0]);
+  triggerDownload(new Blob([recordsToCsv(records)], { type: 'text/csv;charset=utf-8' }), name);
+  $('#summary').textContent = t('store_export_csv_done', [String(records.length), name]);
+}
+
+function triggerDownload(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 8000);
 }
 
 // (Re)open the chosen backend and list its sources. Any backend error (cloud not connected, no token in this

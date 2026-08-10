@@ -10,6 +10,23 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **Export the canonical store to CSV** (`lib/csv.js`, button in the store inspector). A spreadsheet is one
+  more **projection** of the store — "extract once → canonical store → project to anything" — so this adds a
+  view, not a second copy of the data: no re-extraction, no network, and the generator is a pure module with
+  **zero new dependencies** (an extension that asks to be audited should not pull a library to write commas).
+  - RFC 4180 quoting, a **UTF-8 BOM** so Excel shows accents on a double click, and `;` as the default
+    separator — the list separator of the locales these files get opened in; `,` stays available.
+  - Column headers are English and **not translated**: they are a machine contract another app's importer
+    reads. `date, description, amount, currency, balance, account, category, source, id`, mapped from what
+    `buildRecord` actually emits per schema (`total`/`amount`/`netAmount` → `amount`, `balanceAfter` →
+    `balance`, `account`/`settlementAccount`/`group` → `account`).
+  - **Nothing captured is lost**: every remaining field of the record follows as its own column
+    (`store.name`, `instrument.ticker`, `extra.<field>`…), which is the whole point of `record.extra`.
+    Tombstoned items — the ones the service no longer has — are excluded, so the file never claims something
+    exists when the store knows it does not.
+  - Exports the selected source or every source in the backend, as `habeas-<source>-YYYY-MM-DD.csv`.
+
 ## [0.9.12] — 2026-08-08
 
 ### Fixed

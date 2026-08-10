@@ -3426,5 +3426,30 @@
   },
   "opt_dbgmark_warn": {
     "message": "Use it with the addon. On its own the header goes all the way to the service — which makes Habeas identifiable to it, the one thing running inside your own session avoids — and a strict API that does not allow the extra header will start rejecting requests, which looks exactly like the bug you are chasing. With the addon neither happens. Leave it off when you are not debugging."
+  },
+  "store_export_csv": {
+    "message": "Export CSV"
+  },
+  "store_export_csv_all": {
+    "message": "Export every source (CSV)"
+  },
+  "store_export_csv_hint": {
+    "message": "Download the stored records as a spreadsheet (UTF-8 CSV). Tombstoned items — those the service no longer has — are left out."
+  },
+  "store_export_csv_empty": {
+    "message": "Nothing to export: there are no live records here."
+  },
+  "store_export_csv_done": {
+    "message": "Exported $COUNT$ records to $FILE$",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "128"
+      },
+      "file": {
+        "content": "$2",
+        "example": "habeas-ing-es-2026-08-11.csv"
+      }
+    }
   }
 }

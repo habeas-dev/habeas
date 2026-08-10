@@ -3426,5 +3426,30 @@
   },
   "opt_dbgmark_warn": {
     "message": "Úsalo con el addon. Por sí sola, la cabecera llega hasta el servicio —lo que hace a Habeas identificable para él, justo lo que evita funcionar dentro de tu sesión— y una API estricta que no permita esa cabecera empezará a rechazar peticiones, que se parece exactamente al fallo que persigues. Con el addon no pasa ninguna de las dos cosas. Déjalo apagado cuando no estés depurando."
+  },
+  "store_export_csv": {
+    "message": "Exportar CSV"
+  },
+  "store_export_csv_all": {
+    "message": "Exportar todas las fuentes (CSV)"
+  },
+  "store_export_csv_hint": {
+    "message": "Descarga los registros guardados como hoja de cálculo (CSV en UTF-8). Los items con lápida —los que el servicio ya no tiene— quedan fuera."
+  },
+  "store_export_csv_empty": {
+    "message": "Nada que exportar: aquí no hay registros vivos."
+  },
+  "store_export_csv_done": {
+    "message": "Exportados $COUNT$ registros a $FILE$",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "128"
+      },
+      "file": {
+        "content": "$2",
+        "example": "habeas-ing-es-2026-08-11.csv"
+      }
+    }
   }
 }

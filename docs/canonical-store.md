@@ -94,6 +94,18 @@ consumer gets just the records (no document fetch). A file/store sink gets recor
 Per-sink derived views (computed, not stored): `pending[sink]`, `archived[sink]` (gone ∩ delivered),
 `missed[sink]` (gone − delivered).
 
+### CSV export (a projection, not an extra copy)
+`lib/csv.js` projects records to a spreadsheet — pure, zero dependencies (RFC 4180 quoting, UTF-8 **BOM** so
+Excel reads accents on a double click, separator `;` by default because that is the list separator of the
+locales these files are opened in; `,` on request). Columns are a **machine contract**, so their headers are
+English and untranslated: `date, description, amount, currency, balance, account, category, source, id`,
+derived from what `sinks/format.js#buildRecord` emits per schema (`total`/`amount`/`netAmount` → `amount`,
+`balanceAfter` → `balance`, `account`/`settlementAccount`/`group` → `account`). **Every other field of the
+record follows as its own column** (`store.name`, `instrument.ticker`, `extra.<field>` …) — the store's
+promise is that nothing captured is lost, so neither may the export. Tombstoned items are excluded by
+default. Offered from the store inspector ("Export CSV", per source or all of them) as
+`habeas-<source>-YYYY-MM-DD.csv`.
+
 ## Incremental sync (the store IS the index)
 - **Additions** — page newest-first, **stop after K consecutive items already in the store** (+ a small date
   overlap for late inserts). Only genuinely new items hit the network; only they incur detail/PDF fetches.
