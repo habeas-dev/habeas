@@ -60,6 +60,13 @@ Everything is a **pure** `handleRequest(request, env)`. The handoff endpoints:
 | `POST /handoff/:id` | team | set status · link `sourceId` · attach `sourceJson` (a **versioned "install this" card**) · post a **captureRequest** `{instruction, endpoint, reveal}`. |
 | `GET /submitter/:sid/handoffs` | contributor | their pseudonymous inbox. |
 
+**Nobody should be met with silence.** `.github/workflows/handoff-watch.yml` polls this inbox every two
+hours and opens a single GitHub issue while anything is waiting for a reply, closing it once the queue
+clears. It reports a **count only** — this repository and its workflow logs are public, and pairing a
+contributor's handle with a service they hold an account with is precisely what the project exists to
+avoid. Needs the `HABEAS_ADMIN_TOKEN` repository secret (the Worker's `ADMIN_TOKEN`); without it the job
+no-ops, so a fork never fails on it.
+
 **Statuses:** `new → in_review → needs_info` → terminal `published` / `completed` / `declined` /
 `superseded`. `waitingForTeam` is derived when a thread is non-terminal and the last word is the
 contributor's. Team notifications fire to Telegram (`notifyTeam`, best-effort). Limits: 2 MB/bundle,
