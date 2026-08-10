@@ -11,6 +11,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **CSV export: selectable decimal mark.** The exporter now takes `{ decimal: '.' | ',' }` (a `<select>` in
+  the store inspector, remembered across exports). A dot is right when another *application* re-imports the
+  file; a comma is right when a *person* opens it in a spreadsheet set to a comma locale, where dot-decimals
+  arrive as text. A comma decimal combined with a comma delimiter is refused outright rather than emitting a
+  file that silently corrupts every amount.
 - **Export the canonical store to CSV** (`lib/csv.js`, button in the store inspector). A spreadsheet is one
   more **projection** of the store — "extract once → canonical store → project to anything" — so this adds a
   view, not a second copy of the data: no re-extraction, no network, and the generator is a pure module with

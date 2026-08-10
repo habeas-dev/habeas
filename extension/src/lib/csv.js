@@ -13,11 +13,16 @@ export const BOM = '\uFEFF';
 
 // One CSV field. Objects/arrays are JSON-encoded rather than stringified to "[object Object]", so a value
 // the schema didn't flatten is still readable and nothing is silently lost.
-export function csvEscape(value, delimiter = ';') {
+// `decimal` only affects finite numbers: ',' renders 1234.5 as "1234,5" so that Excel in a locale whose
+// decimal mark is a comma reads it as a NUMBER instead of as text. Everything else is untouched.
+export function csvEscape(value, delimiter = ';', decimal = '.') {
   if (value == null) return '';
   let s;
   if (typeof value === 'string') s = value;
-  else if (typeof value === 'number' || typeof value === 'boolean') s = String(value);
+  else if (typeof value === 'number') {
+    s = String(value);
+    if (decimal === ',' && Number.isFinite(value)) s = s.replace('.', ',');
+  } else if (typeof value === 'boolean') s = String(value);
   else if (value instanceof Date) s = value.toISOString();
   else { try { s = JSON.stringify(value); } catch (e) { s = String(value); } }
   if (s === '') return '';
@@ -26,17 +31,28 @@ export function csvEscape(value, delimiter = ';') {
 }
 
 // rows: array of plain objects (keyed by column) or arrays (already positional).
-// opts: { columns?, delimiter?, bom?, eol?, header? }
+// opts: { columns?, delimiter?, decimal?, bom?, eol?, header? }
 //  - delimiter defaults to ';'. Excel parses a `,`-separated file as a single column under any locale whose
 //    list separator is `;` (Spanish, French, German…), which is where these exports are opened by double
 //    click. `,` stays available for tools that expect the RFC's own example separator.
+//  - decimal defaults to '.', the right choice when another APPLICATION re-imports the file: a
+//    locale-dependent decimal mark inside a machine-to-machine contract is a bug waiting to happen.
+//    Pass ',' when a PERSON will open the file in a spreadsheet set to a comma locale, or every amount
+//    lands as text. The two audiences want opposite things, hence the switch.
 //  - a UTF-8 BOM is prepended by default: without it Excel decodes the file as the legacy ANSI codepage and
 //    accented text arrives mangled ("Alimentación"). Consumers that don't want it pass { bom: false }.
 export function toCsv(rows, opts = {}) {
   const delimiter = opts.delimiter || ';';
+  const decimal = opts.decimal === ',' ? ',' : '.';
+  // A comma decimal mark inside comma-separated fields is unparseable ("1,5" reads as two cells) even
+  // with quoting, since most importers strip quotes before sniffing numbers. Refuse rather than emit a
+  // file that silently corrupts every amount.
+  if (decimal === ',' && delimiter === ',') {
+    throw new Error('csv: decimal "," cannot be used with delimiter "," — pick ";" as the delimiter');
+  }
   const eol = opts.eol || '\r\n';
   const columns = opts.columns || columnsOf(rows);
-  const line = (cells) => cells.map((c) => csvEscape(c, delimiter)).join(delimiter);
+  const line = (cells) => cells.map((c) => csvEscape(c, delimiter, decimal)).join(delimiter);
   const out = [];
   if (opts.header !== false && columns) out.push(line(columns));
   for (const row of rows || []) {

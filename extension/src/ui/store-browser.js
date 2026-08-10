@@ -13,6 +13,7 @@ import { recordsToCsv, storeSourceRecords, csvFileName } from '../lib/csv.js';
 import { t, applyI18n } from '../lib/i18n.js';
 
 const $ = (s) => document.querySelector(s);
+const DECIMAL_KEY = 'habeas-csv-decimal';
 const money = (v, c) => (v == null || v === '' ? '' : `${v} ${c || ''}`.trim());
 const storeName = (r) => (r.store && r.store.name) || (r.issuer && r.issuer.name) || r.storeName || '';
 const selectedIds = () => [...document.querySelectorAll('.sel:checked')].map((c) => c.dataset.id);
@@ -43,6 +44,15 @@ async function init() {
   $('#clear-source').onclick = onClearSource;
   $('#export-csv').onclick = () => exportCsv(false);
   $('#export-csv-all').onclick = () => exportCsv(true);
+  // Remember the decimal mark: whoever needs the comma (opens the file in a spreadsheet) needs it EVERY
+  // time, and re-picking it on each export is the kind of friction that ends in a wrong file.
+  try {
+    const saved = localStorage.getItem(DECIMAL_KEY);
+    if (saved === ',' || saved === '.') $('#csv-decimal').value = saved;
+  } catch (e) { /* private mode: just use the default */ }
+  $('#csv-decimal').onchange = (e) => {
+    try { localStorage.setItem(DECIMAL_KEY, e.target.value); } catch (e2) { /* ignore */ }
+  };
   applyI18n(document);
   await loadBackend();
 }
@@ -63,7 +73,8 @@ async function exportCsv(all) {
   }
   if (!records.length) { alert(t('store_export_csv_empty')); return; }
   const name = csvFileName(all ? 'all' : sources[0]);
-  triggerDownload(new Blob([recordsToCsv(records)], { type: 'text/csv;charset=utf-8' }), name);
+  const decimal = $('#csv-decimal')?.value === ',' ? ',' : '.';
+  triggerDownload(new Blob([recordsToCsv(records, { decimal })], { type: 'text/csv;charset=utf-8' }), name);
   $('#summary').textContent = t('store_export_csv_done', [String(records.length), name]);
 }
 

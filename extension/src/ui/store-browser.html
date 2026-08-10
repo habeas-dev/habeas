@@ -42,6 +42,13 @@
       <button id="reset-ledger" hidden>Marcar no entregados (0)</button>
       <button id="export-csv" type="button" data-i18n="store_export_csv" data-i18n-title="store_export_csv_hint"></button>
       <button id="export-csv-all" type="button" data-i18n="store_export_csv_all" data-i18n-title="store_export_csv_hint"></button>
+      <label id="csv-decimal-label" data-i18n-title="store_export_csv_decimal_hint">
+        <span data-i18n="store_export_csv_decimal"></span>
+        <select id="csv-decimal">
+          <option value="." data-i18n="store_export_csv_decimal_dot"></option>
+          <option value="," data-i18n="store_export_csv_decimal_comma"></option>
+        </select>
+      </label>
       <span style="flex:1"></span>
       <button id="clear-source" class="danger">Vaciar esta fuente…</button>
     </div>

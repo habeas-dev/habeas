@@ -140,3 +140,27 @@ test('csvFileName: habeas-<source>-<day>.csv, with the stream suffix made filena
   assert.equal(csvFileName('', '2026-08-11'), 'habeas-store-2026-08-11.csv');
   assert.match(csvFileName('all'), /^habeas-all-\d{4}-\d{2}-\d{2}\.csv$/); // defaults to today
 });
+
+// ── decimal mark ────────────────────────────────────────────────────────────
+// Two audiences want opposite things: another APP re-importing the file needs a dot (a locale-dependent
+// decimal inside a machine contract is a bug), while a PERSON opening it in a comma-locale spreadsheet
+// needs a comma or every amount lands as text.
+test('decimal: "," renders numbers with a comma, leaving strings alone', () => {
+  const csv = toCsv([{ amount: -12.5, note: 'a.b', n: 1000 }], { decimal: ',', bom: false, header: false });
+  assert.equal(csv.trim(), '-12,5;a.b;1000');
+});
+
+test('decimal: defaults to "." and ignores non-finite numbers', () => {
+  assert.equal(toCsv([{ a: -12.5 }], { bom: false, header: false }).trim(), '-12.5');
+  assert.equal(toCsv([{ a: NaN }], { decimal: ',', bom: false, header: false }).trim(), 'NaN');
+  assert.equal(toCsv([{ a: Infinity }], { decimal: ',', bom: false, header: false }).trim(), 'Infinity');
+});
+
+test('decimal: a comma decimal with a comma delimiter is refused, not silently corrupted', () => {
+  assert.throws(() => toCsv([{ a: 1.5 }], { decimal: ',', delimiter: ',' }), /delimiter/);
+});
+
+test('decimal: comma values still get quoted when the delimiter is ";"… they do not need to be', () => {
+  // "1234,5" contains no ';', no quote and no newline → no quoting required by RFC 4180.
+  assert.equal(toCsv([{ a: 1234.5 }], { decimal: ',', bom: false, header: false }).trim(), '1234,5');
+});

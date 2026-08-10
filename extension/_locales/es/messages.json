@@ -3436,6 +3436,18 @@
   "store_export_csv_hint": {
     "message": "Descarga los registros guardados como hoja de cálculo (CSV en UTF-8). Los items con lápida —los que el servicio ya no tiene— quedan fuera."
   },
+  "store_export_csv_decimal": {
+    "message": "Decimales:"
+  },
+  "store_export_csv_decimal_dot": {
+    "message": "1234.56 (para otras apps)"
+  },
+  "store_export_csv_decimal_comma": {
+    "message": "1234,56 (para hojas de cálculo)"
+  },
+  "store_export_csv_decimal_hint": {
+    "message": "Usa el punto si el fichero lo va a importar otra aplicación, y la coma si lo vas a abrir tú en una hoja de cálculo configurada en español: de lo contrario los importes llegan como texto."
+  },
   "store_export_csv_empty": {
     "message": "Nada que exportar: aquí no hay registros vivos."
   },

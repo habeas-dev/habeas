@@ -3436,6 +3436,18 @@
   "store_export_csv_hint": {
     "message": "Download the stored records as a spreadsheet (UTF-8 CSV). Tombstoned items — those the service no longer has — are left out."
   },
+  "store_export_csv_decimal": {
+    "message": "Decimals:"
+  },
+  "store_export_csv_decimal_dot": {
+    "message": "1234.56 (for other apps)"
+  },
+  "store_export_csv_decimal_comma": {
+    "message": "1234,56 (for spreadsheets)"
+  },
+  "store_export_csv_decimal_hint": {
+    "message": "Use a dot when another app will import the file, and a comma when you will open it in a spreadsheet set to a comma locale — otherwise every amount arrives as text."
+  },
   "store_export_csv_empty": {
     "message": "Nothing to export: there are no live records here."
   },
