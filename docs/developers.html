@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Habeas for developers — bank connections for your app, without an aggregator</title>
+  <meta name="description" content="Add bank and broker data to your finance app without paying a PSD2 aggregator. Habeas runs in your user's browser, in their own session. Open source, origin-bound, consent-gated." />
+  <link rel="canonical" href="https://habeas.dev/developers.html" />
+  <link rel="icon" type="image/svg+xml" href="logo.svg" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .doc { max-width: 820px; margin: 0 auto; padding: 8px 20px 64px; }
+    .doc h1 { font-size: 2rem; margin: 24px 0 6px; }
+    .doc h2 { font-size: 1.3rem; margin: 36px 0 8px; }
+    .doc h3 { font-size: 1.02rem; margin: 22px 0 6px; }
+    .doc p, .doc li { line-height: 1.65; }
+    .doc ul, .doc ol { padding-left: 1.2em; }
+    .doc .lead { color: var(--muted, #888); margin: 0 0 24px; font-size: 1.08rem; }
+    .doc .box { border: 1px solid var(--line, #3333); border-radius: 10px; padding: 14px 16px; margin: 18px 0; }
+    .doc pre { overflow-x: auto; padding: 14px 16px; border: 1px solid var(--line, #3333); border-radius: 10px; background: color-mix(in srgb, var(--surface) 88%, var(--bg)); }
+    .doc code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .92em; }
+    .doc hr { border: none; border-top: 1px solid var(--line, #3333); margin: 44px 0; }
+    .doc a { color: inherit; }
+    .steps { counter-reset: step; list-style: none; padding-left: 0; }
+    .steps li { counter-increment: step; position: relative; padding-left: 42px; margin-bottom: 14px; }
+    .steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line, #3335); display: flex; align-items: center; justify-content: center; font-size: .85rem; font-weight: 700; }
+    .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 18px 0; }
+    .cols .card { border: 1px solid var(--line, #3333); border-radius: 12px; padding: 16px; }
+    .cols .card h3 { margin-top: 0; }
+    .cta { display: inline-block; margin: 6px 10px 6px 0; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line, #3335); text-decoration: none; font-weight: 600; }
+  </style>
+  <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
+  <script defer src="https://analytics.habeas.dev/script.js" data-website-id="84a75f7a-c014-4ce8-a3be-1f8dd1899a28" data-domains="habeas.dev"></script>
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://habeas.dev/developers.html" />
+  <meta property="og:title" content="Habeas for developers — bank connections for your app, without an aggregator" />
+  <meta property="og:description" content="Add bank and broker data to your finance app without paying a PSD2 aggregator. Habeas runs in your user's browser, in their own session." />
+  <meta property="og:image" content="https://habeas.dev/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Habeas — download your receipts, invoices and bank statements, from inside your own browser session." />
+  <meta property="og:site_name" content="Habeas" />
+  <meta name="twitter:card" content="summary_large_image" />
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="logo-light.svg" />
+        <img class="logo" src="logo.svg" alt="Habeas" />
+      </picture>
+      <span class="name">Habeas</span>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/why-habeas.html">Why Habeas?</a>
+        <a href="/sources.html">Sources</a>
+        <a href="/developers.html">Developers</a>
+        <a href="/architecture.html">Architecture</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
+        <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <span class="langswitch" role="group" aria-label="Language">
+          <button data-lang="en" aria-pressed="true">EN</button>
+          <button data-lang="es" aria-pressed="false">ES</button>
+        </span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="doc">
+    <div data-lang-content="en">
+    <h1>Bank connections for your app, without an aggregator</h1>
+    <p class="lead">If you build a personal-finance app, you already know the wall: reading your users' bank transactions programmatically means paying an aggregator, and the entry price is out of reach for a small team. Habeas is another way in. It is free, open source, and any app can use it.</p>
+
+    <div class="box">
+      <strong>The short version.</strong> Habeas is a browser extension your user installs. It reads <em>their own</em> data from <em>their own</em> authenticated session, on their machine, and delivers it to an endpoint <strong>on your domain</strong>. No server-side scraping, no stored credentials, no third party accumulating anyone's financial history.
+    </div>
+
+    <h2>How it works</h2>
+    <ol class="steps">
+      <li><strong>Your user installs Habeas</strong> and enables the sources they care about (their bank, their broker).</li>
+      <li><strong>Your app asks for a connection.</strong> Habeas opens <em>its own</em> consent screen. Nothing runs until the user approves it there.</li>
+      <li><strong>Data arrives at your endpoint</strong>, already normalized, as new items appear. You acknowledge what you actually stored; the rest is retried.</li>
+    </ol>
+
+    <h2>Two ways to integrate</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>Pull — you fetch</h3>
+        <p>You propose a specific source, and once the user approves it you can trigger collection whenever you want (a "Sync" button in your UI).</p>
+<pre><code>await habeas('propose-workflow', {
+  source: 'ing-es',
+  sink: {
+    type: 'http',
+    url: 'https://your-app.com/ingest',
+    headers: { 'x-pair-token': '…' },
+  },
+});
+// then, later:
+await habeas('collect', { grantId });</code></pre>
+      </div>
+      <div class="card">
+        <h3>Push — they send</h3>
+        <p>You register only as a destination, with no source and no permission to fetch anything. The user routes whichever sources they want to you, from Habeas.</p>
+<pre><code>await habeas('register-sink', {
+  sink: {
+    type: 'http',
+    url: 'https://your-app.com/ingest',
+    headers: { 'x-pair-token': '…' },
+  },
+});</code></pre>
+      </div>
+    </div>
+    <p>Both are documented in <a href="https://github.com/habeas-dev/habeas/blob/main/consumers/external-hooks.md">external-hooks.md</a>. Most apps start with pull and add push later.</p>
+
+    <h2>What you receive</h2>
+    <ul>
+      <li><strong>Normalized records</strong>, not raw HTML: dates, amounts with sign, description, balance, an id for de-duplication, and the account they belong to. Each record also carries the raw source fields, so nothing is lost.</li>
+      <li><strong>Banking and brokerage.</strong> Transactions, and for brokers, trades and cash movements (units, price, fees, withholding, instrument).</li>
+      <li><strong>Only what is new.</strong> Habeas keeps a per-destination ledger, so re-syncing does not re-send what you already have.</li>
+      <li><strong>Per-record acknowledgment.</strong> Your endpoint replies with the ids it actually incorporated; anything else stays pending and is retried. No silent data loss.</li>
+    </ul>
+
+    <h2>The rules that make this safe</h2>
+    <p>These are enforced in code, not promised in a contract:</p>
+    <ul>
+      <li><strong>Origin-bound.</strong> The endpoint's host must equal your own origin. A site can only ever route data back to <em>itself</em>. There is no allowlist because there does not need to be one.</li>
+      <li><strong>Explicit consent.</strong> Nothing is registered or runs until the user approves it on Habeas's own screen, and an existing permission can never be widened silently.</li>
+      <li><strong>No credentials, ever.</strong> Habeas never reads, stores or types your user's passwords. They log in themselves, including any MFA.</li>
+      <li><strong>Revocable.</strong> The user can drop any integration at any time from Habeas's settings.</li>
+    </ul>
+
+    <h2>Adding a bank</h2>
+    <p>A source is a <strong>definition file</strong>, not code: it describes how to read a given service. They live in a public community catalog, so a source someone else writes works for your app too, and one you write works for everyone else. See <a href="https://github.com/habeas-dev/habeas/blob/main/docs/AUTHORING-SOURCES.md">AUTHORING-SOURCES.md</a> and <a href="https://github.com/habeas-dev/habeas/blob/main/docs/ASSISTED-AUTHORING.md">ASSISTED-AUTHORING.md</a>.</p>
+    <p>This is the part where collaborating actually pays off. Adapters are shared plumbing; the product you build on top is where you compete.</p>
+
+    <h2>What this is not</h2>
+    <p>So you can decide with the real trade-offs on the table:</p>
+    <ul>
+      <li><strong>It is not silent background sync.</strong> Your user must have a live session; if there is none, Habeas surfaces the login tab and waits for them. That is a design decision, not a missing feature.</li>
+      <li><strong>Sources need maintenance.</strong> When a service changes its site, its definition has to be updated. The difference is that you can fix it yourself instead of waiting for a vendor's roadmap.</li>
+      <li><strong>It runs on desktop browsers</strong>, where the extension lives.</li>
+      <li><strong>Each service has its own terms</strong>, and complying with them is the user's responsibility. Habeas operates on a person's own data, in their own session.</li>
+    </ul>
+
+    <h2>Start here</h2>
+    <p>
+      <a class="cta" href="https://github.com/habeas-dev/habeas/blob/main/docs/INTEGRATION.md">Integration guide</a>
+      <a class="cta" href="https://github.com/habeas-dev/habeas/blob/main/consumers/external-hooks.md">API reference</a>
+      <a class="cta" href="https://github.com/habeas-dev/habeas">Source (AGPL-3.0)</a>
+    </p>
+    <p>Habeas is licensed under AGPL-3.0: if you improve it, the improvements come back to the commons. <a href="https://cuentamo.com">Cuéntamo</a> was the first app to integrate it, and it is not meant to be the last.</p>
+    <p>Building something and hit the same wall? Open an issue on GitHub, or write to <a href="mailto:hola@habeas.dev">hola@habeas.dev</a>.</p>
+    </div>
+
+    <div data-lang-content="es" lang="es" hidden>
+    <h1>Conexión bancaria para tu app, sin agregador</h1>
+    <p class="lead">Si construyes una aplicación de finanzas personales ya conoces el muro: leer los movimientos bancarios de tus usuarios de forma programática pasa por pagar a un agregador, y el precio de entrada está fuera del alcance de un equipo pequeño. Habeas es otra vía. Es gratis, es software libre y puede usarlo cualquier aplicación.</p>
+
+    <div class="box">
+      <strong>La versión corta.</strong> Habeas es una extensión de navegador que instala tu usuario. Lee <em>sus propios</em> datos desde <em>su propia</em> sesión autenticada, en su equipo, y los entrega a un endpoint <strong>de tu dominio</strong>. Sin scraping en servidor, sin guardar credenciales, sin un tercero acumulando el historial financiero de nadie.
+    </div>
+
+    <h2>Cómo funciona</h2>
+    <ol class="steps">
+      <li><strong>Tu usuario instala Habeas</strong> y activa las fuentes que le interesan (su banco, su bróker).</li>
+      <li><strong>Tu aplicación pide la conexión.</strong> Habeas abre <em>su propia</em> pantalla de consentimiento. No corre nada hasta que el usuario aprueba ahí.</li>
+      <li><strong>Los datos llegan a tu endpoint</strong>, ya normalizados, según van apareciendo. Tú confirmas lo que has guardado de verdad; el resto se reintenta.</li>
+    </ol>
+
+    <h2>Dos formas de integrarlo</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>Pull — los pides tú</h3>
+        <p>Propones una fuente concreta y, una vez el usuario la aprueba, puedes lanzar la recolección cuando quieras (un botón «Sincronizar» en tu interfaz).</p>
+<pre><code>await habeas('propose-workflow', {
+  source: 'ing-es',
+  sink: {
+    type: 'http',
+    url: 'https://tu-app.com/ingest',
+    headers: { 'x-pair-token': '…' },
+  },
+});
+// y más adelante:
+await habeas('collect', { grantId });</code></pre>
+      </div>
+      <div class="card">
+        <h3>Push — te los envían</h3>
+        <p>Te registras solo como destino, sin fuente y sin permiso para pedir nada. El usuario dirige hacia ti las fuentes que quiera, desde Habeas.</p>
+<pre><code>await habeas('register-sink', {
+  sink: {
+    type: 'http',
+    url: 'https://tu-app.com/ingest',
+    headers: { 'x-pair-token': '…' },
+  },
+});</code></pre>
+      </div>
+    </div>
+    <p>Las dos están documentadas en <a href="https://github.com/habeas-dev/habeas/blob/main/consumers/external-hooks.md">external-hooks.md</a>. La mayoría empieza por pull y añade push después.</p>
+
+    <h2>Qué recibes</h2>
+    <ul>
+      <li><strong>Registros normalizados</strong>, no HTML en bruto: fecha, importe con signo, concepto, saldo, un identificador para deduplicar y la cuenta a la que pertenecen. Cada registro conserva además los campos originales de la fuente, así que no se pierde nada.</li>
+      <li><strong>Banca y bróker.</strong> Movimientos bancarios y, en bróker, operaciones y movimientos de efectivo (títulos, precio, comisiones, retención, instrumento).</li>
+      <li><strong>Solo lo nuevo.</strong> Habeas lleva un registro de entregas por destino, así que resincronizar no te reenvía lo que ya tienes.</li>
+      <li><strong>Confirmación por registro.</strong> Tu endpoint responde con los identificadores que ha incorporado realmente; lo demás queda pendiente y se reintenta. Sin pérdidas silenciosas.</li>
+    </ul>
+
+    <h2>Las reglas que hacen que esto sea seguro</h2>
+    <p>Están implementadas en el código, no prometidas en un contrato:</p>
+    <ul>
+      <li><strong>Ligado al origen.</strong> El host del endpoint tiene que ser el de tu propio dominio. Un sitio solo puede dirigir los datos hacia <em>sí mismo</em>. No hay lista blanca porque no hace falta.</li>
+      <li><strong>Consentimiento explícito.</strong> No se registra ni se ejecuta nada hasta que el usuario lo aprueba en la pantalla de Habeas, y un permiso existente nunca puede ampliarse en silencio.</li>
+      <li><strong>Nunca credenciales.</strong> Habeas no lee, ni guarda, ni escribe las contraseñas de tu usuario. Entra él, incluido el segundo factor.</li>
+      <li><strong>Revocable.</strong> El usuario puede retirar cualquier integración cuando quiera desde los ajustes de Habeas.</li>
+    </ul>
+
+    <h2>Añadir un banco</h2>
+    <p>Una fuente es un <strong>fichero de definición</strong>, no código: describe cómo leer un servicio concreto. Viven en un catálogo comunitario público, así que una fuente que escriba otro te sirve a ti, y una que escribas tú nos sirve al resto. Mira <a href="https://github.com/habeas-dev/habeas/blob/main/docs/AUTHORING-SOURCES.md">AUTHORING-SOURCES.md</a> y <a href="https://github.com/habeas-dev/habeas/blob/main/docs/ASSISTED-AUTHORING.md">ASSISTED-AUTHORING.md</a>.</p>
+    <p>Esta es la parte donde colaborar sale a cuenta de verdad. Los adaptadores son fontanería compartida; donde compites es en el producto que construyes encima.</p>
+
+    <h2>Lo que no es</h2>
+    <p>Para que decidas con las contrapartidas reales sobre la mesa:</p>
+    <ul>
+      <li><strong>No es sincronización silenciosa en segundo plano.</strong> Tu usuario tiene que tener sesión activa; si no la hay, Habeas le saca la pestaña de acceso y espera. Es una decisión de diseño, no una carencia.</li>
+      <li><strong>Las fuentes hay que mantenerlas.</strong> Cuando un servicio cambia su web, su definición se actualiza. La diferencia es que puedes arreglarlo tú mismo en vez de esperar a la hoja de ruta de un proveedor.</li>
+      <li><strong>Funciona en navegadores de escritorio</strong>, que es donde vive la extensión.</li>
+      <li><strong>Cada servicio tiene sus condiciones de uso</strong>, y cumplirlas es responsabilidad de quien lo usa. Habeas opera sobre los datos propios de una persona, en su propia sesión.</li>
+    </ul>
+
+    <h2>Por dónde empezar</h2>
+    <p>
+      <a class="cta" href="https://github.com/habeas-dev/habeas/blob/main/docs/INTEGRATION.md">Guía de integración</a>
+      <a class="cta" href="https://github.com/habeas-dev/habeas/blob/main/consumers/external-hooks.md">Referencia de la API</a>
+      <a class="cta" href="https://github.com/habeas-dev/habeas">Código (AGPL-3.0)</a>
+    </p>
+    <p>Habeas está bajo AGPL-3.0: si lo mejoras, las mejoras vuelven al común. <a href="https://cuentamo.com">Cuéntamo</a> fue la primera aplicación en integrarlo, y no pretende ser la última.</p>
+    <p>¿Estás construyendo algo y te topaste con el mismo muro? Abre un issue en GitHub o escribe a <a href="mailto:hola@habeas.dev">hola@habeas.dev</a>.</p>
+    </div>
+  </main>
+
+  <script src="nav-i18n.js"></script>
+  <script>
+    (function () {
+      const KEY = 'habeas-lang';
+      const saved = localStorage.getItem(KEY);
+      const lang = (saved === 'en' || saved === 'es') ? saved
+        : ((navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en');
+      const btns = document.querySelectorAll('.langswitch button[data-lang]');
+      function apply(l) {
+        document.documentElement.lang = l;
+        globalThis.habeasApplyTopNavLanguage?.(l);
+        document.querySelectorAll('[data-lang-content]').forEach((el) => { el.hidden = el.getAttribute('data-lang-content') !== l; });
+        btns.forEach((b) => b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === l)));
+      }
+      btns.forEach((b) => b.addEventListener('click', () => { const l = b.getAttribute('data-lang'); localStorage.setItem(KEY, l); apply(l); }));
+      apply(lang);
+    })();
+  </script>
+</body>
+</html>
