@@ -40,8 +40,13 @@
     <div class="controls" id="actions" hidden>
       <button id="del-items" class="danger">Borrar del almacén (0)</button>
       <button id="reset-ledger" hidden>Marcar no entregados (0)</button>
-      <button id="export-csv" type="button" data-i18n="store_export_csv" data-i18n-title="store_export_csv_hint"></button>
-      <button id="export-csv-all" type="button" data-i18n="store_export_csv_all" data-i18n-title="store_export_csv_hint"></button>
+      <label id="export-format-label" data-i18n-title="store_export_format_hint">
+        <span data-i18n="store_export_format"></span>
+        <select id="export-format">
+          <option value="csv" data-i18n="store_export_format_csv"></option>
+          <option value="qif" data-i18n="store_export_format_qif"></option>
+        </select>
+      </label>
       <label id="csv-decimal-label" data-i18n-title="store_export_csv_decimal_hint">
         <span data-i18n="store_export_csv_decimal"></span>
         <select id="csv-decimal">
@@ -49,6 +54,15 @@
           <option value="," data-i18n="store_export_csv_decimal_comma"></option>
         </select>
       </label>
+      <label id="qif-date-label" data-i18n-title="store_export_qif_date_hint" hidden>
+        <span data-i18n="store_export_qif_date"></span>
+        <select id="qif-date">
+          <option value="DMY" data-i18n="store_export_qif_date_dmy"></option>
+          <option value="MDY" data-i18n="store_export_qif_date_mdy"></option>
+        </select>
+      </label>
+      <button id="export-run" type="button" data-i18n="store_export" data-i18n-title="store_export_hint"></button>
+      <button id="export-run-all" type="button" data-i18n="store_export_all" data-i18n-title="store_export_hint"></button>
       <span style="flex:1"></span>
       <button id="clear-source" class="danger">Vaciar esta fuente…</button>
     </div>

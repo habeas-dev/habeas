@@ -3427,14 +3427,56 @@
   "opt_dbgmark_warn": {
     "message": "Use it with the addon. On its own the header goes all the way to the service — which makes Habeas identifiable to it, the one thing running inside your own session avoids — and a strict API that does not allow the extra header will start rejecting requests, which looks exactly like the bug you are chasing. With the addon neither happens. Leave it off when you are not debugging."
   },
-  "store_export_csv": {
-    "message": "Export CSV"
+  "store_export": {
+    "message": "Export"
   },
-  "store_export_csv_all": {
-    "message": "Export every source (CSV)"
+  "store_export_all": {
+    "message": "Export every source"
   },
-  "store_export_csv_hint": {
-    "message": "Download the stored records as a spreadsheet (UTF-8 CSV). Tombstoned items — those the service no longer has — are left out."
+  "store_export_hint": {
+    "message": "Download the stored records in the chosen format. Tombstoned items — those the service no longer has — are left out."
+  },
+  "store_export_format": {
+    "message": "Format:"
+  },
+  "store_export_format_csv": {
+    "message": "CSV (spreadsheet)"
+  },
+  "store_export_format_qif": {
+    "message": "QIF (GnuCash, HomeBank, Quicken…)"
+  },
+  "store_export_format_hint": {
+    "message": "CSV is for spreadsheets and for apps that import tables. QIF is the file desktop finance applications (GnuCash, HomeBank, KMyMoney, Quicken) read: bank movements and investment operations, each in its own section."
+  },
+  "store_export_qif_date": {
+    "message": "QIF dates:"
+  },
+  "store_export_qif_date_dmy": {
+    "message": "15/01/2026 (day first)"
+  },
+  "store_export_qif_date_mdy": {
+    "message": "01/15/2026 (month first)"
+  },
+  "store_export_qif_date_hint": {
+    "message": "QIF does not say which order its dates use, so every importer guesses (GnuCash asks you). Day first is what European apps expect; pick month first for a US Quicken file."
+  },
+  "store_export_qif_skipped": {
+    "message": "$COUNT$ investment records were left out: their operation could not be identified, and a QIF investment entry needs an explicit action (buy, sell, dividend…).",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "store_export_qif_none": {
+    "message": "Nothing exported: the $COUNT$ investment records here do not say which operation they are, and a QIF investment entry needs an explicit action (buy, sell, dividend…).",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
   },
   "store_export_csv_decimal": {
     "message": "Decimals:"
@@ -3448,10 +3490,10 @@
   "store_export_csv_decimal_hint": {
     "message": "Use a dot when another app will import the file, and a comma when you will open it in a spreadsheet set to a comma locale — otherwise every amount arrives as text."
   },
-  "store_export_csv_empty": {
+  "store_export_empty": {
     "message": "Nothing to export: there are no live records here."
   },
-  "store_export_csv_done": {
+  "store_export_done": {
     "message": "Exported $COUNT$ records to $FILE$",
     "placeholders": {
       "count": {

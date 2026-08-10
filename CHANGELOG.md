@@ -11,6 +11,41 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Export the canonical store to QIF** (`lib/qif.js`, next to the CSV export in the store inspector).
+  Desktop finance applications — GnuCash, HomeBank, KMyMoney, MoneyDance, Quicken — cannot **receive** a
+  push: their only inlet is a file, and QIF is the lingua franca of that world. Without it a user of those
+  apps had no automatic path in at all (GnuCash also reads OFX and HBCI, but HBCI is Germany-only). This is
+  another **projection** of the store, not a second copy, and it does not re-implement the mapping: it builds
+  on the CSV export's `recordToRow`, so both agree on what a record's date, description and amount are. Pure,
+  zero dependencies, no BOM (several importers read one as part of the first header).
+  - **Bank movements and investment operations, each in its own section of a single file**: the bank blocks
+    under `!Type:Bank` / `!Type:CCard` / `!Type:Cash` (card sources → CCard; a till receipt, which has no
+    account behind it → Cash; mixed → Bank), then `!Type:Invst`. An investment block cannot live under a
+    bank header — there `N` is a cheque number, here it is the operation — and a QIF file is a stream of
+    headers each governing the blocks that follow, so one file imports as two registers instead of making
+    the user import twice.
+  - **Investment operations are supported**: `D` date · `N` action · `Y` security · `I` price · `Q`
+    quantity · `T` total · `O` commission · `M` memo, mapped from `investment@2` (`side`, `units`, `price`,
+    `netAmount`/`grossAmount`, `commission`, `instrument`) and `investment@1` (`operation`). Actions covered:
+    **Buy, Sell, Div, IntInc, ReinvDiv, ShrsIn, ShrsOut, StkSplit, MiscExp**. `Y` takes the readable name
+    (then ticker, then ISIN); the ISIN goes to the memo when the name won the slot. **`taxWithheld` has no
+    QIF field and is NOT smuggled into `O`** — that would corrupt the cost basis importers derive from the
+    commission — it is stated in the memo instead. A broker **cash** movement is an ordinary account
+    movement and exports in the bank section.
+  - **What cannot be identified is left out and counted, never guessed**: a record whose operation is
+    unknown (or a share movement with no quantity, or a trade with no security/amount) is dropped and the
+    number reported in the UI. A Buy imported as a Sell corrupts a portfolio; a missing line does not.
+  - **Dates are selectable, amounts are not.** QIF never says whether its dates are `DD/MM/YYYY` or
+    `MM/DD/YYYY` (GnuCash asks the user), so the inspector offers both — day first by default. Amounts
+    always use a dot decimal and no thousands separator: a QIF is only ever read by another application, and
+    a comma there is not a decimal mark to any importer. The existing `Decimals:` selector is CSV-only, and
+    the UI now shows only the option that applies to the chosen format.
+  - QIF is line-oriented and has no quoting, so a line break inside a value collapses to a space (a stray
+    line, or a lone `^`, would split one movement into two). No currency or running-balance field exists in
+    the format: `balanceAfter` is dropped (importers recompute it) and a record in a currency other than the
+    file's dominant one says so in its memo.
+  - The two buttons now export in the **format picked from a selector** (CSV / QIF) instead of multiplying
+    into four, as `habeas-<source>-YYYY-MM-DD.qif`.
 - **CSV export: selectable decimal mark.** The exporter now takes `{ decimal: '.' | ',' }` (a `<select>` in
   the store inspector, remembered across exports). A dot is right when another *application* re-imports the
   file; a comma is right when a *person* opens it in a spreadsheet set to a comma locale, where dot-decimals

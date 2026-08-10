@@ -10,10 +10,13 @@ import { deliveredSet, forgetDeliveredItems } from '../lib/state.js';
 import { getConfig } from '../lib/config.js';
 import { esc } from '../lib/esc.js';
 import { recordsToCsv, storeSourceRecords, csvFileName } from '../lib/csv.js';
+import { recordsToQif, qifFileName } from '../lib/qif.js';
 import { t, applyI18n } from '../lib/i18n.js';
 
 const $ = (s) => document.querySelector(s);
 const DECIMAL_KEY = 'habeas-csv-decimal';
+const FORMAT_KEY = 'habeas-export-format';
+const QIF_DATE_KEY = 'habeas-qif-date';
 const money = (v, c) => (v == null || v === '' ? '' : `${v} ${c || ''}`.trim());
 const storeName = (r) => (r.store && r.store.name) || (r.issuer && r.issuer.name) || r.storeName || '';
 const selectedIds = () => [...document.querySelectorAll('.sel:checked')].map((c) => c.dataset.id);
@@ -42,25 +45,45 @@ async function init() {
   $('#del-items').onclick = onDeleteItems;
   $('#reset-ledger').onclick = onResetLedger;
   $('#clear-source').onclick = onClearSource;
-  $('#export-csv').onclick = () => exportCsv(false);
-  $('#export-csv-all').onclick = () => exportCsv(true);
-  // Remember the decimal mark: whoever needs the comma (opens the file in a spreadsheet) needs it EVERY
-  // time, and re-picking it on each export is the kind of friction that ends in a wrong file.
-  try {
-    const saved = localStorage.getItem(DECIMAL_KEY);
-    if (saved === ',' || saved === '.') $('#csv-decimal').value = saved;
-  } catch (e) { /* private mode: just use the default */ }
-  $('#csv-decimal').onchange = (e) => {
-    try { localStorage.setItem(DECIMAL_KEY, e.target.value); } catch (e2) { /* ignore */ }
-  };
+  $('#export-run').onclick = () => exportStore(false);
+  $('#export-run-all').onclick = () => exportStore(true);
+  // Remember the export choices: whoever needs the comma (opens the file in a spreadsheet) or QIF (feeds a
+  // desktop finance app) needs it EVERY time, and re-picking it on each export is the kind of friction that
+  // ends in a wrong file.
+  restoreChoice(FORMAT_KEY, '#export-format', ['csv', 'qif']);
+  restoreChoice(DECIMAL_KEY, '#csv-decimal', ['.', ',']);
+  restoreChoice(QIF_DATE_KEY, '#qif-date', ['DMY', 'MDY']);
+  $('#export-format').onchange = (e) => { remember(FORMAT_KEY, e.target.value); showFormatOptions(); };
+  $('#csv-decimal').onchange = (e) => remember(DECIMAL_KEY, e.target.value);
+  $('#qif-date').onchange = (e) => remember(QIF_DATE_KEY, e.target.value);
+  showFormatOptions();
   applyI18n(document);
   await loadBackend();
 }
 
-// Export the store to a spreadsheet — another PROJECTION of the canonical store (docs/canonical-store.md),
-// not a new copy of the data: the records are the ones already held, laid out as CSV. Tombstoned items are
-// left out (they no longer exist at the source). The generation is pure (lib/csv.js); this only downloads it.
-async function exportCsv(all) {
+// A remembered <select> choice (best-effort: private mode has no localStorage, and a missing choice is not
+// worth an error — the default is always a sane one).
+function remember(key, value) { try { localStorage.setItem(key, value); } catch (e) { /* ignore */ } }
+function restoreChoice(key, selector, allowed) {
+  try {
+    const saved = localStorage.getItem(key);
+    if (allowed.includes(saved)) $(selector).value = saved;
+  } catch (e) { /* private mode: just use the default */ }
+}
+
+// The decimal mark is a CSV-only decision (a QIF always uses a dot — see lib/qif.js) and the date order is a
+// QIF-only one (a CSV keeps the store's ISO dates), so only the relevant one is shown.
+function showFormatOptions() {
+  const qif = $('#export-format').value === 'qif';
+  $('#csv-decimal-label').hidden = qif;
+  $('#qif-date-label').hidden = !qif;
+}
+
+// Export the store — another PROJECTION of the canonical store (docs/canonical-store.md), not a new copy of
+// the data: the records are the ones already held, laid out as a spreadsheet (CSV) or as the file format
+// desktop finance apps import (QIF). Tombstoned items are left out (they no longer exist at the source).
+// The generation is pure (lib/csv.js, lib/qif.js); this only downloads it.
+async function exportStore(all) {
   if (!backend) return;
   const sources = all ? (await backend.listSources()).slice().sort() : [$('#source').value].filter(Boolean);
   if (!sources.length) return;
@@ -71,11 +94,25 @@ async function exportCsv(all) {
     // Stamp the store key on records that carry no `source` of their own, so an all-sources export stays attributable.
     for (const r of storeSourceRecords(src)) records.push(r.source ? r : { ...r, source: sourceId });
   }
-  if (!records.length) { alert(t('store_export_csv_empty')); return; }
-  const name = csvFileName(all ? 'all' : sources[0]);
+  if (!records.length) { alert(t('store_export_empty')); return; }
+  const sourceId = all ? 'all' : sources[0];
+  if ($('#export-format').value === 'qif') return exportQif(records, sourceId);
+  const name = csvFileName(sourceId);
   const decimal = $('#csv-decimal')?.value === ',' ? ',' : '.';
   triggerDownload(new Blob([recordsToCsv(records, { decimal })], { type: 'text/csv;charset=utf-8' }), name);
-  $('#summary').textContent = t('store_export_csv_done', [String(records.length), name]);
+  $('#summary').textContent = t('store_export_done', [String(records.length), name]);
+}
+
+// QIF: bank movements and investment operations in their own sections. A record whose investment operation
+// cannot be identified is left out — guessing Buy vs Sell would corrupt a portfolio — so the count of what
+// was dropped is reported next to the count of what was written, never swallowed.
+function exportQif(records, sourceId) {
+  const { text, exported, skipped } = recordsToQif(records, { dateOrder: $('#qif-date')?.value === 'MDY' ? 'MDY' : 'DMY' });
+  if (!exported) { alert(t('store_export_qif_none', [String(skipped)])); return; }
+  const name = qifFileName(sourceId);
+  triggerDownload(new Blob([text], { type: 'application/qif;charset=utf-8' }), name);
+  $('#summary').textContent = t('store_export_done', [String(exported), name])
+    + (skipped ? ' — ' + t('store_export_qif_skipped', [String(skipped)]) : '');
 }
 
 function triggerDownload(blob, name) {

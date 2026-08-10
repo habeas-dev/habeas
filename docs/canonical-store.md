@@ -103,8 +103,46 @@ derived from what `sinks/format.js#buildRecord` emits per schema (`total`/`amoun
 `balanceAfter` → `balance`, `account`/`settlementAccount`/`group` → `account`). **Every other field of the
 record follows as its own column** (`store.name`, `instrument.ticker`, `extra.<field>` …) — the store's
 promise is that nothing captured is lost, so neither may the export. Tombstoned items are excluded by
-default. Offered from the store inspector ("Export CSV", per source or all of them) as
+default. Offered from the store inspector ("Export", per source or all of them) as
 `habeas-<source>-YYYY-MM-DD.csv`.
+
+### QIF export (the same projection, for desktop finance apps)
+`lib/qif.js` writes the same records as **QIF** — the format desktop finance applications (GnuCash,
+HomeBank, KMyMoney, MoneyDance, Quicken) import. They cannot RECEIVE a push: their only inlet is a file, so
+without this there is no automatic path into them at all. It is a second **view**, not a second copy, and it
+does not re-implement the projection: it builds on `recordToRow` (the CSV one), so both exports agree on
+what the date, description and amount of a record are. Pure, zero dependencies, no BOM (several importers
+read a BOM as part of the first header).
+
+- **Two sections in one file.** Bank-like blocks under `!Type:Bank` / `!Type:CCard` / `!Type:Cash`, then
+  securities under `!Type:Invst` — an investment block *cannot* sit under a bank header (there `N` is a
+  cheque number, here it is the action). A QIF file is a stream of headers each governing the blocks that
+  follow, so one file with both sections imports as two registers; two downloads would only mean importing
+  twice. The bank header is the kind all its blocks agree on (card sources → `CCard`, a till receipt with no
+  account behind it → `Cash`), else `Bank`.
+- **Bank block**: `D`ate · `T`otal · `P`ayee · `M`emo · `L`(category) · `N`(number) · `^`. A negative `T` is
+  money out: `direction` decides (a broker cash movement's `kind` via `SIDE_DIR`), and with neither, a
+  receipt/invoice `total` is money **spent** — emitting a shop ticket as income would be a lie — while an
+  already-negative total (a refund) keeps its sign.
+- **Investment block**: `D` · `N` action · `Y` security · `I` price · `Q` quantity · `T` total (unsigned —
+  the action carries the direction) · `O` commission · `M` · `^`. Actions map from `investment@2`'s `side`
+  (and `investment@1`'s `operation`): Buy, Sell, Div, IntInc, ReinvDiv, ShrsIn, ShrsOut, StkSplit, MiscExp.
+  **A record whose operation cannot be identified is left out and COUNTED** (as is a share movement with no
+  quantity, or a trade with no security or no amount): a Buy imported as a Sell corrupts a portfolio, so the
+  export never guesses, and the UI reports how many were dropped.
+- **`Y` is a name, not an identifier**: `instrument.name`, else the ticker, else the ISIN. When the name won
+  the slot the ISIN goes to the memo. **`taxWithheld` has no QIF field** and must not be smuggled into `O`
+  (that would corrupt the cost basis every importer derives from it) — it is stated in the memo.
+- **Dates are configurable, amounts are not.** QIF never says whether its dates are `DD/MM/YYYY` or
+  `MM/DD/YYYY` (GnuCash asks the user), so the inspector offers both, day-first by default. Amounts always
+  use a **dot** decimal and no thousands separator: unlike a CSV, a QIF is only ever read by another
+  application, and a comma there is not a decimal mark to any importer. The `Decimals:` selector is
+  CSV-only.
+- **Escaping**: QIF is line-oriented and has no quoting, so a CR/LF inside a value collapses to a space —
+  otherwise a stray line (or a lone `^`) would split one movement into two. QIF also has no currency or
+  running-balance field: `balanceAfter` is dropped (importers recompute it) and a record in a currency other
+  than the file's dominant one says so in its memo.
+- Same naming as the CSV export, `habeas-<source>-YYYY-MM-DD.qif`.
 
 ## Incremental sync (the store IS the index)
 - **Additions** — page newest-first, **stop after K consecutive items already in the store** (+ a small date

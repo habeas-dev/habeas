@@ -3427,14 +3427,56 @@
   "opt_dbgmark_warn": {
     "message": "Úsalo con el addon. Por sí sola, la cabecera llega hasta el servicio —lo que hace a Habeas identificable para él, justo lo que evita funcionar dentro de tu sesión— y una API estricta que no permita esa cabecera empezará a rechazar peticiones, que se parece exactamente al fallo que persigues. Con el addon no pasa ninguna de las dos cosas. Déjalo apagado cuando no estés depurando."
   },
-  "store_export_csv": {
-    "message": "Exportar CSV"
+  "store_export": {
+    "message": "Exportar"
   },
-  "store_export_csv_all": {
-    "message": "Exportar todas las fuentes (CSV)"
+  "store_export_all": {
+    "message": "Exportar todas las fuentes"
   },
-  "store_export_csv_hint": {
-    "message": "Descarga los registros guardados como hoja de cálculo (CSV en UTF-8). Los items con lápida —los que el servicio ya no tiene— quedan fuera."
+  "store_export_hint": {
+    "message": "Descarga los registros guardados en el formato elegido. Los items con lápida —los que el servicio ya no tiene— quedan fuera."
+  },
+  "store_export_format": {
+    "message": "Formato:"
+  },
+  "store_export_format_csv": {
+    "message": "CSV (hoja de cálculo)"
+  },
+  "store_export_format_qif": {
+    "message": "QIF (GnuCash, HomeBank, Quicken…)"
+  },
+  "store_export_format_hint": {
+    "message": "El CSV es para hojas de cálculo y para aplicaciones que importan tablas. El QIF es el fichero que leen los programas de finanzas de escritorio (GnuCash, HomeBank, KMyMoney, Quicken): movimientos bancarios y operaciones de inversión, cada uno en su sección."
+  },
+  "store_export_qif_date": {
+    "message": "Fechas del QIF:"
+  },
+  "store_export_qif_date_dmy": {
+    "message": "15/01/2026 (día primero)"
+  },
+  "store_export_qif_date_mdy": {
+    "message": "01/15/2026 (mes primero)"
+  },
+  "store_export_qif_date_hint": {
+    "message": "El QIF no dice en qué orden van sus fechas, así que cada programa lo adivina (GnuCash te lo pregunta). Día primero es lo que esperan las aplicaciones europeas; elige mes primero para un fichero de Quicken estadounidense."
+  },
+  "store_export_qif_skipped": {
+    "message": "$COUNT$ registros de inversión quedaron fuera: no se pudo determinar su operación, y una entrada de inversión en QIF necesita una acción explícita (compra, venta, dividendo…).",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "store_export_qif_none": {
+    "message": "No se ha exportado nada: los $COUNT$ registros de inversión que hay aquí no dicen qué operación son, y una entrada de inversión en QIF necesita una acción explícita (compra, venta, dividendo…).",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
   },
   "store_export_csv_decimal": {
     "message": "Decimales:"
@@ -3448,10 +3490,10 @@
   "store_export_csv_decimal_hint": {
     "message": "Usa el punto si el fichero lo va a importar otra aplicación, y la coma si lo vas a abrir tú en una hoja de cálculo configurada en español: de lo contrario los importes llegan como texto."
   },
-  "store_export_csv_empty": {
+  "store_export_empty": {
     "message": "Nada que exportar: aquí no hay registros vivos."
   },
-  "store_export_csv_done": {
+  "store_export_done": {
     "message": "Exportados $COUNT$ registros a $FILE$",
     "placeholders": {
       "count": {

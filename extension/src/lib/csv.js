@@ -167,10 +167,14 @@ export function storeSourceRecords(sourceData, { includeGone = false } = {}) {
   return out.sort((a, b) => ((a.date || '') < (b.date || '') ? 1 : (a.date || '') > (b.date || '') ? -1 : 0));
 }
 
-// habeas-<source>-YYYY-MM-DD.csv — the source id can carry a stream suffix ("ing-es:movements") and, on a
-// community source, anything its author typed, so it is reduced to filename-safe characters.
-export function csvFileName(sourceId, date) {
+// habeas-<source>-YYYY-MM-DD.<ext> — the source id can carry a stream suffix ("ing-es:movements") and, on a
+// community source, anything its author typed, so it is reduced to filename-safe characters. Shared by every
+// projection that downloads a file (CSV, QIF) so they all name their exports the same way.
+export function exportFileName(sourceId, date, ext = 'csv') {
   const day = (date || new Date().toISOString().slice(0, 10)).slice(0, 10);
   const safe = String(sourceId || 'store').replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'store';
-  return `habeas-${safe}-${day}.csv`;
+  return `habeas-${safe}-${day}.${ext}`;
+}
+export function csvFileName(sourceId, date) {
+  return exportFileName(sourceId, date, 'csv');
 }
