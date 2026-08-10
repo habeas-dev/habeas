@@ -283,22 +283,49 @@ test('every public page carries social and structured metadata', async () => {
   }
 });
 
-test('why-habeas is split into one indexable URL per language, linked by hreflang', async () => {
-  const [en, es] = await Promise.all([
-    fs.readFile(path.join(docsDir, 'why-habeas.html'), 'utf8'),
-    fs.readFile(path.join(docsDir, 'es', 'por-que-habeas.html'), 'utf8'),
-  ]);
-  // Neither page may carry the other language's copy: that was the duplicate-content problem.
-  assert.doesNotMatch(en, /data-lang-content/, 'English page still holds a hidden language block');
-  assert.doesNotMatch(es, /data-lang-content/, 'Spanish page still holds a hidden language block');
-  assert.match(en, /<html lang="en">/);
-  assert.match(es, /<html lang="es">/);
-  assert.match(es, /<link rel="canonical" href="https:\/\/habeas\.dev\/es\/por-que-habeas\.html"/);
+// Pages that exist in both languages, as (English path, Spanish path). A page built with
+// `data-lang-content` shows one language and hides the other under a single URL: Google reads that as
+// duplicate content, has no way to serve the Spanish copy to Spanish searchers, and the Spanish nav
+// links to a page that opens in English. Add the pair here when a page gets a translation.
+const BILINGUAL_PAGES = [
+  ['why-habeas.html', 'es/por-que-habeas.html'],
+  ['developers.html', 'es/desarrolladores.html'],
+];
 
-  for (const [page, html] of [['en', en], ['es', es]]) {
-    assert.match(html, /hreflang="en" href="https:\/\/habeas\.dev\/why-habeas\.html"/, `${page}: no en alternate`);
-    assert.match(html, /hreflang="es" href="https:\/\/habeas\.dev\/es\/por-que-habeas\.html"/, `${page}: no es alternate`);
-    assert.match(html, /hreflang="x-default"/, `${page}: no x-default`);
+test('bilingual pages are split into one indexable URL per language, linked by hreflang', async () => {
+  for (const [enPath, esPath] of BILINGUAL_PAGES) {
+    const [en, es] = await Promise.all([
+      fs.readFile(path.join(docsDir, ...enPath.split('/')), 'utf8'),
+      fs.readFile(path.join(docsDir, ...esPath.split('/')), 'utf8'),
+    ]);
+    const enUrl = `https://habeas.dev/${enPath}`;
+    const esUrl = `https://habeas.dev/${esPath}`;
+
+    // Neither page may carry the other language's copy: that is the duplicate-content problem.
+    assert.doesNotMatch(en, /data-lang-content/, `${enPath}: still holds a hidden language block`);
+    assert.doesNotMatch(es, /data-lang-content/, `${esPath}: still holds a hidden language block`);
+    assert.match(en, /<html lang="en">/, `${enPath}: not marked as English`);
+    assert.match(es, /<html lang="es">/, `${esPath}: not marked as Spanish`);
+
+    for (const [label, html, self] of [[enPath, en, enUrl], [esPath, es, esUrl]]) {
+      assert.ok(html.includes(`<link rel="canonical" href="${self}"`), `${label}: canonical is not its own URL`);
+      assert.ok(html.includes(`hreflang="en" href="${enUrl}"`), `${label}: no en alternate`);
+      assert.ok(html.includes(`hreflang="es" href="${esUrl}"`), `${label}: no es alternate`);
+      assert.match(html, /hreflang="x-default"/, `${label}: no x-default`);
+      // The language switch has to navigate between the two URLs; toggling a hidden div is what the
+      // split removed, so a leftover toggle would silently undo it.
+      assert.match(html, /location\.href = ALT\[l\]/, `${label}: language switch does not navigate`);
+    }
+  }
+});
+
+test('a page with a Spanish version is linked from the Spanish nav by its Spanish URL', async () => {
+  // Relabelling the nav without repointing the href sends a Spanish reader to the English page — the
+  // dead end the split exists to remove.
+  const nav = await fs.readFile(path.join(docsDir, 'nav-i18n.js'), 'utf8');
+  for (const [enPath, esPath] of BILINGUAL_PAGES) {
+    assert.ok(nav.includes(`'/${enPath}': { en: '/${enPath}', es: '/${esPath}' }`),
+      `nav-i18n.js has no localized URL for /${enPath}`);
   }
 });
 

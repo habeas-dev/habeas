@@ -28,6 +28,7 @@
   // point at the right one, not just relabel the link. Keyed by the English (canonical) path.
   const LOCALIZED = {
     '/why-habeas.html': { en: '/why-habeas.html', es: '/es/por-que-habeas.html' },
+    '/developers.html': { en: '/developers.html', es: '/es/desarrolladores.html' },
   };
   const CANONICAL = {};
   for (const [key, urls] of Object.entries(LOCALIZED)) {

@@ -11,7 +11,8 @@ import sys
 
 DOCS = pathlib.Path(__file__).resolve().parent.parent
 IMAGE = "https://habeas.dev/og-image.png"
-PAGES = ["index.html", "why-habeas.html", "sources.html", "architecture.html", "privacy.html", "terms.html"]
+PAGES = ["index.html", "why-habeas.html", "sources.html", "architecture.html", "privacy.html", "terms.html",
+         "developers.html", "es/desarrolladores.html", "es/por-que-habeas.html"]
 
 
 def grab(pattern, html, label, page):
