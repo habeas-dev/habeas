@@ -39,6 +39,10 @@ const ALLOWLIST = new Set([
   '9900000000000000000001',    // ikea-graphql-pdf.test.mjs — fake receipt id
   '0000000000000000000000',    // investment2.test.mjs — fictitious broker settlement IBAN (all zeros)
   '0000000000000000000001',    // investment2.test.mjs — fictitious broker cash IBAN (all zeros + 1)
+  // infer-currency.test.mjs — a hand-built unsigned JWT used to test that the drafter can locate the
+  // bearer in the storage snapshot. Decodes to {"alg":"HS256"} / {"sub":"demo"} / the literal word
+  // "signature"; it carries no claim from any real session and verifies against nothing.
+  'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZW1vIn0.c2lnbmF0dXJl',
 ]);
 
 // Path fragments that mean "this is a raw capture" and must never be committed anywhere.
@@ -48,7 +52,8 @@ const CAPTURE_PATH = /(^|\/)(.*-)?capture[^/]*\.(jsonl?|har|txt)$|mitm[^/]*\.(js
 
 const RULES = [
   { id: 'jwt', re: /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}(?:\.[A-Za-z0-9_-]+)?/g,
-    why: 'looks like a live JWT (eyJ…header.payload) — session tokens must never be committed' },
+    why: 'looks like a live JWT (eyJ…header.payload) — session tokens must never be committed',
+    filter: (m) => !ALLOWLIST.has(m) },
   { id: 'iban', re: /\b[A-Z]{2}\d{2}[ ]?(?:\d[ ]?){14,30}\b/g,
     why: 'looks like an IBAN', filter: (m) => digits(m).length >= 16 && !ALLOWLIST.has(digits(m)) },
   { id: 'long-digit-run', re: /\d{15,}/g,

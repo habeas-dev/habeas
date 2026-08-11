@@ -20,6 +20,22 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 - **A red REC badge on the toolbar icon while recording.** The recorder's live panel sits in the Settings
   tab, which is precisely not where the user is during a recording — they are on the site being recorded,
   where nothing said Habeas was listening.
+- **Record mode infers four more fields**, measured against the 24 published sources: **11 of them would
+  now draft with no hand editing at all, up from 4**, and the total number of fields an author has to
+  write by hand across all 24 falls from 85 to 46.
+  - **`currency`** (9 sources) — `sinks/format.js` falls back to EUR when neither the item nor the source
+    says, which silently mislabels every non-euro source. Taken from a currency field in the items, or a
+    symbol glued to an amount; only a clear majority counts, since a genuinely multi-currency list has no
+    single source currency to declare.
+  - **`auth.tokenFromStorage`** — where the SPA keeps the bearer, so the runtime reads it *fresh* per
+    request instead of replaying one captured in a session that may since have ended (without it a bearer
+    source stops working after a browser restart). Both halves are in the recording — the token actually
+    sent and the storage snapshot it came from — so this is a lookup, not a guess.
+  - **`auth.cookies`** — the recorder now captures each request's `credentials` mode, so a token API the
+    SPA calls without cookies is declared as such. Replaying with cookies the site never sent is both
+    wrong and needlessly revealing.
+  - **`auth.loginUrl`** — the sign-in page the user visited during the recording, so an expired session
+    sends them there instead of dropping them on the site root to hunt for it mid-sync.
 - **Record mode infers three more fields** (`runtime/inferextras.js`), each one a field every source author
   previously had to discover by hand — and one of which caused a real bug:
   - **`window` / `maxAgeDays`** — read off the date parameter in the site's own request. Six sources declare
@@ -93,6 +109,16 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
     Tombstoned items — the ones the service no longer has — are excluded, so the file never claims something
     exists when the store knows it does not.
   - Exports the selected source or every source in the backend, as `habeas-<source>-YYYY-MM-DD.csv`.
+
+### Fixed
+- **Sample fields added in `hook.js` never reached the background.** `bridge.js` relays samples by
+  enumerating fields, so anything new was silently dropped — which had already killed the throttle
+  inference outright. A test now asserts the two lists agree, so the next field cannot go missing the
+  same way.
+- **The PII scanner's `jwt` rule had no allowlist**, the escape hatch every other rule documents for
+  known-invented values. A test that legitimately needs a token shape had nowhere to declare it, so the
+  rule now takes the same explicit, human-reviewed exception — and its own self-test still proves a
+  planted JWT is caught.
 
 ### Changed
 - **"Check what was found" shows the documents first, and asks questions second.** It was a form: twelve

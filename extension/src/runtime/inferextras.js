@@ -101,3 +101,156 @@ export function inferCapturePaths(samples) {
   const uniq = [...new Set(scopes)];
   return uniq.length >= 2 ? uniq.map((p) => p + '/') : null;
 }
+
+// ---------------------------------------------------------------------------------------------
+// currency — 9 sources declare one. It is the FALLBACK used when an item carries no currency of
+// its own (sinks/format.js), and until now it defaulted to EUR, which quietly mislabels every
+// non-euro source. The captured items say it outright.
+// ---------------------------------------------------------------------------------------------
+const SYMBOL = [[/€|\bEUR\b/, 'EUR'], [/\$|\bUSD\b/, 'USD'], [/£|\bGBP\b/, 'GBP'], [/\bCHF\b/, 'CHF'],
+                [/¥|\bJPY\b/, 'JPY'], [/\bMXN\b/, 'MXN'], [/\bBRL\b/, 'BRL'], [/\bPLN\b/, 'PLN'],
+                [/\bSEK\b/, 'SEK'], [/\bNOK\b/, 'NOK'], [/\bDKK\b/, 'DKK'], [/\bCAD\b/, 'CAD'],
+                [/\bAUD\b/, 'AUD'], [/\bCNY\b/, 'CNY'], [/\bTRY\b/, 'TRY'], [/\bARS\b/, 'ARS']];
+const CODES = new Set(SYMBOL.map(([, c]) => c));
+const CUR_KEY = /^(currency|currencycode|divisa|moneda|iso.?currency)$/i;
+
+/**
+ * The source's default currency, as an ISO 4217 code, or '' when the items never say.
+ * Only a clear majority counts: a genuinely multi-currency list has no single source currency, and
+ * declaring one there would relabel every foreign purchase.
+ */
+export function inferCurrency(items) {
+  const votes = new Map();
+  const vote = (c) => votes.set(c, (votes.get(c) || 0) + 1);
+  for (const it of (items || []).slice(0, 200)) {
+    if (!it || typeof it !== 'object') continue;
+    let found = false;
+    for (const f of flatten(it)) {
+      const leaf = f.k.split('.').pop();
+      // A field NAMED currency is authoritative — but only if its value is a real code, so a
+      // "currency": "default" style value doesn't invent one.
+      if (CUR_KEY.test(leaf) && CODES.has(String(f.v).toUpperCase())) { vote(String(f.v).toUpperCase()); found = true; break; }
+    }
+    if (found) continue;
+    // Otherwise a symbol glued to an amount ("19,90 €", "$14.99").
+    for (const f of flatten(it)) {
+      if (typeof f.v !== 'string') continue;
+      if (!/\d/.test(f.v)) continue;                 // a symbol without a number is not an amount
+      const hit = SYMBOL.find(([re]) => re.test(f.v));
+      if (hit) { vote(hit[1]); break; }
+    }
+  }
+  if (!votes.size) return '';
+  const ranked = [...votes.entries()].sort((a, b) => b[1] - a[1]);
+  const total = ranked.reduce((n, [, c]) => n + c, 0);
+  return ranked[0][1] / total > 0.6 ? ranked[0][0] : '';
+}
+
+function flatten(obj, prefix = '', depth = 2, out = []) {
+  for (const k of Object.keys(obj || {})) {
+    const v = obj[k], path = prefix ? prefix + '.' + k : k;
+    if (v && typeof v === 'object' && !Array.isArray(v) && depth > 0) flatten(v, path, depth - 1, out);
+    else out.push({ k: path, v });
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------------------------
+// auth.tokenFromStorage — where the SPA keeps the bearer, so the runtime can read it FRESH on every
+// request instead of replaying one captured in a session that may since have ended. Without it a
+// bearer source stops working after a browser restart. The recording holds both halves: the token
+// that was actually sent, and the storage snapshot it came from — so this is a lookup, not a guess.
+// ---------------------------------------------------------------------------------------------
+const JWTISH = /^eyJ[\w-]+\.[\w-]+\.[\w-]*$/;
+
+export function inferTokenFromStorage(samples, storage) {
+  // The credential as the SPA sent it, plus the header and scheme it used — copied, never assumed.
+  let token = '', header = '', scheme = '';
+  for (const s of samples || []) {
+    for (const [k, raw] of Object.entries(s.reqHeaders || {})) {
+      const v = String(raw || '').trim();
+      const m = /^(Bearer|Token|JWT)\s+(.+)$/i.exec(v);
+      const val = m ? m[2] : v;
+      if (!JWTISH.test(val)) continue;               // redacted or opaque → nothing to look up
+      token = val; header = k.toLowerCase(); scheme = m ? m[1] : '';
+      break;
+    }
+    if (token) break;
+  }
+  if (!token) return null;
+
+  // Find that exact value in the storage snapshot. localStorage only: that is what the page-side
+  // reader in pagefetch.js can actually read back.
+  const bag = (storage && storage.local) || {};
+  for (const key of Object.keys(bag)) {
+    const raw = bag[key];
+    if (raw === token) return { key, field: '', scheme, header };
+    let obj = null;
+    if (typeof raw === 'string' && (raw[0] === '{' || raw[0] === '[')) { try { obj = JSON.parse(raw); } catch (e) {} }
+    else if (raw && typeof raw === 'object') obj = raw;
+    if (!obj) continue;
+    const field = pathTo(obj, token);
+    if (field) return { key, field, scheme, header };
+  }
+  return null;
+}
+
+// The dotted path at which `needle` sits inside `obj`, or '' if it isn't there.
+function pathTo(obj, needle, prefix = '', depth = 0) {
+  if (depth > 5 || obj == null || typeof obj !== 'object') return '';
+  for (const k of Object.keys(obj)) {
+    const v = obj[k], path = prefix ? prefix + '.' + k : k;
+    if (v === needle) return path;
+    if (v && typeof v === 'object') { const sub = pathTo(v, needle, path, depth + 1); if (sub) return sub; }
+  }
+  return '';
+}
+
+// ---------------------------------------------------------------------------------------------
+// auth.cookies — whether to send cookies when replaying. Three live sources set it to false: a
+// token-authenticated API on its own host, which the SPA calls with no cookies at all. Replaying
+// with them is not merely redundant, it sends session cookies the site itself never sent.
+// The recorder now captures each request's `credentials`, so this is observed rather than guessed.
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * `false` when every observed call to `apiHost` went out without cookies, else null (keep the default).
+ * `pageHost` matters because fetch defaults to same-origin: a cross-origin call that says nothing about
+ * credentials sends none.
+ */
+export function inferCookies(samples, apiHost, pageHost = '') {
+  let seen = 0;
+  for (const s of samples || []) {
+    let host; try { host = new URL(s.url).host; } catch (e) { continue; }
+    if (host !== apiHost) continue;                  // other hosts say nothing about this source
+    seen++;
+    const cred = s.cred || '';
+    if (cred === 'include') return null;             // the SPA wants cookies here
+    if (!cred) {
+      // Unrecorded: fall back to the browser default, which only sends cookies same-origin.
+      if (!pageHost || host === pageHost) return null;
+    } else if (cred !== 'omit' && cred !== 'same-origin') return null;
+    if (cred === 'same-origin' && host === pageHost) return null;
+  }
+  return seen ? false : null;
+}
+
+// ---------------------------------------------------------------------------------------------
+// auth.loginUrl — where to send the user when the session has expired. Without it they land on the
+// site root and have to find the sign-in page themselves, mid-sync. They visited it during the
+// recording, so the recording knows.
+// ---------------------------------------------------------------------------------------------
+// Anchored at a path segment, so /blog/inicio is not a login page.
+const LOGIN_PATH = /(^|\/)(log[-_]?in|sign[-_]?in|acceso|entrar|iniciar-sesion|autenticacion|auth)(\/|\.|$)/i;
+
+export function inferLoginUrl(pages, pageHost) {
+  for (const p of pages || []) {
+    const raw = typeof p === 'string' ? p : (p && p.url);
+    if (!raw) continue;
+    let u; try { u = new URL(raw); } catch (e) { continue; }
+    if (u.host !== pageHost) continue;               // an identity provider's page is not this site's
+    if (!LOGIN_PATH.test(u.pathname)) continue;
+    return u.origin + u.pathname;                    // drop the query: a redirect token is not part of it
+  }
+  return '';
+}

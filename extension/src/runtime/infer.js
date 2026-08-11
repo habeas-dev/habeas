@@ -12,7 +12,7 @@
 // list with a declarative `rows` config that the runtime's `parseHtmlItems` consumes AS-IS.
 import { parseHtmlItems } from './inventory.js';
 import { registrableDomain, collectHosts } from '../adapters/validate.js';
-import { inferWindow, inferThrottle, inferCapturePaths } from './inferextras.js';
+import { inferWindow, inferThrottle, inferCapturePaths, inferCurrency, inferTokenFromStorage, inferCookies, inferLoginUrl } from './inferextras.js';
 
 // Flag every host the draft touches whose registrable domain differs from the source's own as a
 // crossDomainHost — so the same-domain guard (validate.checkHosts) passes. The runtime still forces a
@@ -940,6 +940,28 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
     const keep = scopes.filter((sc) => used.some((path) => String(path).startsWith(sc)));
     if (keep.length) draft.auth.capturePaths = keep;
   }
+
+  // The source's fallback currency. format.js defaults to EUR when neither the item nor the source says,
+  // which silently mislabels every non-euro source; the items answer this outright.
+  const cur = inferCurrency(best.items);
+  if (cur) draft.currency = cur;
+
+  // Where the SPA keeps the bearer, so the runtime reads it FRESH per request instead of replaying a
+  // token captured in a session that may have ended. Without it a bearer source dies on browser restart.
+  if (draft.auth && draft.auth.mode === 'bearer') {
+    const tfs = inferTokenFromStorage(samples, ctx.storage);
+    if (tfs) draft.auth.tokenFromStorage = tfs;
+  }
+
+  // Whether to send cookies when replaying. Sending them where the SPA sent none is both wrong and
+  // needlessly revealing; the recorder now captures each request's credentials mode, so this is observed.
+  const ck = inferCookies(samples, host, pageHost);
+  if (ck === false) draft.auth.cookies = false;
+
+  // Where to send the user when the session has expired — they visited it during the recording, so
+  // there is no reason to drop them on the site root and let them hunt for the sign-in page mid-sync.
+  const login = inferLoginUrl([...(ctx.domTexts || []), ...(samples || [])], pageHost);
+  if (login) draft.auth.loginUrl = login;
 
   applyCrossDomain(draft); // flag any off-registrable-domain host so the guard passes (+ forces consent)
   // The list array's field candidates power the visual mapper dropdowns.

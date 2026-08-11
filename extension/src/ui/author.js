@@ -27,6 +27,7 @@ let SAMPLES = [];         // captured response samples
 let TEST_COUNT = 0;       // documents listed in the last Test (for the status line)
 let ASSETS = [];          // captured document (PDF) requests
 let DOMTEXTS = [];        // rendered page texts (public vs internal id)
+let STORAGE = null;       // localStorage/sessionStorage snapshot — locates the bearer for auth.tokenFromStorage
 let CANDS = [];           // candidate document lists across the samples
 let CHOSEN = null;        // the candidate currently drafted as the document list
 let GROUPS_KEY = '';      // a candidate marked as the accounts/cards list (multi-account) — '' = none
@@ -254,6 +255,7 @@ async function onAnalyze() {
   SAMPLES = samples;
   ASSETS = await getAssets(LEARN.domain);
   DOMTEXTS = await getDomTexts(LEARN.domain);
+  STORAGE = await getStorage(LEARN.domain);
   CANDS = listCandidates(samples);
   if (!CANDS.length) { $('#step2msg').textContent = t('author_no_list'); return; }
   // Let the user pick which captured list is their data (biggest is only a default).
@@ -289,7 +291,7 @@ async function onAnalyze() {
 // Draft every captured list on the domain as a multi-stream source and open it in the JSON editor to
 // refine (each stream's field mapping) and save.
 async function onMultiStream(keys) {
-  const r = draftStreamsFromSamples(SAMPLES, { domain: LEARN.domain, pageHost: hostFromOrigin(LEARN.origin), assets: ASSETS, domTexts: DOMTEXTS }, keys);
+  const r = draftStreamsFromSamples(SAMPLES, { domain: LEARN.domain, pageHost: hostFromOrigin(LEARN.origin), assets: ASSETS, domTexts: DOMTEXTS, storage: STORAGE }, keys);
   if (!r.ok || !r.draft) { $('#status').textContent = t('author_no_list'); return; }
   const edited = await editJson(r.draft);
   if (!edited) return;
@@ -315,7 +317,7 @@ function onFind() {
 
 function drawDraft(chosen) {
   CHOSEN = chosen;
-  const ctx = { domain: LEARN.domain, pageHost: hostFromOrigin(LEARN.origin), assets: ASSETS, domTexts: DOMTEXTS };
+  const ctx = { domain: LEARN.domain, pageHost: hostFromOrigin(LEARN.origin), assets: ASSETS, domTexts: DOMTEXTS, storage: STORAGE };
   const r = (GROUPS_KEY && GROUPS_KEY !== chosen.key)
     ? draftWithGroups(SAMPLES, ctx, chosen.key, GROUPS_KEY)
     : draftAdapterFromSamples(SAMPLES, ctx, { key: chosen.key });
