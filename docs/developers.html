@@ -132,9 +132,17 @@ await habeas('collect', { grantId });</code></pre>
     <li><strong>Revocable.</strong> The user can drop any integration at any time from Habeas's settings.</li>
     </ul>
 
-    <h2>Adding a bank</h2>
-    <p>A source is a <strong>definition file</strong>, not code: it describes how to read a given service. They live in a public community catalog, so a source someone else writes works for your app too, and one you write works for everyone else. See <a href="https://github.com/habeas-dev/habeas/blob/main/docs/AUTHORING-SOURCES.md">AUTHORING-SOURCES.md</a> and <a href="https://github.com/habeas-dev/habeas/blob/main/docs/ASSISTED-AUTHORING.md">ASSISTED-AUTHORING.md</a>.</p>
-    <p>This is the part where collaborating actually pays off. Adapters are shared plumbing; the product you build on top is where you compete.</p>
+    <h2>The bank your users need: they can add it themselves</h2>
+    <p>The obvious objection to any catalog is "my users' bank isn't in it". Here's the part that matters: <strong>nobody has to wait for us to add it</strong>.</p>
+    <p>Reading happens inside the account holder's own session, which means the person who can teach Habeas a new bank is <em>whoever already banks there</em> — not us. So the extension ships a recorder for exactly that, in <strong>Settings → Record &amp; contribute</strong>:</p>
+    <ol class="steps">
+      <li>The user browses their bank <strong>as they normally would</strong>, signed in, while it records.</li>
+      <li>Habeas <strong>drafts the source automatically</strong> from what it saw — endpoints, paging, fields — and the user maps anything left over in a visual editor, with a <strong>Test</strong> button that runs against their live session so they see real rows before sharing anything.</li>
+      <li>What reaches us is <strong>redacted</strong>: every value is replaced by a type placeholder and only the structure survives. We author and verify the source <em>without ever seeing their data</em>.</li>
+      <li>Once published, that source works for <strong>everyone</strong> — your users and ours.</li>
+    </ol>
+    <p><strong>No code is written by anyone</strong>, and a source is a definition file rather than a program, which is why this can be a commons at all. If you'd rather write one by hand, that path is open too: <a href="https://github.com/habeas-dev/habeas/blob/main/docs/AUTHORING-SOURCES.md">AUTHORING-SOURCES.md</a> and <a href="https://github.com/habeas-dev/habeas/blob/main/docs/ASSISTED-AUTHORING.md">ASSISTED-AUTHORING.md</a>.</p>
+    <p>This is where collaborating actually pays off. Adapters are shared plumbing; the product you build on top is where you compete.</p>
 
     <h2>What this is not</h2>
     <p>So you can decide with the real trade-offs on the table:</p>

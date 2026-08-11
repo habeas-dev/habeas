@@ -28,6 +28,9 @@
     .src a.view { font-size: .82rem; }
     .src a.guide { display: block; font-size: .82rem; margin-top: 8px; }
     .note { color: var(--muted, #888); margin-top: 28px; line-height: 1.6; }
+    .addyours { border: 1px solid var(--line, #3335); border-left-width: 3px; border-radius: 10px; padding: 14px 16px; margin: 0 0 22px; }
+    .addyours strong { display: block; margin-bottom: 4px; }
+    .addyours p { margin: 0; line-height: 1.6; color: var(--muted, #888); }
   </style>
   <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
   <script defer src="https://analytics.habeas.dev/script.js" data-website-id="84a75f7a-c014-4ce8-a3be-1f8dd1899a28" data-domains="habeas.dev"></script>
@@ -71,6 +74,12 @@
     <h1 data-t="title">Sources</h1>
     <p class="sub" data-t="intro">The catalog of sources you can install in the Habeas extension. Each one describes — as data, never code — how to read your own documents from a service, within your own session. First-party sources are audited; community ones are contributed and open to ratings &amp; scrutiny.</p>
     <p class="guide-index" style="margin:0 0 18px"><a href="/download/" data-t="guideIndex" data-umami-event="guide-index">Browse the how-to guides</a> →</p>
+    <!-- The catalog's obvious failure mode: someone scans the grid, doesn't find their bank, and leaves —
+         never learning they could have added it in ten minutes. So the answer sits ABOVE the grid. -->
+    <div class="addyours">
+      <strong data-t="addTitle"></strong>
+      <p data-t="addBody"></p>
+    </div>
     <div class="filters" style="margin:0 0 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <label><span data-t="country">Country:</span> <select id="country"></select></label>
       <label><span data-t="format">Format:</span> <select id="format"></select></label>
@@ -256,7 +265,9 @@
         intro: 'The catalog of sources you can install in the Habeas extension. Each one describes — as data, never code — how to read your own documents from a service, within your own session. First-party sources are audited; community ones are contributed and open to ratings & scrutiny.',
         guide: 'How to download',
         guideIndex: 'Browse the how-to guides',
-        cta: 'Install any of these from the extension: Settings → Browse sources. Contribute a new one at github.com/habeas-dev/sources.',
+        cta: 'Install any of these from the extension: Settings → Browse sources.',
+        addTitle: 'Your bank or shop isn’t listed?',
+        addBody: 'You can add it yourself, and you don’t need to write code. In the extension, go to Settings → Record & contribute: browse the site as you normally would while it records, and Habeas drafts the source for you. What reaches us is redacted — every value replaced by a placeholder, so we never see your data. Once published, it works for everyone.',
         loading: 'Loading the catalog…',
         failed: 'Couldn’t load the catalog right now. See it on GitHub: github.com/habeas-dev/sources.',
         empty: 'No sources published yet.',
@@ -270,7 +281,9 @@
         intro: 'El catálogo de fuentes que puedes instalar en la extensión Habeas. Cada una describe —como datos, nunca código— cómo leer tus propios documentos de un servicio, dentro de tu propia sesión. Las first-party están auditadas; las de la comunidad son aportadas y abiertas a valoraciones y escrutinio.',
         guide: 'Cómo descargar',
         guideIndex: 'Ver las guías paso a paso',
-        cta: 'Instala cualquiera desde la extensión: Ajustes → Explorar fuentes. Aporta una nueva en github.com/habeas-dev/sources.',
+        cta: 'Instala cualquiera desde la extensión: Ajustes → Explorar fuentes.',
+        addTitle: '¿No está tu banco o tu tienda?',
+        addBody: 'Puedes añadirlo tú, y no hace falta escribir código. En la extensión, entra en Ajustes → Grabar y contribuir: navegas por el sitio como harías normalmente mientras graba, y Habeas redacta el borrador de la fuente solo. Lo que nos llega va redactado: cada valor sustituido por un marcador, así que nunca vemos tus datos. Una vez publicada, sirve para todos.',
         loading: 'Cargando el catálogo…',
         failed: 'No se pudo cargar el catálogo ahora mismo. Míralo en GitHub: github.com/habeas-dev/sources.',
         empty: 'Aún no hay fuentes publicadas.',

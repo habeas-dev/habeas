@@ -132,8 +132,16 @@ await habeas('collect', { grantId });</code></pre>
     <li><strong>Revocable.</strong> El usuario puede retirar cualquier integración cuando quiera desde los ajustes de Habeas.</li>
     </ul>
 
-    <h2>Añadir un banco</h2>
-    <p>Una fuente es un <strong>fichero de definición</strong>, no código: describe cómo leer un servicio concreto. Viven en un catálogo comunitario público, así que una fuente que escriba otro te sirve a ti, y una que escribas tú nos sirve al resto. Mira <a href="https://github.com/habeas-dev/habeas/blob/main/docs/AUTHORING-SOURCES.md">AUTHORING-SOURCES.md</a> y <a href="https://github.com/habeas-dev/habeas/blob/main/docs/ASSISTED-AUTHORING.md">ASSISTED-AUTHORING.md</a>.</p>
+    <h2>El banco que necesitan tus usuarios: pueden añadirlo ellos</h2>
+    <p>La objeción evidente a cualquier catálogo es «el banco de mis usuarios no está». Aquí está lo importante: <strong>nadie tiene que esperar a que lo añadamos nosotros</strong>.</p>
+    <p>La lectura ocurre dentro de la sesión del propio titular, así que quien puede enseñarle un banco nuevo a Habeas es <em>quien ya es cliente de ese banco</em>, no nosotros. Por eso la extensión trae un grabador justo para eso, en <strong>Ajustes → Grabar y contribuir</strong>:</p>
+    <ol class="steps">
+      <li>El usuario navega por su banco <strong>como haría normalmente</strong>, con su sesión iniciada, mientras graba.</li>
+      <li>Habeas <strong>redacta el borrador de la fuente solo</strong> a partir de lo que ha visto (endpoints, paginación, campos) y el usuario mapea lo que falte en un editor visual, con un botón <strong>Test</strong> que se ejecuta contra su sesión viva: ve filas reales antes de compartir nada.</li>
+      <li>Lo que nos llega va <strong>redactado</strong>: cada valor sustituido por un marcador de tipo, solo sobrevive la estructura. Escribimos y verificamos la fuente <em>sin ver jamás sus datos</em>.</li>
+      <li>Una vez publicada, esa fuente sirve para <strong>todos</strong>: tus usuarios y los nuestros.</li>
+    </ol>
+    <p><strong>Nadie escribe una línea de código</strong>, y una fuente es un fichero de definición y no un programa, que es lo que permite que esto sea un bien común. Si prefieres escribir una a mano, esa vía también está abierta: <a href="https://github.com/habeas-dev/habeas/blob/main/docs/AUTHORING-SOURCES.md">AUTHORING-SOURCES.md</a> y <a href="https://github.com/habeas-dev/habeas/blob/main/docs/ASSISTED-AUTHORING.md">ASSISTED-AUTHORING.md</a>.</p>
     <p>Esta es la parte donde colaborar sale a cuenta de verdad. Los adaptadores son fontanería compartida; donde compites es en el producto que construyes encima.</p>
 
     <h2>Lo que no es</h2>
