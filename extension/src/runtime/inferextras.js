@@ -401,3 +401,43 @@ function renders(text, value, decimals) {
   }
   return false;
 }
+
+// ---------------------------------------------------------------------------------------------
+// What a draft is probably missing. Measured against the 24 published sources, only 11 would draft
+// with no hand editing — so presenting a draft as a finished source sets the user up to discover,
+// months later, that half their history was never being fetched. Each warning below is a thing the
+// recording could not settle, phrased as what it means for the data rather than which field is absent.
+// ---------------------------------------------------------------------------------------------
+
+// Page sizes an API hands back when there is more behind them. A list that stopped exactly on one of
+// these was almost certainly truncated; an odd number is what a complete list looks like.
+const PAGE_SIZES = new Set([10, 15, 20, 24, 25, 30, 40, 50, 60, 75, 100, 200, 250, 500]);
+const DATEISH = /^(from|since|start|desde|begin|to|until|hasta|end)|date|fecha/i;
+
+export function draftWarnings(draft, info = {}) {
+  const out = [];
+  const api = (draft && draft.api) || null;
+  const list = (api && api.list) || null;
+  if (!draft || !list) return out;
+  const fields = draft.fields || {};
+  const count = Number(info.count) || 0;
+
+  // Truncated history, the failure nobody notices: the source quietly returns one page forever.
+  if ((list.paging || 'none') === 'none' && PAGE_SIZES.has(count)) out.push('warn_paging');
+
+  // A date-filtered endpoint whose parameters were not recognised keeps the captured dates as static
+  // params, so every future run re-asks for the window that ended on the day of the recording.
+  if (!list.range && list.params && Object.keys(list.params).some((k) => DATEISH.test(k))) out.push('warn_range');
+
+  // Not a defect — plenty of sources are records-only — but the user should know before they expect PDFs.
+  if (!api.pdf && !api.detail) out.push('warn_nodocs');
+
+  if (!fields.date) out.push('warn_nodate');
+  const amountField = Object.prototype.hasOwnProperty.call(fields, 'total') || Object.prototype.hasOwnProperty.call(fields, 'amount');
+  if (!amountField || !(fields.total || fields.amount)) out.push('warn_noamount');
+
+  // Off its own registrable domain: allowed, but it is the case that asks the user to consent.
+  if (draft.crossDomainHosts && draft.crossDomainHosts.length) out.push('warn_crossdomain');
+
+  return out;
+}

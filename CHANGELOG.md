@@ -135,6 +135,20 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   planted JWT is caught.
 
 ### Changed
+- **The recorder no longer implies a draft is a finished source.** Measured against the 24 published
+  sources, 11 would draft with no hand editing — a good result for a straightforward shop, and not true
+  of a bank. The UI now says so before the user starts ("on banks and anything with unusual paging it
+  gets part of the way, and you can send the recording so someone finishes it"), and the review step
+  lists what this particular draft could not settle (`draftWarnings`): pagination not detected on a list
+  that stopped at a round number, a date-filtered endpoint whose parameters were not recognised, no
+  per-document file, an unmapped date or amount, a cross-domain host. Each is phrased as what it means
+  for the data, because the failure that matters here is silent — a source that quietly fetches only the
+  first page forever.
+- **Sending the recording no longer disappears when you stop recording.** The send block lived *inside*
+  the live-recording panel, which `onStop` hides — so the escape hatch vanished at exactly the moment the
+  user found out the draft was incomplete. It is now its own card, revealed as soon as anything is
+  captured and kept afterwards, and it says outright that a recording is worth sending **even when
+  nothing could be drafted** — that is the case a maintainer most wants to see.
 - **"Check what was found" shows the documents first, and asks questions second.** It was a form: twelve
   labelled controls — search box, list picker, accounts picker, kind, categories, an eight-row field map,
   an Advanced block — with the one thing that answers the actual question ("are these my purchases?") at

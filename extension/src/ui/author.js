@@ -1,6 +1,7 @@
 import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen, getAssets, getDomTexts, getWsFrames, getStorage } from '../lib/learn.js';
+import { draftWarnings } from '../runtime/inferextras.js';
 import { draftAdapterFromSamples, draftStreamsFromSamples, draftWithGroups, listCandidates, matchCandidates, augmentSource, flatToStream, summarizeCapture } from '../runtime/infer.js';
 import { listInventory, artifactKinds, fetchArtifact, previewDocs } from '../runtime/inventory.js';
 import { ensureSiteFetch } from '../lib/pagefetch.js';
@@ -130,7 +131,7 @@ function showLearning() {
 }
 async function onStop() {
   stopLiveMonitor(); await stopLearning();
-  $('#start').hidden = false; $('#stop').hidden = true; $('#learnstatus').textContent = ''; $('#live').hidden = true;
+  $('#start').hidden = false; $('#stop').hidden = true; $('#learnstatus').textContent = ''; $('#live').hidden = true;   // …but #sharerow stays: the recording is still there to send
   // Analyse straight away. Making the user find and press a second button after they had already
   // finished browsing was the step everyone got stuck on — and pressing it too early (the usual
   // mistake) just printed "0 responses captured", which reads like a failure.
@@ -239,6 +240,9 @@ async function onAnalyze() {
   const samples = await getSamples(LEARN.domain);
   const ws = await getWsFrames(LEARN.domain);
   $('#samplecount').textContent = String(samples.length) + (ws.length ? ' + ' + ws.length + ' ws' : '');
+  // Whatever the analysis concludes, if anything was captured it is worth sending — most of all when
+  // nothing could be drafted here, which is the case a maintainer most wants to see.
+  if (samples.length || ws.length) $('#sharerow').hidden = false;
   if (!samples.length) {
     if (ws.length) { // realtime transport (WebSocket/SSE): captured, but not auto-draftable — share the recording
       const socks = new Set(ws.map((f) => f.url)).size;
@@ -356,6 +360,14 @@ function showLocalPreview(items, total) {
     `<tr><td>${esc((d.date || '').slice(0, 10))}</td><td>${esc(d.label || d.storeName || '')}</td>`
     + `<td class="r">${esc(fmt(d.total ?? d.amount))}</td><td>${esc(d.type || d.category || '')}</td></tr>`).join('');
   $('#docwrap').hidden = true;
+
+  // Say plainly what this draft could not settle. Of the 24 published sources only 11 would draft with
+  // no hand editing, so presenting one as finished sets the user up to find out months later that half
+  // their history was never being fetched.
+  const warns = draftWarnings(adapter, { count: total || docs.length });
+  const ul = $('#warnings');
+  ul.innerHTML = warns.map((k) => `<li>${esc(t(k))}</li>`).join('');
+  ul.hidden = !warns.length;
 }
 
 function hostFromOrigin(origin) { try { return new URL(origin.replace('/*', '')).host; } catch (e) { return LEARN.domain; } }
@@ -587,6 +599,7 @@ export const RECORDER_HTML = `
           <li data-i18n="author_tip_pdf"></li>
           <li data-i18n="author_tip_wait"></li>
         </ol>
+        <p class="muted" data-i18n="author_expect" style="margin:10px 0 0"></p>
         <details style="margin:10px 0 0">
           <summary class="muted" data-i18n="author_note_advanced_h"></summary>
           <p class="muted" data-i18n="author_note_advanced" style="margin:6px 0 0"></p>
@@ -602,21 +615,24 @@ export const RECORDER_HTML = `
       <div id="livecounts" style="display:flex;gap:16px;margin:10px 0;font-size:22px;font-weight:700"></div>
       <div id="livebadges" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
       <p id="livehint" class="muted" style="margin:0"></p>
-      <div id="sharerow" hidden style="margin-top:12px;border-top:1px solid #333;padding-top:10px">
-        <div class="inp" style="margin-bottom:8px"><label data-i18n="author_handle_label"></label>
-          <input id="handle" data-i18n-ph="author_handle_ph" maxlength="60" size="24" />
-        </div>
-        <button id="sendteam" class="primary" data-i18n="author_send_team"></button>
-        <button id="sharepreview" data-i18n="author_share_preview"></button>
-        <button id="share" data-i18n="author_share"></button>
-        <span id="sharestatus" class="muted"></span>
-        <p class="muted" data-i18n="author_share_note" style="margin:8px 0 0;font-size:12px"></p>
-        <div id="orphanpanel" hidden style="margin-top:10px;border:1px solid #b8860b;border-radius:6px;padding:10px">
-          <p class="muted" data-i18n="author_orphan_intro" style="margin:0 0 8px;font-size:12px"></p>
-          <div id="orphanlist" style="font-size:13px"></div>
-          <div style="margin-top:8px"><button id="orphansend" class="primary" data-i18n="author_orphan_send"></button>
-            <button id="orphancancel" data-i18n="author_orphan_cancel"></button></div>
-        </div>
+    </div>
+
+    <div id="sharerow" hidden class="card" style="border-color:#7a6a3a">
+      <strong data-i18n="author_share_h"></strong>
+      <p class="muted" data-i18n="author_share_why" style="margin:4px 0 10px"></p>
+      <div class="inp" style="margin-bottom:8px"><label data-i18n="author_handle_label"></label>
+        <input id="handle" data-i18n-ph="author_handle_ph" maxlength="60" size="24" />
+      </div>
+      <button id="sendteam" class="primary" data-i18n="author_send_team"></button>
+      <button id="sharepreview" data-i18n="author_share_preview"></button>
+      <button id="share" data-i18n="author_share"></button>
+      <span id="sharestatus" class="muted"></span>
+      <p class="muted" data-i18n="author_share_note" style="margin:8px 0 0;font-size:12px"></p>
+      <div id="orphanpanel" hidden style="margin-top:10px;border:1px solid #b8860b;border-radius:6px;padding:10px">
+        <p class="muted" data-i18n="author_orphan_intro" style="margin:0 0 8px;font-size:12px"></p>
+        <div id="orphanlist" style="font-size:13px"></div>
+        <div style="margin-top:8px"><button id="orphansend" class="primary" data-i18n="author_orphan_send"></button>
+          <button id="orphancancel" data-i18n="author_orphan_cancel"></button></div>
       </div>
     </div>
 
@@ -648,6 +664,8 @@ export const RECORDER_HTML = `
           <select id="f_list"></select>
           <div class="muted" id="listhint" hidden data-i18n="author_list_hint" style="margin-top:4px"></div>
         </div>
+
+        <ul id="warnings" hidden class="muted" style="margin:12px 0 0 18px;padding:0"></ul>
 
         <div class="row" style="margin-top:14px">
           <button id="test" data-i18n="author_test"></button>

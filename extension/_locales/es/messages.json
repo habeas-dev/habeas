@@ -3548,5 +3548,41 @@
   "author_found_none": {
     "message": "Se detectó una lista, pero no se pudo leer ninguna fila. Abre «Ajustar» y revisa el mapeo de campos.",
     "description": "Recorder review step."
+  },
+  "author_share_h": {
+    "message": "Envía la grabación — aunque el borrador de abajo esté incompleto",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "author_share_why": {
+    "message": "Grabar funciona de principio a fin en webs sencillas. Los bancos y las webs con paginación rara suelen necesitar que una persona remate la fuente a partir de la grabación — enviarla es lo que lo hace posible, y sirve incluso cuando aquí no se ha podido crear nada.",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "warn_paging": {
+    "message": "No se detectó la paginación y la lista acabó en un número redondo — puede que esta fuente solo traiga siempre la primera página.",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "warn_range": {
+    "message": "Este endpoint filtra por fecha, pero no se reconocieron los parámetros — puede que siga pidiendo las mismas fechas que la grabación de hoy en vez de una ventana nueva.",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "warn_nodocs": {
+    "message": "No se vio ningún fichero por documento (PDF/detalle), así que esta fuente exporta solo los datos. Si quieres los PDF, graba otra vez y abre un documento.",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "warn_nodate": {
+    "message": "No se mapeó ningún campo de fecha — revísalo en «Ajustar».",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "warn_noamount": {
+    "message": "No se mapeó ningún campo de importe — revísalo en «Ajustar».",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "warn_crossdomain": {
+    "message": "Esta fuente lee de un host fuera de su propio dominio, así que te pedirá consentimiento antes de ejecutarse.",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "author_expect": {
+    "message": "En webs sencillas, grabar crea la fuente solo. En bancos y en cualquier web con paginación rara llega a medio camino, y puedes enviar la grabación para que alguien la remate.",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
   }
 }

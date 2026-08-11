@@ -3548,5 +3548,41 @@
   "author_found_none": {
     "message": "A list was detected, but no row could be read from it. Open “Adjust” and check the field mapping.",
     "description": "Recorder review step."
+  },
+  "author_share_h": {
+    "message": "Send the recording — even if the draft below is incomplete",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "author_share_why": {
+    "message": "Recording works end to end on straightforward sites. Banks and sites with unusual paging usually need a person to finish the source from the recording — sending it is what makes that possible, and it is useful even when nothing could be drafted here.",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "warn_paging": {
+    "message": "Pagination was not detected and the list stopped on a round number — this source may only ever fetch the first page.",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "warn_range": {
+    "message": "This endpoint filters by date, but the parameters were not recognised — it may keep asking for the same dates as today’s recording instead of a fresh window.",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "warn_nodocs": {
+    "message": "No per-document file (PDF/detail) was seen, so this source exports the data only. If you want the PDFs, record again and open one document.",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "warn_nodate": {
+    "message": "No date field was mapped — check the field mapping under “Adjust”.",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "warn_noamount": {
+    "message": "No amount field was mapped — check the field mapping under “Adjust”.",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "warn_crossdomain": {
+    "message": "This source reads from a host outside its own domain, so it will ask you to consent before running.",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "author_expect": {
+    "message": "Recording builds the source by itself on straightforward sites. On banks and anything with unusual paging it gets part of the way, and you can send the recording so someone finishes it.",
+    "description": "Recorder: honest expectations about what a draft can and cannot settle."
   }
 }
