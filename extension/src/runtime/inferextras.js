@@ -345,3 +345,59 @@ export function inferMoreFlag(pages) {
   }
   return null;
 }
+
+// ---------------------------------------------------------------------------------------------
+// minorUnits — some APIs return amounts as integer cents. Getting this wrong is uniquely bad: it
+// multiplies (or divides) EVERY amount by 100 with nothing on screen to hint at it, and the user
+// would only find out by reconciling against their own bank statement. So it is never inferred from
+// the shape of the numbers alone — only from the page having SHOWN the user a value 100x smaller
+// than the raw one. No rendered page in the recording, no claim.
+// ---------------------------------------------------------------------------------------------
+
+/** true / false / null (unknown — leave the field out entirely). */
+export function inferMinorUnits(items, amountPath, pageText) {
+  if (!pageText || !amountPath) return null;
+  const text = String(pageText);
+
+  const raws = [];
+  for (const it of (items || []).slice(0, 60)) {
+    const v = String(amountPath).split('.').reduce((o, k) => (o == null ? o : o[k]), it);
+    const n = typeof v === 'number' ? v
+      : (typeof v === 'string' && /^-?\d+$/.test(v.trim()) ? Number(v) : NaN);
+    if (!Number.isFinite(n) || !Number.isInteger(n)) return null; // a fractional amount is already major units
+    if (n !== 0) raws.push(Math.abs(n));
+  }
+  const uniq = [...new Set(raws)];
+  if (uniq.length < 3) return null;                 // too little to tell a pattern from a coincidence
+
+  let scaled = 0, plain = 0;
+  for (const n of uniq) {
+    if (renders(text, n / 100, 2)) scaled++;
+    else if (renders(text, n, 0)) plain++;
+  }
+  // Demand a clear majority on the scaled reading. Anything short of that and the safe answer is "do
+  // not scale": leaving the amounts alone shows the user a wrong number they can see and report,
+  // rather than a plausible one that is silently off by two orders of magnitude.
+  if (scaled >= 3 && scaled > plain) return true;
+  return (scaled + plain) ? false : null;
+}
+
+const SEP = '␟';                               // placeholder for a thousands separator slot
+
+// Does `text` show this number, in any of the ways a page might format it?
+function renders(text, value, decimals) {
+  const [int, dec] = value.toFixed(decimals).split('.');
+  const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, SEP);
+  const ints = new Set([int, grouped.split(SEP).join('.'), grouped.split(SEP).join(','), grouped.split(SEP).join(' ')]);
+  const forms = new Set();
+  for (const g of ints) {
+    if (dec) { forms.add(g + ',' + dec); forms.add(g + '.' + dec); }
+    else forms.add(g);
+  }
+  for (const f of forms) {
+    // Bounded on both sides, so 12,50 does not match inside 112,502.
+    const re = new RegExp('(^|[^\\d.,])' + f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^\\d])');
+    if (re.test(text)) return true;
+  }
+  return false;
+}

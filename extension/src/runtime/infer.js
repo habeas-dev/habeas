@@ -12,7 +12,7 @@
 // list with a declarative `rows` config that the runtime's `parseHtmlItems` consumes AS-IS.
 import { parseHtmlItems } from './inventory.js';
 import { registrableDomain, collectHosts } from '../adapters/validate.js';
-import { inferWindow, inferThrottle, inferCapturePaths, inferCurrency, inferTokenFromStorage, inferCookies, inferLoginUrl, inferRange, inferNextIsUrl, inferMoreFlag } from './inferextras.js';
+import { inferWindow, inferThrottle, inferCapturePaths, inferCurrency, inferTokenFromStorage, inferCookies, inferLoginUrl, inferRange, inferNextIsUrl, inferMoreFlag, inferMinorUnits } from './inferextras.js';
 
 // Flag every host the draft touches whose registrable domain differs from the source's own as a
 // crossDomainHost — so the same-domain guard (validate.checkHosts) passes. The runtime still forces a
@@ -982,6 +982,14 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
   // there is no reason to drop them on the site root and let them hunt for the sign-in page mid-sync.
   const login = inferLoginUrl([...(ctx.domTexts || []), ...(samples || [])], pageHost);
   if (login) draft.auth.loginUrl = login;
+
+  // Amounts in integer cents. Only claimed when the RENDERED page disagrees with the raw value by
+  // exactly 100 — never from the numbers alone, because being wrong here is invisible on screen.
+  const amtPath = fields.total || fields.amount;
+  if (amtPath) {
+    const minor = inferMinorUnits(best.items, amtPath, domText);
+    if (minor === true) draft.minorUnits = true;
+  }
 
   applyCrossDomain(draft); // flag any off-registrable-domain host so the guard passes (+ forces consent)
   // The list array's field candidates power the visual mapper dropdowns.

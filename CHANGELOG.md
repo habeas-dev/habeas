@@ -20,6 +20,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 - **A red REC badge on the toolbar icon while recording.** The recorder's live panel sits in the Settings
   tab, which is precisely not where the user is during a recording — they are on the site being recorded,
   where nothing said Habeas was listening.
+- **`minorUnits`** — amounts returned as integer cents. This one is never inferred from the shape of the
+  numbers: it is claimed only when the page **showed the user** a value exactly 100x smaller than the raw
+  one, for at least three distinct amounts and more often than not. Being wrong here multiplies every
+  amount by 100 with nothing on screen to hint at it, and the user would find out only by reconciling
+  against their own statement — so with no rendered page in the recording, it makes no claim at all.
 - **Record mode infers the date-range and cursor-paging fields too** — `list.range` (the date parameter
   names and their value shape: ISO, `date`, epoch seconds or milliseconds), `nextIsUrl` (the cursor is a
   whole URL, not a token) and `morePath`/`moreValue` (the "there are more pages" flag). The last is only
@@ -31,7 +36,7 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   the window that ended on the recording date. Emitting `range` now removes them.
 - **Record mode infers four more fields**, measured against the 24 published sources: **11 of them would
   now draft with no hand editing at all, up from 4**, and the total number of fields an author has to
-  write by hand across all 24 falls from 85 to 39.
+  write by hand across all 24 falls from 85 to 38.
   - **`currency`** (9 sources) — `sinks/format.js` falls back to EUR when neither the item nor the source
     says, which silently mislabels every non-euro source. Taken from a currency field in the items, or a
     symbol glued to an amount; only a clear majority counts, since a genuinely multi-currency list has no
