@@ -52,6 +52,24 @@ Shorten to fit the CWS 132-char limit:
 
 ---
 
+## ⚠️ Policy note — do NOT list supported brands (CWS rejection, 2026-08-11)
+
+The Chrome Web Store **rejected** a submission for *keyword spam* (ref. `Yellow Argon`), quoting the
+run of ~24 brand names the listing used to carry ("Carrefour, Dia, IKEA, … Raisin and Hover"). Their
+rule: metadata must be **descriptive**, not a keyword list.
+
+So the listing describes **kinds of service** (supermarkets, banks and card issuers, brokers, utilities…)
+and links to https://habeas.dev/sources.html for the actual catalog. That is also where the catalog
+belongs: it changes every week, and a store listing can't track it anyway.
+
+**Do not re-add the brand list**, however tempting it is for search. It is what got the extension
+rejected, and re-adding it risks a harsher action than a rejection. Competitor names (Plaid, Tink…)
+were removed for the same reason — not flagged this time, but the same policy.
+
+The one place brands legitimately appear is the **screenshots**, since they show the product doing real
+work. If a review ever objects there too, the fix is to capture with sources whose brand is ours or
+generic, not to argue.
+
 ## Detailed description
 
 **EN**
@@ -79,10 +97,9 @@ Shorten to fit the CWS 132-char limit:
 > run. Each service's Terms may restrict automated access — complying with them is your
 > responsibility.
 >
-> **Works today with:** Carrefour España, Dia España, IKEA España, Decathlon España, Leroy Merlin
-> España, ING España, Openbank España, WiZink España, CaixaBank Consumer, Financiera El Corte Inglés,
-> Bip&Drive, Pagatelia, Pepe Energy, Pepephone, Amazon, AliExpress, PayPal, Revolut, N26, American
-> Express, Trade Republic, DeGiro, Raisin and Hover — plus any source the community adds.
+> **Works today with:** supermarkets and retail chains, banks and card issuers, payment services,
+> brokers, utilities and telecoms, and toll and mobility providers — plus any source the community
+> adds. The current catalog lives at https://habeas.dev/sources.html
 >
 > Open source: https://github.com/habeas-dev/habeas · Privacy: https://habeas.dev/privacy.html
 
@@ -107,10 +124,9 @@ Shorten to fit the CWS 132-char limit:
 >   abiertas a la comunidad y revisadas en abierto. Nunca código remoto.
 > • **Sin rastreadores.** Sin analítica ni telemetría; fuentes tipográficas propias.
 >
-> **Funciona ya con:** Carrefour, Dia, IKEA, Decathlon, Leroy Merlin, ING, Openbank, WiZink,
-> CaixaBank Consumer, Financiera El Corte Inglés, Bip&Drive, Pagatelia, Pepe Energy, Pepephone,
-> Amazon, AliExpress, PayPal, Revolut, N26, American Express, Trade Republic, DeGiro, Raisin y
-> Hover — además de las fuentes que aporte la comunidad.
+> **Funciona ya con:** supermercados y cadenas de tiendas, bancos y emisores de tarjetas, servicios
+> de pago, brókers, suministros y telecos, y peajes y movilidad — además de las fuentes que aporte la
+> comunidad. El catálogo actual está en https://habeas.dev/sources.html
 >
 > Habeas ejerce tu derecho de portabilidad (GDPR Art. 20) sobre tus propios datos, con software que
 > ejecutas tú. Los Términos de cada servicio pueden restringir el acceso automatizado — cumplirlos es
@@ -143,10 +159,10 @@ Unlike server-side scraping, Habeas runs inside your real browser, in your alrea
 • It never stores your passwords. You log in yourself; the token lives only in memory and is cleared when you close the browser.
 • You solve MFA/OTP live, exactly as you always do.
 
-It's the opposite of how aggregators like Plaid or Tink operate.
+It's the opposite of how server-side account aggregators operate.
 
 WORKS TODAY WITH
-Carrefour, Dia, IKEA, Decathlon, Leroy Merlin, ING, Openbank, WiZink, CaixaBank Consumer, Financiera El Corte Inglés, Bip&Drive, Pagatelia, Pepe Energy, Pepephone (Spain), plus Amazon, AliExpress, PayPal, Revolut, N26, American Express, Trade Republic, DeGiro, Raisin and Hover — and any source the community adds.
+Supermarkets and retail chains, banks and card issuers, payment services, brokers, utilities and telecoms, and toll and mobility providers — and any source the community adds. See the current catalog at https://habeas.dev/sources.html
 
 YOUR ARCHIVE, MADE VISUAL
 Everything you recover lands in your Archive: a clear view of your documents, laid out in a source → account tree, with cards grouped by month or category, amounts and status. Search, filter by account, and open any saved document.
@@ -188,10 +204,10 @@ A diferencia del scraping desde un servidor, Habeas funciona dentro de tu navega
 • Nunca guarda tus contraseñas. Inicias sesión tú; el token vive solo en memoria y se borra al cerrar el navegador.
 • Resuelves el MFA/OTP en directo, exactamente como haces siempre.
 
-Es lo contrario de como operan los agregadores tipo Plaid o Tink.
+Es lo contrario de como operan los agregadores que trabajan desde sus servidores.
 
 FUNCIONA YA CON
-Carrefour, Dia, IKEA, Decathlon, Leroy Merlin, ING, Openbank, WiZink, CaixaBank Consumer, Financiera El Corte Inglés, Bip&Drive, Pagatelia, Pepe Energy y Pepephone (España), además de Amazon, AliExpress, PayPal, Revolut, N26, American Express, Trade Republic, DeGiro, Raisin y Hover — y cualquier fuente que aporte la comunidad.
+Supermercados y cadenas de tiendas, bancos y emisores de tarjetas, servicios de pago, brókers, suministros y telecos, y peajes y movilidad — y cualquier fuente que aporte la comunidad. Consulta el catálogo actual en https://habeas.dev/sources.html
 
 TU ARCHIVO, DE FORMA VISUAL
 Todo lo que recuperas aterriza en tu Archivo: una vista clara de tus documentos, ordenados en un árbol de fuente → cuenta, con tarjetas agrupadas por mes o categoría, importes y estado. Busca, filtra por cuenta y abre cualquier documento guardado.
