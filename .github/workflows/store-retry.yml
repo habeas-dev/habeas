@@ -11,6 +11,22 @@ name: Store retry (Chrome Web Store)
 # when the store is genuinely BEHIND and the queue has cleared. Firefox/AMO isn't retried here: it accepts new
 # versions immediately on the tag build (no in-review queue block), so it's never left behind.
 #
+# ⚠️ DISABLED MANUALLY 2026-08-11 — re-enable with: gh workflow enable store-retry.yml
+#
+# The "re-attempting is safe" reasoning above holds for a QUEUE BLOCK (a predecessor still in review).
+# It does NOT hold for a POLICY REJECTION. On 2026-08-11 the CWS rejected the listing for keyword spam
+# (~24 brand names in the description, ref. Yellow Argon). After a rejection the published version is
+# behind the latest release, so this job stops no-op'ing and starts genuinely re-uploading and
+# re-publishing every 6 hours — which (a) keeps the item permanently "in review", and the dashboard
+# refuses listing edits in that state, so the very fix cannot be applied; and (b) repeatedly resubmits
+# content the reviewer already flagged, which risks escalating beyond a rejection.
+#
+# So: when a submission is rejected on POLICY, disable this job, fix the listing by hand in the
+# dashboard, wait for approval, then re-enable. Note the listing description is NOT something this job
+# could ever fix — the CWS API only uploads and publishes the PACKAGE; the detailed description,
+# screenshots and category exist only in the dashboard. The package controls the title and summary only
+# (manifest / _locales).
+
 # The step is continue-on-error, so a no-op cycle keeps the JOB green (no failure notifications) — the red ✗ on
 # the upload step is just informational. Firefox is unaffected.
 
