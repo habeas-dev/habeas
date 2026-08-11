@@ -248,10 +248,11 @@ API only uploads and publishes the PACKAGE (the detailed description, screenshot
 only in the dashboard), and Chrome forbids extensions from scripting the web-store origin, so a browser
 agent cannot do it either.
 
-**⏳ PENDING once CWS approves: `gh workflow enable store-retry.yml`.** It was disabled during the
-rejection because it re-published every 6 hours, which kept the item permanently in review and blocked
-the very edit the rejection required (see the note in the workflow). Leaving it disabled fails
-*silently*: releases simply stop reaching the store and nobody notices.
+The retry workflow was disabled during the rejection (it re-published every 6 hours, keeping the item
+in review and blocking the very edit the rejection required) and is **re-enabled again** — during
+review its upload no-ops with ITEM_NOT_UPDATABLE. **If a second rejection lands, disable it FIRST**
+(`gh workflow disable store-retry.yml`) and only then edit the listing, or it will re-block the
+dashboard the same way.
 
 Remember that saving a listing change **resubmits the item for review** in both stores.
 
