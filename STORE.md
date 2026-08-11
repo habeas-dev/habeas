@@ -236,24 +236,27 @@ Privacidad: https://habeas.dev/privacy.html
 
 ## Keeping the listings in sync
 
-**AMO is done** (2026-08-08): name, summary and the supported-services list are live. Note that
-AMO's *detailed description* is richer than the one in this file — it covers the Archive, the cloud
-store, record mode and the domain-bound trust boundary. **Do not overwrite it with the copy above**;
-the text here is the shorter CWS-oriented version. Read the live one at
-`addons.mozilla.org/en-US/developers/addon/habeas/edit` before changing either.
+**AMO is done and de-branded** (listing updated 2026-08-11). Note that AMO's *detailed description* is
+richer than the one in this file — it covers the Archive, the cloud store, record mode and the
+domain-bound trust boundary. **Do not overwrite it with the copy above**; the text here is the shorter
+CWS-oriented version. Read the live one at `addons.mozilla.org/en-US/developers/addon/habeas/edit`
+before changing either. The brand list and the named competitors were removed there too, surgically —
+Mozilla had not objected, but the text is the same and there is no reason to keep the exposure.
 
-**CWS is still pending** and has to be done by hand: Chrome forbids any extension from scripting the
-web-store origin, and the developer console lives there, so it cannot be automated from a browser
-agent. Remember that saving a listing change resubmits the item for review.
+**CWS must be redone BY HAND** after the rejection: paste the corrected description from the block
+above. It cannot be automated — Chrome forbids extensions from scripting the web-store origin, and the
+developer console lives there.
 
-The supported-services list above is what makes in-store search surface Habeas for "carrefour",
-"ing" or "pepephone". Regenerate it whenever a source is published:
+Remember that saving a listing change **resubmits the item for review** in both stores.
 
-```bash
-curl -s https://habeas-dev.github.io/sources/index.json | \
-  python3 -c "import json,sys; s=json.load(sys.stdin)['sources']; \
-  print(', '.join(sorted({x['name'].split('—')[0].strip() for x in s})))"
-```
+**⛔ The brand list this section used to tell you to regenerate is exactly what got the CWS submission
+rejected** (see the policy note at the top). The old rationale — that listing "carrefour", "ing" or
+"pepephone" makes in-store search surface Habeas — is true and is precisely why the policy forbids it:
+that is the definition of keyword spam. **Do not regenerate it, and do not paste it into any listing.**
+
+Both stores now describe *kinds* of service and link to https://habeas.dev/sources.html, which is the
+only copy of the catalog that can stay current anyway. If a source is published, nothing in the store
+listings needs to change.
 
 Store ranking also weighs installs and ratings, and both listings currently sit near zero reviews.
 Neither store allows soliciting reviews inside the extension, so this only moves once real users
