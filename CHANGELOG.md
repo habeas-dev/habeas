@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.13] — 2026-08-11
+
 ### Added
 - **Record mode is reachable from the site you are on.** It lived behind Settings → Record & contribute,
   so the people most likely to want it — the ones sitting on a site Habeas cannot export yet — never found
