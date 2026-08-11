@@ -12,7 +12,7 @@
 // list with a declarative `rows` config that the runtime's `parseHtmlItems` consumes AS-IS.
 import { parseHtmlItems } from './inventory.js';
 import { registrableDomain, collectHosts } from '../adapters/validate.js';
-import { inferWindow, inferThrottle, inferCapturePaths, inferCurrency, inferTokenFromStorage, inferCookies, inferLoginUrl } from './inferextras.js';
+import { inferWindow, inferThrottle, inferCapturePaths, inferCurrency, inferTokenFromStorage, inferCookies, inferLoginUrl, inferRange, inferNextIsUrl, inferMoreFlag } from './inferextras.js';
 
 // Flag every host the draft touches whose registrable domain differs from the source's own as a
 // crossDomainHost — so the same-domain guard (validate.checkHosts) passes. The runtime still forces a
@@ -928,6 +928,26 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
   // had to discover them the hard way — the ING window bug was exactly this.
   const win = inferWindow(samples);
   if (win) { draft.api.list.window = win.window; draft.api.list.maxAgeDays = win.maxAgeDays; }
+
+  // The date parameters themselves, so the runtime asks for a window ENDING TODAY. Without this the
+  // captured from/to values survive in list.params and — since params are merged over the computed
+  // range — every future run would keep asking for the day the recording was made.
+  const range = inferRange(samples);
+  if (range) {
+    draft.api.list.range = range;
+    const ps = draft.api.list.params;
+    if (ps) {
+      for (const k of Object.keys(ps)) if (k === range.from || k === range.to) delete ps[k];
+      if (!Object.keys(ps).length) delete draft.api.list.params;
+    }
+  }
+
+  // Cursor paging details that decide whether the pager overruns or stops short.
+  if (draft.api.list.paging === 'cursor') {
+    if (inferNextIsUrl(s.json, draft.api.list.nextPath)) draft.api.list.nextIsUrl = true;
+    const more = inferMoreFlag(best.samples);
+    if (more) { draft.api.list.morePath = more.morePath; draft.api.list.moreValue = more.moreValue; }
+  }
 
   const thr = inferThrottle(samples);
   if (thr) draft.throttle = thr;

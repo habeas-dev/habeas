@@ -20,6 +20,26 @@ const DATE_VALUE = /^(\d{4})-(\d{2})-(\d{2})/;
 const MIN_WINDOW_DAYS = 7;
 const MAX_WINDOW_DAYS = 800;
 
+
+// A date parameter's value as a timestamp, whatever shape the API uses, plus the `range.format` name for
+// that shape (undefined = a full ISO timestamp, which is the runtime's default).
+function whenOf(v) {
+  const str = String(v);
+  const m = DATE_VALUE.exec(str);
+  if (m) { const t = Date.parse(`${m[1]}-${m[2]}-${m[3]}T00:00:00Z`); return Number.isNaN(t) ? null : t; }
+  if (/^\d{10}$/.test(str)) return Number(str) * 1000;          // Unix seconds
+  if (/^\d{13}$/.test(str)) return Number(str);                 // Unix milliseconds
+  if (/^\d{4}-\d{2}-\d{2}T/.test(str)) { const t = Date.parse(str); return Number.isNaN(t) ? null : t; }
+  return null;
+}
+function formatOf(v) {
+  const str = String(v);
+  if (DATE_VALUE.test(str) && !/T/.test(str)) return 'date';
+  if (/^\d{10}$/.test(str)) return 'epoch';
+  if (/^\d{13}$/.test(str)) return 'epochMs';
+  return '';                                                    // full ISO — the runtime default
+}
+
 /**
  * The rolling date window the site itself asked for, as `{ window: '<n>d', maxAgeDays: n }`.
  * Reads the widest span seen — a narrow one is a filter the user clicked, the widest is the limit.
@@ -32,10 +52,8 @@ export function inferWindow(samples, now = Date.now()) {
     try { url = new URL(s.url); } catch (e) { continue; }
     for (const [k, v] of url.searchParams) {
       if (!DATE_PARAM.test(k)) continue;
-      const m = DATE_VALUE.exec(String(v));
-      if (!m) continue;
-      const from = Date.parse(`${m[1]}-${m[2]}-${m[3]}T00:00:00Z`);
-      if (Number.isNaN(from)) continue;
+      const from = whenOf(v);
+      if (from == null) continue;
       const days = Math.round((now - from) / 86400000);
       if (days >= MIN_WINDOW_DAYS && days <= MAX_WINDOW_DAYS && days > widest) widest = days;
     }
@@ -253,4 +271,77 @@ export function inferLoginUrl(pages, pageHost) {
     return u.origin + u.pathname;                    // drop the query: a redirect token is not part of it
   }
   return '';
+}
+
+// ---------------------------------------------------------------------------------------------
+// list.range — the date-window parameters themselves. inferWindow already finds how FAR BACK the SPA
+// asked; this records the parameter NAMES and value shape needed to ask the same way. Four instances
+// across three published sources, and it sits directly on top of signal already being read.
+// ---------------------------------------------------------------------------------------------
+const TO_PARAM = /^(to|until|hasta|end)|(to|until|hasta|end)[_-]?(date|fecha)$|^(date|fecha)[_-]?(to|hasta|end)$/i;
+
+export function inferRange(samples) {
+  for (const s of samples || []) {
+    let u; try { u = new URL(s.url); } catch (e) { continue; }
+    let from = null, fromVal = null;
+    for (const [k, v] of u.searchParams) {
+      if (DATE_PARAM.test(k) && whenOf(v) != null) { from = k; fromVal = v; break; }
+    }
+    if (!from) continue;
+    const out = { from };
+    for (const [k, v] of u.searchParams) {
+      if (k !== from && TO_PARAM.test(k) && whenOf(v) != null) { out.to = k; break; }
+    }
+    const fmt = formatOf(fromVal);
+    if (fmt) out.format = fmt;
+    return out;
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------------------------
+// nextIsUrl — some APIs hand back the whole next-page URL rather than a cursor token, and the runtime
+// has to fetch it directly instead of appending it as a parameter. One look at the value settles it.
+// ---------------------------------------------------------------------------------------------
+export function inferNextIsUrl(json, nextPath) {
+  if (!json || !nextPath) return false;
+  const v = String(nextPath).split('.').reduce((o, k) => (o == null ? o : o[k]), json);
+  return typeof v === 'string' && /^(https?:\/\/|\/)/.test(v);
+}
+
+// ---------------------------------------------------------------------------------------------
+// morePath / moreValue — the "there are more pages" flag. Paging on the cursor alone overruns on APIs
+// that keep returning one, and stops early on those that return an empty final page.
+// ---------------------------------------------------------------------------------------------
+const MORE_KEY = /(^|[._])(has)?(more|next|mas|siguiente)|more$|next$|islast$|lastpage$/i;
+
+/**
+ * `{ morePath, moreValue }` — the flag and the value that means "keep going" — or null.
+ * Requires having seen the flag take TWO values across at least three captured pages: without a page
+ * that turned it off there is no way to tell which value means stop, and guessing wrong either
+ * truncates the user's history or spins until the page cap.
+ */
+export function inferMoreFlag(pages) {
+  const seen = new Map();                     // path -> [values, in capture order]
+  for (const p of pages || []) {
+    for (const f of flatten((p && p.json) || {}, '', 3)) {
+      const leaf = f.k.split('.').pop();
+      if (!MORE_KEY.test(leaf)) continue;
+      if (typeof f.v !== 'boolean' && typeof f.v !== 'string' && typeof f.v !== 'number') continue;
+      if (typeof f.v === 'string' && f.v.length > 4) continue;   // a cursor token, not a flag
+      if (!seen.has(f.k)) seen.set(f.k, []);
+      seen.get(f.k).push(f.v);
+    }
+  }
+  for (const [path, vals] of seen) {
+    if (vals.length < 3) continue;
+    const distinct = [...new Set(vals.map((v) => JSON.stringify(v)))];
+    if (distinct.length !== 2) continue;                          // never flipped, or too noisy to read
+    const counts = new Map();
+    for (const v of vals) { const k = JSON.stringify(v); counts.set(k, (counts.get(k) || 0) + 1); }
+    const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+    if (ranked[0][1] === ranked[1][1]) continue;                  // a tie says nothing
+    return { morePath: path, moreValue: JSON.parse(ranked[0][0]) };
+  }
+  return null;
 }

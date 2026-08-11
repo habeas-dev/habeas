@@ -20,9 +20,18 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 - **A red REC badge on the toolbar icon while recording.** The recorder's live panel sits in the Settings
   tab, which is precisely not where the user is during a recording — they are on the site being recorded,
   where nothing said Habeas was listening.
+- **Record mode infers the date-range and cursor-paging fields too** — `list.range` (the date parameter
+  names and their value shape: ISO, `date`, epoch seconds or milliseconds), `nextIsUrl` (the cursor is a
+  whole URL, not a token) and `morePath`/`moreValue` (the "there are more pages" flag). The last is only
+  emitted when the flag was seen taking **two** values across at least three captured pages: without a
+  page that turned it off there is no way to tell which value means stop, and guessing wrong either
+  truncates the user's history or spins until the page cap.
+- **Fixed: a drafted source froze the day it was recorded.** The captured `fromDate`/`toDate` survived in
+  `list.params`, which the runtime merges *over* the computed range — so every future run kept asking for
+  the window that ended on the recording date. Emitting `range` now removes them.
 - **Record mode infers four more fields**, measured against the 24 published sources: **11 of them would
   now draft with no hand editing at all, up from 4**, and the total number of fields an author has to
-  write by hand across all 24 falls from 85 to 46.
+  write by hand across all 24 falls from 85 to 39.
   - **`currency`** (9 sources) — `sinks/format.js` falls back to EUR when neither the item nor the source
     says, which silently mislabels every non-euro source. Taken from a currency field in the items, or a
     symbol glued to an amount; only a clear majority counts, since a genuinely multi-currency list has no
