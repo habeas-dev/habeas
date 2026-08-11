@@ -464,13 +464,34 @@ function draftHtml(best, ctx = {}) {
 }
 
 // Public: the candidate lists for the picker UI (JSON + HTML), biggest first.
+// One line of a captured item, as the user would recognise it on the site: date · label · amount.
+// The picker used to identify each list by API path and host, which tells a non-technical contributor
+// nothing about which one holds their purchases — this is the same information they can see on screen.
+export function itemPreview(item) {
+  if (!item || typeof item !== 'object') return '';
+  const flat = flattenKeys(item).filter((f) => f.value != null && f.value !== '' && typeof f.value !== 'object');
+  const leaf = (f) => f.path.split('.').pop();
+  const find = (test) => { const f = flat.find((x) => test(leaf(x), x.value)); return f ? f.value : null; };
+
+  const date = find(looksDate);
+  // A label, never an id: an opaque order reference is exactly as unrecogniseable as the URL it replaces.
+  const nameF = flat.find((f) => looksName(leaf(f)) && !looksId(leaf(f)) && typeof f.value === 'string' && f.value.trim().length > 1);
+  const money = find((k, v) => looksMoney(k) && (typeof v === 'number' || /^-?[\d.,\s]+$/.test(String(v))));
+
+  const parts = [];
+  if (date) parts.push(String(date).slice(0, 10));
+  if (nameF) { const v = String(nameF.value).trim(); parts.push(v.length > 40 ? v.slice(0, 40) + '…' : v); }
+  if (money != null) parts.push(String(money));
+  return parts.join(' · ');
+}
+
 export function listCandidates(samples) {
   const json = collect(samples).map((c) => {
     let host = '', path = '';
     try { const u = new URL(c.s.url); host = u.host; path = u.pathname; } catch (e) {}
-    return { key: c.key, url: c.s.url, host, path, itemsPath: c.itemsPath, count: c.len, pages: c.pages, keys: Object.keys(c.item || {}) };
+    return { key: c.key, url: c.s.url, host, path, itemsPath: c.itemsPath, count: c.len, pages: c.pages, keys: Object.keys(c.item || {}), preview: itemPreview(c.item) };
   });
-  const html = collectHtml(samples).map((c) => ({ key: c.key, url: c.s.url, host: c.host, path: c.path, itemsPath: '', count: c.len, pages: 1, keys: Object.keys(c.item || {}), html: true }));
+  const html = collectHtml(samples).map((c) => ({ key: c.key, url: c.s.url, host: c.host, path: c.path, itemsPath: '', count: c.len, pages: 1, keys: Object.keys(c.item || {}), preview: itemPreview(c.item), html: true }));
   return [...json, ...html].sort((a, b) => (b.count || 0) - (a.count || 0));
 }
 

@@ -1173,7 +1173,7 @@
     "message": "If you want the PDFs, download one invoice/receipt from its detail page during capture."
   },
   "author_tip_wait": {
-    "message": "Give each page a second to load its data before moving on, then come back and Analyze."
+    "message": "Give each page a second to load its data before moving on — then press “Stop & analyse”."
   },
   "author_note_advanced": {
     "message": "Heads-up: capture doesn't work on every site. Some — heavily protected SPAs or advanced anti-bot walls (seen on certain retailers) — don't expose their data to record mode, and nothing gets captured. If that happens you can still build the source by hand: open the site's DevTools → Network, find the request that returns your data, and use \"Write/paste JSON\" (in Settings) to define it — like the shipped sources were made."
@@ -1185,13 +1185,13 @@
     "message": "Grant access & open site"
   },
   "author_stop": {
-    "message": "Stop learning"
+    "message": "Stop & analyse"
   },
   "author_step2": {
-    "message": "2 · Build the source"
+    "message": "2 · Check what was found"
   },
   "author_analyze": {
-    "message": "Analyze captured activity"
+    "message": "Analyse again"
   },
   "author_samples": {
     "message": "responses captured"
@@ -1297,10 +1297,10 @@
     "message": "realtime frames"
   },
   "author_live_hint_empty": {
-    "message": "No data yet. Open your orders / invoices page so the site loads it — and scroll down to load them all."
+    "message": "Nothing yet. Open your orders / invoices page so the site loads it — and scroll down to load them all."
   },
   "author_live_hint_draft": {
-    "message": "✅ Found your data ($D$ documents). Press “Analyze” to build the draft — or just open one document so we learn how to download it.",
+    "message": "✅ Found your data ($D$ documents). Open one of them so Habeas also learns how to download it — then press “Stop & analyse”.",
     "placeholders": {
       "D": {
         "content": "$1"
@@ -2130,7 +2130,7 @@
     "message": "page(s)"
   },
   "author_list_hint": {
-    "message": "Totals across the pages you browsed (items · pages captured). When you use the source it paginates to fetch them all — you pick the right list here, not pages."
+    "message": "Pick the list you recognise as yours — each one is labelled with a real row from it. When you use the source it paginates to fetch them all; here you choose the list, not the pages."
   },
   "author_kind": {
     "message": "Kind of data"
@@ -3503,6 +3503,28 @@
       "file": {
         "content": "$2",
         "example": "habeas-ing-es-2026-08-11.csv"
+      }
+    }
+  },
+  "author_note_advanced_h": {
+    "message": "What if nothing is captured?",
+    "description": "Summary of the collapsed note explaining that capture does not work on every site."
+  },
+  "badge_recording": {
+    "message": "recording $DOMAIN$ — browse your orders as usual",
+    "description": "Toolbar tooltip while record mode is armed.",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    }
+  },
+  "teach_site": {
+    "message": "Habeas doesn’t know $DOMAIN$ yet — teach it to export from here",
+    "description": "Popup offer to record a site that has no source yet.",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
       }
     }
   }

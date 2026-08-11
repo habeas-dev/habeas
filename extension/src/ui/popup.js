@@ -23,6 +23,7 @@ import { isRetrievable } from '../lib/retrieve.js';
 import { outputsOf, resolveOutput, storeKeyOf } from '../lib/outputs.js';
 import { storeIdOf } from '../lib/instances.js';
 import { esc } from '../lib/esc.js';
+import { knownSite } from '../lib/sitematch.js';
 import { inventoryView, distinctBy } from '../lib/inventoryview.js';
 
 let ADAPTERS = {};
@@ -59,6 +60,7 @@ async function init() {
   try { const c = (await chrome.storage.local.get('habeas:contribunread'))['habeas:contribunread'] || 0; const el = $('#contribnotice'); if (el && c > 0) { el.hidden = false; el.onclick = () => chrome.runtime.openOptionsPage(); } } catch (e) {}
   $('#sync-all').onclick = onSyncAll;
   ADAPTERS = await getAdapters();
+  offerToTeachThisSite().catch(() => {});
   const cfg = await getConfig();
   const enabled = cfg.datasources.filter((d) => d.enabled);
   $('#ds').innerHTML = enabled.map((d) => { const a = ADAPTERS[d.adapter]; const tld = d.brandDomain ? ' (' + d.brandDomain.replace(/^[^.]*\./, '').toUpperCase() + ')' : ''; return `<option value="${esc(d.id)}">${esc(((a && a.name) || d.id) + tld)}</option>`; }).join('') || '<option value="">—</option>';
@@ -931,3 +933,20 @@ function openDeliveredFile(row, sink, ext) {
 }
 
 init();
+
+
+// Record mode was only reachable from deep inside Settings, so the people most likely to want it — the
+// ones sitting on a site Habeas can't export yet — never found it. Offer it where they are: the tab they
+// have open. `activeTab` gives us this tab's URL on the click that opened the popup, and nothing else.
+async function offerToTeachThisSite() {
+  const el = $('#teachsite'); if (!el) return;
+  let tab = null;
+  try { [tab] = await chrome.tabs.query({ active: true, currentWindow: true }); } catch (e) { return; }
+  const url = tab && tab.url;
+  if (!url || !/^https:\/\//.test(url)) return;   // http/extension/new-tab pages: nothing to record
+  let host = ''; try { host = new URL(url).host; } catch (e) { return; }
+  if (knownSite(ADAPTERS, host)) return;           // already covered — the normal UI handles it
+  $('#teachsite-text').textContent = t('teach_site', [host.replace(/^www\./, '')]);
+  el.hidden = false;
+  el.onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/author.html?url=' + encodeURIComponent(url)) });
+}

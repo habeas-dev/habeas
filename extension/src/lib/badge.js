@@ -11,6 +11,10 @@ export const badgeWorking = () => set('…', '#f1c40f', '#000'); // yellow — a
 export const badgeCount = (n) => set(String(n), '#0a8a0a', '#fff'); // green — N new synced
 export const badgeError = () => set('!', '#c0392b', '#fff'); // red — last run failed
 export const badgeClear = () => set('', '#000');
+// Red REC — record mode is armed. The recorder panel lives in Settings, but the user spends the whole
+// recording in the SITE's tab, where until now nothing said Habeas was listening. The toolbar icon is
+// the one piece of Habeas visible from there, so it carries the state.
+export const badgeRecording = () => set('REC', '#c62828', '#fff');
 
 // The toolbar icon's tooltip — shows what Habeas is doing (or its last result) on hover.
 // Sets the action title (tooltip) AND mirrors the status into storage so an open popup can show live

@@ -23,7 +23,8 @@ import { outputsForSink, outputsOf, resolveOutput, storeKeyOf } from './lib/outp
 import { storeIdOf, migrateBrandDomains } from './lib/instances.js';
 import { getAdapters } from './adapters/index.js';
 import { hasConsent } from './lib/consent.js';
-import { badgeWorking, badgeCount, badgeError, badgeClear, setStatus } from './lib/badge.js';
+import { siteMatches } from './lib/sitematch.js';
+import { badgeWorking, badgeCount, badgeError, badgeClear, badgeRecording, setStatus } from './lib/badge.js';
 import { t } from './lib/i18n.js';
 import { getSubmitter } from './lib/submitter.js';
 import { getMyHandoffs } from './registry/client.js';
@@ -57,6 +58,7 @@ import { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isL
   syncWebRequestCapture();
   syncLoginErrorWatch(); // watch a resetCookies source's login page for its "corrupted cookies" status (WiZink 400)
   syncLearnAssetCapture().catch(() => {}); // (re)arm record-mode document capture if a recording is in progress
+  syncLearnBadge(false).catch(() => {});   // …and restore REC on the toolbar (never clearing another feature's badge)
   syncSchedules().catch(() => {}); // (re)arm the download planner's alarms; overdue ones fire the catch-up
   runAutoMaintenance().catch(() => {}); // version-gated: recover real data from cloud destinations, once, unattended
   try { chrome.alarms.create('contrib:poll', { periodInMinutes: 20 }); } catch (e) {} // poll for team replies to the user's handoffs
@@ -73,7 +75,7 @@ chrome.storage.onChanged.addListener((ch, area) => {
   if (area === 'local' && (ch['habeas:config'] || ch['habeas:sources'])) { syncWebRequestCapture(); syncLoginErrorWatch(); }
   if (area === 'local' && ch['habeas:config']) { syncSchedules().catch(() => {}); scheduleConfigSnapshot(); } // push the change to the store for other devices (debounced; writeSnapshotIfChanged skips the apply echo)
   if (area === 'local' && ch['habeas:secrets']) scheduleVaultSync();
-  if (area === 'local' && ch['habeas:learn']) syncLearnAssetCapture().catch(() => {});
+  if (area === 'local' && ch['habeas:learn']) { syncLearnAssetCapture().catch(() => {}); syncLearnBadge().catch(() => {}); }
 });
 // The download planner: chrome.alarms wakes the SW at each schedule's fire time (a browser that was closed
 // fires the overdue alarm on next start → catch-up). onAlarm runs the schedule, then re-arms next / retry.
@@ -314,6 +316,18 @@ function onLearnHeaders(details) {
     });
   } catch (e) {}
 }
+// Show REC on the toolbar icon for as long as record mode is armed, and say so in the tooltip. The
+// recorder's own live panel sits in the Settings tab, which the user is NOT looking at while they browse
+// the site being recorded — so without this the whole recording is silent from where they actually are.
+async function syncLearnBadge(clearIfIdle = true) {
+  const o = await chrome.storage.local.get('habeas:learn');
+  const l = o['habeas:learn'];
+  if (l && l.active && l.domain) { badgeRecording(); setStatus(chrome.i18n.getMessage('badge_recording', [l.domain]) || ('recording ' + l.domain)); }
+  // The badge is shared with sync results, so only clear it on a real stop — not on a service-worker
+  // restart that merely happens to find no recording in progress.
+  else if (clearIfIdle) { badgeClear(); setStatus(''); }
+}
+
 async function syncLearnAssetCapture() {
   if (!(chrome.webRequest && chrome.webRequest.onHeadersReceived)) return;
   const o = await chrome.storage.local.get('habeas:learn');
@@ -637,13 +651,6 @@ async function sweepAllSources() {
 
 const hostOf = (adapter) => adapter.api.host.replace(/^https?:\/\//, '');
 const bareHost = (m) => String(m).replace(/^[a-z]+:\/\//i, '').replace(/[:/].*$/, '').replace(/^\*\./, '');
-function siteMatches(adapter, host) {
-  if (!host) return false;
-  const dom = adapter.domain;
-  if (dom && (host === dom || host.endsWith('.' + dom))) return true;
-  for (const m of adapter.match || []) { const h = bareHost(m); if (h && (host === h || host.endsWith('.' + h))) return true; }
-  return hostOf(adapter) === host;
-}
 
 // Whole store → each endpoint resolves its own auth (mixed cookie+bearer), merged across sibling hosts
 // sharing the source's registrable domain. Cookie sources proceed with an empty store (cookies carry it).

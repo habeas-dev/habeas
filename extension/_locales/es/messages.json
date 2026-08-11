@@ -1173,7 +1173,7 @@
     "message": "Si quieres los PDF, descarga una factura/recibo desde su página de detalle durante la captura."
   },
   "author_tip_wait": {
-    "message": "Deja que cada página cargue sus datos un segundo antes de seguir, y luego vuelve y pulsa Analizar."
+    "message": "Deja que cada página cargue sus datos un segundo antes de seguir — y luego pulsa «Parar y analizar»."
   },
   "author_note_advanced": {
     "message": "Aviso: la captura no funciona en todas las webs. Algunas —SPAs muy protegidas o con anti-bot avanzado (visto en ciertas tiendas)— no exponen sus datos al grabador y no se captura nada. Si pasa, aún puedes crear la fuente a mano: abre DevTools → Red del sitio, localiza la petición que devuelve tus datos, y usa «Escribir/pegar JSON» (en Ajustes) para definirla — así se hicieron las fuentes que ya vienen."
@@ -1185,13 +1185,13 @@
     "message": "Dar acceso y abrir la web"
   },
   "author_stop": {
-    "message": "Dejar de aprender"
+    "message": "Parar y analizar"
   },
   "author_step2": {
-    "message": "2 · Construir la fuente"
+    "message": "2 · Revisar lo encontrado"
   },
   "author_analyze": {
-    "message": "Analizar actividad capturada"
+    "message": "Analizar de nuevo"
   },
   "author_samples": {
     "message": "respuestas capturadas"
@@ -1297,10 +1297,10 @@
     "message": "frames en tiempo real"
   },
   "author_live_hint_empty": {
-    "message": "Aún no veo datos. Abre tu página de pedidos / facturas para que la web los cargue — y baja para cargarlos todos."
+    "message": "Aún no veo nada. Abre tu página de pedidos / facturas para que la web los cargue — y baja para cargarlos todos."
   },
   "author_live_hint_draft": {
-    "message": "✅ Encontré tus datos ($D$ documentos). Pulsa «Analizar» para crear el borrador — o abre un documento para aprender a descargarlo.",
+    "message": "✅ Encontré tus datos ($D$ documentos). Abre uno para que Habeas aprenda también a descargarlo — y luego pulsa «Parar y analizar».",
     "placeholders": {
       "D": {
         "content": "$1"
@@ -2130,7 +2130,7 @@
     "message": "página(s)"
   },
   "author_list_hint": {
-    "message": "Totales de las páginas que navegaste (elementos · páginas capturadas). Al usar la fuente se pagina para traerlos todos — aquí eliges la lista correcta, no páginas."
+    "message": "Elige la lista que reconozcas como tuya — cada una se muestra con una fila real suya. Al usar la fuente se pagina para traerlos todos; aquí eliges la lista, no las páginas."
   },
   "author_kind": {
     "message": "Tipo de datos"
@@ -3503,6 +3503,28 @@
       "file": {
         "content": "$2",
         "example": "habeas-ing-es-2026-08-11.csv"
+      }
+    }
+  },
+  "author_note_advanced_h": {
+    "message": "¿Y si no se captura nada?",
+    "description": "Summary of the collapsed note explaining that capture does not work on every site."
+  },
+  "badge_recording": {
+    "message": "grabando $DOMAIN$ — navega tus pedidos con normalidad",
+    "description": "Toolbar tooltip while record mode is armed.",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    }
+  },
+  "teach_site": {
+    "message": "Habeas aún no conoce $DOMAIN$ — enséñale a exportar de aquí",
+    "description": "Popup offer to record a site that has no source yet.",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
       }
     }
   }

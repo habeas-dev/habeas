@@ -11,6 +11,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Record mode is reachable from the site you are on.** It lived behind Settings → Record & contribute,
+  so the people most likely to want it — the ones sitting on a site Habeas cannot export yet — never found
+  it. The popup now offers *"Habeas doesn't know example.com yet — teach it to export from here"* and opens
+  the recorder with the URL filled in. This uses `activeTab`, which reveals the current tab's URL only on
+  the click that opened the popup and carries no install-time permission warning (unlike `tabs`, which
+  reads as "read your browsing history").
+- **A red REC badge on the toolbar icon while recording.** The recorder's live panel sits in the Settings
+  tab, which is precisely not where the user is during a recording — they are on the site being recorded,
+  where nothing said Habeas was listening.
 - **Record mode infers three more fields** (`runtime/inferextras.js`), each one a field every source author
   previously had to discover by hand — and one of which caused a real bug:
   - **`window` / `maxAgeDays`** — read off the date parameter in the site's own request. Six sources declare
@@ -86,6 +95,18 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   - Exports the selected source or every source in the backend, as `habeas-<source>-YYYY-MM-DD.csv`.
 
 ### Changed
+- **The recorder no longer asks the user to press "Analyse".** Stopping a recording analyses it — the
+  button is now *"Stop & analyse"*. Pressing Analyse was the step people got stuck on, and pressing it too
+  early (the usual mistake) printed "0 responses captured", which reads like a failure rather than "you
+  haven't finished yet". The whole step-2 panel stays hidden until there is something in it, instead of
+  sitting there empty during the recording.
+- **The list picker shows the user's own data instead of an API path.** Each captured list was labelled
+  `/v1/movements · api.example.test`; nobody recognises their purchases that way. It now reads
+  `128 items · 2026-05-04 · Recibo de luz · -61.2` — a real row from that list (`itemPreview`), falling
+  back to the path only when the items hold nothing a person would recognise.
+- **The "capture doesn't work on every site → open DevTools → Network" caveat is collapsed** behind
+  *"What if nothing is captured?"*. It is true and worth keeping, but it was the last thing a first-time
+  contributor read before starting.
 - **Handoff bundles carry relative sample timings** (`dt`, milliseconds since the first sample) instead of
   wall-clock times. The gaps are what reveal the site's pacing; the absolute times would have revealed when
   the user was browsing and in which timezone.

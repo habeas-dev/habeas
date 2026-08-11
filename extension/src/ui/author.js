@@ -124,7 +124,14 @@ function showLearning() {
   $('#learnstatus').textContent = t('author_learning', [LEARN.domain]);
   startLiveMonitor();
 }
-async function onStop() { stopLiveMonitor(); await stopLearning(); $('#start').hidden = false; $('#stop').hidden = true; $('#learnstatus').textContent = ''; $('#live').hidden = true; }
+async function onStop() {
+  stopLiveMonitor(); await stopLearning();
+  $('#start').hidden = false; $('#stop').hidden = true; $('#learnstatus').textContent = ''; $('#live').hidden = true;
+  // Analyse straight away. Making the user find and press a second button after they had already
+  // finished browsing was the step everyone got stuck on — and pressing it too early (the usual
+  // mistake) just printed "0 responses captured", which reads like a failure.
+  if (LEARN) await onAnalyze();
+}
 
 // Live recorder monitor — while the helper browses (in the site tab), poll the capture and show, in
 // plain language, what we're seeing: documents found, data lists, realtime frames, which transport, and
@@ -223,6 +230,7 @@ function startLiveMonitor() { stopLiveMonitor(); $('#live').hidden = false; refr
 
 async function onAnalyze() {
   if (!LEARN) { $('#learnstatus').textContent = t('author_start_first'); return; }
+  $('#step2').hidden = false; // from here on it holds either a mapper or the reason there isn't one
   const samples = await getSamples(LEARN.domain);
   const ws = await getWsFrames(LEARN.domain);
   $('#samplecount').textContent = String(samples.length) + (ws.length ? ' + ' + ws.length + ' ws' : '');
@@ -245,7 +253,9 @@ async function onAnalyze() {
   CANDS = listCandidates(samples);
   if (!CANDS.length) { $('#status').textContent = t('author_no_list'); return; }
   // Let the user pick which captured list is their data (biggest is only a default).
-  $('#f_list').innerHTML = CANDS.map((c, i) => `<option value="${i}">${c.count} ${t('author_items')} · ${c.pages} ${t('author_pages')} · ${esc(c.path)} · ${esc(c.host)}</option>`).join('');
+  // Label each list by a real row from it ("2026-05-04 · Recibo de luz · -61.2"), falling back to the
+  // API path only when the items have nothing a person would recognise.
+  $('#f_list').innerHTML = CANDS.map((c, i) => `<option value="${i}">${c.count} ${t('author_items')} · ${esc(c.preview || (c.path + ' · ' + c.host))}</option>`).join('');
   $('#f_list').onchange = () => drawDraft(CANDS[+$('#f_list').value]);
   $('#findbtn').onclick = onFind;
   $('#f_find').onkeydown = (e) => { if (e.key === 'Enter') onFind(); };
@@ -267,7 +277,7 @@ async function onAnalyze() {
   GROUPS_KEY = '';
   $('#groupspickrow').hidden = CANDS.length <= 1;
   $('#f_groups').innerHTML = `<option value="">${t('author_groups_none')}</option>`
-    + CANDS.map((c) => `<option value="${esc(c.key)}">${esc(c.path)} · ${esc(c.host)}</option>`).join('');
+    + CANDS.map((c) => `<option value="${esc(c.key)}">${c.count} ${t('author_items')} · ${esc(c.preview || (c.path + ' · ' + c.host))}</option>`).join('');
   $('#f_groups').onchange = () => { GROUPS_KEY = $('#f_groups').value; if (CHOSEN) drawDraft(CHOSEN); };
   drawDraft(CANDS[0]);
 }
@@ -546,7 +556,10 @@ export const RECORDER_HTML = `
           <li data-i18n="author_tip_pdf"></li>
           <li data-i18n="author_tip_wait"></li>
         </ol>
-        <p class="muted" data-i18n="author_note_advanced" style="margin:10px 0 0"></p>
+        <details style="margin:10px 0 0">
+          <summary class="muted" data-i18n="author_note_advanced_h"></summary>
+          <p class="muted" data-i18n="author_note_advanced" style="margin:6px 0 0"></p>
+        </details>
       </div>
     </div>
 
@@ -576,6 +589,7 @@ export const RECORDER_HTML = `
       </div>
     </div>
 
+    <div id="step2" hidden>
     <div class="section-title"><h2 data-i18n="author_step2"></h2></div>
     <div class="card">
       <div class="row">
@@ -640,4 +654,5 @@ export const RECORDER_HTML = `
           <div id="docpreview"></div>
         </div>
       </div>
+    </div>
     </div>`;
