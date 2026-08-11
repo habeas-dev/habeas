@@ -10,6 +10,20 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.14] — 2026-08-11
+
+### Fixed
+- **The inferred window was a day too long for half of every day.** `inferWindow` measured elapsed time
+  and rounded it, so a source drafted after ~12:00 UTC read an 89-day window as 90 — asking for one day
+  more than the service allows. That is precisely the off-by-one that made ING reject the month straddling
+  its boundary, which is the bug this inference exists to prevent. It now counts calendar days between the
+  two dates, independently of the time of day.
+- **Google Drive read as permanently disconnected on Edge, Brave, Opera and Vivaldi.** Those browsers
+  expose `chrome.identity.getAuthToken` but it never yields a token — it is tied to being signed into
+  Chrome itself. `getToken` already fell through to the cross-browser implicit flow when Path A failed, so
+  sending worked; `driveConnected` and `disconnectDrive` returned early instead, so Settings reported Drive
+  disconnected while it was in fact working, and Disconnect cleared nothing.
+
 ## [0.9.13] — 2026-08-11
 
 ### Added

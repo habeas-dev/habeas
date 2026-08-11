@@ -188,7 +188,10 @@ export async function driveSignIn(clientId) { return getToken(clientId, true); }
 
 // "Connected" = a token can be obtained SILENTLY (Path A: Chrome has a grant; Path B: a valid cached token).
 export async function driveConnected(clientId) {
-  if (hasChromeAuth()) { try { await chromeGetToken(false); return true; } catch (e) { return false; } }
+  // Non-Chrome Chromium browsers (Edge, Brave, Opera, Vivaldi) HAVE getAuthToken but it never yields a
+  // token — it is tied to being signed into Chrome. Failing here must fall through to the Path B check,
+  // exactly as getToken does, or Drive sends fine while Settings reports it permanently disconnected.
+  if (hasChromeAuth()) { try { await chromeGetToken(false); return true; } catch (e) { /* → Path B below */ } }
   const key = 'gdrive:' + cid(clientId);
   const o = await chrome.storage.local.get(key);
   const c = o[key];
@@ -198,7 +201,9 @@ export async function driveConnected(clientId) {
 // Disconnect: Path A → drop Chrome's cached token; Path B/C → drop the stored token (+ refresh). (We don't revoke the grant
 // server-side; the user can do that from their Google account.)
 export async function disconnectDrive(clientId) {
-  if (hasChromeAuth()) { try { removeCachedToken(await chromeGetToken(false)); } catch (e) {} return; }
+  // Same reasoning: on a browser where Path A never worked, the token to drop is the Path B one — so
+  // clear both rather than returning early on a Path A that had nothing cached in the first place.
+  if (hasChromeAuth()) { try { removeCachedToken(await chromeGetToken(false)); return; } catch (e) { /* → Path B below */ } }
   try { await chrome.storage.local.remove('gdrive:' + cid(clientId)); } catch (e) {}
 }
 

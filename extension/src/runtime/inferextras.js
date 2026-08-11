@@ -32,6 +32,8 @@ function whenOf(v) {
   if (/^\d{4}-\d{2}-\d{2}T/.test(str)) { const t = Date.parse(str); return Number.isNaN(t) ? null : t; }
   return null;
 }
+const midnightUTC = (t) => { const d = new Date(t); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()); };
+
 function formatOf(v) {
   const str = String(v);
   if (DATE_VALUE.test(str) && !/T/.test(str)) return 'date';
@@ -54,7 +56,9 @@ export function inferWindow(samples, now = Date.now()) {
       if (!DATE_PARAM.test(k)) continue;
       const from = whenOf(v);
       if (from == null) continue;
-      const days = Math.round((now - from) / 86400000);
+      // Calendar days between the two DATES, not elapsed time: rounding 89 days + 12 hours gives 90, and
+      // asking for one day more than the service allows is precisely the ING failure this exists to prevent.
+      const days = (midnightUTC(now) - midnightUTC(from)) / 86400000;
       if (days >= MIN_WINDOW_DAYS && days <= MAX_WINDOW_DAYS && days > widest) widest = days;
     }
   }

@@ -116,3 +116,14 @@ test('a drafted source carries the window the site itself asked for', async () =
   assert.equal(r.draft.api.list.maxAgeDays, 89, 'the window should reach the draft, not just the inference');
   assert.equal(r.draft.api.list.window, '89d');
 });
+
+test('the window is counted in calendar days, whatever the time of day', () => {
+  // 89 days + 12 hours is still an 89-day window. Rounding it to 90 is exactly the off-by-one that made
+  // ING reject the month straddling its boundary.
+  const noon = Date.parse('2026-08-11T12:30:00Z');
+  const from = new Date(noon - 89 * 86400000).toISOString().slice(0, 10);
+  assert.equal(inferWindow([{ url: `https://api.example.test/tx?fromDate=${from}` }], noon).maxAgeDays, 89);
+  const dawn = Date.parse('2026-08-11T00:05:00Z');
+  const from2 = new Date(dawn - 89 * 86400000).toISOString().slice(0, 10);
+  assert.equal(inferWindow([{ url: `https://api.example.test/tx?fromDate=${from2}` }], dawn).maxAgeDays, 89);
+});
