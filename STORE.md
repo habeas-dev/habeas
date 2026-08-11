@@ -243,9 +243,15 @@ CWS-oriented version. Read the live one at `addons.mozilla.org/en-US/developers/
 before changing either. The brand list and the named competitors were removed there too, surgically —
 Mozilla had not objected, but the text is the same and there is no reason to keep the exposure.
 
-**CWS must be redone BY HAND** after the rejection: paste the corrected description from the block
-above. It cannot be automated — Chrome forbids extensions from scripting the web-store origin, and the
-developer console lives there.
+**CWS: corrected description pasted 2026-08-11, awaiting review.** It had to be done by hand — the CWS
+API only uploads and publishes the PACKAGE (the detailed description, screenshots and category exist
+only in the dashboard), and Chrome forbids extensions from scripting the web-store origin, so a browser
+agent cannot do it either.
+
+**⏳ PENDING once CWS approves: `gh workflow enable store-retry.yml`.** It was disabled during the
+rejection because it re-published every 6 hours, which kept the item permanently in review and blocked
+the very edit the rejection required (see the note in the workflow). Leaving it disabled fails
+*silently*: releases simply stop reaching the store and nobody notices.
 
 Remember that saving a listing change **resubmits the item for review** in both stores.
 
