@@ -11,6 +11,24 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Record mode infers three more fields** (`runtime/inferextras.js`), each one a field every source author
+  previously had to discover by hand — and one of which caused a real bug:
+  - **`window` / `maxAgeDays`** — read off the date parameter in the site's own request. Six sources declare
+    a rolling window, and ING's was found only after its API started rejecting the month straddling the
+    90-day boundary; the SPA's request had been showing that limit all along. The widest span seen wins (a
+    narrow one is a filter the user clicked); spans under a week or over ~2 years are not windows and are
+    ignored.
+  - **`throttle`** — the pacing between the SPA's own calls, so a replay keeps the site's own rhythm. Needs
+    timestamps, so samples now carry one; a burst (everything within milliseconds) means there was no pacing
+    to copy and nothing is emitted.
+  - **`auth.capturePaths`** — a bearer that differs between path prefixes is scoped to them. Since
+    `capturePaths` is an allowlist, only the scope that actually covers the paths the source replays is kept.
+    Credentials are redacted in a shared handoff, so this one only fires on a local recording — where it
+    would produce a wrong answer, it produces nothing.
+
+  Each returns nothing rather than a shaky guess: a wrong field in a draft is worse than a missing one,
+  because the author stops looking once something is filled in.
+
 - **Export the canonical store to QIF** (`lib/qif.js`, next to the CSV export in the store inspector).
   Desktop finance applications — GnuCash, HomeBank, KMyMoney, MoneyDance, Quicken — cannot **receive** a
   push: their only inlet is a file, and QIF is the lingua franca of that world. Without it a user of those
@@ -66,6 +84,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
     Tombstoned items — the ones the service no longer has — are excluded, so the file never claims something
     exists when the store knows it does not.
   - Exports the selected source or every source in the backend, as `habeas-<source>-YYYY-MM-DD.csv`.
+
+### Changed
+- **Handoff bundles carry relative sample timings** (`dt`, milliseconds since the first sample) instead of
+  wall-clock times. The gaps are what reveal the site's pacing; the absolute times would have revealed when
+  the user was browsing and in which timezone.
 
 ## [0.9.12] — 2026-08-08
 

@@ -93,14 +93,14 @@
     const body = typeof reqBody === 'string' ? reqBody.slice(0, 20000) : '';
     let json; try { json = JSON.parse(bodyText); } catch (e) {}
     if (json && typeof json === 'object') {
-      window.postMessage({ __habeas: true, type: 'sample', host: hostOf(url), path, url: abs, method: method || 'GET', status: status || 0, reqHeaders: rh, json, reqBody: body }, '*');
+      window.postMessage({ __habeas: true, type: 'sample', host: hostOf(url), path, url: abs, method: method || 'GET', status: status || 0, reqHeaders: rh, json, reqBody: body, at: Date.now() }, '*');
       return;
     }
     // Not JSON — keep it only if it's HTML (content-type says so, or it opens with an HTML tag).
     const looksHtml = /html|xml/i.test(contentType || '') || /^\s*<(!doctype|html|table|div|tr|tbody|ul|ol|section|body|main)\b/i.test(bodyText);
     if (!looksHtml) return;
     const html = bodyText.length > 500000 ? bodyText.slice(0, 500000) : bodyText;
-    window.postMessage({ __habeas: true, type: 'sample', host: hostOf(url), path, url: abs, method: method || 'GET', status: status || 0, reqHeaders: rh, kind: 'html', html, reqBody: body, fromHtml: true }, '*');
+    window.postMessage({ __habeas: true, type: 'sample', host: hostOf(url), path, url: abs, method: method || 'GET', status: status || 0, reqHeaders: rh, kind: 'html', html, reqBody: body, fromHtml: true, at: Date.now() }, '*');
   }
   // Lightweight "we saw a request" ping (host only) — powers the record-mode diagnostic.
   function postSeen(url) { if (LEARN) try { window.postMessage({ __habeas: true, type: 'seen', host: hostOf(url) }, '*'); } catch (e) {} }

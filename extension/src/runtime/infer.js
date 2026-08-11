@@ -12,6 +12,7 @@
 // list with a declarative `rows` config that the runtime's `parseHtmlItems` consumes AS-IS.
 import { parseHtmlItems } from './inventory.js';
 import { registrableDomain, collectHosts } from '../adapters/validate.js';
+import { inferWindow, inferThrottle, inferCapturePaths } from './inferextras.js';
 
 // Flag every host the draft touches whose registrable domain differs from the source's own as a
 // crossDomainHost — so the same-domain guard (validate.checkHosts) passes. The runtime still forces a
@@ -900,6 +901,23 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
     draft.api.list.path = draft.api.list.path.split(actx.value).join(tok);
     if (draft.api.list.params) for (const k of Object.keys(draft.api.list.params)) draft.api.list.params[k] = String(draft.api.list.params[k]).split(actx.value).join(tok);
     if (draft.api.detail && draft.api.detail.path) draft.api.detail.path = draft.api.detail.path.split(actx.value).join(tok);
+  }
+
+  // Three fields the recorder has the signal for but the draft used to leave blank, so every author
+  // had to discover them the hard way — the ING window bug was exactly this.
+  const win = inferWindow(samples);
+  if (win) { draft.api.list.window = win.window; draft.api.list.maxAgeDays = win.maxAgeDays; }
+
+  const thr = inferThrottle(samples);
+  if (thr) draft.throttle = thr;
+
+  // capturePaths is an ALLOWLIST: keep only the scope that actually covers what this source replays,
+  // or the runtime would capture a token for an area the source never calls (or, worse, none at all).
+  const scopes = inferCapturePaths(samples);
+  if (scopes) {
+    const used = [draft.api.list.path, draft.api.detail?.path, draft.api.pdf?.path].filter(Boolean);
+    const keep = scopes.filter((sc) => used.some((path) => String(path).startsWith(sc)));
+    if (keep.length) draft.auth.capturePaths = keep;
   }
 
   applyCrossDomain(draft); // flag any off-registrable-domain host so the guard passes (+ forces consent)

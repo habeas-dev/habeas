@@ -198,8 +198,12 @@ export function redactHtml(html) {
 
 // Redact one captured sample (HTTP request/response, or a WS frame carried as a sample). Pass a shared
 // `refs` so id values correlate across the whole bundle (path ↔ header ↔ field).
-export function redactSample(s, refs = null) {
+// `base` (ms) turns the sample's wall-clock time into an offset. The GAPS are what a maintainer needs
+// (they reveal the site's own pacing); the absolute time would reveal when the user was browsing and in
+// what timezone, which is nobody's business.
+export function redactSample(s, refs = null, base = null) {
   const out = { url: s.url ? redactUrl(s.url, refs) : s.url, method: s.method, status: s.status };
+  if (base != null && typeof s.at === 'number') out.dt = Math.max(0, s.at - base);
   if (s.kind) out.kind = s.kind;
   if (s.event) out.event = s.event;
   if (s.reqHeaders) out.reqHeaders = redactHeaders(s.reqHeaders, refs);
@@ -290,7 +294,11 @@ export function buildHandoff({ domain, samples, wsframes, assets, storage }) {
     domain: domain || '',
     note: 'Redacted recording for source authoring. Field names + structure kept; personal VALUES removed; no auth/tokens/page-text included. Repeated id VALUES share a stable [id#N] tag so provenance is traceable without revealing the value.',
     counts: { samples: (samples || []).length, wsframes: (wsframes || []).length, assets: (assets || []).length },
-    samples: (samples || []).map((s) => redactSample(s, refs)),
+    samples: (() => {
+      const ts = (samples || []).map((x) => x.at).filter((t) => typeof t === 'number');
+      const base = ts.length ? Math.min(...ts) : null;
+      return (samples || []).map((s) => redactSample(s, refs, base));
+    })(),
     wsframes: (wsframes || []).map((f) => ({ event: f.event, url: f.url ? redactUrl(f.url, refs) : f.url, frame: f.frame != null ? redactFrame(f.frame, refs) : f.frame })),
     assets: (assets || []).map((a) => ({ method: a.method, url: a.url ? redactUrl(a.url, refs) : a.url, reqType: a.reqType })),
   };
