@@ -95,6 +95,20 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   - Exports the selected source or every source in the backend, as `habeas-<source>-YYYY-MM-DD.csv`.
 
 ### Changed
+- **"Check what was found" shows the documents first, and asks questions second.** It was a form: twelve
+  labelled controls — search box, list picker, accounts picker, kind, categories, an eight-row field map,
+  an Advanced block — with the one thing that answers the actual question ("are these my purchases?") at
+  the very bottom, and empty until the user pressed Test. Now the review step opens with the rows
+  themselves, mapped from the captured items through the draft by `previewDocs` — the same mapping a real
+  listing uses, so what is shown is what the source will produce, with no network call, no live session
+  and no button. Below them sits the one decision nobody can make for the user (which captured list is
+  theirs, when there is more than one), then Test and Save; everything else folds into *"Not right? Adjust
+  what was detected"*, and any correction made there re-renders the rows immediately.
+- **The label column follows the kind of data.** It was headed "Store" for every source, so a bank's
+  movements and a broker's trades both read as though they had been mapped wrong.
+- **Analysis diagnostics are visible.** "No list found", "N requests seen but no list", and the WebSocket
+  notice were written into a status line *inside* the mapper — which is hidden precisely when those
+  messages fire. Pressing Analyse and seeing nothing happen was this bug.
 - **The recorder no longer asks the user to press "Analyse".** Stopping a recording analyses it — the
   button is now *"Stop & analyse"*. Pressing Analyse was the step people got stuck on, and pressing it too
   early (the usual mistake) printed "0 responses captured", which reads like a failure rather than "you

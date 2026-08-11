@@ -1239,7 +1239,7 @@
     "message": "Categorías"
   },
   "author_test": {
-    "message": "Probar"
+    "message": "Probar contra la web"
   },
   "author_save": {
     "message": "Guardar fuente"
@@ -3527,5 +3527,26 @@
         "content": "$1"
       }
     }
+  },
+  "author_adjust": {
+    "message": "¿No está bien? Ajustar lo detectado",
+    "description": "Recorder review step."
+  },
+  "author_other_list": {
+    "message": "¿No son tus datos? Prueba otra lista capturada en esta web:",
+    "description": "Recorder review step."
+  },
+  "author_found_h": {
+    "message": "Estos son los $N$ documentos que Habeas ha entendido — comprueba que están bien:",
+    "description": "Recorder review step.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_found_none": {
+    "message": "Se detectó una lista, pero no se pudo leer ninguna fila. Abre «Ajustar» y revisa el mapeo de campos.",
+    "description": "Recorder review step."
   }
 }

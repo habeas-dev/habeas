@@ -1239,7 +1239,7 @@
     "message": "Categories"
   },
   "author_test": {
-    "message": "Test"
+    "message": "Test against the site"
   },
   "author_save": {
     "message": "Save source"
@@ -3527,5 +3527,26 @@
         "content": "$1"
       }
     }
+  },
+  "author_adjust": {
+    "message": "Not right? Adjust what was detected",
+    "description": "Recorder review step."
+  },
+  "author_other_list": {
+    "message": "Not your data? Try another list captured on this site:",
+    "description": "Recorder review step."
+  },
+  "author_found_h": {
+    "message": "These are the $N$ documents Habeas understood — check they look right:",
+    "description": "Recorder review step.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "author_found_none": {
+    "message": "A list was detected, but no row could be read from it. Open “Adjust” and check the field mapping.",
+    "description": "Recorder review step."
   }
 }

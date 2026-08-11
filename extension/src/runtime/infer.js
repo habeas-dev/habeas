@@ -460,7 +460,7 @@ function draftHtml(best, ctx = {}) {
   if (info.pdf) draft.api.pdf = info.pdf;
 
   const fieldCandidates = Object.keys(best.item || {}).map((k) => ({ path: k, value: best.item[k] }));
-  return { ok: true, draft, fieldCandidates, itemsPath: 'HTML rows', host, count: best.len };
+  return { ok: true, draft, fieldCandidates, itemsPath: 'HTML rows', host, count: best.len, items: best.items };
 }
 
 // Public: the candidate lists for the picker UI (JSON + HTML), biggest first.
@@ -943,7 +943,7 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
 
   applyCrossDomain(draft); // flag any off-registrable-domain host so the guard passes (+ forces consent)
   // The list array's field candidates power the visual mapper dropdowns.
-  return { ok: true, draft, fieldCandidates: flat, itemsPath: best.itemsPath, host, count: best.len };
+  return { ok: true, draft, fieldCandidates: flat, itemsPath: best.itemsPath, host, count: best.len, items: best.items };
 }
 
 // The download formats for a set of items: each captured asset tied to an item id (by id in the path

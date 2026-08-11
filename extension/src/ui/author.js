@@ -2,7 +2,7 @@ import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { startLearning, stopLearning, getSamples, clearSamples, getAuthFor, getSeen, getAssets, getDomTexts, getWsFrames, getStorage } from '../lib/learn.js';
 import { draftAdapterFromSamples, draftStreamsFromSamples, draftWithGroups, listCandidates, matchCandidates, augmentSource, flatToStream, summarizeCapture } from '../runtime/infer.js';
-import { listInventory, artifactKinds, fetchArtifact } from '../runtime/inventory.js';
+import { listInventory, artifactKinds, fetchArtifact, previewDocs } from '../runtime/inventory.js';
 import { ensureSiteFetch } from '../lib/pagefetch.js';
 import { editJson } from './jsoneditor.js';
 import { buildHandoff, findOrphans, revealOrphans } from '../lib/redact.js';
@@ -90,7 +90,10 @@ export async function initAuthor(root, params = {}) {
   $('#test').onclick = onTest;
   $('#save').onclick = onSave;
   $('#augment').onclick = onAugment;
-  $('#f_schema').onchange = () => renderFieldMap(collectFields());
+  // Any correction in "Adjust" re-renders the rows above it, so the user sees the fix land instead of
+  // having to re-run anything to find out whether it worked.
+  $('#f_schema').onchange = () => { renderFieldMap(collectFields()); refreshPreview(); };
+  { const adj = $('#adjust'); if (adj) adj.addEventListener('change', (e) => { if (e.target !== $('#f_schema')) refreshPreview(); }); }
   // "Complete an existing source" mode: ?base=<id> loads that source; drafting then ADDS a stream to it
   // (a contributor recording a product the author lacks — a card, an investment) instead of a new source.
   const baseId = params.base;
@@ -231,18 +234,19 @@ function startLiveMonitor() { stopLiveMonitor(); $('#live').hidden = false; refr
 async function onAnalyze() {
   if (!LEARN) { $('#learnstatus').textContent = t('author_start_first'); return; }
   $('#step2').hidden = false; // from here on it holds either a mapper or the reason there isn't one
+  $('#step2msg').textContent = '';
   const samples = await getSamples(LEARN.domain);
   const ws = await getWsFrames(LEARN.domain);
   $('#samplecount').textContent = String(samples.length) + (ws.length ? ' + ' + ws.length + ' ws' : '');
   if (!samples.length) {
     if (ws.length) { // realtime transport (WebSocket/SSE): captured, but not auto-draftable — share the recording
       const socks = new Set(ws.map((f) => f.url)).size;
-      $('#status').textContent = t('author_ws_captured', [String(ws.length), String(socks)]);
+      $('#step2msg').textContent = t('author_ws_captured', [String(ws.length), String(socks)]);
       return;
     }
     const seen = await getSeen(LEARN.domain);
     const hosts = Object.keys(seen.hosts || {});
-    $('#status').textContent = seen.total
+    $('#step2msg').textContent = seen.total
       ? t('author_no_list_seen', [String(seen.total), hosts.join(', ')])
       : t('author_no_requests');
     return;
@@ -251,7 +255,7 @@ async function onAnalyze() {
   ASSETS = await getAssets(LEARN.domain);
   DOMTEXTS = await getDomTexts(LEARN.domain);
   CANDS = listCandidates(samples);
-  if (!CANDS.length) { $('#status').textContent = t('author_no_list'); return; }
+  if (!CANDS.length) { $('#step2msg').textContent = t('author_no_list'); return; }
   // Let the user pick which captured list is their data (biggest is only a default).
   // Label each list by a real row from it ("2026-05-04 · Recibo de luz · -61.2"), falling back to the
   // API path only when the items have nothing a person would recognise.
@@ -260,7 +264,7 @@ async function onAnalyze() {
   $('#findbtn').onclick = onFind;
   $('#f_find').onkeydown = (e) => { if (e.key === 'Enter') onFind(); };
   $('#listpickrow').hidden = CANDS.length <= 1;
-  $('#listhint').hidden = CANDS.length <= 1;
+  $('#listhint').hidden = CANDS.length <= 1;   // "which list is mine" is the one call nobody can make for the user
   $('#findstatus').textContent = '';
   $('#mapper').hidden = false;
   // Multi-stream: if ≥2 captured lists share one registrable domain (Leroy Merlin tickets+orders,
@@ -315,7 +319,7 @@ function drawDraft(chosen) {
   const r = (GROUPS_KEY && GROUPS_KEY !== chosen.key)
     ? draftWithGroups(SAMPLES, ctx, chosen.key, GROUPS_KEY)
     : draftAdapterFromSamples(SAMPLES, ctx, { key: chosen.key });
-  if (!r.ok) { $('#status').textContent = t('author_no_list'); return; }
+  if (!r.ok) { $('#step2msg').textContent = t('author_no_list'); $('#mapper').hidden = true; return; }
   DRAFT = r.draft;
   candidates = r.fieldCandidates; // [{ path, value }]
   fillForm(DRAFT);
@@ -325,6 +329,31 @@ function drawDraft(chosen) {
   let status = t('author_detected', [r.itemsPath, String(r.count)]) + ' · ' + doc;
   if (DRAFT.crossDomainHosts && DRAFT.crossDomainHosts.length) status += ' · ' + t('author_crossdomain', [DRAFT.crossDomainHosts.join(', ')]);
   $('#status').textContent = status;
+  showLocalPreview(r.items || [], r.count);
+}
+
+// The captured items, mapped through the draft exactly as a real listing would map them — no network, no
+// session, no button to press. "Are these my documents?" is answered by looking at them; the form below
+// only matters when the answer is no.
+let PREVIEW_ITEMS = [], PREVIEW_TOTAL = 0;
+const refreshPreview = () => { if (DRAFT) showLocalPreview(PREVIEW_ITEMS, PREVIEW_TOTAL); };
+
+function showLocalPreview(items, total) {
+  PREVIEW_ITEMS = items; PREVIEW_TOTAL = total;
+  const adapter = buildAdapter();
+  let docs = [];
+  try { docs = previewDocs(adapter, items); } catch (e) { docs = []; }
+  $('#foundline').textContent = docs.length ? t('author_found_h', [String(total || docs.length)]) : t('author_found_none');
+  // The label column is "Store" for a receipt but "Description" for a bank movement and "Instrument" for a
+  // trade — a fixed header made every non-retail source read as if it had been mapped wrong.
+  const LABEL_TH = { receipt: 'fld_store', invoice: 'fld_issuer', transaction: 'fld_description', investment: 'fld_instrument' };
+  const kind = ($('#f_schema').value || 'receipt@1').split('@')[0];
+  const th = $('#preview thead th:nth-child(2)');
+  if (th) th.textContent = t(LABEL_TH[kind] || 'fld_store');
+  $('#preview tbody').innerHTML = docs.map((d) =>
+    `<tr><td>${esc((d.date || '').slice(0, 10))}</td><td>${esc(d.label || d.storeName || '')}</td>`
+    + `<td class="r">${esc(fmt(d.total ?? d.amount))}</td><td>${esc(d.type || d.category || '')}</td></tr>`).join('');
+  $('#docwrap').hidden = true;
 }
 
 function hostFromOrigin(origin) { try { return new URL(origin.replace('/*', '')).host; } catch (e) { return LEARN.domain; } }
@@ -592,60 +621,16 @@ export const RECORDER_HTML = `
     <div id="step2" hidden>
     <div class="section-title"><h2 data-i18n="author_step2"></h2></div>
     <div class="card">
-      <div class="row">
-        <button id="analyze" data-i18n="author_analyze"></button>
-        <span class="muted"><span id="samplecount">0</span> <span data-i18n="author_samples"></span></span>
-      </div>
+      <!-- Diagnostics live OUTSIDE #mapper: when analysis finds nothing there is no mapper to show them in,
+           which is how "press Analyse and nothing happens" used to look. -->
+      <p id="step2msg" class="muted" style="margin:0"></p>
 
-      <div id="mapper" hidden style="margin-top:12px">
-        <div class="inp"><label data-i18n="author_find_label"></label>
-          <span class="row"><input id="f_find" data-i18n-ph="author_find_ph" size="22"><button id="findbtn" data-i18n="author_find"></button><span id="findstatus" class="muted"></span></span>
-        </div>
-        <div class="inp" id="listpickrow" hidden><label data-i18n="author_which_list"></label><select id="f_list"></select></div>
-        <div class="muted" id="listhint" hidden data-i18n="author_list_hint" style="margin:-4px 0 8px"></div>
-        <div class="inp" id="groupspickrow" hidden><label data-i18n="author_groups_label"></label><select id="f_groups"></select></div>
-        <div class="inp" id="multistreamrow"><label></label><button id="multistream" class="accent" type="button" hidden data-i18n="author_multistream"></button></div>
-        <p class="muted" data-i18n="author_map_intro"></p>
-        <div class="inp"><label data-i18n="author_kind"></label>
-          <select id="f_schema">
-            <option value="receipt@1" data-i18n="kind_receipt"></option>
-            <option value="invoice@1" data-i18n="kind_invoice"></option>
-            <option value="transaction@1" data-i18n="kind_transaction"></option>
-            <option value="investment@1" data-i18n="kind_investment"></option>
-          </select>
-        </div>
-        <div class="inp"><label data-i18n="author_categories"></label><input id="f_cats" placeholder="grocery,retail" /></div>
-
-        <div class="section-title" style="margin-top:12px"><h3 data-i18n="author_fields"></h3></div>
-        <div id="fieldmap"></div>
-
-        <details style="margin-top:12px">
-          <summary data-i18n="author_advanced"></summary>
-          <div class="inp"><label data-i18n="author_id"></label><input id="f_id" /></div>
-          <div class="inp"><label data-i18n="author_name"></label><input id="f_name" /></div>
-          <div class="inp"><label data-i18n="author_apihost"></label><input id="f_host" /></div>
-          <div class="inp"><label data-i18n="author_listpath"></label><input id="f_path" /></div>
-          <div class="inp"><label data-i18n="author_itemspath"></label><input id="f_items" /></div>
-          <div class="inp"><label data-i18n="author_paging"></label>
-            <select id="f_paging">
-              <option value="none">none</option><option value="page">page</option>
-              <option value="offset">offset</option>
-              <option value="cursor">cursor</option><option value="offsets">offsets</option>
-              <option value="years">years</option>
-            </select>
-          </div>
-          <div class="inp"><label data-i18n="author_pdfpath"></label><input id="f_pdf" placeholder="/…/{externalId}/pdf" /></div>
-          <div class="inp"><label data-i18n="author_detailpath"></label><input id="f_detail" placeholder="/…/{internalId}" /></div>
-          <div class="inp"><label></label><button id="editjson" type="button" data-i18n="edit_json"></button></div>
-        </details>
-
-        <div class="row" style="margin-top:14px">
-          <button id="test" data-i18n="author_test"></button>
-          <button id="augment" class="accent" hidden data-i18n="author_augment"></button>
-          <button id="save" class="accent" data-i18n="author_save"></button>
-          <span id="status" class="muted"></span>
-        </div>
-        <table id="preview" style="margin-top:10px"><thead><tr>
+      <div id="mapper" hidden>
+        <!-- The answer first. Everything the user might need to correct is below it, and mostly folded away:
+             the question here is "are these your documents?", and it is answered by looking, not by filling
+             in a form. -->
+        <div id="foundline" style="font-weight:600;margin:0 0 8px"></div>
+        <table id="preview"><thead><tr>
           <th data-i18n="th_date"></th><th data-i18n="th_store"></th>
           <th class="r" data-i18n="th_amount"></th><th data-i18n="th_type"></th>
         </tr></thead><tbody></tbody></table>
@@ -653,6 +638,68 @@ export const RECORDER_HTML = `
           <b data-i18n="author_doc_preview"></b>
           <div id="docpreview"></div>
         </div>
+
+        <!-- Which captured list is "yours" is the one decision nobody can make for the user, so it stays in
+             the open whenever there is more than one. -->
+        <div id="listpickrow" hidden style="margin-top:12px">
+          <label data-i18n="author_other_list" style="display:block;margin-bottom:4px"></label>
+          <select id="f_list"></select>
+          <div class="muted" id="listhint" hidden data-i18n="author_list_hint" style="margin-top:4px"></div>
+        </div>
+
+        <div class="row" style="margin-top:14px">
+          <button id="test" data-i18n="author_test"></button>
+          <button id="augment" class="accent" hidden data-i18n="author_augment"></button>
+          <button id="save" class="accent" data-i18n="author_save"></button>
+          <span id="status" class="muted"></span>
+        </div>
+
+        <details id="adjust" style="margin-top:14px">
+          <summary data-i18n="author_adjust"></summary>
+          <div class="inp"><label data-i18n="author_find_label"></label>
+            <span class="row"><input id="f_find" data-i18n-ph="author_find_ph" size="22"><button id="findbtn" data-i18n="author_find"></button><span id="findstatus" class="muted"></span></span>
+          </div>
+          <div class="inp" id="groupspickrow" hidden><label data-i18n="author_groups_label"></label><select id="f_groups"></select></div>
+          <div class="inp" id="multistreamrow"><label></label><button id="multistream" class="accent" type="button" hidden data-i18n="author_multistream"></button></div>
+          <div class="inp"><label data-i18n="author_kind"></label>
+            <select id="f_schema">
+              <option value="receipt@1" data-i18n="kind_receipt"></option>
+              <option value="invoice@1" data-i18n="kind_invoice"></option>
+              <option value="transaction@1" data-i18n="kind_transaction"></option>
+              <option value="investment@1" data-i18n="kind_investment"></option>
+            </select>
+          </div>
+          <div class="inp"><label data-i18n="author_categories"></label><input id="f_cats" placeholder="grocery,retail" /></div>
+
+          <div class="section-title" style="margin-top:12px"><h3 data-i18n="author_fields"></h3></div>
+          <p class="muted" data-i18n="author_map_intro" style="margin:0 0 8px"></p>
+          <div id="fieldmap"></div>
+
+          <details style="margin-top:12px">
+            <summary data-i18n="author_advanced"></summary>
+            <div class="inp"><label data-i18n="author_id"></label><input id="f_id" /></div>
+            <div class="inp"><label data-i18n="author_name"></label><input id="f_name" /></div>
+            <div class="inp"><label data-i18n="author_apihost"></label><input id="f_host" /></div>
+            <div class="inp"><label data-i18n="author_listpath"></label><input id="f_path" /></div>
+            <div class="inp"><label data-i18n="author_itemspath"></label><input id="f_items" /></div>
+            <div class="inp"><label data-i18n="author_paging"></label>
+              <select id="f_paging">
+                <option value="none">none</option><option value="page">page</option>
+                <option value="offset">offset</option>
+                <option value="cursor">cursor</option><option value="offsets">offsets</option>
+                <option value="years">years</option>
+              </select>
+            </div>
+            <div class="inp"><label data-i18n="author_pdfpath"></label><input id="f_pdf" placeholder="/…/{externalId}/pdf" /></div>
+            <div class="inp"><label data-i18n="author_detailpath"></label><input id="f_detail" placeholder="/…/{internalId}" /></div>
+            <div class="inp"><label></label><button id="editjson" type="button" data-i18n="edit_json"></button></div>
+          </details>
+
+          <div class="row" style="margin-top:12px">
+            <button id="analyze" data-i18n="author_analyze"></button>
+            <span class="muted"><span id="samplecount">0</span> <span data-i18n="author_samples"></span></span>
+          </div>
+        </details>
       </div>
     </div>
     </div>`;

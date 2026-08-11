@@ -1702,6 +1702,19 @@ function collect(adapter, data, seen, all, group) {
   return added;
 }
 
+// Map already-captured raw items through the adapter, with no network and no session. The recorder's
+// review step uses this to show the user their actual rows the moment analysis finishes, instead of an
+// empty table waiting behind a "Test" button. Same mapping as a real listing, so what they see is what
+// the source will produce.
+export function previewDocs(adapter, items, max = 500) {
+  const out = [];
+  for (const it of (items || []).slice(0, max)) {
+    // One malformed item must not blank the whole preview — the point is to show what WAS understood.
+    try { if (it && typeof it === 'object') out.push(mapDoc(adapter, it)); } catch (e) {}
+  }
+  return out;
+}
+
 function mapDoc(adapter, p, group) {
   const f = adapter.fields, doc = { _raw: p };
   if (group) doc._group = group; // the parent (account) this record belongs to
