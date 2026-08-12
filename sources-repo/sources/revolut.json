@@ -8,8 +8,8 @@
   "categories": [
     "banking"
   ],
-  "version": "2026-08-08",
-  "minVersion": "0.3.0.24",
+  "version": "2026-08-12",
+  "minVersion": "0.9.3",
   "minorUnits": true,
   "keepRaw": true,
   "throttle": {
@@ -27,7 +27,8 @@
     "mode": "cookie",
     "replayHeaders": [
       "x-device-id"
-    ]
+    ],
+    "readyUrl": "https://app.revolut.com/home"
   },
   "api": {
     "host": "https://app.revolut.com",
@@ -146,6 +147,10 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-08-12",
+      "changes": "La sincronización automática ya no arranca hasta que app.revolut.com/home ha terminado de cargar. La app dispara peticiones autenticadas en pantallas anteriores, así que una sincronización podía empezar antes de que existiera la vista con los datos."
+    },
     {
       "version": "2026-08-08",
       "changes": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`."

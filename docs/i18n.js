@@ -310,8 +310,17 @@ function shuffleArray(sources) {
   return pool;
 }
 
+// Shuffle for variety, then order by what this visitor can actually use (docs/source-rank.js). 14 of the
+// 24 published sources are Spain-only, so a purely random sample showed most visitors a wall of Spanish
+// supermarkets. Degrades to the plain random sample if the module didn't load, so the preview is never empty.
 function pickRandomSources(sources, count) {
-  return shuffleArray(sources).slice(0, count);
+  const pool = shuffleArray(sources);
+  const rank = globalThis.habeasSourceRank;
+  if (!rank) return pool.slice(0, count);
+  let tz = '';
+  try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+  const region = rank.detectRegion({ language: navigator.language || '', timeZone: tz });
+  return rank.rankSources(pool, region).slice(0, count);
 }
 
 function previewCard(source) {

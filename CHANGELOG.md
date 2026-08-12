@@ -10,6 +10,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Changed
+- **The landing shows sources the visitor can actually use** (`docs/source-rank.js`). The preview was a
+  random sample of the catalogue, and 14 of the 24 published sources are Spain-only — so most visitors saw
+  a wall of Spanish supermarkets. The analytics agree: 39 visitors in 30 days, about a minute each, and
+  not one has ever clicked through to a store. Sources are now ordered by the visitor's own country, then
+  EU-wide ones if they are in Europe, then the global ones, with Spain-only last for everyone else; the
+  list is still shuffled first, so the order varies without becoming arbitrary. The browser's language and
+  time zone are read locally to sort a list already on the page — nothing is sent, no country is recorded.
+
 ## [0.9.15] — 2026-08-12
 
 ### Fixed
