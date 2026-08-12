@@ -3584,5 +3584,56 @@
   "author_expect": {
     "message": "Recording builds the source by itself on straightforward sites. On banks and anything with unusual paging it gets part of the way, and you can send the recording so someone finishes it.",
     "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "archive_export": {
+    "message": "Export",
+    "description": "Archive: export the rows on screen."
+  },
+  "archive_export_hint": {
+    "message": "Download what you are looking at right now — the account and search filters apply.",
+    "description": "Archive: export the rows on screen."
+  },
+  "archive_export_more": {
+    "message": "Other formats",
+    "description": "Archive: export the rows on screen."
+  },
+  "archive_export_csv": {
+    "message": "CSV (spreadsheet)",
+    "description": "Archive: export the rows on screen."
+  },
+  "archive_export_qif": {
+    "message": "QIF (GnuCash, HomeBank, Quicken…)",
+    "description": "Archive: export the rows on screen."
+  },
+  "archive_export_done": {
+    "message": "Exported $N$ rows.",
+    "description": "Archive: export the rows on screen.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_export_empty": {
+    "message": "Nothing to export — no rows are showing.",
+    "description": "Archive: export the rows on screen."
+  },
+  "archive_export_qif_none": {
+    "message": "Nothing could be written as QIF ($N$ rows had no operation that could be identified).",
+    "description": "Archive: export the rows on screen.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_export_qif_skipped": {
+    "message": "$N$ left out (operation not identifiable)",
+    "description": "Archive: export the rows on screen.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
   }
 }

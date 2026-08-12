@@ -3584,5 +3584,56 @@
   "author_expect": {
     "message": "En webs sencillas, grabar crea la fuente solo. En bancos y en cualquier web con paginación rara llega a medio camino, y puedes enviar la grabación para que alguien la remate.",
     "description": "Recorder: honest expectations about what a draft can and cannot settle."
+  },
+  "archive_export": {
+    "message": "Exportar",
+    "description": "Archive: export the rows on screen."
+  },
+  "archive_export_hint": {
+    "message": "Descarga lo que estás viendo ahora mismo — se aplican los filtros de cuenta y búsqueda.",
+    "description": "Archive: export the rows on screen."
+  },
+  "archive_export_more": {
+    "message": "Otros formatos",
+    "description": "Archive: export the rows on screen."
+  },
+  "archive_export_csv": {
+    "message": "CSV (hoja de cálculo)",
+    "description": "Archive: export the rows on screen."
+  },
+  "archive_export_qif": {
+    "message": "QIF (GnuCash, HomeBank, Quicken…)",
+    "description": "Archive: export the rows on screen."
+  },
+  "archive_export_done": {
+    "message": "Exportadas $N$ filas.",
+    "description": "Archive: export the rows on screen.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_export_empty": {
+    "message": "No hay nada que exportar — no se muestra ninguna fila.",
+    "description": "Archive: export the rows on screen."
+  },
+  "archive_export_qif_none": {
+    "message": "No se pudo escribir nada en QIF ($N$ filas no tenían una operación identificable).",
+    "description": "Archive: export the rows on screen.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "archive_export_qif_skipped": {
+    "message": "$N$ fuera (operación no identificable)",
+    "description": "Archive: export the rows on screen.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
   }
 }

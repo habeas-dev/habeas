@@ -164,3 +164,11 @@ test('decimal: comma values still get quoted when the delimiter is ";"… they d
   // "1234,5" contains no ';', no quote and no newline → no quoting required by RFC 4180.
   assert.equal(toCsv([{ a: 1234.5 }], { decimal: ',', bom: false, header: false }).trim(), '1234,5');
 });
+
+test('an account-qualified export name stays a safe filename', () => {
+  // The Archive exports what is on screen, so the name carries the selected account — which is a label the
+  // bank chose ("Cuenta Nómina · ES12 3456"), not an identifier.
+  const name = csvFileName('ing-es:movimientos-Cuenta Nómina · ES12 3456/78');
+  assert.match(name, /^habeas-[A-Za-z0-9._-]+-\d{4}-\d{2}-\d{2}\.csv$/);
+  assert.ok(!/[ /·]/.test(name), `unsafe characters survived: ${name}`);
+});

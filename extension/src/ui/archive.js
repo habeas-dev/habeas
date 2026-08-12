@@ -28,6 +28,8 @@ import { ensureSiteFetch, siteBaseUrl, recoverSession } from '../lib/pagefetch.j
 import { challengeUrlOf } from '../lib/render.js';
 import { pushDiag } from '../lib/diag.js';
 import { openReportDialog } from './reportproblem.js';
+import { recordsToCsv, csvFileName } from '../lib/csv.js';
+import { recordsToQif, qifFileName } from '../lib/qif.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { esc } from '../lib/esc.js';
 
@@ -596,8 +598,19 @@ async function renderDocs() {
   // Report a problem — for anyone USING the source, not just whoever contributed it. The Contributions
   // screen only offers this inside a handoff thread, which a plain user never has.
   const reportBtn = entry.ds ? `<button id="report" class="refbtn" title="${esc(t('archive_report_hint'))}"><span class="ic">⚑</span> ${esc(t('archive_report'))}</button>` : '';
+  // Export what is ON SCREEN — the account and the search box already narrowed it, so exporting anything
+  // else would be surprising. CSV is the common case and is the button itself; QIF (desktop finance apps)
+  // sits under the caret. This existed only in the store inspector, three clicks away behind a button
+  // called "Browse archive", which is not where anyone looks for "give me my data as a spreadsheet".
+  const exportBtn = `<span class="refwrap">
+      <button id="export" class="refbtn" title="${esc(t('archive_export_hint'))}"><span class="ic">⬇</span> ${esc(t('archive_export'))}</button>
+      <button id="export-more" class="refbtn caret" aria-haspopup="menu" aria-label="${esc(t('archive_export_more'))}" title="${esc(t('archive_export_more'))}">▾</button>
+      <div id="expmenu" class="refmenu" hidden role="menu">
+        <button data-exp="csv"><span class="ic">📊</span> ${esc(t('archive_export_csv'))}</button>
+        <button data-exp="qif"><span class="ic">🏦</span> ${esc(t('archive_export_qif'))}</button>
+      </div></span>`;
   head += `<div class="docbar"><div class="groupby">${gb('month', t('group_month'))}${gb('category', t('group_category'))}${gb('store', t('group_store'))}</div>
-    <div class="docbar-r">${countryBtn}${acctBtn}${refreshBtn}${reportBtn}${saveGrp}<button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div></div>`;
+    <div class="docbar-r">${countryBtn}${acctBtn}${refreshBtn}${exportBtn}${reportBtn}${saveGrp}<button id="seltoggle" class="selbtn${SELECTING ? ' on' : ''}">${esc(SELECTING ? t('archive_sel_done') : t('archive_select'))}</button></div></div>`;
   // Pending maintenance: some delivered docs haven't had their file formats scanned → a format they lack (e.g. a
   // missing invoice PDF) may still offer a button. Offer to scan (the destination probe isn't auto-run).
   if (PENDING_FMT) head += `<div class="fmtnotice" style="margin:8px 0;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);font-size:13px;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap">🔎 ${esc(t('archive_scan_pending', [String(PENDING_FMT)]))} <button id="scan-pending" class="refbtn">${esc(t('archive_scan'))}</button></div>`;
@@ -933,6 +946,35 @@ async function reconcileDates() {
 }
 // Dropdown menus (Refresh modes, Save re-download). Opening one closes the others.
 function toggleMenu(id) { const m = $('#' + id); if (!m) return; const willOpen = m.hidden; closeMenus(); m.hidden = !willOpen; }
+// Download the rows currently on screen. Generation is pure (lib/csv.js, lib/qif.js) and shared with the
+// store inspector, so both places agree on what a record's date, description and amount are — and the
+// decimal separator is read from the same stored preference, since whoever needs the comma needs it here too.
+async function exportVisible(fmt) {
+  const docs = visibleDocs();
+  const records = docs.map((r) => r.record).filter(Boolean);
+  if (!records.length) { $('#astatus').textContent = t('archive_export_empty'); return; }
+  const name = (CUR || 'store') + (ACCOUNT && ACCOUNT !== NO_ACCOUNT ? '-' + ACCOUNT : '');
+  if (fmt === 'qif') {
+    const order = localStorage.getItem('habeas-qif-date') === 'MDY' ? 'MDY' : 'DMY';
+    const { text, exported, skipped } = recordsToQif(records, { dateOrder: order });
+    // An investment operation we cannot identify is left out rather than guessed — say so instead of
+    // quietly handing over a short file.
+    if (!exported) { $('#astatus').textContent = t('archive_export_qif_none', [String(skipped)]); return; }
+    download(new Blob([text], { type: 'application/qif;charset=utf-8' }), qifFileName(name));
+    $('#astatus').textContent = t('archive_export_done', [String(exported)]) + (skipped ? ' — ' + t('archive_export_qif_skipped', [String(skipped)]) : '');
+    return;
+  }
+  const decimal = localStorage.getItem('habeas-csv-decimal') === ',' ? ',' : '.';
+  download(new Blob([recordsToCsv(records, { decimal })], { type: 'text/csv;charset=utf-8' }), csvFileName(name));
+  $('#astatus').textContent = t('archive_export_done', [String(records.length)]);
+}
+function download(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 8000);
+}
+
 function closeMenus() { document.querySelectorAll('.refmenu').forEach((m) => { m.hidden = true; }); }
 function openFile(r, sinkId, ext) {
   const url = chrome.runtime.getURL(`src/ui/docview.html?sink=${encodeURIComponent(sinkId)}&src=${encodeURIComponent(r.base)}&id=${encodeURIComponent(r.internalId)}${ext ? '&ext=' + encodeURIComponent(ext) : ''}`);
@@ -1171,6 +1213,9 @@ function wire() {
     const rm = ev.target.closest('[data-refmode]'); if (rm) { closeMenus(); const m = rm.dataset.refmode; if (m === 'full') refreshSource('full'); else if (m === 'reconcile') reconcileDates(); else if (m === 'scanformats') scanFormats(); else reloadFromStore(); return; }
     if (ev.target.closest('#scan-pending')) { scanFormats(); return; }
     if (ev.target.closest('#refresh-more')) { toggleMenu('refmenu'); return; }
+    if (ev.target.closest('#export-more')) { toggleMenu('expmenu'); return; }
+    if (ev.target.closest('#export')) { closeMenus(); exportVisible('csv'); return; }
+    { const e = ev.target.closest('[data-exp]'); if (e) { closeMenus(); exportVisible(e.dataset.exp); return; } }
     if (ev.target.closest('#save-more')) { toggleMenu('savemenu'); return; }
     if (ev.target.closest('#accts')) { onManageAccounts(); return; }
     if (ev.target.closest('#country')) { onPickCountry(); return; }

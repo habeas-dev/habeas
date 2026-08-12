@@ -10,6 +10,17 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **Export straight from the Archive.** Exporting your own data existed only in the store inspector —
+  three clicks away, behind a button called "Browse archive", which is not where anyone looks for "give me
+  this as a spreadsheet", and hidden entirely until a source was selected. There is now an **Export**
+  button in the document bar, next to Refresh: CSV on the button, QIF under the caret. It exports **what
+  is on screen** — the account and search filters already narrowed it, so exporting anything else would be
+  surprising. Generation is the same pure code the inspector uses (`lib/csv.js`, `lib/qif.js`) and it
+  honours the same stored decimal/date preferences, so the two places can never disagree about what a
+  record's date, description or amount is. As there, a QIF investment operation that cannot be identified
+  is left out and counted rather than guessed.
+
 ### Changed
 - **The landing shows sources the visitor can actually use** (`docs/source-rank.js`). The preview was a
   random sample of the catalogue, and 14 of the 24 published sources are Spain-only — so most visitors saw
