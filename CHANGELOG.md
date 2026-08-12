@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.16] — 2026-08-13
+
 ### Added
 - **Export straight from the Archive.** Exporting your own data existed only in the store inspector —
   three clicks away, behind a button called "Browse archive", which is not where anyone looks for "give me
