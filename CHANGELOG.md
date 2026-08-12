@@ -10,6 +10,22 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.15] — 2026-08-12
+
+### Fixed
+- **Config sync left each browser permanently missing the other's sinks.** `writeSnapshotIfChanged` adopts
+  the remote snapshot into what it *writes* (so a smaller local view can never clobber the shared one) and
+  then records that `savedAt` as applied — but it never adopted it into the device's own config. From then
+  on `applyStoredConfigIfNewer` saw `savedAt <= at` and skipped, so a peer's sinks lived in the shared
+  snapshot and never in this browser. Two devices could both be pointed at the same Dropbox store, both be
+  writing correctly, and neither ever see the other's destinations. The write path now saves the merged
+  config locally as well.
+- **…and a device already stranded that way now heals itself.** Adopting is a union, and a union is
+  idempotent, so "is the snapshot newer?" is the wrong question for entries this device simply does not
+  have: an older snapshot now still contributes what is missing, while never overwriting a shared id whose
+  local value may be newer. Without this the fix above would only help devices that happened to edit their
+  config again.
+
 ## [0.9.14] — 2026-08-11
 
 ### Fixed

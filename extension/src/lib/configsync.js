@@ -37,6 +37,18 @@ function mergeById(localArr, snapArr) {
   for (const s of snapArr || []) { const k = String(s.id); if (idx.has(k)) out[idx.get(k)] = { ...out[idx.get(k)], ...s }; else out.push(s); } // snap wins on conflict, local-only kept
   return out;
 }
+// Union that only ADDS: entries the snapshot has and we don't. Used when the snapshot is not newer than
+// what we last applied — its shared entries may be stale, but an entry we simply lack cannot be.
+function addMissingById(localArr, snapArr) {
+  const out = [...(localArr || [])];
+  const have = new Set(out.map((x) => String(x.id)));
+  for (const s of snapArr || []) if (!have.has(String(s.id))) out.push(s);
+  return out;
+}
+export function unionSnapshot(local, snap) {
+  return { ...local, datasources: addMissingById(local.datasources, snap.datasources), sinks: addMissingById(local.sinks, snap.sinks), routes: addMissingById(local.routes, snap.routes) };
+}
+
 export function mergeSnapshot(local, snap) {
   return { ...local, datasources: mergeById(local.datasources, snap.datasources), sinks: mergeById(local.sinks, snap.sinks), routes: mergeById(local.routes, snap.routes) };
 }
@@ -73,8 +85,20 @@ export async function applyStoredConfigIfNewer() {
   const snap = await getConfigSnapshot().catch(() => null);
   if (!snap || !snap.savedAt) return false;
   const st = await syncState();
-  if (snap.savedAt <= (st.at || 0)) return false;
-  const merged = mergeSnapshot(await getConfig(), snap);
+  const local = await getConfig();
+  // Not newer than what we last applied — but a union is idempotent, so "is it newer?" is the wrong
+  // question for entries this device simply does not have. Adopt only those, never overwriting a shared
+  // id with a possibly-stale value. This is also what heals a device whose own write pushed `at` past the
+  // snapshot, which used to strand it from its peers permanently.
+  if (snap.savedAt <= (st.at || 0)) {
+    const grown = unionSnapshot(local, snap);
+    if (configSig(grown) === configSig(local)) return false;
+    await saveConfig(grown);
+    await setSyncState({ sig: configSig(grown) }); // keep `at`: we did NOT adopt the snapshot wholesale
+    installMissingSources(grown).catch(() => {});
+    return true;
+  }
+  const merged = mergeSnapshot(local, snap);
   await saveConfig(merged);
   // Record what we applied AND its signature, so the saveConfig above (its own storage change) isn't mistaken for a
   // user edit and echoed straight back to the store (which would ping-pong savedAt between devices).
@@ -102,6 +126,15 @@ export async function writeSnapshotIfChanged(cfg, nowMs) {
     if (remote && (remote.datasources || remote.sinks || remote.routes)) toWrite = mergeSnapshot(remote, c);
   } catch (e) { /* store unreadable → write the local copy (best-effort, same as before) */ }
   const ok = await putConfigSnapshot(buildSnapshot(toWrite, at));
-  if (ok) await setSyncState({ at, sig }); // sig of the LOCAL config — so the next real local edit is detected
-  return ok;
+  if (!ok) return false;
+  // ADOPT LOCALLY TOO. Unioning the remote only into what we WRITE, then recording that savedAt as applied,
+  // left this device permanently behind: applyStoredConfigIfNewer skips anything with savedAt <= at, so the
+  // peer's sinks lived in the shared snapshot and never in this browser's own config. Saving the merged
+  // config here is also what makes the sig below honest — it is the config this device now actually has.
+  const mergedSig = configSig(toWrite);
+  if (mergedSig !== sig) await saveConfig(toWrite);
+  // sig of what this device ENDS UP with, so its own saveConfig isn't mistaken for a fresh user edit
+  // (which would bump savedAt again and ping-pong), while a genuine later edit still differs from it.
+  await setSyncState({ at, sig: mergedSig });
+  return true;
 }

@@ -89,3 +89,56 @@ test('missingAdapterIds: community adapters a config uses but the device lacks (
   assert.deepEqual(missingAdapterIds({ datasources: [] }, {}), []);
   assert.deepEqual(missingAdapterIds(cfg, { 'ing-es': {}, 'pepeenergy-es': {}, 'carrefour-es': {} }), []); // all present
 });
+
+test('a device that unions the remote on write also ADOPTS it locally', async () => {
+  // The reported failure: sinks configured on one browser stayed invisible on the other, for good.
+  // writeSnapshotIfChanged adopts the remote into what it WRITES (so a smaller local view can't clobber
+  // the shared snapshot) and then records that savedAt as "applied". Without adopting it LOCALLY too,
+  // applyStoredConfigIfNewer later sees savedAt <= at and skips forever — the device permanently misses
+  // whatever the other one had.
+  reset();
+  SNAP = { v: 1, savedAt: 500, datasources: [], sinks: [{ id: 'dbx-other', type: 'dropbox', name: 'Dropbox (other browser)' }], routes: [] };
+  mem['habeas:config'] = { datasources: [], sinks: [{ id: 'dbx-mine', type: 'dropbox', name: 'Dropbox (this browser)' }], routes: [] };
+
+  assert.equal(await writeSnapshotIfChanged(null, 1000), true);
+  assert.equal(SNAP.sinks.length, 2, 'the shared snapshot keeps both, as it already did');
+
+  const ids = (cfgOf().sinks || []).map((s) => s.id).sort();
+  assert.deepEqual(ids, ['dbx-mine', 'dbx-other'],
+    'the other browser’s sink must land in the LOCAL config too, not only in the snapshot');
+});
+
+test('…and having adopted it, the device does not then re-push or loop', async () => {
+  reset();
+  SNAP = { v: 1, savedAt: 500, datasources: [], sinks: [{ id: 'dbx-other', type: 'dropbox' }], routes: [] };
+  mem['habeas:config'] = { datasources: [], sinks: [{ id: 'dbx-mine', type: 'dropbox' }], routes: [] };
+  await writeSnapshotIfChanged(null, 1000);
+  assert.equal(await writeSnapshotIfChanged(null, 2000), false, 'nothing changed since → no second write');
+  assert.equal(SNAP.savedAt, 1000);
+});
+
+test('an OLDER snapshot still contributes what this device is missing, without overwriting it', async () => {
+  // Heals a device already stuck: its own last write pushed `at` past the snapshot's savedAt, so the
+  // timestamp gate skipped forever. Union is idempotent, so "is it newer?" is the wrong question for
+  // entries we simply do not have — but an older snapshot must NOT win on an id we do have.
+  reset();
+  mem['habeas:config-synced'] = { at: 9000, sig: 'stale' };
+  mem['habeas:config'] = { datasources: [], sinks: [{ id: 'dbx-mine', type: 'dropbox', name: 'mine, renamed here' }], routes: [] };
+  SNAP = { v: 1, savedAt: 500, datasources: [], routes: [],
+    sinks: [{ id: 'dbx-mine', type: 'dropbox', name: 'an older name' }, { id: 'dbx-other', type: 'dropbox', name: 'from the other browser' }] };
+
+  assert.equal(await applyStoredConfigIfNewer(), true, 'the missing sink should still be adopted');
+  const sinks = cfgOf().sinks;
+  assert.equal(sinks.length, 2);
+  assert.equal(sinks.find((s) => s.id === 'dbx-mine').name, 'mine, renamed here',
+    'a stale snapshot must not overwrite a newer local edit');
+  assert.ok(sinks.find((s) => s.id === 'dbx-other'), 'the entry this device lacked is added');
+});
+
+test('an older snapshot with nothing new is a no-op', async () => {
+  reset();
+  mem['habeas:config-synced'] = { at: 9000, sig: 'stale' };
+  mem['habeas:config'] = { datasources: [], sinks: [{ id: 'dbx-mine', type: 'dropbox' }], routes: [] };
+  SNAP = { v: 1, savedAt: 500, datasources: [], sinks: [{ id: 'dbx-mine', type: 'dropbox' }], routes: [] };
+  assert.equal(await applyStoredConfigIfNewer(), false);
+});
