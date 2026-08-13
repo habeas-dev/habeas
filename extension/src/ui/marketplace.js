@@ -2,6 +2,7 @@ import { chrome } from '../lib/ext.js';
 import { applyI18n, t } from '../lib/i18n.js';
 import { fetchIndex, installFromEntry, getRatings, postRating, getComments, postComment } from '../registry/client.js';
 import { getAdapters } from '../adapters/index.js';
+import { detectRegion, currentEnv, regionTier } from '../lib/region.js';
 import { meetsMinVersion } from '../lib/version.js';
 import { esc } from '../lib/esc.js';
 
@@ -58,12 +59,19 @@ function rank(e) {
   if (!inst) return 1;                 // installable
   return 2;                            // installed & current
 }
+// Where this user is, worked out once. 14 of the 24 published sources are Spain-only, so listing them
+// alphabetically showed everyone else a wall of supermarkets from another country — the same failure the
+// landing had, and worse here: the site decides whether they install, this decides whether they find
+// anything worth keeping afterwards. Read locally, never sent anywhere.
+const REGION = detectRegion(currentEnv());
 function render() {
   const q = $('#q').value.trim();
   // Experimental (beta) sources are hidden when the toggle is off — but one that's already installed always
   // shows, so the user can see/update/remove it.
   const list = ENTRIES.filter((e) => matches(e, q) && (SHOW_BETA || !e.beta || INSTALLED[e.id]))
-    .sort((a, b) => (rank(a) - rank(b)) || (a.name || a.id).localeCompare(b.name || b.id));
+    // State first (an update to install still comes before everything), then what this user can actually
+    // use, then name — so the existing ordering keeps its meaning and relevance only breaks its ties.
+    .sort((a, b) => (rank(a) - rank(b)) || (regionTier(a, REGION) - regionTier(b, REGION)) || (a.name || a.id).localeCompare(b.name || b.id));
   if (!list.length) { $('#list').innerHTML = `<p class="muted">${t('market_empty')}</p>`; return; }
   const outdated = list.filter((e) => isOutdated(e) && meetsMinVersion(e.minVersion)); // don't offer to update into a version this extension can't run
   const banner = outdated.length

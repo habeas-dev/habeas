@@ -2,8 +2,9 @@
   "id": "paypal",
   "name": "PayPal",
   "service": "paypal",
+  "country": "global",
   "trust": "community",
-  "version": "2026-08-08",
+  "version": "2026-08-13",
   "minVersion": "0.7.0.10",
   "domain": "paypal.com",
   "match": [
@@ -111,6 +112,10 @@
   },
   "brand": "PayPal",
   "changelog": [
+    {
+      "version": "2026-08-13",
+      "changes": "Declara country: global. PayPal funciona en cualquier país, pero al no declararlo quedaba sin clasificar justo cuando la extensión y la web han empezado a ordenar las fuentes por relevancia geográfica."
+    },
     {
       "version": "2026-08-08",
       "changes": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`."

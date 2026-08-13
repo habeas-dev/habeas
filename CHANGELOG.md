@@ -11,6 +11,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Changed
+- **The in-extension marketplace orders sources by what this user can actually use.** The landing was fixed
+  first; the marketplace still listed everything alphabetically, so a visitor convinced by the site would
+  install and immediately be shown the same wall of Spain-only sources. Install state still decides the
+  order — a source with an update to install comes first, however irrelevant — and regional relevance only
+  breaks its ties, with the name still breaking those. Sorting by *tier* rather than by position in the
+  ranked list is what keeps that last fallback alive: position would have silently imposed catalogue order.
+- **One implementation, two places** (`extension/src/lib/region.js`). `docs/source-rank.js` is now generated
+  from it (`docs/tools/build-source-rank.mjs`) and a test fails if the two drift — a site that recommends
+  what the extension then fails to surface is the same failure twice, and it would fail silently.
 - **CI reports what the Chrome Web Store is actually serving** (`scripts/cws-live-version.mjs`), asked via
   the update-check service every Chrome install polls. The upload API's return code never answered that
   question, and twice it misled us: a release sat "Published — public" in the dashboard while users still

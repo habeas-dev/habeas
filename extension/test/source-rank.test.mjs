@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { detectRegion, rankSources } from '../../docs/source-rank.js';
+import { detectRegion, rankSources } from '../src/lib/region.js';
 
 // The landing showed a RANDOM sample of the catalogue. 14 of 24 published sources are Spain-only, so a
 // visitor from anywhere else mostly saw supermarkets they cannot use — which matches what the analytics
@@ -94,4 +94,16 @@ test('order within a tier is preserved, so the caller controls variety', () => {
 test('an empty or missing catalogue is not an error', () => {
   assert.deepEqual(rankSources([], { country: 'ES' }), []);
   assert.deepEqual(rankSources(null, { country: 'ES' }), []);
+});
+
+test('the copy the website loads is generated from this module, never hand-edited', async () => {
+  // Two copies would drift, and silently: the site would recommend what the extension then fails to
+  // surface. The generator is the single point of truth; this fails the moment they disagree.
+  const { readFileSync } = await import('node:fs');
+  const { fileURLToPath } = await import('node:url');
+  const { dirname, join } = await import('node:path');
+  const { build } = await import('../../docs/tools/build-source-rank.mjs');
+  const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
+  assert.equal(readFileSync(join(root, 'docs/source-rank.js'), 'utf8'), build(),
+    'docs/source-rank.js is stale — run: node docs/tools/build-source-rank.mjs');
 });

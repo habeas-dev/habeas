@@ -1,5 +1,3 @@
-// GENERATED — do not edit. Source: extension/src/lib/region.js
-// Regenerate with: node docs/tools/build-source-rank.mjs
 // Order a list of sources by what this user can actually use.
 //
 // ONE implementation, used in two places: the landing's source preview and the in-extension marketplace.
@@ -91,7 +89,3 @@ export function currentEnv() {
   const language = (typeof navigator !== 'undefined' && navigator.language) || '';
   return { language, timeZone };
 }
-
-// i18n.js is a classic script, so it reads the helper from here. If this file ever fails to load, the
-// preview falls back to the plain random sample rather than rendering nothing.
-globalThis.habeasSourceRank = { detectRegion, rankSources };
