@@ -69,10 +69,27 @@ jobs:
           echo "Zip: ${zip:-<none>}"
           [ -n "$zip" ] || { echo "::error::release $tag has no .zip asset"; exit 1; }
           echo "path=$zip" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
         continue-on-error: true
 
+      # Ask the update service Chrome itself asks: is the store already SERVING this version? The upload
+      # API's return code never answered that — a release sat "Published — public" in the dashboard while
+      # users still got the previous one, and the publish call's 400 read as a failure when it was not.
+      # Knowing the served version also stops this job re-uploading (and re-400ing) every six hours once
+      # the release has actually landed.
+      - name: What is the store serving?
+        if: env.HAS_CWS == 'true' && steps.dl.outputs.version != ''
+        id: live
+        continue-on-error: true
+        run: |
+          LIVE=$(node scripts/cws-live-version.mjs "${{ secrets.CWS_EXTENSION_ID }}" 2>/dev/null || echo '')
+          echo "live=$LIVE" >> "$GITHUB_OUTPUT"
+          node scripts/cws-live-version.mjs "${{ secrets.CWS_EXTENSION_ID }}" "${{ steps.dl.outputs.version }}" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+
       - name: Re-attempt Chrome Web Store upload
-        if: env.HAS_CWS == 'true' && steps.dl.outputs.path != ''
+        # Skipped once the store serves this exact version: there is nothing left to retry, and retrying
+        # anyway is what produced a 400 on every run and made a healthy release look broken.
+        if: env.HAS_CWS == 'true' && steps.dl.outputs.path != '' && steps.live.outputs.live != steps.dl.outputs.version
         # No-op when the store is already current (version not greater → rejected) or a predecessor is still in
         # review (ITEM_NOT_UPDATABLE). Only publishes when CWS is genuinely behind and the queue is clear.
         continue-on-error: true

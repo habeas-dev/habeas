@@ -96,8 +96,16 @@ jobs:
       - name: Report the Chrome Web Store outcome
         if: always() && steps.cws.outcome != 'skipped'
         run: |
+          # What the store is SERVING, asked the way Chrome asks. The upload API's return code says nothing
+          # about what users receive: a release once sat "Published — public" in the dashboard while the
+          # update service still served the previous version, and a 400 from the publish call read as a
+          # hard failure when publishing had worked. Report the fact instead of deducing it from an error.
+          VER=$(node -p "require('./extension/manifest.json').version")
+          LIVE=$(node scripts/cws-live-version.mjs "${{ secrets.CWS_EXTENSION_ID }}" "$VER" 2>/dev/null || echo "store check unavailable")
           if [ "${{ steps.cws.outcome }}" = "success" ]; then
             echo "✅ Chrome Web Store: uploaded" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "\`$LIVE\`" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "::warning title=Chrome Web Store upload failed::The release and the GitHub asset shipped, but the store did NOT receive this version. Common cause: ITEM_NOT_UPDATABLE while a prior version is still in review. Upload dist/*.zip by hand once it clears."
             {
@@ -106,6 +114,8 @@ jobs:
               echo "The GitHub Release and its zip shipped; the store did not receive this version."
               echo "Most often \`ITEM_NOT_UPDATABLE\` — a prior version still in review."
               echo "Upload the attached zip by hand once it clears, or re-run this workflow."
+              echo ""
+              echo "\`$LIVE\`"
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 

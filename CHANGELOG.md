@@ -10,6 +10,18 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Changed
+- **CI reports what the Chrome Web Store is actually serving** (`scripts/cws-live-version.mjs`), asked via
+  the update-check service every Chrome install polls. The upload API's return code never answered that
+  question, and twice it misled us: a release sat "Published — public" in the dashboard while users still
+  received the previous version, and a `400` from the publish call read as a hard failure when publishing
+  had in fact worked. The release summary now says `built 0.9.16 · store 0.9.12 — published, still reaching
+  the update servers`, so the state is read rather than deduced from an error code. It never fails a build:
+  a store that lags is propagating, and an unreachable update service is not ours to fail on.
+- **The Chrome Web Store retry stops once the release has landed.** It re-uploaded every six hours forever,
+  earning a `400` each time and making a healthy release look broken; it now skips when the store already
+  serves that exact version.
+
 ## [0.9.16] — 2026-08-13
 
 ### Added
