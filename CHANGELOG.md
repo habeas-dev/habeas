@@ -10,6 +10,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **Four requested permissions had no justification in the store listing** — `activeTab` (added in 0.9.13),
+  `cookies`, `webRequest` and `alarms` — while `downloads` stayed documented long after it stopped being
+  requested. The Chrome Web Store blocks a submission until every permission is justified, which is the
+  most likely reason the 0.9.16 draft uploads fine and then fails to publish. A test now compares the
+  manifest against `STORE.md` so the two cannot drift again: the drift is invisible until a release will
+  not submit, which is a bad moment to find out.
+
 ### Changed
 - **The in-extension marketplace orders sources by what this user can actually use.** The landing was fixed
   first; the marketplace still listed everything alphabetically, so a visitor convinced by the site would

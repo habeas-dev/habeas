@@ -275,8 +275,11 @@ arrive — which is what the landing pages and the launch posts are for.
 
 | Permission | Why it's needed |
 |---|---|
+| `activeTab` | When the user clicks the toolbar icon, read **that one tab's** URL so the popup can offer to teach Habeas a site it has no source for yet. Granted by that click, for that tab, and nothing else — no browsing history is read. |
+| `cookies` | Clear a source's own session cookies when the site itself corrupts them and its login page stops loading, so the user can sign in again. Scoped to that source's domain. |
+| `webRequest` | Observe response headers of the user's own document downloads (record mode, and detecting a login page that fails with a telltale status). Observation only — nothing is blocked, redirected or modified. |
+| `alarms` | Wake the extension at the times the user scheduled their own syncs for. |
 | `storage` | Save the user's settings, a delivery ledger (to avoid re-downloading), and a local activity log on the device. Session tokens live in `storage.session` (memory only, cleared on close). |
-| `downloads` | The "Download" destination — save an exported document as a file. |
 | `identity` | Google Drive destination only: `launchWebAuthFlow` OAuth to the user's **own** Drive, `drive.file` scope (only files the extension creates). |
 | `notifications` | Notify the user when new documents were synced (auto mode). |
 | `scripting` | Run the data fetch **in the site's own tab (page context)** so it inherits the user's session and passes anti-bot walls; and, in opt-in "record mode", capture sample responses to draft a new source. |
