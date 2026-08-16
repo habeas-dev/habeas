@@ -189,6 +189,18 @@ function page({ lang, meta, full, entry, siblings }) {
     '@context': 'https://schema.org', '@type': 'FAQPage', inLanguage: lang,
     mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
   };
+  // The three steps are a sequence, and saying so is the whole point of the page: "how do I download my
+  // X invoices" is a procedure, and a procedure is what an assistant quotes back. They were marked up as
+  // an unordered list, which said the opposite.
+  const steps = [t.step1(meta.domain), t.step2, t.step3];
+  const howToLd = {
+    '@context': 'https://schema.org', '@type': 'HowTo', inLanguage: lang,
+    name: copy.h1,
+    description: copy.intro.split('.')[0] + '.',
+    totalTime: 'PT2M',
+    tool: [{ '@type': 'HowToTool', name: 'Habeas' }],
+    step: steps.map((text, i) => ({ '@type': 'HowToStep', position: i + 1, name: text.split('.')[0] + '.', text })),
+  };
 
   return `<!doctype html>
 <html lang="${lang}">
@@ -225,6 +237,9 @@ ${hreflang}
   <script type="application/ld+json">
 ${JSON.stringify(faqLd, null, 2)}
   </script>
+  <script type="application/ld+json">
+${JSON.stringify(howToLd, null, 2)}
+  </script>
   <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
   <script defer src="https://analytics.habeas.dev/script.js" data-website-id="84a75f7a-c014-4ce8-a3be-1f8dd1899a28" data-domains="habeas.dev"></script>
 </head>
@@ -255,11 +270,9 @@ ${rows}
 ${note}${gaps}
     <h2>${esc(t.how)}</h2>
     <p>${t.howIntro(esc(meta.domain))}</p>
-    <ul>
-      <li>${esc(t.step1(meta.domain))}</li>
-      <li>${esc(t.step2)}</li>
-      <li>${esc(t.step3)}</li>
-    </ul>
+    <ol>
+${steps.map((x) => `      <li>${esc(x)}</li>`).join('\n')}
+    </ol>
     <p>${t.never} ${trust}</p>
 
     <div class="cta">
@@ -299,12 +312,26 @@ function indexPage({ lang, groups }) {
 ${g.items.map((i) => `      <li><a href="${L.path(i.slug)}">${esc(i.h1)}</a></li>`).join('\n')}
     </ul>`).join('\n\n');
 
+  // Declare the list. The page already shows every guide; an ItemList is what lets an extractor state
+  // "these services are covered" without scraping cards out of markup.
+  const flat = groups.flatMap((g) => g.items || []);
+  const listLd = {
+    '@context': 'https://schema.org', '@type': 'ItemList', inLanguage: lang,
+    name: t.indexTitle, numberOfItems: flat.length,
+    itemListElement: flat.map((e, n) => ({
+      '@type': 'ListItem', position: n + 1, name: e.name || e.brand || e.id,
+      url: ORIGIN + LANGS[lang].path(e.slug),
+    })),
+  };
   return `<!doctype html>
 <html lang="${lang}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${esc(t.indexTitle)} — Habeas</title>
+  <script type="application/ld+json">
+${JSON.stringify(listLd, null, 2)}
+  </script>
   <meta name="description" content="${esc(t.indexIntro)}" />
   <link rel="canonical" href="${url}" />
 ${alts}

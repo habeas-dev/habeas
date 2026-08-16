@@ -73,6 +73,42 @@
   ]
 }
   </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "inLanguage": "en",
+  "name": "How to download your Amazon invoices",
+  "description": "Amazon keeps years of orders in your account, each with its own invoice behind its own page.",
+  "totalTime": "PT2M",
+  "tool": [
+    {
+      "@type": "HowToTool",
+      "name": "Habeas"
+    }
+  ],
+  "step": [
+    {
+      "@type": "HowToStep",
+      "position": 1,
+      "name": "You go to amazon.",
+      "text": "You go to amazon.com and sign in yourself, as always, with your MFA or whatever code you use."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 2,
+      "name": "Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does.",
+      "text": "Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 3,
+      "name": "You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own.",
+      "text": "You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own."
+    }
+  ]
+}
+  </script>
   <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
   <script defer src="https://analytics.habeas.dev/script.js" data-website-id="84a75f7a-c014-4ce8-a3be-1f8dd1899a28" data-domains="habeas.dev"></script>
 </head>
@@ -106,11 +142,11 @@
 
     <h2>How it works</h2>
     <p>It is not a service that connects to amazon.com on its own. It runs <strong>inside your own browser</strong>, reusing the session you already have open:</p>
-    <ul>
+    <ol>
       <li>You go to amazon.com and sign in yourself, as always, with your MFA or whatever code you use.</li>
       <li>Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does.</li>
       <li>You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own.</li>
-    </ul>
+    </ol>
     <p><strong>Your password is never read, never stored and never sent anywhere</strong>, and nothing runs in the background while you are away. This is an <strong>audited</strong> source, verified by the project against the real service.</p>
 
     <div class="cta">

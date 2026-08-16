@@ -10,6 +10,18 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **The guide pages declare the procedure they describe** (`HowTo` + `HowToStep`), and their three steps
+  are now an ordered list rather than a bulleted one — they are a sequence, and neither the markup nor the
+  HTML said so. "How do I download my invoices from X" is a procedure, and a procedure is what an
+  assistant quotes back. (`FAQPage` was already there.)
+- **`docs/llms.txt`** (`docs/tools/build-llms-txt.mjs`), generated from the live catalogue and the guide
+  index so it cannot drift. Its load-bearing section is **what Habeas is not**: not a scraper service, not
+  an aggregator, not a background crawler. Without that stated plainly, an assistant reading the site
+  describes it as exactly the thing the whole design exists to avoid.
+- **The guide indexes declare what they list** (`ItemList`), so "these services are covered" is readable
+  without scraping cards out of markup.
+
 ### Fixed
 - **Four requested permissions had no justification in the store listing** — `activeTab` (added in 0.9.13),
   `cookies`, `webRequest` and `alarms` — while `downloads` stayed documented long after it stopped being

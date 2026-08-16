@@ -34,6 +34,10 @@ jobs:
         run: node docs/tools/render-sources.mjs
       - name: Rebuild the sitemap
         run: node docs/tools/build-sitemap.mjs
+
+      - name: Rebuild llms.txt
+        # Lists the supported services and the guide pages, so it goes stale the moment the catalogue moves.
+        run: node docs/tools/build-llms-txt.mjs
       - name: Commit if anything changed
         run: |
           if git diff --quiet -- docs/; then

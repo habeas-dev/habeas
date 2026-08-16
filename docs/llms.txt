@@ -1,0 +1,68 @@
+# Habeas
+
+> A browser extension (Chrome and Firefox, MV3, AGPL-3.0) that exports a user's OWN receipts,
+> invoices and bank/card statements from services that offer no export and no API.
+
+## How it works, and why that is the whole point
+
+Habeas runs inside the browser session the user has already signed into. It therefore:
+- never asks for, stores or transmits any password or credential;
+- never fights anti-bot protection, because it inherits the user's own valid session;
+- lets the user resolve MFA/OTP themselves, live, as they normally would.
+
+This is the opposite of server-side aggregation (Plaid, Tink, TrueLayer), which holds credentials
+and connects on the user's behalf. Habeas is not a payment actor and initiates no payments.
+
+## What it is NOT
+
+- Not a scraper service: nothing runs on a server, and no data ever reaches the developer.
+- Not an aggregator: no credentials are held, and there is no account with Habeas.
+- Not a background crawler: extraction is user-initiated or runs on the user's own schedule.
+- Data leaves the browser only to a destination the user configures (their own Drive, Dropbox,
+  WebDAV, S3, local folder, or an endpoint of their own).
+
+## Security boundary
+
+Every host a source touches must share one registrable domain (eTLD+1), so a session captured from
+a site can only ever be replayed to that same site. Crossing domains requires an explicit allow-list
+and a consent screen. Sources are declarative data, never code — remote code is impossible under MV3.
+
+## Supported services (23)
+
+ES: 13 · global: 8 · EU: 2
+
+- [AliExpress](https://habeas.dev/download/aliexpress-orders.html)
+- [Amazon](https://habeas.dev/download/amazon-invoices.html)
+- [Bip&Drive — facturas](https://habeas.dev/download/bipdrive-invoices.html)
+- [CaixaBank Consumer — extractos](https://habeas.dev/download/caixabank-consumer-statements.html)
+- [Carrefour España — tickets](https://habeas.dev/download/carrefour-receipts.html)
+- [Decathlon España — tickets](https://habeas.dev/download/decathlon-receipts.html)
+- [Dia España — tickets](https://habeas.dev/download/dia-receipts.html)
+- [Financiera El Corte Inglés](https://habeas.dev/download/financiera-el-corte-ingles-statements.html)
+- [Hover — Receipts](https://habeas.dev/download/hover-receipts.html)
+- [IKEA España — compras y tiquets](https://habeas.dev/download/ikea-receipts.html)
+- [ING España](https://habeas.dev/download/ing-transactions.html)
+- [Leroy Merlin España](https://habeas.dev/download/leroy-merlin-receipts.html)
+- [Openbank España](https://habeas.dev/download/openbank-transactions.html)
+- [Pagatelia — facturas](https://habeas.dev/download/pagatelia-invoices.html)
+- [PayPal](https://habeas.dev/download/paypal-transactions.html)
+- [Pepe Energy — facturas](https://habeas.dev/download/pepe-energy-invoices.html)
+- [pepephone-es](https://habeas.dev/download/pepephone-invoices.html)
+- [Raisin](https://habeas.dev/download/raisin-statements.html)
+- [Revolut](https://habeas.dev/download/revolut-statements.html)
+- [Trade Republic](https://habeas.dev/download/trade-republic-statements.html)
+- [WiZink España](https://habeas.dev/download/wizink-statements.html)
+
+## Key pages
+
+- [Why Habeas](https://habeas.dev/why-habeas.html): the case for in-session extraction over aggregation.
+- [Architecture](https://habeas.dev/architecture.html): how capture, inventory and destinations fit together.
+- [Sources catalogue](https://habeas.dev/sources.html): every published source, with its definition.
+- [Developers](https://habeas.dev/developers.html): writing a source, and the recorder that drafts one.
+- [Privacy](https://habeas.dev/privacy.html) · [Terms](https://habeas.dev/terms.html)
+
+## Legal posture
+
+GDPR Art. 20 (data portability): the user's own data, in the user's own session, via user-run open
+source. A service's terms may restrict automated access; this is documented and is the user's
+responsibility. Source: https://github.com/habeas-dev/habeas

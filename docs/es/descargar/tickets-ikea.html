@@ -73,6 +73,42 @@
   ]
 }
   </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "inLanguage": "es",
+  "name": "Cómo descargar tus tiquets y compras de IKEA",
+  "description": "IKEA conserva tus compras y tiquets en tu cuenta, pero para guardarlos hay que ir entrando en cada uno.",
+  "totalTime": "PT2M",
+  "tool": [
+    {
+      "@type": "HowToTool",
+      "name": "Habeas"
+    }
+  ],
+  "step": [
+    {
+      "@type": "HowToStep",
+      "position": 1,
+      "name": "Entras en ikea.",
+      "text": "Entras en ikea.com y te identificas tú, como siempre, con tu MFA o el código que uses."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 2,
+      "name": "Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web.",
+      "text": "Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 3,
+      "name": "Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio.",
+      "text": "Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio."
+    }
+  ]
+}
+  </script>
   <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
   <script defer src="https://analytics.habeas.dev/script.js" data-website-id="84a75f7a-c014-4ce8-a3be-1f8dd1899a28" data-domains="habeas.dev"></script>
 </head>
@@ -106,11 +142,11 @@
 
     <h2>Cómo funciona</h2>
     <p>No es un servicio que se conecte a ikea.com por su cuenta. Funciona <strong>dentro de tu propio navegador</strong>, aprovechando la sesión que ya tienes abierta:</p>
-    <ul>
+    <ol>
       <li>Entras en ikea.com y te identificas tú, como siempre, con tu MFA o el código que uses.</li>
       <li>Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web.</li>
       <li>Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio.</li>
-    </ul>
+    </ol>
     <p><strong>Tu contraseña nunca se lee, ni se guarda, ni se envía a ningún sitio</strong>, y no hay ningún proceso trabajando en segundo plano mientras no estás. Es una fuente <strong>auditada</strong> por el proyecto y verificada contra el servicio real.</p>
 
     <div class="cta">
