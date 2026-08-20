@@ -1,13 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { globSync } from 'node:fs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
-const guides = () => globSync('docs/{download,es/descargar}/*.html', { cwd: ROOT }).filter((f) => !f.endsWith('index.html'));
+// readdirSync rather than fs.globSync: glob landed in Node 22 and CI pins Node 20, so a test written
+// against the newer API passes locally and fails only in the release build — which is where it did.
+const guides = () => ['docs/download', 'docs/es/descargar'].flatMap((dir) =>
+  readdirSync(join(ROOT, dir))
+    .filter((f) => f.endsWith('.html') && f !== 'index.html')
+    .map((f) => `${dir}/${f}`));
 
 // The guide pages are the ones an assistant would cite — they answer the question verbatim ("how do I
 // download my X invoices"). What they declare about themselves is the difference between being quoted and
