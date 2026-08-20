@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.17] — 2026-08-20
+
 ### Added
 - **The guide pages declare the procedure they describe** (`HowTo` + `HowToStep`), and their three steps
   are now an ordered list rather than a bulleted one — they are a sequence, and neither the markup nor the
