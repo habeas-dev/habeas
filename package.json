@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "Reclaim your own personal data from services that lock it behind non-automatable walls — a browser extension that extracts your data within your own session.",
   "license": "AGPL-3.0-or-later",
+  "engines": {
+    "node": ">=22"
+  },
   "keywords": [
     "personal-data",
     "data-portability",

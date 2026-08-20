@@ -10,6 +10,18 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **The store check said things it could not know.** Whenever the Chrome Web Store was not yet serving the
+  built version it reported *"published, still reaching the update servers (normal, minutes to a few
+  hours)"* — regardless. It said that about a version that had never been uploaded, and kept saying it for
+  three days about one stuck behind an unsubmitted draft, which is what sent us looking in the wrong place.
+  It now claims no upload it cannot verify, and mentions a timescale only when the release date is actually
+  passed in: under a day it is propagation, past a day it says so plainly and points at the dashboard.
+  Still never a build failure.
+- **CI ran Node 20 while development runs 22.** A test written against `fs.globSync` (Node 22) passed
+  locally and failed only in the release build, taking the 0.9.17 tag down before it produced anything.
+  Both workflows move to Node 22, with `.nvmrc` and `engines` recording the expectation.
+
 ## [0.9.17] — 2026-08-20
 
 ### Added

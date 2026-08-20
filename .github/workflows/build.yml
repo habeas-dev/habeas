@@ -25,7 +25,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - run: npm install
 
@@ -101,7 +101,7 @@ jobs:
           # update service still served the previous version, and a 400 from the publish call read as a
           # hard failure when publishing had worked. Report the fact instead of deducing it from an error.
           VER=$(node -p "require('./extension/manifest.json').version")
-          LIVE=$(node scripts/cws-live-version.mjs "${{ secrets.CWS_EXTENSION_ID }}" "$VER" 2>/dev/null || echo "store check unavailable")
+          LIVE=$(node scripts/cws-live-version.mjs "${{ secrets.CWS_EXTENSION_ID }}" "$VER" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" 2>/dev/null || echo "store check unavailable")
           if [ "${{ steps.cws.outcome }}" = "success" ]; then
             echo "✅ Chrome Web Store: uploaded" >> "$GITHUB_STEP_SUMMARY"
             echo "" >> "$GITHUB_STEP_SUMMARY"

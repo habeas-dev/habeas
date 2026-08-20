@@ -70,6 +70,8 @@ jobs:
           [ -n "$zip" ] || { echo "::error::release $tag has no .zip asset"; exit 1; }
           echo "path=$zip" >> "$GITHUB_OUTPUT"
           echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+          # When the release was cut — the check needs it to tell propagation from a stuck draft.
+          echo "released=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json createdAt --jq .createdAt)" >> "$GITHUB_OUTPUT"
         continue-on-error: true
 
       # Ask the update service Chrome itself asks: is the store already SERVING this version? The upload
@@ -84,7 +86,7 @@ jobs:
         run: |
           LIVE=$(node scripts/cws-live-version.mjs "${{ secrets.CWS_EXTENSION_ID }}" 2>/dev/null || echo '')
           echo "live=$LIVE" >> "$GITHUB_OUTPUT"
-          node scripts/cws-live-version.mjs "${{ secrets.CWS_EXTENSION_ID }}" "${{ steps.dl.outputs.version }}" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+          node scripts/cws-live-version.mjs "${{ secrets.CWS_EXTENSION_ID }}" "${{ steps.dl.outputs.version }}" "${{ steps.dl.outputs.released }}" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
 
       - name: Re-attempt Chrome Web Store upload
         # Skipped once the store serves this exact version: there is nothing left to retry, and retrying

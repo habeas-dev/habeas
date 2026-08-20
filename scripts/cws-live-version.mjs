@@ -29,14 +29,46 @@ export function parseLiveVersion(xml) {
 }
 
 /**
- * How the store compares to the version just built. `ok` is false only for states worth failing on — and
- * none currently are: a store that lags is propagating, and a service that won't answer is not our problem.
+ * How the store compares to the version just built, as `{ state, stale, ok, note }`.
+ *
+ * `note` is the part a human reads, so it must never claim more than is known. The previous wording said
+ * "published, still reaching the update servers (normal, minutes to a few hours)" for ANY version the
+ * store was not yet serving — including one that had never been uploaded, and one that had been stuck for
+ * three days. Both were stated as fact and both were false, and the reassurance cost days of looking in
+ * the wrong place. So: an upload is never claimed, and a timescale is only mentioned when `ageHours` is
+ * actually known.
+ *
+ * `ok` is false only for states worth failing on, and none are: being behind is not a build failure, and
+ * an unreachable update service is not ours to fail on.
  */
-export function compareToLive(built, live) {
-  if (!live) return { state: 'unknown', ok: true };
-  if (live === built) return { state: 'current', ok: true };
-  return { state: cmp(live, built) > 0 ? 'ahead' : 'propagating', ok: true };
+export function compareToLive(built, live, ageHours = null) {
+  if (!live) {
+    return { state: 'unknown', stale: false, ok: true,
+      note: `built ${built} · the update service did not answer, so what the store serves is unknown` };
+  }
+  if (live === built) {
+    return { state: 'current', stale: false, ok: true,
+      note: `built ${built} · the store is serving this version` };
+  }
+  if (cmp(live, built) > 0) {
+    return { state: 'ahead', stale: false, ok: true,
+      note: `built ${built} · the store serves ${live}, which is NEWER — was an older tag re-run?` };
+  }
+  const known = typeof ageHours === 'number' && Number.isFinite(ageHours);
+  const stale = known && ageHours >= STALE_AFTER_HOURS;
+  let tail;
+  if (!known) tail = 'the store has not served it yet';
+  else if (stale) tail = `${age(ageHours)} since the release and the store still has not served it — `
+    + 'this is no longer propagation; check the dashboard for a draft that was never submitted, '
+    + 'an unanswered permission justification, or a version still in review';
+  else tail = `released ${age(ageHours)} ago — still propagating`;
+  return { state: 'behind', stale, ok: true, note: `built ${built} · store ${live} · ${tail}` };
 }
+
+// A day: long enough that an overnight release is not called stuck, short enough that the three-day
+// silence we actually lived through would have been named on the first check of the second day.
+const STALE_AFTER_HOURS = 24;
+const age = (h) => (h >= 48 ? `${Math.round(h / 24)}d` : `${Math.round(h)}h`);
 
 // Numeric, part-by-part: "0.9.9" is older than "0.9.16", which a string comparison gets backwards.
 function cmp(a, b) {
@@ -55,19 +87,18 @@ export async function fetchLiveVersion(id) {
   return parseLiveVersion(await res.text());
 }
 
-const WORD = {
-  current: 'the store is serving this version',
-  propagating: 'published, still reaching the update servers (normal, minutes to a few hours)',
-  ahead: 'the store is AHEAD of this build — an older tag was re-run?',
-  unknown: 'the update service did not answer; state unknown',
-};
-
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const [id, built] = process.argv.slice(2);
-  if (!id) { console.error('usage: cws-live-version.mjs <extension-id> [expected-version]'); process.exit(2); }
+  const [id, built, releasedAt] = process.argv.slice(2);
+  if (!id) { console.error('usage: cws-live-version.mjs <extension-id> [built-version] [release-iso-date]'); process.exit(2); }
   let live = '';
   try { live = await fetchLiveVersion(id); } catch (e) { live = ''; }
   if (!built) { console.log(live || '(unknown)'); process.exit(0); }
-  const { state } = compareToLive(built, live);
-  console.log(`built ${built} · store ${live || '(unknown)'} — ${WORD[state]}`);
+  // The age is what turns "still propagating" from a guess into a statement. Without a release date we
+  // simply do not say how long it has been.
+  let ageHours = null;
+  if (releasedAt) {
+    const t = Date.parse(releasedAt);
+    if (!Number.isNaN(t)) ageHours = (Date.now() - t) / 3600000;
+  }
+  console.log(compareToLive(built, live, ageHours).note);
 }

@@ -37,24 +37,60 @@ test('an unknown or unpublished item yields nothing rather than a wrong version'
 // ---------------------------------------------------------------- the verdict
 
 test('a store that is already serving the built version says so', () => {
-  assert.deepEqual(compareToLive('0.9.16', '0.9.16'), { state: 'current', ok: true });
+  const v = compareToLive('0.9.16', '0.9.16');
+  assert.equal(v.state, 'current');
+  assert.equal(v.ok, true);
 });
 
-test('a store still on the previous version is propagating, not broken', () => {
-  // Publishing marks the item; reaching the update servers takes a while. Reporting this as a failure is
-  // what sent us chasing a permission problem that did not exist.
-  const v = compareToLive('0.9.16', '0.9.12');
-  assert.equal(v.state, 'propagating');
-  assert.equal(v.ok, true, 'a lag behind the just-built version is expected, never a build failure');
+test('a store behind the build says only that, when nobody knows how long it has been', () => {
+  // The old wording asserted "published, still reaching the update servers (normal, minutes to a few
+  // hours)" whatever had happened — including for a version that was never uploaded at all, and for one
+  // that had been stuck for days. Both were said out loud, and both were wrong.
+  const v = compareToLive('0.9.17', '0.9.16');
+  assert.equal(v.state, 'behind');
+  assert.equal(v.ok, true, 'being behind is never a build failure');
+  assert.ok(!/publish/i.test(v.note), `must not claim it was published: ${v.note}`);
+  assert.ok(!/minutes|hours/i.test(v.note), `must not promise a timescale it cannot know: ${v.note}`);
+});
+
+test('with the age known and short, it is fair to call it propagation', () => {
+  const v = compareToLive('0.9.17', '0.9.16', 3);
+  assert.equal(v.state, 'behind');
+  assert.equal(v.stale, false);
+  assert.match(v.note, /propagat/i);
+});
+
+test('with the age known and long, it says plainly that this is no longer propagation', () => {
+  // Three days is what actually happened, while the check kept calling it normal.
+  const v = compareToLive('0.9.17', '0.9.16', 72);
+  assert.equal(v.stale, true);
+  assert.ok(!/normal/i.test(v.note), `stopped being normal two days ago: ${v.note}`);
+  assert.match(v.note, /3d|72h|no longer|check/i);
+  assert.equal(v.ok, true, 'still not a build failure — it is a prompt to go look');
+});
+
+test('the boundary is a day, so an overnight release is not called stuck', () => {
+  assert.equal(compareToLive('0.9.17', '0.9.16', 23).stale, false);
+  assert.equal(compareToLive('0.9.17', '0.9.16', 25).stale, true);
 });
 
 test('a store ahead of this build is reported as such rather than as an error', () => {
   // Re-running an old tag's workflow: the store is correctly ahead.
-  assert.equal(compareToLive('0.9.12', '0.9.16').state, 'ahead');
+  const v = compareToLive('0.9.12', '0.9.16');
+  assert.equal(v.state, 'ahead');
+  assert.equal(v.ok, true);
 });
 
 test('no answer from the update service is unknown, not zero', () => {
   const v = compareToLive('0.9.16', '');
   assert.equal(v.state, 'unknown');
   assert.equal(v.ok, true, 'the update service being unreachable must not fail a release');
+  assert.ok(!/propagat|publish/i.test(v.note), `unknown must not be dressed up as progress: ${v.note}`);
+});
+
+test('every verdict carries a note, since the note is what a human reads', () => {
+  for (const args of [['1.0.0', '1.0.0'], ['1.0.1', '1.0.0'], ['1.0.1', '1.0.0', 99], ['1.0.0', '1.0.1'], ['1.0.0', '']]) {
+    const v = compareToLive(...args);
+    assert.ok(v.note && v.note.length > 10, `no note for ${JSON.stringify(args)}`);
+  }
 });
