@@ -6,11 +6,15 @@
 [![Firefox Add-ons](https://img.shields.io/amo/v/habeas?label=Firefox%20Add-ons&logo=firefoxbrowser&logoColor=white)](https://addons.mozilla.org/firefox/addon/habeas/)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 
-**Habeas** is an open-source, local-first runtime that lets you retrieve **your own data** from websites that offer no API, no bulk export, or intentionally make automation difficult.
+**Habeas** is an open-source, local-first browser extension that retrieves **your own invoices, receipts and bank statements** from websites that offer no API, no bulk export, or intentionally make automation difficult.
 
 It runs **inside your own authenticated browser session**, where you already have access to your data, and delivers that data wherever **you** choose.
 
 Unlike server-side aggregators, Habeas never asks for your credentials, never logs in on your behalf, and never receives your personal data.
+
+![The Habeas archive: documents recovered from several services, grouped by month](docs/screenshot-archive.png)
+
+*Your archive, after a few syncs. Service names above are fictitious.*
 
 ---
 
@@ -81,12 +85,14 @@ Habeas separates **where data comes from** from **where data goes**.
 
 A Source knows how to retrieve data from one specific website.
 
-Examples include:
+**24 Sources are published today**, most of them Spanish (where the project started), plus international
+ones including **Revolut, Amazon, PayPal, N26, DEGIRO, Trade Republic, American Express and AliExpress**.
 
-- supermarkets
-- banks
-- brokers
-- online services
+Browse the whole catalogue — every definition is public and reviewable — at
+**[habeas.dev/sources.html](https://habeas.dev/sources.html)**, or read the per-service guides at
+**[habeas.dev/download/](https://habeas.dev/download/)**.
+
+They cover supermarkets, retail, banks, brokers, utilities and online services.
 
 Each Source produces its own native outputs.
 
@@ -184,7 +190,7 @@ The project already includes:
 - a Manifest V3 extension;
 - Chrome/Chromium support;
 - Firefox support;
-- a growing catalog of production-ready Sources (supermarkets, retail, and banks);
+- **24 production-ready Sources** (supermarkets, retail, utilities, banks, brokers) and growing;
 - multiple Sinks (download / local folder / native Google Drive / HTTP / WebDAV / S3 / Dropbox);
 - automatic synchronization on login, plus a "Sync all" sweep across every source;
 - duplicate detection;
