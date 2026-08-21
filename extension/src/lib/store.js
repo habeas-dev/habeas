@@ -3,6 +3,7 @@
 // where the store is hosted (local by default, or a folder / Drive / HTTP backend for multi-device) and can
 // move it between backends (a union-merge, never clobbering). Record shaping lives in the pure format module.
 import { chrome } from './ext.js';
+import { readCache, writeCache, dropCache } from './storecache.js';
 import * as local from './store/local.js';
 import * as folder from './store/folder.js';
 import * as http from './store/http.js';
@@ -41,6 +42,7 @@ const now = () => new Date().toISOString();
 // Write-through: merge captured items into a source's store. entries: [{ internalId, record, docAvailable? }]
 // (or tombstones { internalId, gone, goneReason }). Each is stamped `at` now unless given.
 export async function putItems(sourceId, entries, meta) {
+  invalidate(sourceId); // the cache must not outlive a change to what it copies
   if (!entries || !entries.length) return;
   // Stamp each entry with the source version that produced it (from meta.srcVersion) so the store records what
   // normalization each item was last built with — used by migrations to decide what needs reprocessing.
@@ -77,10 +79,30 @@ export async function getSecretsBlob() { try { const b = await backendFor(); ret
 // Public read helpers stay tolerant (a flaky/unconnected cloud backend must not crash the popup's normal
 // list flow) — they degrade to null/empty. The store BROWSER calls a backend's loadSource DIRECTLY so it
 // can surface the real failure reason (see ui/store-browser.js).
-export async function getSource(sourceId) { try { return (await (await backendFor()).loadSource(sourceId)) || null; } catch (e) { return null; } }
+export async function getSource(sourceId) {
+  try {
+    const data = (await (await backendFor()).loadSource(sourceId)) || null;
+    // Remember it for the next open. Best-effort and after the fact, so a cache problem can never turn a
+    // successful read into a failed one.
+    if (data) { const cfg = await getStoreConfig().catch(() => null); writeCache(cfg && cfg.backend, sourceId, data); }
+    return data;
+  } catch (e) { return null; }
+}
+// The same source as of the last successful read, WITHOUT touching the network — so the Archive can paint
+// what you saw last time while the real read is still in flight. Display only: see lib/storecache.js for
+// why this must never decide what gets written, deleted or marked delivered.
+// Forget a source's cached copy. Fire-and-forget: it is a cache.
+function invalidate(sourceId) {
+  getStoreConfig().then((cfg) => dropCache(cfg && cfg.backend, sourceId)).catch(() => {});
+}
+export async function getSourceCached(sourceId) {
+  const cfg = await getStoreConfig().catch(() => null);
+  return readCache(cfg && cfg.backend, sourceId);
+}
 
 // Delete specific items from a source's store (debug/repair). Returns how many were removed.
 export async function deleteStoreItems(sourceId, ids) {
+  invalidate(sourceId); // the cache must not outlive a change to what it copies
   const backend = await backendFor();
   const src = await backend.loadSource(sourceId);
   if (!src || !src.items) return 0;
@@ -92,6 +114,7 @@ export async function deleteStoreItems(sourceId, ids) {
 // Empty a source's store entirely (keeps its meta). A full backend "delete file/entry" isn't part of the
 // backend interface, so the source stays listed but empty.
 export async function clearStoreSource(sourceId) {
+  invalidate(sourceId); // the cache must not outlive a change to what it copies
   const backend = await backendFor();
   const src = await backend.loadSource(sourceId);
   await backend.saveSource(sourceId, { meta: (src && src.meta) || {}, items: {} }, { prune: true }); // explicit clear

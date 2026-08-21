@@ -2568,7 +2568,8 @@
     }
   },
   "archive_refreshing": {
-    "message": "Buscando documentos nuevos…"
+    "message": "buscando nuevos…",
+    "description": "Shown on the document count while the store is re-read behind already-painted documents."
   },
   "archive_refresh_ok": {
     "message": "$N$ documento(s) nuevo(s) añadidos",

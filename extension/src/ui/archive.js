@@ -8,7 +8,7 @@
 import { chrome } from '../lib/ext.js';
 import { getConfig, saveConfig } from '../lib/config.js';
 import { getAdapters } from '../adapters/index.js';
-import { listSources, getSource, getStoreConfig } from '../lib/store.js';
+import { listSources, getSource, getSourceCached, getStoreConfig } from '../lib/store.js';
 import { instrumentLabel, displayName, displayAmount, SIDE_DIR, sideKey, isInvestmentRec } from '../lib/recdisplay.js';
 import { useDriveStore, useFolderStore, useSinkStore, useHttpStore, folderStoreAvailable } from '../lib/storesetup.js';
 import { mountSinkForm, connectSink, needsConnect, storeCapable } from './sinkform.js';
@@ -38,6 +38,7 @@ let ADAPTERS = {}, CFG = {}, RETRIEVABLE = [];
 let LANG = 'en', ESLANG = false;
 let INDEX = [];       // [{ base, ds, adapter, name, count, lastDate, primaryCat }]
 let CUR = null;       // current source base, or null = the index
+let REFRESHING = false;  // showing last-known documents while the store is re-read
 let CURDOCS = [];     // [{ base, dsId, adapter, internalId, record, delivered[], formats[] }]
 let PENDING_FMT = 0;  // delivered docs in the current view whose file formats haven't been scanned yet
 let ACCOUNT = '';     // account (record.group) filter
@@ -307,7 +308,7 @@ function patchMeta(s) {
   document.querySelectorAll('.node' + q + ' .cnt').forEach((el) => { el.textContent = s.count == null ? '' : String(s.count); });
 }
 
-async function loadDocs(base) {
+async function loadDocs(base, { cachedOnly = false } = {}) {
   const keys = (await listSources()).filter((k) => String(k).split(':')[0] === base);
   const entry = INDEX.find((x) => x.base === base) || {};
   const ds = entry.ds, adapter = entry.adapter;
@@ -317,7 +318,7 @@ async function loadDocs(base) {
   const rows = [];
   let pendingFmt = 0; // delivered docs whose file formats haven't been scanned yet (exts unknown) → offer a scan
   for (const key of keys) {
-    const src = await getSource(key).catch(() => null); if (!src || !src.items) continue;
+    const src = await (cachedOnly ? getSourceCached(key) : getSource(key)).catch(() => null); if (!src || !src.items) continue;
     const stream = String(key).split(':')[1] || '';
     const formats = fileFormatsFor(adapter, stream);
     for (const [internalId, e] of Object.entries(src.items)) {
@@ -571,6 +572,8 @@ async function renderDocs() {
   let head = `<div class="crumbs"><span class="tile ${catOf(entry.primaryCat).f}" style="width:26px;height:26px;font-size:14px;border-radius:7px">${catOf(entry.primaryCat).i}</span> <b>${esc(entry.name || CUR)}</b>${ACCOUNT ? ' <span>›</span> ' + esc(accLabel(ACCOUNT)) : ''}</div>`;
   head += `<div class="summ"><span class="chip">📄 <b>${gate ? CURDOCS.length : docs.length}</b> ${esc(t('archive_docs_word'))}</span>`;
   if (delivered) head += `<span class="chip">${esc(t('archive_saved_n', [String(delivered)]))}</span>`;
+  // While the store is being re-read, say so ON the count — otherwise last-known documents look final.
+  if (REFRESHING) head += `<span class="chip" aria-live="polite"><span class="thb"></span> ${esc(t('archive_refreshing'))}</span>`;
   head += `<span class="chip legend" title="${esc(t('archive_legend'))}" tabindex="0" aria-label="${esc(t('archive_legend'))}">ℹ</span>`;
   head += '</div>';
   const gb = (mode, label) => `<button data-gb="${mode}" class="${GROUPMODE === mode ? 'on' : ''}">${esc(label)}</button>`;
@@ -1151,16 +1154,35 @@ function enterSelectingWith(card) {
 // ---- navigation ----
 async function openSource(base) {
   CUR = base; ACCOUNT = ''; SELECTING = false; PICKED.clear();
-  $('#main').innerHTML = loadingPane(); // instant throbber while the source's documents load
+  $('#main').innerHTML = loadingPane(); // until we know whether there is anything cached to show
   renderRail();
+
+  // Paint the documents from the last successful read FIRST. A cloud-backed store is several requests
+  // per source, and waiting on Dropbox to redraw a list that has not changed since this morning is the
+  // whole complaint. The refresh below replaces them in place; `REFRESHING` keeps the spinner visible so
+  // "these are last time's documents, and they are being checked" is never mistaken for "this is final".
+  REFRESHING = true;
+  try {
+    await loadDocs(base, { cachedOnly: true });
+    if (CUR !== base) return;
+    if (CURDOCS.length) { pickGroupMode(base); renderRail(); renderDocs(); }
+  } catch (e) { /* no cache is simply the old behaviour */ }
+
   await loadDocs(base);
+  REFRESHING = false;
   if (CUR !== base) return; // navigated away mid-load
   const entry = INDEX.find((x) => x.base === base);
   // Default grouping: by month for banks OR any source with a single category (grouping by category would be one
   // useless bucket — e.g. Amazon is all "marketplace"); by category when the source spans several (Carrefour).
+  pickGroupMode(base);
+  renderRail(); renderDocs();
+}
+// Default grouping: by month for banks OR any source with a single category (grouping by category would be
+// one useless bucket — e.g. Amazon is all "marketplace"); by category when the source spans several.
+function pickGroupMode(base) {
+  const entry = INDEX.find((x) => x.base === base);
   const cats = new Set(CURDOCS.map((r) => r.record && r.record.category).filter((c) => c != null));
   GROUPMODE = isBankish(entry && entry.adapter) || cats.size <= 1 ? 'month' : 'category';
-  renderRail(); renderDocs();
 }
 function goIndex() { CUR = null; renderRail(); renderIndex(); }
 

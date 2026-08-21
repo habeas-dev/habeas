@@ -2568,7 +2568,8 @@
     }
   },
   "archive_refreshing": {
-    "message": "Checking for new documents…"
+    "message": "checking for new ones…",
+    "description": "Shown on the document count while the store is re-read behind already-painted documents."
   },
   "archive_refresh_ok": {
     "message": "$N$ new document(s) added",

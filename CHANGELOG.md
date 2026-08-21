@@ -10,6 +10,20 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **The Archive paints the documents you saw last time, immediately** (`lib/storecache.js`). Opening a
+  source on a cloud-backed store meant staring at a spinner while several Dropbox requests completed — to
+  redraw a list that usually had not changed since the last sync. The store now caches each source's last
+  successful read in IndexedDB, the Archive draws that at once, and the real read replaces it in place.
+  The document count carries a *"checking for new ones…"* spinner meanwhile, so last-known documents are
+  never mistaken for the final answer.
+  - **Display only, and enforced by a test.** The store's governing invariant is *adopt the remote, never
+    clobber it* — a device's local view must never shrink the shared one — and a cache is by definition a
+    stale local view. Letting it decide what to save, delete or mark delivered would be that data-loss bug
+    with extra steps, so a test fails if anything outside the drawing layer reads it.
+  - Every write path (`putItems`, `deleteStoreItems`, `clearStoreSource`) invalidates the copy, and entries
+    older than a month are dropped rather than shown.
+
 ### Fixed
 - **The store check said things it could not know.** Whenever the Chrome Web Store was not yet serving the
   built version it reported *"published, still reaching the update servers (normal, minutes to a few
