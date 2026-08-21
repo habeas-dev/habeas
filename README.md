@@ -85,8 +85,12 @@ Habeas separates **where data comes from** from **where data goes**.
 
 A Source knows how to retrieve data from one specific website.
 
-**24 Sources are published today**, most of them Spanish (where the project started), plus international
-ones including **Revolut, Amazon, PayPal, N26, DEGIRO, Trade Republic, American Express and AliExpress**.
+**21 verified Sources are published today** — each one built and tested against a real capture of the
+service. Most are Spanish (where the project started), plus international ones including **Revolut,
+Amazon, PayPal, Trade Republic, AliExpress, Raisin and Hover**.
+
+A further 3 are published as **experimental**: drafted but never confirmed against a real account. The
+catalogue flags them, and the extension hides them unless you ask for them.
 
 Browse the whole catalogue — every definition is public and reviewable — at
 **[habeas.dev/sources.html](https://habeas.dev/sources.html)**, or read the per-service guides at
@@ -190,7 +194,7 @@ The project already includes:
 - a Manifest V3 extension;
 - Chrome/Chromium support;
 - Firefox support;
-- **24 production-ready Sources** (supermarkets, retail, utilities, banks, brokers) and growing;
+- **21 verified Sources** (supermarkets, retail, utilities, banks, brokers) plus 3 experimental, and growing;
 - multiple Sinks (download / local folder / native Google Drive / HTTP / WebDAV / S3 / Dropbox);
 - automatic synchronization on login, plus a "Sync all" sweep across every source;
 - duplicate detection;
