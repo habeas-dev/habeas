@@ -10,6 +10,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **Button groups in the Archive were styled by id, so every control added later inherited the wrong
+  corners.** The rule that flattens a button's right edge named `#refresh`, so Export — added
+  afterwards — kept both corners round against its own caret; and the rule that flattens a caret's left
+  edge matched *any* caret inside a group, so the standalone Re-download caret went flat on a side with
+  nothing to join. Both are now keyed on structure (`first-child`, `button + .caret`), so the next pair of
+  buttons works without touching the CSS.
+
 ### Added
 - **The Archive paints the documents you saw last time, immediately** (`lib/storecache.js`). Opening a
   source on a cloud-backed store meant staring at a spinner while several Dropbox requests completed — to

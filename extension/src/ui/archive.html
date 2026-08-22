@@ -150,8 +150,13 @@
     @media (prefers-reduced-motion:reduce){.refbtn.spin .ic{animation:none}}
     /* split button: Refresh + a caret that opens the alternative refresh modes */
     .refwrap{position:relative;display:inline-flex;align-items:stretch}
-    .refwrap #refresh{border-radius:100px 0 0 100px}
-    .refwrap .caret{border-radius:0 100px 100px 0;border-left:0;padding:6px 9px}
+    /* A button with a caret glued to its right loses that corner, and the caret loses the matching one —
+       keyed on STRUCTURE, not on an id. Naming #refresh meant Export, added later, kept both round corners
+       against its caret; matching any .caret inside meant the standalone Re-download caret went flat on a
+       side with nothing to join. */
+    .refwrap > button:not(.caret):first-child{border-radius:100px 0 0 100px}
+    .refwrap > button + .caret{border-radius:0 100px 100px 0;border-left:0}
+    .refwrap .caret{padding:6px 9px}
     .refmenu{position:absolute;top:calc(100% + 5px);right:0;z-index:30;min-width:230px;padding:5px;
       background:var(--surface);border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow-lg);
       display:flex;flex-direction:column;gap:2px}
