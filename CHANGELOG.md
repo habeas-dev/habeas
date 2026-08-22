@@ -11,6 +11,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Fixed
+- **Firefox drew a blank toolbar icon.** `setIcon` was given relative paths, and the two browsers resolve
+  them differently: Chrome against the extension root, Firefox against the *calling document*. Every caller
+  lives in `src/ui/`, so on Firefox `icon-16.png` became `src/ui/icon-16.png` — which does not exist — and
+  the icon vanished. Most visible during a sync, because the badge is what makes you look at the toolbar.
+  The paths are now root-absolute, and a test checks every one of them resolves to a file that ships.
 - **Button groups in the Archive were styled by id, so every control added later inherited the wrong
   corners.** The rule that flattens a button's right edge named `#refresh`, so Export — added
   afterwards — kept both corners round against its own caret; and the rule that flattens a caret's left
