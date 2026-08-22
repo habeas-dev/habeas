@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.9.18] — 2026-08-22
+
 ### Fixed
 - **Firefox drew a blank toolbar icon.** `setIcon` was given relative paths, and the two browsers resolve
   them differently: Chrome against the extension root, Firefox against the *calling document*. Every caller
