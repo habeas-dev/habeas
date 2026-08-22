@@ -38,6 +38,9 @@ let ADAPTERS = {}, CFG = {}, RETRIEVABLE = [];
 let LANG = 'en', ESLANG = false;
 let INDEX = [];       // [{ base, ds, adapter, name, count, lastDate, primaryCat }]
 let CUR = null;       // current source base, or null = the index
+const BACKEND_LABEL = { local: 'store_local', folder: 'store_folder', dropbox: 'store_dropbox',
+  drive: 'store_drive', webdav: 'store_webdav', s3: 'store_s3', http: 'store_http' };
+let STORE_LABEL = '';    // the archive's destination, by name — shown while it is being re-read
 let REFRESHING = false;  // showing last-known documents while the store is re-read
 let CURDOCS = [];     // [{ base, dsId, adapter, internalId, record, delivered[], formats[] }]
 let PENDING_FMT = 0;  // delivered docs in the current view whose file formats haven't been scanned yet
@@ -573,7 +576,7 @@ async function renderDocs() {
   head += `<div class="summ"><span class="chip">📄 <b>${gate ? CURDOCS.length : docs.length}</b> ${esc(t('archive_docs_word'))}</span>`;
   if (delivered) head += `<span class="chip">${esc(t('archive_saved_n', [String(delivered)]))}</span>`;
   // While the store is being re-read, say so ON the count — otherwise last-known documents look final.
-  if (REFRESHING) head += `<span class="chip" aria-live="polite"><span class="thb"></span> ${esc(t('archive_refreshing'))}</span>`;
+  if (REFRESHING) head += `<span class="chip" aria-live="polite"><span class="thb"></span> ${esc(t('archive_refreshing', [STORE_LABEL || t('store_local')]))}</span>`;
   head += `<span class="chip legend" title="${esc(t('archive_legend'))}" tabindex="0" aria-label="${esc(t('archive_legend'))}">ℹ</span>`;
   head += '</div>';
   const gb = (mode, label) => `<button data-gb="${mode}" class="${GROUPMODE === mode ? 'on' : ''}">${esc(label)}</button>`;
@@ -1308,7 +1311,15 @@ async function init() {
   CFG = await getConfig();
   RETRIEVABLE = (CFG.sinks || []).filter((s) => isRetrievable(s));
   // First-run assistant: the store is still the default per-browser backend AND the user hasn't dismissed it.
-  try { STORE_LOCAL = ((await getStoreConfig()).backend || 'local') === 'local'; } catch (e) {}
+  // Where the archive actually lives, named — so the refresh indicator can say "loading from Dropbox"
+  // instead of something that sounds like it is going back to the bank. Prefer the destination's own
+  // name (the user chose it) over the generic backend label.
+  try {
+    const sc = await getStoreConfig();
+    STORE_LOCAL = (sc.backend || 'local') === 'local';
+    const sink = sc.sinkId && (CFG.sinks || []).find((x) => x.id === sc.sinkId);
+    STORE_LABEL = (sink && sink.name) || t(BACKEND_LABEL[sc.backend] || 'store_local');
+  } catch (e) {}
   try { ONBOARD_DISMISSED = !!(await chrome.storage.local.get('habeas:onboard-dismissed'))['habeas:onboard-dismissed']; } catch (e) {}
   try { GS_DISMISSED = !!(await chrome.storage.local.get('habeas:gs-dismissed'))['habeas:gs-dismissed']; } catch (e) {}
   wire();

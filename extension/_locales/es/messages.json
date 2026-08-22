@@ -2568,8 +2568,13 @@
     }
   },
   "archive_refreshing": {
-    "message": "buscando nuevos…",
-    "description": "Shown on the document count while the store is re-read behind already-painted documents."
+    "message": "cargando desde $WHERE$…",
+    "description": "Shown on the document count while the ARCHIVE is re-read from its destination — not while the source website is contacted.",
+    "placeholders": {
+      "where": {
+        "content": "$1"
+      }
+    }
   },
   "archive_refresh_ok": {
     "message": "$N$ documento(s) nuevo(s) añadidos",

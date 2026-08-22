@@ -15,8 +15,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   source on a cloud-backed store meant staring at a spinner while several Dropbox requests completed — to
   redraw a list that usually had not changed since the last sync. The store now caches each source's last
   successful read in IndexedDB, the Archive draws that at once, and the real read replaces it in place.
-  The document count carries a *"checking for new ones…"* spinner meanwhile, so last-known documents are
-  never mistaken for the final answer.
+  The document count carries a *"loading from Dropbox…"* spinner meanwhile — named after wherever the
+  archive actually lives — so last-known documents are never mistaken for the final answer, and the wait
+  is never mistaken for the extension going back to the bank.
   - **Display only, and enforced by a test.** The store's governing invariant is *adopt the remote, never
     clobber it* — a device's local view must never shrink the shared one — and a cache is by definition a
     stale local view. Letting it decide what to save, delete or mark delivered would be that data-loss bug
