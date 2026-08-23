@@ -271,6 +271,44 @@ arrive — which is what the landing pages and the launch posts are for.
 
 ---
 
+## Microsoft Edge Add-ons
+
+**Why publish here at all, when Edge already installs from the Chrome Web Store.** It does — behind a
+browser prompt saying the extension comes from another store. For a tool that asks to sit inside the
+user's banking session, a scare prompt at the moment of installing is the worst possible first
+impression, and it lands on exactly the non-technical user this is for. Removing it is a conversion fix,
+not a discovery one.
+
+**What it costs.** Nothing in money: the Partner Center developer account for Edge extensions is free,
+unlike Apple's. The same MV3 zip is uploaded unchanged. And because `manifest.json` carries a `key`, the
+extension ID is derived from that key rather than assigned by the store — so **the ID matches the Chrome
+one**, and the Drive OAuth redirect (`<id>.chromiumapp.org`, already registered) keeps working with no
+new client and no per-store redirect. That was not true of Firefox and cost real work there.
+
+**What it actually costs.** A third review queue, on top of the two that already need watching, and a
+third listing whose copy can drift. Registration and identity verification are manual and take days, and
+the FIRST submission must be done by hand — the API updates an existing product, it cannot create one.
+
+**Listing copy.** Reuse the CWS text in this file verbatim: same name, same summary, same detailed
+description, same single-purpose statement. The policy note above applies here too — **do not list brand
+names**. Edge's store search is not worth a keyword-spam rejection either, and the reason it was wrong on
+CWS was policy, not enforcement.
+
+**Permission justifications.** The table below is store-agnostic; paste the same answers.
+
+**One-time setup**
+1. Register at Microsoft Partner Center → *Microsoft Edge* program (free). Identity verification takes
+   a few days.
+2. Submit the current release zip by hand (from GitHub Releases) and complete the listing.
+3. Only then create API credentials for the Edge Add-ons API and store them as repo secrets, so the
+   release workflow can publish subsequent versions like it does for CWS and AMO.
+
+**Until step 3 is done, an Edge release is a manual zip upload.** Do not add a half-wired CI step: a
+publish path that silently does nothing is worse than one that is obviously manual — that is precisely
+how the CWS retry looked green for days while uploading nothing.
+
+---
+
 ## Permission justifications (for review / the CWS "Privacy practices" tab)
 
 | Permission | Why it's needed |

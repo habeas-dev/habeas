@@ -33,6 +33,29 @@ CI (`.github/workflows/build.yml`) then: tests → lint → `web-ext build` → 
 to the Release → uploads the same zip to the Chrome Web Store **as a draft** (you press *Publish* in the
 dashboard). To auto-submit for review instead, set `publish: true` on the CWS step.
 
+## Microsoft Edge Add-ons
+
+Edge installs from the Chrome Web Store already, but behind a "this comes from another store" prompt —
+bad first contact for a tool that asks to sit in your banking session. Publishing there removes it.
+
+Free (no annual fee), same MV3 zip, and the extension ID matches Chrome's because `manifest.json` carries
+a `key` — so the Drive OAuth redirect needs no change.
+
+**Today it is a manual step.** Until Partner Center credentials exist as repo secrets, an Edge release is:
+
+```
+# after the tag build finishes and the GitHub Release exists
+gh release download vX.Y.Z --pattern '*.zip' --dir dist
+# then upload dist/*.zip by hand at partner.microsoft.com → Microsoft Edge → your extension → Update
+```
+
+Setup steps and the reasoning behind the listing copy live in [`STORE.md`](../STORE.md) → *Microsoft Edge
+Add-ons*. Do not add a CI step until the credentials are real: a publish path that silently no-ops is
+worse than an obviously manual one — that is exactly how the CWS retry looked green for days while
+uploading nothing.
+
+---
+
 ## Chrome Web Store automation — one-time setup
 The CWS upload step self-skips until these repo **Actions secrets** exist
 (`Settings → Secrets and variables → Actions` on `habeas-dev/habeas`):
