@@ -280,10 +280,26 @@ impression, and it lands on exactly the non-technical user this is for. Removing
 not a discovery one.
 
 **What it costs.** Nothing in money: the Partner Center developer account for Edge extensions is free,
-unlike Apple's. The same MV3 zip is uploaded unchanged. And because `manifest.json` carries a `key`, the
-extension ID is derived from that key rather than assigned by the store — so **the ID matches the Chrome
-one**, and the Drive OAuth redirect (`<id>.chromiumapp.org`, already registered) keeps working with no
-new client and no per-store redirect. That was not true of Firefox and cost real work there.
+unlike Apple's.
+
+**But NOT the same zip** — Edge validates MV3 more strictly than either other store and rejects the shared
+package on two counts (confirmed on submission, 2026-08-23):
+
+- `background.scripts` alongside `service_worker`. The shared manifest carries both on purpose: Chrome
+  uses the worker, Firefox still needs `scripts` at our `strict_min_version`, and each ignores the other's.
+  Edge refuses the package outright.
+- `key`. Edge forbids it in the manifest.
+
+So Edge gets its **own build** (`npm run build:edge` → `dist/edge/`, and CI attaches it to every release).
+The shared manifest is never edited to please Edge: removing `scripts` would leave Firefox with no
+background at all.
+
+**⚠️ The dropped `key` changes the extension ID, and that has a consequence.** The Chrome ID is derived
+from that key; without it Edge assigns its own. So `chrome.identity.getRedirectURL()` returns a *different*
+`<id>.chromiumapp.org` there, and **Google Drive will not connect on Edge until that redirect is added to
+the OAuth client**. The ID is only knowable once the item exists, so this is a step AFTER the first
+submission: publish, read the ID from the dashboard, add the redirect. Everything else — the sinks that do
+not use Google OAuth, the whole extraction path — works regardless.
 
 **What it actually costs.** A third review queue, on top of the two that already need watching, and a
 third listing whose copy can drift. Registration and identity verification are manual and take days, and
@@ -299,11 +315,14 @@ CWS was policy, not enforcement.
 **One-time setup**
 1. Register at Microsoft Partner Center → *Microsoft Edge* program (free). Identity verification takes
    a few days.
-2. Submit the current release zip by hand (from GitHub Releases) and complete the listing.
-3. Only then create API credentials for the Edge Add-ons API and store them as repo secrets, so the
+2. Submit the **Edge** zip by hand — `habeas-edge-<version>.zip`, attached to every GitHub Release —
+   and complete the listing. The Chrome zip will be rejected.
+3. Read the assigned extension ID from the dashboard and add `https://<id>.chromiumapp.org/` to the Google
+   OAuth client's authorised redirect URIs, or Drive will not connect on Edge.
+4. Only then create API credentials for the Edge Add-ons API and store them as repo secrets, so the
    release workflow can publish subsequent versions like it does for CWS and AMO.
 
-**Until step 3 is done, an Edge release is a manual zip upload.** Do not add a half-wired CI step: a
+**Until step 4 is done, an Edge release is a manual zip upload.** Do not add a half-wired CI step: a
 publish path that silently does nothing is worse than one that is obviously manual — that is precisely
 how the CWS retry looked green for days while uploading nothing.
 

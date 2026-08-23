@@ -31,7 +31,8 @@
     "e2e": "xvfb-run -a bash -c 'node extension/test/e2e/e2e.test.mjs && node extension/test/e2e/author-flow.mjs && node extension/test/e2e/author-flow-complex.mjs && node extension/test/e2e/mixed-auth.mjs && node extension/test/e2e/marketplace-live.mjs'",
     "lint": "web-ext lint --source-dir extension",
     "build": "web-ext build --source-dir extension --artifacts-dir dist --overwrite-dest",
-    "package": "npm run lint && npm run build"
+    "package": "npm run lint && npm run build",
+    "build:edge": "node scripts/build-edge.mjs"
   },
   "devDependencies": {
     "playwright": "^1.61.1",
