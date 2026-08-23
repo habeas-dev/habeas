@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseLiveVersion, compareToLive } from '../../scripts/cws-live-version.mjs';
+import { parseLiveVersion, compareToLive, businessHoursBetween } from '../../scripts/cws-live-version.mjs';
 
 // The build reported the Chrome Web Store's state from the upload API's return code alone, which says
 // nothing about what users actually receive: a release sat "published" in the dashboard while the update
@@ -93,4 +93,43 @@ test('every verdict carries a note, since the note is what a human reads', () =>
     const v = compareToLive(...args);
     assert.ok(v.note && v.note.length > 10, `no note for ${JSON.stringify(args)}`);
   }
+});
+
+// ---------------------------------------------------------------- weekends
+
+test('weekend hours do not count towards "this is no longer propagation"', () => {
+  // Google does not review at the weekend, so a Saturday release must not raise the alarm on Sunday.
+  const satMorning = Date.parse('2026-08-22T08:00:00Z');   // Saturday
+  const sunEvening = Date.parse('2026-08-23T20:00:00Z');   // Sunday
+  assert.equal(businessHoursBetween(satMorning, sunEvening), 0, 'a whole weekend is zero working hours');
+});
+
+test('a working day counts in full', () => {
+  // Left as a plain elapsed count inside the week: this is a heuristic for "should I be worried yet",
+  // not an SLA calculator, and pretending to know office hours would be false precision.
+  const tueAm = Date.parse('2026-08-25T08:00:00Z');
+  const wedAm = Date.parse('2026-08-26T08:00:00Z');
+  assert.equal(businessHoursBetween(tueAm, wedAm), 24);
+});
+
+test('a span that crosses a weekend only counts the weekdays', () => {
+  const friAm = Date.parse('2026-08-21T08:00:00Z');        // Friday
+  const monAm = Date.parse('2026-08-24T08:00:00Z');        // Monday
+  assert.equal(businessHoursBetween(friAm, monAm), 24, 'Fri→Mon is one working day, not three');
+});
+
+test('a Friday release is not called stuck until well into Monday', () => {
+  const friEvening = Date.parse('2026-08-21T17:00:00Z');
+  const sunNight = Date.parse('2026-08-23T22:00:00Z');
+  const v = compareToLive('0.9.18', '0.9.17', null, { releasedAt: friEvening, now: sunNight });
+  assert.equal(v.stale, false, 'the whole weekend elapsed, but nobody was reviewing');
+  assert.match(v.note, /propagat/i);
+});
+
+test('…and IS called stuck once real working time has passed', () => {
+  const friEvening = Date.parse('2026-08-21T17:00:00Z');
+  const tueEvening = Date.parse('2026-08-25T18:00:00Z');   // Mon + Tue elapsed
+  const v = compareToLive('0.9.18', '0.9.17', null, { releasedAt: friEvening, now: tueEvening });
+  assert.equal(v.stale, true);
+  assert.match(v.note, /no longer propagation/i);
 });

@@ -10,6 +10,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **The store check stopped crying wolf at weekends.** Its "this is no longer propagation" warning fired
+  24 hours after a release regardless of when that was — so a Saturday release raised the alarm on Sunday,
+  while nobody at Google was reviewing anything. It now counts only Monday–Friday, so a Friday-evening
+  release stays quiet all weekend and only speaks up once real working time has passed. Whole days rather
+  than office hours on purpose: this answers "should I be worried yet", and pretending to know Mountain
+  View's schedule would be false precision. A warning that fires when nothing is wrong is a warning you
+  learn to ignore.
+
 ## [0.9.18] — 2026-08-22
 
 ### Fixed

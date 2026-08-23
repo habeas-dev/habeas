@@ -41,7 +41,29 @@ export function parseLiveVersion(xml) {
  * `ok` is false only for states worth failing on, and none are: being behind is not a build failure, and
  * an unreachable update service is not ours to fail on.
  */
-export function compareToLive(built, live, ageHours = null) {
+/**
+ * Hours between two instants, counting only Monday–Friday. Google does not review at the weekend, so a
+ * Saturday release that is still unserved on Sunday is not evidence of anything — and saying it is, in
+ * the alarming register the stale message uses, trains you to ignore the message.
+ *
+ * Deliberately whole days rather than office hours: this answers "should I be worried yet", and
+ * pretending to know Mountain View's working hours would be false precision.
+ */
+export function businessHoursBetween(from, to) {
+  if (!(to > from)) return 0;
+  const DAY = 86400000, HOUR = 3600000;
+  let hours = 0;
+  // Walk hour by hour: simple, exact at any boundary, and a release is never more than a few hundred
+  // iterations old before the answer stops mattering.
+  const cap = from + 400 * DAY;
+  for (let t = from; t < to && t < cap; t += HOUR) {
+    const d = new Date(t).getUTCDay();          // 0 Sun … 6 Sat
+    if (d !== 0 && d !== 6) hours += Math.min(1, (to - t) / HOUR);
+  }
+  return Math.round(hours);
+}
+
+export function compareToLive(built, live, ageHours = null, opts = null) {
   if (!live) {
     return { state: 'unknown', stale: false, ok: true,
       note: `built ${built} · the update service did not answer, so what the store serves is unknown` };
@@ -54,14 +76,20 @@ export function compareToLive(built, live, ageHours = null) {
     return { state: 'ahead', stale: false, ok: true,
       note: `built ${built} · the store serves ${live}, which is NEWER — was an older tag re-run?` };
   }
-  const known = typeof ageHours === 'number' && Number.isFinite(ageHours);
-  const stale = known && ageHours >= STALE_AFTER_HOURS;
+  // Prefer the real instants when we have them, so weekends can be discounted; fall back to a plain hour
+  // count when only that is available.
+  let effHours = ageHours;
+  if (opts && typeof opts.releasedAt === 'number') {
+    effHours = businessHoursBetween(opts.releasedAt, typeof opts.now === 'number' ? opts.now : Date.now());
+  }
+  const known = typeof effHours === 'number' && Number.isFinite(effHours);
+  const stale = known && effHours >= STALE_AFTER_HOURS;
   let tail;
   if (!known) tail = 'the store has not served it yet';
-  else if (stale) tail = `${age(ageHours)} since the release and the store still has not served it — `
+  else if (stale) tail = `${age(effHours)} of working time since the release and the store still has not served it — `
     + 'this is no longer propagation; check the dashboard for a draft that was never submitted, '
     + 'an unanswered permission justification, or a version still in review';
-  else tail = `released ${age(ageHours)} ago — still propagating`;
+  else tail = `released ${age(effHours)} of working time ago — still propagating`;
   return { state: 'behind', stale, ok: true, note: `built ${built} · store ${live} · ${tail}` };
 }
 
@@ -95,10 +123,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   if (!built) { console.log(live || '(unknown)'); process.exit(0); }
   // The age is what turns "still propagating" from a guess into a statement. Without a release date we
   // simply do not say how long it has been.
-  let ageHours = null;
+  // Pass the INSTANT, not a duration: only the instant lets weekends be discounted, and a Saturday
+  // release still unserved on Sunday is not evidence of anything.
+  let opts = null;
   if (releasedAt) {
     const t = Date.parse(releasedAt);
-    if (!Number.isNaN(t)) ageHours = (Date.now() - t) / 3600000;
+    if (!Number.isNaN(t)) opts = { releasedAt: t };
   }
-  console.log(compareToLive(built, live, ageHours).note);
+  console.log(compareToLive(built, live, null, opts).note);
 }
