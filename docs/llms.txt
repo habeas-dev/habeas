@@ -27,9 +27,9 @@ Every host a source touches must share one registrable domain (eTLD+1), so a ses
 a site can only ever be replayed to that same site. Crossing domains requires an explicit allow-list
 and a consent screen. Sources are declarative data, never code — remote code is impossible under MV3.
 
-## Supported services (23)
+## Supported services (24)
 
-ES: 13 · global: 8 · EU: 2
+ES: 14 · global: 8 · EU: 2
 
 - [AliExpress](https://habeas.dev/download/aliexpress-orders.html)
 - [Amazon](https://habeas.dev/download/amazon-invoices.html)
@@ -47,7 +47,7 @@ ES: 13 · global: 8 · EU: 2
 - [Pagatelia — facturas](https://habeas.dev/download/pagatelia-invoices.html)
 - [PayPal](https://habeas.dev/download/paypal-transactions.html)
 - [Pepe Energy — facturas](https://habeas.dev/download/pepe-energy-invoices.html)
-- [pepephone-es](https://habeas.dev/download/pepephone-invoices.html)
+- [Pepephone — facturas](https://habeas.dev/download/pepephone-invoices.html)
 - [Raisin](https://habeas.dev/download/raisin-statements.html)
 - [Revolut](https://habeas.dev/download/revolut-statements.html)
 - [Trade Republic](https://habeas.dev/download/trade-republic-statements.html)
