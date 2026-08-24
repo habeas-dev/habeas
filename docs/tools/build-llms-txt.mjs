@@ -46,11 +46,17 @@ export function build() {
   L();
   L('## What it is NOT');
   L();
-  L('- Not a scraper service: nothing runs on a server, and no data ever reaches the developer.');
+  L('- Not a scraper service: extraction runs entirely in the browser, and the documents it');
+  L('  extracts are never sent to the developer.');
   L('- Not an aggregator: no credentials are held, and there is no account with Habeas.');
   L('- Not a background crawler: extraction is user-initiated or runs on the user\'s own schedule.');
   L('- Data leaves the browser only to a destination the user configures (their own Drive, Dropbox,');
   L('  WebDAV, S3, local folder, or an endpoint of their own).');
+  L();
+  L('Two optional features do talk to habeas.dev, and neither is part of extraction: ratings and');
+  L('comments on the source catalogue, and a "handoff" that lets a user send a REDACTED recording to');
+  L('the maintainer when they want help turning it into a source. Both are user-initiated; the second');
+  L('is passed through a redaction step (lib/redact.js) before anything leaves.');
   L();
   L('## Security boundary');
   L();
