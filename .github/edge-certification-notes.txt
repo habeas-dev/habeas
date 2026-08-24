@@ -1,0 +1,29 @@
+HOW TO TEST — and why we cannot give you credentials.
+
+Habeas never receives, stores or transmits any password. It works INSIDE the session the user has
+already opened themselves, in their own browser. There is therefore no test account we can hand over:
+there is no Habeas account, and handing over a real service account would defeat the design.
+
+To evaluate it, use your own account at any supported service. The full catalogue is public at
+https://habeas.dev/sources.html — the internationally available ones are easiest for a reviewer:
+PayPal, Amazon, AliExpress, Revolut, Trade Republic.
+
+STEPS
+1. Install and open the extension. It opens its Archive; no sign-up, no account, no onboarding.
+2. Settings > Sources: enable one source for a service you already use (e.g. PayPal or Amazon).
+3. Open that service in a tab and sign in yourself, as you normally would, MFA included.
+4. Back in Habeas, press Refresh on that source. It lists your own documents and shows them locally.
+5. Optionally pick a destination (a plain download is the simplest) and save one document.
+
+WITHOUT any such account you can still verify: the UI, the settings, the source catalogue, the
+permission usage and the fact that nothing is transmitted anywhere — the network panel stays silent
+until you explicitly act.
+
+NOTES FOR REVIEW
+- No remote code. Source definitions are declarative JSON data interpreted by code inside the package;
+  they are never evaluated. There is no eval() and no externally referenced script (MV3 compliant).
+- No telemetry, no analytics, no developer server. Data goes only to the destination the user picks.
+- Broad host access (https://*/*) is OPTIONAL and never granted at install: it is requested at runtime,
+  one origin at a time, with the user's click, only when they add a source for a site not built in.
+- Open source, AGPL-3.0: https://github.com/habeas-dev/habeas
+- Privacy policy: https://habeas.dev/privacy.html

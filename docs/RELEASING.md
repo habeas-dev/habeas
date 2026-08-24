@@ -41,7 +41,22 @@ bad first contact for a tool that asks to sit in your banking session. Publishin
 Free (no annual fee), same MV3 zip, and the extension ID matches Chrome's because `manifest.json` carries
 a `key` — so the Drive OAuth redirect needs no change.
 
-**Today it is a manual step.** Until Partner Center credentials exist as repo secrets, an Edge release is:
+**Automated once three repo secrets exist** — until then the workflow SKIPS the step and says so in the
+run summary, rather than looking green while publishing nothing:
+
+| Secret | Where it comes from |
+|---|---|
+| `EDGE_PRODUCT_ID` | Partner Center → the extension → *Información general* → **Id. del producto** |
+| `EDGE_CLIENT_ID` | Partner Center → *Publish API* → the API credential's client ID |
+| `EDGE_API_KEY` | the same screen — shown once, on creation |
+
+The publisher is `scripts/edge-publish.mjs` (Update REST API v1.1: upload the zip to the draft, poll,
+publish with the certification notes in `.github/edge-certification-notes.txt`, poll again). Two API
+"failures" are deliberately treated as success — `NoModulesUpdated` (the store already has this build)
+and `InProgressSubmission` (the previous version is still queued) — because failing a healthy release on
+those is exactly what Chrome's `ITEM_NOT_UPDATABLE` did to us for days.
+
+**Without the secrets**, an Edge release is manual:
 
 ```
 # after the tag build finishes and the GitHub Release exists

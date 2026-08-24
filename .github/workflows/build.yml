@@ -20,6 +20,7 @@ jobs:
       HAS_CWS: ${{ secrets.CWS_REFRESH_TOKEN != '' }}
       HAS_AMO: ${{ secrets.AMO_JWT_SECRET != '' }}
       HAS_DEVICE: ${{ secrets.DEVICE_CLIENT_SECRET != '' }}
+      HAS_EDGE: ${{ secrets.EDGE_API_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -126,6 +127,25 @@ jobs:
               echo "\`$LIVE\`"
             } >> "$GITHUB_STEP_SUMMARY"
           fi
+
+      # --- Microsoft Edge Add-ons (milestone v* tags / manual dispatch) --------------------------------
+      # Self-skips until the EDGE_* secrets exist, and says so — never a step that looks green while
+      # publishing nothing. Two API "failures" are not: NoModulesUpdated (the store already has this
+      # build) and InProgressSubmission (the previous version is still queued); the script treats both as
+      # success, so a healthy release is not failed the way Chrome's ITEM_NOT_UPDATABLE did for days.
+      - name: Submit to Microsoft Edge Add-ons
+        if: (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch') && env.HAS_EDGE == 'true'
+        continue-on-error: true
+        run: node scripts/edge-publish.mjs "$(ls dist/edge/*.zip | head -1)" .github/edge-certification-notes.txt
+        env:
+          EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
+          EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+          EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+
+      - name: Note that Edge was skipped
+        if: (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch') && env.HAS_EDGE != 'true'
+        run: |
+          echo "⏭️ Microsoft Edge: skipped — EDGE_API_KEY is not set. Upload dist/edge/*.zip by hand." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Submit to Firefox Add-ons (AMO)
         if: (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch') && env.HAS_AMO == 'true'
