@@ -77,6 +77,13 @@ export function build() {
   L(`- [Developers](${ORIGIN}/developers.html): writing a source, and the recorder that drafts one.`);
   L(`- [Privacy](${ORIGIN}/privacy.html) · [Terms](${ORIGIN}/terms.html)`);
   L();
+  L('## Licensing');
+  L();
+  L('The extension is AGPL-3.0. The source definitions are deliberately not: every definition in the');
+  L('catalogue is in the public domain under CC0-1.0, and the guide prose under CC-BY-4.0. A definition');
+  L('only records how a service has arranged data that already belongs to its user — fact rather than');
+  L('authorship — so it can be reused in anything at all, commercially or not, with or without credit.');
+  L();
   L('## Legal posture');
   L();
   L('GDPR Art. 20 (data portability): the user\'s own data, in the user\'s own session, via user-run open');

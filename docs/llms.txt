@@ -61,6 +61,13 @@ ES: 13 · global: 8 · EU: 2
 - [Developers](https://habeas.dev/developers.html): writing a source, and the recorder that drafts one.
 - [Privacy](https://habeas.dev/privacy.html) · [Terms](https://habeas.dev/terms.html)
 
+## Licensing
+
+The extension is AGPL-3.0. The source definitions are deliberately not: every definition in the
+catalogue is in the public domain under CC0-1.0, and the guide prose under CC-BY-4.0. A definition
+only records how a service has arranged data that already belongs to its user — fact rather than
+authorship — so it can be reused in anything at all, commercially or not, with or without credit.
+
 ## Legal posture
 
 GDPR Art. 20 (data portability): the user's own data, in the user's own session, via user-run open
