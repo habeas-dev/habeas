@@ -76,6 +76,11 @@
     <p class="guide-index" style="margin:0 0 18px"><a href="/download/" data-t="guideIndex" data-umami-event="guide-index">Browse the how-to guides</a> →</p>
     <!-- The catalog's obvious failure mode: someone scans the grid, doesn't find their bank, and leaves —
          never learning they could have added it in ten minutes. So the answer sits ABOVE the grid. -->
+    <div class="cta" style="display:flex;gap:12px;flex-wrap:wrap;margin:20px 0 10px">
+      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-t="installChrome" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="sources">Install on Chrome</a>
+      <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-t="installFirefox" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="sources">Install on Firefox</a>
+    </div>
+    <p class="lead" data-t="installNote" style="margin:0 0 28px">Free and open source (AGPL-3.0). Chrome will warn you that the extension is not trusted: that happens to any developer account recently registered on the Chrome Web Store, it fades after a few months, and it says nothing about the code — which you can read in full.</p>
     <div class="addyours">
       <strong data-t="addTitle"></strong>
       <p data-t="addBody"></p>
@@ -265,6 +270,9 @@
         intro: 'The catalog of sources you can install in the Habeas extension. Each one describes — as data, never code — how to read your own documents from a service, within your own session. First-party sources are audited; community ones are contributed and open to ratings & scrutiny.',
         guide: 'How to download',
         guideIndex: 'Browse the how-to guides',
+        installChrome: 'Install on Chrome',
+        installFirefox: 'Install on Firefox',
+        installNote: 'Free and open source (AGPL-3.0). Chrome will warn you that the extension is not trusted: that happens to any developer account recently registered on the Chrome Web Store, it fades after a few months, and it says nothing about the code — which you can read in full.',
         cta: 'Install any of these from the extension: Settings → Browse sources.',
         addTitle: 'Your bank or shop isn’t listed?',
         addBody: 'You can add it yourself, and you don’t need to write code. In the extension, go to Settings → Record & contribute: browse the site as you normally would while it records, and Habeas drafts the source for you. What reaches us is redacted — every value replaced by a placeholder, so we never see your data. Once published, it works for everyone.',
@@ -281,6 +289,9 @@
         intro: 'El catálogo de fuentes que puedes instalar en la extensión Habeas. Cada una describe —como datos, nunca código— cómo leer tus propios documentos de un servicio, dentro de tu propia sesión. Las first-party están auditadas; las de la comunidad son aportadas y abiertas a valoraciones y escrutinio.',
         guide: 'Cómo descargar',
         guideIndex: 'Ver las guías paso a paso',
+        installChrome: 'Instalar en Chrome',
+        installFirefox: 'Instalar en Firefox',
+        installNote: 'Libre y de código abierto (AGPL-3.0). Chrome te avisará de que la extensión no es de confianza: le ocurre a cualquier cuenta de desarrollador registrada hace poco en la Chrome Web Store, se disipa en unos meses y no dice nada del código, que puedes leer entero.',
         cta: 'Instala cualquiera desde la extensión: Ajustes → Explorar fuentes.',
         addTitle: '¿No está tu banco o tu tienda?',
         addBody: 'Puedes añadirlo tú, y no hace falta escribir código. En la extensión, entra en Ajustes → Grabar y contribuir: navegas por el sitio como harías normalmente mientras graba, y Habeas redacta el borrador de la fuente solo. Lo que nos llega va redactado: cada valor sustituido por un marcador, así que nunca vemos tus datos. Una vez publicada, sirve para todos.',

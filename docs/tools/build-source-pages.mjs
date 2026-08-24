@@ -53,6 +53,9 @@ const LANGS = {
       never: '<strong>Your password is never read, never stored and never sent anywhere</strong>, and nothing runs in the background while you are away.',
       trustFp: 'This is an <strong>audited</strong> source, verified by the project against the real service.',
       trustCommunity: 'This is a <strong>community</strong> source: its definition is public and reviewable, and it runs under the same security rules as every other.',
+      installH: 'Install Habeas',
+      installLead: 'Free and open source (AGPL-3.0). Install it, then turn on the source you need from Settings → Browse sources.',
+      chromeNote: 'Chrome will warn you that the extension is not trusted. That happens to any developer account recently registered on the Chrome Web Store, it fades after a few months, and it says nothing about the code — which you can read in full.',
       installChrome: 'Install on Chrome',
       installFirefox: 'Install on Firefox',
       free: (name) => `Free and open source (AGPL-3.0). Install the extension and enable the “${name}” source from Settings → Browse sources.`,
@@ -103,6 +106,9 @@ const LANGS = {
       never: '<strong>Tu contraseña nunca se lee, ni se guarda, ni se envía a ningún sitio</strong>, y no hay ningún proceso trabajando en segundo plano mientras no estás.',
       trustFp: 'Es una fuente <strong>auditada</strong> por el proyecto y verificada contra el servicio real.',
       trustCommunity: 'Es una fuente <strong>de la comunidad</strong>: su definición es pública y revisable, y funciona bajo las mismas reglas de seguridad que el resto.',
+      installH: 'Instalar Habeas',
+      installLead: 'Libre y de código abierto (AGPL-3.0). Instálala y activa en Ajustes → Explorar fuentes la que necesites.',
+      chromeNote: 'Chrome te avisará de que la extensión no es de confianza. Le ocurre a cualquier cuenta de desarrollador registrada hace poco en la Chrome Web Store, se disipa en unos meses y no dice nada del código, que puedes leer entero.',
       installChrome: 'Instalar en Chrome',
       installFirefox: 'Instalar en Firefox',
       free: (name) => `Gratis y de código abierto (AGPL-3.0). Instala la extensión y activa la fuente «${name}» desde Ajustes → Explorar fuentes.`,
@@ -280,6 +286,7 @@ ${steps.map((x) => `      <li>${esc(x)}</li>`).join('\n')}
       <a class="btn primary" href="${AMO}" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="${esc(meta.id)}">${esc(t.installFirefox)}</a>
     </div>
     <p class="lead">${esc(t.free(meta.name))}</p>
+    <p class="lead">${esc(t.chromeNote)}</p>
 
     <h2>${esc(t.faqH)}</h2>
 ${faq.map(([q, a]) => `    <h3>${esc(q)}</h3>\n    <p>${esc(a)}</p>`).join('\n')}
@@ -376,6 +383,12 @@ ${t.nav.map(([href, label]) => `        <a href="${href}">${esc(label)}</a>`).jo
   <main class="doc">
     <h1>${esc(t.indexTitle)}</h1>
     <p class="lead">${esc(t.indexIntro)}</p>
+
+    <div class="cta">
+      <a class="btn primary" href="${CWS}" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="guide-index">${esc(t.installChrome)}</a>
+      <a class="btn primary" href="${AMO}" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="guide-index">${esc(t.installFirefox)}</a>
+    </div>
+    <p class="lead">${esc(t.installLead)} ${esc(t.chromeNote)}</p>
 
 ${sections}
 
