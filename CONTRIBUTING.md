@@ -52,6 +52,59 @@ The easiest way is **record mode** inside the extension (no hand-writing require
   boundary prevents credential exfiltration. They carry the `community` trust
   label; project-maintained ones carry `first-party` (audited to a higher bar).
 
+## Licensing of contributions
+
+### Code
+
+By submitting code to this repository you agree that:
+
+- it is licensed under **AGPL-3.0**, the same licence as the project; and
+- you grant the maintainer a perpetual, worldwide, irrevocable, non-exclusive
+  right to use it and to license it under any terms, in derivative works and in
+  other products — typically a service built on top of this code.
+
+**One exception, and it is the point of the whole clause: any browser extension
+that runs inside the user's own session stays AGPL-3.0, permanently.** The line
+is drawn by where the code runs rather than by what it is called, so a rebranded
+or white-labelled build is covered just the same. It rules out closing such
+code. It does not rule out charging for it, or putting someone else's name on
+it — "free" here means free to inspect.
+
+Why that exception is not just a promise is set out in full on the website,
+under [why you should not have to trust
+Habeas](https://habeas.dev/why-habeas.html#audit). The short version: AGPL-3.0
+§2 grants its rights for the term of the copyright and makes them irrevocable,
+so every release published so far stays free whatever becomes of this project,
+and that does not depend on anyone's goodwill.
+
+### Sources
+
+Source definitions are declarative data rather than code, and live in a separate
+catalogue, [`habeas-dev/sources`](https://github.com/habeas-dev/sources). They
+carry their own terms, chosen so that nobody has to think twice before using
+them:
+
+- **The definition** — every machine-readable field — is placed in the public
+  domain under [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/). It
+  describes how a service has arranged the user's own data, which is mostly fact
+  rather than authorship, and it is worth more to everyone with no strings on it.
+- **The `content` field** — the prose that becomes a guide page on habeas.dev —
+  is [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/): reuse it freely,
+  with credit.
+
+By submitting a source you also confirm that:
+
+- you wrote it, or derived it by observing a service you were entitled to use;
+- **it contains no personal data** — no real names, addresses, account or card
+  numbers, amounts, document ids, or captured sample responses; and
+- **it contains no credentials** — no tokens, cookies, keys or session material
+  in any field, examples included.
+
+Those last two matter more here than in most projects, because sources are
+authored from captures of a real account. Keep the capture outside the
+repository, and let nothing from it reach the definition: invent example values
+instead of trimming real ones.
+
 ## Principles this project will not compromise on
 
 - Local-first: nothing leaves the browser without explicit user consent.
