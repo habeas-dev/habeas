@@ -12,6 +12,10 @@ It runs **inside your own authenticated browser session**, where you already hav
 
 Unlike server-side aggregators, Habeas never asks for your credentials, never logs in on your behalf, and never receives your personal data.
 
+**And if your provider already emails you the invoice, you do not need Habeas.** That is why the catalogue
+is not a land grab: a service that already hands you your data gets no source, on purpose. Habeas is for
+the ones that keep it behind a login and let it expire there.
+
 ![The Habeas archive: documents recovered from several services, grouped by month](docs/screenshot-archive.png)
 
 *Your archive, after a few syncs. Service names above are fictitious.*

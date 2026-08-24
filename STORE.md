@@ -52,6 +52,20 @@ Shorten to fit the CWS 132-char limit:
 
 ---
 
+## Scope — say where Habeas is NOT needed
+
+Worth stating in any listing or post, because it answers the "couldn't a mail filter do this?" objection
+before it is asked, and because volunteering where your tool is unnecessary buys more credibility than any
+argument for why it is:
+
+> If your provider already emails you the invoice, you do not need Habeas.
+
+The catalogue is deliberately not exhaustive. A service that already hands the user their data gets no
+source — O2 emails its invoices, so it has none, while Pepephone does. Habeas is for the ones that keep
+your documents behind a login and let them expire there.
+
+---
+
 ## ⚠️ Policy note — do NOT list supported brands (CWS rejection, 2026-08-11)
 
 The Chrome Web Store **rejected** a submission for *keyword spam* (ref. `Yellow Argon`), quoting the
