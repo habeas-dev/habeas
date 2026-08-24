@@ -10,6 +10,20 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Security
+- **The same-domain guard now sees every host a source declares.** It used to check a hand-written list
+  of four places (`api.host`, `api.pdf`, `api.detail`, `api.document`) and that list had gone quietly out
+  of date: `api.csrf`, `api.groups`, and every host under `streams[]`/`formats[]` were never looked at. A
+  source could therefore name a foreign host inside a stream, pass validation with no errors at all, and
+  have the runtime replay the captured session token to it — with no off-site consent screen, because
+  `crossDomainHosts` is only consulted for hosts the guard collected. That is the one boundary the project
+  calls non-negotiable, so it now walks the whole definition instead of enumerating known spots: any field
+  called `host`, at any depth, is checked, and a field added later is covered without anyone remembering.
+  No published source was affected — the catalogue is entirely first-party today, and `ing-es`, whose
+  statement stream does declare its own host, passed only because that host was also listed in `match`.
+  Found while auditing `ing-es` line by line. The registry's copy of the validator is fixed identically,
+  so the catalogue's PR check rejects it too.
+
 ### Fixed
 - **The store check stopped crying wolf at weekends.** Its "this is no longer propagation" warning fired
   24 hours after a release regardless of when that was — so a Saturday release raised the alarm on Sunday,

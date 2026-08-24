@@ -36,11 +36,23 @@ export function registrableDomain(urlOrHost) {
 // Every host an adapter reads from / replays credentials to.
 export function collectHosts(adapter) {
   const hosts = new Set();
-  const api = adapter.api || {};
-  if (api.host) hosts.add(hostOf(api.host));
-  if (api.pdf && api.pdf.host) hosts.add(hostOf(api.pdf.host));       // the session is replayed here too
-  if (api.detail && api.detail.host) hosts.add(hostOf(api.detail.host));
-  if (api.document && api.document.host) hosts.add(hostOf(api.document.host));
+  // Walk the WHOLE graph for any key called `host`, rather than listing the places one may appear.
+  // The list used to be api.host / api.pdf / api.detail / api.document, and it was silently
+  // incomplete: api.csrf, api.groups and everything under streams[] and formats[] were never seen.
+  // A source could therefore name a foreign host inside a stream, pass validation with no errors at
+  // all, and have the runtime replay the captured bearer to it without any consent screen, since
+  // crossDomainHosts is only consulted for hosts the guard collected. Enumerating is what caused
+  // that; walking is fail-closed, so a field added later is covered without anyone remembering to.
+  const walk = (v, seen) => {
+    if (!v || typeof v !== 'object' || seen.has(v)) return;
+    seen.add(v);
+    if (Array.isArray(v)) { for (const x of v) walk(x, seen); return; }
+    for (const k of Object.keys(v)) {
+      if (k === 'host' && typeof v[k] === 'string') hosts.add(hostOf(v[k]));
+      else walk(v[k], seen);
+    }
+  };
+  walk(adapter, new Set());
   for (const m of adapter.match || []) hosts.add(hostOf(m));
   for (const h of adapter.captureHosts || []) hosts.add(hostOf(h));
   if (adapter.openUrl) hosts.add(hostOf(adapter.openUrl)); // the tab we open must stay within the source's domain
