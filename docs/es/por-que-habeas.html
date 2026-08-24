@@ -36,7 +36,7 @@
   <link rel="alternate" hreflang="en" href="https://habeas.dev/why-habeas.html" />
   <link rel="alternate" hreflang="es" href="https://habeas.dev/es/por-que-habeas.html" />
   <link rel="alternate" hreflang="x-default" href="https://habeas.dev/why-habeas.html" />
-  <!-- Structured data: 7 questions, extracted from the copy below -->
+  <!-- Structured data: 8 questions, extracted from the copy below -->
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -89,6 +89,14 @@
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "Habeas se ejecuta donde la web ya sabe que está hablando contigo: dentro de tu propia sesión autenticada del navegador. Eso significa que inicias sesión tú, resuelves la MFA tú y mantienes tus credenciales para ti. Esta arquitectura no es un truco técnico. Es una consecuencia de los valores del proyecto. Si el objetivo es dar más control a los usuarios, la herramienta debe evitar intermediarios innecesarios, evitar guardar tus logins y mantener el flujo comprensible."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Por qué deberías confiarle a la extensión tu sesión bancaria?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No deberías tener que hacerlo, y ahí está la clave. Habeas se ejecuta dentro de la sesión del navegador en la que ya has entrado en tu banco, y ninguna promesa es razón suficiente para permitir algo así. La única razón que se sostiene es que el código se puede leer. Está publicado entero bajo AGPL-3.0, las fuentes son datos declarativos y no código, y la extensión no puede cargar ningún script remoto —Manifest V3 lo prohíbe—, así que lo que auditas es lo que se ejecuta. Esa apertura no es una preferencia de licencia que pueda cambiar más adelante: es el producto. La AGPL-3.0 concede sus derechos durante todo el plazo del copyright y los hace irrevocables, de modo que cada versión publicada seguirá siendo libre para siempre: si el proyecto se abandonara, cualquiera podría coger la última versión y continuarla."
       }
     },
     {
@@ -173,6 +181,11 @@
     <h2>¿Por qué la arquitectura sigue esos principios?</h2>
     <p>Habeas se ejecuta donde la web ya sabe que está hablando contigo: dentro de tu propia sesión autenticada del navegador. Eso significa que inicias sesión tú, resuelves la MFA tú y mantienes tus credenciales para ti.</p>
     <p>Esta arquitectura no es un truco técnico. Es una consecuencia de los valores del proyecto. Si el objetivo es dar más control a los usuarios, la herramienta debe evitar intermediarios innecesarios, evitar guardar tus logins y mantener el flujo comprensible.</p>
+
+    <h2 id="audit">¿Por qué deberías confiarle a la extensión tu sesión bancaria?</h2>
+    <p>No deberías tener que hacerlo, y ahí está la clave. Habeas pide mucho: se ejecuta dentro de la sesión del navegador en la que ya has entrado en tu banco. Ninguna promesa de esta página es razón suficiente para permitir algo así. La única razón que se sostiene es que el código se puede leer.</p>
+    <p>Está publicado entero bajo <a href="https://github.com/habeas-dev/habeas/blob/main/LICENSE">AGPL-3.0</a>, las fuentes son datos declarativos y no código, y la extensión no puede cargar ningún script remoto —Manifest V3 lo prohíbe—, así que lo que auditas es lo que se ejecuta. No hace falta que lo leas tú: basta con que pueda hacerlo cualquiera, y con que cualquier afirmación de esta página pueda desmentirla mañana quien se moleste en mirar.</p>
+    <p>Esa apertura no es una preferencia de licencia que pueda cambiar más adelante: es el producto. Una extensión como esta que no se pudiera inspeccionar no tendría ya nada que ofrecer, así que cerrarla sería menos una traición que un derribo. La licencia zanja el resto: la AGPL-3.0 concede sus derechos durante todo el plazo del copyright y los hace irrevocables, de modo que cada versión publicada hasta hoy seguirá siendo libre para siempre. Si el proyecto se abandonara, o tomara un rumbo que no compartes, cualquiera podría coger la última versión y continuarla.</p>
 
     <h2 id="psd2">¿Por qué una extensión del navegador y no los canales oficiales de open banking (PSD2)?</h2>
     <p>Para los datos de cuentas de pago, las API reguladas de open banking —a través de agregadores con licencia— son la vía canónica y, cuando te sirven bien, suelen ser la mejor opción. Habeas no intenta sustituirlas ahí.</p>

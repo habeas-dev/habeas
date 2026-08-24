@@ -36,7 +36,7 @@
   <link rel="alternate" hreflang="en" href="https://habeas.dev/why-habeas.html" />
   <link rel="alternate" hreflang="es" href="https://habeas.dev/es/por-que-habeas.html" />
   <link rel="alternate" hreflang="x-default" href="https://habeas.dev/why-habeas.html" />
-  <!-- Structured data: 7 questions, extracted from the copy below -->
+  <!-- Structured data: 8 questions, extracted from the copy below -->
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -89,6 +89,14 @@
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "Habeas runs where the website already knows it is talking to you: inside your own authenticated browser session. That means you log in yourself, handle MFA yourself, and keep your credentials to yourself. This architecture is not a technical gimmick. It is a consequence of the project's values. If the goal is to give users more control, the tool should avoid unnecessary intermediaries, avoid storing your logins, and keep the flow understandable."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why should you trust the extension with your bank session?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "You should not have to, and that is the point. Habeas runs inside the browser session where you are already signed in to your bank, and no promise is a good enough reason to allow that. The only reason that holds is that the code can be read. All of it is published under the AGPL-3.0, sources are declarative data rather than code, and the extension can load no remote script — Manifest V3 forbids it — so what you audit is what runs. That openness is not a licensing preference that might change later; it is the product. AGPL-3.0 grants its rights for the full term of the copyright and makes them irrevocable, so every release published so far stays free permanently: were this project ever abandoned, anyone could take the last release and carry it on."
       }
     },
     {
@@ -173,6 +181,11 @@
     <h2>Why does the architecture follow these principles?</h2>
     <p>Habeas runs where the website already knows it is talking to you: inside your own authenticated browser session. That means you log in yourself, handle MFA yourself, and keep your credentials to yourself.</p>
     <p>This architecture is not a technical gimmick. It is a consequence of the project's values. If the goal is to give users more control, the tool should avoid unnecessary intermediaries, avoid storing your logins, and keep the flow understandable.</p>
+
+    <h2 id="audit">Why should you trust the extension with your bank session?</h2>
+    <p>You should not have to, and that is the point. Habeas asks for a great deal: it runs inside the browser session where you are already signed in to your bank. No promise made on this page is a good enough reason to allow that. The only reason that holds is that the code can be read.</p>
+    <p>All of it is published under the <a href="https://github.com/habeas-dev/habeas/blob/main/LICENSE">AGPL-3.0</a>, sources are declarative data rather than code, and the extension can load no remote script — Manifest V3 forbids it — so what you audit is what runs. You do not have to read it yourself. It is enough that anyone can, and that any claim made here could be contradicted tomorrow by somebody who looked.</p>
+    <p>That openness is not a licensing preference that might change later; it is the product. An extension of this kind that could not be inspected would have nothing left to offer, so closing it would be less a betrayal than a demolition. The licence settles the rest: AGPL-3.0 grants its rights for the full term of the copyright and makes them irrevocable, so every release published so far stays free permanently. Were this project ever abandoned, or were it to take a turn you disliked, anyone could take the last release and carry it on.</p>
 
     <h2 id="psd2">Why a browser extension instead of official open-banking (PSD2) channels?</h2>
     <p>For payment-account data, regulated open-banking APIs — reached through licensed aggregators — are the canonical path, and where they serve you well they are often the better choice. Habeas does not try to replace them there.</p>
