@@ -72,3 +72,21 @@ is a hard boundary that trips people up:
 
 **Recommendation:** for multi-device, use the **native Google Drive** store + sink and do **not** route Habeas
 data through a third-party folder syncer. Surfaced in the UI as `dest_multidevice_hint` (Settings → Destinos).
+
+## Registered redirect URIs
+
+`launchWebAuthFlow` (Path B) redirects to `https://<extension-id>.chromiumapp.org/`, and the id differs
+per store — Chrome derives it from the manifest `key`, Edge forbids that field and assigns its own. Every
+store therefore needs its own entry on the **Web application** client `246972215385-rd4fbb1s…`:
+
+| Where | Redirect URI |
+|---|---|
+| Chrome Web Store | `https://pbpehhngeidokhaokgloaneiibhceiog.chromiumapp.org/` |
+| Microsoft Edge | `https://clcjdklighbiegknodicfogkeahjmaoa.chromiumapp.org/` |
+| Local unpacked (dev) | `https://fdaldgfnnlgaljejigkfipjemaoibikm.chromiumapp.org/` |
+
+Careful: the project has TWO OAuth clients named "Habeas extension". The one that matters here is the
+*Web application* one. The *Chrome extension* one (`246972215385-1vvd…`) is the manifest's `oauth2`
+client for `getAuthToken` (Path A, Chrome only) and has no redirect URIs to maintain.
+
+A wrong or missing entry fails silently: Drive simply never connects, with nothing in the log to say why.

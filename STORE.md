@@ -294,6 +294,18 @@ So Edge gets its **own build** (`npm run build:edge` → `dist/edge/`, and CI at
 The shared manifest is never edited to please Edge: removing `scripts` would leave Firefox with no
 background at all.
 
+**Live ids (submitted 2026-08-24, in review — Microsoft quotes 7 working days):**
+
+| | |
+|---|---|
+| CRX id (Edge) | `clcjdklighbiegknodicfogkeahjmaoa` |
+| Store id | `0RDCKFL9DKWN` |
+| Product id | `13590b8f-a250-48e0-a91a-732bba0372f3` |
+
+`https://clcjdklighbiegknodicfogkeahjmaoa.chromiumapp.org/` was added to the OAuth client
+`246972215385-rd4fbb1s…` (type *Web application* — NOT the *Chrome extension* client of the same name,
+which is the manifest's `oauth2` one and plays no part here) on 2026-08-24, so Drive connects on Edge.
+
 **⚠️ The dropped `key` changes the extension ID, and that has a consequence.** The Chrome ID is derived
 from that key; without it Edge assigns its own. So `chrome.identity.getRedirectURL()` returns a *different*
 `<id>.chromiumapp.org` there, and **Google Drive will not connect on Edge until that redirect is added to
