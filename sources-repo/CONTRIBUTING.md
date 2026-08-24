@@ -67,9 +67,28 @@ Sources flagged `beta: true` never get a page, whatever `content` says: the extr
 verified against a real capture yet, and a page ranking for "how to download your X" when X may not
 work does more harm than good.
 
+## Licence, and what a source must never contain
+
+By opening a PR here you place your source under the catalogue's terms
+([`sources/LICENSE`](./sources/LICENSE)): the **definition** goes into the public domain under
+**CC0-1.0**, and the **`content`** prose is **CC-BY-4.0**. None of it is AGPL. A definition is
+closer to a fact than to a program, and it does more good unencumbered.
+
+You also confirm that:
+
+- **you wrote it**, or derived it by observing a service you were entitled to use;
+- **it contains no personal data** — no real names, addresses, account or card numbers, amounts,
+  document ids, or captured sample responses; and
+- **it contains no credentials** — no tokens, cookies, keys or session material in any field,
+  examples included.
+
+Those last two matter more here than in most projects, because a source is authored from a capture
+of a real account. Keep the capture outside the repository and let nothing from it reach the JSON:
+invent example values rather than trimming real ones.
+
 ## Checklist
 
 - [ ] `npm run validate` passes locally.
 - [ ] Tested against your own account with the extension (record mode → Test).
 - [ ] If you added `content`: every claim is verifiable, limits are stated, and both languages are present.
-- [ ] No secrets, tokens, or personal data in the JSON.
+- [ ] No secrets, tokens, personal data, or any value copied from a real capture in the JSON.

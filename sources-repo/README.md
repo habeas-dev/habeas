@@ -46,3 +46,18 @@ npm install
 npm run validate        # validate every source
 npm run build-index     # regenerate sources/index.json
 ```
+
+## Licence
+
+Two different kinds of thing live in these files and they carry different terms. Full text of both
+in [`sources/LICENSE`](./sources/LICENSE).
+
+- **The definition** — every machine-readable field — is in the public domain under
+  **[CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)**. A definition records how a
+  service happens to have arranged data that already belongs to its user: mostly fact rather than
+  authorship, and worth more to everybody with nothing attached to it. Use it anywhere, including
+  commercially, with or without credit.
+- **The `content` field** — the prose that becomes a guide page on habeas.dev — is
+  **[CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/)**: reuse it freely, with credit.
+
+`scripts/` and `schema/` are code and stay **AGPL-3.0** ([LICENSE](./LICENSE)).

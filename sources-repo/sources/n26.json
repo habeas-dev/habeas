@@ -8,17 +8,16 @@
   "domain": "n26.com",
   "country": "EU",
   "currency": "EUR",
-  "version": "2024-08-10",
+  "version": "2026-08-24",
   "minVersion": "0.5.0.24",
-  "license": "AGPL-3.0-or-later",
   "attribution": {
     "derivedFrom": "woob — N26 module",
     "copyright": "Copyright (C) 2016 Benjamin Bouvier",
     "url": "https://gitlab.com/woob/woob/-/tree/master/modules/n26",
     "referenceLicense": "LGPL-3.0-or-later",
     "woobIntelDate": "2024-08-10",
-    "note": "The API host, endpoint paths and response field names were used as REFERENCE (facts / interface, no source code copied). `version` is the woob module's last functional (intel) commit date, not a repo-wide chore. No code copied; woob's credential login is not used — Habeas replays the user's own live session. This adapter is data, AGPL-3.0-or-later like Habeas.",
-    "license": "AGPL-3.0-or-later"
+    "note": "The API host, endpoint paths and response field names were used as REFERENCE (facts / interface, no source code copied). The woob module's last functional (intel) commit date is recorded in `woobIntelDate`. No code copied; woob's credential login is not used — Habeas replays the user's own live session. This adapter is data, dedicated to the public domain under CC0-1.0 (see sources/LICENSE).",
+    "license": "CC0-1.0"
   },
   "notes": "BETA / UNVERIFIED — drafted from woob (intel 2024-08, relatively fresh). Cross-domain: login on n26.com, API on api.tech26.de (different registrable domain) → the crossDomainHosts consent screen fires. Auth: Bearer JWT (captured by default) + a per-device `device-token` header the SPA sends (replayed). Open items to promote out of beta: (1) confirm the /api/smrt/transactions response is a top-level array (itemsPath '$') and the field names; (2) visibleTS/createdTS are epoch ms → date (normalizeDate handles epoch); (3) confirm the `device-token` header is actually captured+replayed and that no other header is required; (4) amount is the account-currency (EUR) value; originalCurrency/originalAmount are only set on FX transactions (kept in extra via keepRaw).",
   "categories": [
