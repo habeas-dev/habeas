@@ -24,11 +24,34 @@ function walk(dir) {
   });
 }
 
+// What the previous sitemap said, so a run that cannot reach git history preserves the last known
+// good dates instead of overwriting them with today's. Keyed by <loc>.
+const PREVIOUS = (() => {
+  const map = new Map();
+  try {
+    const xml = readFileSync(join(DOCS, 'sitemap.xml'), 'utf8');
+    for (const m of xml.matchAll(/<loc>([^<]+)<\/loc>\s*<lastmod>([^<]+)<\/lastmod>/g)) map.set(m[1], m[2]);
+  } catch { /* first run */ }
+  return map;
+})();
+
+// A shallow clone has no per-file history, so `git log -- <file>` is silently empty. That used to fall
+// straight through to mtime, which in a fresh CI checkout is the checkout time: every page claimed to
+// have changed today, every single day. Say so rather than quietly emitting a wrong date.
+const SHALLOW = (() => {
+  try {
+    return execFileSync('git', ['rev-parse', '--is-shallow-repository'], { cwd: DOCS, encoding: 'utf8' }).trim() === 'true';
+  } catch { return false; }
+})();
+if (SHALLOW) console.warn('warning: shallow clone — no per-file history, so <lastmod> is carried over from the previous sitemap');
+
 function lastmod(file) {
   try {
     const out = execFileSync('git', ['log', '-1', '--format=%cs', '--', file], { cwd: DOCS, encoding: 'utf8' }).trim();
     if (out) return out;
   } catch { /* not a repo, or git unavailable — fall through */ }
+  const previous = PREVIOUS.get(urlFor(file));
+  if (previous) return previous;                       // keep what we last knew over a fabricated today
   return statSync(file).mtime.toISOString().slice(0, 10);
 }
 

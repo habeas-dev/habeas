@@ -24,6 +24,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history: the sitemap's <lastmod> is each file's last COMMIT date, and a shallow
+          # checkout leaves `git log -- <file>` empty, so every page fell back to its mtime — the
+          # checkout time. Every page then claimed to have changed today, every day, which produced
+          # a pointless daily commit and taught crawlers to ignore the field.
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
