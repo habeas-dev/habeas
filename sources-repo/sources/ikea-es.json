@@ -9,14 +9,14 @@
   "categories": [
     "home"
   ],
-  "version": "2026-08-25",
+  "version": "2026-08-25.1",
   "crossDomainHosts": [
     "cssom-prod.ingka.com"
   ],
   "match": [
     "https://www.ikea.com/*"
   ],
-  "openUrl": "https://www.ikea.com/es/es/purchases/",
+  "openUrl": "https://www.ikea.com/es/es/loyalty-hub/",
   "auth": {
     "mode": "bearer",
     "replayHeaders": [
@@ -70,8 +70,8 @@
   "brand": "IKEA",
   "changelog": [
     {
-      "version": "2026-08-25",
-      "changes": "Waits for the loyalty hub before auto-running: IKEA fires capturable requests on earlier screens, so auto-sync asked for purchases before the session was usable."
+      "version": "2026-08-25.1",
+      "changes": "Waits for the loyalty hub before auto-running, and opens it rather than /purchases/ in a dedicated tab. IKEA fires capturable requests on earlier screens, so both paths could reach the purchase-history API before the session was good for it. The documents come from the API, not from the page, so the page only has to be the one that establishes a usable session."
     },
     {
       "version": "2026-08-08",
