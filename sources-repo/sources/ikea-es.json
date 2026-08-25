@@ -9,7 +9,7 @@
   "categories": [
     "home"
   ],
-  "version": "2026-08-08",
+  "version": "2026-08-25",
   "crossDomainHosts": [
     "cssom-prod.ingka.com"
   ],
@@ -21,7 +21,8 @@
     "mode": "bearer",
     "replayHeaders": [
       "authorization"
-    ]
+    ],
+    "readyUrl": "https://www.ikea.com/es/es/loyalty-hub/"
   },
   "api": {
     "host": "https://cssom-prod.ingka.com",
@@ -68,6 +69,10 @@
   },
   "brand": "IKEA",
   "changelog": [
+    {
+      "version": "2026-08-25",
+      "changes": "Waits for the loyalty hub before auto-running: IKEA fires capturable requests on earlier screens, so auto-sync asked for purchases before the session was usable."
+    },
     {
       "version": "2026-08-08",
       "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
