@@ -207,6 +207,18 @@
               <button id="addsink" class="primary" data-i18n="add"></button>
             </div>
           </div>
+
+          <div class="subhead" data-i18n="opt_copy_h"></div>
+          <p class="note" data-i18n="opt_copy_intro"></p>
+          <div class="card">
+            <div class="row" style="margin-top:4px">
+              <select id="copyto"></select>
+              <button id="copystart" class="primary" data-i18n="opt_copy_start"></button>
+              <button id="copystop" hidden data-i18n="stop"></button>
+            </div>
+            <div id="copystatus" class="note" aria-live="polite"></div>
+            <div id="copyreport" class="note" hidden></div>
+          </div>
         </section>
 
         <section class="osec" data-sec="auto" role="tabpanel">

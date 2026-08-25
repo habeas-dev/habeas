@@ -10,6 +10,28 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **Copy your archive from one destination to another, in Settings → Destinations.** Changing where
+  Habeas saves things used to mean re-collecting everything from the services — and for a great many
+  documents that is simply not possible: Carrefour answers 406 for an old ticket, ING keeps about
+  ninety days. So the only copy of a five-year-old receipt could be destroyed by moving from a folder
+  to Dropbox. The copy reads each file from whichever OTHER destination already holds it and never
+  contacts a service, so it needs no login and cannot disturb a bank session. It checkpoints every 25
+  documents into the delivery ledger, which doubles as its cursor: stop it, close the tab, lose the
+  service worker — pressing Copy again carries on where it left off. Documents whose file is in no
+  readable destination are reported as skipped rather than quietly fetched.
+- **Drive can now be read back from**, not only written to. It was excluded for no better reason than
+  nobody having written the retrieval; the `drive.file` scope already covers files Habeas created.
+  Because Drive addresses by id rather than by path, a folder's names are indexed once per run — a few
+  thousand documents would otherwise be two requests each and straight into rate limits. Resolution is
+  read-only on purpose: the writer's helper creates folders it cannot find, and a *reader* doing that
+  would turn "copy from this destination" into "write to it".
+
+### Fixed
+- **Saving a source to a destination no longer fails just because you are logged out.** It reported
+  "no session" and stopped, even when every document it needed was already in the archive. It now
+  falls back to a store-only send for those, and asks for a session only for what is genuinely new.
+
 ### Security
 - **The same-domain guard now sees every host a source declares.** It used to check a hand-written list
   of four places (`api.host`, `api.pdf`, `api.detail`, `api.document`) and that list had gone quietly out

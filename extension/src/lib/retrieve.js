@@ -5,12 +5,16 @@
 // sink used at write time; if it can't be reconstructed/fetched, the caller falls back to the JSON viewer.
 import { webdavRetrieve, s3Retrieve, folderRetrieve, webdavExists, s3Exists, folderExists } from '../sinks/sinks.js';
 import { dropboxRetrieve, dropboxExists } from '../sinks/dropbox.js';
+import { driveRetrieve, driveExists } from '../sinks/drive.js';
 import { pathFor } from '../sinks/format.js';
 import { documentExt } from '../runtime/inventory.js';
 import { getHandle, verifyPermission } from './fs.js';
 
 // Sink types we can read an individual file back from (→ eligible for a "delivered here, view it" badge).
-export const RETRIEVABLE = new Set(['dropbox', 'webdav', 's3', 'local-folder']);
+// Drive belongs here too: it is addressed by id rather than by path, so it needs a name lookup the
+// others do not, but the files are ours (the drive.file scope covers what the app created) and reading
+// them back is what lets an archive move to a new destination without re-fetching from the source.
+export const RETRIEVABLE = new Set(['dropbox', 'webdav', 's3', 'local-folder', 'drive']);
 export const isRetrievable = (sink) => !!sink && RETRIEVABLE.has(sink.type);
 
 // The relative paths a delivered doc could occupy. Mirrors delivery: service = adapter.service||id, ext
@@ -50,6 +54,7 @@ export async function retrieveDelivered(sink, adapter, record, preferExt, opts =
         else if (sink.type === 'webdav') ok = await webdavExists(sink, path);
         else if (sink.type === 's3') ok = await s3Exists(sink, path);
         else if (sink.type === 'local-folder') ok = await folderExists(handle, path);
+        else if (sink.type === 'drive') ok = await driveExists(sink, path, { cache: opts.driveCache });
         if (ok) return { exists: true, ext, path };
         tried.push(path); continue;
       }
@@ -58,6 +63,8 @@ export async function retrieveDelivered(sink, adapter, record, preferExt, opts =
       else if (sink.type === 'webdav') blob = await webdavRetrieve(sink, path);
       else if (sink.type === 's3') blob = await s3Retrieve(sink, path);
       else if (sink.type === 'local-folder') blob = await folderRetrieve(handle, path);
+      // opts.driveCache: one shared cache across a whole copy so folder listings are not repeated per file.
+      else if (sink.type === 'drive') blob = await driveRetrieve(sink, path, { cache: opts.driveCache });
       if (blob) return { blob, ext, path };
       tried.push(path); // reached the backend, got a clean "not found"
     } catch (e) { tried.push(path + ' — ' + ((e && e.message) || String(e))); }

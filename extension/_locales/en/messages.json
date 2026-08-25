@@ -3641,5 +3641,68 @@
         "content": "$1"
       }
     }
+  },
+  "opt_copy_h": {
+    "message": "Copy your archive to another destination"
+  },
+  "opt_copy_intro": {
+    "message": "Copies the documents you already have into another destination, reading them from the ones that hold them. It never contacts the services, so no login is needed — and it is the only way some documents survive a change of destination, because many shops and banks refuse to hand an old document over a second time."
+  },
+  "opt_copy_start": {
+    "message": "Copy"
+  },
+  "opt_copy_nodests": {
+    "message": "Add a second destination first — there is nowhere to copy to."
+  },
+  "opt_copy_running": {
+    "message": "Copying to $SINK$…",
+    "placeholders": {
+      "sink": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_copy_done": {
+    "message": "Copied $N$ document(s) to $SINK$.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "sink": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_copy_none": {
+    "message": "$SINK$ already holds everything in your archive.",
+    "placeholders": {
+      "sink": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_copy_stopped": {
+    "message": "Stopped after $N$ document(s). Press Copy again to carry on where it left off.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_copy_skipped": {
+    "message": "$N$ had no file in any readable destination and were skipped.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_copy_err": {
+    "message": "Copy failed: $ERR$",
+    "placeholders": {
+      "err": {
+        "content": "$1"
+      }
+    }
   }
 }

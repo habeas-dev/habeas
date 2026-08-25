@@ -220,6 +220,81 @@ export async function driveRead(sink, opts = {}) {
   });
 }
 
+// ---- reading individual delivered FILES back ---------------------------------------------------
+// Needed so an archive can be copied to another destination without going back to the source — and
+// some documents cannot be fetched again at all (Carrefour answers 406 for old tickets), so the copy
+// is the only way they survive a change of destination.
+//
+// Mirrors driveWrite's path exactly: Habeas/<pathFor(...)>. Drive is addressed by id rather than by
+// path, which is why this needs a lookup the other sinks do not.
+
+// A per-operation cache. Drive costs a lookup per name, so a few thousand documents without this is
+// straight into rate limiting; with it, a whole folder resolves in one listing.
+export function driveCache() { return { folders: {}, names: {} }; }
+
+// Resolve a folder path WITHOUT creating anything. ensureFolderPath makes what it cannot find, which is
+// right when writing and wrong here: a retrieval that silently created folders would turn "copy from
+// this destination" into "write to it".
+async function resolveFolderPath(token, parts, cache) {
+  let parentId = 'root', path = '';
+  for (const name of parts) {
+    path += '/' + name;
+    if (cache[path] === undefined) cache[path] = await findFile(token, name, parentId, true);
+    if (!cache[path]) return null;   // a missing folder means the file cannot be below it
+    parentId = cache[path];
+  }
+  return parentId;
+}
+
+// name → id for an entire folder in one paged listing, so N files cost N downloads plus one list
+// instead of 2N requests.
+async function folderIndex(token, parentId, cache) {
+  if (cache[parentId]) return cache[parentId];
+  const q = `'${parentId}' in parents and trashed=false`;
+  const map = new Map();
+  let page = '';
+  do {
+    const url = 'https://www.googleapis.com/drive/v3/files?pageSize=1000&fields=nextPageToken,files(id,name)&q='
+      + encodeURIComponent(q) + (page ? '&pageToken=' + encodeURIComponent(page) : '');
+    const r = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+    if (r.status === 401) throw new Error('drive 401'); // let withToken re-mint
+    if (!r.ok) break;
+    const d = await r.json().catch(() => ({}));
+    for (const f of d.files || []) map.set(f.name, f.id);
+    page = d.nextPageToken || '';
+  } while (page);
+  cache[parentId] = map;
+  return map;
+}
+
+async function locate(token, sink, relPath, cache) {
+  const root = sink.rootFolderName || 'Habeas';
+  const parts = (root + '/' + relPath).split('/').filter(Boolean);
+  const folderId = await resolveFolderPath(token, parts.slice(0, -1), cache.folders);
+  if (!folderId) return null;
+  return (await folderIndex(token, folderId, cache.names)).get(parts.at(-1)) || null;
+}
+
+// Default interactive:false — a long copy must never pop an OAuth window part-way through. withToken
+// still refreshes a merely-expired token; a genuinely disconnected Drive fails cleanly and the caller
+// reports the file as unavailable rather than as an error.
+export async function driveRetrieve(sink, relPath, opts = {}) {
+  const cache = opts.cache || driveCache();
+  return withToken(sink.clientId, opts.interactive === true, async (token) => {
+    const id = await locate(token, sink, relPath, cache);
+    if (!id) return null;
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, { headers: { Authorization: 'Bearer ' + token } });
+    if (r.status === 401) throw new Error('drive 401');
+    if (!r.ok) return null;
+    return await r.blob();
+  });
+}
+
+export async function driveExists(sink, relPath, opts = {}) {
+  const cache = opts.cache || driveCache();
+  return withToken(sink.clientId, opts.interactive === true, async (token) => !!(await locate(token, sink, relPath, cache)));
+}
+
 export async function driveWrite(sink, docs, files, opts) {
   return withToken(sink.clientId, opts.interactive !== false, async (token) => {
     const root = sink.rootFolderName || 'Habeas';

@@ -16,6 +16,7 @@ import { saveSource } from '../adapters/index.js';
 import { editJson } from './jsoneditor.js';
 import { getGrants, revokeGrant } from '../lib/grants.js';
 import { getStoreConfig, moveStoreTo, putItems } from '../lib/store.js';
+import { copyFolderBackedDocs } from '../lib/foldercopy.js';
 import { enableVault, unlockVault, lockVault, vaultStatus } from '../lib/secretsync.js';
 import { RECORDER_HTML, initAuthor } from './author.js';
 import { readSinkRecords } from '../sinks/sinks.js';
@@ -302,6 +303,60 @@ async function render() {
     catch (e) { b.textContent = t('connect_dropbox'); alert('Dropbox: ' + e.message); }
     finally { b.disabled = false; }
   });
+
+  // ---- copy the archive from one destination to another ------------------------------------------
+  // Only destinations that KEEP files are offered as a target: `download` builds one ephemeral ZIP (a
+  // whole archive would be buffered in memory) and `email` would send a message per batch. The origins
+  // are not chosen — each file is taken from whichever other destination happens to hold it, so an
+  // archive spread across Dropbox and Drive comes across in a single pass.
+  const KEEPS_FILES = ['local-folder', 'drive', 'dropbox', 'webdav', 's3', 'http'];
+  const copyTargets = cfg.sinks.filter((s) => KEEPS_FILES.includes(s.type));
+  const copySel = $('#copyto');
+  copySel.innerHTML = copyTargets.map((s) => `<option value="${esc(s.id)}">${esc(s.name || s.id)}</option>`).join('');
+  const canCopy = cfg.sinks.length >= 2 && copyTargets.length >= 1;
+  copySel.disabled = !canCopy;
+  $('#copystart').disabled = !canCopy;
+  if (!canCopy) $('#copystatus').textContent = t('opt_copy_nodests');
+
+  let copyAbort = null;
+  $('#copystop').onclick = () => { if (copyAbort) copyAbort.abort(); chrome.runtime.sendMessage({ type: 'habeas:stop' }); };
+  $('#copystart').onclick = async () => {
+    const target = cfg.sinks.find((s) => s.id === copySel.value);
+    if (!target) return;
+    const label = target.name || target.id;
+    copyAbort = new AbortController();
+    $('#copystart').hidden = true; $('#copystop').hidden = false; copySel.disabled = true;
+    $('#copyreport').hidden = true; $('#copyreport').textContent = '';
+    $('#copystatus').textContent = t('opt_copy_running', [label]);
+    // Live counts ride chrome.storage, the channel the Archive already listens on: a port would be torn
+    // down the moment the service worker sleeps between chunks, and this run is long by design.
+    const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#copystatus').textContent = v.msg; };
+    chrome.storage.onChanged.addListener(onStatus);
+    try {
+      const r = await chrome.runtime.sendMessage({ type: 'habeas:archiveCopy', sink: target.id });
+      if (!r || !r.ok) { $('#copystatus').textContent = t('opt_copy_err', [(r && r.error) || 'error']); return; }
+      let sent = r.sent || 0, skipped = r.skipped || 0, stopped = r.status === 'stopped';
+      // Second pass, page-side: a local folder can only be read where a directory handle lives, which
+      // is here and never in the service worker. Skipped when the folder IS the target.
+      const folder = cfg.sinks.find((s) => s.type === 'local-folder' && s.id !== target.id);
+      if (folder && !stopped && !copyAbort.signal.aborted) {
+        const f = await copyFolderBackedDocs(cfg, CATALOG, folder, target, {
+          signal: copyAbort.signal,
+          onStatus: (p) => { $('#copystatus').textContent = t('status_sending', [String(p.sending), p.sink]); },
+        });
+        sent += f.sent; skipped += f.skipped; stopped = stopped || f.stopped;
+      }
+      if (stopped) $('#copystatus').textContent = t('opt_copy_stopped', [String(sent)]);
+      else if (!sent) $('#copystatus').textContent = t('opt_copy_none', [label]);
+      else $('#copystatus').textContent = t('opt_copy_done', [String(sent), label]);
+      if (skipped) { $('#copyreport').hidden = false; $('#copyreport').textContent = t('opt_copy_skipped', [String(skipped)]); }
+    } catch (e) { $('#copystatus').textContent = t('opt_copy_err', [(e && e.message) || String(e)]); }
+    finally {
+      chrome.storage.onChanged.removeListener(onStatus);
+      copyAbort = null;
+      $('#copystart').hidden = false; $('#copystop').hidden = true; copySel.disabled = false;
+    }
+  };
 
   const swSinks = cfg.sinks.filter((s) => ['drive', 'http', 'webdav', 's3', 'dropbox', 'email'].includes(s.type));
   const enabledDs = cfg.datasources.filter((d) => d.enabled);

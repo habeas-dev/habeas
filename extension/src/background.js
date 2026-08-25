@@ -13,6 +13,7 @@ import { syncVaultIfUnlocked } from './lib/secretsync.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
 import { resolveSiteFetch, ensureSiteFetch, recoverSession, clearSiteCookies, withBrandHost, findSiteTab, foregroundTab } from './lib/pagefetch.js';
 import { retrieveDelivered } from './lib/retrieve.js';
+import { driveCache } from './sinks/drive.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink, readSinkRecords } from './sinks/sinks.js';
 import { recordDelivered, putItems, getRecords } from './lib/store.js';
@@ -398,6 +399,34 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       // Returns { status:'nosession' } cleanly when there's no live session (the Archive surfaces that honestly).
       // msg.force → "Re-download from site": deliver ALL listed docs, not just undelivered (re-fetches them).
       const r = await runRoute(ds, adapter, sink, { kind: 'manual', interactive: true, force: !!msg.force, signal: startOp() });
+      // No live session used to be the end of it — but "save this source here" mostly means documents
+      // the archive already holds, and refusing to move those because the bank happens to be logged out
+      // was needless. Fall back to a store-only send: files come from whatever other destination has
+      // them, and the source is never contacted. Only what is genuinely new still needs a session.
+      if (r && r.status === 'nosession' && !msg.force) {
+        const picked = await pickStoredDocs(ds, adapter, sink).catch(() => []);
+        if (picked.length) {
+          const sr = await sendStoredDocs(ds, adapter, sink, picked, { noOpen: true, noSource: true, signal: startOp() });
+          if (sr && sr.sent) return { ok: true, ...sr, fromStore: true };
+        }
+      }
+      return { ok: true, ...r };
+    })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
+    return true; // async response
+  }
+  if (msg.type === 'habeas:archiveCopy' && msg.sink) { // Settings → "copy my archive to another destination"
+    (async () => {
+      const cfg = await getConfig();
+      const sink = (cfg.sinks || []).find((s) => s.id === msg.sink);
+      if (!sink) return { ok: false, error: 'unknown sink' };
+      const adapters = await getAdapters();
+      const signal = startOp();
+      const r = await runArchiveCopy(cfg, adapters, sink, {
+        signal,
+        // Progress rides the same storage channel the Archive already listens on, so the Settings page
+        // gets live counts without a port that a sleeping service worker would drop.
+        onProgress: (p) => setStatus(p.phase === 'source' ? t('status_fetching', [String(p.found), p.name]) : t('status_sending', [String(p.sent), sink.id])),
+      });
       return { ok: true, ...r };
     })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true; // async response
@@ -780,17 +809,26 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
     // open the site and need its live session). local-folder needs a page handle the service worker lacks; the
     // TARGET sink is skipped; opts.force ("Re-download from site") bypasses retrieval to fetch fresh.
     const cfg = await getConfig();
-    const SW_RETRIEVABLE = new Set(['dropbox', 'webdav', 's3']);
+    // local-folder is absent because the service worker has no directory handle — only a page does, so a
+    // folder-backed archive is copied page-side instead (see the Settings migration).
+    const SW_RETRIEVABLE = new Set(['dropbox', 'webdav', 's3', 'drive']);
     const stores = opts.force ? [] : (cfg.sinks || []).filter((s) => s.id !== sink.id && SW_RETRIEVABLE.has(s.type));
+    // One Drive cache for the whole send: Drive resolves names to ids, so without this every file costs
+    // an extra lookup and a few thousand documents run into rate limits.
+    const dcache = driveCache();
     const retrieveArt = async (d, ext) => {
       const rec = { ...(d.record || {}), internalId: d.internalId, date: d.date ?? (d.record && d.record.date), group: d.group ?? (d.record && d.record.group) };
-      for (const st of stores) { try { const r = await retrieveDelivered(st, adapter, rec, ext, { only: true }); if (r && r.blob) return { blob: r.blob, ext: r.ext || ext }; } catch (e) {} }
+      for (const st of stores) { try { const r = await retrieveDelivered(st, adapter, rec, ext, { only: true, driveCache: dcache }); if (r && r.blob) return { blob: r.blob, ext: r.ext || ext }; } catch (e) {} }
       return null;
     };
     // The source page-fetch, opened LAZILY — only when a file genuinely can't be read back from a store. So a
     // send of documents already in Dropbox never opens the source. undefined = unresolved, null = resolved-none.
     let net;
     const ensureNet = async () => {
+      // opts.noSource: the archive copy promises never to contact the source at all. noOpen only stops a
+      // NEW tab being opened — an already-open one would still be used, and then "copied from your other
+      // destination" would quietly become "re-fetched from the site", which is not what was reported.
+      if (opts.noSource) return null;
       if (net === undefined) { net = auth ? await ensureSiteFetch(adapter, { open: wantsDocs && !opts.noOpen, ds }).catch(() => null) : null; adapter = withBrandHost(adapter, net, ds); }
       return net;
     };
@@ -1417,7 +1455,10 @@ async function runExternalCollect(grant, ds, adapter, sink, tabId, groupId) {
 // delivered yet (per ledger), optionally narrow to one account (its record.group label, resolved
 // from the cached enumeration), and hand them to sendStoredDocs with noOpen (record-only unless a
 // site tab already happens to be open — the source is never contacted on purpose).
-async function runExternalStoreSend(ds, adapter, sink, { label, force } = {}) {
+// Which stored documents this route still owes a sink. The delivery ledger IS the cursor: everything in
+// the archive minus everything already delivered here, recomputed each time. That is what makes a long
+// copy resumable without any new state — an interruption loses at most the chunk in flight.
+async function pickStoredDocs(ds, adapter, sink, { label, force } = {}) {
   const sid0 = storeIdOf(ds, adapter);
   const delivered = force ? {} : await deliveredSet(ds.id, sink.id).catch(() => ({}));
   const streams = [...new Set(outputsOf(adapter).map((o) => o.stream))];
@@ -1438,12 +1479,57 @@ async function runExternalStoreSend(ds, adapter, sink, { label, force } = {}) {
       picked.push({ internalId: r.internalId, record: r, stream: sid });
     }
   }
+  return picked;
+}
+
+async function runExternalStoreSend(ds, adapter, sink, { label, force } = {}) {
+  const picked = await pickStoredDocs(ds, adapter, sink, { label, force });
   if (!picked.length) {
     // Nothing new for this route — tell the consumer apart from a delivery (found: 0).
     await appendLog({ kind: 'ext-store', datasource: ds.id, sink: sink.id, status: 'ok', count: 0 });
     return { status: 'done', sent: 0, found: 0, accepted: 0 };
   }
   return sendStoredDocs(ds, adapter, sink, picked, { noOpen: true });
+}
+
+// Copy the whole archive — every source — into one destination, without ever contacting a source.
+// Files come from whichever OTHER destination already holds them; a document that no readable
+// destination has is skipped and counted, never fetched. This exists because some documents cannot be
+// fetched again at all (Carrefour answers 406 for old tickets, ING keeps about ninety days), so before
+// this, changing destination quietly meant losing everything past the retention window.
+//
+// local-folder is not among the origins here: the service worker has no directory handle. The Settings
+// page copies that case itself, since only a page can hold one.
+export async function runArchiveCopy(cfg, adapters, sink, { signal, onProgress } = {}) {
+  const per = [];
+  let sent = 0, found = 0, skipped = 0;
+  for (const ds of (cfg.datasources || [])) {
+    if (signal && signal.aborted) break;
+    if (ds.enabled === false) continue;
+    const adapter = adapters[ds.adapter];
+    if (!adapter) continue;
+    const name = adapter.name || ds.adapter;
+    let picked = [];
+    try { picked = await pickStoredDocs(ds, adapter, sink); } catch (e) { picked = []; }
+    if (!picked.length) { per.push({ datasource: ds.id, name, found: 0, sent: 0 }); continue; }
+    found += picked.length;
+    if (onProgress) onProgress({ phase: 'source', name, found: picked.length });
+    let r;
+    try {
+      r = await sendStoredDocs(ds, adapter, sink, picked, { noOpen: true, noSource: true, signal });
+    } catch (e) {
+      per.push({ datasource: ds.id, name, found: picked.length, sent: 0, error: (e && e.message) || String(e) });
+      continue;
+    }
+    sent += r.sent || 0;
+    // "Accepted" counts what the destination's `accepts` filter let through; anything found but not sent
+    // had no file in any readable destination, which is worth reporting rather than hiding.
+    skipped += Math.max(0, (r.accepted || 0) - (r.sent || 0));
+    per.push({ datasource: ds.id, name, found: picked.length, sent: r.sent || 0, accepted: r.accepted || 0 });
+    if (onProgress) onProgress({ phase: 'done-source', name, sent: r.sent || 0 });
+  }
+  await appendLog({ kind: 'archive-copy', sink: sink.id, status: 'ok', count: sent });
+  return { status: signal && signal.aborted ? 'stopped' : 'done', sent, found, skipped, per };
 }
 
 async function addPending(host, entry) {
