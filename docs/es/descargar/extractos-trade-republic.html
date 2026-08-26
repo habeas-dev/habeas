@@ -12,7 +12,33 @@
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="stylesheet" href="/style.css" />
   <style>
-    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    /* Two columns: the prose reads at its own width, and everything ABOUT the source — what it is, which
+       version, who wrote it, how to install it, and the definition itself — sits beside it instead of
+       interrupting it. One column below 1000px, sidebar FIRST, so a phone gets the install buttons
+       before the essay. */
+    .doc { max-width: 1100px; margin: 0 auto; padding: 8px 20px 64px;
+           display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 40px; align-items: start; }
+    .doc > .body { min-width: 0; }
+    .doc > aside { position: sticky; top: 78px; display: flex; flex-direction: column; gap: 14px; }
+    @media (max-width: 1000px) { .doc { grid-template-columns: 1fr; gap: 22px; }
+      .doc > aside { position: static; order: -1; } }
+    .card { border: 1px solid var(--line, #3333); border-radius: 14px; padding: 15px 16px; }
+    .card h2 { font-size: .78rem !important; text-transform: uppercase; letter-spacing: .6px;
+               color: var(--muted, #888); margin: 0 0 10px !important; }
+    .card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13.5px; }
+    .card dt { color: var(--muted, #888); }
+    .card dd { margin: 0; word-break: break-word; }
+    .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
+                 border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
+    aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+    aside .cta .btn { text-align: center; }
+    /* The definition, in full. It is the project's whole security claim — adapters are data, never code —
+       and a claim you cannot read is a claim you are asked to take on faith. */
+    .defn summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+    .defn pre { max-height: 420px; overflow: auto; margin: 10px 0 0; padding: 11px 12px; font-size: 11.5px;
+                line-height: 1.5; border-radius: 9px; background: var(--surface-2, #0001); }
+    header nav .langlink { font-weight: 700; }
     .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
     .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
     .doc h3 { font-size: 1.02rem; margin: 20px 0 6px; }
@@ -199,15 +225,296 @@
       <span class="name">Habeas</span>
       <nav>
         <a href="/">Inicio</a>
-        <a href="/es/por-que-habeas.html">Por qué Habeas</a>
+        <a href="/es/por-que-habeas.html">¿Por qué Habeas?</a>
         <a href="/sources.html">Fuentes</a>
+        <a href="/es/desarrolladores.html">Desarrolladores</a>
+        <a href="/architecture.html">Arquitectura</a>
         <a href="/privacy.html">Privacidad</a>
+        <a href="/terms.html">Términos</a>
         <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <a class="langlink" href="/download/trade-republic-statements.html" hreflang="en" rel="alternate">EN</a>
       </nav>
     </div>
   </header>
 
   <main class="doc" data-habeas-enriched>
+    <aside>
+      <div class="card">
+        <h2>Sobre esta fuente</h2>
+        <dl>
+          <dt>Versión</dt><dd>2026-08-26</dd>
+          <dt>Confianza</dt><dd>community</dd>
+          <dt>Cobertura</dt><dd>global</dd>
+          <dt>Licencia</dt><dd>CC0-1.0</dd>
+        </dl>
+        <p class="who"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella.</p>
+        <p class="note">La definición, de dominio público (CC0-1.0); el texto de esta página, CC-BY-4.0.</p>
+      </div>
+
+      <div class="cta">
+        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="traderepublic">Instalar en Chrome</a>
+        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="traderepublic">Instalar en Firefox</a>
+      </div>
+
+      <div class="card defn">
+        <h2>La definición en sí</h2>
+        <p class="note">Una fuente son datos, nunca código — esto es todo lo que hay.</p>
+        <details>
+          <summary>traderepublic.json</summary>
+          <pre>{
+  &quot;id&quot;: &quot;traderepublic&quot;,
+  &quot;name&quot;: &quot;Trade Republic&quot;,
+  &quot;service&quot;: &quot;traderepublic&quot;,
+  &quot;trust&quot;: &quot;community&quot;,
+  &quot;credit&quot;: {
+    &quot;author&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    },
+    &quot;capture&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    }
+  },
+  &quot;domain&quot;: &quot;traderepublic.com&quot;,
+  &quot;country&quot;: &quot;global&quot;,
+  &quot;categories&quot;: [
+    &quot;banking&quot;,
+    &quot;investment&quot;
+  ],
+  &quot;version&quot;: &quot;2026-08-26&quot;,
+  &quot;minVersion&quot;: &quot;0.3.0.24&quot;,
+  &quot;keepRaw&quot;: true,
+  &quot;match&quot;: [
+    &quot;https://app.traderepublic.com/*&quot;
+  ],
+  &quot;openUrl&quot;: &quot;https://app.traderepublic.com/&quot;,
+  &quot;auth&quot;: {
+    &quot;mode&quot;: &quot;cookie&quot;,
+    &quot;replayHeaders&quot;: []
+  },
+  &quot;api&quot;: {
+    &quot;host&quot;: &quot;https://api.traderepublic.com&quot;
+  },
+  &quot;streams&quot;: [
+    {
+      &quot;id&quot;: &quot;transactions&quot;,
+      &quot;name&quot;: &quot;Transacciones&quot;,
+      &quot;schema&quot;: &quot;investment@2&quot;,
+      &quot;normalize&quot;: {
+        &quot;fields&quot;: {
+          &quot;isin&quot;: {
+            &quot;from&quot;: &quot;icon&quot;,
+            &quot;re&quot;: [
+              &quot;^logos/([A-Z]{2}[A-Z0-9]{9}[0-9])/&quot;
+            ]
+          }
+        },
+        &quot;map&quot;: {
+          &quot;side&quot;: {
+            &quot;from&quot;: &quot;type&quot;,
+            &quot;map&quot;: {
+              &quot;TRADING_SAVINGSPLAN_EXECUTED&quot;: &quot;buy&quot;,
+              &quot;SAVINGS_PLAN_EXECUTED&quot;: &quot;buy&quot;
+            }
+          },
+          &quot;kind&quot;: {
+            &quot;from&quot;: &quot;type&quot;,
+            &quot;map&quot;: {
+              &quot;INTEREST_PAYOUT&quot;: &quot;interest&quot;,
+              &quot;BANK_TRANSACTION_INCOMING&quot;: &quot;deposit&quot;,
+              &quot;PAYMENT_INBOUND&quot;: &quot;deposit&quot;,
+              &quot;PAYMENT_INBOUND_GOOGLE_PAY&quot;: &quot;deposit&quot;
+            }
+          }
+        }
+      },
+      &quot;api&quot;: {
+        &quot;ws&quot;: {
+          &quot;url&quot;: &quot;wss://api.traderepublic.com&quot;,
+          &quot;connectVersion&quot;: 34,
+          &quot;connect&quot;: {
+            &quot;locale&quot;: &quot;en&quot;,
+            &quot;platformId&quot;: &quot;webtrading&quot;,
+            &quot;platformVersion&quot;: &quot;web&quot;,
+            &quot;clientId&quot;: &quot;app.traderepublic.com&quot;,
+            &quot;clientVersion&quot;: &quot;15.101.0&quot;
+          },
+          &quot;sub&quot;: {
+            &quot;type&quot;: &quot;timelineTransactions&quot;
+          },
+          &quot;itemsPath&quot;: &quot;items&quot;,
+          &quot;cursorPath&quot;: &quot;cursors.after&quot;,
+          &quot;cursorParam&quot;: &quot;after&quot;,
+          &quot;maxPages&quot;: 200,
+          &quot;detail&quot;: {
+            &quot;subType&quot;: &quot;timelineDetailV2&quot;,
+            &quot;idField&quot;: &quot;id&quot;,
+            &quot;idParam&quot;: &quot;id&quot;,
+            &quot;attachAs&quot;: &quot;detail&quot;,
+            &quot;max&quot;: 2000
+          }
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;id&quot;,
+        &quot;date&quot;: &quot;timestamp&quot;,
+        &quot;amount&quot;: &quot;amount.value&quot;,
+        &quot;currency&quot;: &quot;amount.currency&quot;,
+        &quot;description&quot;: &quot;title&quot;,
+        &quot;counterparty&quot;: &quot;title&quot;,
+        &quot;instrumentName&quot;: &quot;title&quot;,
+        &quot;type&quot;: &quot;eventType&quot;,
+        &quot;settlementAccount&quot;: &quot;cashAccountNumber&quot;,
+        &quot;units&quot;: &quot;detail.sections[title=Transaction].data[title=Shares].detail.text&quot;,
+        &quot;price&quot;: &quot;detail.sections[title=Transaction].data[title=Share price].detail.text&quot;,
+        &quot;commission&quot;: &quot;detail.sections[title=Transaction].data[title=Fee].detail.text&quot;
+      }
+    },
+    {
+      &quot;id&quot;: &quot;extracto&quot;,
+      &quot;name&quot;: &quot;Extractos mensuales&quot;,
+      &quot;schema&quot;: &quot;invoice@1&quot;,
+      &quot;api&quot;: {
+        &quot;list&quot;: {
+          &quot;paging&quot;: &quot;synthetic&quot;,
+          &quot;synthetic&quot;: {
+            &quot;each&quot;: &quot;months&quot;
+          },
+          &quot;maxAgeDays&quot;: 1100
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;{period}&quot;,
+        &quot;date&quot;: &quot;{date}&quot;,
+        &quot;number&quot;: &quot;{period}&quot;,
+        &quot;description&quot;: &quot;Extracto {period}&quot;
+      },
+      &quot;formats&quot;: [
+        {
+          &quot;id&quot;: &quot;pdf&quot;,
+          &quot;name&quot;: &quot;PDF (extracto de cuenta)&quot;,
+          &quot;api&quot;: {
+            &quot;pdf&quot;: {
+              &quot;path&quot;: &quot;/api/v1/banking/consumer/accountstatement/statement?fromDate={period}&amp;toDate={period}&quot;,
+              &quot;method&quot;: &quot;GET&quot;,
+              &quot;ext&quot;: &quot;pdf&quot;,
+              &quot;mime&quot;: &quot;application/pdf&quot;
+            }
+          }
+        },
+        {
+          &quot;id&quot;: &quot;csv&quot;,
+          &quot;name&quot;: &quot;CSV (transacciones)&quot;,
+          &quot;api&quot;: {
+            &quot;pdf&quot;: {
+              &quot;ext&quot;: &quot;csv&quot;,
+              &quot;mime&quot;: &quot;text/csv&quot;,
+              &quot;job&quot;: {
+                &quot;start&quot;: {
+                  &quot;path&quot;: &quot;/api/v1/portfolio-analytics/transactions/export/request&quot;,
+                  &quot;method&quot;: &quot;POST&quot;,
+                  &quot;body&quot;: &quot;{\&quot;from\&quot;:\&quot;{fromDate}\&quot;,\&quot;to\&quot;:\&quot;{toDate}\&quot;}&quot;,
+                  &quot;contentType&quot;: &quot;application/json&quot;,
+                  &quot;idField&quot;: &quot;jobId&quot;
+                },
+                &quot;status&quot;: {
+                  &quot;path&quot;: &quot;/api/v1/portfolio-analytics/transactions/export/status?jobId={jobId}&quot;,
+                  &quot;statePath&quot;: &quot;status&quot;,
+                  &quot;readyValue&quot;: &quot;COMPLETED&quot;,
+                  &quot;tries&quot;: 20,
+                  &quot;delayMs&quot;: 1000
+                },
+                &quot;download&quot;: {
+                  &quot;path&quot;: &quot;/api/v1/portfolio-analytics/transactions/export/download?jobId={jobId}&quot;
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-08-26&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.&quot;,
+        &quot;es&quot;: &quot;Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-08&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.&quot;,
+        &quot;es&quot;: &quot;Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-17&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Parse the trade breakdown into structured fields: units (Shares), price (Share price) and commission (Fee) from the timelineDetailV2 'Transaction' table (English labels — the WS connect requests locale 'en'). 'Free' fees resolve to 0. Requires extension &gt;= 0.3.0.24.&quot;,
+        &quot;es&quot;: &quot;Analiza el desglose de la operación en campos estructurados: títulos (Shares), precio (Share price) y comisión (Fee) desde la tabla 'Transaction' de timelineDetailV2 (etiquetas en inglés — la conexión WS pide locale 'en'). Las comisiones 'Free' se resuelven como 0. Requiere extensión &gt;= 0.3.0.24.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-16&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Timeline stream now emits investment@2 (broker trade/cash): recordType inferred from the extracted ISIN, side/kind mapped from the timeline eventType, instrument{isin,name}, and the settlement account (cashAccountNumber). Trade quantity/price/fees remain in record.extra.detail (localized text) pending structured parsing. Requires extension &gt;= 0.3.0.24.&quot;,
+        &quot;es&quot;: &quot;El stream de timeline emite ya investment@2 (operación/efectivo de bróker): el recordType se infiere del ISIN extraído, side/kind se mapean desde el eventType del timeline, instrument{isin,name} y la cuenta de liquidación (cashAccountNumber). La cantidad, el precio y las comisiones de la operación siguen en record.extra.detail (texto localizado) a la espera de un análisis estructurado. Requiere extensión &gt;= 0.3.0.24.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-15.3&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Add monthly documents: the account statement PDF (accountstatement/statement?fromDate&amp;toDate) and the monthly transactions CSV (async export job: POST request → poll status → download), per completed month.&quot;,
+        &quot;es&quot;: &quot;Añade documentos mensuales: el PDF del extracto de cuenta (accountstatement/statement?fromDate&amp;toDate) y el CSV mensual de transacciones (trabajo de exportación asíncrono: POST de la petición → consulta de estado → descarga), por cada mes cerrado.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-15.2&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Extract the traded instrument ISIN from the timeline icon into record.isin.&quot;,
+        &quot;es&quot;: &quot;Extrae el ISIN del instrumento negociado desde el icono del timeline a record.isin.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-15.1&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Enrich each timeline transaction with its timelineDetailV2 detail in record.extra.detail.&quot;,
+        &quot;es&quot;: &quot;Enriquece cada transacción del timeline con su detalle de timelineDetailV2 en record.extra.detail.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-15&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Initial: the whole transaction timeline via Trade Republic’s WebSocket API.&quot;,
+        &quot;es&quot;: &quot;Inicial: el timeline completo de transacciones a través de la API WebSocket de Trade Republic.&quot;
+      }
+    }
+  ],
+  &quot;content&quot;: {
+    &quot;en&quot;: {
+      &quot;slug&quot;: &quot;trade-republic-statements&quot;,
+      &quot;docs&quot;: &quot;transactions and statements&quot;,
+      &quot;h1&quot;: &quot;How to download your Trade Republic transactions and statements&quot;,
+      &quot;intro&quot;: &quot;Trade Republic publishes your statements as PDF or CSV, period by period. If you want the full record of your positions and movements in one place, you are the one assembling it.&quot;
+    },
+    &quot;es&quot;: {
+      &quot;slug&quot;: &quot;extractos-trade-republic&quot;,
+      &quot;docs&quot;: &quot;movimientos y extractos&quot;,
+      &quot;h1&quot;: &quot;Cómo descargar tus movimientos y extractos de Trade Republic&quot;,
+      &quot;intro&quot;: &quot;Trade Republic publica tus extractos en PDF o CSV, periodo a periodo. Si quieres el registro completo de tus posiciones y movimientos en un solo sitio, el que lo va montando eres tú.&quot;
+    }
+  },
+  &quot;brand&quot;: &quot;Trade Republic&quot;
+}</pre>
+        </details>
+        <p class="note"><a href="https://habeas-dev.github.io/sources/traderepublic.json" rel="noopener">Abrir el fichero original -></a></p>
+      </div>
+    </aside>
+
+    <div class="body">
     <h1>Cómo descargar tus movimientos y extractos de Trade Republic</h1>
     <p class="lead">Trade Republic publica tus extractos en PDF o CSV, periodo a periodo. Si quieres el registro completo de tus posiciones y movimientos en un solo sitio, el que lo va montando eres tú.</p>
 
@@ -266,8 +573,6 @@
         <li class="rev"><time datetime="2026-07-15">2026-07-15</time> — Añade documentos mensuales: el PDF del extracto de cuenta (accountstatement/statement?fromDate&amp;toDate) y el CSV mensual de transacciones (trabajo de exportación asíncrono: POST de la petición → consulta de estado → descarga), por cada mes cerrado.</li>
       </ul>
       <p class="lead"><a href="/sources.html#traderepublic">Ver el historial completo en el catálogo →</a></p>
-      <h2>Agradecimientos</h2>
-      <p class="credit"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella. Habeas existe porque hay gente que mapea los servicios que usa y comparte el resultado.</p>
 
     <h2>Más guías de bancos, tarjetas e inversión</h2>
     <ul>
@@ -286,6 +591,7 @@
 
     <h2>Otras fuentes</h2>
     <p>Habeas funciona con más servicios españoles e internacionales. <a href="/sources.html">Mira el catálogo completo</a> o lee <a href="/es/por-que-habeas.html">por qué existe Habeas</a>.</p>
+    </div>
   </main>
 </body>
 </html>

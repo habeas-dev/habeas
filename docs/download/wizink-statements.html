@@ -12,7 +12,33 @@
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="stylesheet" href="/style.css" />
   <style>
-    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    /* Two columns: the prose reads at its own width, and everything ABOUT the source — what it is, which
+       version, who wrote it, how to install it, and the definition itself — sits beside it instead of
+       interrupting it. One column below 1000px, sidebar FIRST, so a phone gets the install buttons
+       before the essay. */
+    .doc { max-width: 1100px; margin: 0 auto; padding: 8px 20px 64px;
+           display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 40px; align-items: start; }
+    .doc > .body { min-width: 0; }
+    .doc > aside { position: sticky; top: 78px; display: flex; flex-direction: column; gap: 14px; }
+    @media (max-width: 1000px) { .doc { grid-template-columns: 1fr; gap: 22px; }
+      .doc > aside { position: static; order: -1; } }
+    .card { border: 1px solid var(--line, #3333); border-radius: 14px; padding: 15px 16px; }
+    .card h2 { font-size: .78rem !important; text-transform: uppercase; letter-spacing: .6px;
+               color: var(--muted, #888); margin: 0 0 10px !important; }
+    .card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13.5px; }
+    .card dt { color: var(--muted, #888); }
+    .card dd { margin: 0; word-break: break-word; }
+    .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
+                 border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
+    aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+    aside .cta .btn { text-align: center; }
+    /* The definition, in full. It is the project's whole security claim — adapters are data, never code —
+       and a claim you cannot read is a claim you are asked to take on faith. */
+    .defn summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+    .defn pre { max-height: 420px; overflow: auto; margin: 10px 0 0; padding: 11px 12px; font-size: 11.5px;
+                line-height: 1.5; border-radius: 9px; background: var(--surface-2, #0001); }
+    header nav .langlink { font-weight: 700; }
     .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
     .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
     .doc h3 { font-size: 1.02rem; margin: 20px 0 6px; }
@@ -183,15 +209,322 @@
       <span class="name">Habeas</span>
       <nav>
         <a href="/">Home</a>
-        <a href="/why-habeas.html">Why Habeas</a>
+        <a href="/why-habeas.html">Why Habeas?</a>
         <a href="/sources.html">Sources</a>
+        <a href="/developers.html">Developers</a>
+        <a href="/architecture.html">Architecture</a>
         <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
         <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <a class="langlink" href="/es/descargar/extractos-wizink.html" hreflang="es" rel="alternate">ES</a>
       </nav>
     </div>
   </header>
 
   <main class="doc">
+    <aside>
+      <div class="card">
+        <h2>About this source</h2>
+        <dl>
+          <dt>Version</dt><dd>2026-08-26</dd>
+          <dt>Trust</dt><dd>first-party</dd>
+          <dt>Coverage</dt><dd>ES</dd>
+          <dt>Licence</dt><dd>CC0-1.0</dd>
+        </dl>
+        <p class="who"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> recorded their own session and wrote this source definition from it.</p>
+        <p class="note">Definition in the public domain (CC0-1.0); this page’s text CC-BY-4.0.</p>
+      </div>
+
+      <div class="cta">
+        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="wizink-es">Install on Chrome</a>
+        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="wizink-es">Install on Firefox</a>
+      </div>
+
+      <div class="card defn">
+        <h2>The definition itself</h2>
+        <p class="note">A source is data, never code — this is the whole of it.</p>
+        <details>
+          <summary>wizink-es.json</summary>
+          <pre>{
+  &quot;id&quot;: &quot;wizink-es&quot;,
+  &quot;name&quot;: &quot;WiZink España&quot;,
+  &quot;service&quot;: &quot;wizink&quot;,
+  &quot;trust&quot;: &quot;first-party&quot;,
+  &quot;credit&quot;: {
+    &quot;author&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    },
+    &quot;capture&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    }
+  },
+  &quot;domain&quot;: &quot;wizink.es&quot;,
+  &quot;country&quot;: &quot;ES&quot;,
+  &quot;version&quot;: &quot;2026-08-26&quot;,
+  &quot;currency&quot;: &quot;EUR&quot;,
+  &quot;categories&quot;: [
+    &quot;card&quot;,
+    &quot;banking&quot;
+  ],
+  &quot;match&quot;: [
+    &quot;https://www.wizink.es/*&quot;
+  ],
+  &quot;auth&quot;: {
+    &quot;mode&quot;: &quot;cookie&quot;,
+    &quot;replayHeaders&quot;: [],
+    &quot;resetCookies&quot;: true,
+    &quot;resetCookiesOnLoginStatus&quot;: 400,
+    &quot;loginUrl&quot;: &quot;https://www.wizink.es/login&quot;,
+    &quot;readyUrl&quot;: &quot;https://www.wizink.es/clientes/posicion-global&quot;
+  },
+  &quot;api&quot;: {
+    &quot;host&quot;: &quot;https://www.wizink.es&quot;,
+    &quot;csrf&quot;: {
+      &quot;path&quot;: &quot;/clientes/posicion-global&quot;,
+      &quot;match&quot;: &quot;securityToken['\&quot;]?\\s*(?:value=|:)\\s*['\&quot;]([A-Za-z0-9]{12,})&quot;
+    },
+    &quot;groups&quot;: {
+      &quot;from&quot;: &quot;html&quot;,
+      &quot;path&quot;: &quot;/cs/Satellite&quot;,
+      &quot;method&quot;: &quot;POST&quot;,
+      &quot;params&quot;: {
+        &quot;pagename&quot;: &quot;ECOM_SiteEntry/WZPRI/NewGlobalPosition&quot;
+      },
+      &quot;body&quot;: &quot;ECOM_Page_Category=New Global Position&amp;ECOM_Page_Sub_Category=New Global Position&amp;securityToken={csrf}&quot;,
+      &quot;rows&quot;: {
+        &quot;each&quot;: &quot;goToCardDetail\\('([^']+)',\\s*'([^']+)'[\\s\\S]{0,180}?c-card__summary[\\s\\S]{0,150}?card-product-name[^&gt;]*&gt;(?:&lt;span[^&gt;]*&gt;[^&lt;]*&lt;/span&gt;)?\\s*([^&lt;]+?)\\s*&lt;/span&gt;[\\s\\S]{0,200}?card-security-code[^&gt;]*&gt;(?:&lt;span[^&gt;]*&gt;[^&lt;]*&lt;/span&gt;)?\\s*([^&lt;]*\\d{4})&quot;,
+        &quot;fields&quot;: {
+          &quot;accountNumber&quot;: {
+            &quot;group&quot;: 1
+          },
+          &quot;cardNumber&quot;: {
+            &quot;group&quot;: 2
+          },
+          &quot;name&quot;: {
+            &quot;group&quot;: 3
+          },
+          &quot;mask&quot;: {
+            &quot;group&quot;: 4
+          }
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;id&quot;: &quot;accountNumber&quot;,
+        &quot;accountNumber&quot;: &quot;accountNumber&quot;,
+        &quot;cardNumber&quot;: &quot;cardNumber&quot;,
+        &quot;name&quot;: &quot;name&quot;,
+        &quot;mask&quot;: &quot;mask&quot;
+      }
+    }
+  },
+  &quot;streams&quot;: [
+    {
+      &quot;id&quot;: &quot;movimientos&quot;,
+      &quot;name&quot;: &quot;Movimientos de tarjeta&quot;,
+      &quot;schema&quot;: &quot;transaction@1&quot;,
+      &quot;categories&quot;: [
+        &quot;card&quot;
+      ],
+      &quot;api&quot;: {
+        &quot;list&quot;: {
+          &quot;from&quot;: &quot;html&quot;,
+          &quot;path&quot;: &quot;/cs/Satellite&quot;,
+          &quot;method&quot;: &quot;POST&quot;,
+          &quot;maxPeriods&quot;: 24,
+          &quot;periods&quot;: {
+            &quot;current&quot;: {
+              &quot;params&quot;: {
+                &quot;pagename&quot;: &quot;ECOM_SiteEntry/WZPRI/CardDetail/NewToday&quot;
+              },
+              &quot;body&quot;: &quot;accountNumber={group.accountNumber}&amp;cardNumber={group.cardNumber}&amp;option=today&amp;securityToken={csrf}&quot;
+            },
+            &quot;dates&quot;: {
+              &quot;params&quot;: {
+                &quot;pagename&quot;: &quot;ECOM_SiteEntry/WZPRI/CardDetail/Today/ListExtracts&quot;
+              },
+              &quot;body&quot;: &quot;cardNumber={group.cardNumber}&amp;accountNumber={group.accountNumber}&amp;securityToken={csrf}&quot;,
+              &quot;rows&quot;: {
+                &quot;each&quot;: &quot;callOperations\\('([0-9-]+)'\\)&quot;,
+                &quot;fields&quot;: {
+                  &quot;statementDate&quot;: {
+                    &quot;group&quot;: 1
+                  }
+                }
+              }
+            },
+            &quot;past&quot;: {
+              &quot;params&quot;: {
+                &quot;pagename&quot;: &quot;ECOM_SiteEntry/WZPRI/CardDetail/ExtractOnScreenDetail&quot;
+              },
+              &quot;body&quot;: &quot;securityToken={csrf}&amp;ic2Error=false&amp;accountNumber={group.accountNumber}&amp;cardNumber={group.cardNumber}&amp;cardLogo=505&amp;cahsback=null&amp;statementDate={period}&amp;calculatePaymentInfo=false&amp;fromPrincipalAccount=true&amp;inStatementRepository=true&amp;verMas=false&amp;flagStatementsHistory=null&quot;
+            }
+          },
+          &quot;rows&quot;: {
+            &quot;each&quot;: &quot;movItem(?:_\\d+_[A-Z]+|R_\\d+)\&quot;[\\s\\S]{0,1500}?class=\&quot;movement-amount[^\&quot;]*\&quot;[^&gt;]*&gt;[^&lt;]*&lt;&quot;,
+            &quot;fields&quot;: {
+              &quot;type&quot;: {
+                &quot;re&quot;: &quot;movement-item ([a-zA-Z]+)&quot;
+              },
+              &quot;description&quot;: {
+                &quot;tag&quot;: &quot;h4&quot;
+              },
+              &quot;card&quot;: {
+                &quot;sel&quot;: &quot;card-number-masked&quot;
+              },
+              &quot;date&quot;: {
+                &quot;sel&quot;: &quot;movement-date&quot;
+              },
+              &quot;location&quot;: {
+                &quot;sel&quot;: &quot;movement-location&quot;
+              },
+              &quot;amount&quot;: {
+                &quot;sel&quot;: &quot;movement-amount&quot;
+              }
+            }
+          },
+          &quot;maxAgeDays&quot;: 90,
+          &quot;idOverride&quot;: {
+            &quot;template&quot;: &quot;{group.accountNumber}|{date}|{amount}|{description}&quot;,
+            &quot;when&quot;: {
+              &quot;field&quot;: &quot;amount&quot;,
+              &quot;present&quot;: true
+            }
+          }
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;{group.accountNumber}|{date}|{amount}|{description}&quot;,
+        &quot;date&quot;: &quot;date&quot;,
+        &quot;amount&quot;: &quot;amount&quot;,
+        &quot;description&quot;: &quot;description&quot;,
+        &quot;type&quot;: &quot;type&quot;,
+        &quot;location&quot;: &quot;location&quot;,
+        &quot;card&quot;: &quot;card&quot;,
+        &quot;account&quot;: &quot;{group.accountNumber}&quot;
+      }
+    },
+    {
+      &quot;id&quot;: &quot;extractos&quot;,
+      &quot;name&quot;: &quot;Extractos&quot;,
+      &quot;schema&quot;: &quot;invoice@1&quot;,
+      &quot;categories&quot;: [
+        &quot;banking&quot;
+      ],
+      &quot;api&quot;: {
+        &quot;list&quot;: {
+          &quot;from&quot;: &quot;html&quot;,
+          &quot;path&quot;: &quot;/cs/Satellite&quot;,
+          &quot;method&quot;: &quot;POST&quot;,
+          &quot;paging&quot;: &quot;none&quot;,
+          &quot;params&quot;: {
+            &quot;pagename&quot;: &quot;ECOM_SiteEntry/WZPRI/CardDetail/ExtractOnScreen&quot;
+          },
+          &quot;body&quot;: &quot;cardNumber={group.cardNumber}&amp;accountNumber={group.accountNumber}&amp;securityToken={csrf}&quot;,
+          &quot;rows&quot;: {
+            &quot;each&quot;: &quot;&lt;option[^&gt;]*data-statementDate=\&quot;([^\&quot;]+)\&quot;[^&gt;]*data-inRepository=\&quot;true\&quot;[^&gt;]*data-docId=\&quot;([^\&quot;]+)\&quot;[^&gt;]*data-fileName=\&quot;([^\&quot;]+)\&quot;&quot;,
+            &quot;fields&quot;: {
+              &quot;statementDate&quot;: {
+                &quot;group&quot;: 1
+              },
+              &quot;docId&quot;: {
+                &quot;group&quot;: 2
+              },
+              &quot;fileName&quot;: {
+                &quot;group&quot;: 3
+              }
+            }
+          },
+          &quot;maxAgeDays&quot;: 90
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;{group.accountNumber}|{statementDate}&quot;,
+        &quot;date&quot;: &quot;statementDate&quot;,
+        &quot;account&quot;: &quot;{group.accountNumber}&quot;,
+        &quot;type&quot;: &quot;Extracto&quot;,
+        &quot;description&quot;: &quot;Extracto {statementDate}&quot;
+      },
+      &quot;formats&quot;: [
+        {
+          &quot;id&quot;: &quot;pdf&quot;,
+          &quot;name&quot;: &quot;PDF&quot;,
+          &quot;api&quot;: {
+            &quot;pdf&quot;: {
+              &quot;path&quot;: &quot;/cs/Satellite/{fileName}?pagename=ECOM_SiteEntry/WZPRI/DownloadIC2File&amp;d=Touch&amp;documentId={docId}&amp;fileName={fileName}&amp;statementDate={statementDate}&amp;accountNumber={group.accountNumber}&amp;customerNumber=null&amp;securityToken={csrf}&quot;,
+              &quot;method&quot;: &quot;GET&quot;,
+              &quot;ext&quot;: &quot;pdf&quot;
+            }
+          }
+        },
+        {
+          &quot;id&quot;: &quot;excel&quot;,
+          &quot;name&quot;: &quot;Excel&quot;,
+          &quot;api&quot;: {
+            &quot;pdf&quot;: {
+              &quot;path&quot;: &quot;/cs/Satellite/movimientosExtracto.xls?pagename=ECOM_SiteEntry/WZPRI/General/DownloadXLSFileExtract&amp;d=Touch&amp;fileName=movimientosExtracto.xls&amp;accountNumber={group.accountNumber}&amp;date={statementDate}&amp;isPrincipalAccount=true&amp;securityToken={csrf}&quot;,
+              &quot;method&quot;: &quot;GET&quot;,
+              &quot;ext&quot;: &quot;xls&quot;
+            }
+          }
+        }
+      ]
+    }
+  ],
+  &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-08-26&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.&quot;,
+        &quot;es&quot;: &quot;Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-08&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.&quot;,
+        &quot;es&quot;: &quot;Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-10&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Statements now show a readable label (\&quot;Statement &lt;date&gt;\&quot;) instead of the internal identifier, and carry the type \&quot;Statement\&quot;.&quot;,
+        &quot;es&quot;: &quot;Los extractos ahora muestran una etiqueta legible («Extracto &lt;fecha&gt;») en lugar del identificador interno, y llevan el tipo «Extracto».&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-09&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Unified source: replaces the three WiZink sources (movements, statements-PDF, statements-Excel) with a single source offering selectable outputs (stream × format). The \&quot;Movements\&quot; stream captures card transactions; the \&quot;Statements\&quot; stream offers each statement as PDF or Excel, sharing one listing. Requires extension 0.1.52+ (output support).&quot;,
+        &quot;es&quot;: &quot;Fuente unificada: reemplaza las tres fuentes WiZink (movimientos, extractos-PDF, extractos-Excel) por un único source con salidas seleccionables (stream × formato). El stream «Movimientos» captura las transacciones de tarjeta; el stream «Extractos» ofrece cada extracto en PDF o Excel compartiendo el mismo listado. Requiere la extensión 0.1.52+ (soporte de salidas).&quot;
+      }
+    }
+  ],
+  &quot;minVersion&quot;: &quot;0.9.3&quot;,
+  &quot;content&quot;: {
+    &quot;en&quot;: {
+      &quot;slug&quot;: &quot;wizink-statements&quot;,
+      &quot;docs&quot;: &quot;card transactions and statements&quot;,
+      &quot;h1&quot;: &quot;How to download your WiZink transactions and statements&quot;,
+      &quot;intro&quot;: &quot;WiZink publishes one statement per period plus a transaction list. Getting the full history means downloading each statement separately.&quot;
+    },
+    &quot;es&quot;: {
+      &quot;slug&quot;: &quot;extractos-wizink&quot;,
+      &quot;docs&quot;: &quot;movimientos y extractos de tarjeta&quot;,
+      &quot;h1&quot;: &quot;Cómo descargar tus movimientos y extractos de WiZink&quot;,
+      &quot;intro&quot;: &quot;WiZink publica un extracto por periodo y un listado de movimientos. Para tener el histórico completo hay que ir descargando cada extracto por separado.&quot;
+    }
+  },
+  &quot;brand&quot;: &quot;WiZink&quot;
+}</pre>
+        </details>
+        <p class="note"><a href="https://habeas-dev.github.io/sources/wizink-es.json" rel="noopener">Open the raw file -></a></p>
+      </div>
+    </aside>
+
+    <div class="body">
     <h1>How to download your WiZink transactions and statements</h1>
     <p class="lead">WiZink publishes one statement per period plus a transaction list. Getting the full history means downloading each statement separately.</p>
 
@@ -236,8 +569,6 @@
         <li class="rev"><time datetime="2026-07-10">2026-07-10</time> — Statements now show a readable label (&quot;Statement &lt;date&gt;&quot;) instead of the internal identifier, and carry the type &quot;Statement&quot;.</li>
         <li class="rev"><time datetime="2026-07-09">2026-07-09</time> — Unified source: replaces the three WiZink sources (movements, statements-PDF, statements-Excel) with a single source offering selectable outputs (stream × format). The &quot;Movements&quot; stream captures card transactions; the &quot;Statements&quot; stream offers each statement as PDF or Excel, sharing one listing. Requires extension 0.1.52+ (output support).</li>
       </ul>
-      <h2>Credit</h2>
-      <p class="credit"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> recorded their own session and wrote this source definition from it. Habeas exists because people map the services they use and share the result.</p>
 
     <h2>More banks, cards &amp; investments guides</h2>
     <ul>
@@ -256,6 +587,7 @@
 
     <h2>Other sources</h2>
     <p>Habeas works with more Spanish and international services. <a href="/sources.html">See the full catalog</a> or read <a href="/why-habeas.html">why Habeas exists</a>.</p>
+    </div>
   </main>
 </body>
 </html>

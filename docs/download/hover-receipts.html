@@ -12,7 +12,33 @@
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="stylesheet" href="/style.css" />
   <style>
-    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    /* Two columns: the prose reads at its own width, and everything ABOUT the source — what it is, which
+       version, who wrote it, how to install it, and the definition itself — sits beside it instead of
+       interrupting it. One column below 1000px, sidebar FIRST, so a phone gets the install buttons
+       before the essay. */
+    .doc { max-width: 1100px; margin: 0 auto; padding: 8px 20px 64px;
+           display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 40px; align-items: start; }
+    .doc > .body { min-width: 0; }
+    .doc > aside { position: sticky; top: 78px; display: flex; flex-direction: column; gap: 14px; }
+    @media (max-width: 1000px) { .doc { grid-template-columns: 1fr; gap: 22px; }
+      .doc > aside { position: static; order: -1; } }
+    .card { border: 1px solid var(--line, #3333); border-radius: 14px; padding: 15px 16px; }
+    .card h2 { font-size: .78rem !important; text-transform: uppercase; letter-spacing: .6px;
+               color: var(--muted, #888); margin: 0 0 10px !important; }
+    .card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13.5px; }
+    .card dt { color: var(--muted, #888); }
+    .card dd { margin: 0; word-break: break-word; }
+    .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
+                 border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
+    aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+    aside .cta .btn { text-align: center; }
+    /* The definition, in full. It is the project's whole security claim — adapters are data, never code —
+       and a claim you cannot read is a claim you are asked to take on faith. */
+    .defn summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+    .defn pre { max-height: 420px; overflow: auto; margin: 10px 0 0; padding: 11px 12px; font-size: 11.5px;
+                line-height: 1.5; border-radius: 9px; background: var(--surface-2, #0001); }
+    header nav .langlink { font-weight: 700; }
     .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
     .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
     .doc h3 { font-size: 1.02rem; margin: 20px 0 6px; }
@@ -183,15 +209,149 @@
       <span class="name">Habeas</span>
       <nav>
         <a href="/">Home</a>
-        <a href="/why-habeas.html">Why Habeas</a>
+        <a href="/why-habeas.html">Why Habeas?</a>
         <a href="/sources.html">Sources</a>
+        <a href="/developers.html">Developers</a>
+        <a href="/architecture.html">Architecture</a>
         <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
         <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <a class="langlink" href="/es/descargar/facturas-hover.html" hreflang="es" rel="alternate">ES</a>
       </nav>
     </div>
   </header>
 
   <main class="doc">
+    <aside>
+      <div class="card">
+        <h2>About this source</h2>
+        <dl>
+          <dt>Version</dt><dd>2026-08-26</dd>
+          <dt>Trust</dt><dd>community</dd>
+          <dt>Coverage</dt><dd>global</dd>
+          <dt>Licence</dt><dd>CC0-1.0</dd>
+        </dl>
+        <p class="who"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> recorded their own session and wrote this source definition from it.</p>
+        <p class="note">Definition in the public domain (CC0-1.0); this page’s text CC-BY-4.0.</p>
+      </div>
+
+      <div class="cta">
+        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="hover-com">Install on Chrome</a>
+        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="hover-com">Install on Firefox</a>
+      </div>
+
+      <div class="card defn">
+        <h2>The definition itself</h2>
+        <p class="note">A source is data, never code — this is the whole of it.</p>
+        <details>
+          <summary>hover-com.json</summary>
+          <pre>{
+  &quot;id&quot;: &quot;hover-com&quot;,
+  &quot;name&quot;: &quot;Hover — Receipts&quot;,
+  &quot;service&quot;: &quot;hover&quot;,
+  &quot;trust&quot;: &quot;community&quot;,
+  &quot;credit&quot;: {
+    &quot;author&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    },
+    &quot;capture&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    }
+  },
+  &quot;domain&quot;: &quot;hover.com&quot;,
+  &quot;country&quot;: &quot;global&quot;,
+  &quot;version&quot;: &quot;2026-08-26&quot;,
+  &quot;categories&quot;: [
+    &quot;domains&quot;
+  ],
+  &quot;match&quot;: [
+    &quot;https://www.hover.com/*&quot;
+  ],
+  &quot;openUrl&quot;: &quot;https://www.hover.com/control_panel/settings/receipts&quot;,
+  &quot;auth&quot;: {
+    &quot;mode&quot;: &quot;cookie&quot;,
+    &quot;replayHeaders&quot;: []
+  },
+  &quot;api&quot;: {
+    &quot;host&quot;: &quot;https://www.hover.com&quot;,
+    &quot;list&quot;: {
+      &quot;path&quot;: &quot;/api/control_panel/settings/receipts&quot;,
+      &quot;paging&quot;: &quot;none&quot;,
+      &quot;itemsPath&quot;: &quot;settings.receipts.orders&quot;
+    },
+    &quot;detail&quot;: {
+      &quot;path&quot;: &quot;/api/control_panel/settings/receipts/{internalId}&quot;,
+      &quot;method&quot;: &quot;GET&quot;
+    },
+    &quot;document&quot;: {
+      &quot;path&quot;: &quot;/control_panel/receipts/{internalId}&quot;,
+      &quot;as&quot;: &quot;render&quot;,
+      &quot;waitMs&quot;: 4000
+    }
+  },
+  &quot;fields&quot;: {
+    &quot;internalId&quot;: &quot;invoice&quot;,
+    &quot;number&quot;: &quot;invoice&quot;,
+    &quot;date&quot;: &quot;date&quot;,
+    &quot;total&quot;: &quot;total&quot;,
+    &quot;storeName&quot;: &quot;text&quot;
+  },
+  &quot;schema&quot;: &quot;receipt@1&quot;,
+  &quot;currency&quot;: &quot;USD&quot;,
+  &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-08-26&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.&quot;,
+        &quot;es&quot;: &quot;Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-08&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.&quot;,
+        &quot;es&quot;: &quot;Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-13&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Bill in USD (Hover charges USD; was defaulting to EUR).&quot;,
+        &quot;es&quot;: &quot;Factura en USD (Hover cobra en USD; antes se asumía EUR por defecto).&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-08&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Domain invoices (JSON + HTML receipt).&quot;,
+        &quot;es&quot;: &quot;Facturas de dominios (JSON + recibo HTML).&quot;
+      }
+    }
+  ],
+  &quot;content&quot;: {
+    &quot;en&quot;: {
+      &quot;slug&quot;: &quot;hover-receipts&quot;,
+      &quot;docs&quot;: &quot;domain renewal receipts&quot;,
+      &quot;h1&quot;: &quot;How to download your Hover receipts&quot;,
+      &quot;intro&quot;: &quot;Hover keeps a receipt for every domain registration and renewal in your account. They are small, they are easy to forget, and at tax time you need all of them — one at a time.&quot;
+    },
+    &quot;es&quot;: {
+      &quot;slug&quot;: &quot;facturas-hover&quot;,
+      &quot;docs&quot;: &quot;recibos de dominios&quot;,
+      &quot;h1&quot;: &quot;Cómo descargar tus recibos de Hover&quot;,
+      &quot;intro&quot;: &quot;Hover guarda un recibo por cada registro y renovación de dominio en tu cuenta. Son pequeños, se olvidan con facilidad y cuando toca justificar gastos los necesitas todos, de uno en uno.&quot;
+    }
+  },
+  &quot;brand&quot;: &quot;Hover&quot;
+}</pre>
+        </details>
+        <p class="note"><a href="https://habeas-dev.github.io/sources/hover-com.json" rel="noopener">Open the raw file -></a></p>
+      </div>
+    </aside>
+
+    <div class="body">
     <h1>How to download your Hover receipts</h1>
     <p class="lead">Hover keeps a receipt for every domain registration and renewal in your account. They are small, they are easy to forget, and at tax time you need all of them — one at a time.</p>
 
@@ -235,8 +395,6 @@
         <li class="rev"><time datetime="2026-07-13">2026-07-13</time> — Bill in USD (Hover charges USD; was defaulting to EUR).</li>
         <li class="rev"><time datetime="2026-07-08">2026-07-08</time> — Domain invoices (JSON + HTML receipt).</li>
       </ul>
-      <h2>Credit</h2>
-      <p class="credit"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> recorded their own session and wrote this source definition from it. Habeas exists because people map the services they use and share the result.</p>
 
     <h2>More services &amp; subscriptions guides</h2>
     <ul>
@@ -249,6 +407,7 @@
 
     <h2>Other sources</h2>
     <p>Habeas works with more Spanish and international services. <a href="/sources.html">See the full catalog</a> or read <a href="/why-habeas.html">why Habeas exists</a>.</p>
+    </div>
   </main>
 </body>
 </html>

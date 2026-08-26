@@ -195,9 +195,14 @@ test('a language-keyed changelog note renders in the page language', async () =>
         if (!e.changes[lang]) continue;
         const dir = lang === 'es' ? 'docs/es/descargar' : 'docs/download';
         const h = read(`${dir}/${slug}.html`);
-        if (!/class="changelog"/.test(h)) continue;
+        // Scoped to the RENDERED list, not the whole document. The page also embeds the source
+        // definition verbatim so a reader can check what they are installing, and that definition
+        // carries every note in both languages by design — searching the whole file would flag the
+        // viewer as a translation bug.
+        const rendered = /<ul class="changelog">([\s\S]*?)<\/ul>/.exec(h)?.[1];
+        if (!rendered) continue;
         const other = Object.entries(e.changes).find(([l]) => l !== lang)?.[1];
-        if (other && h.includes(other) && !h.includes(e.changes[lang])) {
+        if (other && rendered.includes(other) && !rendered.includes(e.changes[lang])) {
           assert.fail(`${meta.id}/${lang}: rendered the wrong language's changelog note`);
         }
       }

@@ -23,6 +23,7 @@ import { dirname, join } from 'node:path';
 const here = dirname(fileURLToPath(import.meta.url));
 const DOCS = join(here, '..');
 const INDEX_URL = 'https://habeas-dev.github.io/sources/index.json';
+const ORIGIN_SOURCES = 'https://habeas-dev.github.io/sources';
 const ORIGIN = 'https://habeas.dev';
 const CWS = 'https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog';
 const AMO = 'https://addons.mozilla.org/firefox/addon/habeas/';
@@ -89,7 +90,13 @@ const LANGS = {
       indexAll: 'See the full source catalog',
       other: 'Other sources',
       otherBody: 'Habeas works with more Spanish and international services. <a href="/sources.html">See the full catalog</a> or read <a href="/why-habeas.html">why Habeas exists</a>.',
-      nav: [['/', 'Home'], ['/why-habeas.html', 'Why Habeas'], ['/sources.html', 'Sources'], ['/privacy.html', 'Privacy']],
+      nav: [['/', 'Home'], ['/why-habeas.html', 'Why Habeas?'], ['/sources.html', 'Sources'], ['/developers.html', 'Developers'],
+            ['/architecture.html', 'Architecture'], ['/privacy.html', 'Privacy'], ['/terms.html', 'Terms']],
+      otherLang: 'Español', otherLangCode: 'ES',
+      asideAbout: 'About this source', asideVersion: 'Version', asideTrust: 'Trust',
+      asideLicence: 'Licence', asideLicenceBody: 'Definition in the public domain (CC0-1.0); this page\u2019s text CC-BY-4.0.',
+      asideDefinition: 'The definition itself', asideDefinitionBody: 'A source is data, never code — this is the whole of it.',
+      asideRaw: 'Open the raw file', asideCountry: 'Coverage',
       descTail: 'Habeas downloads them from inside your own browser session, without ever storing your password.',
       faq: (brand, fmts) => [
         [`Does Habeas store my ${brand} password?`,
@@ -159,7 +166,13 @@ const LANGS = {
       indexAll: 'Ver el catálogo completo de fuentes',
       other: 'Otras fuentes',
       otherBody: 'Habeas funciona con más servicios españoles e internacionales. <a href="/sources.html">Mira el catálogo completo</a> o lee <a href="/es/por-que-habeas.html">por qué existe Habeas</a>.',
-      nav: [['/', 'Inicio'], ['/es/por-que-habeas.html', 'Por qué Habeas'], ['/sources.html', 'Fuentes'], ['/privacy.html', 'Privacidad']],
+      nav: [['/', 'Inicio'], ['/es/por-que-habeas.html', '¿Por qué Habeas?'], ['/sources.html', 'Fuentes'], ['/es/desarrolladores.html', 'Desarrolladores'],
+            ['/architecture.html', 'Arquitectura'], ['/privacy.html', 'Privacidad'], ['/terms.html', 'Términos']],
+      otherLang: 'English', otherLangCode: 'EN',
+      asideAbout: 'Sobre esta fuente', asideVersion: 'Versión', asideTrust: 'Confianza',
+      asideLicence: 'Licencia', asideLicenceBody: 'La definición, de dominio público (CC0-1.0); el texto de esta página, CC-BY-4.0.',
+      asideDefinition: 'La definición en sí', asideDefinitionBody: 'Una fuente son datos, nunca código — esto es todo lo que hay.',
+      asideRaw: 'Abrir el fichero original', asideCountry: 'Cobertura',
       descTail: 'Habeas los descarga desde tu propia sesión del navegador, sin guardar tu contraseña.',
       faq: (brand, fmts) => [
         [`¿Habeas guarda mi contraseña de ${brand}?`,
@@ -277,9 +290,9 @@ ${log.length > HISTORY_MAX ? `      <p class="lead"><a href="/sources.html#${esc
     : cap && aut ? t.creditBoth(cap, aut)
     : cap ? t.creditCapture(cap)
     : aut ? t.creditAuthor(aut) : null;
-  const credit = line ? `      <h2>${esc(t.creditH)}</h2>
-      <p class="credit">${line} ${esc(t.creditThanks)}</p>
-` : '';
+  // `line` now lives in the sidebar card rather than in a section of its own: attribution belongs at hand
+  // while you read, not as a footnote after the FAQ.
+  const credit = '';
 
   // Provenance, kept apart from credit on purpose: this one is a licence record. If a definition was
   // drafted from someone else's published work, saying so on the public page is part of honouring it.
@@ -296,6 +309,9 @@ ${log.length > HISTORY_MAX ? `      <p class="lead"><a href="/sources.html#${esc
 
   // hreflang across every language that has copy for this source, so neither side dead-ends.
   const alts = Object.keys(LANGS).filter((l) => entry[l]);
+  // The same page in the other language, linked where a reader looks for it: in the nav, beside the
+  // rest of the site's links. hreflang alone tells crawlers and nobody else.
+  const other = alts.find((l) => l !== lang) || null;
   const hreflang = alts.map((l) => `  <link rel="alternate" hreflang="${l}" href="${ORIGIN}${LANGS[l].path(entry[l].slug)}" />`).join('\n')
     + `\n  <link rel="alternate" hreflang="x-default" href="${ORIGIN}${LANGS.en.path(entry.en.slug)}" />`;
 
@@ -367,7 +383,33 @@ ${hreflang}
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="stylesheet" href="/style.css" />
   <style>
-    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    /* Two columns: the prose reads at its own width, and everything ABOUT the source — what it is, which
+       version, who wrote it, how to install it, and the definition itself — sits beside it instead of
+       interrupting it. One column below 1000px, sidebar FIRST, so a phone gets the install buttons
+       before the essay. */
+    .doc { max-width: 1100px; margin: 0 auto; padding: 8px 20px 64px;
+           display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 40px; align-items: start; }
+    .doc > .body { min-width: 0; }
+    .doc > aside { position: sticky; top: 78px; display: flex; flex-direction: column; gap: 14px; }
+    @media (max-width: 1000px) { .doc { grid-template-columns: 1fr; gap: 22px; }
+      .doc > aside { position: static; order: -1; } }
+    .card { border: 1px solid var(--line, #3333); border-radius: 14px; padding: 15px 16px; }
+    .card h2 { font-size: .78rem !important; text-transform: uppercase; letter-spacing: .6px;
+               color: var(--muted, #888); margin: 0 0 10px !important; }
+    .card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13.5px; }
+    .card dt { color: var(--muted, #888); }
+    .card dd { margin: 0; word-break: break-word; }
+    .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
+                 border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
+    aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+    aside .cta .btn { text-align: center; }
+    /* The definition, in full. It is the project's whole security claim — adapters are data, never code —
+       and a claim you cannot read is a claim you are asked to take on faith. */
+    .defn summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+    .defn pre { max-height: 420px; overflow: auto; margin: 10px 0 0; padding: 11px 12px; font-size: 11.5px;
+                line-height: 1.5; border-radius: 9px; background: var(--surface-2, #0001); }
+    header nav .langlink { font-weight: 700; }
     .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
     .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
     .doc h3 { font-size: 1.02rem; margin: 20px 0 6px; }
@@ -413,11 +455,42 @@ ${JSON.stringify(articleLd, null, 2)}
       <nav>
 ${t.nav.map(([href, label]) => `        <a href="${href}">${esc(label)}</a>`).join('\n')}
         <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+${other ? `        <a class="langlink" href="${LANGS[other].path(entry[other].slug)}" hreflang="${other}" rel="alternate">${esc(t.otherLangCode)}</a>` : ''}
       </nav>
     </div>
   </header>
 
   <main class="doc"${enriched ? ' data-habeas-enriched' : ''}>
+    <aside>
+      <div class="card">
+        <h2>${esc(t.asideAbout)}</h2>
+        <dl>
+${[[t.asideVersion, esc(String(full.version || '-'))],
+   [t.asideTrust, esc(String(full.trust || 'community'))],
+   ...(full.country ? [[t.asideCountry, esc(String(full.country))]] : []),
+   [t.asideLicence, 'CC0-1.0']]
+  .map(([k, v]) => `          <dt>${esc(k)}</dt><dd>${v}</dd>`).join('\n')}
+        </dl>
+${line ? `        <p class="who">${line}</p>\n` : ''}        <p class="note">${esc(t.asideLicenceBody)}</p>
+      </div>
+
+      <div class="cta">
+        <a class="btn primary" href="${CWS}" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="${esc(meta.id)}">${esc(t.installChrome)}</a>
+        <a class="btn primary" href="${AMO}" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="${esc(meta.id)}">${esc(t.installFirefox)}</a>
+      </div>
+
+      <div class="card defn">
+        <h2>${esc(t.asideDefinition)}</h2>
+        <p class="note">${esc(t.asideDefinitionBody)}</p>
+        <details>
+          <summary>${esc(meta.id)}.json</summary>
+          <pre>${esc(JSON.stringify(full, null, 2))}</pre>
+        </details>
+        <p class="note"><a href="${ORIGIN_SOURCES}/${esc(meta.id)}.json" rel="noopener">${esc(t.asideRaw)} -></a></p>
+      </div>
+    </aside>
+
+    <div class="body">
     <h1>${esc(copy.h1)}</h1>
     <p class="lead">${esc(copy.intro)}</p>
 
@@ -455,6 +528,7 @@ ${siblings.map((sb) => `      <li><a href="${LANGS[lang].path(sb.slug)}">${esc(s
 
     <h2>${esc(t.other)}</h2>
     <p>${t.otherBody}</p>
+    </div>
   </main>
 </body>
 </html>

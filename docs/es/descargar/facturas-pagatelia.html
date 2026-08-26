@@ -12,7 +12,33 @@
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="stylesheet" href="/style.css" />
   <style>
-    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    /* Two columns: the prose reads at its own width, and everything ABOUT the source — what it is, which
+       version, who wrote it, how to install it, and the definition itself — sits beside it instead of
+       interrupting it. One column below 1000px, sidebar FIRST, so a phone gets the install buttons
+       before the essay. */
+    .doc { max-width: 1100px; margin: 0 auto; padding: 8px 20px 64px;
+           display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 40px; align-items: start; }
+    .doc > .body { min-width: 0; }
+    .doc > aside { position: sticky; top: 78px; display: flex; flex-direction: column; gap: 14px; }
+    @media (max-width: 1000px) { .doc { grid-template-columns: 1fr; gap: 22px; }
+      .doc > aside { position: static; order: -1; } }
+    .card { border: 1px solid var(--line, #3333); border-radius: 14px; padding: 15px 16px; }
+    .card h2 { font-size: .78rem !important; text-transform: uppercase; letter-spacing: .6px;
+               color: var(--muted, #888); margin: 0 0 10px !important; }
+    .card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13.5px; }
+    .card dt { color: var(--muted, #888); }
+    .card dd { margin: 0; word-break: break-word; }
+    .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
+                 border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
+    aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+    aside .cta .btn { text-align: center; }
+    /* The definition, in full. It is the project's whole security claim — adapters are data, never code —
+       and a claim you cannot read is a claim you are asked to take on faith. */
+    .defn summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+    .defn pre { max-height: 420px; overflow: auto; margin: 10px 0 0; padding: 11px 12px; font-size: 11.5px;
+                line-height: 1.5; border-radius: 9px; background: var(--surface-2, #0001); }
+    header nav .langlink { font-weight: 700; }
     .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
     .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
     .doc h3 { font-size: 1.02rem; margin: 20px 0 6px; }
@@ -183,15 +209,151 @@
       <span class="name">Habeas</span>
       <nav>
         <a href="/">Inicio</a>
-        <a href="/es/por-que-habeas.html">Por qué Habeas</a>
+        <a href="/es/por-que-habeas.html">¿Por qué Habeas?</a>
         <a href="/sources.html">Fuentes</a>
+        <a href="/es/desarrolladores.html">Desarrolladores</a>
+        <a href="/architecture.html">Arquitectura</a>
         <a href="/privacy.html">Privacidad</a>
+        <a href="/terms.html">Términos</a>
         <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <a class="langlink" href="/download/pagatelia-invoices.html" hreflang="en" rel="alternate">EN</a>
       </nav>
     </div>
   </header>
 
   <main class="doc">
+    <aside>
+      <div class="card">
+        <h2>Sobre esta fuente</h2>
+        <dl>
+          <dt>Versión</dt><dd>2026-08-26</dd>
+          <dt>Confianza</dt><dd>community</dd>
+          <dt>Cobertura</dt><dd>ES</dd>
+          <dt>Licencia</dt><dd>CC0-1.0</dd>
+        </dl>
+        <p class="who"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella.</p>
+        <p class="note">La definición, de dominio público (CC0-1.0); el texto de esta página, CC-BY-4.0.</p>
+      </div>
+
+      <div class="cta">
+        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="pagatelia-es">Instalar en Chrome</a>
+        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="pagatelia-es">Instalar en Firefox</a>
+      </div>
+
+      <div class="card defn">
+        <h2>La definición en sí</h2>
+        <p class="note">Una fuente son datos, nunca código — esto es todo lo que hay.</p>
+        <details>
+          <summary>pagatelia-es.json</summary>
+          <pre>{
+  &quot;id&quot;: &quot;pagatelia-es&quot;,
+  &quot;name&quot;: &quot;Pagatelia — facturas&quot;,
+  &quot;service&quot;: &quot;pagatelia&quot;,
+  &quot;trust&quot;: &quot;community&quot;,
+  &quot;credit&quot;: {
+    &quot;author&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    },
+    &quot;capture&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    }
+  },
+  &quot;domain&quot;: &quot;pagatelia.com&quot;,
+  &quot;country&quot;: &quot;ES&quot;,
+  &quot;version&quot;: &quot;2026-08-26&quot;,
+  &quot;minVersion&quot;: &quot;0.7.0.48&quot;,
+  &quot;categories&quot;: [
+    &quot;tolls&quot;
+  ],
+  &quot;contributors&quot;: [
+    &quot;David Marín Carreño&quot;
+  ],
+  &quot;match&quot;: [
+    &quot;https://portal.pagatelia.com/*&quot;
+  ],
+  &quot;auth&quot;: {
+    &quot;mode&quot;: &quot;cookie&quot;,
+    &quot;replayHeaders&quot;: []
+  },
+  &quot;api&quot;: {
+    &quot;host&quot;: &quot;https://portal.pagatelia.com&quot;,
+    &quot;list&quot;: {
+      &quot;from&quot;: &quot;html&quot;,
+      &quot;path&quot;: &quot;/micuenta/consumos&quot;,
+      &quot;paging&quot;: &quot;none&quot;,
+      &quot;rows&quot;: {
+        &quot;within&quot;: &quot;grid&quot;,
+        &quot;each&quot;: &quot;&lt;tr\\b[^&gt;]*&gt;[\\s\\S]*?&lt;/tr&gt;&quot;,
+        &quot;fields&quot;: {
+          &quot;date&quot;: {
+            &quot;sel&quot;: &quot;billDate&quot;,
+            &quot;endOfMonth&quot;: true
+          },
+          &quot;number&quot;: {
+            &quot;sel&quot;: &quot;billNumber&quot;
+          },
+          &quot;total&quot;: {
+            &quot;sel&quot;: &quot;billAmount&quot;
+          },
+          &quot;billId&quot;: {
+            &quot;re&quot;: &quot;bill/download/([0-9]+)&quot;
+          }
+        }
+      }
+    },
+    &quot;pdf&quot;: {
+      &quot;path&quot;: &quot;/micuenta/bill/download/{billId}&quot;,
+      &quot;method&quot;: &quot;GET&quot;,
+      &quot;ext&quot;: &quot;pdf&quot;
+    }
+  },
+  &quot;fields&quot;: {
+    &quot;internalId&quot;: &quot;billId&quot;,
+    &quot;date&quot;: &quot;date&quot;,
+    &quot;number&quot;: &quot;number&quot;,
+    &quot;total&quot;: &quot;total&quot;
+  },
+  &quot;schema&quot;: &quot;invoice@1&quot;,
+  &quot;content&quot;: {
+    &quot;en&quot;: {
+      &quot;slug&quot;: &quot;pagatelia-invoices&quot;,
+      &quot;docs&quot;: &quot;toll invoices&quot;,
+      &quot;h1&quot;: &quot;How to download your Pagatelia invoices&quot;,
+      &quot;intro&quot;: &quot;Pagatelia builds up one invoice per period for tolls and car parks. Recovering the full history means downloading them one by one.&quot;
+    },
+    &quot;es&quot;: {
+      &quot;slug&quot;: &quot;facturas-pagatelia&quot;,
+      &quot;docs&quot;: &quot;facturas de peaje&quot;,
+      &quot;h1&quot;: &quot;Cómo descargar tus facturas de Pagatelia&quot;,
+      &quot;intro&quot;: &quot;Pagatelia acumula una factura por periodo de peajes y parkings. Recuperar el histórico completo significa descargarlas una a una.&quot;
+    }
+  },
+  &quot;brand&quot;: &quot;Pagatelia&quot;,
+  &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-08-26&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.&quot;,
+        &quot;es&quot;: &quot;Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-08&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.&quot;,
+        &quot;es&quot;: &quot;Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.&quot;
+      }
+    }
+  ]
+}</pre>
+        </details>
+        <p class="note"><a href="https://habeas-dev.github.io/sources/pagatelia-es.json" rel="noopener">Abrir el fichero original -></a></p>
+      </div>
+    </aside>
+
+    <div class="body">
     <h1>Cómo descargar tus facturas de Pagatelia</h1>
     <p class="lead">Pagatelia acumula una factura por periodo de peajes y parkings. Recuperar el histórico completo significa descargarlas una a una.</p>
 
@@ -233,8 +395,6 @@
         <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.</li>
         <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.</li>
       </ul>
-      <h2>Agradecimientos</h2>
-      <p class="credit"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella. Habeas existe porque hay gente que mapea los servicios que usa y comparte el resultado.</p>
 
     <h2>Más guías de peajes y parking</h2>
     <ul>
@@ -246,6 +406,7 @@
 
     <h2>Otras fuentes</h2>
     <p>Habeas funciona con más servicios españoles e internacionales. <a href="/sources.html">Mira el catálogo completo</a> o lee <a href="/es/por-que-habeas.html">por qué existe Habeas</a>.</p>
+    </div>
   </main>
 </body>
 </html>

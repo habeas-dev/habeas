@@ -12,7 +12,33 @@
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="stylesheet" href="/style.css" />
   <style>
-    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    /* Two columns: the prose reads at its own width, and everything ABOUT the source — what it is, which
+       version, who wrote it, how to install it, and the definition itself — sits beside it instead of
+       interrupting it. One column below 1000px, sidebar FIRST, so a phone gets the install buttons
+       before the essay. */
+    .doc { max-width: 1100px; margin: 0 auto; padding: 8px 20px 64px;
+           display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 40px; align-items: start; }
+    .doc > .body { min-width: 0; }
+    .doc > aside { position: sticky; top: 78px; display: flex; flex-direction: column; gap: 14px; }
+    @media (max-width: 1000px) { .doc { grid-template-columns: 1fr; gap: 22px; }
+      .doc > aside { position: static; order: -1; } }
+    .card { border: 1px solid var(--line, #3333); border-radius: 14px; padding: 15px 16px; }
+    .card h2 { font-size: .78rem !important; text-transform: uppercase; letter-spacing: .6px;
+               color: var(--muted, #888); margin: 0 0 10px !important; }
+    .card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13.5px; }
+    .card dt { color: var(--muted, #888); }
+    .card dd { margin: 0; word-break: break-word; }
+    .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
+                 border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
+    aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+    aside .cta .btn { text-align: center; }
+    /* The definition, in full. It is the project's whole security claim — adapters are data, never code —
+       and a claim you cannot read is a claim you are asked to take on faith. */
+    .defn summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+    .defn pre { max-height: 420px; overflow: auto; margin: 10px 0 0; padding: 11px 12px; font-size: 11.5px;
+                line-height: 1.5; border-radius: 9px; background: var(--surface-2, #0001); }
+    header nav .langlink { font-weight: 700; }
     .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
     .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
     .doc h3 { font-size: 1.02rem; margin: 20px 0 6px; }
@@ -183,15 +209,343 @@
       <span class="name">Habeas</span>
       <nav>
         <a href="/">Home</a>
-        <a href="/why-habeas.html">Why Habeas</a>
+        <a href="/why-habeas.html">Why Habeas?</a>
         <a href="/sources.html">Sources</a>
+        <a href="/developers.html">Developers</a>
+        <a href="/architecture.html">Architecture</a>
         <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
         <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <a class="langlink" href="/es/descargar/movimientos-ing.html" hreflang="es" rel="alternate">ES</a>
       </nav>
     </div>
   </header>
 
   <main class="doc">
+    <aside>
+      <div class="card">
+        <h2>About this source</h2>
+        <dl>
+          <dt>Version</dt><dd>2026-08-26</dd>
+          <dt>Trust</dt><dd>community</dd>
+          <dt>Coverage</dt><dd>ES</dd>
+          <dt>Licence</dt><dd>CC0-1.0</dd>
+        </dl>
+        <p class="who"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> recorded their own session and wrote this source definition from it.</p>
+        <p class="note">Definition in the public domain (CC0-1.0); this page’s text CC-BY-4.0.</p>
+      </div>
+
+      <div class="cta">
+        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="ing-es">Install on Chrome</a>
+        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="ing-es">Install on Firefox</a>
+      </div>
+
+      <div class="card defn">
+        <h2>The definition itself</h2>
+        <p class="note">A source is data, never code — this is the whole of it.</p>
+        <details>
+          <summary>ing-es.json</summary>
+          <pre>{
+  &quot;id&quot;: &quot;ing-es&quot;,
+  &quot;name&quot;: &quot;ING España&quot;,
+  &quot;service&quot;: &quot;ing&quot;,
+  &quot;trust&quot;: &quot;community&quot;,
+  &quot;credit&quot;: {
+    &quot;author&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    },
+    &quot;capture&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    }
+  },
+  &quot;domain&quot;: &quot;ingdirect.es&quot;,
+  &quot;country&quot;: &quot;ES&quot;,
+  &quot;version&quot;: &quot;2026-08-26&quot;,
+  &quot;minVersion&quot;: &quot;0.9.11.4&quot;,
+  &quot;categories&quot;: [
+    &quot;banking&quot;
+  ],
+  &quot;gaps&quot;: [
+    &quot;inversión&quot;
+  ],
+  &quot;throttle&quot;: {
+    &quot;minMs&quot;: 300,
+    &quot;jitterMs&quot;: 500
+  },
+  &quot;retry&quot;: {
+    &quot;status&quot;: [
+      401
+    ],
+    &quot;max&quot;: 4,
+    &quot;delayMs&quot;: 700,
+    &quot;bodyMatch&quot;: &quot;Authorization Required&quot;
+  },
+  &quot;match&quot;: [
+    &quot;https://ing.ingdirect.es/*&quot;
+  ],
+  &quot;openUrl&quot;: &quot;https://ing.ingdirect.es/app/login&quot;,
+  &quot;currency&quot;: &quot;EUR&quot;,
+  &quot;auth&quot;: {
+    &quot;mode&quot;: &quot;bearer&quot;,
+    &quot;tokenMatch&quot;: &quot;^Bearer eyJ[A-Za-z0-9._-]+$&quot;,
+    &quot;replayHeaders&quot;: [
+      &quot;authorization&quot;,
+      &quot;x-ing-extendedsessioncontext&quot;,
+      &quot;baggage&quot;
+    ],
+    &quot;pageOnly&quot;: true,
+    &quot;readyUrl&quot;: [
+      &quot;https://ing.ingdirect.es/pfm/#producto/&quot;,
+      &quot;https://ing.ingdirect.es/pfm/#overall-position&quot;
+    ]
+  },
+  &quot;api&quot;: {
+    &quot;host&quot;: &quot;https://api.ing.ingdirect.es&quot;
+  },
+  &quot;streams&quot;: [
+    {
+      &quot;id&quot;: &quot;movimientos&quot;,
+      &quot;name&quot;: &quot;Movimientos&quot;,
+      &quot;schema&quot;: &quot;transaction@1&quot;,
+      &quot;keepRaw&quot;: true,
+      &quot;api&quot;: {
+        &quot;groups&quot;: {
+          &quot;path&quot;: &quot;/position-keeping&quot;,
+          &quot;itemsPath&quot;: &quot;products&quot;,
+          &quot;fields&quot;: {
+            &quot;id&quot;: &quot;uuid&quot;,
+            &quot;name&quot;: &quot;commercialName&quot;,
+            &quot;type&quot;: &quot;type&quot;,
+            &quot;iban&quot;: &quot;identifiers[type=PRODUCT_NUMBER].value&quot;,
+            &quot;currency&quot;: &quot;denominationCurrency&quot;
+          },
+          &quot;mask&quot;: [
+            &quot;iban&quot;
+          ]
+        },
+        &quot;list&quot;: {
+          &quot;path&quot;: &quot;/v2/products/{group.id}/transactions&quot;,
+          &quot;paging&quot;: &quot;offset&quot;,
+          &quot;offsetParam&quot;: &quot;offset&quot;,
+          &quot;offsetStep&quot;: 100,
+          &quot;itemsPath&quot;: &quot;transactions&quot;,
+          &quot;window&quot;: &quot;89d&quot;,
+          &quot;maxAgeDays&quot;: 89,
+          &quot;range&quot;: {
+            &quot;from&quot;: &quot;fromDate&quot;,
+            &quot;to&quot;: &quot;toDate&quot;,
+            &quot;format&quot;: &quot;date&quot;
+          },
+          &quot;params&quot;: {
+            &quot;limit&quot;: 100,
+            &quot;filterEru&quot;: &quot;false&quot;
+          },
+          &quot;idOverride&quot;: {
+            &quot;when&quot;: {
+              &quot;field&quot;: &quot;status&quot;,
+              &quot;present&quot;: true
+            },
+            &quot;template&quot;: &quot;card|{transactionDate}|{amount}|{transactionId.productId}&quot;
+          }
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;transactionLocalUUID&quot;,
+        &quot;date&quot;: &quot;transactionDate&quot;,
+        &quot;amount&quot;: &quot;amount&quot;,
+        &quot;description&quot;: &quot;description&quot;,
+        &quot;type&quot;: &quot;transactionCode&quot;,
+        &quot;account&quot;: &quot;{group.iban}&quot;,
+        &quot;balanceAfter&quot;: &quot;balance&quot;
+      },
+      &quot;normalize&quot;: {
+        &quot;counterparty&quot;: {
+          &quot;from&quot;: &quot;description&quot;,
+          &quot;flags&quot;: &quot;i&quot;,
+          &quot;re&quot;: [
+            &quot;(?:enviad[oa] a|recibid[oa] de|a favor de|domiciliaci[oó]n de)\\s+(.+)$&quot;,
+            &quot;^N[oó]mina recibida\\s+(.+)$&quot;,
+            &quot;^Recibo\\s+(.+?)\\s*(?:·.*)?$&quot;
+          ]
+        }
+      }
+    },
+    {
+      &quot;id&quot;: &quot;informe&quot;,
+      &quot;name&quot;: &quot;Extracto por cuenta&quot;,
+      &quot;schema&quot;: &quot;invoice@1&quot;,
+      &quot;api&quot;: {
+        &quot;groups&quot;: {
+          &quot;path&quot;: &quot;/position-keeping&quot;,
+          &quot;itemsPath&quot;: &quot;products&quot;,
+          &quot;fields&quot;: {
+            &quot;id&quot;: &quot;uuid&quot;,
+            &quot;name&quot;: &quot;commercialName&quot;,
+            &quot;type&quot;: &quot;type&quot;,
+            &quot;iban&quot;: &quot;identifiers[type=PRODUCT_NUMBER].value&quot;
+          },
+          &quot;mask&quot;: [
+            &quot;iban&quot;
+          ]
+        },
+        &quot;list&quot;: {
+          &quot;paging&quot;: &quot;synthetic&quot;,
+          &quot;synthetic&quot;: {
+            &quot;each&quot;: &quot;group-months&quot;
+          },
+          &quot;maxAgeDays&quot;: 89
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;{group.id}-{period}&quot;,
+        &quot;date&quot;: &quot;{date}&quot;,
+        &quot;number&quot;: &quot;{period}&quot;,
+        &quot;account&quot;: &quot;{group.iban}&quot;,
+        &quot;description&quot;: &quot;Extracto {group.name} {period}&quot;
+      },
+      &quot;formats&quot;: [
+        {
+          &quot;id&quot;: &quot;pdf&quot;,
+          &quot;name&quot;: &quot;PDF&quot;,
+          &quot;api&quot;: {
+            &quot;pdf&quot;: {
+              &quot;path&quot;: &quot;/v2/products/{group.id}/transactions/report?fromDate={fromDate}&amp;toDate={toDate}&amp;limit=1000&amp;filterEru=false&amp;reportType=pdf&quot;,
+              &quot;method&quot;: &quot;GET&quot;,
+              &quot;ext&quot;: &quot;pdf&quot;
+            }
+          }
+        },
+        {
+          &quot;id&quot;: &quot;excel&quot;,
+          &quot;name&quot;: &quot;Excel&quot;,
+          &quot;api&quot;: {
+            &quot;pdf&quot;: {
+              &quot;path&quot;: &quot;/v2/products/{group.id}/transactions/report?fromDate={fromDate}&amp;toDate={toDate}&amp;limit=1000&amp;filterEru=false&amp;reportType=xls&quot;,
+              &quot;method&quot;: &quot;GET&quot;,
+              &quot;ext&quot;: &quot;xls&quot;
+            }
+          }
+        }
+      ]
+    },
+    {
+      &quot;id&quot;: &quot;extracto-mensual&quot;,
+      &quot;name&quot;: &quot;Extracto integrado mensual&quot;,
+      &quot;schema&quot;: &quot;invoice@1&quot;,
+      &quot;api&quot;: {
+        &quot;host&quot;: &quot;https://ing.ingdirect.es&quot;,
+        &quot;list&quot;: {
+          &quot;paging&quot;: &quot;synthetic&quot;,
+          &quot;synthetic&quot;: {
+            &quot;each&quot;: &quot;months&quot;
+          },
+          &quot;maxAgeDays&quot;: 89
+        },
+        &quot;pdf&quot;: {
+          &quot;path&quot;: &quot;/genoma_api/rest/products/statement?year={year}&amp;month={month}&quot;,
+          &quot;method&quot;: &quot;GET&quot;,
+          &quot;ext&quot;: &quot;pdf&quot;
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;{period}&quot;,
+        &quot;date&quot;: &quot;{date}&quot;,
+        &quot;number&quot;: &quot;{period}&quot;,
+        &quot;description&quot;: &quot;Extracto integrado {period}&quot;
+      }
+    }
+  ],
+  &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-08-26&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.&quot;,
+        &quot;es&quot;: &quot;Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-09&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;The guide now says that ING serves only about 90 days of history, and that it applies this strictly on a current account. Somebody searching for \&quot;download my ING statements\&quot; expects their full history; finding three months with no warning is worse than having no page at all. Verified against a real account: with the trimming of the month that straddles the window (extension 0.9.12), that month's statements now download.&quot;,
+        &quot;es&quot;: &quot;La guía dice ya que ING solo sirve unos 90 días de histórico y que en cuenta corriente lo aplica de forma estricta. Quien busca \&quot;descargar mis extractos de ING\&quot; espera su histórico completo; encontrarse tres meses sin aviso es peor que no tener página. Verificado contra una cuenta real: con el recorte del mes que cruza la ventana (extensión 0.9.12) los extractos de ese mes ya se descargan.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-08.2&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Window down to 89 days, not 90: ING's limit counts today, so the oldest valid day is today−89 and asking for today−90 is off by one. Requires extension 0.9.11.4, which also trims the monthly report's fromDate to the window instead of asking from the 1st of the month.&quot;,
+        &quot;es&quot;: &quot;Ventana a 89 días (no 90): el límite de ING cuenta el día de hoy, así que el día más antiguo válido es hoy−89 y pedir hoy−90 se sale por uno. Requiere extensión 0.9.11.4, que además recorta el fromDate del informe mensual a la ventana en vez de pedir desde el día 1 del mes.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-08.1&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.&quot;,
+        &quot;es&quot;: &quot;Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-08&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Fixes `gaps`: card movements are extracted already (see 2026-07-23.3), so only investments remain out of coverage. The previous entry was stale and was being published as a limitation.&quot;,
+        &quot;es&quot;: &quot;Corrige `gaps`: los movimientos de tarjeta ya se extraen (ver 2026-07-23.3), así que solo queda inversión fuera de cobertura. El dato anterior era obsoleto y se publicaba como limitación.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-31.1&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Fix intermittent 401 'Authorization Required' (ING Webserver edge) that aborted the whole sync — most often at the account-enumeration step (/position-keeping). Verified via mitmproxy that the SAME authenticated request (same bearer, same 36 session cookies, browser-agnostic) returns 401 one call and 200 the next — a load-balancer/pool routing race (dual lb-3-p-288 / lb-4-p-288 + x-pool-from-dc cookies). ING's own SPA rides it out by retrying; Habeas now does the same via a bounded retry (retry: 401 ×4, 700ms), gated on the raw edge-HTML body so a genuine token-expiry (JSON) 401 still surfaces for re-login. Also replay `baggage` to mirror the SPA. Needs extension &gt;= 0.9.7 (declarative retry in netFetch).&quot;,
+        &quot;es&quot;: &quot;Corrige el 401 'Authorization Required' intermitente (borde del Webserver de ING) que abortaba la sincronización entera — casi siempre al enumerar cuentas (/position-keeping). Verificado con mitmproxy: la MISMA petición autenticada (mismo bearer, mismas 36 cookies de sesión, con independencia del navegador) devuelve 401 en una llamada y 200 en la siguiente — una carrera de enrutado en el balanceador (dual lb-3-p-288 / lb-4-p-288 más cookies x-pool-from-dc). La propia SPA de ING lo sortea reintentando; Habeas hace ahora lo mismo con un reintento acotado (retry: 401 ×4, 700 ms), condicionado al cuerpo HTML crudo del borde para que un 401 por caducidad real del token (JSON) siga saliendo a la luz y se pueda volver a entrar. Además replica `baggage` para imitar a la SPA. Necesita extensión &gt;= 0.9.7 (reintento declarativo en netFetch).&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-23.3&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Fix credit-card duplicates WITHOUT hiding real movements. A current-month card purchase is confirmed but stays \&quot;Pendiente de liquidar\&quot; until the monthly settlement, and ING re-lists a still-pending charge with a fresh transactionLocalUUID every sync → duplicates. Card movements (items with a `status`) now key by a stable natural id {date|amount|productId} PLUS a per-import ordinal (list.idOverride): two genuinely-distinct charges sharing (date,amount,productId) arrive together in one import → they get ordinals 0,1 and stay separate; a churning re-list of one charge is always ordinal 0 → dedupes; the pending→settled transition dedupes too. Account movements (no status) keep their stable UUID. Needs extension &gt;= 0.7.0.25.&quot;,
+        &quot;es&quot;: &quot;Corrige los duplicados de tarjeta SIN ocultar movimientos reales. Una compra con tarjeta del mes en curso está confirmada pero permanece «Pendiente de liquidar» hasta la liquidación mensual, e ING vuelve a listar el cargo pendiente con un transactionLocalUUID nuevo en cada sincronización → duplicados. Los movimientos de tarjeta (elementos con `status`) se indexan ahora por una clave natural estable {date|amount|productId} MÁS un ordinal por importación (list.idOverride): dos cargos genuinamente distintos que comparten (fecha, importe, producto) llegan juntos en una importación → reciben los ordinales 0 y 1 y se mantienen separados; un mismo cargo relistado una y otra vez es siempre el ordinal 0 → deduplica; y la transición de pendiente a liquidado también deduplica. Los movimientos de cuenta (sin status) conservan su UUID estable. Necesita extensión &gt;= 0.7.0.25.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-16&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Map the movement's running balance to record.balanceAfter (promoted to a canonical field for the Cuéntamo contract). Requires extension &gt;= 0.3.0.24.&quot;,
+        &quot;es&quot;: &quot;Mapea el saldo tras el movimiento a record.balanceAfter (promovido a campo canónico para el contrato del consumidor). Requiere extensión &gt;= 0.3.0.24.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-14&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Initial: movements (transactions), per-account monthly statements (PDF/Excel), and the integrated monthly statement (PDF). Grouped by account, 90-day window.&quot;,
+        &quot;es&quot;: &quot;Inicial: movimientos (transactions), extractos mensuales por cuenta (PDF/Excel) y el extracto mensual integrado (PDF). Agrupada por cuenta, ventana de 90 días.&quot;
+      }
+    }
+  ],
+  &quot;content&quot;: {
+    &quot;en&quot;: {
+      &quot;slug&quot;: &quot;ing-transactions&quot;,
+      &quot;docs&quot;: &quot;transactions and statements&quot;,
+      &quot;h1&quot;: &quot;How to download your ING transactions and statements&quot;,
+      &quot;intro&quot;: &quot;ING lets you view your transactions and download monthly statements, but one account and one month at a time. Pulling a whole year, or several accounts together, is repetitive manual work.&quot;,
+      &quot;note&quot;: &quot;ING serves a limited history — around 90 days — and enforces it strictly on current accounts, so Habeas brings that window rather than years back: the sooner you start, the more you keep. If you hold several accounts, it lets you choose which ones the export covers and remembers that choice between syncs.&quot;
+    },
+    &quot;es&quot;: {
+      &quot;slug&quot;: &quot;movimientos-ing&quot;,
+      &quot;docs&quot;: &quot;movimientos y extractos&quot;,
+      &quot;h1&quot;: &quot;Cómo descargar tus movimientos y extractos de ING&quot;,
+      &quot;intro&quot;: &quot;ING te deja ver tus movimientos y descargar extractos mensuales, pero cuenta por cuenta y mes a mes. Reunir un año entero, o varias cuentas a la vez, es un trabajo manual repetitivo.&quot;,
+      &quot;note&quot;: &quot;ING sirve un histórico limitado —unos 90 días— y en las cuentas corrientes lo aplica de forma estricta, así que Habeas trae ese periodo, no años atrás: cuanto antes empieces, más conservas. Si tienes varias cuentas, te deja elegir cuáles entran en la exportación y recuerda esa selección entre sincronizaciones.&quot;
+    }
+  },
+  &quot;brand&quot;: &quot;ING&quot;
+}</pre>
+        </details>
+        <p class="note"><a href="https://habeas-dev.github.io/sources/ing-es.json" rel="noopener">Open the raw file -></a></p>
+      </div>
+    </aside>
+
+    <div class="body">
     <h1>How to download your ING transactions and statements</h1>
     <p class="lead">ING lets you view your transactions and download monthly statements, but one account and one month at a time. Pulling a whole year, or several accounts together, is repetitive manual work.</p>
 
@@ -241,8 +595,6 @@
         <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Fixes `gaps`: card movements are extracted already (see 2026-07-23.3), so only investments remain out of coverage. The previous entry was stale and was being published as a limitation.</li>
       </ul>
       <p class="lead"><a href="/sources.html#ing-es">See the full history in the catalog →</a></p>
-      <h2>Credit</h2>
-      <p class="credit"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> recorded their own session and wrote this source definition from it. Habeas exists because people map the services they use and share the result.</p>
 
     <h2>More banks, cards &amp; investments guides</h2>
     <ul>
@@ -261,6 +613,7 @@
 
     <h2>Other sources</h2>
     <p>Habeas works with more Spanish and international services. <a href="/sources.html">See the full catalog</a> or read <a href="/why-habeas.html">why Habeas exists</a>.</p>
+    </div>
   </main>
 </body>
 </html>

@@ -12,7 +12,33 @@
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="stylesheet" href="/style.css" />
   <style>
-    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    /* Two columns: the prose reads at its own width, and everything ABOUT the source — what it is, which
+       version, who wrote it, how to install it, and the definition itself — sits beside it instead of
+       interrupting it. One column below 1000px, sidebar FIRST, so a phone gets the install buttons
+       before the essay. */
+    .doc { max-width: 1100px; margin: 0 auto; padding: 8px 20px 64px;
+           display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 40px; align-items: start; }
+    .doc > .body { min-width: 0; }
+    .doc > aside { position: sticky; top: 78px; display: flex; flex-direction: column; gap: 14px; }
+    @media (max-width: 1000px) { .doc { grid-template-columns: 1fr; gap: 22px; }
+      .doc > aside { position: static; order: -1; } }
+    .card { border: 1px solid var(--line, #3333); border-radius: 14px; padding: 15px 16px; }
+    .card h2 { font-size: .78rem !important; text-transform: uppercase; letter-spacing: .6px;
+               color: var(--muted, #888); margin: 0 0 10px !important; }
+    .card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13.5px; }
+    .card dt { color: var(--muted, #888); }
+    .card dd { margin: 0; word-break: break-word; }
+    .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
+                 border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
+    aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+    aside .cta .btn { text-align: center; }
+    /* The definition, in full. It is the project's whole security claim — adapters are data, never code —
+       and a claim you cannot read is a claim you are asked to take on faith. */
+    .defn summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+    .defn pre { max-height: 420px; overflow: auto; margin: 10px 0 0; padding: 11px 12px; font-size: 11.5px;
+                line-height: 1.5; border-radius: 9px; background: var(--surface-2, #0001); }
+    header nav .langlink { font-weight: 700; }
     .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
     .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
     .doc h3 { font-size: 1.02rem; margin: 20px 0 6px; }
@@ -183,15 +209,168 @@
       <span class="name">Habeas</span>
       <nav>
         <a href="/">Inicio</a>
-        <a href="/es/por-que-habeas.html">Por qué Habeas</a>
+        <a href="/es/por-que-habeas.html">¿Por qué Habeas?</a>
         <a href="/sources.html">Fuentes</a>
+        <a href="/es/desarrolladores.html">Desarrolladores</a>
+        <a href="/architecture.html">Arquitectura</a>
         <a href="/privacy.html">Privacidad</a>
+        <a href="/terms.html">Términos</a>
         <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <a class="langlink" href="/download/caixabank-consumer-statements.html" hreflang="en" rel="alternate">EN</a>
       </nav>
     </div>
   </header>
 
   <main class="doc">
+    <aside>
+      <div class="card">
+        <h2>Sobre esta fuente</h2>
+        <dl>
+          <dt>Versión</dt><dd>2026-08-26</dd>
+          <dt>Confianza</dt><dd>first-party</dd>
+          <dt>Cobertura</dt><dd>ES</dd>
+          <dt>Licencia</dt><dd>CC0-1.0</dd>
+        </dl>
+        <p class="who"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella.</p>
+        <p class="note">La definición, de dominio público (CC0-1.0); el texto de esta página, CC-BY-4.0.</p>
+      </div>
+
+      <div class="cta">
+        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="caixabank-consumer-es">Instalar en Chrome</a>
+        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="caixabank-consumer-es">Instalar en Firefox</a>
+      </div>
+
+      <div class="card defn">
+        <h2>La definición en sí</h2>
+        <p class="note">Una fuente son datos, nunca código — esto es todo lo que hay.</p>
+        <details>
+          <summary>caixabank-consumer-es.json</summary>
+          <pre>{
+  &quot;id&quot;: &quot;caixabank-consumer-es&quot;,
+  &quot;name&quot;: &quot;CaixaBank Consumer — extractos&quot;,
+  &quot;service&quot;: &quot;caixabank-consumer&quot;,
+  &quot;trust&quot;: &quot;first-party&quot;,
+  &quot;credit&quot;: {
+    &quot;author&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    },
+    &quot;capture&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    }
+  },
+  &quot;domain&quot;: &quot;caixabankconsumer.com&quot;,
+  &quot;country&quot;: &quot;ES&quot;,
+  &quot;currency&quot;: &quot;EUR&quot;,
+  &quot;categories&quot;: [
+    &quot;card&quot;
+  ],
+  &quot;crossDomainHosts&quot;: [
+    &quot;api.caixabankpc.com&quot;
+  ],
+  &quot;match&quot;: [
+    &quot;https://clientes.caixabankconsumer.com/*&quot;
+  ],
+  &quot;openUrl&quot;: &quot;https://clientes.caixabankconsumer.com/cpc/tarjetas&quot;,
+  &quot;auth&quot;: {
+    &quot;mode&quot;: &quot;bearer&quot;,
+    &quot;tokenMatch&quot;: &quot;^Bearer [0-9a-f-]{20,}$&quot;,
+    &quot;replayHeaders&quot;: [
+      &quot;authorization&quot;
+    ],
+    &quot;context&quot;: [
+      {
+        &quot;name&quot;: &quot;dni&quot;,
+        &quot;from&quot;: &quot;url&quot;,
+        &quot;match&quot;: &quot;/posicionGlobal/es/([0-9A-Za-z]+)&quot;
+      }
+    ],
+    &quot;loginUrl&quot;: &quot;https://clientes.caixabankconsumer.com/cpc/login&quot;
+  },
+  &quot;api&quot;: {
+    &quot;host&quot;: &quot;https://api.caixabankpc.com&quot;,
+    &quot;groups&quot;: {
+      &quot;path&quot;: &quot;/cpc/v1.0/portalCliente/posicionGlobal/es/{ctx.dni}&quot;,
+      &quot;itemsPath&quot;: &quot;listaProductos&quot;,
+      &quot;fields&quot;: {
+        &quot;id&quot;: &quot;numeroContrato&quot;,
+        &quot;numeroContrato&quot;: &quot;numeroContrato&quot;,
+        &quot;marca&quot;: &quot;marca&quot;,
+        &quot;name&quot;: &quot;marcaDescripcion&quot;,
+        &quot;card&quot;: &quot;numeroTarjeta&quot;
+      },
+      &quot;mask&quot;: [
+        &quot;card&quot;
+      ]
+    },
+    &quot;list&quot;: {
+      &quot;path&quot;: &quot;/cpc/v1.0/crm365/contratos/tarjetas/extractos/consultaonline&quot;,
+      &quot;method&quot;: &quot;POST&quot;,
+      &quot;contentType&quot;: &quot;application/json&quot;,
+      &quot;paging&quot;: &quot;none&quot;,
+      &quot;itemsPath&quot;: &quot;Extractos&quot;,
+      &quot;window&quot;: &quot;5y&quot;,
+      &quot;body&quot;: &quot;{\&quot;Contrato\&quot;:\&quot;{group.numeroContrato}\&quot;,\&quot;DNI\&quot;:\&quot;{ctx.dni}\&quot;,\&quot;Marca\&quot;:\&quot;{group.marca}\&quot;,\&quot;FechaDesde\&quot;:\&quot;{fromDate}\&quot;,\&quot;FechaHasta\&quot;:\&quot;{toDate}\&quot;,\&quot;Idioma\&quot;:\&quot;es\&quot;}&quot;
+    },
+    &quot;pdf&quot;: {
+      &quot;urlField&quot;: &quot;Url&quot;
+    }
+  },
+  &quot;fields&quot;: {
+    &quot;internalId&quot;: &quot;Codigo&quot;,
+    &quot;date&quot;: &quot;FechaHasta&quot;,
+    &quot;number&quot;: &quot;Codigo&quot;,
+    &quot;issuer&quot;: &quot;Marca&quot;
+  },
+  &quot;schema&quot;: &quot;invoice@1&quot;,
+  &quot;minVersion&quot;: &quot;0.1.35&quot;,
+  &quot;version&quot;: &quot;2026-08-26&quot;,
+  &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-08-26&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.&quot;,
+        &quot;es&quot;: &quot;Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-08&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.&quot;,
+        &quot;es&quot;: &quot;Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-08&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Initial version: statements (cross-domain api.caixabankpc.com), DNI capture, PDF by absolute URL.&quot;,
+        &quot;es&quot;: &quot;Versión inicial: extractos (cross-domain api.caixabankpc.com), captura de DNI, PDF por URL absoluta.&quot;
+      }
+    }
+  ],
+  &quot;content&quot;: {
+    &quot;en&quot;: {
+      &quot;slug&quot;: &quot;caixabank-consumer-statements&quot;,
+      &quot;docs&quot;: &quot;card statements&quot;,
+      &quot;h1&quot;: &quot;How to download your CaixaBank Consumer statements&quot;,
+      &quot;intro&quot;: &quot;Your CaixaBank Consumer card statements are available as PDFs, one per period, with no combined download.&quot;
+    },
+    &quot;es&quot;: {
+      &quot;slug&quot;: &quot;extractos-caixabank-consumer&quot;,
+      &quot;docs&quot;: &quot;extractos de tarjeta&quot;,
+      &quot;h1&quot;: &quot;Cómo descargar tus extractos de CaixaBank Consumer&quot;,
+      &quot;intro&quot;: &quot;Los extractos de tu tarjeta de CaixaBank Consumer están disponibles en PDF, uno por periodo, sin opción de descarga conjunta.&quot;
+    }
+  },
+  &quot;brand&quot;: &quot;CaixaBank Consumer&quot;
+}</pre>
+        </details>
+        <p class="note"><a href="https://habeas-dev.github.io/sources/caixabank-consumer-es.json" rel="noopener">Abrir el fichero original -></a></p>
+      </div>
+    </aside>
+
+    <div class="body">
     <h1>Cómo descargar tus extractos de CaixaBank Consumer</h1>
     <p class="lead">Los extractos de tu tarjeta de CaixaBank Consumer están disponibles en PDF, uno por periodo, sin opción de descarga conjunta.</p>
 
@@ -234,8 +413,6 @@
         <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.</li>
         <li class="rev"><time datetime="2026-07-08">2026-07-08</time> — Versión inicial: extractos (cross-domain api.caixabankpc.com), captura de DNI, PDF por URL absoluta.</li>
       </ul>
-      <h2>Agradecimientos</h2>
-      <p class="credit"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella. Habeas existe porque hay gente que mapea los servicios que usa y comparte el resultado.</p>
 
     <h2>Más guías de bancos, tarjetas e inversión</h2>
     <ul>
@@ -254,6 +431,7 @@
 
     <h2>Otras fuentes</h2>
     <p>Habeas funciona con más servicios españoles e internacionales. <a href="/sources.html">Mira el catálogo completo</a> o lee <a href="/es/por-que-habeas.html">por qué existe Habeas</a>.</p>
+    </div>
   </main>
 </body>
 </html>

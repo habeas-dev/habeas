@@ -12,7 +12,33 @@
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="stylesheet" href="/style.css" />
   <style>
-    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    /* Two columns: the prose reads at its own width, and everything ABOUT the source — what it is, which
+       version, who wrote it, how to install it, and the definition itself — sits beside it instead of
+       interrupting it. One column below 1000px, sidebar FIRST, so a phone gets the install buttons
+       before the essay. */
+    .doc { max-width: 1100px; margin: 0 auto; padding: 8px 20px 64px;
+           display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 40px; align-items: start; }
+    .doc > .body { min-width: 0; }
+    .doc > aside { position: sticky; top: 78px; display: flex; flex-direction: column; gap: 14px; }
+    @media (max-width: 1000px) { .doc { grid-template-columns: 1fr; gap: 22px; }
+      .doc > aside { position: static; order: -1; } }
+    .card { border: 1px solid var(--line, #3333); border-radius: 14px; padding: 15px 16px; }
+    .card h2 { font-size: .78rem !important; text-transform: uppercase; letter-spacing: .6px;
+               color: var(--muted, #888); margin: 0 0 10px !important; }
+    .card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13.5px; }
+    .card dt { color: var(--muted, #888); }
+    .card dd { margin: 0; word-break: break-word; }
+    .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
+                 border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
+    aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+    aside .cta .btn { text-align: center; }
+    /* The definition, in full. It is the project's whole security claim — adapters are data, never code —
+       and a claim you cannot read is a claim you are asked to take on faith. */
+    .defn summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+    .defn pre { max-height: 420px; overflow: auto; margin: 10px 0 0; padding: 11px 12px; font-size: 11.5px;
+                line-height: 1.5; border-radius: 9px; background: var(--surface-2, #0001); }
+    header nav .langlink { font-weight: 700; }
     .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
     .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
     .doc h3 { font-size: 1.02rem; margin: 20px 0 6px; }
@@ -183,15 +209,305 @@
       <span class="name">Habeas</span>
       <nav>
         <a href="/">Inicio</a>
-        <a href="/es/por-que-habeas.html">Por qué Habeas</a>
+        <a href="/es/por-que-habeas.html">¿Por qué Habeas?</a>
         <a href="/sources.html">Fuentes</a>
+        <a href="/es/desarrolladores.html">Desarrolladores</a>
+        <a href="/architecture.html">Arquitectura</a>
         <a href="/privacy.html">Privacidad</a>
+        <a href="/terms.html">Términos</a>
         <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <a class="langlink" href="/download/financiera-el-corte-ingles-statements.html" hreflang="en" rel="alternate">EN</a>
       </nav>
     </div>
   </header>
 
   <main class="doc">
+    <aside>
+      <div class="card">
+        <h2>Sobre esta fuente</h2>
+        <dl>
+          <dt>Versión</dt><dd>2026-08-26</dd>
+          <dt>Confianza</dt><dd>community</dd>
+          <dt>Cobertura</dt><dd>ES</dd>
+          <dt>Licencia</dt><dd>CC0-1.0</dd>
+        </dl>
+        <p class="who"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella.</p>
+        <p class="note">La definición, de dominio público (CC0-1.0); el texto de esta página, CC-BY-4.0.</p>
+      </div>
+
+      <div class="cta">
+        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="financiera-elcorteingles-es">Instalar en Chrome</a>
+        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="financiera-elcorteingles-es">Instalar en Firefox</a>
+      </div>
+
+      <div class="card defn">
+        <h2>La definición en sí</h2>
+        <p class="note">Una fuente son datos, nunca código — esto es todo lo que hay.</p>
+        <details>
+          <summary>financiera-elcorteingles-es.json</summary>
+          <pre>{
+  &quot;id&quot;: &quot;financiera-elcorteingles-es&quot;,
+  &quot;name&quot;: &quot;Financiera El Corte Inglés&quot;,
+  &quot;service&quot;: &quot;financiera-elcorteingles&quot;,
+  &quot;trust&quot;: &quot;community&quot;,
+  &quot;credit&quot;: {
+    &quot;author&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    },
+    &quot;capture&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    }
+  },
+  &quot;domain&quot;: &quot;financieraelcorteingles.es&quot;,
+  &quot;country&quot;: &quot;ES&quot;,
+  &quot;categories&quot;: [
+    &quot;card&quot;,
+    &quot;loan&quot;
+  ],
+  &quot;version&quot;: &quot;2026-08-26&quot;,
+  &quot;minVersion&quot;: &quot;0.5.0&quot;,
+  &quot;keepRaw&quot;: true,
+  &quot;contributors&quot;: [
+    &quot;David Marín&quot;
+  ],
+  &quot;match&quot;: [
+    &quot;https://www.financieraelcorteingles.es/*&quot;
+  ],
+  &quot;openUrl&quot;: &quot;https://www.financieraelcorteingles.es/dashboard/&quot;,
+  &quot;auth&quot;: {
+    &quot;mode&quot;: &quot;cookie&quot;,
+    &quot;replayHeaders&quot;: [
+      &quot;authorization&quot;
+    ],
+    &quot;capturePaths&quot;: [
+      &quot;/dashboard/&quot;
+    ]
+  },
+  &quot;api&quot;: {
+    &quot;host&quot;: &quot;https://www.financieraelcorteingles.es&quot;,
+    &quot;groups&quot;: {
+      &quot;path&quot;: &quot;/dashboard/user&quot;,
+      &quot;itemsPath&quot;: &quot;userEciCardList&quot;,
+      &quot;fields&quot;: {
+        &quot;id&quot;: &quot;contract_number&quot;,
+        &quot;label&quot;: &quot;cardLabel&quot;,
+        &quot;mask&quot;: &quot;masked_pan&quot;,
+        &quot;pan&quot;: &quot;encryptedPan&quot;
+      }
+    }
+  },
+  &quot;streams&quot;: [
+    {
+      &quot;id&quot;: &quot;movimientos&quot;,
+      &quot;schema&quot;: &quot;transaction@1&quot;,
+      &quot;categories&quot;: [
+        &quot;card&quot;
+      ],
+      &quot;api&quot;: {
+        &quot;list&quot;: {
+          &quot;path&quot;: &quot;/dashboard/api/payments/ms-evolve-cards-transactions/v3/cards/transactions-global/movements-close&quot;,
+          &quot;params&quot;: {
+            &quot;operationType&quot;: &quot;A&quot;,
+            &quot;accountNumber&quot;: &quot;{group.id}&quot;
+          },
+          &quot;paramSets&quot;: [
+            {
+              &quot;monthFilter&quot;: &quot;N&quot;,
+              &quot;paginationType&quot;: &quot;N&quot;
+            },
+            {
+              &quot;monthFilter&quot;: &quot;A&quot;,
+              &quot;paginationType&quot;: &quot;A&quot;
+            }
+          ],
+          &quot;itemsPath&quot;: &quot;movements&quot;,
+          &quot;headers&quot;: {
+            &quot;eci-custom-encrypted-pan&quot;: &quot;{group.pan}&quot;
+          }
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;invoiceNumber&quot;,
+        &quot;date&quot;: &quot;operationDate&quot;,
+        &quot;amount&quot;: &quot;amount&quot;,
+        &quot;description&quot;: &quot;company&quot;,
+        &quot;counterparty&quot;: &quot;center&quot;,
+        &quot;type&quot;: &quot;type&quot;
+      }
+    },
+    {
+      &quot;id&quot;: &quot;aplazamientos&quot;,
+      &quot;schema&quot;: &quot;transaction@1&quot;,
+      &quot;categories&quot;: [
+        &quot;loan&quot;
+      ],
+      &quot;api&quot;: {
+        &quot;list&quot;: {
+          &quot;path&quot;: &quot;/dashboard/api/payments/ms-evolve-customers-contracts/v2/card-contracts/{group.id}/financing-purchases&quot;,
+          &quot;params&quot;: {
+            &quot;page_number&quot;: &quot;0&quot;,
+            &quot;page_size&quot;: &quot;100&quot;
+          },
+          &quot;headers&quot;: {
+            &quot;eci-custom-encrypted-pan&quot;: &quot;{group.pan}&quot;
+          },
+          &quot;itemsPath&quot;: &quot;financing_data&quot;,
+          &quot;paging&quot;: &quot;none&quot;
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;identifier&quot;,
+        &quot;date&quot;: &quot;start_date&quot;,
+        &quot;type&quot;: &quot;financing_type&quot;
+      }
+    },
+    {
+      &quot;id&quot;: &quot;extractos&quot;,
+      &quot;schema&quot;: &quot;invoice@1&quot;,
+      &quot;categories&quot;: [
+        &quot;card&quot;
+      ],
+      &quot;api&quot;: {
+        &quot;list&quot;: {
+          &quot;path&quot;: &quot;/dashboard/api/payments/ms-evolve-documents/v1/contracts/{group.id}/shopping-summaries&quot;,
+          &quot;params&quot;: {
+            &quot;date_bill&quot;: &quot;{monthEnd:DD/MM/YYYY}&quot;
+          },
+          &quot;headers&quot;: {
+            &quot;eci-custom-encrypted-pan&quot;: &quot;{group.pan}&quot;
+          },
+          &quot;itemsPath&quot;: &quot;previous_months_shopping_summaries&quot;,
+          &quot;paging&quot;: &quot;none&quot;
+        },
+        &quot;pdf&quot;: {
+          &quot;path&quot;: &quot;/dashboard/api/payments/ms-evolve-documents/v1/contracts/{group.id}/shopping-summaries/generate-file?datePurchase={date:DD/MM/YYYY}&quot;,
+          &quot;method&quot;: &quot;POST&quot;,
+          &quot;body&quot;: &quot;{}&quot;,
+          &quot;contentType&quot;: &quot;application/json&quot;,
+          &quot;headers&quot;: {
+            &quot;eci-custom-encrypted-pan&quot;: &quot;{group.pan}&quot;
+          },
+          &quot;base64Field&quot;: &quot;file&quot;,
+          &quot;ext&quot;: &quot;pdf&quot;
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;date&quot;,
+        &quot;date&quot;: &quot;date&quot;,
+        &quot;number&quot;: &quot;description&quot;
+      }
+    }
+  ],
+  &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-08-26&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.&quot;,
+        &quot;es&quot;: &quot;Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-08&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.&quot;,
+        &quot;es&quot;: &quot;Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.3&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;First publish to the live registry. Requires extension &gt;= 0.5.0 (the milestone that ships declarative capturePaths, the login-safe scoped token observer, and the {date:FORMAT} document token this source relies on). Verified end-to-end by the contributor.&quot;,
+        &quot;es&quot;: &quot;Primera publicación en el registro vivo. Requiere extensión &gt;= 0.5.0 (el hito que incorpora capturePaths declarativo, el observador de token acotado y seguro ante el login, y el token de documento {date:FORMAT} del que depende esta fuente). Verificada de extremo a extremo por quien la aportó.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.2&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Fix the statement PDF datePurchase format: the generate-file endpoint wants DD/MM/YYYY (e.g. 01/09/2025), but on a store re-download the date falls back to the normalized ISO value (2025-09-01), which the server rejected with HTTP 400. Now formatted explicitly via {date:DD/MM/YYYY}. Requires extension &gt;= 0.4.1.15.&quot;,
+        &quot;es&quot;: &quot;Corrige el formato de datePurchase del PDF de extracto: el endpoint generate-file espera DD/MM/YYYY (p. ej. 01/09/2025), pero al re-descargar desde el archivo la fecha volvía al valor ISO normalizado (2025-09-01), que el servidor rechazaba con HTTP 400. Ahora se formatea explícitamente con {date:DD/MM/YYYY}. Requiere extensión &gt;= 0.4.1.15.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.1&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Declare auth.capturePaths = ['/dashboard/'] so the token is only captured from the authenticated dashboard area (where it first appears, after login) and the header observer never engages with the sign-in flow — this keeps the extension from interfering with the bank's Transmit Security login.&quot;,
+        &quot;es&quot;: &quot;Declara auth.capturePaths = ['/dashboard/'] para que el token solo se capture en el área autenticada del panel (donde aparece por primera vez, tras el login) y el observador de cabeceras no intervenga nunca en el flujo de acceso: así la extensión no interfiere con el login de Transmit Security del banco.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Send the per-card eci-custom-encrypted-pan header on the aplazamientos (financing-purchases) and extractos (shopping-summaries) LIST requests too — the SPA sends it on every card-scoped call (as movements already does), so the server needs it to return those lists per card, not just for movements + the statement PDF.&quot;,
+        &quot;es&quot;: &quot;Envía también la cabecera eci-custom-encrypted-pan por tarjeta en las peticiones de LISTA de aplazamientos (financing-purchases) y extractos (shopping-summaries) — la SPA la manda en toda llamada acotada a una tarjeta (como ya hacía movimientos), así que el servidor la necesita para devolver esas listas por tarjeta, no solo para los movimientos y el PDF del extracto.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-17.4&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Revert tokenFromStorage: FECI's API bearer is a WSO2 OAuth JWT held in memory (obtained via /api/accessTokenTransmit), NOT in localStorage — aphishi-lws_at.t is a session id, so injecting it gave WSO2 900901 'Invalid Credentials'. Back to capturing the bearer from the SPA's own requests (auth.replayHeaders).&quot;,
+        &quot;es&quot;: &quot;Revierte tokenFromStorage: el bearer de la API de FECI es un JWT OAuth de WSO2 que vive en memoria (se obtiene vía /api/accessTokenTransmit), NO en localStorage — aphishi-lws_at.t es un identificador de sesión, así que inyectarlo daba 'Invalid Credentials' 900901 de WSO2. Vuelve a capturarse el bearer de las propias peticiones de la SPA (auth.replayHeaders).&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-17.3&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;(reverted) read the bearer from localStorage via auth.tokenFromStorage — wrong field for FECI (the token isn't in localStorage).&quot;,
+        &quot;es&quot;: &quot;(revertido) leer el bearer de localStorage vía auth.tokenFromStorage — campo equivocado para FECI (el token no está en localStorage).&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-17.2&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Fix extractos statement PDF download (the real cause): the generate-file POST also needs the per-card eci-custom-encrypted-pan header (same as movements), which the server requires to return the file. Sent via api.pdf.headers {group.pan}. Requires extension &gt;= 0.4.1.2.&quot;,
+        &quot;es&quot;: &quot;Corrige la descarga del PDF de extractos (la causa real): el POST a generate-file necesita además la cabecera eci-custom-encrypted-pan de la tarjeta (igual que movimientos), que el servidor exige para devolver el fichero. Se envía vía api.pdf.headers {group.pan}. Requiere extensión &gt;= 0.4.1.2.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-17.1&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;extractos generate-file POST sends the {} JSON body + application/json content-type the SPA sends. datePurchase correct (the raw item date, DD/MM/YYYY).&quot;,
+        &quot;es&quot;: &quot;El POST a generate-file de extractos envía el cuerpo JSON {} y el content-type application/json que manda la SPA. datePurchase correcto (la fecha cruda del elemento, DD/MM/YYYY).&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-17&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Fix empty aplazamientos + extractos lists: send the query params the SPA sends. aplazamientos/financing-purchases now sends page_number=0&amp;page_size=100 (the endpoint is paged); extractos/shopping-summaries now sends date_bill (the current billing date the SPA stamps), via the new {monthEnd:DD/MM/YYYY} computed-date token. Requires extension &gt;= 0.4.1.1.&quot;,
+        &quot;es&quot;: &quot;Corrige las listas vacías de aplazamientos y extractos: envía los parámetros de consulta que manda la SPA. aplazamientos/financing-purchases envía ahora page_number=0&amp;page_size=100 (el endpoint es paginado); extractos/shopping-summaries envía date_bill (la fecha de facturación actual que estampa la SPA), mediante el nuevo token de fecha calculada {monthEnd:DD/MM/YYYY}. Requiere extensión &gt;= 0.4.1.1.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-16&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Initial (authored from a redacted handoff recording, verified live by the contributor). Multi-card (grouped by contract): card movements (transactions), aplazamientos/financing purchases, and monthly statement PDFs (generated per month, base64). Cookie session + replayed bearer + per-card eci-custom-encrypted-pan header.&quot;,
+        &quot;es&quot;: &quot;Inicial (escrita a partir de una grabación redactada del handoff, verificada en vivo por quien la aportó). Multitarjeta (agrupada por contrato): movimientos de tarjeta (transactions), aplazamientos/financing purchases y PDF de extracto mensual (generados por mes, en base64). Sesión por cookie + bearer replicado + cabecera eci-custom-encrypted-pan por tarjeta.&quot;
+      }
+    }
+  ],
+  &quot;content&quot;: {
+    &quot;en&quot;: {
+      &quot;slug&quot;: &quot;financiera-el-corte-ingles-statements&quot;,
+      &quot;docs&quot;: &quot;transactions, instalments and statements&quot;,
+      &quot;h1&quot;: &quot;How to download your Financiera El Corte Inglés transactions and statements&quot;,
+      &quot;intro&quot;: &quot;The El Corte Inglés card has three things worth keeping: the transactions, the payment instalments and the monthly statements. Each lives on its own screen.&quot;
+    },
+    &quot;es&quot;: {
+      &quot;slug&quot;: &quot;extractos-financiera-el-corte-ingles&quot;,
+      &quot;docs&quot;: &quot;movimientos, aplazamientos y extractos&quot;,
+      &quot;h1&quot;: &quot;Cómo descargar tus movimientos y extractos de Financiera El Corte Inglés&quot;,
+      &quot;intro&quot;: &quot;La tarjeta de El Corte Inglés tiene tres cosas distintas que interesan: los movimientos, los aplazamientos de pago y los extractos mensuales. Cada uno vive en su propia pantalla.&quot;
+    }
+  },
+  &quot;brand&quot;: &quot;Financiera El Corte Inglés&quot;
+}</pre>
+        </details>
+        <p class="note"><a href="https://habeas-dev.github.io/sources/financiera-elcorteingles-es.json" rel="noopener">Abrir el fichero original -></a></p>
+      </div>
+    </aside>
+
+    <div class="body">
     <h1>Cómo descargar tus movimientos y extractos de Financiera El Corte Inglés</h1>
     <p class="lead">La tarjeta de El Corte Inglés tiene tres cosas distintas que interesan: los movimientos, los aplazamientos de pago y los extractos mensuales. Cada uno vive en su propia pantalla.</p>
 
@@ -239,8 +555,6 @@
         <li class="rev"><time datetime="2026-07-20">2026-07-20</time> — Declara auth.capturePaths = ['/dashboard/'] para que el token solo se capture en el área autenticada del panel (donde aparece por primera vez, tras el login) y el observador de cabeceras no intervenga nunca en el flujo de acceso: así la extensión no interfiere con el login de Transmit Security del banco.</li>
       </ul>
       <p class="lead"><a href="/sources.html#financiera-elcorteingles-es">Ver el historial completo en el catálogo →</a></p>
-      <h2>Agradecimientos</h2>
-      <p class="credit"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella. Habeas existe porque hay gente que mapea los servicios que usa y comparte el resultado.</p>
 
     <h2>Más guías de bancos, tarjetas e inversión</h2>
     <ul>
@@ -259,6 +573,7 @@
 
     <h2>Otras fuentes</h2>
     <p>Habeas funciona con más servicios españoles e internacionales. <a href="/sources.html">Mira el catálogo completo</a> o lee <a href="/es/por-que-habeas.html">por qué existe Habeas</a>.</p>
+    </div>
   </main>
 </body>
 </html>

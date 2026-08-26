@@ -12,7 +12,33 @@
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="stylesheet" href="/style.css" />
   <style>
-    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    /* Two columns: the prose reads at its own width, and everything ABOUT the source — what it is, which
+       version, who wrote it, how to install it, and the definition itself — sits beside it instead of
+       interrupting it. One column below 1000px, sidebar FIRST, so a phone gets the install buttons
+       before the essay. */
+    .doc { max-width: 1100px; margin: 0 auto; padding: 8px 20px 64px;
+           display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 40px; align-items: start; }
+    .doc > .body { min-width: 0; }
+    .doc > aside { position: sticky; top: 78px; display: flex; flex-direction: column; gap: 14px; }
+    @media (max-width: 1000px) { .doc { grid-template-columns: 1fr; gap: 22px; }
+      .doc > aside { position: static; order: -1; } }
+    .card { border: 1px solid var(--line, #3333); border-radius: 14px; padding: 15px 16px; }
+    .card h2 { font-size: .78rem !important; text-transform: uppercase; letter-spacing: .6px;
+               color: var(--muted, #888); margin: 0 0 10px !important; }
+    .card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13.5px; }
+    .card dt { color: var(--muted, #888); }
+    .card dd { margin: 0; word-break: break-word; }
+    .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
+                 border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
+    aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+    aside .cta .btn { text-align: center; }
+    /* The definition, in full. It is the project's whole security claim — adapters are data, never code —
+       and a claim you cannot read is a claim you are asked to take on faith. */
+    .defn summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+    .defn pre { max-height: 420px; overflow: auto; margin: 10px 0 0; padding: 11px 12px; font-size: 11.5px;
+                line-height: 1.5; border-radius: 9px; background: var(--surface-2, #0001); }
+    header nav .langlink { font-weight: 700; }
     .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
     .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
     .doc h3 { font-size: 1.02rem; margin: 20px 0 6px; }
@@ -207,15 +233,174 @@
       <span class="name">Habeas</span>
       <nav>
         <a href="/">Home</a>
-        <a href="/why-habeas.html">Why Habeas</a>
+        <a href="/why-habeas.html">Why Habeas?</a>
         <a href="/sources.html">Sources</a>
+        <a href="/developers.html">Developers</a>
+        <a href="/architecture.html">Architecture</a>
         <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
         <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <a class="langlink" href="/es/descargar/tickets-carrefour.html" hreflang="es" rel="alternate">ES</a>
       </nav>
     </div>
   </header>
 
   <main class="doc" data-habeas-enriched>
+    <aside>
+      <div class="card">
+        <h2>About this source</h2>
+        <dl>
+          <dt>Version</dt><dd>2026-08-26</dd>
+          <dt>Trust</dt><dd>first-party</dd>
+          <dt>Coverage</dt><dd>ES</dd>
+          <dt>Licence</dt><dd>CC0-1.0</dd>
+        </dl>
+        <p class="who"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> recorded their own session and wrote this source definition from it.</p>
+        <p class="note">Definition in the public domain (CC0-1.0); this page’s text CC-BY-4.0.</p>
+      </div>
+
+      <div class="cta">
+        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="carrefour-es">Install on Chrome</a>
+        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="carrefour-es">Install on Firefox</a>
+      </div>
+
+      <div class="card defn">
+        <h2>The definition itself</h2>
+        <p class="note">A source is data, never code — this is the whole of it.</p>
+        <details>
+          <summary>carrefour-es.json</summary>
+          <pre>{
+  &quot;id&quot;: &quot;carrefour-es&quot;,
+  &quot;name&quot;: &quot;Carrefour España — tickets&quot;,
+  &quot;service&quot;: &quot;carrefour&quot;,
+  &quot;trust&quot;: &quot;first-party&quot;,
+  &quot;credit&quot;: {
+    &quot;author&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    },
+    &quot;capture&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    }
+  },
+  &quot;domain&quot;: &quot;carrefour.es&quot;,
+  &quot;country&quot;: &quot;ES&quot;,
+  &quot;categories&quot;: [
+    &quot;grocery&quot;,
+    &quot;fuel&quot;,
+    &quot;retail&quot;
+  ],
+  &quot;categorize&quot;: {
+    &quot;field&quot;: &quot;purchaseType&quot;,
+    &quot;map&quot;: {
+      &quot;HYPERMARKET&quot;: &quot;grocery&quot;,
+      &quot;SUPERMARKET&quot;: &quot;grocery&quot;,
+      &quot;REFUELING&quot;: &quot;fuel&quot;
+    },
+    &quot;default&quot;: &quot;retail&quot;
+  },
+  &quot;match&quot;: [
+    &quot;https://www.carrefour.es/*&quot;
+  ],
+  &quot;openUrl&quot;: &quot;https://www.carrefour.es/myaccount/#/area-privada/mis-compras&quot;,
+  &quot;auth&quot;: {
+    &quot;tokenMatch&quot;: &quot;eyJ&quot;,
+    &quot;replayHeaders&quot;: [
+      &quot;authorization&quot;,
+      &quot;x-xsrf-token&quot;,
+      &quot;x-csrf-token&quot;,
+      &quot;requestorigin&quot;,
+      &quot;sessionid&quot;
+    ],
+    &quot;swFetchOk&quot;: true
+  },
+  &quot;api&quot;: {
+    &quot;host&quot;: &quot;https://pro.api.carrefour.es&quot;,
+    &quot;list&quot;: {
+      &quot;path&quot;: &quot;/md-purchasesAccount-v1/purchases&quot;,
+      &quot;paging&quot;: &quot;offsets&quot;,
+      &quot;itemsPath&quot;: &quot;purchases&quot;,
+      &quot;offsetsPath&quot;: &quot;offsets&quot;,
+      &quot;initialOffsets&quot;: {
+        &quot;ticketOffset&quot;: 0,
+        &quot;atgfOffset&quot;: 0,
+        &quot;atgnfOffset&quot;: 0,
+        &quot;currentTickets&quot;: 0,
+        &quot;currentAtgfOrders&quot;: 0,
+        &quot;currentAtgnfOrders&quot;: 0
+      },
+      &quot;range&quot;: {
+        &quot;from&quot;: &quot;from&quot;,
+        &quot;to&quot;: &quot;to&quot;
+      },
+      &quot;window&quot;: &quot;3y&quot;,
+      &quot;params&quot;: {
+        &quot;count&quot;: 50
+      }
+    },
+    &quot;pdf&quot;: {
+      &quot;path&quot;: &quot;/md-ticketsAccount-v1/tickets/{internalId}/pdf&quot;
+    }
+  },
+  &quot;fields&quot;: {
+    &quot;internalId&quot;: &quot;purchaseId&quot;,
+    &quot;date&quot;: &quot;purchaseDate&quot;,
+    &quot;total&quot;: &quot;amount&quot;,
+    &quot;storeName&quot;: &quot;mallName&quot;,
+    &quot;storeAddress&quot;: &quot;mallAddress&quot;,
+    &quot;type&quot;: &quot;purchaseType&quot;,
+    &quot;source&quot;: &quot;orderSource&quot;
+  },
+  &quot;schema&quot;: &quot;receipt@1&quot;,
+  &quot;version&quot;: &quot;2026-08-26&quot;,
+  &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-08-26&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.&quot;,
+        &quot;es&quot;: &quot;Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-08&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.&quot;,
+        &quot;es&quot;: &quot;Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-08&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Receipts and online orders (offset pagination); PDF where one exists.&quot;,
+        &quot;es&quot;: &quot;Tickets y pedidos online (offset pagination); PDF cuando existe.&quot;
+      }
+    }
+  ],
+  &quot;content&quot;: {
+    &quot;en&quot;: {
+      &quot;slug&quot;: &quot;carrefour-receipts&quot;,
+      &quot;docs&quot;: &quot;purchase receipts&quot;,
+      &quot;h1&quot;: &quot;How to download your Carrefour receipts&quot;,
+      &quot;intro&quot;: &quot;Carrefour keeps your hypermarket, petrol-station and online-order receipts in your account, but offers no way to download them all at once: you have to open and save them one by one.&quot;,
+      &quot;note&quot;: &quot;Carrefour only keeps the PDF for recent receipts. Older ones still show in your history, but their PDF is gone: Habeas still exports them as metadata (date, amount, store, category), which is all the service retains of them.&quot;
+    },
+    &quot;es&quot;: {
+      &quot;slug&quot;: &quot;tickets-carrefour&quot;,
+      &quot;docs&quot;: &quot;tickets de compra&quot;,
+      &quot;h1&quot;: &quot;Cómo descargar tus tickets de Carrefour&quot;,
+      &quot;intro&quot;: &quot;Carrefour guarda tus tickets de hipermercado, gasolinera y pedidos online en tu cuenta, pero no ofrece ninguna forma de descargarlos todos de golpe: hay que abrirlos y guardarlos uno a uno.&quot;,
+      &quot;note&quot;: &quot;Carrefour solo conserva el PDF de los tickets recientes. Los más antiguos siguen apareciendo en tu historial, pero su PDF ya no existe: Habeas los exporta igualmente como metadatos (fecha, importe, tienda, categoría), que es todo lo que el servicio conserva de ellos.&quot;
+    }
+  },
+  &quot;brand&quot;: &quot;Carrefour&quot;
+}</pre>
+        </details>
+        <p class="note"><a href="https://habeas-dev.github.io/sources/carrefour-es.json" rel="noopener">Open the raw file -></a></p>
+      </div>
+    </aside>
+
+    <div class="body">
     <h1>How to download your Carrefour receipts</h1>
     <p class="lead">Carrefour keeps your hypermarket, petrol-station and online-order receipts in your account, but offers no way to download them all at once: you have to open and save them one by one.</p>
 
@@ -274,8 +459,6 @@
         <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.</li>
         <li class="rev"><time datetime="2026-07-08">2026-07-08</time> — Receipts and online orders (offset pagination); PDF where one exists.</li>
       </ul>
-      <h2>Credit</h2>
-      <p class="credit"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> recorded their own session and wrote this source definition from it. Habeas exists because people map the services they use and share the result.</p>
 
     <h2>More supermarkets guides</h2>
     <ul>
@@ -287,6 +470,7 @@
 
     <h2>Other sources</h2>
     <p>Habeas works with more Spanish and international services. <a href="/sources.html">See the full catalog</a> or read <a href="/why-habeas.html">why Habeas exists</a>.</p>
+    </div>
   </main>
 </body>
 </html>

@@ -12,7 +12,33 @@
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="stylesheet" href="/style.css" />
   <style>
-    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    /* Two columns: the prose reads at its own width, and everything ABOUT the source — what it is, which
+       version, who wrote it, how to install it, and the definition itself — sits beside it instead of
+       interrupting it. One column below 1000px, sidebar FIRST, so a phone gets the install buttons
+       before the essay. */
+    .doc { max-width: 1100px; margin: 0 auto; padding: 8px 20px 64px;
+           display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 40px; align-items: start; }
+    .doc > .body { min-width: 0; }
+    .doc > aside { position: sticky; top: 78px; display: flex; flex-direction: column; gap: 14px; }
+    @media (max-width: 1000px) { .doc { grid-template-columns: 1fr; gap: 22px; }
+      .doc > aside { position: static; order: -1; } }
+    .card { border: 1px solid var(--line, #3333); border-radius: 14px; padding: 15px 16px; }
+    .card h2 { font-size: .78rem !important; text-transform: uppercase; letter-spacing: .6px;
+               color: var(--muted, #888); margin: 0 0 10px !important; }
+    .card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13.5px; }
+    .card dt { color: var(--muted, #888); }
+    .card dd { margin: 0; word-break: break-word; }
+    .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
+                 border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
+    aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+    aside .cta .btn { text-align: center; }
+    /* The definition, in full. It is the project's whole security claim — adapters are data, never code —
+       and a claim you cannot read is a claim you are asked to take on faith. */
+    .defn summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+    .defn pre { max-height: 420px; overflow: auto; margin: 10px 0 0; padding: 11px 12px; font-size: 11.5px;
+                line-height: 1.5; border-radius: 9px; background: var(--surface-2, #0001); }
+    header nav .langlink { font-weight: 700; }
     .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
     .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
     .doc h3 { font-size: 1.02rem; margin: 20px 0 6px; }
@@ -183,15 +209,215 @@
       <span class="name">Habeas</span>
       <nav>
         <a href="/">Home</a>
-        <a href="/why-habeas.html">Why Habeas</a>
+        <a href="/why-habeas.html">Why Habeas?</a>
         <a href="/sources.html">Sources</a>
+        <a href="/developers.html">Developers</a>
+        <a href="/architecture.html">Architecture</a>
         <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
         <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <a class="langlink" href="/es/descargar/tickets-leroy-merlin.html" hreflang="es" rel="alternate">ES</a>
       </nav>
     </div>
   </header>
 
   <main class="doc">
+    <aside>
+      <div class="card">
+        <h2>About this source</h2>
+        <dl>
+          <dt>Version</dt><dd>2026-08-26</dd>
+          <dt>Trust</dt><dd>community</dd>
+          <dt>Coverage</dt><dd>ES</dd>
+          <dt>Licence</dt><dd>CC0-1.0</dd>
+        </dl>
+        <p class="who"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> recorded their own session and wrote this source definition from it.</p>
+        <p class="note">Definition in the public domain (CC0-1.0); this page’s text CC-BY-4.0.</p>
+      </div>
+
+      <div class="cta">
+        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="leroymerlin-es">Install on Chrome</a>
+        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="leroymerlin-es">Install on Firefox</a>
+      </div>
+
+      <div class="card defn">
+        <h2>The definition itself</h2>
+        <p class="note">A source is data, never code — this is the whole of it.</p>
+        <details>
+          <summary>leroymerlin-es.json</summary>
+          <pre>{
+  &quot;id&quot;: &quot;leroymerlin-es&quot;,
+  &quot;name&quot;: &quot;Leroy Merlin España&quot;,
+  &quot;service&quot;: &quot;leroymerlin&quot;,
+  &quot;trust&quot;: &quot;community&quot;,
+  &quot;credit&quot;: {
+    &quot;author&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    },
+    &quot;capture&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    }
+  },
+  &quot;domain&quot;: &quot;leroymerlin.es&quot;,
+  &quot;country&quot;: &quot;ES&quot;,
+  &quot;categories&quot;: [
+    &quot;diy&quot;
+  ],
+  &quot;match&quot;: [
+    &quot;https://www.leroymerlin.es/*&quot;
+  ],
+  &quot;openUrl&quot;: &quot;https://www.leroymerlin.es/mi-cuenta/mis-compras/historial&quot;,
+  &quot;auth&quot;: {
+    &quot;mode&quot;: &quot;cookie&quot;,
+    &quot;replayHeaders&quot;: [],
+    &quot;loginUrl&quot;: &quot;https://www.leroymerlin.es/login.html&quot;
+  },
+  &quot;itemLabel&quot;: &quot;Pedido {internalId}&quot;,
+  &quot;api&quot;: {
+    &quot;host&quot;: &quot;https://www.leroymerlin.es&quot;
+  },
+  &quot;streams&quot;: [
+    {
+      &quot;id&quot;: &quot;tickets&quot;,
+      &quot;name&quot;: &quot;Tickets de tienda&quot;,
+      &quot;schema&quot;: &quot;receipt@1&quot;,
+      &quot;categories&quot;: [
+        &quot;diy&quot;
+      ],
+      &quot;api&quot;: {
+        &quot;list&quot;: {
+          &quot;headers&quot;: {
+            &quot;content-type&quot;: &quot;application/json&quot;
+          },
+          &quot;itemsPath&quot;: &quot;receipts&quot;,
+          &quot;pageParam&quot;: &quot;yearOffset&quot;,
+          &quot;pageStart&quot;: 0,
+          &quot;stopAfterEmpty&quot;: 3,
+          &quot;paging&quot;: &quot;page&quot;,
+          &quot;params&quot;: {
+            &quot;page&quot;: &quot;0&quot;,
+            &quot;size&quot;: &quot;10&quot;
+          },
+          &quot;path&quot;: &quot;/customer-space-module/services/customer-after-sales-backend/me/receipts&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;headers&quot;: {
+            &quot;content-type&quot;: &quot;application/json&quot;
+          },
+          &quot;method&quot;: &quot;GET&quot;,
+          &quot;path&quot;: &quot;/customer-space-module/services/customer-after-sales-backend/me/receipts/{internalId}&quot;
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;date&quot;: &quot;date&quot;,
+        &quot;internalId&quot;: &quot;id&quot;,
+        &quot;number&quot;: &quot;number&quot;,
+        &quot;storeName&quot;: &quot;store.storeName&quot;,
+        &quot;total&quot;: &quot;totalPriceIncludingVAT.amount&quot;
+      }
+    },
+    {
+      &quot;id&quot;: &quot;pedidos&quot;,
+      &quot;name&quot;: &quot;Pedidos&quot;,
+      &quot;schema&quot;: &quot;receipt@1&quot;,
+      &quot;categories&quot;: [
+        &quot;diy&quot;
+      ],
+      &quot;api&quot;: {
+        &quot;list&quot;: {
+          &quot;headers&quot;: {
+            &quot;content-type&quot;: &quot;application/json&quot;
+          },
+          &quot;path&quot;: &quot;/order-followup/backend/v2/orders&quot;,
+          &quot;paging&quot;: &quot;none&quot;,
+          &quot;itemsPath&quot;: &quot;$&quot;
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;orderPartNumber&quot;,
+        &quot;date&quot;: &quot;parentOrder.createdAt&quot;,
+        &quot;total&quot;: &quot;price.totalAmount&quot;,
+        &quot;storeName&quot;: &quot;vendors.0.name&quot;
+      }
+    }
+  ],
+  &quot;version&quot;: &quot;2026-08-26&quot;,
+  &quot;minVersion&quot;: &quot;0.1.53.13&quot;,
+  &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-08-26&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.&quot;,
+        &quot;es&quot;: &quot;Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-08&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.&quot;,
+        &quot;es&quot;: &quot;Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-10.3&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Receipts: do not stop on reaching a year with no purchases (stopAfterEmpty) — it previously stopped at 2025 (no purchases) and hid the older receipts.&quot;,
+        &quot;es&quot;: &quot;Tickets: no cortar al llegar a un año sin compras (stopAfterEmpty) — antes se paraba en 2025 (sin compras) y ocultaba los tickets más antiguos.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-10.2&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;\&quot;Orders\&quot; stream: show ALL orders from \&quot;my orders\&quot; (removes the filter that kept only the ONLINE ones and hid in-store orders that appear there too).&quot;,
+        &quot;es&quot;: &quot;Stream «Pedidos»: mostrar TODOS los pedidos de «mis pedidos» (se quita el filtro que dejaba solo los ONLINE y ocultaba pedidos de tienda que también aparecen ahí).&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-10.1&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;In-store receipts: start from the current year (yearOffset 0) — it previously started two years back and skipped this year's purchases and last year's.&quot;,
+        &quot;es&quot;: &quot;Tickets de tienda: empezar en el año actual (yearOffset 0) — antes empezaba 2 años atrás y se saltaba las compras de este año y el anterior.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-10&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Adds online purchases (the \&quot;Online orders\&quot; stream via /order-followup/backend/v2/orders, filtered to ONLINE) alongside the existing in-store receipts; multi-output source (streams).&quot;,
+        &quot;es&quot;: &quot;Añade compras online (stream «Pedidos online» vía /order-followup/backend/v2/orders, filtradas a ONLINE) junto a los tickets de tienda existentes; fuente multi-salida (streams).&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-08&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Receipts via a JSON API (cookie).&quot;,
+        &quot;es&quot;: &quot;Recibos vía API JSON (cookie).&quot;
+      }
+    }
+  ],
+  &quot;content&quot;: {
+    &quot;en&quot;: {
+      &quot;slug&quot;: &quot;leroy-merlin-receipts&quot;,
+      &quot;docs&quot;: &quot;receipts and orders&quot;,
+      &quot;h1&quot;: &quot;How to download your Leroy Merlin receipts and orders&quot;,
+      &quot;intro&quot;: &quot;Leroy Merlin keeps in-store receipts separate from online orders. Both live in your account and neither can be downloaded in bulk.&quot;
+    },
+    &quot;es&quot;: {
+      &quot;slug&quot;: &quot;tickets-leroy-merlin&quot;,
+      &quot;docs&quot;: &quot;tickets y pedidos&quot;,
+      &quot;h1&quot;: &quot;Cómo descargar tus tickets y pedidos de Leroy Merlin&quot;,
+      &quot;intro&quot;: &quot;Leroy Merlin separa los tickets de tienda de los pedidos online. Ambos están en tu cuenta y ninguno se puede descargar en bloque.&quot;
+    }
+  },
+  &quot;brand&quot;: &quot;Leroy Merlin&quot;
+}</pre>
+        </details>
+        <p class="note"><a href="https://habeas-dev.github.io/sources/leroymerlin-es.json" rel="noopener">Open the raw file -></a></p>
+      </div>
+    </aside>
+
+    <div class="body">
     <h1>How to download your Leroy Merlin receipts and orders</h1>
     <p class="lead">Leroy Merlin keeps in-store receipts separate from online orders. Both live in your account and neither can be downloaded in bulk.</p>
 
@@ -238,8 +464,6 @@
         <li class="rev"><time datetime="2026-07-10">2026-07-10</time> — In-store receipts: start from the current year (yearOffset 0) — it previously started two years back and skipped this year's purchases and last year's.</li>
       </ul>
       <p class="lead"><a href="/sources.html#leroymerlin-es">See the full history in the catalog →</a></p>
-      <h2>Credit</h2>
-      <p class="credit"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> recorded their own session and wrote this source definition from it. Habeas exists because people map the services they use and share the result.</p>
 
     <h2>More shops guides</h2>
     <ul>
@@ -254,6 +478,7 @@
 
     <h2>Other sources</h2>
     <p>Habeas works with more Spanish and international services. <a href="/sources.html">See the full catalog</a> or read <a href="/why-habeas.html">why Habeas exists</a>.</p>
+    </div>
   </main>
 </body>
 </html>

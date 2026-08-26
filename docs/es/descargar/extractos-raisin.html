@@ -12,7 +12,33 @@
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="stylesheet" href="/style.css" />
   <style>
-    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    /* Two columns: the prose reads at its own width, and everything ABOUT the source — what it is, which
+       version, who wrote it, how to install it, and the definition itself — sits beside it instead of
+       interrupting it. One column below 1000px, sidebar FIRST, so a phone gets the install buttons
+       before the essay. */
+    .doc { max-width: 1100px; margin: 0 auto; padding: 8px 20px 64px;
+           display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 40px; align-items: start; }
+    .doc > .body { min-width: 0; }
+    .doc > aside { position: sticky; top: 78px; display: flex; flex-direction: column; gap: 14px; }
+    @media (max-width: 1000px) { .doc { grid-template-columns: 1fr; gap: 22px; }
+      .doc > aside { position: static; order: -1; } }
+    .card { border: 1px solid var(--line, #3333); border-radius: 14px; padding: 15px 16px; }
+    .card h2 { font-size: .78rem !important; text-transform: uppercase; letter-spacing: .6px;
+               color: var(--muted, #888); margin: 0 0 10px !important; }
+    .card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13.5px; }
+    .card dt { color: var(--muted, #888); }
+    .card dd { margin: 0; word-break: break-word; }
+    .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
+                 border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
+    aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+    aside .cta .btn { text-align: center; }
+    /* The definition, in full. It is the project's whole security claim — adapters are data, never code —
+       and a claim you cannot read is a claim you are asked to take on faith. */
+    .defn summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+    .defn pre { max-height: 420px; overflow: auto; margin: 10px 0 0; padding: 11px 12px; font-size: 11.5px;
+                line-height: 1.5; border-radius: 9px; background: var(--surface-2, #0001); }
+    header nav .langlink { font-weight: 700; }
     .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
     .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
     .doc h3 { font-size: 1.02rem; margin: 20px 0 6px; }
@@ -183,15 +209,566 @@
       <span class="name">Habeas</span>
       <nav>
         <a href="/">Inicio</a>
-        <a href="/es/por-que-habeas.html">Por qué Habeas</a>
+        <a href="/es/por-que-habeas.html">¿Por qué Habeas?</a>
         <a href="/sources.html">Fuentes</a>
+        <a href="/es/desarrolladores.html">Desarrolladores</a>
+        <a href="/architecture.html">Arquitectura</a>
         <a href="/privacy.html">Privacidad</a>
+        <a href="/terms.html">Términos</a>
         <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <a class="langlink" href="/download/raisin-statements.html" hreflang="en" rel="alternate">EN</a>
       </nav>
     </div>
   </header>
 
   <main class="doc">
+    <aside>
+      <div class="card">
+        <h2>Sobre esta fuente</h2>
+        <dl>
+          <dt>Versión</dt><dd>2026-08-26</dd>
+          <dt>Confianza</dt><dd>community</dd>
+          <dt>Cobertura</dt><dd>global</dd>
+          <dt>Licencia</dt><dd>CC0-1.0</dd>
+        </dl>
+        <p class="who"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella.</p>
+        <p class="note">La definición, de dominio público (CC0-1.0); el texto de esta página, CC-BY-4.0.</p>
+      </div>
+
+      <div class="cta">
+        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="raisin">Instalar en Chrome</a>
+        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="raisin">Instalar en Firefox</a>
+      </div>
+
+      <div class="card defn">
+        <h2>La definición en sí</h2>
+        <p class="note">Una fuente son datos, nunca código — esto es todo lo que hay.</p>
+        <details>
+          <summary>raisin.json</summary>
+          <pre>{
+  &quot;id&quot;: &quot;raisin&quot;,
+  &quot;name&quot;: &quot;Raisin&quot;,
+  &quot;service&quot;: &quot;raisin&quot;,
+  &quot;trust&quot;: &quot;community&quot;,
+  &quot;credit&quot;: {
+    &quot;author&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    },
+    &quot;capture&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    }
+  },
+  &quot;domain&quot;: &quot;raisin.com&quot;,
+  &quot;country&quot;: &quot;global&quot;,
+  &quot;categories&quot;: [
+    &quot;banking&quot;,
+    &quot;investment&quot;
+  ],
+  &quot;version&quot;: &quot;2026-08-26&quot;,
+  &quot;minVersion&quot;: &quot;0.5.0.32&quot;,
+  &quot;keepRaw&quot;: true,
+  &quot;contributors&quot;: [
+    &quot;David Marín Carreño&quot;
+  ],
+  &quot;match&quot;: [
+    &quot;https://www.raisin.com/*&quot;
+  ],
+  &quot;crossDomainHosts&quot;: [
+    &quot;api2.weltsparen.de&quot;
+  ],
+  &quot;auth&quot;: {
+    &quot;mode&quot;: &quot;bearer&quot;,
+    &quot;replayHeaders&quot;: [
+      &quot;authorization&quot;
+    ],
+    &quot;capturePaths&quot;: [
+      &quot;/tams/&quot;,
+      &quot;/dbff/&quot;,
+      &quot;/dds/&quot;,
+      &quot;/cas/&quot;
+    ],
+    &quot;context&quot;: [
+      {
+        &quot;name&quot;: &quot;customer_id&quot;,
+        &quot;from&quot;: &quot;url&quot;,
+        &quot;match&quot;: &quot;customer_id=(BAC_[0-9_]+)&quot;
+      }
+    ],
+    &quot;tokenFromStorage&quot;: {
+      &quot;key&quot;: &quot;auth_token&quot;,
+      &quot;field&quot;: &quot;access_token&quot;,
+      &quot;scheme&quot;: &quot;Bearer&quot;
+    },
+    &quot;cookies&quot;: false
+  },
+  &quot;api&quot;: {
+    &quot;host&quot;: &quot;https://api2.weltsparen.de&quot;
+  },
+  &quot;streams&quot;: [
+    {
+      &quot;id&quot;: &quot;movimientos&quot;,
+      &quot;name&quot;: &quot;Movimientos (cuenta Raisin)&quot;,
+      &quot;schema&quot;: &quot;transaction@1&quot;,
+      &quot;categories&quot;: [
+        &quot;banking&quot;
+      ],
+      &quot;keepRaw&quot;: true,
+      &quot;api&quot;: {
+        &quot;groups&quot;: {
+          &quot;path&quot;: &quot;/tams/v1/accounts&quot;,
+          &quot;itemsPath&quot;: &quot;$&quot;,
+          &quot;params&quot;: {
+            &quot;filter&quot;: &quot;customerId eq {ctx.customer_id} &amp; type eq TA_INTERNAL&quot;
+          },
+          &quot;fields&quot;: {
+            &quot;id&quot;: &quot;id&quot;,
+            &quot;name&quot;: &quot;accountNumber&quot;,
+            &quot;iban&quot;: &quot;iban&quot;,
+            &quot;currency&quot;: &quot;currencyCode&quot;,
+            &quot;type&quot;: &quot;type&quot;
+          },
+          &quot;mask&quot;: [
+            &quot;iban&quot;
+          ],
+          &quot;headers&quot;: {
+            &quot;accept&quot;: &quot;application/json, text/plain, */*&quot;
+          }
+        },
+        &quot;list&quot;: {
+          &quot;path&quot;: &quot;/tams/v1/accounts/{group.id}/transactions&quot;,
+          &quot;paging&quot;: &quot;offset&quot;,
+          &quot;offsetParam&quot;: &quot;offset&quot;,
+          &quot;offsetStep&quot;: 10,
+          &quot;itemsPath&quot;: &quot;$&quot;,
+          &quot;params&quot;: {
+            &quot;limit&quot;: 10,
+            &quot;date_from&quot;: &quot;{daysAgo:90}&quot;
+          },
+          &quot;headers&quot;: {
+            &quot;accept&quot;: &quot;application/json, text/plain, */*&quot;
+          }
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;id&quot;,
+        &quot;date&quot;: &quot;bookingDate&quot;,
+        &quot;amount&quot;: &quot;amount&quot;,
+        &quot;currency&quot;: &quot;currencyCode&quot;,
+        &quot;counterparty&quot;: &quot;counterpartyName&quot;,
+        &quot;description&quot;: &quot;referenceText&quot;
+      }
+    },
+    {
+      &quot;id&quot;: &quot;depositos&quot;,
+      &quot;name&quot;: &quot;Depósitos a plazo&quot;,
+      &quot;schema&quot;: &quot;investment@2&quot;,
+      &quot;categories&quot;: [
+        &quot;investment&quot;
+      ],
+      &quot;keepRaw&quot;: true,
+      &quot;api&quot;: {
+        &quot;list&quot;: {
+          &quot;paging&quot;: &quot;none&quot;,
+          &quot;itemsPath&quot;: &quot;entries&quot;,
+          &quot;params&quot;: {
+            &quot;customer_id&quot;: &quot;{ctx.customer_id}&quot;,
+            &quot;locale&quot;: &quot;{locale}&quot;,
+            &quot;sort_by&quot;: &quot;availability&quot;,
+            &quot;order_by&quot;: &quot;asc&quot;
+          },
+          &quot;keep&quot;: {
+            &quot;field&quot;: &quot;accounting.deposit_id&quot;,
+            &quot;prefix&quot;: &quot;FDA_&quot;
+          },
+          &quot;headers&quot;: {
+            &quot;accept&quot;: &quot;application/json, text/plain, */*&quot;
+          },
+          &quot;paths&quot;: [
+            &quot;/dbff/v1/public/deposits/dashboard/active&quot;,
+            &quot;/dbff/v1/public/deposits/dashboard/inactive&quot;
+          ]
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;accounting.deposit_id&quot;,
+        &quot;date&quot;: &quot;deposit.opening_date&quot;,
+        &quot;amount&quot;: &quot;accounting.balance.amount.denomination&quot;,
+        &quot;currency&quot;: &quot;accounting.balance.amount.currency&quot;,
+        &quot;description&quot;: &quot;{i18n:deposit} {product.deposit_taking_bank.name} {accounting.effective_interest_rate:num}% {accounting.term:duration} - {deposit.opening_date:date}&quot;,
+        &quot;counterparty&quot;: &quot;{product.deposit_taking_bank.name}&quot;,
+        &quot;group&quot;: &quot;{i18n:deposit} {product.deposit_taking_bank.name} {accounting.effective_interest_rate:num}% {accounting.term:duration} - {deposit.opening_date:date}&quot;
+      }
+    },
+    {
+      &quot;id&quot;: &quot;ahorro&quot;,
+      &quot;name&quot;: &quot;Movimientos (cuentas de ahorro)&quot;,
+      &quot;schema&quot;: &quot;transaction@1&quot;,
+      &quot;categories&quot;: [
+        &quot;banking&quot;
+      ],
+      &quot;keepRaw&quot;: true,
+      &quot;api&quot;: {
+        &quot;groups&quot;: {
+          &quot;itemsPath&quot;: &quot;entries&quot;,
+          &quot;params&quot;: {
+            &quot;customer_id&quot;: &quot;{ctx.customer_id}&quot;,
+            &quot;locale&quot;: &quot;{locale}&quot;,
+            &quot;sort_by&quot;: &quot;availability&quot;,
+            &quot;order_by&quot;: &quot;asc&quot;
+          },
+          &quot;keep&quot;: {
+            &quot;field&quot;: &quot;accounting.deposit_id&quot;,
+            &quot;prefix&quot;: &quot;OMA_&quot;
+          },
+          &quot;fields&quot;: {
+            &quot;id&quot;: &quot;accounting.deposit_id&quot;,
+            &quot;currency&quot;: &quot;accounting.balance.amount.currency&quot;,
+            &quot;name&quot;: &quot;{i18n:account} {product.deposit_taking_bank.name}&quot;
+          },
+          &quot;headers&quot;: {
+            &quot;accept&quot;: &quot;application/json, text/plain, */*&quot;
+          },
+          &quot;paths&quot;: [
+            &quot;/dbff/v1/public/deposits/dashboard/active&quot;,
+            &quot;/dbff/v1/public/deposits/dashboard/inactive&quot;
+          ]
+        },
+        &quot;list&quot;: {
+          &quot;path&quot;: &quot;/dbff/v1/public/deposits/{group.id}&quot;,
+          &quot;paging&quot;: &quot;none&quot;,
+          &quot;itemsPath&quot;: &quot;accounting.transactions&quot;,
+          &quot;params&quot;: {
+            &quot;customer_id&quot;: &quot;{ctx.customer_id}&quot;,
+            &quot;locale&quot;: &quot;{locale:lower}&quot;
+          },
+          &quot;headers&quot;: {
+            &quot;accept&quot;: &quot;application/json, text/plain, */*&quot;
+          }
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;transaction_id&quot;,
+        &quot;date&quot;: &quot;value_date&quot;,
+        &quot;amount&quot;: &quot;amount.denomination&quot;,
+        &quot;currency&quot;: &quot;amount.currency&quot;,
+        &quot;description&quot;: &quot;type&quot;
+      }
+    },
+    {
+      &quot;id&quot;: &quot;documentos&quot;,
+      &quot;name&quot;: &quot;Documentos de depósitos&quot;,
+      &quot;schema&quot;: &quot;invoice@1&quot;,
+      &quot;categories&quot;: [
+        &quot;banking&quot;
+      ],
+      &quot;keepRaw&quot;: true,
+      &quot;api&quot;: {
+        &quot;groups&quot;: {
+          &quot;itemsPath&quot;: &quot;entries&quot;,
+          &quot;params&quot;: {
+            &quot;customer_id&quot;: &quot;{ctx.customer_id}&quot;,
+            &quot;locale&quot;: &quot;{locale}&quot;,
+            &quot;sort_by&quot;: &quot;availability&quot;,
+            &quot;order_by&quot;: &quot;asc&quot;
+          },
+          &quot;keep&quot;: {
+            &quot;field&quot;: &quot;accounting.deposit_id&quot;,
+            &quot;prefix&quot;: &quot;FDA_&quot;
+          },
+          &quot;fields&quot;: {
+            &quot;id&quot;: &quot;accounting.deposit_id&quot;,
+            &quot;name&quot;: &quot;{i18n:deposit} {product.deposit_taking_bank.name} {accounting.effective_interest_rate:num}% {accounting.term:duration} - {deposit.opening_date:date}&quot;
+          },
+          &quot;headers&quot;: {
+            &quot;accept&quot;: &quot;application/json, text/plain, */*&quot;
+          },
+          &quot;paths&quot;: [
+            &quot;/dbff/v1/public/deposits/dashboard/active&quot;,
+            &quot;/dbff/v1/public/deposits/dashboard/inactive&quot;
+          ]
+        },
+        &quot;list&quot;: {
+          &quot;path&quot;: &quot;/dds/api/v2/public/documents&quot;,
+          &quot;paging&quot;: &quot;none&quot;,
+          &quot;itemsPath&quot;: &quot;documents&quot;,
+          &quot;params&quot;: {
+            &quot;customer_id&quot;: &quot;{ctx.customer_id}&quot;,
+            &quot;deposit_id&quot;: &quot;{group.id}&quot;
+          },
+          &quot;headers&quot;: {
+            &quot;accept&quot;: &quot;application/json, text/plain, */*&quot;
+          }
+        },
+        &quot;pdf&quot;: {
+          &quot;path&quot;: &quot;/dds/api/v2/public/documents/{internalId}&quot;,
+          &quot;params&quot;: {
+            &quot;preview&quot;: &quot;true&quot;
+          }
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;id&quot;,
+        &quot;date&quot;: &quot;created&quot;,
+        &quot;description&quot;: &quot;title&quot;,
+        &quot;type&quot;: &quot;document_type&quot;
+      }
+    },
+    {
+      &quot;id&quot;: &quot;documentos-ahorro&quot;,
+      &quot;name&quot;: &quot;Documentos de cuentas de ahorro&quot;,
+      &quot;schema&quot;: &quot;invoice@1&quot;,
+      &quot;categories&quot;: [
+        &quot;banking&quot;
+      ],
+      &quot;keepRaw&quot;: true,
+      &quot;api&quot;: {
+        &quot;groups&quot;: {
+          &quot;itemsPath&quot;: &quot;entries&quot;,
+          &quot;params&quot;: {
+            &quot;customer_id&quot;: &quot;{ctx.customer_id}&quot;,
+            &quot;locale&quot;: &quot;{locale}&quot;,
+            &quot;sort_by&quot;: &quot;availability&quot;,
+            &quot;order_by&quot;: &quot;asc&quot;
+          },
+          &quot;keep&quot;: {
+            &quot;field&quot;: &quot;accounting.deposit_id&quot;,
+            &quot;prefix&quot;: &quot;OMA_&quot;
+          },
+          &quot;fields&quot;: {
+            &quot;id&quot;: &quot;accounting.deposit_id&quot;,
+            &quot;name&quot;: &quot;{i18n:account} {product.deposit_taking_bank.name}&quot;
+          },
+          &quot;headers&quot;: {
+            &quot;accept&quot;: &quot;application/json, text/plain, */*&quot;
+          },
+          &quot;paths&quot;: [
+            &quot;/dbff/v1/public/deposits/dashboard/active&quot;,
+            &quot;/dbff/v1/public/deposits/dashboard/inactive&quot;
+          ]
+        },
+        &quot;list&quot;: {
+          &quot;path&quot;: &quot;/dds/api/v2/public/documents&quot;,
+          &quot;paging&quot;: &quot;none&quot;,
+          &quot;itemsPath&quot;: &quot;documents&quot;,
+          &quot;params&quot;: {
+            &quot;customer_id&quot;: &quot;{ctx.customer_id}&quot;,
+            &quot;deposit_id&quot;: &quot;{group.id}&quot;
+          },
+          &quot;headers&quot;: {
+            &quot;accept&quot;: &quot;application/json, text/plain, */*&quot;
+          }
+        },
+        &quot;pdf&quot;: {
+          &quot;path&quot;: &quot;/dds/api/v2/public/documents/{internalId}&quot;,
+          &quot;params&quot;: {
+            &quot;preview&quot;: &quot;true&quot;
+          }
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;id&quot;,
+        &quot;date&quot;: &quot;created&quot;,
+        &quot;description&quot;: &quot;title&quot;,
+        &quot;type&quot;: &quot;document_type&quot;
+      }
+    }
+  ],
+  &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-08-26&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.&quot;,
+        &quot;es&quot;: &quot;Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-08&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.&quot;,
+        &quot;es&quot;: &quot;Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-21&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Declared country: \&quot;global\&quot; — the field was missing since the multi-market rename (raisin-es -&gt; raisin), so the catalog showed no 🌐 badge and country filters didn't treat it as worldwide.&quot;,
+        &quot;es&quot;: &quot;Declara country: \&quot;global\&quot; — el campo faltaba desde el renombrado multimercado (raisin-es -&gt; raisin), así que el catálogo no mostraba el distintivo 🌐 y los filtros por país no la trataban como mundial.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.18&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Multi-language labels: the product-type word (Deposit/Account) is translated per browser locale via a source i18n dictionary (en/es/de/fr/nl — every Raisin market; en fallback), since the API only returns it as an enum. Dropped the TAE abbreviation (varies by country; % is universal). Requires 0.5.0.32 ({i18n:key} token).&quot;,
+        &quot;es&quot;: &quot;Etiquetas multiidioma: la palabra del tipo de producto (Depósito/Cuenta) se traduce según el idioma del navegador mediante un diccionario i18n de la fuente (en/es/de/fr/nl — todos los mercados de Raisin; en por defecto), ya que la API solo la devuelve como enum. Se elimina la abreviatura TAE (varía por país; el % es universal). Requiere 0.5.0.32 (token {i18n:key}).&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.17&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Multi-market: renamed raisin-es -&gt; raisin (the API api2.weltsparen.de is shared across all Raisin countries); the response-language `locale` param now follows the browser locale via {locale}/{locale:lower} instead of a hardcoded es-ES. Requires 0.5.0.30. (Account-label WORDS Depósito/Cuenta/TAE remain Spanish for now.)&quot;,
+        &quot;es&quot;: &quot;Multimercado: renombrada raisin-es -&gt; raisin (la API api2.weltsparen.de es común a todos los países de Raisin); el parámetro `locale` del idioma de respuesta sigue ahora al del navegador vía {locale}/{locale:lower} en lugar de un es-ES fijo. Requiere 0.5.0.30. (Las PALABRAS de las etiquetas de cuenta —Depósito/Cuenta/TAE— siguen en español por ahora.)&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.16&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;A deposit account now shows the SAME name everywhere: its own record, its documents, and the account picker all use the full \&quot;Depósito &lt;bank&gt; &lt;rate&gt;% TAE &lt;term&gt; - &lt;opening&gt;\&quot; label (the record previously showed a shorter \&quot;Depósito &lt;bank&gt;\&quot;). The bank moved to the store/counterparty column.&quot;,
+        &quot;es&quot;: &quot;Una cuenta de depósito muestra ya el MISMO nombre en todas partes: su propio registro, sus documentos y el selector de cuentas usan la etiqueta completa «Depósito &lt;banco&gt; &lt;tipo&gt;% TAE &lt;plazo&gt; - &lt;apertura&gt;» (antes el registro mostraba un «Depósito &lt;banco&gt;» más corto). El banco pasa a la columna de tienda/contraparte.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.15&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Split documents by product: FDA_ deposits keep the \&quot;Depósito … % TAE … plazo\&quot; label; OMA_ savings accounts now show \&quot;Cuenta &lt;bank&gt;\&quot; (no rate/term — variable). Deposit records carry their own account label. Requires 0.5.0.29 (ungrouped-stream account label).&quot;,
+        &quot;es&quot;: &quot;Separa los documentos por producto: los depósitos FDA_ mantienen la etiqueta «Depósito … % TAE … plazo»; las cuentas de ahorro OMA_ muestran ahora «Cuenta &lt;banco&gt;» (sin tipo ni plazo, que son variables). Los registros de depósito llevan su propia etiqueta de cuenta. Requiere 0.5.0.29 (etiqueta de cuenta en stream no agrupado).&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.14&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Requires 0.5.0.28: group-field templates now resolve (the account picker AND the Account column show the readable name instead of a raw id).&quot;,
+        &quot;es&quot;: &quot;Requiere 0.5.0.28: las plantillas de campo de grupo ya se resuelven (tanto el selector de cuentas como la columna Cuenta muestran el nombre legible en vez de un id crudo).&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.13&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Deposit labels now use browser-locale formatting: rate with the locale decimal comma and term as words (\&quot;Depósito Banca Progetto 2,45% TAE 6 meses - 2024-03-22\&quot;). Requires runtime 0.5.0.27 ({field:num|pct|duration|date} format directives).&quot;,
+        &quot;es&quot;: &quot;Las etiquetas de depósito usan ya el formato del idioma del navegador: el tipo con la coma decimal local y el plazo en palabras («Depósito Banca Progetto 2,45% TAE 6 meses - 2024-03-22»). Requiere runtime 0.5.0.27 (directivas de formato {field:num|pct|duration|date}).&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.12&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Readable account/deposit names: savings show \&quot;Cuenta &lt;bank&gt;\&quot;, deposits \&quot;Depósito &lt;bank&gt; &lt;rate&gt;% TAE - &lt;opening date&gt;\&quot; using the real bank name (deposit_taking_bank.name). Deposit date is now the opening date (deposit.opening_date). (Term wording and decimal comma still pending a formatting helper.)&quot;,
+        &quot;es&quot;: &quot;Nombres legibles de cuenta y depósito: el ahorro muestra «Cuenta &lt;banco&gt;» y los depósitos «Depósito &lt;banco&gt; &lt;tipo&gt;% TAE - &lt;fecha de apertura&gt;», con el nombre real del banco (deposit_taking_bank.name). La fecha del depósito es ahora la de apertura (deposit.opening_date). (La redacción del plazo y la coma decimal siguen pendientes de un ayudante de formato.)&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.11&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Deposits, savings and documents now enumerate BOTH dashboard/active AND dashboard/inactive (api paths[]), so inactive/cancelled deposits and ALL their documents are captured (documents come from /dds per deposit). Requires runtime 0.5.0.26 (paths[] support).&quot;,
+        &quot;es&quot;: &quot;Los depósitos, el ahorro y los documentos enumeran ahora TANTO dashboard/active COMO dashboard/inactive (api paths[]), de modo que se capturan los depósitos inactivos o cancelados y TODOS sus documentos (los documentos vienen de /dds por depósito). Requiere runtime 0.5.0.26 (soporte de paths[]).&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.10&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Savings/deposit accounts now carry a readable name (the deposit-taking bank) + type, so the account list and per-account labels show a bank name instead of a raw id. Requires 0.5.0.25 (account picker enumerates every grouped stream: current account + savings + deposits).&quot;,
+        &quot;es&quot;: &quot;Las cuentas de ahorro y depósito llevan ya un nombre legible (el banco que capta el depósito) más su tipo, así que la lista de cuentas y las etiquetas por cuenta muestran un nombre de banco en vez de un id crudo. Requiere 0.5.0.25 (el selector de cuentas enumera todos los streams agrupados: cuenta corriente, ahorro y depósitos).&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.9&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Requires runtime 0.5.0.24: list params now resolve {ctx.*} (depositos/ahorro/documentos send the real customer_id, was literal → dbff/dbs 403) and pdf.params apply to the document fetch (dds ?preview=true). All 4 outputs verified offline against the capture.&quot;,
+        &quot;es&quot;: &quot;Requiere runtime 0.5.0.24: los parámetros de lista resuelven ya {ctx.*} (depositos/ahorro/documentos envían el customer_id real, antes literal → 403 en dbff/dbs) y los pdf.params se aplican a la descarga del documento (dds ?preview=true). Las 4 salidas verificadas offline contra la captura.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.8&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Account list uses the real OData filter customerId eq {ctx.customer_id} &amp; type eq TA_INTERNAL (was the invalid filter=all → 401). The customerId is templated from captured context, never hardcoded. Requires group-param ctx templating (minVersion 0.5.0.19).&quot;,
+        &quot;es&quot;: &quot;La lista de cuentas usa el filtro OData real customerId eq {ctx.customer_id} &amp; type eq TA_INTERNAL (antes el filtro inválido filter=all → 401). El customerId se plantilla desde el contexto capturado, nunca fijo. Requiere plantillado ctx en parámetros de grupo (minVersion 0.5.0.19).&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.7&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Send the browser-style Accept header (application/json, text/plain, */*) on every list/groups request. Instrumentation proved the ONLY difference between the SPA’s working request and our 401 was the Accept value (bare application/json); the API gateway rejects it. Same token, same everything else.&quot;,
+        &quot;es&quot;: &quot;Envía la cabecera Accept al estilo del navegador (application/json, text/plain, */*) en toda petición de lista y de grupos. La instrumentación demostró que la ÚNICA diferencia entre la petición que funcionaba en la SPA y nuestro 401 era el valor de Accept (application/json a secas); la pasarela de la API lo rechaza. Mismo token, todo lo demás idéntico.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.6&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;auth.cookies:false — send the bearer WITHOUT cookies. Instrumentation proved the token is valid (not expired), so the 401 Authorization-required on a valid token points to a weltsparen.de session cookie interfering with the bearer on the cross-domain call (like Openbank 413). Bearer-only request.&quot;,
+        &quot;es&quot;: &quot;auth.cookies:false — envía el bearer SIN cookies. La instrumentación demostró que el token es válido (no caducado), así que un 401 Authorization-required con un token válido apunta a que una cookie de sesión de weltsparen.de interfiere con el bearer en la llamada cross-domain (como el 413 de Openbank). Petición solo con bearer.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.5&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Re-enable tokenFromStorage {key:auth_token, field:access_token}: token-correlation in a fresh capture PROVED the /tams bearer IS localStorage.auth_token.access_token (same [jwt#1] tag on all 19 API calls). Reading it fresh avoids the ~5min Keycloak expiry.&quot;,
+        &quot;es&quot;: &quot;Reactiva tokenFromStorage {key:auth_token, field:access_token}: la correlación de tokens en una captura nueva DEMOSTRÓ que el bearer de /tams ES localStorage.auth_token.access_token (misma marca [jwt#1] en las 19 llamadas a la API). Leerlo fresco evita la caducidad de Keycloak a los ~5 min.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.4&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Revert tokenFromStorage: localStorage.auth_token.access_token is the Keycloak access token, NOT the weltsparen API bearer (a distinct api_ticket token, likely in-memory) — sending it gave 401 Authorization required. Back to the captured API bearer (capturePaths); token freshness/exchange still under investigation.&quot;,
+        &quot;es&quot;: &quot;Revierte tokenFromStorage: localStorage.auth_token.access_token es el token de acceso de Keycloak, NO el bearer de la API de weltsparen (un api_ticket distinto, probablemente en memoria) — enviarlo daba 401 Authorization required. Vuelta al bearer capturado de la API (capturePaths); la frescura y el intercambio del token siguen en investigación.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.3&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Point tokenFromStorage at the explicit field access_token (localStorage.auth_token.access_token) — unambiguous and works without the auto-detect. minVersion 0.5.0.8.&quot;,
+        &quot;es&quot;: &quot;Apunta tokenFromStorage al campo explícito access_token (localStorage.auth_token.access_token) — inequívoco y funciona sin la autodetección. minVersion 0.5.0.8.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.2&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Read the bearer FRESH from localStorage.auth_token on every request (auth.tokenFromStorage, access-token auto-detected) — Raisin uses a short-lived Keycloak JWT (~5 min) that expired between capture and listing (401 Jwt is expired). This always sends a valid, current user token.&quot;,
+        &quot;es&quot;: &quot;Lee el bearer FRESCO de localStorage.auth_token en cada petición (auth.tokenFromStorage, con el access-token autodetectado) — Raisin usa un JWT de Keycloak de vida corta (~5 min) que caducaba entre la captura y el listado (401 Jwt is expired). Así siempre se envía un token de usuario válido y actual.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20.1&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Scope token capture to the user-data endpoints (auth.capturePaths /tams/ /dbff/ /dds/ /cas/) so the replayed bearer is the logged-in user's token, not a client/anonymous token the public catalog (/dcms) may carry — which caused a 401 UNAUTHORIZED on /tams/v1/accounts even with an authorization sent.&quot;,
+        &quot;es&quot;: &quot;Acota la captura del token a los endpoints de datos del usuario (auth.capturePaths /tams/ /dbff/ /dds/ /cas/) para que el bearer replicado sea el del usuario identificado y no un token de cliente o anónimo que puede llevar el catálogo público (/dcms) — lo que provocaba un 401 UNAUTHORIZED en /tams/v1/accounts incluso enviando authorization.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-20&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Initial: Raisin (WeltSparen). Cross-domain login raisin.com -&gt; API api2.weltsparen.de (Keycloak bearer), customer_id captured as context, 90-day window (SCA-free). Four outputs: movimientos (Raisin transaction account, tams), depósitos (fixed-term deposits FDA_, investment@2 with keepRaw), ahorro (flexible savings-account movements OMA_, from the deposit detail's embedded transactions), documentos (terms/condiciones via dds). OMA (flexible cuenta corriente) vs FDA (fixed deposit) split by the product-id prefix (auth.keep prefix on accounting.deposit_id).&quot;,
+        &quot;es&quot;: &quot;Inicial: Raisin (WeltSparen). Login cross-domain raisin.com -&gt; API api2.weltsparen.de (bearer de Keycloak), customer_id capturado como contexto, ventana de 90 días (sin SCA). Cuatro salidas: movimientos (cuenta de transacciones de Raisin, tams), depósitos (a plazo fijo FDA_, investment@2 con keepRaw), ahorro (movimientos de cuenta flexible OMA_, desde las transacciones incrustadas en el detalle del depósito) y documentos (condiciones vía dds). La separación entre OMA (cuenta corriente flexible) y FDA (depósito a plazo) se hace por el prefijo del id de producto (auth.keep prefix sobre accounting.deposit_id).&quot;
+      }
+    }
+  ],
+  &quot;i18n&quot;: {
+    &quot;deposit&quot;: {
+      &quot;en&quot;: &quot;Deposit&quot;,
+      &quot;es&quot;: &quot;Depósito&quot;,
+      &quot;de&quot;: &quot;Festgeld&quot;,
+      &quot;fr&quot;: &quot;Dépôt&quot;,
+      &quot;nl&quot;: &quot;Deposito&quot;
+    },
+    &quot;account&quot;: {
+      &quot;en&quot;: &quot;Account&quot;,
+      &quot;es&quot;: &quot;Cuenta&quot;,
+      &quot;de&quot;: &quot;Konto&quot;,
+      &quot;fr&quot;: &quot;Compte&quot;,
+      &quot;nl&quot;: &quot;Rekening&quot;
+    }
+  },
+  &quot;content&quot;: {
+    &quot;en&quot;: {
+      &quot;slug&quot;: &quot;raisin-statements&quot;,
+      &quot;docs&quot;: &quot;transactions, deposits and documents&quot;,
+      &quot;h1&quot;: &quot;How to download your Raisin transactions, deposits and documents&quot;,
+      &quot;intro&quot;: &quot;Raisin spreads what matters across several products: the account movements, the fixed-term deposits, the savings balance and the documents for each. Each lives on its own screen, so the full picture is never in one place.&quot;
+    },
+    &quot;es&quot;: {
+      &quot;slug&quot;: &quot;extractos-raisin&quot;,
+      &quot;docs&quot;: &quot;movimientos, depósitos y documentos&quot;,
+      &quot;h1&quot;: &quot;Cómo descargar tus movimientos, depósitos y documentos de Raisin&quot;,
+      &quot;intro&quot;: &quot;Raisin reparte lo importante entre varios productos: los movimientos de la cuenta, los depósitos a plazo, el saldo de ahorro y los documentos de cada uno. Cada cosa vive en su pantalla, así que la foto completa nunca está en un solo sitio.&quot;
+    }
+  },
+  &quot;brand&quot;: &quot;Raisin&quot;
+}</pre>
+        </details>
+        <p class="note"><a href="https://habeas-dev.github.io/sources/raisin.json" rel="noopener">Abrir el fichero original -></a></p>
+      </div>
+    </aside>
+
+    <div class="body">
     <h1>Cómo descargar tus movimientos, depósitos y documentos de Raisin</h1>
     <p class="lead">Raisin reparte lo importante entre varios productos: los movimientos de la cuenta, los depósitos a plazo, el saldo de ahorro y los documentos de cada uno. Cada cosa vive en su pantalla, así que la foto completa nunca está en un solo sitio.</p>
 
@@ -241,8 +818,6 @@
         <li class="rev"><time datetime="2026-07-20">2026-07-20</time> — Multimercado: renombrada raisin-es -&gt; raisin (la API api2.weltsparen.de es común a todos los países de Raisin); el parámetro `locale` del idioma de respuesta sigue ahora al del navegador vía {locale}/{locale:lower} en lugar de un es-ES fijo. Requiere 0.5.0.30. (Las PALABRAS de las etiquetas de cuenta —Depósito/Cuenta/TAE— siguen en español por ahora.)</li>
       </ul>
       <p class="lead"><a href="/sources.html#raisin">Ver el historial completo en el catálogo →</a></p>
-      <h2>Agradecimientos</h2>
-      <p class="credit"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella. Habeas existe porque hay gente que mapea los servicios que usa y comparte el resultado.</p>
 
     <h2>Más guías de bancos, tarjetas e inversión</h2>
     <ul>
@@ -261,6 +836,7 @@
 
     <h2>Otras fuentes</h2>
     <p>Habeas funciona con más servicios españoles e internacionales. <a href="/sources.html">Mira el catálogo completo</a> o lee <a href="/es/por-que-habeas.html">por qué existe Habeas</a>.</p>
+    </div>
   </main>
 </body>
 </html>

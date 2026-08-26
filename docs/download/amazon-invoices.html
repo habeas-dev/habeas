@@ -12,7 +12,33 @@
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="stylesheet" href="/style.css" />
   <style>
-    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    /* Two columns: the prose reads at its own width, and everything ABOUT the source — what it is, which
+       version, who wrote it, how to install it, and the definition itself — sits beside it instead of
+       interrupting it. One column below 1000px, sidebar FIRST, so a phone gets the install buttons
+       before the essay. */
+    .doc { max-width: 1100px; margin: 0 auto; padding: 8px 20px 64px;
+           display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 40px; align-items: start; }
+    .doc > .body { min-width: 0; }
+    .doc > aside { position: sticky; top: 78px; display: flex; flex-direction: column; gap: 14px; }
+    @media (max-width: 1000px) { .doc { grid-template-columns: 1fr; gap: 22px; }
+      .doc > aside { position: static; order: -1; } }
+    .card { border: 1px solid var(--line, #3333); border-radius: 14px; padding: 15px 16px; }
+    .card h2 { font-size: .78rem !important; text-transform: uppercase; letter-spacing: .6px;
+               color: var(--muted, #888); margin: 0 0 10px !important; }
+    .card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13.5px; }
+    .card dt { color: var(--muted, #888); }
+    .card dd { margin: 0; word-break: break-word; }
+    .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
+                 border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
+    aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+    aside .cta .btn { text-align: center; }
+    /* The definition, in full. It is the project's whole security claim — adapters are data, never code —
+       and a claim you cannot read is a claim you are asked to take on faith. */
+    .defn summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+    .defn pre { max-height: 420px; overflow: auto; margin: 10px 0 0; padding: 11px 12px; font-size: 11.5px;
+                line-height: 1.5; border-radius: 9px; background: var(--surface-2, #0001); }
+    header nav .langlink { font-weight: 700; }
     .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
     .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
     .doc h3 { font-size: 1.02rem; margin: 20px 0 6px; }
@@ -183,15 +209,250 @@
       <span class="name">Habeas</span>
       <nav>
         <a href="/">Home</a>
-        <a href="/why-habeas.html">Why Habeas</a>
+        <a href="/why-habeas.html">Why Habeas?</a>
         <a href="/sources.html">Sources</a>
+        <a href="/developers.html">Developers</a>
+        <a href="/architecture.html">Architecture</a>
         <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
         <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <a class="langlink" href="/es/descargar/facturas-amazon.html" hreflang="es" rel="alternate">ES</a>
       </nav>
     </div>
   </header>
 
   <main class="doc">
+    <aside>
+      <div class="card">
+        <h2>About this source</h2>
+        <dl>
+          <dt>Version</dt><dd>2026-08-26</dd>
+          <dt>Trust</dt><dd>first-party</dd>
+          <dt>Coverage</dt><dd>global</dd>
+          <dt>Licence</dt><dd>CC0-1.0</dd>
+        </dl>
+        <p class="who"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> recorded their own session and wrote this source definition from it.</p>
+        <p class="note">Definition in the public domain (CC0-1.0); this page’s text CC-BY-4.0.</p>
+      </div>
+
+      <div class="cta">
+        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="amazon">Install on Chrome</a>
+        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="amazon">Install on Firefox</a>
+      </div>
+
+      <div class="card defn">
+        <h2>The definition itself</h2>
+        <p class="note">A source is data, never code — this is the whole of it.</p>
+        <details>
+          <summary>amazon.json</summary>
+          <pre>{
+  &quot;id&quot;: &quot;amazon&quot;,
+  &quot;name&quot;: &quot;Amazon&quot;,
+  &quot;service&quot;: &quot;amazon&quot;,
+  &quot;trust&quot;: &quot;first-party&quot;,
+  &quot;credit&quot;: {
+    &quot;author&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    },
+    &quot;capture&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    }
+  },
+  &quot;verified&quot;: true,
+  &quot;domain&quot;: &quot;amazon.com&quot;,
+  &quot;domains&quot;: [
+    &quot;amazon.com&quot;,
+    &quot;amazon.co.uk&quot;,
+    &quot;amazon.de&quot;,
+    &quot;amazon.fr&quot;,
+    &quot;amazon.it&quot;,
+    &quot;amazon.es&quot;,
+    &quot;amazon.nl&quot;,
+    &quot;amazon.se&quot;,
+    &quot;amazon.pl&quot;,
+    &quot;amazon.com.tr&quot;,
+    &quot;amazon.ca&quot;,
+    &quot;amazon.com.mx&quot;,
+    &quot;amazon.com.br&quot;,
+    &quot;amazon.co.jp&quot;,
+    &quot;amazon.in&quot;,
+    &quot;amazon.com.au&quot;,
+    &quot;amazon.sg&quot;,
+    &quot;amazon.ae&quot;
+  ],
+  &quot;country&quot;: &quot;global&quot;,
+  &quot;version&quot;: &quot;2026-08-26&quot;,
+  &quot;minVersion&quot;: &quot;0.7.0.11&quot;,
+  &quot;notes&quot;: &quot;BETA — a MULTI-COUNTRY generalization of the verified amazon-es source. The your-orders SPA structure (data-component regions, order-card slot-ids, invoice popover, item titles/prices, and the internal paymentMethodHeader/lastDigits JSON keys) is the SAME in every locale, so most of this is universal; only a few TEXT labels are locale-specific and are matched with a multi-language regex alternation (Total/Gesamt/Totale…, Refunded/Reembolsado/Erstattet…) plus a currency capture that accepts a symbol before OR after the amount. VERIFIED for Spain (amazon.es); UNVERIFIED elsewhere. Open items a tester in another country can confirm: (1) the grand-total label + currency for their market (esp. non-€: .com $, .co.uk £, .co.jp ¥); (2) the order-detail DATE parses (normalizeDate handles en/es month names; other locales may fall back to year-only); (3) the return/refund words. Pin the country for unattended scheduled runs with the country picker (ds.brandDomain). The year pager scans the FULL window (back:30, stopAfterEmpty:30) rather than stopping after a couple of empty years, because Amazon histories are often sparse/gappy (e.g. orders only in 2008, 2011, 2016, 2020) — a low stopAfterEmpty truncated everything before the first recent order. Future optimization: parse the on-page timeFilter year dropdown to scan only the years the account actually has.&quot;,
+  &quot;categories&quot;: [
+    &quot;marketplace&quot;
+  ],
+  &quot;match&quot;: [
+    &quot;https://www.amazon.com/*&quot;,
+    &quot;https://www.amazon.co.uk/*&quot;,
+    &quot;https://www.amazon.de/*&quot;,
+    &quot;https://www.amazon.fr/*&quot;,
+    &quot;https://www.amazon.it/*&quot;,
+    &quot;https://www.amazon.es/*&quot;,
+    &quot;https://www.amazon.nl/*&quot;,
+    &quot;https://www.amazon.se/*&quot;,
+    &quot;https://www.amazon.pl/*&quot;,
+    &quot;https://www.amazon.com.tr/*&quot;,
+    &quot;https://www.amazon.ca/*&quot;,
+    &quot;https://www.amazon.com.mx/*&quot;,
+    &quot;https://www.amazon.com.br/*&quot;,
+    &quot;https://www.amazon.co.jp/*&quot;,
+    &quot;https://www.amazon.in/*&quot;,
+    &quot;https://www.amazon.com.au/*&quot;,
+    &quot;https://www.amazon.sg/*&quot;,
+    &quot;https://www.amazon.ae/*&quot;
+  ],
+  &quot;openUrl&quot;: &quot;https://www.amazon.com/gp/css/order-history?ref_=nav_orders_first&quot;,
+  &quot;auth&quot;: {
+    &quot;mode&quot;: &quot;cookie&quot;,
+    &quot;replayHeaders&quot;: []
+  },
+  &quot;api&quot;: {
+    &quot;host&quot;: &quot;https://www.amazon.com&quot;,
+    &quot;list&quot;: {
+      &quot;path&quot;: &quot;/your-orders/orders&quot;,
+      &quot;from&quot;: &quot;html&quot;,
+      &quot;paging&quot;: &quot;years&quot;,
+      &quot;years&quot;: {
+        &quot;param&quot;: &quot;timeFilter&quot;,
+        &quot;format&quot;: &quot;year-{y}&quot;,
+        &quot;startParam&quot;: &quot;startIndex&quot;,
+        &quot;startStep&quot;: 10,
+        &quot;back&quot;: 30,
+        &quot;stopAfterEmpty&quot;: 30
+      },
+      &quot;maxPages&quot;: 200,
+      &quot;rows&quot;: {
+        &quot;each&quot;: &quot;amzn1\\.yourorders\\.order-card\\.([0-9]{3}-[0-9]{7}-[0-9]{7})&quot;,
+        &quot;fields&quot;: {
+          &quot;orderId&quot;: {
+            &quot;group&quot;: 1
+          }
+        }
+      }
+    },
+    &quot;detail&quot;: {
+      &quot;path&quot;: &quot;/your-orders/order-details?orderID={internalId}&quot;,
+      &quot;method&quot;: &quot;GET&quot;,
+      &quot;fields&quot;: {
+        &quot;orderId&quot;: {
+          &quot;region&quot;: &quot;orderId&quot;,
+          &quot;tag&quot;: &quot;span&quot;
+        },
+        &quot;date&quot;: {
+          &quot;region&quot;: &quot;orderDate&quot;,
+          &quot;tag&quot;: &quot;span&quot;
+        },
+        &quot;total&quot;: {
+          &quot;region&quot;: &quot;chargeSummary&quot;,
+          &quot;re&quot;: &quot;[\\s\\S]*Total[^&lt;:]{0,40}:[\\s\\S]{0,250}?od-line-item-row-content a-span-last[^&gt;]*&gt;\\s*&lt;span[^&gt;]*&gt;\\s*([^&lt;]+?)\\s*&lt;&quot;
+        },
+        &quot;currency&quot;: {
+          &quot;region&quot;: &quot;chargeSummary&quot;,
+          &quot;re&quot;: &quot;[\\s\\S]*Total[^&lt;:]{0,40}:[\\s\\S]{0,250}?od-line-item-row-content a-span-last[^&gt;]*&gt;\\s*&lt;span[^&gt;]*&gt;\\s*[^&lt;]*?(US\\$|USD|EUR|GBP|JPY|€|\\$|£|¥)&quot;
+        },
+        &quot;returnStatus&quot;: {
+          &quot;re&quot;: &quot;od-status-message[\\s\\S]{0,80}?(Reembolsado|Devolución completada|Refunded|Returned|Return complete|Erstattet|Rückerstattung|Remboursé|Retour terminé|Rimborsato|Reso completato)&quot;
+        },
+        &quot;refundTotal&quot;: {
+          &quot;re&quot;: &quot;(?:Reembolso|Refund|Erstattung|Remboursement|Rimborso)[\\s\\S]{0,400}?([^\\s&lt;&gt;0-9]{0,3}\\s*[\\d.,]+\\s*[^\\s&lt;&gt;0-9]{0,3})&quot;
+        },
+        &quot;paymentMethod&quot;: {
+          &quot;re&quot;: &quot;paymentMethodHeader[\\\\\&quot;:]+([^\\\\\&quot;]+)(?:(?!paymentMethodHeader)[\\s\\S]){0,300}?lastDigits&quot;
+        },
+        &quot;paymentLast4&quot;: {
+          &quot;re&quot;: &quot;lastDigits[\\\\\&quot;:]+(\\d{4})&quot;
+        }
+      },
+      &quot;items&quot;: {
+        &quot;each&quot;: &quot;data-component=\&quot;itemTitle\&quot;[\\s\\S]*?href=\&quot;/dp/([A-Z0-9]{10})[^\&quot;]*\&quot;[^&gt;]*&gt;([^&lt;]+)&lt;/a&gt;[\\s\\S]{0,5000}?data-component=\&quot;unitPrice\&quot;&gt;[\\s\\S]{0,400}?a-offscreen\&quot;&gt;([^&lt;]+)&lt;&quot;,
+        &quot;fields&quot;: {
+          &quot;asin&quot;: {
+            &quot;group&quot;: 1
+          },
+          &quot;title&quot;: {
+            &quot;group&quot;: 2
+          },
+          &quot;price&quot;: {
+            &quot;group&quot;: 3
+          }
+        },
+        &quot;section&quot;: {
+          &quot;each&quot;: &quot;data-component=\&quot;shipmentStatus\&quot;&quot;,
+          &quot;fields&quot;: {
+            &quot;returned&quot;: {
+              &quot;re&quot;: &quot;od-status-message[\\s\\S]{0,80}?(Reembolsado|Devolución completada|Refunded|Returned|Return complete|Erstattet|Remboursé|Rimborsato)&quot;
+            }
+          }
+        }
+      }
+    },
+    &quot;pdf&quot;: {
+      &quot;resolve&quot;: {
+        &quot;path&quot;: &quot;/your-orders/invoice/popover?orderId={internalId}&quot;,
+        &quot;method&quot;: &quot;GET&quot;,
+        &quot;linkMatch&quot;: &quot;href=\&quot;(/documents/download/[^\&quot;]+/invoice\\.pdf)\&quot;&quot;
+      }
+    }
+  },
+  &quot;fields&quot;: {
+    &quot;internalId&quot;: &quot;orderId&quot;,
+    &quot;date&quot;: &quot;_year&quot;
+  },
+  &quot;schema&quot;: &quot;receipt@1&quot;,
+  &quot;itemLabel&quot;: &quot;Order {internalId}&quot;,
+  &quot;content&quot;: {
+    &quot;en&quot;: {
+      &quot;slug&quot;: &quot;amazon-invoices&quot;,
+      &quot;docs&quot;: &quot;order invoices&quot;,
+      &quot;h1&quot;: &quot;How to download your Amazon invoices&quot;,
+      &quot;intro&quot;: &quot;Amazon keeps years of orders in your account, each with its own invoice behind its own page. Collecting a year of them — for expenses, a tax return, or a warranty claim — means opening every order in turn.&quot;
+    },
+    &quot;es&quot;: {
+      &quot;slug&quot;: &quot;facturas-amazon&quot;,
+      &quot;docs&quot;: &quot;facturas de pedidos&quot;,
+      &quot;h1&quot;: &quot;Cómo descargar tus facturas de Amazon&quot;,
+      &quot;intro&quot;: &quot;Amazon guarda años de pedidos en tu cuenta, cada uno con su factura tras su propia página. Reunir un año entero —para gastos, la declaración o una garantía— significa abrir pedido por pedido.&quot;
+    }
+  },
+  &quot;brand&quot;: &quot;Amazon&quot;,
+  &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-08-26&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.&quot;,
+        &quot;es&quot;: &quot;Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-24&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Licence of the definition moved to CC0-1.0 (and the guide `content` to CC-BY-4.0), stated once in sources/LICENSE instead of a per-file field.&quot;,
+        &quot;es&quot;: &quot;La licencia de la definición pasa a CC0-1.0 (y el `content` de la guía a CC-BY-4.0), declarada una sola vez en sources/LICENSE en lugar de en un campo por fichero.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-08&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.&quot;,
+        &quot;es&quot;: &quot;Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`.&quot;
+      }
+    }
+  ]
+}</pre>
+        </details>
+        <p class="note"><a href="https://habeas-dev.github.io/sources/amazon.json" rel="noopener">Open the raw file -></a></p>
+      </div>
+    </aside>
+
+    <div class="body">
     <h1>How to download your Amazon invoices</h1>
     <p class="lead">Amazon keeps years of orders in your account, each with its own invoice behind its own page. Collecting a year of them — for expenses, a tax return, or a warranty claim — means opening every order in turn.</p>
 
@@ -234,8 +495,6 @@
         <li class="rev"><time datetime="2026-08-24">2026-08-24</time> — Licence of the definition moved to CC0-1.0 (and the guide `content` to CC-BY-4.0), stated once in sources/LICENSE instead of a per-file field.</li>
         <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.</li>
       </ul>
-      <h2>Credit</h2>
-      <p class="credit"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> recorded their own session and wrote this source definition from it. Habeas exists because people map the services they use and share the result.</p>
 
     <h2>More shops guides</h2>
     <ul>
@@ -250,6 +509,7 @@
 
     <h2>Other sources</h2>
     <p>Habeas works with more Spanish and international services. <a href="/sources.html">See the full catalog</a> or read <a href="/why-habeas.html">why Habeas exists</a>.</p>
+    </div>
   </main>
 </body>
 </html>

@@ -12,7 +12,33 @@
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="stylesheet" href="/style.css" />
   <style>
-    .doc { max-width: 780px; margin: 0 auto; padding: 8px 20px 64px; }
+    /* Two columns: the prose reads at its own width, and everything ABOUT the source — what it is, which
+       version, who wrote it, how to install it, and the definition itself — sits beside it instead of
+       interrupting it. One column below 1000px, sidebar FIRST, so a phone gets the install buttons
+       before the essay. */
+    .doc { max-width: 1100px; margin: 0 auto; padding: 8px 20px 64px;
+           display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 40px; align-items: start; }
+    .doc > .body { min-width: 0; }
+    .doc > aside { position: sticky; top: 78px; display: flex; flex-direction: column; gap: 14px; }
+    @media (max-width: 1000px) { .doc { grid-template-columns: 1fr; gap: 22px; }
+      .doc > aside { position: static; order: -1; } }
+    .card { border: 1px solid var(--line, #3333); border-radius: 14px; padding: 15px 16px; }
+    .card h2 { font-size: .78rem !important; text-transform: uppercase; letter-spacing: .6px;
+               color: var(--muted, #888); margin: 0 0 10px !important; }
+    .card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13.5px; }
+    .card dt { color: var(--muted, #888); }
+    .card dd { margin: 0; word-break: break-word; }
+    .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
+                 border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
+    aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+    aside .cta .btn { text-align: center; }
+    /* The definition, in full. It is the project's whole security claim — adapters are data, never code —
+       and a claim you cannot read is a claim you are asked to take on faith. */
+    .defn summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+    .defn pre { max-height: 420px; overflow: auto; margin: 10px 0 0; padding: 11px 12px; font-size: 11.5px;
+                line-height: 1.5; border-radius: 9px; background: var(--surface-2, #0001); }
+    header nav .langlink { font-weight: 700; }
     .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
     .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
     .doc h3 { font-size: 1.02rem; margin: 20px 0 6px; }
@@ -183,15 +209,322 @@
       <span class="name">Habeas</span>
       <nav>
         <a href="/">Inicio</a>
-        <a href="/es/por-que-habeas.html">Por qué Habeas</a>
+        <a href="/es/por-que-habeas.html">¿Por qué Habeas?</a>
         <a href="/sources.html">Fuentes</a>
+        <a href="/es/desarrolladores.html">Desarrolladores</a>
+        <a href="/architecture.html">Arquitectura</a>
         <a href="/privacy.html">Privacidad</a>
+        <a href="/terms.html">Términos</a>
         <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <a class="langlink" href="/download/revolut-statements.html" hreflang="en" rel="alternate">EN</a>
       </nav>
     </div>
   </header>
 
   <main class="doc">
+    <aside>
+      <div class="card">
+        <h2>Sobre esta fuente</h2>
+        <dl>
+          <dt>Versión</dt><dd>2026-08-26.3</dd>
+          <dt>Confianza</dt><dd>community</dd>
+          <dt>Cobertura</dt><dd>global</dd>
+          <dt>Licencia</dt><dd>CC0-1.0</dd>
+        </dl>
+        <p class="who"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella.</p>
+        <p class="note">La definición, de dominio público (CC0-1.0); el texto de esta página, CC-BY-4.0.</p>
+      </div>
+
+      <div class="cta">
+        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="revolut">Instalar en Chrome</a>
+        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="revolut">Instalar en Firefox</a>
+      </div>
+
+      <div class="card defn">
+        <h2>La definición en sí</h2>
+        <p class="note">Una fuente son datos, nunca código — esto es todo lo que hay.</p>
+        <details>
+          <summary>revolut.json</summary>
+          <pre>{
+  &quot;id&quot;: &quot;revolut&quot;,
+  &quot;name&quot;: &quot;Revolut&quot;,
+  &quot;service&quot;: &quot;revolut&quot;,
+  &quot;trust&quot;: &quot;community&quot;,
+  &quot;credit&quot;: {
+    &quot;author&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    },
+    &quot;capture&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    }
+  },
+  &quot;domain&quot;: &quot;revolut.com&quot;,
+  &quot;country&quot;: &quot;global&quot;,
+  &quot;categories&quot;: [
+    &quot;banking&quot;
+  ],
+  &quot;version&quot;: &quot;2026-08-26.3&quot;,
+  &quot;minVersion&quot;: &quot;0.9.3&quot;,
+  &quot;minorUnits&quot;: true,
+  &quot;keepRaw&quot;: true,
+  &quot;throttle&quot;: {
+    &quot;minMs&quot;: 300,
+    &quot;jitterMs&quot;: 400
+  },
+  &quot;match&quot;: [
+    &quot;https://app.revolut.com/*&quot;
+  ],
+  &quot;openUrl&quot;: &quot;https://app.revolut.com/home&quot;,
+  &quot;crossDomainHosts&quot;: [
+    &quot;storage.googleapis.com&quot;
+  ],
+  &quot;auth&quot;: {
+    &quot;mode&quot;: &quot;cookie&quot;,
+    &quot;replayHeaders&quot;: [
+      &quot;x-device-id&quot;
+    ],
+    &quot;readyUrl&quot;: &quot;https://app.revolut.com/home&quot;
+  },
+  &quot;api&quot;: {
+    &quot;host&quot;: &quot;https://app.revolut.com&quot;,
+    &quot;groups&quot;: {
+      &quot;path&quot;: &quot;/api/retail/user/current/wallet&quot;,
+      &quot;itemsPath&quot;: &quot;pockets&quot;,
+      &quot;fields&quot;: {
+        &quot;id&quot;: &quot;id&quot;,
+        &quot;name&quot;: &quot;currency&quot;,
+        &quot;currency&quot;: &quot;currency&quot;,
+        &quot;type&quot;: &quot;type&quot;
+      }
+    }
+  },
+  &quot;streams&quot;: [
+    {
+      &quot;id&quot;: &quot;transactions&quot;,
+      &quot;name&quot;: &quot;Transacciones&quot;,
+      &quot;schema&quot;: &quot;transaction@1&quot;,
+      &quot;normalize&quot;: {
+        &quot;counterparty&quot;: {
+          &quot;from&quot;: &quot;description&quot;,
+          &quot;re&quot;: [
+            &quot;^(?:To|From|Payment to|Payment from)\\s+(.+)$&quot;
+          ]
+        },
+        &quot;sign&quot;: {
+          &quot;amount&quot;: {
+            &quot;when&quot;: {
+              &quot;field&quot;: &quot;vault&quot;,
+              &quot;present&quot;: true
+            },
+            &quot;positiveWhen&quot;: {
+              &quot;field&quot;: &quot;fromAccount.type&quot;,
+              &quot;equals&quot;: &quot;SAVINGS&quot;
+            }
+          }
+        },
+        &quot;unset&quot;: {
+          &quot;balanceAfter&quot;: {
+            &quot;when&quot;: {
+              &quot;field&quot;: &quot;vault&quot;,
+              &quot;present&quot;: true
+            }
+          }
+        }
+      },
+      &quot;api&quot;: {
+        &quot;list&quot;: {
+          &quot;path&quot;: &quot;/api/retail/user/current/transactions/last&quot;,
+          &quot;itemsPath&quot;: &quot;$&quot;,
+          &quot;paging&quot;: &quot;cursor&quot;,
+          &quot;cursorParam&quot;: &quot;to&quot;,
+          &quot;cursorFromItem&quot;: &quot;startedDate&quot;,
+          &quot;params&quot;: {
+            &quot;count&quot;: &quot;500&quot;,
+            &quot;internalPocketId&quot;: &quot;{group.id}&quot;
+          },
+          &quot;headers&quot;: {
+            &quot;x-browser-application&quot;: &quot;WEB_CLIENT&quot;,
+            &quot;x-client-version&quot;: &quot;100.0&quot;
+          },
+          &quot;referer&quot;: &quot;https://app.revolut.com/home&quot;,
+          &quot;keep&quot;: [
+            {
+              &quot;field&quot;: &quot;cardVerification&quot;,
+              &quot;exclude&quot;: [
+                true
+              ]
+            },
+            {
+              &quot;field&quot;: &quot;state&quot;,
+              &quot;values&quot;: [
+                &quot;COMPLETED&quot;
+              ]
+            }
+          ]
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;id&quot;,
+        &quot;date&quot;: &quot;startedDate&quot;,
+        &quot;amount&quot;: &quot;amount&quot;,
+        &quot;currency&quot;: &quot;currency&quot;,
+        &quot;description&quot;: &quot;description&quot;,
+        &quot;type&quot;: &quot;type&quot;,
+        &quot;counterparty&quot;: &quot;merchant.name&quot;,
+        &quot;balanceAfter&quot;: &quot;balance&quot;,
+        &quot;valueDate&quot;: &quot;completedDate&quot;
+      }
+    },
+    {
+      &quot;id&quot;: &quot;extracto&quot;,
+      &quot;name&quot;: &quot;Extractos de cuenta&quot;,
+      &quot;schema&quot;: &quot;invoice@1&quot;,
+      &quot;api&quot;: {
+        &quot;list&quot;: {
+          &quot;paging&quot;: &quot;synthetic&quot;,
+          &quot;synthetic&quot;: {
+            &quot;each&quot;: &quot;group-months&quot;
+          },
+          &quot;maxAgeDays&quot;: 366
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;{group.currency}-{period}&quot;,
+        &quot;date&quot;: &quot;{date}&quot;,
+        &quot;number&quot;: &quot;{period}&quot;,
+        &quot;account&quot;: &quot;{group.currency}&quot;,
+        &quot;description&quot;: &quot;Extracto {group.currency} {period}&quot;
+      },
+      &quot;formats&quot;: [
+        {
+          &quot;id&quot;: &quot;pdf&quot;,
+          &quot;name&quot;: &quot;PDF&quot;,
+          &quot;api&quot;: {
+            &quot;pdf&quot;: {
+              &quot;poll&quot;: {
+                &quot;path&quot;: &quot;/api/retail/user/current/statements/account-statements?from={fromDate}&amp;to={date}&amp;ccy={group.currency}&amp;format=PDF&amp;type=OFFICIAL&quot;,
+                &quot;statePath&quot;: &quot;state&quot;,
+                &quot;readyValue&quot;: &quot;READY&quot;,
+                &quot;urlField&quot;: &quot;url&quot;,
+                &quot;tries&quot;: 10,
+                &quot;delayMs&quot;: 1500
+              },
+              &quot;ext&quot;: &quot;pdf&quot;,
+              &quot;mime&quot;: &quot;application/pdf&quot;
+            }
+          }
+        },
+        {
+          &quot;id&quot;: &quot;csv&quot;,
+          &quot;name&quot;: &quot;CSV&quot;,
+          &quot;api&quot;: {
+            &quot;pdf&quot;: {
+              &quot;poll&quot;: {
+                &quot;path&quot;: &quot;/api/retail/user/current/statements/account-statements?from={fromDate}&amp;to={date}&amp;ccy={group.currency}&amp;format=CSV&amp;type=OFFICIAL&quot;,
+                &quot;statePath&quot;: &quot;state&quot;,
+                &quot;readyValue&quot;: &quot;READY&quot;,
+                &quot;urlField&quot;: &quot;url&quot;,
+                &quot;tries&quot;: 10,
+                &quot;delayMs&quot;: 1500
+              },
+              &quot;ext&quot;: &quot;csv&quot;,
+              &quot;mime&quot;: &quot;text/csv&quot;
+            }
+          }
+        }
+      ]
+    }
+  ],
+  &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-08-26.3&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Documents a known limit rather than fixing it: weekend foreign-currency card payments arrive about 1% short, because Revolut’s out-of-hours surcharge leaves the balance but never appears in the data. 1.48 EUR across 3 of 167 movements, and every way of correcting it costs more than it recovers.&quot;,
+        &quot;es&quot;: &quot;Documenta un límite conocido en vez de arreglarlo: los pagos con tarjeta en divisa hechos en fin de semana llegan un 1% cortos, porque el recargo de Revolut fuera de horario sale del saldo pero no aparece en los datos. Son 1,48 € en 3 de 167 movimientos, y cualquier forma de corregirlo cuesta más de lo que recupera.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-26.1&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Drops card verifications (0 EUR authorisations, flagged cardVerification) — they move no money and are not movements. Fixes vault transfers: Revolut books them from the paying side, so money returning from a savings vault arrived negative, and the balance they carry belongs to the vault rather than to the personal account. Reported against 167 real movements, of which 151 of 166 balance links already chained to the cent. Also drops anything whose state is not COMPLETED (5 DECLINED + 1 REVERTED in the sample were retried charges whose successful twin also arrived).&quot;,
+        &quot;es&quot;: &quot;Descarta las verificaciones de tarjeta (autorizaciones de 0 EUR, marcadas con cardVerification): no mueven dinero y no son movimientos. Corrige las transferencias con vaults: Revolut las contabiliza desde el lado que paga, así que el dinero que volvía de un bolsillo de ahorro llegaba en negativo, y el saldo que arrastran pertenece al vault y no a la cuenta personal. Reportado contra 167 movimientos reales, de los cuales 151 de 166 enlaces de saldo ya encadenaban al céntimo. Descarta además todo lo que no esté en estado COMPLETED (los 5 DECLINED y 1 REVERTED de la muestra eran cargos reintentados cuyo gemelo correcto también llegaba).&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-26&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.&quot;,
+        &quot;es&quot;: &quot;Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-12&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Automatic sync no longer starts until app.revolut.com/home has finished loading. The app fires authenticated requests on earlier screens, so a sync could begin before the view holding the data existed.&quot;,
+        &quot;es&quot;: &quot;La sincronización automática ya no arranca hasta que app.revolut.com/home ha terminado de cargar. La app dispara peticiones autenticadas en pantallas anteriores, así que una sincronización podía empezar antes de que existiera la vista con los datos.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-08-08&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.&quot;,
+        &quot;es&quot;: &quot;Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-16&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Map the running balance (minor-unit scaled) to record.balanceAfter and the completed date to record.valueDate — promoted to canonical fields for the Cuéntamo contract. Requires extension &gt;= 0.3.0.24.&quot;,
+        &quot;es&quot;: &quot;Mapea el saldo tras el movimiento (escalado desde unidades menores) a record.balanceAfter y la fecha de completado a record.valueDate — promovidos a campos canónicos para el contrato del consumidor. Requiere extensión &gt;= 0.3.0.24.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-15.2&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Add account statements (PDF/CSV) per account × month: async-generated (poll account-statements until READY) then download the signed Google Storage URL (crossDomainHosts + consent). Statements bounded to the last ~12 months.&quot;,
+        &quot;es&quot;: &quot;Añade extractos de cuenta (PDF/CSV) por cuenta × mes: se generan de forma asíncrona (se consulta account-statements hasta READY) y luego se descarga la URL firmada de Google Storage (crossDomainHosts + consentimiento). Los extractos se limitan a los últimos ~12 meses.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-15.1&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Add per-account (pocket) filter with a currency-labelled Accounts picker.&quot;,
+        &quot;es&quot;: &quot;Añade filtro por cuenta (bolsillo) con un selector de cuentas etiquetado por divisa.&quot;
+      }
+    },
+    {
+      &quot;version&quot;: &quot;2026-07-15&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Initial: personal transactions across all accounts, paged by the `to` timestamp cursor; cookie + captured x-device-id; minor-unit amounts scaled per ISO 4217.&quot;,
+        &quot;es&quot;: &quot;Inicial: movimientos personales de todas las cuentas, paginados por el cursor de marca temporal `to`; cookie más x-device-id capturado; importes en unidades menores escalados según ISO 4217.&quot;
+      }
+    }
+  ],
+  &quot;content&quot;: {
+    &quot;en&quot;: {
+      &quot;slug&quot;: &quot;revolut-statements&quot;,
+      &quot;docs&quot;: &quot;transactions and statements&quot;,
+      &quot;h1&quot;: &quot;How to download your Revolut transactions and statements&quot;,
+      &quot;intro&quot;: &quot;Revolut offers statements as PDF or CSV, one period at a time. Building a continuous history, or keeping it alongside your other accounts, still means going back every month and downloading by hand.&quot;
+    },
+    &quot;es&quot;: {
+      &quot;slug&quot;: &quot;extractos-revolut&quot;,
+      &quot;docs&quot;: &quot;movimientos y extractos&quot;,
+      &quot;h1&quot;: &quot;Cómo descargar tus movimientos y extractos de Revolut&quot;,
+      &quot;intro&quot;: &quot;Revolut ofrece extractos en PDF o CSV, un periodo cada vez. Construir un histórico continuo, o mantenerlo junto al de tus otras cuentas, sigue exigiendo volver cada mes y descargar a mano.&quot;
+    }
+  },
+  &quot;brand&quot;: &quot;Revolut&quot;,
+  &quot;notes&quot;: &quot;KNOWN AND DELIBERATELY NOT FIXED — foreign-currency card payments made at the WEEKEND arrive about 1% under the real charge. Revolut adds a surcharge for converting while the market is shut; it is taken out of the balance but is not in `amount`, which is derived from the interbank `rate` alone (-680 minor units / 0.8402721 = -8.09, against a real -8.18). The tell is that every weekend movement shares one frozen rate while weekday ones each have their own. Separation was perfect in an 18-month sample: the 3 Sunday movements were short, the 6 weekday ones chained to the cent, and it hit GBP and USD alike — so it is the day, not the currency. Total impact: 1.48 EUR across 3 of 167 movements.\nNot fixed because every route costs more than it buys. The real charge is only recoverable from the balance delta (amount = balance(n-1) - balance(n)), which would make the whole ingest depend on ordering and on the previous item to correct three movements. Applying a percentage by hand is worse: the rate is not in the payload and varies by plan and moment, so it would be invented. There is no `fee` field and no final euro amount anywhere in the response. If it is ever worth solving properly, the thread is `feeBreakdownId` (\&quot;TXN:&lt;id&gt;\&quot;), which suggests the breakdown lives at another endpoint — one extra request per movement, which 1.48 EUR does not justify.\nGotcha for anyone measuring this: `counterpart.amount` is in MINOR units (-680 is 6.80 GBP, not 680). The balance-continuity check in lib/reconcile.js surfaces this as a small, constant residue once the card verifications, the non-COMPLETED states and the vault transfers are handled.&quot;
+}</pre>
+        </details>
+        <p class="note"><a href="https://habeas-dev.github.io/sources/revolut.json" rel="noopener">Abrir el fichero original -></a></p>
+      </div>
+    </aside>
+
+    <div class="body">
     <h1>Cómo descargar tus movimientos y extractos de Revolut</h1>
     <p class="lead">Revolut ofrece extractos en PDF o CSV, un periodo cada vez. Construir un histórico continuo, o mantenerlo junto al de tus otras cuentas, sigue exigiendo volver cada mes y descargar a mano.</p>
 
@@ -238,8 +571,6 @@
         <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`.</li>
       </ul>
       <p class="lead"><a href="/sources.html#revolut">Ver el historial completo en el catálogo →</a></p>
-      <h2>Agradecimientos</h2>
-      <p class="credit"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella. Habeas existe porque hay gente que mapea los servicios que usa y comparte el resultado.</p>
 
     <h2>Más guías de bancos, tarjetas e inversión</h2>
     <ul>
@@ -258,6 +589,7 @@
 
     <h2>Otras fuentes</h2>
     <p>Habeas funciona con más servicios españoles e internacionales. <a href="/sources.html">Mira el catálogo completo</a> o lee <a href="/es/por-que-habeas.html">por qué existe Habeas</a>.</p>
+    </div>
   </main>
 </body>
 </html>
