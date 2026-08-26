@@ -171,3 +171,24 @@ test('a pinned origin is honoured by BOTH passes, not just the background', () =
   const ui = read('src/ui/options.js');
   assert.match(ui, /&& \(!originId \|\| s\.id === originId\)/, 'the page-side folder pass must respect it too');
 });
+
+// ---------------------------------------------------------------- where a document actually lives
+
+test('the detail names every destination a document is saved in', () => {
+  // The card carried this only in a tooltip, and the drawer showed it implicitly as one "open from X"
+  // button per destination — which answers nothing for a record-only movement, the case where the
+  // question is hardest: a bank line has no file to open, so no part of the screen said where its data
+  // had gone. Listed for a single destination too; "where is this?" has a one-item answer as often as not.
+  const ui = read('src/ui/archive.js');
+  const i = ui.indexOf('function openDrawer');
+  assert.ok(i > 0, 'openDrawer not found');
+  const body = ui.slice(i, ui.indexOf('\nfunction ', i + 10));
+  assert.match(body, /archive_field_destinations/, 'the drawer must state where the document is saved');
+  assert.match(body, /r\.delivered\.map\(sinkLabel\)/, 'named with the shared label helper, not by raw id');
+  // Before the files row: where it lives, then what is there.
+  assert.ok(body.indexOf('archive_field_destinations') < body.indexOf('archive_field_files'),
+    'destinations should read before formats');
+  for (const lang of ['en', 'es']) {
+    assert.ok(JSON.parse(read(`_locales/${lang}/messages.json`)).archive_field_destinations, `${lang} lacks the label`);
+  }
+});

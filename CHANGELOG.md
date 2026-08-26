@@ -47,6 +47,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   number a person would write. Invisible until a few thousand movements are summed, or until someone
   reads one — and this is a ledger, so both happen. Affects every source declaring `minorUnits`.
 
+- **A document's detail now names every destination it is saved in.** The card carried it only in a
+  tooltip and the drawer showed it implicitly, as one "open from X" button per destination — which
+  answers nothing for a record-only movement, the case where the question is hardest: a bank line has no
+  file to open, so nothing on screen said where its data had gone. Shown for one destination as well as
+  several.
+
 ### Added
 - **`lib/reconcile.js` — the arithmetic a statement can do on itself.** Each movement carries the balance
   it left behind, so the amounts between any two must equal the difference between their balances. When

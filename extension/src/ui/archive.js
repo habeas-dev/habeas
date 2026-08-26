@@ -728,6 +728,12 @@ function openDrawer(r) {
   if (r.record.group) rows.push([t('archive_field_account'), r.record.group]);
   const cp = nameOf(r.record.counterparty) || nameOf(r.record.description); if (cp) rows.push([t('archive_field_concept'), cp]);
   if (r.record.type && !isInv) rows.push([t('archive_field_type'), String(r.record.type)]);
+  // WHERE this lives. The card only carried it in a tooltip, and the drawer showed it implicitly, as one
+  // "open from X" button per destination — which says nothing at all for a record-only movement, the case
+  // where the question is hardest to answer: a bank line has no file to open, so nothing on screen told
+  // you which destinations hold it. Listed for one destination as well as several: "where is this?" is a
+  // reasonable question with a single answer too.
+  if (r.delivered.length) rows.push([t('archive_field_destinations'), r.delivered.map(sinkLabel).join(' · ')]);
   if (r.formats.length) rows.push([t('archive_field_files'), r.formats.map((f) => (f.ext || '').toUpperCase() + (r._scanned ? '' : '?')).join(' · ')]);
   let body = `<dl class="kvx">${rows.map(([k, v, cls]) => `<dt>${esc(k)}</dt><dd${cls ? ` style="color:var(--${cls === 'neg' ? 'neg' : 'pos'})"` : ''}>${esc(String(v))}</dd>`).join('')}</dl>`;
   // actions: open each delivered FILE (real). A record-only movement (a bank line) has no file — its data
