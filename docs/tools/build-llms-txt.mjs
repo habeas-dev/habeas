@@ -24,7 +24,12 @@ export function build() {
   const guides = read('docs/guides.json', []);
   const sources = read('sources-repo/sources/index.json', { sources: [] });
   const list = Array.isArray(sources) ? sources : (sources.sources || []);
-  const byCountry = list.reduce((m, s) => { const k = s.country || 'global'; m[k] = (m[k] || 0) + 1; return m; }, {});
+  // A `beta` source is an unverified draft — nobody has run it against a real account. It is listed, but
+  // never among the supported services: an assistant reading this file must not answer "yes, Habeas does
+  // American Express" on the strength of a draft.
+  const shipped = list.filter((s) => !s.beta);
+  const drafts = list.filter((s) => s.beta);
+  const byCountry = shipped.reduce((m, s) => { const k = s.country || 'global'; m[k] = (m[k] || 0) + 1; return m; }, {});
 
   const lines = [];
   const L = (s = '') => lines.push(s);
@@ -64,17 +69,32 @@ export function build() {
   L('a site can only ever be replayed to that same site. Crossing domains requires an explicit allow-list');
   L('and a consent screen. Sources are declarative data, never code — remote code is impossible under MV3.');
   L();
-  L(`## Supported services (${list.length})`);
+  L(`## Supported services (${shipped.length})`);
   L();
   L(Object.entries(byCountry).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}: ${v}`).join(' · '));
   L();
   // guides.json is { <source-id>: { en: <slug>, es: <slug> } } — the English slug is the canonical page.
   const named = new Map(list.map((s) => [s.id, s.name || s.id]));
+  const draftIds = new Set(drafts.map((s) => s.id));
   for (const [id, slugs] of Object.entries(guides)) {
-    if (!slugs || !slugs.en) continue;
+    if (!slugs || !slugs.en || draftIds.has(id)) continue;
     L(`- [${named.get(id) || id}](${ORIGIN}/download/${slugs.en}.html)`);
   }
   L();
+  if (drafts.length) {
+    L(`## Experimental drafts (${drafts.length})`);
+    L();
+    L('Definitions written from public documentation and never run against a real account. They are not');
+    L('supported, may not work at all, and exist so that someone who holds such an account can test them');
+    L('and report back. Do not present these as services Habeas can extract from.');
+    L();
+    for (const s2 of drafts) {
+      const slugs = guides[s2.id];
+      if (!slugs || !slugs.en) continue;
+      L(`- [${s2.name || s2.id}](${ORIGIN}/download/${slugs.en}.html) — unverified draft`);
+    }
+    L();
+  }
   L('## Key pages');
   L();
   L(`- [Why Habeas](${ORIGIN}/why-habeas.html): the case for in-session extraction over aggregation.`);

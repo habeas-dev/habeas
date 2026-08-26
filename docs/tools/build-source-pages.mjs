@@ -93,6 +93,13 @@ const LANGS = {
       nav: [['/', 'Home'], ['/why-habeas.html', 'Why Habeas?'], ['/sources.html', 'Sources'], ['/developers.html', 'Developers'],
             ['/architecture.html', 'Architecture'], ['/privacy.html', 'Privacy'], ['/terms.html', 'Terms']],
       otherLang: 'Español', otherLangCode: 'ES',
+      betaH1: (brand) => `${brand} — experimental source, not yet verified`,
+      betaIntro: (brand) => `A draft definition for ${brand}. Nobody has run it against a real account yet, so it may extract nothing at all. This page exists so that somebody who HAS an account can try it and say what happened.`,
+      betaWarnH: 'Do not expect this to work',
+      betaWarnBody: (ref) => `This source was drafted from ${ref} — a map of which endpoints the service uses and what they return — and has never been validated against a live session. Endpoints move, responses change shape, and a definition written from a reference rather than from a capture is a hypothesis. Installing it is safe; the same rules apply as to any other source. It simply may not find anything.`,
+      betaMeantH: 'What it is meant to extract',
+      betaHelpH: 'If you have an account here',
+      betaHelpBody: 'Install it, run it once, and open an issue with what happened — including "nothing at all", which is the most useful answer of the three. That is how a draft becomes a verified source, and it is the only way: the project cannot test an account it does not have.',
       asideAbout: 'About this source', asideVersion: 'Version', asideTrust: 'Trust',
       asideLicence: 'Licence', asideLicenceBody: 'Definition in the public domain (CC0-1.0); this page\u2019s text CC-BY-4.0.',
       asideDefinition: 'The definition itself', asideDefinitionBody: 'A source is data, never code — this is the whole of it.',
@@ -169,6 +176,13 @@ const LANGS = {
       nav: [['/', 'Inicio'], ['/es/por-que-habeas.html', '¿Por qué Habeas?'], ['/sources.html', 'Fuentes'], ['/es/desarrolladores.html', 'Desarrolladores'],
             ['/architecture.html', 'Arquitectura'], ['/privacy.html', 'Privacidad'], ['/terms.html', 'Términos']],
       otherLang: 'English', otherLangCode: 'EN',
+      betaH1: (brand) => `${brand} — fuente experimental, sin verificar`,
+      betaIntro: (brand) => `Un borrador de definición para ${brand}. Nadie la ha ejecutado todavía contra una cuenta real, así que puede no extraer nada. Esta página existe para que quien SÍ tenga cuenta pueda probarla y contar qué pasó.`,
+      betaWarnH: 'No des por hecho que funciona',
+      betaWarnBody: (ref) => `Esta fuente se redactó a partir de ${ref} — un mapa de qué endpoints usa el servicio y qué devuelven — y nunca se ha validado contra una sesión real. Los endpoints se mueven, las respuestas cambian de forma, y una definición escrita desde una referencia y no desde una captura es una hipótesis. Instalarla es seguro: se le aplican las mismas reglas que a cualquier otra. Simplemente puede no encontrar nada.`,
+      betaMeantH: 'Qué pretende extraer',
+      betaHelpH: 'Si tienes cuenta aquí',
+      betaHelpBody: 'Instálala, ejecútala una vez y abre una incidencia contando qué pasó — incluido «nada en absoluto», que de las tres respuestas es la más útil. Así es como un borrador se convierte en fuente verificada, y es la única forma: el proyecto no puede probar una cuenta que no tiene.',
       asideAbout: 'Sobre esta fuente', asideVersion: 'Versión', asideTrust: 'Confianza',
       asideLicence: 'Licencia', asideLicenceBody: 'La definición, de dominio público (CC0-1.0); el texto de esta página, CC-BY-4.0.',
       asideDefinition: 'La definición en sí', asideDefinitionBody: 'Una fuente son datos, nunca código — esto es todo lo que hay.',
@@ -210,6 +224,18 @@ const groupOf = (meta) => {
 const FORMAT = { pdf: 'PDF', excel: 'Excel', json: 'JSON', html: 'HTML', xls: 'Excel', csv: 'CSV' };
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+// Schemas are versioned (`investment@2`). The descriptions are keyed by version so a genuinely different
+// shape can be described differently, but a bump that only adds fields must not make the page fall back to
+// printing the raw identifier at the reader — so an unknown version borrows the base schema's wording, and
+// an unknown schema says something true rather than something technical.
+function schemaText(L, lang, schema) {
+  if (!schema) return lang === 'es' ? 'los datos que el servicio expone' : 'the data the service exposes';
+  if (L.schema[schema]) return L.schema[schema];
+  const base = String(schema).split('@')[0];
+  const sameBase = Object.keys(L.schema).find((k) => k.split('@')[0] === base);
+  return sameBase ? L.schema[sameBase] : (lang === 'es' ? 'los datos que el servicio expone' : 'the data the service exposes');
+}
+
 function outputsOf(full) {
   if (full.streams?.length) {
     return full.streams.map((s) => ({ id: s.id, schema: s.schema || full.schema, formats: (s.formats || []).map((f) => f.id).filter(Boolean) }));
@@ -217,17 +243,21 @@ function outputsOf(full) {
   return [{ id: null, schema: full.schema, formats: [] }];
 }
 
-function page({ lang, meta, full, entry, siblings }) {
+function page({ lang, meta, full, entry, siblings, isBeta }) {
   const L = LANGS[lang], t = L.t, copy = entry[lang];
   const brand = entry.brand || meta.name;
   const url = ORIGIN + L.path(copy.slug);
   const outputs = outputsOf(full);
   const formats = [...new Set([...(meta.formats || []), ...outputs.flatMap((o) => o.formats)])].map((f) => FORMAT[f] || f.toUpperCase());
   const title = `${copy.h1} — Habeas`;
+  // A draft is reachable from the catalogue and absent from search. Ranking for "how to download your X"
+  // while the extraction is unverified would be selling something that may not exist; and structured data
+  // is a claim made to a machine, so an unrun procedure gets no HowTo and no FAQ.
+  const robots = isBeta ? '\n  <meta name="robots" content="noindex,follow" />' : '';
   const desc = `${copy.intro.split('.')[0]}. ${t.descTail}`;
 
   const rows = outputs.map((o) => {
-    const what = L.schema[o.schema] || (lang === 'es' ? 'los datos que el servicio expone' : 'the data the service exposes');
+    const what = schemaText(L, lang, o.schema);
     const f = o.formats.length ? ` · ${o.formats.map((x) => FORMAT[x] || x).join(lang === 'es' ? ' o ' : ' or ')}` : '';
     return `        <li><strong>${esc(o.id || copy.docs)}</strong>${esc(f)} — ${esc(what)}.</li>`;
   }).join('\n');
@@ -376,7 +406,7 @@ ${log.length > HISTORY_MAX ? `      <p class="lead"><a href="/sources.html#${esc
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${esc(title)}</title>
+  <title>${esc(title)}</title>${robots}
   <meta name="description" content="${esc(desc)}" />
   <link rel="canonical" href="${url}" />
 ${hreflang}
@@ -405,7 +435,9 @@ ${hreflang}
     .card dd { margin: 0; word-break: break-word; }
     .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
                  border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
-    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
+${isBeta ? `    .box.warn { border-color: #c2410c66; background: #c2410c14; }
+    .box.warn strong { color: #c2410c; }
+` : ''}    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
     aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
     aside .cta .btn { text-align: center; }
     /* The definition, in full. It is the project's whole security claim — adapters are data, never code —
@@ -433,12 +465,12 @@ ${hreflang}
   <meta property="og:image:height" content="630" />
   <meta property="og:site_name" content="Habeas" />
   <meta name="twitter:card" content="summary_large_image" />
-  <script type="application/ld+json">
+${isBeta ? '' : `  <script type="application/ld+json">
 ${JSON.stringify(faqLd, null, 2)}
   </script>
   <script type="application/ld+json">
 ${JSON.stringify(howToLd, null, 2)}
-  </script>
+  </script>`}
   <script type="application/ld+json">
 ${JSON.stringify(crumbLd, null, 2)}
   </script>
@@ -497,8 +529,31 @@ ${line ? `        <p class="who">${line}</p>\n` : ''}        <p class="note">${e
     <div class="body">
     <h1>${esc(copy.h1)}</h1>
     <p class="lead">${esc(copy.intro)}</p>
+${isBeta ? `    <div class="box warn">
+      <strong>${esc(t.betaWarnH)}</strong>
+      <p>${esc(t.betaWarnBody(copy._beta))}</p>
+    </div>
 
-    <h2>${esc(t.whatYouGet)}</h2>
+    <h2>${esc(t.betaMeantH)}</h2>
+    <ul>
+${(() => {
+      const outs = outputsOf(full);
+      // The stream's own name is the author's wording, in the author's language. It disambiguates when a
+      // source has several outputs; on a single-output source it would just put a foreign word in bold
+      // where the schema description already says, in this page's language, what the records contain.
+      return outs.map((s) => {
+        const what = esc(schemaText(L, lang, s.schema));
+        return outs.length > 1
+          ? `      <li><strong>${esc(s.name || s.id || meta.id)}</strong> — ${what}</li>`
+          : `      <li>${what}</li>`;
+      }).join('\n');
+    })()}
+    </ul>
+
+    <h2>${esc(t.betaHelpH)}</h2>
+    <p>${esc(t.betaHelpBody)}</p>
+` : ''}
+${isBeta ? '' : `    <h2>${esc(t.whatYouGet)}</h2>
     <p>${esc(t.whatItIs(brand))}</p>
     <ul>
 ${rows}
@@ -519,7 +574,7 @@ ${steps.map((x) => `      <li>${esc(x)}</li>`).join('\n')}
     <p class="lead">${esc(t.chromeNote)}</p>
 
     <h2>${esc(t.faqH)}</h2>
-${faq.map(([q, a]) => `    <h3>${esc(q)}</h3>\n    <p>${esc(a)}</p>`).join('\n')}
+${faq.map(([q, a]) => `    <h3>${esc(q)}</h3>\n    <p>${esc(a)}</p>`).join('\n')}`}
 
 ${history}${credit}${provenance}
 ${siblings.length ? `    <h2>${esc(t.siblings(groupOf(meta)[lang]))}</h2>
@@ -652,7 +707,12 @@ const resolved = [];
 const skipped = [];
 for (const meta of index) {
   const full = await fetch(meta.url).then((r) => r.json());
-  if (meta.beta || full.beta) { if (full.content) skipped.push(`${meta.id} (beta)`); continue; }
+  // A beta source gets a page too, but NOT a how-to: it is a draft nobody has run against a real
+  // account, so a page promising "how to download your X" would rank for a promise it cannot keep.
+  // Its copy is synthesised from what such a source genuinely has — the brand, the streams it declares,
+  // and the reference it was drafted from — which is source-specific, so it is not the doorway content
+  // an empty template would be. It is also noindex: reachable from the catalogue, absent from search.
+  const isBeta = !!(meta.beta || full.beta);
   const override = overrides[meta.id] || {};
   // Registry content is the source of truth; the local file overrides it field by field.
   const entry = { brand: override.brand || full.brand || meta.name, credit: override.credit || full.credit, attribution: override.attribution || full.attribution };
@@ -660,11 +720,21 @@ for (const meta of index) {
     const base = full.content?.[lang];
     if (base || override[lang]) entry[lang] = { ...base, ...override[lang] };
   }
+  if (isBeta) {
+    const ref = full.attribution?.derivedFrom || 'a published reference';
+    for (const lang of Object.keys(LANGS)) {
+      const t = LANGS[lang].t, brand = entry.brand;
+      entry[lang] = { ...(entry[lang] || {}), // A slug of its own: the id is already unique and readable, and prefixing it keeps a draft's URL
+        // visibly distinct from a verified guide's.
+        slug: (entry[lang]?.slug) || `${meta.id}-beta`,
+        h1: t.betaH1(brand), intro: t.betaIntro(brand), _beta: ref };
+    }
+  }
   if (!Object.keys(LANGS).some((l) => entry[l])) { skipped.push(`${meta.id} (no content)`); continue; }
-  resolved.push({ id: meta.id, entry, meta, full });
+  resolved.push({ id: meta.id, entry, meta, full, isBeta });
 }
 
-for (const { id, entry, meta, full } of resolved) {
+for (const { id, entry, meta, full, isBeta } of resolved) {
   for (const lang of Object.keys(LANGS)) {
     if (!entry[lang]) { console.error(`  ! ${id}: no ${lang} copy — that language gets no page`); continue; }
     // Siblings: same category group, same language, excluding itself.
@@ -672,7 +742,7 @@ for (const { id, entry, meta, full } of resolved) {
     const siblings = resolved
       .filter((r) => r.id !== id && r.entry[lang] && groupOf(r.meta).id === group.id)
       .map((r) => ({ slug: r.entry[lang].slug, h1: r.entry[lang].h1 }));
-    writeFileSync(join(DOCS, ...LANGS[lang].dir.split('/'), `${entry[lang].slug}.html`), page({ lang, meta, full, entry, siblings }));
+    writeFileSync(join(DOCS, ...LANGS[lang].dir.split('/'), `${entry[lang].slug}.html`), page({ lang, meta, full, entry, siblings, isBeta }));
     written++;
   }
 }

@@ -451,7 +451,12 @@ const REGISTRY = path.join(rootDir, 'sources-repo', 'sources');
 async function loadGuides() {
   const byLang = {};
   for (const [lang, dir] of Object.entries(GUIDE_LANGS)) {
-    const files = (await fs.readdir(path.join(docsDir, dir))).filter((f) => f.endsWith('.html') && f !== 'index.html');
+    // `-beta` pages are excluded on purpose: they document a draft nobody has run against a real
+    // account, so they carry no FAQ and no HowTo (marking up a procedure that was never executed would
+    // ask a search engine to repeat a claim the project cannot make) and they are noindex. Their own
+    // contract is asserted separately, below.
+    const files = (await fs.readdir(path.join(docsDir, dir)))
+      .filter((f) => f.endsWith('.html') && f !== 'index.html' && !f.endsWith('-beta.html'));
     byLang[lang] = new Map();
     for (const file of files) {
       const html = await fs.readFile(path.join(docsDir, dir, file), 'utf8');
@@ -557,5 +562,38 @@ test('guides are reachable: index groups them, siblings cross-link, catalog link
   assert.match(sources, /href="\/download\/"/, 'sources.html does not link the guide index');
   for (const slug of byLang.en.keys()) {
     assert.ok(sources.includes(`${slug}.html`), `sources.html does not link ${slug}`);
+  }
+});
+
+// An experimental source has a page so that someone who *has* that account can see what the draft claims
+// to do and report back. That is the whole purpose, and it is the opposite of a guide: the procedure has
+// never been run against a real account. So the page must say so before anything else, must not carry the
+// structured data that would offer it to a search engine as a working how-to, and must stay out of the
+// index. This test is what stops a future template change from quietly turning a draft into a promise.
+test('beta source pages announce themselves as unverified and are not marked up as guides', async () => {
+  const beta = [];
+  for (const [lang, dir] of Object.entries(GUIDE_LANGS)) {
+    const files = (await fs.readdir(path.join(docsDir, dir))).filter((f) => f.endsWith('-beta.html'));
+    for (const file of files) beta.push({ lang, file, html: await fs.readFile(path.join(docsDir, dir, file), 'utf8') });
+  }
+  assert.ok(beta.length >= 2, 'no beta pages were generated');
+
+  for (const { lang, file, html } of beta) {
+    const where = `${lang}/${file}`;
+    assert.match(html, /<meta name="robots" content="noindex/, `${where}: is indexable`);
+    assert.ok(!/"@type":\s*"(FAQPage|HowTo)"/.test(html), `${where}: marked up as a guide`);
+    assert.match(html, /class="box warn"/, `${where}: no unverified warning`);
+    // The warning has to be the first thing under the title, before any description of what the draft
+    // extracts — pushed below a section it reads as a footnote to a guide rather than as its premise.
+    const afterTitle = html.indexOf('<h1>');
+    assert.ok(html.indexOf('class="box warn"', afterTitle) < html.indexOf('<h2>', afterTitle),
+      `${where}: the warning does not lead the page`);
+  }
+
+  // Still reachable — an unverified draft nobody can find is a draft nobody can confirm.
+  const sources = await fs.readFile(path.join(docsDir, 'sources.html'), 'utf8');
+  for (const { lang, file } of beta) {
+    if (lang !== 'en') continue;
+    assert.ok(sources.includes(file), `sources.html does not link ${file}`);
   }
 });

@@ -7,6 +7,10 @@
     "en": "amazon-invoices",
     "es": "facturas-amazon"
   },
+  "americanexpress": {
+    "en": "americanexpress-beta",
+    "es": "americanexpress-beta"
+  },
   "bipdrive-es": {
     "en": "bipdrive-invoices",
     "es": "facturas-bipdrive"
@@ -22,6 +26,10 @@
   "decathlon-es": {
     "en": "decathlon-receipts",
     "es": "tickets-decathlon"
+  },
+  "degiro": {
+    "en": "degiro-beta",
+    "es": "degiro-beta"
   },
   "dia-es": {
     "en": "dia-receipts",
@@ -46,6 +54,10 @@
   "leroymerlin-es": {
     "en": "leroy-merlin-receipts",
     "es": "tickets-leroy-merlin"
+  },
+  "n26": {
+    "en": "n26-beta",
+    "es": "n26-beta"
   },
   "openbank-es": {
     "en": "openbank-transactions",

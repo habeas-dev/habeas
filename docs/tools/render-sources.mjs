@@ -31,7 +31,7 @@ function card(s) {
         <div class="meta">${s.country ? flag(s.country) + ' ' : ''}${esc(s.service)} · ${esc(s.domain)}</div>
         <div class="cats">${cats}${fmts}</div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="${esc(s.url)}" rel="noopener" data-umami-event="source-view" data-umami-event-source="${esc(s.id)}">View JSON →</a></div>${GUIDES[s.id] ? `
-        <a class="guide" href="/download/${GUIDES[s.id].en}.html">How to download →</a>` : ''}
+        <a class="guide" href="/download/${GUIDES[s.id].en}.html">${s.beta ? 'What this draft covers →' : 'How to download →'}</a>` : ''}
       </div>`;
 }
 

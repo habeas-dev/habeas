@@ -8,9 +8,15 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 // readdirSync rather than fs.globSync: glob landed in Node 22 and CI pins Node 20, so a test written
 // against the newer API passes locally and fails only in the release build — which is where it did.
+// Verified guides only. A `-beta` page is a different kind of document on purpose: it describes a draft
+// nobody has run against a real account, so it carries no FAQ and no HowTo — marking up a procedure that
+// has never been executed asks a search engine to repeat a claim the project cannot make — and it is
+// noindex for the same reason. Asserting guide rules against it would force exactly the dishonesty the
+// page exists to avoid.
+const BETA = /-beta\.html$/;
 const guides = () => ['docs/download', 'docs/es/descargar'].flatMap((dir) =>
   readdirSync(join(ROOT, dir))
-    .filter((f) => f.endsWith('.html') && f !== 'index.html')
+    .filter((f) => f.endsWith('.html') && f !== 'index.html' && !BETA.test(f))
     .map((f) => `${dir}/${f}`));
 
 // The guide pages are the ones an assistant would cite — they answer the question verbatim ("how do I

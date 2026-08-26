@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>N26 — experimental source, not yet verified — Habeas</title>
+  <meta name="robots" content="noindex,follow" />
+  <meta name="description" content="A draft definition for N26. Habeas downloads them from inside your own browser session, without ever storing your password." />
+  <link rel="canonical" href="https://habeas.dev/download/n26-beta.html" />
+  <link rel="alternate" hreflang="en" href="https://habeas.dev/download/n26-beta.html" />
+  <link rel="alternate" hreflang="es" href="https://habeas.dev/es/descargar/n26-beta.html" />
+  <link rel="alternate" hreflang="x-default" href="https://habeas.dev/download/n26-beta.html" />
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    /* Two columns: the prose reads at its own width, and everything ABOUT the source — what it is, which
+       version, who wrote it, how to install it, and the definition itself — sits beside it instead of
+       interrupting it. One column below 1000px, sidebar FIRST, so a phone gets the install buttons
+       before the essay. */
+    .doc { max-width: 1100px; margin: 0 auto; padding: 8px 20px 64px;
+           display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 40px; align-items: start; }
+    /* The columns are assigned EXPLICITLY because the aside comes first in the DOM — which is what puts
+       the install buttons above the essay on a phone. Left to source order it would take the wide
+       column and squeeze the prose into 300px, which is exactly what it did. */
+    .doc > .body { min-width: 0; grid-column: 1; }
+    .doc > aside { grid-column: 2; grid-row: 1; position: sticky; top: 78px; display: flex; flex-direction: column; gap: 14px; }
+    @media (max-width: 1000px) { .doc { grid-template-columns: 1fr; gap: 22px; }
+      .doc > .body, .doc > aside { grid-column: 1; grid-row: auto; }
+      .doc > aside { position: static; } }
+    .card { border: 1px solid var(--line, #3333); border-radius: 14px; padding: 15px 16px; }
+    .card h2 { font-size: .78rem !important; text-transform: uppercase; letter-spacing: .6px;
+               color: var(--muted, #888); margin: 0 0 10px !important; }
+    .card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13.5px; }
+    .card dt { color: var(--muted, #888); }
+    .card dd { margin: 0; word-break: break-word; }
+    .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
+                 border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .box.warn { border-color: #c2410c66; background: #c2410c14; }
+    .box.warn strong { color: #c2410c; }
+    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
+    aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+    aside .cta .btn { text-align: center; }
+    /* The definition, in full. It is the project's whole security claim — adapters are data, never code —
+       and a claim you cannot read is a claim you are asked to take on faith. */
+    .defn summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+    .defn pre { max-height: 420px; overflow: auto; margin: 10px 0 0; padding: 11px 12px; font-size: 11.5px;
+                line-height: 1.5; border-radius: 9px; background: var(--surface-2, #0001); }
+    header nav .langlink { font-weight: 700; }
+    .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
+    .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
+    .doc h3 { font-size: 1.02rem; margin: 20px 0 6px; }
+    .doc p, .doc li { line-height: 1.65; }
+    .doc ul { padding-left: 1.2em; }
+    .doc .lead { color: var(--muted, #888); margin: 0 0 24px; }
+    .doc .box { border: 1px solid var(--line, #3333); border-radius: 10px; padding: 14px 16px; margin: 18px 0; }
+    .doc .cta { display: flex; gap: 10px; flex-wrap: wrap; margin: 24px 0 8px; }
+    .doc a { color: inherit; }
+  </style>
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://habeas.dev/download/n26-beta.html" />
+  <meta property="og:title" content="N26 — experimental source, not yet verified — Habeas" />
+  <meta property="og:description" content="A draft definition for N26. Habeas downloads them from inside your own browser session, without ever storing your password." />
+  <meta property="og:image" content="https://habeas.dev/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:site_name" content="Habeas" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://habeas.dev/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Guides",
+      "item": "https://habeas.dev/download/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "N26 — experimental source, not yet verified",
+      "item": "https://habeas.dev/download/n26-beta.html"
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "inLanguage": "en",
+  "headline": "N26 — experimental source, not yet verified",
+  "description": "A draft definition for N26. Habeas downloads them from inside your own browser session, without ever storing your password.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://habeas.dev/download/n26-beta.html"
+  },
+  "dateModified": "2026-08-24",
+  "author": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev"
+  },
+  "about": {
+    "@type": "Thing",
+    "name": "N26"
+  },
+  "isBasedOn": {
+    "@type": "CreativeWork",
+    "name": "woob — N26 module",
+    "url": "https://gitlab.com/woob/woob/-/tree/master/modules/n26"
+  },
+  "isAccessibleForFree": true,
+  "license": "https://www.gnu.org/licenses/agpl-3.0.html"
+}
+  </script>
+  <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
+  <script defer src="https://analytics.habeas.dev/script.js" data-website-id="84a75f7a-c014-4ce8-a3be-1f8dd1899a28" data-domains="habeas.dev"></script>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="/logo-light.svg" />
+        <img class="logo" src="/logo.svg" alt="Habeas" />
+      </picture>
+      <span class="name">Habeas</span>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/why-habeas.html">Why Habeas?</a>
+        <a href="/sources.html">Sources</a>
+        <a href="/developers.html">Developers</a>
+        <a href="/architecture.html">Architecture</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
+        <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <a class="langlink" href="/es/descargar/n26-beta.html" hreflang="es" rel="alternate">ES</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="doc">
+    <aside>
+      <div class="card">
+        <h2>About this source</h2>
+        <dl>
+          <dt>Version</dt><dd>2026-08-24</dd>
+          <dt>Trust</dt><dd>community</dd>
+          <dt>Coverage</dt><dd>EU</dd>
+          <dt>Licence</dt><dd>CC0-1.0</dd>
+        </dl>
+        <p class="note">Definition in the public domain (CC0-1.0); this page’s text CC-BY-4.0.</p>
+      </div>
+
+      <div class="cta">
+        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="n26">Install on Chrome</a>
+        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="n26">Install on Firefox</a>
+      </div>
+
+      <div class="card defn">
+        <h2>The definition itself</h2>
+        <p class="note">A source is data, never code — this is the whole of it.</p>
+        <details>
+          <summary>n26.json</summary>
+          <pre>{
+  &quot;id&quot;: &quot;n26&quot;,
+  &quot;name&quot;: &quot;N26&quot;,
+  &quot;service&quot;: &quot;n26&quot;,
+  &quot;trust&quot;: &quot;community&quot;,
+  &quot;beta&quot;: true,
+  &quot;verified&quot;: false,
+  &quot;domain&quot;: &quot;n26.com&quot;,
+  &quot;country&quot;: &quot;EU&quot;,
+  &quot;currency&quot;: &quot;EUR&quot;,
+  &quot;version&quot;: &quot;2026-08-24&quot;,
+  &quot;minVersion&quot;: &quot;0.5.0.24&quot;,
+  &quot;attribution&quot;: {
+    &quot;derivedFrom&quot;: &quot;woob — N26 module&quot;,
+    &quot;copyright&quot;: &quot;Copyright (C) 2016 Benjamin Bouvier&quot;,
+    &quot;url&quot;: &quot;https://gitlab.com/woob/woob/-/tree/master/modules/n26&quot;,
+    &quot;referenceLicense&quot;: &quot;LGPL-3.0-or-later&quot;,
+    &quot;woobIntelDate&quot;: &quot;2024-08-10&quot;,
+    &quot;note&quot;: &quot;The API host, endpoint paths and response field names were used as REFERENCE (facts / interface, no source code copied). The woob module's last functional (intel) commit date is recorded in `woobIntelDate`. No code copied; woob's credential login is not used — Habeas replays the user's own live session. This adapter is data, dedicated to the public domain under CC0-1.0 (see sources/LICENSE).&quot;,
+    &quot;license&quot;: &quot;CC0-1.0&quot;
+  },
+  &quot;notes&quot;: &quot;BETA / UNVERIFIED — drafted from woob (intel 2024-08, relatively fresh). Cross-domain: login on n26.com, API on api.tech26.de (different registrable domain) → the crossDomainHosts consent screen fires. Auth: Bearer JWT (captured by default) + a per-device `device-token` header the SPA sends (replayed). Open items to promote out of beta: (1) confirm the /api/smrt/transactions response is a top-level array (itemsPath '$') and the field names; (2) visibleTS/createdTS are epoch ms → date (normalizeDate handles epoch); (3) confirm the `device-token` header is actually captured+replayed and that no other header is required; (4) amount is the account-currency (EUR) value; originalCurrency/originalAmount are only set on FX transactions (kept in extra via keepRaw).&quot;,
+  &quot;categories&quot;: [
+    &quot;banking&quot;
+  ],
+  &quot;match&quot;: [
+    &quot;https://app.n26.com/*&quot;
+  ],
+  &quot;crossDomainHosts&quot;: [
+    &quot;api.tech26.de&quot;
+  ],
+  &quot;openUrl&quot;: &quot;https://app.n26.com/&quot;,
+  &quot;auth&quot;: {
+    &quot;capturePaths&quot;: [
+      &quot;/api/&quot;
+    ],
+    &quot;replayHeaders&quot;: [
+      &quot;authorization&quot;,
+      &quot;device-token&quot;
+    ],
+    &quot;cookies&quot;: false
+  },
+  &quot;api&quot;: {
+    &quot;host&quot;: &quot;https://api.tech26.de&quot;
+  },
+  &quot;streams&quot;: [
+    {
+      &quot;id&quot;: &quot;movimientos&quot;,
+      &quot;name&quot;: &quot;Movimientos&quot;,
+      &quot;schema&quot;: &quot;transaction@1&quot;,
+      &quot;categories&quot;: [
+        &quot;banking&quot;
+      ],
+      &quot;keepRaw&quot;: true,
+      &quot;api&quot;: {
+        &quot;list&quot;: {
+          &quot;path&quot;: &quot;/api/smrt/transactions&quot;,
+          &quot;itemsPath&quot;: &quot;$&quot;,
+          &quot;params&quot;: {
+            &quot;limit&quot;: &quot;1000&quot;
+          },
+          &quot;headers&quot;: {
+            &quot;accept&quot;: &quot;application/json&quot;
+          }
+        }
+      },
+      &quot;fields&quot;: {
+        &quot;internalId&quot;: &quot;id&quot;,
+        &quot;date&quot;: &quot;visibleTS&quot;,
+        &quot;amount&quot;: &quot;amount&quot;,
+        &quot;counterparty&quot;: &quot;merchantName&quot;,
+        &quot;type&quot;: &quot;type&quot;,
+        &quot;description&quot;: &quot;referenceText&quot;
+      }
+    }
+  ]
+}</pre>
+        </details>
+        <p class="note"><a href="https://habeas-dev.github.io/sources/n26.json" rel="noopener">Open the raw file -></a></p>
+      </div>
+    </aside>
+
+    <div class="body">
+    <h1>N26 — experimental source, not yet verified</h1>
+    <p class="lead">A draft definition for N26. Nobody has run it against a real account yet, so it may extract nothing at all. This page exists so that somebody who HAS an account can try it and say what happened.</p>
+    <div class="box warn">
+      <strong>Do not expect this to work</strong>
+      <p>This source was drafted from woob — N26 module — a map of which endpoints the service uses and what they return — and has never been validated against a live session. Endpoints move, responses change shape, and a definition written from a reference rather than from a capture is a hypothesis. Installing it is safe; the same rules apply as to any other source. It simply may not find anything.</p>
+    </div>
+
+    <h2>What it is meant to extract</h2>
+    <ul>
+      <li>each movement with its date, amount, currency, description and counterparty</li>
+    </ul>
+
+    <h2>If you have an account here</h2>
+    <p>Install it, run it once, and open an issue with what happened — including &quot;nothing at all&quot;, which is the most useful answer of the three. That is how a draft becomes a verified source, and it is the only way: the project cannot test an account it does not have.</p>
+
+
+
+      <h2>Where this definition came from</h2>
+      <p class="attribution">This definition was drafted using <a href="https://gitlab.com/woob/woob/-/tree/master/modules/n26" rel="nofollow noopener">woob — N26 module</a> as a reference for the service's interface. Copyright (C) 2016 Benjamin Bouvier, LGPL-3.0-or-later. The API host, endpoint paths and response field names were used as REFERENCE (facts / interface, no source code copied). The woob module's last functional (intel) commit date is recorded in `woobIntelDate`. No code copied; woob's credential login is not used — Habeas replays the user's own live session. This adapter is data, dedicated to the public domain under CC0-1.0 (see sources/LICENSE).</p>
+
+    <h2>More banks, cards &amp; investments guides</h2>
+    <ul>
+      <li><a href="/download/americanexpress-beta.html">American Express — experimental source, not yet verified</a></li>
+      <li><a href="/download/caixabank-consumer-statements.html">How to download your CaixaBank Consumer statements</a></li>
+      <li><a href="/download/degiro-beta.html">DeGiro — experimental source, not yet verified</a></li>
+      <li><a href="/download/financiera-el-corte-ingles-statements.html">How to download your Financiera El Corte Inglés transactions and statements</a></li>
+      <li><a href="/download/ing-transactions.html">How to download your ING transactions and statements</a></li>
+      <li><a href="/download/openbank-transactions.html">How to download your Openbank transactions and statements</a></li>
+      <li><a href="/download/paypal-transactions.html">How to download your PayPal transaction history</a></li>
+      <li><a href="/download/raisin-statements.html">How to download your Raisin transactions, deposits and documents</a></li>
+      <li><a href="/download/revolut-statements.html">How to download your Revolut transactions and statements</a></li>
+      <li><a href="/download/trade-republic-statements.html">How to download your Trade Republic transactions and statements</a></li>
+      <li><a href="/download/wizink-statements.html">How to download your WiZink transactions and statements</a></li>
+    </ul>
+
+    <h2>Your service is not on the list?</h2>
+    <p>Habeas can learn a new one <strong>without any code</strong>. Record mode watches the site’s own API while you browse it normally and drafts the source for you; you test it against your own account, and then keep it to yourself or share it so everyone gets it. That is where most of the catalog came from.</p>
+
+    <h2>Other sources</h2>
+    <p>Habeas works with more Spanish and international services. <a href="/sources.html">See the full catalog</a> or read <a href="/why-habeas.html">why Habeas exists</a>.</p>
+    </div>
+  </main>
+</body>
+</html>
