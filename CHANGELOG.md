@@ -27,6 +27,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   read-only on purpose: the writer's helper creates folders it cannot find, and a *reader* doing that
   would turn "copy from this destination" into "write to it".
 
+### Changed
+- **The archive copy now says what it will read from, not only where it writes.** The origins are not
+  chosen — each file is taken from whichever destination happens to hold it — so the operation asked
+  for approval without stating what it touches. It now names both ends before you start. Picking your
+  only readable destination as the target is refused with the reason, instead of running and reporting
+  "already holds everything", which was false: there was nowhere to read from. The destination was
+  already excluded as an origin in both senders (copying a file onto itself is at best a no-op, at
+  worst a rewrite of the thing being preserved); that is now covered by tests, as is the stop control.
+
 ### Fixed
 - **Saving a source to a destination no longer fails just because you are logged out.** It reported
   "no session" and stopped, even when every document it needed was already in the archive. It now

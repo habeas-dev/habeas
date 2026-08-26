@@ -68,3 +68,58 @@ test('Drive is a readable origin, and local-folder is not one for the service wo
   assert.ok(!line.includes('local-folder'), 'the service worker cannot hold a directory handle');
   assert.match(read('src/lib/retrieve.js'), /RETRIEVABLE = new Set\(\[[^\]]*'drive'/, 'Drive must be retrievable');
 });
+
+// ---------------------------------------------------------------- origin ≠ destination
+
+test('the destination is never used as one of the origins', () => {
+  // Reading a file from the very place being written to is at best a no-op and at worst a rewrite of
+  // the thing the copy exists to preserve. Enforced in BOTH senders, because they read different sinks.
+  const bg = read('src/background.js');
+  const i = bg.indexOf('const stores = ');
+  assert.ok(i > 0, 'the origin list was not found');
+  assert.match(bg.slice(i, bg.indexOf('\n', i)), /s\.id !== sink\.id/, 'the background must exclude the target');
+
+  const ui = read('src/ui/options.js');
+  assert.match(ui, /type === 'local-folder' && s\.id !== target\.id/, 'the page pass must exclude the target too');
+});
+
+test('the user is told what the copy will read from, not only where it writes', () => {
+  // The origins are not chosen — each file comes from whichever destination happens to hold it — so
+  // without this the user approves an operation without being told what it touches.
+  const ui = read('src/ui/options.js');
+  assert.match(ui, /describeCopy/, 'no origin/destination description');
+  assert.match(ui, /opt_copy_from/, 'the description must name both ends');
+  assert.match(ui, /copySel\.onchange = describeCopy/, 'it must follow the chosen destination');
+  for (const lang of ['en', 'es']) {
+    const msg = JSON.parse(read(`_locales/${lang}/messages.json`));
+    assert.ok(msg.opt_copy_from && msg.opt_copy_noorigin, `${lang} is missing the copy description strings`);
+  }
+});
+
+test('a destination with no possible origin cannot be started', () => {
+  // Picking your only readable destination as the target used to report "already holds everything",
+  // which is false: there was simply nowhere to read from.
+  const ui = read('src/ui/options.js');
+  const i = ui.indexOf('const describeCopy');
+  const body = ui.slice(i, ui.indexOf('copySel.onchange', i));
+  assert.match(body, /origins\.length > 0/, 'an empty origin list must block the copy');
+  assert.match(body, /\$\('#copystart'\)\.disabled = !ok/, 'the button must reflect it');
+  assert.match(body, /opt_copy_noorigin/, 'and the reason must be shown');
+});
+
+test('the readable set is imported, not restated, so the UI cannot drift from what can be read', () => {
+  const ui = read('src/ui/options.js');
+  assert.match(ui, /import \{ RETRIEVABLE \} from '\.\.\/lib\/retrieve\.js'/,
+    'listing the readable types by hand in the UI is how it starts lying');
+});
+
+test('a running copy can be stopped, and stopping actually reaches the loop', () => {
+  const ui = read('src/ui/options.js');
+  assert.match(ui, /#copystop/, 'no stop control');
+  assert.match(ui, /new AbortController\(\)/, 'the page pass needs its own signal');
+  assert.match(ui, /type: 'habeas:stop'/, 'and the background pass needs to be told');
+  const bg = read('src/background.js');
+  assert.match(bg, /function stopOp\(\)[^\n]*__opAbort\.abort/, 'habeas:stop must abort the op signal');
+  const fn = bg.slice(bg.indexOf('export async function runArchiveCopy'));
+  assert.match(fn.slice(0, fn.indexOf('\n}\n')), /signal\.aborted/, 'the copy loop must check the signal');
+});

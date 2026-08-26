@@ -3704,5 +3704,24 @@
         "content": "$1"
       }
     }
+  },
+  "opt_copy_from": {
+    "message": "Leerá de $LIST$ y escribirá en $SINK$. Cada fichero se toma del que ya lo tenga; el destino nunca se usa como origen.",
+    "placeholders": {
+      "list": {
+        "content": "$1"
+      },
+      "sink": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_copy_noorigin": {
+    "message": "$SINK$ es el único destino del que se pueden releer ficheros, así que no hay de dónde copiar. Elige otro destino, o añade uno que guarde ficheros.",
+    "placeholders": {
+      "sink": {
+        "content": "$1"
+      }
+    }
   }
 }

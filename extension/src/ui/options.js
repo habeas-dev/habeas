@@ -17,6 +17,7 @@ import { editJson } from './jsoneditor.js';
 import { getGrants, revokeGrant } from '../lib/grants.js';
 import { getStoreConfig, moveStoreTo, putItems } from '../lib/store.js';
 import { copyFolderBackedDocs } from '../lib/foldercopy.js';
+import { RETRIEVABLE } from '../lib/retrieve.js';
 import { enableVault, unlockVault, lockVault, vaultStatus } from '../lib/secretsync.js';
 import { RECORDER_HTML, initAuthor } from './author.js';
 import { readSinkRecords } from '../sinks/sinks.js';
@@ -313,10 +314,26 @@ async function render() {
   const copyTargets = cfg.sinks.filter((s) => KEEPS_FILES.includes(s.type));
   const copySel = $('#copyto');
   copySel.innerHTML = copyTargets.map((s) => `<option value="${esc(s.id)}">${esc(s.name || s.id)}</option>`).join('');
-  const canCopy = cfg.sinks.length >= 2 && copyTargets.length >= 1;
-  copySel.disabled = !canCopy;
-  $('#copystart').disabled = !canCopy;
-  if (!canCopy) $('#copystatus').textContent = t('opt_copy_nodests');
+  copySel.disabled = copyTargets.length < 1;
+
+  // Say where the files will come FROM, not only where they go. The origins are not chosen — each file
+  // is taken from whichever destination happens to hold it — so without this the operation is opaque:
+  // you would be asked to approve a copy without being told what it reads. RETRIEVABLE is imported
+  // rather than restated so this cannot drift from what the code can actually read.
+  const describeCopy = () => {
+    const target = cfg.sinks.find((s) => s.id === copySel.value);
+    // The destination is never its own origin (enforced in the sender too) — copying a file onto
+    // itself is at best a no-op and at worst a rewrite of the thing being preserved.
+    const origins = cfg.sinks.filter((s) => RETRIEVABLE.has(s.type) && (!target || s.id !== target.id));
+    const ok = !!target && origins.length > 0;
+    $('#copystart').disabled = !ok;
+    if (!copyTargets.length) { $('#copyfrom').textContent = t('opt_copy_nodests'); return; }
+    $('#copyfrom').textContent = ok
+      ? t('opt_copy_from', [origins.map((s) => s.name || s.id).join(', '), (target.name || target.id)])
+      : t('opt_copy_noorigin', [target ? (target.name || target.id) : '']);
+  };
+  copySel.onchange = describeCopy;
+  describeCopy();
 
   let copyAbort = null;
   $('#copystop').onclick = () => { if (copyAbort) copyAbort.abort(); chrome.runtime.sendMessage({ type: 'habeas:stop' }); };
