@@ -109,6 +109,17 @@ export async function copyArchivePageSide(cfg, adapters, target, { originId = ''
       const eff = resolveOutput(adapter, sid);
       const sk = storeKeyOf(storeIdOf(ds, adapter), sid);
       const fmts = outputsOf(adapter).filter((o) => o.stream === sid).map((o) => o.format);
+      const docs = list.map((d) => {
+        const rec = d.record || {};
+        // category must sit on the doc itself — acceptsDoc reads doc.category, not record.category.
+        const category = rec.category != null ? rec.category
+          : ((adapter.categorize && adapter.categorize.default) || (adapter.categories && adapter.categories[0]));
+        return { internalId: d.internalId, record: rec, date: rec.date, total: rec.total ?? rec.amount, currency: rec.currency,
+                 category, type: rec.type, group: rec.group || '', _stream: sid, _storeKey: sk, _fromStore: true };
+      }).filter((d) => acceptsDoc(target, d));
+      if (!docs.length) continue;
+      found += docs.length;
+
       // Can this STREAM produce an artifact at all? Adapter-level and free — no metadata, no requests, and
       // it works on an archive that predates the per-document records, which is the case that matters.
       // A bank movements stream declares none: its data rides the MANIFEST, which every writer emits
