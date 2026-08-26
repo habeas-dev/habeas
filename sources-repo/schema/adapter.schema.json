@@ -51,8 +51,82 @@
             "type": "string"
           },
           "changes": {
-            "type": "string"
+            "description": "The note itself. A plain string is written in one language and shown as-is everywhere; an object keyed by language code lets the guide page render the reader's own language instead of dropping a Spanish note onto the English page.",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "minProperties": 1,
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^[a-z]{2}$": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
           }
+        }
+      }
+    },
+    "credit": {
+      "type": "object",
+      "description": "Who this source is owed to, when that was not the maintainer alone. Two DIFFERENT contributions, deliberately kept apart because they are not the same thing and must not be attributed as if they were: `author` wrote the definition itself, `capture` supplied the redacted recording the team then wrote it from. Both may be present and be different people. PUBLISHED on the source's guide page at habeas.dev, so either may only be filled in with what that person themselves gave for that purpose — never inferred from git history, a pull request author, or a handoff submission. Omit whichever the person did not ask to be named in.",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "author": {
+          "$ref": "#/$defs/creditedPerson",
+          "description": "Wrote the source definition (this JSON) themselves."
+        },
+        "capture": {
+          "$ref": "#/$defs/creditedPerson",
+          "description": "Supplied the redacted recording of their own session that the source was built from. They did not write the definition; saying they did would misattribute the work in both directions."
+        }
+      }
+    },
+    "attribution": {
+      "type": "object",
+      "description": "Where this definition was DRAFTED FROM, when it was drafted from someone else's published work rather than from a capture of the maintainer's own session. This is a licence and provenance record, NOT a courtesy — do not conflate it with `credit`, which names people who asked to be named. Used today by the woob-derived experimental drafts: their endpoint and field maps are facts taken as reference, with no source code copied. Publishing it on the guide page is part of honouring the upstream licence.",
+      "required": [
+        "derivedFrom"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "derivedFrom": {
+          "type": "string",
+          "description": "The upstream work, named as its authors name it, e.g. 'woob — DeGiro module'."
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https://",
+          "description": "Where that work lives."
+        },
+        "copyright": {
+          "type": "string",
+          "description": "Upstream copyright line, verbatim, e.g. 'Copyright (C) 2012-2020 Budget Insight'."
+        },
+        "referenceLicence": {
+          "type": "string",
+          "description": "Alias of referenceLicense, accepted so a British spelling does not silently fail validation."
+        },
+        "referenceLicense": {
+          "type": "string",
+          "description": "SPDX id of the upstream licence, e.g. LGPL-3.0-or-later."
+        },
+        "license": {
+          "type": "string",
+          "description": "Licence of THIS definition, which is data rather than code — CC0-1.0 for the catalog."
+        },
+        "woobIntelDate": {
+          "type": "string",
+          "description": "For woob-derived drafts: the date of the last functional commit in the upstream module, which is how stale the interface facts are."
+        },
+        "note": {
+          "type": "string",
+          "description": "Exactly what was and was not taken. Must state plainly whether any source code was copied."
         }
       }
     },
@@ -1184,6 +1258,45 @@
             "note": {
               "type": "string",
               "description": "Optional caveat that is specific and verifiable for this source."
+            },
+            "whatYouGet": {
+              "type": "string",
+              "description": "Optional. A paragraph on what this source actually yields, in this service's own terms — how the documents are organised, what the numbers mean, what arrives alongside them. Complements the auto-generated output list; do not restate it."
+            },
+            "retention": {
+              "type": "string",
+              "description": "Optional. How far back the service's own history really goes, and what happens past that point. Must be observed, not assumed: state what the API returns for old documents (e.g. 'tickets older than a few months return 406 and are exported as metadata only')."
+            },
+            "quirks": {
+              "type": "array",
+              "description": "Optional. Behaviours a reader would not guess and that are verifiable in this source's own definition — session handling, per-account grouping, formats that differ per stream. One short sentence each. Never invent steps for the service's own UI.",
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 6
+            },
+            "faq": {
+              "type": "array",
+              "description": "Optional. Questions specific to THIS service, appended to the four generic ones every guide carries. This is what makes the page worth indexing on its own, so it must not paraphrase the generic set.",
+              "maxItems": 6,
+              "items": {
+                "type": "object",
+                "required": [
+                  "q",
+                  "a"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "q": {
+                    "type": "string",
+                    "description": "The question, phrased as a reader would search it."
+                  },
+                  "a": {
+                    "type": "string",
+                    "description": "A verifiable answer. No marketing."
+                  }
+                }
+              }
             }
           }
         }
@@ -1258,6 +1371,28 @@
             "type": "string"
           },
           "description": "Field names that must be non-empty; incomplete rows are dropped."
+        }
+      }
+    },
+    "creditedPerson": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "However they chose to be named — a real name, a handle, an organisation. Their call, not ours."
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https://",
+          "description": "Optional profile or site they asked to be linked. https only; anything else is dropped rather than rendered."
+        },
+        "note": {
+          "type": "string",
+          "description": "Optional one line on what they contributed, e.g. 'mapped the statements stream'."
         }
       }
     }
