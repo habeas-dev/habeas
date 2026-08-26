@@ -13,7 +13,8 @@
 // double work: whatever the background already delivered is no longer pending.
 import { getRecords, recordDelivered } from './store.js';
 import { deliveredSet, markDelivered, rememberDocMeta } from './state.js';
-import { retrieveDelivered } from './retrieve.js';
+import { retrieveDelivered, RETRIEVABLE } from './retrieve.js';
+import { getHandle, verifyPermission } from './fs.js';
 import { writeToSink } from '../sinks/sinks.js';
 import { acceptsDoc } from '../sinks/format.js';
 import { storeIdOf } from './instances.js';
@@ -43,11 +44,36 @@ async function pending(ds, adapter, target) {
 }
 
 /**
- * Move what `source` (a local-folder sink) holds into `target`, for every enabled source.
- * Never contacts a service: a document with no file in the folder is left pending, not fetched.
- * Returns { sent, found, skipped, stopped }.
+ * Copy an archive into `target`, page-side, for every enabled source.
+ *
+ * Runs here rather than in the background because a local folder is reachable only through a File System
+ * Access directory handle, and only a page can hold one — the service worker resolves the handle from
+ * IndexedDB but cannot be relied on to use it, which the codebase already hedges against elsewhere. That
+ * applies whichever END the folder is: as the ORIGIN it must be read here, and as the TARGET it must be
+ * written here. Missing the second case is what made a Dropbox→folder copy appear to run and produce
+ * nothing at all: writeToSink threw "no directory handle" for every chunk, once per source, and the
+ * failures were counted rather than shown.
+ *
+ * @param originId  pin the copy to one destination, or '' to take each file from wherever it is
+ * @returns { sent, found, skipped, stopped }
  */
-export async function copyFolderBackedDocs(cfg, adapters, source, target, { signal, onStatus } = {}) {
+export async function copyArchivePageSide(cfg, adapters, target, { originId = '', signal, onStatus } = {}) {
+  // Reading is fine from any retrievable destination; the TARGET is never one of them.
+  const origins = (cfg.sinks || []).filter((s) => RETRIEVABLE.has(s.type) && s.id !== target.id
+    && (!originId || s.id === originId));
+  if (!origins.length) return { sent: 0, found: 0, skipped: 0, stopped: false };
+
+  // Resolved once, and up front: if the folder is no longer authorised, asking now — inside the click
+  // that started the copy — is the only moment a browser will grant it. Failing here beats failing after
+  // twenty minutes of reading.
+  let dirHandle;
+  if (target.type === 'local-folder') {
+    dirHandle = await getHandle('dir:' + target.id).catch(() => null);
+    if (!dirHandle || !(await verifyPermission(dirHandle).catch(() => false))) {
+      throw new Error('no directory handle');
+    }
+  }
+
   let sent = 0, found = 0, skipped = 0;
   for (const ds of (cfg.datasources || [])) {
     if (signal && signal.aborted) break;
@@ -82,9 +108,10 @@ export async function copyFolderBackedDocs(cfg, adapters, source, target, { sign
         if (!batch.length) return;
         const b = batch; batch = [];
         if (onStatus) onStatus({ sending: b.length, sink: target.name || target.id });
-        const res = await writeToSink(target, b, files, { service: adapter.service || ds.adapter, source: sk, ext: documentExt(eff) || 'pdf', interactive: true });
-        // A destination that answers with per-record `accepted` decides what enters the ledger; one that
-        // does not is taken at its word for the whole batch, exactly as the background does.
+        const res = await writeToSink(target, b, files, { service: adapter.service || ds.adapter, source: sk,
+          ext: documentExt(eff) || 'pdf', interactive: true, dirHandle });
+        // A destination answering with per-record `accepted` decides what enters the ledger; one that does
+        // not is taken at its word for the whole batch, exactly as the background does.
         const ok = Array.isArray(res && res.accepted) ? b.filter((d) => res.accepted.includes(d.internalId)) : b;
         await markDelivered(ds.id, target.id, ok.map((d) => d.internalId));
         try { await recordDelivered(sk, b, { source: adapter.id, schema: eff.schema, srcVersion: adapter.version }); } catch (e) {}
@@ -95,15 +122,18 @@ export async function copyFolderBackedDocs(cfg, adapters, source, target, { sign
 
       for (const d of docs) {
         if (signal && signal.aborted) break;
+        const rec = { ...d.record, internalId: d.internalId, date: d.date, group: d.group };
         const arts = [];
         for (const fmt of (fmts.length ? fmts : [''])) {
           const oeff = resolveOutput(adapter, sid + (fmt ? '/' + fmt : ''));
           for (const kind of artifactKinds(oeff, d)) {
-            const r = await retrieveDelivered(source, adapter, { ...d.record, internalId: d.internalId, date: d.date, group: d.group }, kind, { only: true }).catch(() => null);
-            if (r && r.blob) arts.push({ blob: r.blob, ext: r.ext || kind });
+            for (const from of origins) {
+              const r = await retrieveDelivered(from, adapter, rec, kind, { only: true }).catch(() => null);
+              if (r && r.blob) { arts.push({ blob: r.blob, ext: r.ext || kind }); break; }
+            }
           }
         }
-        // No file in the folder → leave it pending rather than reaching for the service. The caller
+        // Nowhere readable has the file → leave it pending rather than reach for the service. The caller
         // reports these; silently fetching them would contradict what the operation promises.
         if (!arts.length) { skipped++; continue; }
         files.set(d.internalId, arts);

@@ -47,6 +47,16 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   number a person would write. Invisible until a few thousand movements are summed, or until someone
   reads one — and this is a ledger, so both happen. Affects every source declaring `minorUnits`.
 
+- **Copying INTO a local folder actually writes now.** A folder is reachable only through a File System
+  Access directory handle and only a page can hold one, so the background's write threw "no directory
+  handle" for every chunk of every source. The page-side pass had been built for a folder as the ORIGIN
+  and never for a folder as the TARGET, so a Dropbox→folder copy ran, looked busy, and produced nothing.
+  A copy touching a folder at either end now runs in the page, in full. The folder's permission is also
+  confirmed up front, inside the click that starts the copy — the only moment a browser will grant it —
+  rather than after twenty minutes of reading.
+- **A copy that fails says so.** Per-source failures were recorded and never shown, so a copy that could
+  not write a single file read exactly like a copy with nothing left to do. That is what made the above
+  hard to diagnose from the outside. A lapsed folder permission gets its own words rather than "error".
 - **A document's detail now names every destination it is saved in.** The card carried it only in a
   tooltip and the drawer showed it implicitly, as one "open from X" button per destination — which
   answers nothing for a record-only movement, the case where the question is hardest: a bank line has no

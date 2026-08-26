@@ -37,6 +37,31 @@ test('noSource short-circuits BEFORE any tab or session is looked for', () => {
   assert.ok(guard < call, 'the noSource guard must come before ensureSiteFetch, or it does nothing');
 });
 
+test('a copy touching a local folder at EITHER end runs page-side', () => {
+  // Reported from real use: Dropbox → a new local folder appeared to run and wrote nothing. A folder is
+  // reachable only through a directory handle and only a page can hold one, so the background's
+  // writeToSink threw "no directory handle" for every chunk of every source — and the failures were
+  // counted rather than shown, which is why it looked busy instead of broken. The page-side pass had been
+  // built for the folder as ORIGIN and never for the folder as TARGET.
+  const ui = read('src/ui/options.js');
+  assert.match(ui, /const folderInvolved = target\.type === 'local-folder'/, 'a folder TARGET must run page-side');
+  assert.match(ui, /s\.type === 'local-folder' && s\.id !== target\.id/, '…and so must a folder ORIGIN');
+  assert.match(ui, /if \(!folderInvolved\) \{/, 'only a copy touching no folder may go to the background');
+  const lib = read('src/lib/foldercopy.js');
+  assert.match(lib, /dirHandle = await getHandle\('dir:' \+ target\.id\)/, 'the target handle must be resolved');
+  assert.match(lib, /interactive: true, dirHandle/, 'and handed to writeToSink, which throws without it');
+});
+
+test('a failure is reported, not merely counted', () => {
+  // "It is doing something but I do not know what" was the whole bug report. A copy that could not write
+  // one single file read exactly like a copy with nothing left to do.
+  const bg = read('src/background.js');
+  assert.match(bg, /failed: failed\.length, firstError/, 'the run must report its failures');
+  const ui = read('src/ui/options.js');
+  assert.match(ui, /if \(r\.failed\)/, 'and the UI must show them');
+  assert.match(ui, /opt_copy_nofolder/, 'a lapsed folder permission needs its own words, not "error"');
+});
+
 test('the page-side folder copy has no route to a source at all', () => {
   // The strongest guarantee available here: it cannot contact a service because it imports nothing
   // that can. If someone adds such an import, this fails and they have to justify it.

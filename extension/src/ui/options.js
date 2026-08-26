@@ -17,7 +17,7 @@ import { saveSource } from '../adapters/index.js';
 import { editJson } from './jsoneditor.js';
 import { getGrants, revokeGrant } from '../lib/grants.js';
 import { getStoreConfig, moveStoreTo, putItems } from '../lib/store.js';
-import { copyFolderBackedDocs } from '../lib/foldercopy.js';
+import { copyArchivePageSide } from '../lib/foldercopy.js';
 import { RETRIEVABLE } from '../lib/retrieve.js';
 import { enableVault, unlockVault, lockVault, vaultStatus } from '../lib/secretsync.js';
 import { RECORDER_HTML, initAuthor } from './author.js';
@@ -369,28 +369,37 @@ async function render() {
     chrome.storage.onChanged.addListener(onStatus);
     try {
       const originId = copySrc.value || '';
-      const r = await chrome.runtime.sendMessage({ type: 'habeas:archiveCopy', sink: target.id, from: originId });
-      if (!r || !r.ok) { $('#copystatus').textContent = t('opt_copy_err', [(r && r.error) || 'error']); return; }
-      let sent = r.sent || 0, skipped = r.skipped || 0, stopped = r.status === 'stopped';
-      // Second pass, page-side: a local folder can only be read where a directory handle lives, which
-      // is here and never in the service worker. Skipped when the folder IS the target.
-      // Only when the local folder is actually the chosen origin — or when no origin was pinned and it
-      // may therefore hold files nothing else does. Naming Dropbox as the origin must not quietly pull
-      // from a folder as well; that is the whole point of having chosen.
-      const folder = cfg.sinks.find((s) => s.type === 'local-folder' && s.id !== target.id
-        && (!originId || s.id === originId));
-      if (folder && !stopped && !copyAbort.signal.aborted) {
-        const f = await copyFolderBackedDocs(cfg, CATALOG, folder, target, {
+      // A local folder is only reachable through a directory handle, and only a page can hold one — so a
+      // copy touching one at EITHER end runs here, in full. Sending it to the background produced the
+      // failure that surfaced this: writeToSink threw "no directory handle" for every chunk of every
+      // source, the errors were counted rather than shown, and the copy looked busy while writing nothing.
+      const folderInvolved = target.type === 'local-folder'
+        || (cfg.sinks || []).some((s) => s.type === 'local-folder' && s.id !== target.id && (!originId || s.id === originId));
+      let sent = 0, skipped = 0, stopped = false;
+
+      if (!folderInvolved) {
+        const r = await chrome.runtime.sendMessage({ type: 'habeas:archiveCopy', sink: target.id, from: originId });
+        if (!r || !r.ok) { $('#copystatus').textContent = t('opt_copy_err', [(r && r.error) || 'error']); return; }
+        sent = r.sent || 0; skipped = r.skipped || 0; stopped = r.status === 'stopped';
+        // A copy that failed on every source must not read as a copy with nothing left to do.
+        if (r.failed) { $('#copyreport').hidden = false; $('#copyreport').textContent = t('opt_copy_failed', [String(r.failed), r.firstError || '']); }
+      } else {
+        const f = await copyArchivePageSide(cfg, CATALOG, target, {
+          originId,
           signal: copyAbort.signal,
           onStatus: (p) => { $('#copystatus').textContent = t('status_sending', [String(p.sending), p.sink]); },
         });
-        sent += f.sent; skipped += f.skipped; stopped = stopped || f.stopped;
+        sent = f.sent; skipped = f.skipped; stopped = f.stopped;
       }
+
       if (stopped) $('#copystatus').textContent = t('opt_copy_stopped', [String(sent)]);
       else if (!sent) $('#copystatus').textContent = t('opt_copy_none', [label]);
       else $('#copystatus').textContent = t('opt_copy_done', [String(sent), label]);
       if (skipped) { $('#copyreport').hidden = false; $('#copyreport').textContent = t('opt_copy_skipped', [String(skipped)]); }
-    } catch (e) { $('#copystatus').textContent = t('opt_copy_err', [(e && e.message) || String(e)]); }
+    } catch (e) {
+      const msg = (e && e.message) || String(e);
+      $('#copystatus').textContent = t('opt_copy_err', [msg === 'no directory handle' ? t('opt_copy_nofolder') : msg]);
+    }
     finally {
       chrome.storage.onChanged.removeListener(onStatus);
       copyAbort = null;

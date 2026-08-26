@@ -1534,7 +1534,11 @@ export async function runArchiveCopy(cfg, adapters, sink, { signal, onProgress, 
     if (onProgress) onProgress({ phase: 'done-source', name, sent: r.sent || 0 });
   }
   await appendLog({ kind: 'archive-copy', sink: sink.id, status: 'ok', count: sent });
-  return { status: signal && signal.aborted ? 'stopped' : 'done', sent, found, skipped, per };
+  // Failures per source were recorded and never shown, so a copy that could not write a single file
+  // looked exactly like a copy with nothing to do. Surface the count and the first message.
+  const failed = per.filter((x) => x.error);
+  return { status: signal && signal.aborted ? 'stopped' : 'done', sent, found, skipped, per,
+    failed: failed.length, firstError: failed.length ? failed[0].error : '' };
 }
 
 async function addPending(host, entry) {
