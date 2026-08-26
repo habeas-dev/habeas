@@ -10,6 +10,23 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **A field may declare several source paths, and the first that resolves wins.** Until now a field mapped
+  to exactly one path, which is right until a service reports the same quantity under two names — one
+  authoritative, one merely usually equal. Ordering them says "prefer this, accept that" without the source
+  having to encode a rule for when each applies, which is precisely the rule nobody can state correctly
+  from a sample.
+
+### Fixed
+- **Revolut movements now report what actually left the account.** `amount` is the amount converted at the
+  interbank rate; `amountWithCharges` is what was charged. They agree whenever nothing was charged, so the
+  wrong field looked correct in almost every movement and was wrong in exactly the ones carrying a fee — a
+  weekend FX surcharge, for instance. Verified against a real archive of 208 movements: five change, all
+  five to the value the service itself declares, none loses its amount, and the field is present across
+  every movement type (top-ups, transfers, card payments, fees, exchanges, refunds). The amount is still
+  scaled by the movement's OWN currency exponent, so dividing by a hard-coded 100 — the obvious way to
+  write this — would have turned a JPY charge into a hundredth of itself.
+
 ## [0.10.0] — 2026-08-26
 
 ### Added

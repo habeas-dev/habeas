@@ -819,6 +819,15 @@ function i18nWord(map, key) {
   return dict[loc] || dict[loc.toLowerCase()] || dict[lang] || dict.en || dict[Object.keys(dict)[0]] || '';
 }
 function resolveField(value, item, group, i18n) {
+  // A field may declare SEVERAL paths: the first that resolves to something wins. This is for the case
+  // where a service reports one quantity under two names, one authoritative and one merely usually equal
+  // — Revolut's `amountWithCharges` (what left the account) versus `amount` (the pre-fee conversion).
+  // Ordering them says "prefer this, accept that" without the source having to encode a rule for when
+  // each applies, which is exactly the rule nobody can state correctly from a sample.
+  if (Array.isArray(value)) {
+    for (const v of value) { const r = resolveField(v, item, group, i18n); if (r != null && r !== '') return r; }
+    return undefined;
+  }
   if (typeof value !== 'string' || value.indexOf('{') < 0) return get(item, value);
   const pick = (spec) => {
     if (spec.indexOf('i18n:') === 0) return i18nWord(i18n, spec.slice(5)); // {i18n:key} → per-locale word

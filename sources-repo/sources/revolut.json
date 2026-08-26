@@ -18,8 +18,8 @@
   "categories": [
     "banking"
   ],
-  "version": "2026-08-26.4",
-  "minVersion": "0.9.3",
+  "version": "2026-08-26.5",
+  "minVersion": "0.10.0.1",
   "minorUnits": true,
   "keepRaw": true,
   "throttle": {
@@ -121,7 +121,10 @@
       "fields": {
         "internalId": "id",
         "date": "startedDate",
-        "amount": "amount",
+        "amount": [
+          "amountWithCharges",
+          "amount"
+        ],
         "currency": "currency",
         "description": "description",
         "type": "type",

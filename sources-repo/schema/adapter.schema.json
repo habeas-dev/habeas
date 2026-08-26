@@ -1204,9 +1204,21 @@
         "date"
       ],
       "additionalProperties": {
-        "type": "string"
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "description": "Several candidate paths: the first that resolves to a non-empty value wins. For a quantity a service reports under two names, put the authoritative one first (Revolut: amountWithCharges before amount). Needs an extension with array-path support — gate it with minVersion."
+          }
+        ]
       },
-      "description": "Map of normalized field name -> source field (dotted path). Recognized keys depend on `schema`: receipt (total, storeName, storeAddress, type, source), invoice (total, issuer, issuerAddress, number, type, source), transaction (amount, description, counterparty, direction, type, source), investment (instrument, isin, units, price, amount, operation, type)."
+      "description": "Map of normalized field name -> source field (dotted path). Recognized keys depend on `schema`: receipt (total, storeName, storeAddress, type, source), invoice (total, issuer, issuerAddress, number, type, source), transaction (amount, description, counterparty, direction, type, source), investment (instrument, isin, units, price, amount, operation, type). A value may be a single dotted path or an ordered list of candidate paths."
     },
     "schema": {
       "type": "string",
