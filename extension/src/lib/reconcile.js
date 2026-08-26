@@ -32,24 +32,33 @@ export function checkBalanceContinuity(docs, tol = 0.01) {
   const runs = new Map();
   for (const d of docs || []) {
     if (!d) continue;
-    const amount = typeof d.amount === 'number' ? d.amount : (d.record && typeof d.record.amount === 'number' ? d.record.amount : null);
-    const bal = typeof d.balanceAfter === 'number' ? d.balanceAfter : (d.record && typeof d.record.balanceAfter === 'number' ? d.record.balanceAfter : null);
-    if (amount == null || bal == null) continue; // a movement without both tells us nothing either way
-    const key = [d.group || (d.record && d.record.group) || '', d.currency || (d.record && d.record.currency) || ''].join('|');
+    const r = d.record || {};
+    const amount = typeof d.amount === 'number' ? d.amount : (typeof r.amount === 'number' ? r.amount : null);
+    if (amount == null) continue;   // no amount, nothing to add up
+    // Balance is OPTIONAL. A movement can legitimately have none — a Revolut vault transfer carries the
+    // vault's closing balance, so Habeas removes it rather than pollute the series with another account's
+    // figure. Dropping such a movement entirely would be worse than the bug it came from: its amount is
+    // real and must still be counted. It simply stops being a checkpoint.
+    const balRaw = typeof d.balanceAfter === 'number' ? d.balanceAfter : (typeof r.balanceAfter === 'number' ? r.balanceAfter : null);
+    const key = [d.group || r.group || '', d.currency || r.currency || ''].join('|');
     if (!runs.has(key)) runs.set(key, []);
-    runs.get(key).push({ date: String(d.date || (d.record && d.record.date) || ''), amount, bal });
+    runs.get(key).push({ date: String(d.date || r.date || ''), amount, bal: balRaw });
   }
 
   const out = [];
   for (const [key, list] of runs) {
-    if (list.length < 2) continue; // one movement proves nothing: there is no interval to check
     list.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
-    // Balance BEFORE the first movement, so the first one is included in the sum rather than assumed.
-    const opening = list[0].bal - list[0].amount;
-    const actual = list.at(-1).bal - opening;
-    const expected = list.reduce((s, m) => s + m.amount, 0);
+    // Check between the first and last movements that DO carry a balance; everything in between counts
+    // toward the sum whether it carries one or not.
+    const first = list.findIndex((m) => m.bal != null);
+    let last = -1;
+    for (let i = list.length - 1; i >= 0; i--) if (list[i].bal != null) { last = i; break; }
+    if (first < 0 || last <= first) continue; // fewer than two checkpoints: no interval to verify
+    const opening = list[first].bal - list[first].amount;
+    const actual = list[last].bal - opening;
+    const expected = list.slice(first, last + 1).reduce((s, m) => s + m.amount, 0);
     const gap = actual - expected;
-    out.push({ key, n: list.length, expected, actual, gap, ok: near(expected, actual, tol) });
+    out.push({ key, n: last - first + 1, expected, actual, gap, ok: near(expected, actual, tol) });
   }
   const worst = out.reduce((w, r) => (Math.abs(r.gap) > Math.abs(w) ? r.gap : w), 0);
   return { ok: out.every((r) => r.ok), runs: out, gap: worst };

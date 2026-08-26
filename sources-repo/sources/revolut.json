@@ -18,7 +18,7 @@
   "categories": [
     "banking"
   ],
-  "version": "2026-08-26",
+  "version": "2026-08-26.1",
   "minVersion": "0.9.3",
   "minorUnits": true,
   "keepRaw": true,
@@ -102,12 +102,20 @@
             "x-client-version": "100.0"
           },
           "referer": "https://app.revolut.com/home",
-          "keep": {
-            "field": "cardVerification",
-            "exclude": [
-              true
-            ]
-          }
+          "keep": [
+            {
+              "field": "cardVerification",
+              "exclude": [
+                true
+              ]
+            },
+            {
+              "field": "state",
+              "values": [
+                "COMPLETED"
+              ]
+            }
+          ]
         }
       },
       "fields": {
@@ -184,8 +192,8 @@
   ],
   "changelog": [
     {
-      "version": "2026-08-26",
-      "changes": "Drops card verifications (0 EUR authorisations, flagged cardVerification) — they move no money and are not movements. Fixes vault transfers: Revolut books them from the paying side, so money returning from a savings vault arrived negative, and the balance they carry belongs to the vault rather than to the personal account. Reported against 167 real movements, of which 151 of 166 balance links already chained to the cent."
+      "version": "2026-08-26.1",
+      "changes": "Drops card verifications (0 EUR authorisations, flagged cardVerification) — they move no money and are not movements. Fixes vault transfers: Revolut books them from the paying side, so money returning from a savings vault arrived negative, and the balance they carry belongs to the vault rather than to the personal account. Reported against 167 real movements, of which 151 of 166 balance links already chained to the cent. Also drops anything whose state is not COMPLETED (5 DECLINED + 1 REVERTED in the sample were retried charges whose successful twin also arrived)."
     },
     {
       "version": "2026-08-26",

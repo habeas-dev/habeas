@@ -32,12 +32,12 @@ const feed = (items) => async (url) => (String(url).includes('/wallet')
 const ids = (docs) => docs.map((d) => d.internalId).sort();
 
 const CARD_VERIFICATION = {
-  id: 'CV1', startedDate: '2025-02-24', amount: 0, currency: 'EUR', balance: 100000,
+  id: 'CV1', startedDate: '2025-02-24', amount: 0, currency: 'EUR', balance: 100000, state: 'COMPLETED',
   description: 'Amazon.es', type: 'CARD_PAYMENT', cardVerification: true,
 };
-const NORMAL = { id: 'N1', startedDate: '2025-02-25', amount: -1250, currency: 'EUR', balance: 98750, description: 'Dinahosting' };
+const NORMAL = { id: 'N1', startedDate: '2025-02-25', amount: -1250, currency: 'EUR', balance: 98750, state: 'COMPLETED', description: 'Dinahosting' };
 const vault = (id, date, amount, bal, from, to) => ({
-  id, startedDate: date, amount, currency: 'EUR', balance: bal, description: 'Vault',
+  id, startedDate: date, amount, currency: 'EUR', balance: bal, description: 'Vault', state: 'COMPLETED',
   vault: { id: 'v1' }, fromAccount: { type: from }, toAccount: { type: to },
 });
 
@@ -55,8 +55,9 @@ test('…and the filter keys off the FLAG, not off the amount being zero', async
   // that the SOURCE does not claim to filter on the amount.
   const src = JSON.parse(readFileSync(join(ROOT, 'sources-repo/sources/revolut.json'), 'utf8'));
   const keep = src.streams.find((s) => s.id === 'transactions').api.list.keep;
-  assert.equal(keep.field, 'cardVerification', 'the flag is the signal, not the amount');
-  assert.deepEqual(keep.exclude, [true]);
+  const flag = keep.find((k) => k.field === 'cardVerification');
+  assert.ok(flag, 'the flag is the signal, not the amount');
+  assert.deepEqual(flag.exclude, [true]);
   assert.equal(docs.length, 0);
 });
 
@@ -89,12 +90,12 @@ test('ordinary movements are left completely alone', async () => {
 
 test('with both fixed, the statement adds up — which is what failed by 10.260,80', async () => {
   const items = [
-    { id: 'A', startedDate: '2025-03-01', amount: 100000, currency: 'EUR', balance: 100000, description: 'Salary' },
+    { id: 'A', startedDate: '2025-03-01', amount: 100000, currency: 'EUR', balance: 100000, state: 'COMPLETED', description: 'Salary' },
     CARD_VERIFICATION,                                                        // dropped: not a movement
     { ...vault('B', '2025-03-02', -40000, 0, 'PERSONAL', 'SAVINGS'), balance: 60000 }, // -400, balance is the vault's
-    { id: 'C', startedDate: '2025-03-03', amount: -10000, currency: 'EUR', balance: 50000, description: 'Rent' },
+    { id: 'C', startedDate: '2025-03-03', amount: -10000, currency: 'EUR', balance: 50000, state: 'COMPLETED', description: 'Rent' },
     vault('D', '2025-03-04', -40000, 0, 'SAVINGS', 'PERSONAL'),               // +400 back, balance is the vault's
-    { id: 'E', startedDate: '2025-03-05', amount: -5000, currency: 'EUR', balance: 85000, description: 'Shopping' },
+    { id: 'E', startedDate: '2025-03-05', amount: -5000, currency: 'EUR', balance: 85000, state: 'COMPLETED', description: 'Shopping' },
   ];
   const docs = await listInventory(ADP, AUTH, feed(items), {});
   assert.deepEqual(ids(docs), ['A', 'B', 'C', 'D', 'E'], 'only the verification is dropped');
@@ -111,12 +112,87 @@ test('minor units divide, so an amount is the number a person would write', asyn
   // lands on the nearest double to 2005.36. Invisible until a few thousand movements are summed, or
   // until someone reads it — and this is a ledger, so both happen.
   const docs = await listInventory(ADP, AUTH, feed([
-    { id: 'F1', startedDate: '2025-04-01', amount: 200536, currency: 'EUR', balance: 200536, description: 'x' },
-    { id: 'F2', startedDate: '2025-04-02', amount: -1071, currency: 'EUR', balance: 199465, description: 'y' },
+    { id: 'F1', startedDate: '2025-04-01', amount: 200536, currency: 'EUR', balance: 200536, state: 'COMPLETED', description: 'x' },
+    { id: 'F2', startedDate: '2025-04-02', amount: -1071, currency: 'EUR', balance: 199465, state: 'COMPLETED', description: 'y' },
   ]), {});
   const by = Object.fromEntries(docs.map((d) => [d.internalId, d]));
   assert.equal(by.F1.amount, 2005.36);
   assert.equal(by.F2.amount, -10.71);
   assert.equal(by.F2.balanceAfter, 1994.65);
   assert.equal(String(by.F1.amount), '2005.36', 'and it must READ correctly, not merely compare closely');
+});
+
+// ---------------------------------------------------------------- declined and reverted charges
+
+test('a declined or reverted charge is not emitted — its successful twin already is', async () => {
+  // A card is refused, the payment is retried, and the good one arrives too. Emitting all three books
+  // the purchase three times. In the sample the discriminator was again perfect: the 6 DECLINED/REVERTED
+  // rows were exactly the 6 arriving with no balance, and no COMPLETED row lacked one.
+  const docs = await listInventory(ADP, AUTH, feed([
+    { id: 'D1', startedDate: '2025-05-01', amount: -8950, currency: 'EUR', state: 'DECLINED', description: 'Shop' },
+    { id: 'R1', startedDate: '2025-05-01', amount: -8950, currency: 'EUR', state: 'REVERTED', description: 'Shop' },
+    { id: 'G1', startedDate: '2025-05-01', amount: -8950, currency: 'EUR', balance: 41050, state: 'COMPLETED', description: 'Shop' },
+  ]), {});
+  assert.deepEqual(ids(docs), ['G1'], 'only the charge that actually happened');
+});
+
+test('the state filter is a WHITELIST, so a state Revolut invents later stays out', async () => {
+  // A blacklist would silently admit PENDING or PROCESSING the day they appear, and nobody would know
+  // what they mean until the balances stopped adding up again.
+  const src = JSON.parse(readFileSync(join(ROOT, 'sources-repo/sources/revolut.json'), 'utf8'));
+  const rule = src.streams.find((s) => s.id === 'transactions').api.list.keep.find((k) => k.field === 'state');
+  assert.deepEqual(rule.values, ['COMPLETED']);
+  assert.equal(rule.exclude, undefined, 'a blacklist here would admit tomorrow\'s unknown states');
+  const docs = await listInventory(ADP, AUTH, feed([
+    { id: 'P1', startedDate: '2025-06-01', amount: -100, currency: 'EUR', state: 'PENDING', description: 'later' },
+  ]), {});
+  assert.equal(docs.length, 0);
+});
+
+test('a TRANSFER without vault/fromAccount is left completely alone', async () => {
+  // Called out in the report: the sample holds 2 plain TRANSFERs with no fromAccount/toAccount. Keying
+  // the sign rule off type === "TRANSFER" would have flipped those for no reason.
+  const docs = await listInventory(ADP, AUTH, feed([
+    { id: 'T1', startedDate: '2025-07-01', amount: -25000, currency: 'EUR', balance: 75000, state: 'COMPLETED', type: 'TRANSFER', description: 'To someone' },
+  ]), {});
+  assert.equal(docs[0].amount, -250, 'an ordinary transfer keeps its sign');
+  assert.equal(docs[0].balanceAfter, 750, 'and keeps its balance');
+});
+
+test('the reported shape end to end: 20 dropped of three kinds, and the rest closes', async () => {
+  // Mirrors the sample's headline: 167 movements in, 147 out, 20 discarded — 14 card verifications, 5
+  // declined and 1 reverted — and a statement that adds up once the vault rows are read from the right
+  // side. The counts here are the same three kinds in the same proportions, not the same volume.
+  const items = [];
+  let bal = 100000;                                     // 1000,00 EUR in minor units
+  const real = (id, amt, date) => { bal += amt; return { id, startedDate: date, amount: amt, currency: 'EUR', balance: bal, state: 'COMPLETED', description: id }; };
+
+  items.push(real('S', 200000, '2025-01-01'));           // +2000
+  for (let i = 0; i < 14; i++)                           // 14 verifications: no money, no balance change
+    items.push({ id: 'CV' + i, startedDate: '2025-01-02', amount: 0, currency: 'EUR', balance: bal, state: 'COMPLETED', type: 'CARD_PAYMENT', cardVerification: true });
+  for (let i = 0; i < 5; i++)                            // 5 declined: never happened, and carry no balance
+    items.push({ id: 'DEC' + i, startedDate: '2025-01-03', amount: -4500, currency: 'EUR', state: 'DECLINED', description: 'retry' });
+  items.push({ id: 'REV', startedDate: '2025-01-03', amount: -4500, currency: 'EUR', state: 'REVERTED', description: 'retry' });
+  items.push(real('OK', -4500, '2025-01-04'));           // the charge that did happen
+  // Two vault movements, as Revolut books them: negative from the payer's side, carrying the VAULT's balance.
+  items.push({ id: 'V-out', startedDate: '2025-01-05', amount: -50000, currency: 'EUR', balance: 50000, state: 'COMPLETED', vault: { id: 'v' }, fromAccount: { type: 'PERSONAL' }, toAccount: { type: 'SAVINGS' } });
+  bal -= 50000;
+  items.push({ id: 'V-in', startedDate: '2025-01-06', amount: -20000, currency: 'EUR', balance: 30000, state: 'COMPLETED', vault: { id: 'v' }, fromAccount: { type: 'SAVINGS' }, toAccount: { type: 'PERSONAL' } });
+  bal += 20000;
+  items.push(real('END', -1000, '2025-01-07'));
+
+  const docs = await listInventory(ADP, AUTH, feed(items), {});
+  assert.equal(items.length, 25, '5 real movements plus the 20 that should never be emitted');
+  assert.equal(docs.length, 5, 'S, OK, V-out, V-in and END survive; the other 20 do not');
+  assert.equal(docs.filter((d) => d.internalId.startsWith('CV')).length, 0);
+  assert.equal(docs.filter((d) => /^(DEC|REV)/.test(d.internalId)).length, 0);
+
+  // The sign is corrected on the way in, which is what makes the sum meaningful at all.
+  const by = Object.fromEntries(docs.map((d) => [d.internalId, d]));
+  assert.equal(by['V-out'].amount, -500);
+  assert.equal(by['V-in'].amount, 200, 'money returning from the vault is income');
+  assert.equal(by['V-out'].balanceAfter, undefined, 'the vault\'s balance must not enter the series');
+
+  const r = checkBalanceContinuity(docs);
+  assert.equal(r.ok, true, `the corrected statement must close: ${JSON.stringify(r.runs)}`);
 });

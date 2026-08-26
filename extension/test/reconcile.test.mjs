@@ -53,9 +53,18 @@ test('the FIRST movement cannot be checked, and the check must not pretend other
   assert.equal(Math.round(r2.gap), -10);
 });
 
-test('movements lacking a balance are ignored rather than guessed at', () => {
+test('a movement with no balance still counts, it just stops being a checkpoint', () => {
+  // Habeas removes the balance from a Revolut vault transfer, because the one it carries belongs to the
+  // vault. Skipping such a movement would drop its amount from the sum and manufacture a discrepancy of
+  // exactly that size — replacing the reported bug with a subtler one.
+  const r = checkBalanceContinuity([mv('2026-01-01', 100, 1100), { date: '2026-01-02', amount: -400 }, mv('2026-01-03', -60, 640)]);
+  assert.equal(r.ok, true, `the gap must be spanned, not ignored: ${JSON.stringify(r.runs)}`);
+  assert.equal(r.runs[0].n, 3, 'all three movements are inside the interval');
+});
+
+test('a run with fewer than two balances cannot be checked', () => {
   const r = checkBalanceContinuity([mv('2026-01-01', 100, 1100), { date: '2026-01-02', amount: -40 }]);
-  assert.equal(r.runs.length, 0, 'one usable movement is not an interval');
+  assert.equal(r.runs.length, 0, 'one checkpoint is not an interval');
   assert.equal(r.ok, true);
 });
 

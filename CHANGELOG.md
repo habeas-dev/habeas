@@ -29,6 +29,19 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   negative exactly like money going into it, and each carried the VAULT's closing balance rather than the
   personal account's — which is why the running series jumped by thousands at those rows. Together they
   account for the whole −10.253,24 against a real balance movement of 7,56. Nothing was missing.
+- **Revolut: declined and reverted charges are no longer emitted either.** A card is refused, the payment
+  is retried, and the successful one arrives too — booking the purchase up to three times. The state is
+  filtered as a WHITELIST (`COMPLETED` only) rather than a blacklist, so a state Revolut invents later
+  stays out until somebody knows what it means, instead of silently joining the ledger. Together with the
+  card verifications that is 20 of 167 movements that should never have been emitted, and it takes the
+  sample's discrepancy from −10.260,80 to 1,48 — the remainder being three card payments made in pounds,
+  which is a separate matter.
+- **`list.keep` accepts an array of rules.** One list can need filtering on two unrelated fields, and
+  neither Revolut discriminator subsumes the other.
+- **The balance check spans a movement that carries no balance instead of discarding it.** Removing the
+  vault's balance left those movements with an amount and no checkpoint; skipping them would have dropped
+  their amounts from the sum and manufactured a discrepancy of exactly that size — trading the reported
+  bug for a subtler one.
 - **Minor-unit amounts now divide instead of multiplying by a reciprocal.** `200536 * 0.01` is
   `2005.3600000000001`, because one hundredth is not exactly representable; `200536 / 100` lands on the
   number a person would write. Invisible until a few thousand movements are summed, or until someone

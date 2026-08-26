@@ -1586,6 +1586,10 @@ const itemsPathOf = (list) => (list.from === 'html' ? '__items' : list.itemsPath
 //   • prefix          keep only items whose field starts with this string (or any of an array) — routes
 //                     id-namespaced product kinds to their own stream (Raisin: OMA_… flexible vs FDA_… fixed)
 export function keepFilter(items, keep) {
+  // An ARRAY of rules applies them in turn, because one list can need filtering on two unrelated fields:
+  // Revolut has to drop card verifications (a flag) AND anything that is not COMPLETED (a state), and
+  // neither discriminator subsumes the other.
+  if (Array.isArray(keep)) return keep.reduce((acc, k) => keepFilter(acc, k), items);
   if (!keep || !keep.field) return items;
   const val = (p) => get(p, keep.field);
   let out = items;
