@@ -73,8 +73,11 @@ test('the page-side folder copy has no route to a source at all', () => {
 
 test('a document with no file anywhere is skipped, not fetched', () => {
   const src = read('src/lib/foldercopy.js');
-  assert.match(src, /if \(!arts\.length\) \{ skipped\+\+; continue; \}/,
-    'the no-file case must skip and count, never fall through to a fetch');
+  // Its RECORD still travels — every writer emits the manifest alongside the files, and dropping the row
+  // as well would lose the data too, for a document that does exist. What must never happen is reaching
+  // for the service, which is the promise this operation makes.
+  assert.match(src, /if \(!arts\.length\) skipped\+\+;\s*\n\s*else files\.set/,
+    'a missing file is counted, and the record still goes');
 });
 
 test('the copy checkpoints, so an interrupted run resumes instead of restarting', () => {
@@ -306,9 +309,15 @@ test('the copy asks what a document HAS before going to look for it', () => {
   // file. That is where the five silent minutes went.
   const lib = read('src/lib/foldercopy.js');
   assert.match(lib, /getDocMeta\(storeIdOf\(ds, adapter\)\)/, 'the recorded formats must be read');
-  assert.match(lib, /const withFiles = docs\.filter\(\(d\) => !hasNoFile\(d\)\)/,
+  assert.match(lib, /const withFiles = recordsOnly \? \[\] : docs\.filter\(\(d\) => !hasNoFile\(d\)\)/,
     'documents without files must be partitioned out BEFORE the loop, not visited to be skipped');
-  assert.match(lib, /if \(!withFiles\.length\) \{/, 'a source with none resolves in one step');
+  // …and their RECORDS must still travel. Every writer emits the manifest alongside the files, so a
+  // stream that declares no artifact — a bank's movements — still has data to copy. Skipping it would
+  // leave a bank archive uncopied, which is most of what people have.
+  assert.match(lib, /const recordOnlyDocs = recordsOnly \? docs : docs\.filter\(hasNoFile\)/,
+    'records with no file must still be delivered');
+  assert.ok(!/if \(!withFiles\.length\) \{\s*\n\s*skipped \+= docs\.length/.test(lib),
+    'a stream with no artifacts must not be skipped outright');
   assert.match(lib, /total: withFiles\.length/, 'and the counter must count what will be copied, not what exists');
   assert.match(lib, /if \(wanted && !wanted\.has\(String\(k\.ext\)\.toLowerCase\(\)\)\) continue;/,
     'and a known format list must not be probed beyond');

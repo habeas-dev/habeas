@@ -67,10 +67,18 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   format filter compared an object against a string — so no file could ever be found, whatever the archive
   held. This was the real cause of "zero bytes written"; the several rounds of progress reporting that
   preceded it made the failure visible without touching it.
-- **A stream that declares no file is settled without touching its documents.** AliExpress orders carry a
-  JSON detail and no document, so all 639 of them were being probed to discover something the adapter
-  states outright. This check needs no per-document metadata, which matters because an archive filled
-  before those records existed has none.
+- **Records are copied even when there is no file to go with them.** Every writer emits a cumulative
+  manifest alongside the files, so a bank movements stream — which declares no per-document artifact at
+  all, its data riding that manifest — still has something to copy. An earlier version of this change
+  skipped such a stream outright, which would have left a bank archive uncopied; that is most of what
+  people have. A document whose file cannot be found anywhere now also delivers its record rather than
+  being dropped entirely: losing the data as well, for a document that does exist, is the worse outcome.
+  The service is still never contacted, which is the promise the operation makes.
+- **A stream that declares no artifact at all is settled without touching its documents.** A bank
+  movements stream has nothing per-document to fetch — its data rides the manifest — and probing every
+  movement to discover what the adapter states outright is pure waste. The check needs no per-document
+  metadata, which matters because an archive filled before those records existed has none. Note that a
+  JSON detail counts as an artifact and is copied: it is a real file at the destination.
 - **The copy now asks what a document has before going to look for it**, and settles the ones without a
   file in a single step rather than visiting each to decide not to fetch it. Habeas already records each
   document's formats — at delivery time, and again on the Archive's format scan — and the Archive, the

@@ -109,27 +109,26 @@ export async function copyArchivePageSide(cfg, adapters, target, { originId = ''
       const eff = resolveOutput(adapter, sid);
       const sk = storeKeyOf(storeIdOf(ds, adapter), sid);
       const fmts = outputsOf(adapter).filter((o) => o.stream === sid).map((o) => o.format);
-      // Can this STREAM produce a file at all? Adapter-level and free — no metadata, no requests. A source
-      // whose stream declares no document (AliExpress orders carry a JSON detail and nothing else) has
-      // zero files by construction, and probing 639 of them to discover that is pure waste. This is the
-      // check that works even when nothing was ever recorded about the individual documents.
+      // Can this STREAM produce an artifact at all? Adapter-level and free — no metadata, no requests, and
+      // it works on an archive that predates the per-document records, which is the case that matters.
+      // A bank movements stream declares none: its data rides the MANIFEST, which every writer emits
+      // alongside the files. So a stream with no artifacts is not skipped — that would leave a bank
+      // archive uncopied, which is most of what people have — it is delivered straight to batches with
+      // nothing fetched at all.
       const streamKinds = (fmts.length ? fmts : ['']).flatMap((fmt) =>
         artifactKinds(resolveOutput(adapter, sid + (fmt ? '/' + fmt : ''))).filter((k) => sinkAcceptsArtifact(target, k)));
-      if (!streamKinds.length) {
-        skipped += docs.length;
-        if (onStatus) onStatus({ phase: 'nofiles', source: adapter.name || ds.adapter, total: docs.length, n, of: enabled.length });
-        continue;
+      const recordsOnly = !streamKinds.length;
+
+      // Documents recorded as having no file are settled the same way: their records still travel, they
+      // are simply not searched for.
+      const hasNoFile = (d) => { const e = known[d.internalId] && known[d.internalId].exts; return Array.isArray(e) && !e.length; };
+      const withFiles = recordsOnly ? [] : docs.filter((d) => !hasNoFile(d));
+      const recordOnlyDocs = recordsOnly ? docs : docs.filter(hasNoFile);
+      if (onStatus) {
+        onStatus(recordsOnly
+          ? { phase: 'records', source: adapter.name || ds.adapter, total: docs.length, n, of: enabled.length }
+          : { phase: 'copying', done: 0, total: withFiles.length, source: adapter.name || ds.adapter, skipped, n, of: enabled.length });
       }
-      const docs = list.map((d) => {
-        const rec = d.record || {};
-        // category must sit on the doc itself — acceptsDoc reads doc.category, not record.category.
-        const category = rec.category != null ? rec.category
-          : ((adapter.categorize && adapter.categorize.default) || (adapter.categories && adapter.categories[0]));
-        return { internalId: d.internalId, record: rec, date: rec.date, total: rec.total ?? rec.amount, currency: rec.currency,
-                 category, type: rec.type, group: rec.group || '', _stream: sid, _storeKey: sk, _fromStore: true };
-      }).filter((d) => acceptsDoc(target, d));
-      if (!docs.length) continue;
-      found += docs.length;
 
       const files = new Map();
       let batch = [];
@@ -148,20 +147,14 @@ export async function copyArchivePageSide(cfg, adapters, target, { originId = ''
         sent += ok.length;
       };
 
-      // Partitioned BEFORE the loop, not inside it. Knowing a document has no file and then visiting it
-      // anyway to decide not to fetch it is the same mistake one layer up: the counter crawls through
-      // hundreds of entries announcing work it is not doing, and the total it reports is a total of
-      // documents rather than of things that will actually be copied. An archive of bank movements
-      // resolves here, in one step, with no loop and no requests.
-      const hasNoFile = (d) => { const e = known[d.internalId] && known[d.internalId].exts; return Array.isArray(e) && !e.length; };
-      const withFiles = docs.filter((d) => !hasNoFile(d));
-      skipped += docs.length - withFiles.length;
-      if (!withFiles.length) {
-        // Said out loud. If every source resolves this way — an archive of bank movements does — no
-        // copying message would ever appear, and the run would look like it had done nothing again.
-        if (onStatus) onStatus({ phase: 'nofiles', source: adapter.name || ds.adapter, total: docs.length, n, of: enabled.length });
-        continue;
+      // Records with no file to wait for go first, in batches, without a single request.
+      let batchRO = [];
+      for (const d of recordOnlyDocs) {
+        if (signal && signal.aborted) break;
+        batchRO.push(d);
+        if (batchRO.length >= CHUNK) { batch = batchRO; batchRO = []; await flush(); }
       }
+      if (batchRO.length) { batch = batchRO; await flush(); }
 
       let seen = 0;
       for (const d of withFiles) {
@@ -197,10 +190,11 @@ export async function copyArchivePageSide(cfg, adapters, target, { originId = ''
             }
           }
         }
-        // Nowhere readable has the file → leave it pending rather than reach for the service. The caller
-        // reports these; silently fetching them would contradict what the operation promises.
-        if (!arts.length) { skipped++; continue; }
-        files.set(d.internalId, arts);
+        // Nowhere readable has the file. The RECORD still travels — dropping it would lose the data too,
+        // for a document that at least exists — but the service is never contacted for the file, which is
+        // what this operation promises. Counted so the shortfall is visible.
+        if (!arts.length) skipped++;
+        else files.set(d.internalId, arts);
         batch.push(d);
         if (batch.length >= CHUNK) await flush();
       }

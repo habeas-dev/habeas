@@ -3808,8 +3808,8 @@
   "opt_copy_looked": {
     "message": "Buscó en:"
   },
-  "opt_copy_nofiles": {
-    "message": "$SRC$ — ninguno de sus $T$ documentos tiene fichero",
+  "opt_copy_records": {
+    "message": "$SRC$ — $T$ movimientos, solo registros (no tienen fichero propio)",
     "placeholders": {
       "src": {
         "content": "$1"
