@@ -54,6 +54,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   A copy touching a folder at either end now runs in the page, in full. The folder's permission is also
   confirmed up front, inside the click that starts the copy — the only moment a browser will grant it —
   rather than after twenty minutes of reading.
+- **A folder destination synced from Chrome no longer looks usable in Firefox.** File System Access is
+  Chromium-only, and Settings hid the option to CREATE a folder destination and stopped there — but
+  configuration syncs between browsers, so one created in Chrome arrived in Firefox looking completely
+  ordinary: listed, offered for a manual send, offered as a copy origin and as a copy target, and failing
+  only at the moment of use. It is now labelled "not available here" and left out of every operation that
+  could only fail. It is deliberately NOT deleted: configuration sync adopts and never prunes, so removing
+  the entry in Firefox would remove a working destination from Chrome as well.
 - **A copy that fails says so.** Per-source failures were recorded and never shown, so a copy that could
   not write a single file read exactly like a copy with nothing left to do. That is what made the above
   hard to diagnose from the outside. A lapsed folder permission gets its own words rather than "error".

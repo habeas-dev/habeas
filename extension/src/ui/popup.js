@@ -1,4 +1,5 @@
 import { chrome } from '../lib/ext.js';
+import { sinkUnavailableHere } from '../lib/folderavail.js';
 import { sinkLabel } from '../lib/sinklabel.js';
 import { getConfig, saveConfig } from '../lib/config.js';
 import { displayName, displayAmount } from '../lib/recdisplay.js';
@@ -244,7 +245,10 @@ async function setFavSink(dsId, sinkId) { if (!dsId || !sinkId) return; const f 
 async function populateSinks(cfg) {
   const dsId = $('#ds').value;
   const { adapter } = adapterFor(dsId, cfg);
-  const list = cfg.sinks.filter((s) => !adapter || sinkAcceptsSource(s, adapter));
+  // A local folder is unreachable on a browser without File System Access, and configuration syncs
+  // between browsers — so a folder created in Chrome arrives here looking perfectly ordinary. It is
+  // kept in the configuration (removing it would remove it from Chrome too) but never offered.
+  const list = cfg.sinks.filter((s) => (!adapter || sinkAcceptsSource(s, adapter)) && !sinkUnavailableHere(s));
   $('#sink').innerHTML = list.map((s) => `<option value="${esc(s.id)}">${esc(s.id)} · ${esc(s.type)}</option>`).join('') || '<option value="">—</option>';
   const fav = (await getFavSinks())[dsId];
   const def = await getDefaultSink();

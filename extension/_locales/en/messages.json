@@ -3768,5 +3768,11 @@
   },
   "opt_copy_nofolder": {
     "message": "the folder is no longer authorised — open its destination and reconnect it"
+  },
+  "dest_unavailable": {
+    "message": "Not available here"
+  },
+  "dest_unavailable_hint": {
+    "message": "A local folder needs the File System Access API, which Firefox does not have. The destination is kept — it still works in Chrome, and removing it here would remove it there too."
   }
 }

@@ -19,6 +19,7 @@ import { getGrants, revokeGrant } from '../lib/grants.js';
 import { getStoreConfig, moveStoreTo, putItems } from '../lib/store.js';
 import { copyArchivePageSide } from '../lib/foldercopy.js';
 import { RETRIEVABLE } from '../lib/retrieve.js';
+import { sinkUnavailableHere } from '../lib/folderavail.js';
 import { enableVault, unlockVault, lockVault, vaultStatus } from '../lib/secretsync.js';
 import { RECORDER_HTML, initAuthor } from './author.js';
 import { readSinkRecords } from '../sinks/sinks.js';
@@ -226,7 +227,7 @@ async function render() {
       <div class="dest-top">
         <div class="dest-ic">${SINK_IC[s.type] || '📤'}</div>
         <div class="dest-id">
-          <div class="dest-name">${esc(sinkLabel(s))}${isDef ? ` <span class="pill sent">★ ${t('default_sink')}</span>` : ''}${isArchive ? ` <span class="pill type" title="${esc(t('dest_is_archive_hint'))}">🗄️ ${t('dest_is_archive')}</span>` : ''}</div>
+          <div class="dest-name">${esc(sinkLabel(s))}${isDef ? ` <span class="pill sent">★ ${t('default_sink')}</span>` : ''}${isArchive ? ` <span class="pill type" title="${esc(t('dest_is_archive_hint'))}">🗄️ ${t('dest_is_archive')}</span>` : ''}${sinkUnavailableHere(s) ? ` <span class="pill type" title="${esc(t('dest_unavailable_hint'))}">⚠️ ${t('dest_unavailable')}</span>` : ''}</div>
           <div class="dest-meta">${esc(typeLabel)}${s.name ? ` · <code>${esc(s.id)}</code>` : ''}${detail ? ` · ${detail}` : ''}</div>
         </div>
       </div>
@@ -312,14 +313,16 @@ async function render() {
   // are not chosen — each file is taken from whichever other destination happens to hold it, so an
   // archive spread across Dropbox and Drive comes across in a single pass.
   const KEEPS_FILES = ['local-folder', 'drive', 'dropbox', 'webdav', 's3', 'http'];
-  const copyTargets = cfg.sinks.filter((s) => KEEPS_FILES.includes(s.type));
+  // Excluded on a browser without File System Access: offering a destination that cannot be written, or
+  // an origin that cannot be read, is offering an operation guaranteed to fail.
+  const copyTargets = cfg.sinks.filter((s) => KEEPS_FILES.includes(s.type) && !sinkUnavailableHere(s));
   // A destination with no name shows its id ("local-folder-1"), which tells the user nothing. Fall back
   // to the TYPE's own label — "Local folder" is at least true and readable.
 
   // Two pickers, because "copy A to B" is how people hold this in their heads. RETRIEVABLE is imported
   // rather than restated, so the origin list cannot drift from what the code can actually read back.
   const copySrc = $('#copysrc'), copySel = $('#copyto');
-  const readable = cfg.sinks.filter((s) => RETRIEVABLE.has(s.type));
+  const readable = cfg.sinks.filter((s) => RETRIEVABLE.has(s.type) && !sinkUnavailableHere(s));
   // The empty option keeps the old behaviour available: with an archive spread over two destinations,
   // taking each file from wherever it happens to be does in one pass what a fixed origin needs two for.
   copySrc.innerHTML = `<option value="">${esc(t('opt_copy_any_src'))}</option>`

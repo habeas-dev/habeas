@@ -3768,5 +3768,11 @@
   },
   "opt_copy_nofolder": {
     "message": "la carpeta ya no está autorizada: abre su destino y vuelve a conectarla"
+  },
+  "dest_unavailable": {
+    "message": "No disponible aquí"
+  },
+  "dest_unavailable_hint": {
+    "message": "Una carpeta local necesita la API de File System Access, que Firefox no tiene. El destino se conserva: sigue funcionando en Chrome, y quitarlo aquí lo quitaría también allí."
   }
 }

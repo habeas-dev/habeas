@@ -217,3 +217,33 @@ test('the detail names every destination a document is saved in', () => {
     assert.ok(JSON.parse(read(`_locales/${lang}/messages.json`)).archive_field_destinations, `${lang} lacks the label`);
   }
 });
+
+// ---------------------------------------------------------------- a folder destination on Firefox
+
+test('a folder destination is offered nowhere on a browser that cannot open one', () => {
+  // Configuration syncs between browsers, so a folder created in Chrome arrives in Firefox intact — where
+  // File System Access does not exist. Settings hid the option to CREATE one and stopped there, so the
+  // synced entry looked completely ordinary: listed, offered as a copy origin and target, and failing only
+  // at the moment of use.
+  const ui = read('src/ui/options.js');
+  assert.match(ui, /KEEPS_FILES\.includes\(s\.type\) && !sinkUnavailableHere\(s\)/, 'not offered as a target');
+  assert.match(ui, /RETRIEVABLE\.has\(s\.type\) && !sinkUnavailableHere\(s\)/, 'nor as an origin');
+  assert.match(read('src/ui/popup.js'), /!sinkUnavailableHere\(s\)/, 'nor for a manual send');
+});
+
+test('…but it is KEPT and labelled, never deleted', () => {
+  // Deleting it would be the tidy-looking mistake: configuration sync adopts and never prunes, so removing
+  // the entry here would remove it from Chrome as well — losing a working destination to clean up a
+  // cosmetic problem on the other machine.
+  const lib = read('src/lib/folderavail.js');
+  assert.match(lib, /sink\.type === 'local-folder' && !folderSinksUsable\(\)/);
+  // It must only ANSWER the question, never act on it: no config, no storage, no imports at all.
+  assert.ok(!/^import /m.test(lib), 'a pure predicate needs nothing');
+  assert.ok(!/saveConfig|upsert\(|remove\(|chrome\./.test(lib), 'it must not touch configuration');
+  const ui = read('src/ui/options.js');
+  assert.match(ui, /dest_unavailable/, 'the card must say why it cannot be used here');
+  for (const lang of ['en', 'es']) {
+    const msg = JSON.parse(read(`_locales/${lang}/messages.json`));
+    assert.ok(msg.dest_unavailable && msg.dest_unavailable_hint, `${lang} lacks the unavailable labels`);
+  }
+});
