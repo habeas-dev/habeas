@@ -18,10 +18,14 @@
        before the essay. */
     .doc { max-width: 1100px; margin: 0 auto; padding: 8px 20px 64px;
            display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 40px; align-items: start; }
-    .doc > .body { min-width: 0; }
-    .doc > aside { position: sticky; top: 78px; display: flex; flex-direction: column; gap: 14px; }
+    /* The columns are assigned EXPLICITLY because the aside comes first in the DOM — which is what puts
+       the install buttons above the essay on a phone. Left to source order it would take the wide
+       column and squeeze the prose into 300px, which is exactly what it did. */
+    .doc > .body { min-width: 0; grid-column: 1; }
+    .doc > aside { grid-column: 2; grid-row: 1; position: sticky; top: 78px; display: flex; flex-direction: column; gap: 14px; }
     @media (max-width: 1000px) { .doc { grid-template-columns: 1fr; gap: 22px; }
-      .doc > aside { position: static; order: -1; } }
+      .doc > .body, .doc > aside { grid-column: 1; grid-row: auto; }
+      .doc > aside { position: static; } }
     .card { border: 1px solid var(--line, #3333); border-radius: 14px; padding: 15px 16px; }
     .card h2 { font-size: .78rem !important; text-transform: uppercase; letter-spacing: .6px;
                color: var(--muted, #888); margin: 0 0 10px !important; }
