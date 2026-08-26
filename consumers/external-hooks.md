@@ -104,9 +104,12 @@ it"). Send `headers` again only to rotate the credential.
 
 ## A″. Records without files, and showing one on demand
 
-A consumer that reconciles bank movements wants the **list** of invoices, not the invoices. Cuéntamo
-needs Amazon's records to match a card charge against and emphatically does not want five thousand
-PDFs — but when the user asks *what was this charge?*, something has to be able to show the document.
+Open to **any** consumer, not to a particular one. A ledger app, a spreadsheet, an accountant's portal —
+anything that reconciles against records rather than storing documents.
+
+The shape is always the same: you want the **list** of invoices, not the invoices. Something matching a
+card charge needs Amazon's records and emphatically does not want five thousand PDFs — but when the user
+asks *what was this charge?*, something has to be able to show the document.
 
 Declare an **empty** artifact list on your sink and you receive records and no files:
 
