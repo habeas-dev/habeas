@@ -1301,6 +1301,10 @@
           }
         }
       }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Maintainer-facing prose about this source: what is known to be wrong with it and was deliberately left alone, what a reader should not waste time re-investigating, and where the thread is if they decide to. Not shown to users — the guide page copy lives in `content`."
     }
   },
   "$defs": {

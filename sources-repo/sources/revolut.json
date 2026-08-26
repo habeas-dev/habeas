@@ -18,7 +18,7 @@
   "categories": [
     "banking"
   ],
-  "version": "2026-08-26.1",
+  "version": "2026-08-26.2",
   "minVersion": "0.9.3",
   "minorUnits": true,
   "keepRaw": true,
@@ -192,6 +192,13 @@
   ],
   "changelog": [
     {
+      "version": "2026-08-26.2",
+      "changes": {
+        "en": "Documents a known limit rather than fixing it: weekend foreign-currency card payments arrive about 1% short, because Revolut’s out-of-hours surcharge leaves the balance but never appears in the data. 1.48 EUR across 3 of 167 movements, and every way of correcting it costs more than it recovers.",
+        "es": "Documenta un límite conocido en vez de arreglarlo: los pagos con tarjeta en divisa hechos en fin de semana llegan un 1% cortos, porque el recargo de Revolut fuera de horario sale del saldo pero no aparece en los datos. Son 1,48 € en 3 de 167 movimientos, y cualquier forma de corregirlo cuesta más de lo que recupera."
+      }
+    },
+    {
       "version": "2026-08-26.1",
       "changes": "Drops card verifications (0 EUR authorisations, flagged cardVerification) — they move no money and are not movements. Fixes vault transfers: Revolut books them from the paying side, so money returning from a savings vault arrived negative, and the balance they carry belongs to the vault rather than to the personal account. Reported against 167 real movements, of which 151 of 166 balance links already chained to the cent. Also drops anything whose state is not COMPLETED (5 DECLINED + 1 REVERTED in the sample were retried charges whose successful twin also arrived)."
     },
@@ -241,5 +248,6 @@
       "intro": "Revolut ofrece extractos en PDF o CSV, un periodo cada vez. Construir un histórico continuo, o mantenerlo junto al de tus otras cuentas, sigue exigiendo volver cada mes y descargar a mano."
     }
   },
-  "brand": "Revolut"
+  "brand": "Revolut",
+  "notes": "KNOWN AND DELIBERATELY NOT FIXED — foreign-currency card payments made at the WEEKEND arrive about 1% under the real charge. Revolut adds a surcharge for converting while the market is shut; it is taken out of the balance but is not in `amount`, which is derived from the interbank `rate` alone (-680 minor units / 0.8402721 = -8.09, against a real -8.18). The tell is that every weekend movement shares one frozen rate while weekday ones each have their own. Separation was perfect in an 18-month sample: the 3 Sunday movements were short, the 6 weekday ones chained to the cent, and it hit GBP and USD alike — so it is the day, not the currency. Total impact: 1.48 EUR across 3 of 167 movements.\nNot fixed because every route costs more than it buys. The real charge is only recoverable from the balance delta (amount = balance(n-1) - balance(n)), which would make the whole ingest depend on ordering and on the previous item to correct three movements. Applying a percentage by hand is worse: the rate is not in the payload and varies by plan and moment, so it would be invented. There is no `fee` field and no final euro amount anywhere in the response. If it is ever worth solving properly, the thread is `feeBreakdownId` (\"TXN:<id>\"), which suggests the breakdown lives at another endpoint — one extra request per movement, which 1.48 EUR does not justify.\nGotcha for anyone measuring this: `counterpart.amount` is in MINOR units (-680 is 6.80 GBP, not 680). The balance-continuity check in lib/reconcile.js surfaces this as a small, constant residue once the card verifications, the non-COMPLETED states and the vault transfers are handled."
 }
