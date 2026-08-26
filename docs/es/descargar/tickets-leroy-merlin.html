@@ -91,22 +91,78 @@
     {
       "@type": "HowToStep",
       "position": 1,
-      "name": "Entras en leroymerlin.",
+      "name": "Inicias sesión tú",
       "text": "Entras en leroymerlin.es y te identificas tú, como siempre, con tu MFA o el código que uses."
     },
     {
       "@type": "HowToStep",
       "position": 2,
-      "name": "Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web.",
+      "name": "Habeas reutiliza esa sesión",
       "text": "Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web."
     },
     {
       "@type": "HowToStep",
       "position": 3,
-      "name": "Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio.",
+      "name": "Eliges el destino",
       "text": "Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio."
     }
   ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Inicio",
+      "item": "https://habeas.dev/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Guías",
+      "item": "https://habeas.dev/es/descargar/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Cómo descargar tus tickets y pedidos de Leroy Merlin",
+      "item": "https://habeas.dev/es/descargar/tickets-leroy-merlin.html"
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "inLanguage": "es",
+  "headline": "Cómo descargar tus tickets y pedidos de Leroy Merlin",
+  "description": "Leroy Merlin separa los tickets de tienda de los pedidos online. Habeas los descarga desde tu propia sesión del navegador, sin guardar tu contraseña.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://habeas.dev/es/descargar/tickets-leroy-merlin.html"
+  },
+  "dateModified": "2026-08-08",
+  "author": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev"
+  },
+  "about": {
+    "@type": "Thing",
+    "name": "Leroy Merlin"
+  },
+  "isAccessibleForFree": true,
+  "license": "https://www.gnu.org/licenses/agpl-3.0.html"
 }
   </script>
   <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
@@ -166,6 +222,17 @@
     <p>Los datos normalizados en un manifiesto, junto con los documentos originales que el servicio ofrezca.</p>
     <h3>¿Es gratis?</h3>
     <p>Sí. Habeas es software libre con licencia AGPL-3.0 y su código es público en GitHub.</p>
+
+      <h2>Qué ha cambiado en esta fuente</h2>
+      <p>Esta fuente es una definición pública y cada cambio queda registrado. De lo más reciente a lo más antiguo:</p>
+      <ul class="changelog">
+        <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.</li>
+        <li class="rev"><time datetime="2026-07-10">2026-07-10</time> — Tickets: no cortar al llegar a un año sin compras (stopAfterEmpty) — antes se paraba en 2025 (sin compras) y ocultaba los tickets más antiguos.</li>
+        <li class="rev"><time datetime="2026-07-10">2026-07-10</time> — Stream «Pedidos»: mostrar TODOS los pedidos de «mis pedidos» (se quita el filtro que dejaba solo los ONLINE y ocultaba pedidos de tienda que también aparecen ahí).</li>
+        <li class="rev"><time datetime="2026-07-10">2026-07-10</time> — Tickets de tienda: empezar en el año actual (yearOffset 0) — antes empezaba 2 años atrás y se saltaba las compras de este año y el anterior.</li>
+        <li class="rev"><time datetime="2026-07-10">2026-07-10</time> — Añade compras online (stream «Pedidos online» vía /order-followup/backend/v2/orders, filtradas a ONLINE) junto a los tickets de tienda existentes; fuente multi-salida (streams).</li>
+      </ul>
+      <p class="lead"><a href="/sources.html#leroymerlin-es">Ver el historial completo en el catálogo →</a></p>
 
     <h2>Más guías de tiendas</h2>
     <ul>

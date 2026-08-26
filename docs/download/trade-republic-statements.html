@@ -40,6 +40,22 @@
   "mainEntity": [
     {
       "@type": "Question",
+      "name": "Should I pull the transactions or the statements?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "They are different things and you can have both. Transactions are the movement-by-movement detail, useful for reconciling; statements are the periodic document, which is usually what gets asked of you as proof."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does the CSV statement hold the same as the PDF?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes: both formats come from the same set of operations. The wrapper changes, the content does not."
+      }
+    },
+    {
+      "@type": "Question",
       "name": "Does Habeas store my Trade Republic password?",
       "acceptedAnswer": {
         "@type": "Answer",
@@ -91,22 +107,78 @@
     {
       "@type": "HowToStep",
       "position": 1,
-      "name": "You go to traderepublic.",
+      "name": "Sign in yourself",
       "text": "You go to traderepublic.com and sign in yourself, as always, with your MFA or whatever code you use."
     },
     {
       "@type": "HowToStep",
       "position": 2,
-      "name": "Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does.",
+      "name": "Habeas reuses that session",
       "text": "Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does."
     },
     {
       "@type": "HowToStep",
       "position": 3,
-      "name": "You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own.",
+      "name": "You choose where it goes",
       "text": "You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own."
     }
   ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://habeas.dev/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Guides",
+      "item": "https://habeas.dev/download/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "How to download your Trade Republic transactions and statements",
+      "item": "https://habeas.dev/download/trade-republic-statements.html"
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "inLanguage": "en",
+  "headline": "How to download your Trade Republic transactions and statements",
+  "description": "Trade Republic publishes your statements as PDF or CSV, period by period. Habeas downloads them from inside your own browser session, without ever storing your password.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://habeas.dev/download/trade-republic-statements.html"
+  },
+  "dateModified": "2026-08-08",
+  "author": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev"
+  },
+  "about": {
+    "@type": "Thing",
+    "name": "Trade Republic"
+  },
+  "isAccessibleForFree": true,
+  "license": "https://www.gnu.org/licenses/agpl-3.0.html"
 }
   </script>
   <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
@@ -130,7 +202,7 @@
     </div>
   </header>
 
-  <main class="doc">
+  <main class="doc" data-habeas-enriched>
     <h1>How to download your Trade Republic transactions and statements</h1>
     <p class="lead">Trade Republic publishes your statements as PDF or CSV, period by period. If you want the full record of your positions and movements in one place, you are the one assembling it.</p>
 
@@ -140,6 +212,14 @@
         <li><strong>transactions</strong> — the data the service exposes.</li>
         <li><strong>extracto</strong> · PDF or CSV — each document with its date, amount, currency and numbering.</li>
     </ul>
+      <h2>What Trade Republic actually gives you</h2>
+      <p>Trade Republic exposes two distinct sets, handled separately here: on one side the transaction history, with each position and its instrument; on the other the statements, which are periodic documents available as either PDF or CSV. You can enable just one of the two, or both.</p>
+      <h2>Worth knowing about this source</h2>
+      <ul class="quirks">
+        <li>The statement comes in two formats over the same data: the PDF works as a receipt and the CSV drops into a spreadsheet, and you pick which one when you configure the source.</li>
+        <li>Transactions and statements are tracked separately, so switching the second one on later does not make you re-download the first.</li>
+        <li>This is a community source: its definition is public and reviewable, but it is not audited by the project.</li>
+      </ul>
 
     <h2>How it works</h2>
     <p>It is not a service that connects to traderepublic.com on its own. It runs <strong>inside your own browser</strong>, reusing the session you already have open:</p>
@@ -158,6 +238,10 @@
     <p class="lead">Chrome will warn you that the extension is not trusted. That happens to any developer account recently registered on the Chrome Web Store, it fades after a few months, and it says nothing about the code — which you can read in full.</p>
 
     <h2>Frequently asked questions</h2>
+    <h3>Should I pull the transactions or the statements?</h3>
+    <p>They are different things and you can have both. Transactions are the movement-by-movement detail, useful for reconciling; statements are the periodic document, which is usually what gets asked of you as proof.</p>
+    <h3>Does the CSV statement hold the same as the PDF?</h3>
+    <p>Yes: both formats come from the same set of operations. The wrapper changes, the content does not.</p>
     <h3>Does Habeas store my Trade Republic password?</h3>
     <p>No. You sign in yourself, on the usual website, including any verification code. Habeas reuses the session your browser already has open and never reads or stores your credentials.</p>
     <h3>Is my data sent to a server?</h3>
@@ -166,6 +250,17 @@
     <p>The original documents exactly as the service issues them (PDF, CSV), together with a manifest holding the normalised data.</p>
     <h3>Is it free?</h3>
     <p>Yes. Habeas is free software under the AGPL-3.0 licence and its code is public on GitHub.</p>
+
+      <h2>What has changed in this source</h2>
+      <p>This source is a public definition, and every change to it is on the record. Most recent first:</p>
+      <ul class="changelog">
+        <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.</li>
+        <li class="rev"><time datetime="2026-07-17">2026-07-17</time> — Parse the trade breakdown into structured fields: units (Shares), price (Share price) and commission (Fee) from the timelineDetailV2 'Transaction' table (English labels — the WS connect requests locale 'en'). 'Free' fees resolve to 0. Requires extension &gt;= 0.3.0.24.</li>
+        <li class="rev"><time datetime="2026-07-16">2026-07-16</time> — Timeline stream now emits investment@2 (broker trade/cash): recordType inferred from the extracted ISIN, side/kind mapped from the timeline eventType, instrument{isin,name}, and the settlement account (cashAccountNumber). Trade quantity/price/fees remain in record.extra.detail (localized text) pending structured parsing. Requires extension &gt;= 0.3.0.24.</li>
+        <li class="rev"><time datetime="2026-07-15">2026-07-15</time> — Add monthly documents: the account statement PDF (accountstatement/statement?fromDate&amp;toDate) and the monthly transactions CSV (async export job: POST request → poll status → download), per completed month.</li>
+        <li class="rev"><time datetime="2026-07-15">2026-07-15</time> — Extract the traded instrument ISIN from the timeline icon into record.isin.</li>
+      </ul>
+      <p class="lead"><a href="/sources.html#traderepublic">See the full history in the catalog →</a></p>
 
     <h2>More banks, cards &amp; investments guides</h2>
     <ul>

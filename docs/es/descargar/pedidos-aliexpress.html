@@ -91,22 +91,78 @@
     {
       "@type": "HowToStep",
       "position": 1,
-      "name": "Entras en aliexpress.",
+      "name": "Inicias sesión tú",
       "text": "Entras en aliexpress.com y te identificas tú, como siempre, con tu MFA o el código que uses."
     },
     {
       "@type": "HowToStep",
       "position": 2,
-      "name": "Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web.",
+      "name": "Habeas reutiliza esa sesión",
       "text": "Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web."
     },
     {
       "@type": "HowToStep",
       "position": 3,
-      "name": "Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio.",
+      "name": "Eliges el destino",
       "text": "Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio."
     }
   ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Inicio",
+      "item": "https://habeas.dev/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Guías",
+      "item": "https://habeas.dev/es/descargar/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Cómo descargar tus pedidos y recibos de AliExpress",
+      "item": "https://habeas.dev/es/descargar/pedidos-aliexpress.html"
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "inLanguage": "es",
+  "headline": "Cómo descargar tus pedidos y recibos de AliExpress",
+  "description": "AliExpress guarda tu historial de pedidos en tu cuenta, pero el recibo de cada uno vive en su propia pantalla y no hay forma de llevártelos todos. Habeas los descarga desde tu propia sesión del navegador, sin guardar tu contraseña.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://habeas.dev/es/descargar/pedidos-aliexpress.html"
+  },
+  "dateModified": "2026-08-08",
+  "author": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev"
+  },
+  "about": {
+    "@type": "Thing",
+    "name": "AliExpress"
+  },
+  "isAccessibleForFree": true,
+  "license": "https://www.gnu.org/licenses/agpl-3.0.html"
 }
   </script>
   <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
@@ -165,6 +221,13 @@
     <p>Los documentos originales tal cual los emite el servicio (HTML), acompañados de un manifiesto con los datos ya normalizados.</p>
     <h3>¿Es gratis?</h3>
     <p>Sí. Habeas es software libre con licencia AGPL-3.0 y su código es público en GitHub.</p>
+
+      <h2>Qué ha cambiado en esta fuente</h2>
+      <p>Esta fuente es una definición pública y cada cambio queda registrado. De lo más reciente a lo más antiguo:</p>
+      <ul class="changelog">
+        <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.</li>
+        <li class="rev"><time datetime="2026-07-16">2026-07-16</time> — Initial: order history via Alibaba's mtop gateway. Runs in the site tab and reuses the app's own live request payload (hook stashes it) + its lib.mtop signing (no hardcoded blob, no forged signature); paginates by bumping the component pageIndex. Orders extracted from the DIDA component response (itemsFromKeys). Per-order receipt as a self-contained printable HTML invoice, generated from mtop queryorderreceiptinfo (no seed needed — a known flat payload) via a declarative template using AliExpress's own labels.</li>
+      </ul>
 
     <h2>Más guías de tiendas</h2>
     <ul>

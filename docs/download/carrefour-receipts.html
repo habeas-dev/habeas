@@ -40,6 +40,30 @@
   "mainEntity": [
     {
       "@type": "Question",
+      "name": "Why do some older receipts come through without a PDF?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Because Carrefour stops serving it after a while: asking for it returns a 406. Habeas still keeps that purchase's data — date, amount, store and category — but the document itself no longer exists on the service's side and there is no way to recover it."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it include orders I placed online, or only in-store ones?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Both. The list mixes in-store receipts and online orders, and each one is identified."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I send groceries to one place and fuel to another?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Each purchase is filed as it is collected, and destinations can filter by category, so the hypermarket shop and the refuelling can end up in different places with no work from you."
+      }
+    },
+    {
+      "@type": "Question",
       "name": "Does Habeas store my Carrefour password?",
       "acceptedAnswer": {
         "@type": "Answer",
@@ -91,22 +115,78 @@
     {
       "@type": "HowToStep",
       "position": 1,
-      "name": "You go to carrefour.",
+      "name": "Sign in yourself",
       "text": "You go to carrefour.es and sign in yourself, as always, with your MFA or whatever code you use."
     },
     {
       "@type": "HowToStep",
       "position": 2,
-      "name": "Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does.",
+      "name": "Habeas reuses that session",
       "text": "Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does."
     },
     {
       "@type": "HowToStep",
       "position": 3,
-      "name": "You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own.",
+      "name": "You choose where it goes",
       "text": "You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own."
     }
   ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://habeas.dev/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Guides",
+      "item": "https://habeas.dev/download/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "How to download your Carrefour receipts",
+      "item": "https://habeas.dev/download/carrefour-receipts.html"
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "inLanguage": "en",
+  "headline": "How to download your Carrefour receipts",
+  "description": "Carrefour keeps your hypermarket, petrol-station and online-order receipts in your account, but offers no way to download them all at once: you have to open and save them one by one. Habeas downloads them from inside your own browser session, without ever storing your password.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://habeas.dev/download/carrefour-receipts.html"
+  },
+  "dateModified": "2026-08-08",
+  "author": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev"
+  },
+  "about": {
+    "@type": "Thing",
+    "name": "Carrefour"
+  },
+  "isAccessibleForFree": true,
+  "license": "https://www.gnu.org/licenses/agpl-3.0.html"
 }
   </script>
   <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
@@ -130,7 +210,7 @@
     </div>
   </header>
 
-  <main class="doc">
+  <main class="doc" data-habeas-enriched>
     <h1>How to download your Carrefour receipts</h1>
     <p class="lead">Carrefour keeps your hypermarket, petrol-station and online-order receipts in your account, but offers no way to download them all at once: you have to open and save them one by one.</p>
 
@@ -139,7 +219,16 @@
     <ul>
         <li><strong>purchase receipts</strong> — each purchase with its date, amount, currency, store and category.</li>
     </ul>
-      <div class="box"><strong>Worth knowing:</strong> Carrefour only keeps the PDF for recent receipts. Older ones still show in your history, but their PDF is gone: Habeas still exports them as metadata (date, amount, store, category), which is all the service retains of them.</div>
+      <h2>What Carrefour actually gives you</h2>
+      <p>Both in-store receipts and online orders come through, in the same list and the same shape. Each purchase carries its date, amount, currency and store, and is filed by where it came from: the hypermarket shop as groceries and refuelling as fuel, which is the distinction you usually need later.</p>
+      <h2>How far back it goes</h2>
+      <p class="retention">Here is the catch, and it is worth knowing before you start: only recent receipts still have their PDF. Older ones no longer do, and the server answers with a 406 when asked. That is not a failure and no retry fixes it: those receipts are still exported, but with their data only, no document. The sooner you start, the more PDFs you keep.</p>
+      <h2>Worth knowing about this source</h2>
+      <ul class="quirks">
+        <li>The site sits behind Cloudflare and sign-in uses a one-time code emailed to you; you do that step yourself, as always, and Habeas takes no part in it.</li>
+        <li>This source is audited by the project and verified against the real service, not an unreviewed contribution.</li>
+        <li>Filing by purchase type is automatic, so a destination that only accepts groceries keeps the shop and drops the refuelling without you separating them by hand.</li>
+      </ul>
 
     <h2>How it works</h2>
     <p>It is not a service that connects to carrefour.es on its own. It runs <strong>inside your own browser</strong>, reusing the session you already have open:</p>
@@ -158,6 +247,12 @@
     <p class="lead">Chrome will warn you that the extension is not trusted. That happens to any developer account recently registered on the Chrome Web Store, it fades after a few months, and it says nothing about the code — which you can read in full.</p>
 
     <h2>Frequently asked questions</h2>
+    <h3>Why do some older receipts come through without a PDF?</h3>
+    <p>Because Carrefour stops serving it after a while: asking for it returns a 406. Habeas still keeps that purchase's data — date, amount, store and category — but the document itself no longer exists on the service's side and there is no way to recover it.</p>
+    <h3>Does it include orders I placed online, or only in-store ones?</h3>
+    <p>Both. The list mixes in-store receipts and online orders, and each one is identified.</p>
+    <h3>Can I send groceries to one place and fuel to another?</h3>
+    <p>Yes. Each purchase is filed as it is collected, and destinations can filter by category, so the hypermarket shop and the refuelling can end up in different places with no work from you.</p>
     <h3>Does Habeas store my Carrefour password?</h3>
     <p>No. You sign in yourself, on the usual website, including any verification code. Habeas reuses the session your browser already has open and never reads or stores your credentials.</p>
     <h3>Is my data sent to a server?</h3>
@@ -166,6 +261,13 @@
     <p>The original documents exactly as the service issues them (PDF), together with a manifest holding the normalised data.</p>
     <h3>Is it free?</h3>
     <p>Yes. Habeas is free software under the AGPL-3.0 licence and its code is public on GitHub.</p>
+
+      <h2>What has changed in this source</h2>
+      <p>This source is a public definition, and every change to it is on the record. Most recent first:</p>
+      <ul class="changelog">
+        <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.</li>
+        <li class="rev"><time datetime="2026-07-08">2026-07-08</time> — Tickets y pedidos online (offset pagination); PDF cuando existe.</li>
+      </ul>
 
     <h2>More supermarkets guides</h2>
     <ul>

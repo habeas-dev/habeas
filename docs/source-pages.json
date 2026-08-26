@@ -5,9 +5,152 @@
     "its guide. This file exists only to tweak wording for a specific source without republishing the",
     "catalog: entries here are merged OVER the registry, field by field.",
     "",
-    "Shape: { \"<source-id>\": { \"brand\": \"...\", \"es\": { \"slug\", \"docs\", \"h1\", \"intro\", \"note\" } } }",
+    "Shape: { \"<source-id>\": { \"brand\": \"...\", \"es\": { \"slug\", \"docs\", \"h1\", \"intro\", \"note\",",
+    "                          \"whatYouGet\", \"retention\", \"quirks\": [], \"faq\": [{ \"q\", \"a\" }] } } }",
     "",
     "Keep it empty unless you are actively overriding something — anything left here silently shadows",
-    "the registry, which is exactly the drift moving the copy upstream was meant to end."
-  ]
+    "the registry, which is exactly the drift moving the copy upstream was meant to end.",
+    "",
+    "PILOT (2026-08-26): paypal, traderepublic and carrefour-es carry the differentiating fields here",
+    "while the approach is validated. Once it is, this copy moves UPSTREAM into each source's own",
+    "`content` in habeas-dev/sources and these entries go away — otherwise the guides only differ on",
+    "this machine, and every other consumer of the catalog still gets the thin version.",
+    "carrefour-es: `note` intentionally emptied — its retention copy now says the same thing with more context, and printing both put the 406 caveat on the page twice."
+  ],
+  "paypal": {
+    "es": {
+      "whatYouGet": "PayPal no emite una factura por cada movimiento, así que lo que se puede conservar es el registro de actividad: los pagos que has enviado y recibido, cada uno con su fecha, importe, moneda y contraparte. Habeas los recoge paginando la misma llamada que usa la web cuando pulsas «cargar más», y los deja normalizados en el manifiesto junto al resto de tus fuentes.",
+      "retention": "No hay un corte de retención como en otros servicios: la consulta admite una ventana de fechas amplia y va avanzando por un cursor hasta agotar el histórico, así que llega hasta donde llegue tu propia cuenta.",
+      "quirks": [
+        "Los importes llegan ya formateados según tu idioma («-9,00 €»), con la moneda en un campo aparte; Habeas los interpreta y respeta la divisa real en lugar de asumir euros.",
+        "La sesión se sostiene con la cookie de tu navegador más un token CSRF que rota, capturado de tus propias peticiones mientras navegas.",
+        "Es una fuente de la comunidad: su definición es pública y revisable, pero no está auditada por el proyecto."
+      ],
+      "faq": [
+        {
+          "q": "¿Puedo descargar mis movimientos de PayPal en PDF?",
+          "a": "No, porque PayPal no emite un PDF por movimiento. Lo que obtienes son los datos de cada operación en el manifiesto normalizado. Si necesitas un justificante concreto, sigue estando en la web de PayPal."
+        },
+        {
+          "q": "¿En qué se diferencia esto de la exportación que ya ofrece PayPal?",
+          "a": "PayPal sí deja descargar informes de actividad, pero es una tarea manual que hay que repetir y el resultado llega suelto. Aquí el histórico acaba en el mismo archivo que el resto de tus servicios, con el mismo formato y sin pasar cada mes por la pantalla de exportación."
+        },
+        {
+          "q": "¿Recoge también los pagos que he recibido, no solo los que he hecho?",
+          "a": "Sí. La actividad personal incluye los movimientos en ambos sentidos, y cada uno queda marcado con su dirección."
+        }
+      ]
+    },
+    "en": {
+      "whatYouGet": "PayPal does not issue an invoice per movement, so what there is to keep is the activity record: the payments you have sent and received, each with its date, amount, currency and counterparty. Habeas collects them by paging the same call the site itself makes when you hit “load more”, and leaves them normalised in the manifest alongside your other sources.",
+      "retention": "There is no retention cliff here like there is on other services: the query accepts a wide date window and walks a cursor until the history runs out, so it reaches as far back as your own account does.",
+      "quirks": [
+        "Amounts arrive pre-formatted for your locale (“-9,00 €”), with the currency in a separate field; Habeas parses them and honours the real currency instead of assuming euros.",
+        "The session rests on your browser cookie plus a rotating CSRF token, captured from your own requests as you browse.",
+        "This is a community source: its definition is public and reviewable, but it is not audited by the project."
+      ],
+      "faq": [
+        {
+          "q": "Can I download my PayPal transactions as PDFs?",
+          "a": "No, because PayPal does not issue a PDF per movement. What you get is each operation's data in the normalised manifest. If you need one specific receipt, it is still on PayPal's own site."
+        },
+        {
+          "q": "How is this different from the export PayPal already offers?",
+          "a": "PayPal does let you download activity reports, but it is a manual chore you have to repeat and the result lands on its own. Here the history ends up in the same archive as your other services, in the same shape, without a monthly detour through the export screen."
+        },
+        {
+          "q": "Does it pick up payments I received, not just ones I made?",
+          "a": "Yes. Personal activity covers movements in both directions, and each one is tagged with its direction."
+        }
+      ]
+    }
+  },
+  "traderepublic": {
+    "es": {
+      "whatYouGet": "Trade Republic da dos conjuntos distintos que aquí se tratan por separado: por un lado el histórico de operaciones, con cada posición y su instrumento; por otro los extractos, que son documentos periódicos y se pueden obtener tanto en PDF como en CSV. Puedes activar solo uno de los dos o los dos a la vez.",
+      "quirks": [
+        "El extracto se ofrece en dos formatos sobre los mismos datos: el PDF sirve como justificante y el CSV para meterlo en una hoja de cálculo, y eliges cuál quieres al configurar la fuente.",
+        "Las operaciones y los extractos se llevan la cuenta por separado, así que activar el segundo más tarde no te obliga a volver a descargar lo primero.",
+        "Es una fuente de la comunidad: su definición es pública y revisable, pero no está auditada por el proyecto."
+      ],
+      "faq": [
+        {
+          "q": "¿Me bajo las operaciones o los extractos?",
+          "a": "Son cosas distintas y puedes tener las dos. Las operaciones son el detalle movimiento a movimiento, útil para cuadrar cuentas; los extractos son el documento periódico, que es lo que normalmente te piden como justificante."
+        },
+        {
+          "q": "¿El extracto en CSV trae lo mismo que el PDF?",
+          "a": "Sí: los dos formatos salen del mismo conjunto de operaciones. Cambia el envoltorio, no el contenido."
+        }
+      ]
+    },
+    "en": {
+      "whatYouGet": "Trade Republic exposes two distinct sets, handled separately here: on one side the transaction history, with each position and its instrument; on the other the statements, which are periodic documents available as either PDF or CSV. You can enable just one of the two, or both.",
+      "quirks": [
+        "The statement comes in two formats over the same data: the PDF works as a receipt and the CSV drops into a spreadsheet, and you pick which one when you configure the source.",
+        "Transactions and statements are tracked separately, so switching the second one on later does not make you re-download the first.",
+        "This is a community source: its definition is public and reviewable, but it is not audited by the project."
+      ],
+      "faq": [
+        {
+          "q": "Should I pull the transactions or the statements?",
+          "a": "They are different things and you can have both. Transactions are the movement-by-movement detail, useful for reconciling; statements are the periodic document, which is usually what gets asked of you as proof."
+        },
+        {
+          "q": "Does the CSV statement hold the same as the PDF?",
+          "a": "Yes: both formats come from the same set of operations. The wrapper changes, the content does not."
+        }
+      ]
+    }
+  },
+  "carrefour-es": {
+    "es": {
+      "whatYouGet": "Entran tanto los tickets de la tienda física como los pedidos online, en la misma lista y con el mismo formato. Cada compra trae su fecha, importe, moneda y establecimiento, y además queda clasificada según de dónde venga: la compra de hipermercado como alimentación y el repostaje como combustible, que es la distinción que suele hacer falta luego.",
+      "retention": "Aquí está la trampa, y conviene saberla antes de empezar: solo los tickets recientes conservan su PDF. Los antiguos ya no lo tienen y el servidor responde con un 406 al pedirlo. Eso no es un fallo ni se salda con un reintento: esos tickets se exportan igualmente, pero solo con sus datos, sin el documento. Cuanto antes empieces, más PDFs conservas.",
+      "quirks": [
+        "La web va detrás de Cloudflare y el acceso se hace con un código de un solo uso que te llega por correo; ese paso lo das tú, como siempre, y Habeas no interviene.",
+        "Es una fuente auditada por el proyecto y verificada contra el servicio real, no una aportación sin revisar.",
+        "La clasificación por tipo de compra es automática, así que un destino que solo acepte alimentación se queda con la compra y descarta el repostaje sin que tengas que separarlos a mano."
+      ],
+      "faq": [
+        {
+          "q": "¿Por qué algunos tickets antiguos salen sin PDF?",
+          "a": "Porque Carrefour deja de servirlo pasado un tiempo: al pedirlo devuelve un 406. Habeas conserva de todos modos los datos de esa compra —fecha, importe, establecimiento y categoría—, pero el documento en sí ya no existe del lado del servicio y no hay forma de recuperarlo."
+        },
+        {
+          "q": "¿Incluye los pedidos que hice por internet o solo los de la tienda?",
+          "a": "Los dos. La lista mezcla los tickets de la tienda física y los pedidos online, y cada uno queda identificado."
+        },
+        {
+          "q": "¿Puedo mandar solo la compra de alimentación a un sitio y el combustible a otro?",
+          "a": "Sí. Cada compra se clasifica al recogerla, y los destinos pueden filtrar por categoría, así que la compra de hipermercado y el repostaje pueden acabar en sitios distintos sin intervención tuya."
+        }
+      ],
+      "note": ""
+    },
+    "en": {
+      "whatYouGet": "Both in-store receipts and online orders come through, in the same list and the same shape. Each purchase carries its date, amount, currency and store, and is filed by where it came from: the hypermarket shop as groceries and refuelling as fuel, which is the distinction you usually need later.",
+      "retention": "Here is the catch, and it is worth knowing before you start: only recent receipts still have their PDF. Older ones no longer do, and the server answers with a 406 when asked. That is not a failure and no retry fixes it: those receipts are still exported, but with their data only, no document. The sooner you start, the more PDFs you keep.",
+      "quirks": [
+        "The site sits behind Cloudflare and sign-in uses a one-time code emailed to you; you do that step yourself, as always, and Habeas takes no part in it.",
+        "This source is audited by the project and verified against the real service, not an unreviewed contribution.",
+        "Filing by purchase type is automatic, so a destination that only accepts groceries keeps the shop and drops the refuelling without you separating them by hand."
+      ],
+      "faq": [
+        {
+          "q": "Why do some older receipts come through without a PDF?",
+          "a": "Because Carrefour stops serving it after a while: asking for it returns a 406. Habeas still keeps that purchase's data — date, amount, store and category — but the document itself no longer exists on the service's side and there is no way to recover it."
+        },
+        {
+          "q": "Does it include orders I placed online, or only in-store ones?",
+          "a": "Both. The list mixes in-store receipts and online orders, and each one is identified."
+        },
+        {
+          "q": "Can I send groceries to one place and fuel to another?",
+          "a": "Yes. Each purchase is filed as it is collected, and destinations can filter by category, so the hypermarket shop and the refuelling can end up in different places with no work from you."
+        }
+      ],
+      "note": ""
+    }
+  }
 }

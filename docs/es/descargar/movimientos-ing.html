@@ -91,22 +91,78 @@
     {
       "@type": "HowToStep",
       "position": 1,
-      "name": "Entras en ingdirect.",
+      "name": "Inicias sesión tú",
       "text": "Entras en ingdirect.es y te identificas tú, como siempre, con tu MFA o el código que uses."
     },
     {
       "@type": "HowToStep",
       "position": 2,
-      "name": "Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web.",
+      "name": "Habeas reutiliza esa sesión",
       "text": "Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web."
     },
     {
       "@type": "HowToStep",
       "position": 3,
-      "name": "Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio.",
+      "name": "Eliges el destino",
       "text": "Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio."
     }
   ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Inicio",
+      "item": "https://habeas.dev/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Guías",
+      "item": "https://habeas.dev/es/descargar/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Cómo descargar tus movimientos y extractos de ING",
+      "item": "https://habeas.dev/es/descargar/movimientos-ing.html"
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "inLanguage": "es",
+  "headline": "Cómo descargar tus movimientos y extractos de ING",
+  "description": "ING te deja ver tus movimientos y descargar extractos mensuales, pero cuenta por cuenta y mes a mes. Habeas los descarga desde tu propia sesión del navegador, sin guardar tu contraseña.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://habeas.dev/es/descargar/movimientos-ing.html"
+  },
+  "dateModified": "2026-08-09",
+  "author": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev"
+  },
+  "about": {
+    "@type": "Thing",
+    "name": "ING"
+  },
+  "isAccessibleForFree": true,
+  "license": "https://www.gnu.org/licenses/agpl-3.0.html"
 }
   </script>
   <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
@@ -169,6 +225,17 @@
     <p>Los documentos originales tal cual los emite el servicio (PDF, Excel), acompañados de un manifiesto con los datos ya normalizados.</p>
     <h3>¿Es gratis?</h3>
     <p>Sí. Habeas es software libre con licencia AGPL-3.0 y su código es público en GitHub.</p>
+
+      <h2>Qué ha cambiado en esta fuente</h2>
+      <p>Esta fuente es una definición pública y cada cambio queda registrado. De lo más reciente a lo más antiguo:</p>
+      <ul class="changelog">
+        <li class="rev"><time datetime="2026-08-09">2026-08-09</time> — La guía dice ya que ING solo sirve unos 90 días de histórico y que en cuenta corriente lo aplica de forma estricta. Quien busca &quot;descargar mis extractos de ING&quot; espera su histórico completo; encontrarse tres meses sin aviso es peor que no tener página. Verificado contra una cuenta real: con el recorte del mes que cruza la ventana (extensión 0.9.12) los extractos de ese mes ya se descargan.</li>
+        <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Ventana a 89 días (no 90): el límite de ING cuenta el día de hoy, así que el día más antiguo válido es hoy−89 y pedir hoy−90 se sale por uno. Requiere extensión 0.9.11.4, que además recorta el fromDate del informe mensual a la ventana en vez de pedir desde el día 1 del mes.</li>
+        <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.</li>
+        <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Corrige `gaps`: los movimientos de tarjeta ya se extraen (ver 2026-07-23.3), así que solo queda inversión fuera de cobertura. El dato anterior era obsoleto y se publicaba como limitación.</li>
+        <li class="rev"><time datetime="2026-07-31">2026-07-31</time> — Fix intermittent 401 'Authorization Required' (ING Webserver edge) that aborted the whole sync — most often at the account-enumeration step (/position-keeping). Verified via mitmproxy that the SAME authenticated request (same bearer, same 36 session cookies, browser-agnostic) returns 401 one call and 200 the next — a load-balancer/pool routing race (dual lb-3-p-288 / lb-4-p-288 + x-pool-from-dc cookies). ING's own SPA rides it out by retrying; Habeas now does the same via a bounded retry (retry: 401 ×4, 700ms), gated on the raw edge-HTML body so a genuine token-expiry (JSON) 401 still surfaces for re-login. Also replay `baggage` to mirror the SPA. Needs extension &gt;= 0.9.7 (declarative retry in netFetch).</li>
+      </ul>
+      <p class="lead"><a href="/sources.html#ing-es">Ver el historial completo en el catálogo →</a></p>
 
     <h2>Más guías de bancos, tarjetas e inversión</h2>
     <ul>

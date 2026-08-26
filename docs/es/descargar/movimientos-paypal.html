@@ -40,6 +40,30 @@
   "mainEntity": [
     {
       "@type": "Question",
+      "name": "¿Puedo descargar mis movimientos de PayPal en PDF?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No, porque PayPal no emite un PDF por movimiento. Lo que obtienes son los datos de cada operación en el manifiesto normalizado. Si necesitas un justificante concreto, sigue estando en la web de PayPal."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿En qué se diferencia esto de la exportación que ya ofrece PayPal?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "PayPal sí deja descargar informes de actividad, pero es una tarea manual que hay que repetir y el resultado llega suelto. Aquí el histórico acaba en el mismo archivo que el resto de tus servicios, con el mismo formato y sin pasar cada mes por la pantalla de exportación."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Recoge también los pagos que he recibido, no solo los que he hecho?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Sí. La actividad personal incluye los movimientos en ambos sentidos, y cada uno queda marcado con su dirección."
+      }
+    },
+    {
+      "@type": "Question",
       "name": "¿Habeas guarda mi contraseña de PayPal?",
       "acceptedAnswer": {
         "@type": "Answer",
@@ -91,22 +115,78 @@
     {
       "@type": "HowToStep",
       "position": 1,
-      "name": "Entras en paypal.",
+      "name": "Inicias sesión tú",
       "text": "Entras en paypal.com y te identificas tú, como siempre, con tu MFA o el código que uses."
     },
     {
       "@type": "HowToStep",
       "position": 2,
-      "name": "Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web.",
+      "name": "Habeas reutiliza esa sesión",
       "text": "Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web."
     },
     {
       "@type": "HowToStep",
       "position": 3,
-      "name": "Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio.",
+      "name": "Eliges el destino",
       "text": "Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio."
     }
   ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Inicio",
+      "item": "https://habeas.dev/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Guías",
+      "item": "https://habeas.dev/es/descargar/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Cómo descargar tus movimientos de PayPal",
+      "item": "https://habeas.dev/es/descargar/movimientos-paypal.html"
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "inLanguage": "es",
+  "headline": "Cómo descargar tus movimientos de PayPal",
+  "description": "PayPal sí te deja descargar informes de actividad, pero llegan aparte de todo lo demás que intentas conservar, y hacerlo con regularidad es una tarea manual que tienes que acordarte de repetir. Habeas los descarga desde tu propia sesión del navegador, sin guardar tu contraseña.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://habeas.dev/es/descargar/movimientos-paypal.html"
+  },
+  "dateModified": "2026-08-13",
+  "author": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev"
+  },
+  "about": {
+    "@type": "Thing",
+    "name": "PayPal"
+  },
+  "isAccessibleForFree": true,
+  "license": "https://www.gnu.org/licenses/agpl-3.0.html"
 }
   </script>
   <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
@@ -130,7 +210,7 @@
     </div>
   </header>
 
-  <main class="doc">
+  <main class="doc" data-habeas-enriched>
     <h1>Cómo descargar tus movimientos de PayPal</h1>
     <p class="lead">PayPal sí te deja descargar informes de actividad, pero llegan aparte de todo lo demás que intentas conservar, y hacerlo con regularidad es una tarea manual que tienes que acordarte de repetir.</p>
 
@@ -139,6 +219,16 @@
     <ul>
         <li><strong>movimientos</strong> — cada movimiento con su fecha, importe, moneda, concepto y contraparte.</li>
     </ul>
+      <h2>Qué te da PayPal en realidad</h2>
+      <p>PayPal no emite una factura por cada movimiento, así que lo que se puede conservar es el registro de actividad: los pagos que has enviado y recibido, cada uno con su fecha, importe, moneda y contraparte. Habeas los recoge paginando la misma llamada que usa la web cuando pulsas «cargar más», y los deja normalizados en el manifiesto junto al resto de tus fuentes.</p>
+      <h2>Hasta dónde llega el histórico</h2>
+      <p class="retention">No hay un corte de retención como en otros servicios: la consulta admite una ventana de fechas amplia y va avanzando por un cursor hasta agotar el histórico, así que llega hasta donde llegue tu propia cuenta.</p>
+      <h2>Particularidades de esta fuente</h2>
+      <ul class="quirks">
+        <li>Los importes llegan ya formateados según tu idioma («-9,00 €»), con la moneda en un campo aparte; Habeas los interpreta y respeta la divisa real en lugar de asumir euros.</li>
+        <li>La sesión se sostiene con la cookie de tu navegador más un token CSRF que rota, capturado de tus propias peticiones mientras navegas.</li>
+        <li>Es una fuente de la comunidad: su definición es pública y revisable, pero no está auditada por el proyecto.</li>
+      </ul>
       <div class="box"><strong>A tener en cuenta:</strong> Habeas no está aquí porque PayPal esconda tu historial —no lo hace—. Está para que ese historial acabe en el mismo archivo que el resto de tus servicios, automáticamente y sin pasar cada mes por la pantalla de exportación.</div>
 
     <h2>Cómo funciona</h2>
@@ -158,6 +248,12 @@
     <p class="lead">Chrome te avisará de que la extensión no es de confianza. Le ocurre a cualquier cuenta de desarrollador registrada hace poco en la Chrome Web Store, se disipa en unos meses y no dice nada del código, que puedes leer entero.</p>
 
     <h2>Preguntas frecuentes</h2>
+    <h3>¿Puedo descargar mis movimientos de PayPal en PDF?</h3>
+    <p>No, porque PayPal no emite un PDF por movimiento. Lo que obtienes son los datos de cada operación en el manifiesto normalizado. Si necesitas un justificante concreto, sigue estando en la web de PayPal.</p>
+    <h3>¿En qué se diferencia esto de la exportación que ya ofrece PayPal?</h3>
+    <p>PayPal sí deja descargar informes de actividad, pero es una tarea manual que hay que repetir y el resultado llega suelto. Aquí el histórico acaba en el mismo archivo que el resto de tus servicios, con el mismo formato y sin pasar cada mes por la pantalla de exportación.</p>
+    <h3>¿Recoge también los pagos que he recibido, no solo los que he hecho?</h3>
+    <p>Sí. La actividad personal incluye los movimientos en ambos sentidos, y cada uno queda marcado con su dirección.</p>
     <h3>¿Habeas guarda mi contraseña de PayPal?</h3>
     <p>No. Inicias sesión tú, en la web de siempre, incluido cualquier código de verificación. Habeas reutiliza la sesión que tu navegador ya tiene abierta y nunca lee ni almacena tus credenciales.</p>
     <h3>¿Se envían mis datos a algún servidor?</h3>
@@ -166,6 +262,13 @@
     <p>Los documentos originales tal cual los emite el servicio (JSON), acompañados de un manifiesto con los datos ya normalizados.</p>
     <h3>¿Es gratis?</h3>
     <p>Sí. Habeas es software libre con licencia AGPL-3.0 y su código es público en GitHub.</p>
+
+      <h2>Qué ha cambiado en esta fuente</h2>
+      <p>Esta fuente es una definición pública y cada cambio queda registrado. De lo más reciente a lo más antiguo:</p>
+      <ul class="changelog">
+        <li class="rev"><time datetime="2026-08-13">2026-08-13</time> — Declara country: global. PayPal funciona en cualquier país, pero al no declararlo quedaba sin clasificar justo cuando la extensión y la web han empezado a ordenar las fuentes por relevancia geográfica.</li>
+        <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.</li>
+      </ul>
 
     <h2>Más guías de bancos, tarjetas e inversión</h2>
     <ul>

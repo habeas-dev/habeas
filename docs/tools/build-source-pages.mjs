@@ -60,6 +60,27 @@ const LANGS = {
       installFirefox: 'Install on Firefox',
       free: (name) => `Free and open source (AGPL-3.0). Install the extension and enable the “${name}” source from Settings → Browse sources.`,
       faqH: 'Frequently asked questions',
+      detailH: (brand) => `What ${brand} actually gives you`,
+      retentionH: 'How far back it goes',
+      quirksH: 'Worth knowing about this source',
+      crumbHome: 'Home',
+      crumbGuides: 'Guides',
+      // Explicit, because deriving them by splitting the step text at the first "." cut every step that
+      // mentioned a domain: Amazon's step 1 was named "You go to amazon."
+      stepNames: ['Sign in yourself', 'Habeas reuses that session', 'You choose where it goes'],
+      historyH: 'What has changed in this source',
+      historyLead: 'This source is a public definition, and every change to it is on the record. Most recent first:',
+      historyMore: 'See the full history in the catalog',
+      creditH: 'Credit',
+      // Three sentences, not one with a slot: who recorded a session and who wrote the definition are
+      // different contributions, and collapsing them would credit each for the other's work.
+      creditAuthor: (who) => `This source definition was written by ${who}.`,
+      creditCapture: (who) => `This source exists thanks to the redacted recording ${who} contributed from their own session; the definition itself was written by the Habeas team.`,
+      creditBoth: (cap, aut) => `This source exists thanks to the redacted recording ${cap} contributed from their own session, and the definition was written by ${aut}.`,
+      creditSame: (who) => `${who} recorded their own session and wrote this source definition from it.`,
+      creditThanks: 'Habeas exists because people map the services they use and share the result.',
+      provenanceH: 'Where this definition came from',
+      provenanceBy: (work) => `This definition was drafted using ${work} as a reference for the service's interface.`,
       siblings: (group) => `More ${group.toLowerCase()} guides`,
       teachH: 'Your service is not on the list?',
       teachBody: 'Habeas can learn a new one <strong>without any code</strong>. Record mode watches the site’s own API while you browse it normally and drafts the source for you; you test it against your own account, and then keep it to yourself or share it so everyone gets it. That is where most of the catalog came from.',
@@ -113,6 +134,23 @@ const LANGS = {
       installFirefox: 'Instalar en Firefox',
       free: (name) => `Gratis y de código abierto (AGPL-3.0). Instala la extensión y activa la fuente «${name}» desde Ajustes → Explorar fuentes.`,
       faqH: 'Preguntas frecuentes',
+      detailH: (brand) => `Qué te da ${brand} en realidad`,
+      retentionH: 'Hasta dónde llega el histórico',
+      quirksH: 'Particularidades de esta fuente',
+      crumbHome: 'Inicio',
+      crumbGuides: 'Guías',
+      stepNames: ['Inicias sesión tú', 'Habeas reutiliza esa sesión', 'Eliges el destino'],
+      historyH: 'Qué ha cambiado en esta fuente',
+      historyLead: 'Esta fuente es una definición pública y cada cambio queda registrado. De lo más reciente a lo más antiguo:',
+      historyMore: 'Ver el historial completo en el catálogo',
+      creditH: 'Agradecimientos',
+      creditAuthor: (who) => `Esta definición de fuente la escribió ${who}.`,
+      creditCapture: (who) => `Esta fuente existe gracias a la grabación redactada que aportó ${who} desde su propia sesión; la definición la escribió el equipo de Habeas.`,
+      creditBoth: (cap, aut) => `Esta fuente existe gracias a la grabación redactada que aportó ${cap} desde su propia sesión, y la definición la escribió ${aut}.`,
+      creditSame: (who) => `${who} grabó su propia sesión y escribió esta definición a partir de ella.`,
+      creditThanks: 'Habeas existe porque hay gente que mapea los servicios que usa y comparte el resultado.',
+      provenanceH: 'De dónde sale esta definición',
+      provenanceBy: (work) => `Esta definición se redactó tomando ${work} como referencia de la interfaz del servicio.`,
       siblings: (group) => `Más guías de ${group.toLowerCase()}`,
       teachH: '¿Tu servicio no está en la lista?',
       teachBody: 'Habeas puede aprender uno nuevo <strong>sin programar nada</strong>. El modo grabación observa la propia API del sitio mientras navegas con normalidad y te redacta la fuente; la pruebas contra tu propia cuenta y luego te la quedas o la compartes para que la tenga todo el mundo. De ahí sale la mayor parte del catálogo.',
@@ -149,6 +187,7 @@ const GROUPS = [
   { id: 'utility',  cats: ['energy', 'telecom', 'domains'],     en: 'Services & subscriptions', es: 'Servicios y suscripciones' },
 ];
 const UNGROUPED = new Set();
+const MONOLINGUAL = new Set();
 const groupOf = (meta) => {
   const hit = GROUPS.find((g) => (meta.categories || []).some((c) => g.cats.includes(c)));
   if (!hit) UNGROUPED.add(`${meta.id} (${(meta.categories || []).join(', ') || 'no categories'})`);
@@ -184,7 +223,76 @@ function page({ lang, meta, full, entry, siblings }) {
     ? `      <div class="box"><strong>${t.gaps}</strong> ${esc(t.gapsBody(full.gaps.map(esc).join(lang === 'es' ? ' ni ' : ' or ')))}</div>\n` : '';
   const note = copy.note ? `      <div class="box"><strong>${t.note}</strong> ${esc(copy.note)}</div>\n` : '';
   const trust = meta.trust === 'first-party' ? t.trustFp : t.trustCommunity;
-  const faq = t.faq(brand, formats);
+  // Source-specific questions come FIRST: they are the reason this page deserves to exist separately
+  // from the other 41, and burying them under the four boilerplate ones wastes them on both a reader
+  // and an extractor.
+  const ownFaq = (copy.faq || []).map((x) => [x.q, x.a]);
+  const faq = [...ownFaq, ...t.faq(brand, formats)];
+
+  // Prose that only applies to this service. Without at least one of these the page is the template
+  // with a name swapped in, which is what left 30 of them unindexed.
+  const quirks = copy.quirks || [];
+  const enriched = Boolean(copy.whatYouGet || copy.retention || quirks.length || ownFaq.length);
+  const detail = copy.whatYouGet
+    ? `      <h2>${esc(t.detailH(brand))}</h2>\n      <p>${esc(copy.whatYouGet)}</p>\n` : '';
+  const retention = copy.retention
+    ? `      <h2>${esc(t.retentionH)}</h2>\n      <p class="retention">${esc(copy.retention)}</p>\n` : '';
+  const quirksBlock = quirks.length
+    ? `      <h2>${esc(t.quirksH)}</h2>\n      <ul class="quirks">\n${quirks.map((q) => `        <li>${esc(q)}</li>`).join('\n')}\n      </ul>\n` : '';
+
+  // `changes` is either one string or a map keyed by language. Fall back rather than drop the entry:
+  // a note in the wrong language still tells the reader something; a missing one tells them nothing.
+  const noteIn = (ch) => {
+    if (typeof ch !== 'string') return ch?.[lang] || ch?.en || Object.values(ch || {})[0] || '';
+    // One string serves every language, so it lands verbatim on both pages. Most of the catalog's notes
+    // are written in Spanish, which means the English guides currently carry Spanish paragraphs — the
+    // exact low-quality signal these pages are being rebuilt to shed. Counted and reported, not hidden.
+    MONOLINGUAL.add(meta.id);
+    return ch;
+  };
+  const HISTORY_MAX = 5;
+  const log = (full.changelog || []).filter((e) => e?.version && noteIn(e.changes));
+  const shown = log.slice(0, HISTORY_MAX);
+  const history = shown.length ? `      <h2>${esc(t.historyH)}</h2>
+      <p>${esc(t.historyLead)}</p>
+      <ul class="changelog">
+${shown.map((e) => `        <li class="rev"><time datetime="${esc(String(e.version).slice(0, 10))}">${esc(String(e.version).slice(0, 10))}</time> — ${esc(noteIn(e.changes))}</li>`).join('\n')}
+      </ul>
+${log.length > HISTORY_MAX ? `      <p class="lead"><a href="/sources.html#${esc(meta.id)}">${esc(t.historyMore)} →</a></p>\n` : ''}` : '';
+
+  // Only ever what each person themselves supplied. Never derived from git, a PR author or a handoff —
+  // publishing someone's name is theirs to consent to. The name is the link so the sentence reads as a
+  // sentence, and only https survives: a contributor-supplied string lands in a published page.
+  const cr = entry.credit || {};
+  const person = (p) => {
+    if (!p?.name) return null;
+    const safe = /^https:\/\/[^\s"'<>]+$/i.test(p.url || '') ? p.url : null;
+    const who = safe ? `<a href="${esc(safe)}" rel="nofollow noopener">${esc(p.name)}</a>` : esc(p.name);
+    return p.note ? `${who} (${esc(p.note)})` : who;
+  };
+  const aut = person(cr.author);
+  const cap = person(cr.capture);
+  const sameHuman = cr.author?.name && cr.capture?.name && cr.author.name === cr.capture.name;
+  const line = sameHuman ? t.creditSame(aut)
+    : cap && aut ? t.creditBoth(cap, aut)
+    : cap ? t.creditCapture(cap)
+    : aut ? t.creditAuthor(aut) : null;
+  const credit = line ? `      <h2>${esc(t.creditH)}</h2>
+      <p class="credit">${line} ${esc(t.creditThanks)}</p>
+` : '';
+
+  // Provenance, kept apart from credit on purpose: this one is a licence record. If a definition was
+  // drafted from someone else's published work, saying so on the public page is part of honouring it.
+  const at = entry.attribution;
+  const atUrl = /^https:\/\/[^\s"'<>]+$/i.test(at?.url || '') ? at.url : null;
+  const work = at?.derivedFrom
+    ? (atUrl ? `<a href="${esc(atUrl)}" rel="nofollow noopener">${esc(at.derivedFrom)}</a>` : esc(at.derivedFrom))
+    : null;
+  const licBits = [at?.copyright, at?.referenceLicense || at?.referenceLicence].filter(Boolean);
+  const lic = licBits.length && !licBits.every((b) => (at.note || '').includes(b)) ? licBits.join(', ') : '';
+  const provenance = work ? `      <h2>${esc(t.provenanceH)}</h2>
+      <p class="attribution">${t.provenanceBy(work)}${lic ? ` ${esc(lic)}.` : ''}${at.note ? ` ${esc(at.note)}` : ''}</p>
+` : '';
 
   // hreflang across every language that has copy for this source, so neither side dead-ends.
   const alts = Object.keys(LANGS).filter((l) => entry[l]);
@@ -205,7 +313,46 @@ function page({ lang, meta, full, entry, siblings }) {
     description: copy.intro.split('.')[0] + '.',
     totalTime: 'PT2M',
     tool: [{ '@type': 'HowToTool', name: 'Habeas' }],
-    step: steps.map((text, i) => ({ '@type': 'HowToStep', position: i + 1, name: text.split('.')[0] + '.', text })),
+    step: steps.map((text, i) => ({ '@type': 'HowToStep', position: i + 1, name: t.stepNames[i], text })),
+  };
+
+  const crumbLd = {
+    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: t.crumbHome, item: ORIGIN + '/' },
+      { '@type': 'ListItem', position: 2, name: t.crumbGuides, item: `${ORIGIN}/${L.dir}/` },
+      { '@type': 'ListItem', position: 3, name: copy.h1, item: url },
+    ],
+  };
+
+  // A source's `version` IS its last-changed date (YYYY-MM-DD, by project convention), which makes it
+  // the honest dateModified: it moves when the source actually changes and stays put when the page is
+  // merely rebuilt. Deriving it from the build clock is what taught crawlers to ignore the sitemap's
+  // <lastmod>, and repeating that mistake here would cost the same credibility.
+  const modified = /^\d{4}-\d{2}-\d{2}/.test(String(meta.version || '')) ? String(meta.version).slice(0, 10) : null;
+  const articleLd = {
+    '@context': 'https://schema.org', '@type': 'TechArticle', inLanguage: lang,
+    headline: copy.h1,
+    description: desc,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    ...(modified ? { dateModified: modified } : {}),
+    // Attribute the source's contributor when there is one, so the credit is machine-readable and not
+    // just a line of prose an extractor may or may not carry across.
+    // author = who wrote the definition; contributor = who supplied the recording it was built from.
+    // schema.org draws the same distinction, so the credit survives extraction instead of flattening.
+    author: cr.author?.name
+      ? { '@type': 'Person', name: cr.author.name, ...(cr.author.url ? { url: cr.author.url } : {}) }
+      : { '@type': 'Organization', name: 'Habeas', url: ORIGIN },
+    ...(cr.capture?.name
+      ? { contributor: { '@type': 'Person', name: cr.capture.name, ...(cr.capture.url ? { url: cr.capture.url } : {}) } }
+      : {}),
+    publisher: { '@type': 'Organization', name: 'Habeas', url: ORIGIN },
+    about: { '@type': 'Thing', name: brand },
+    ...(at?.derivedFrom
+      ? { isBasedOn: { '@type': 'CreativeWork', name: at.derivedFrom, ...(atUrl ? { url: atUrl } : {}) } }
+      : {}),
+    isAccessibleForFree: true,
+    license: 'https://www.gnu.org/licenses/agpl-3.0.html',
   };
 
   return `<!doctype html>
@@ -246,6 +393,12 @@ ${JSON.stringify(faqLd, null, 2)}
   <script type="application/ld+json">
 ${JSON.stringify(howToLd, null, 2)}
   </script>
+  <script type="application/ld+json">
+${JSON.stringify(crumbLd, null, 2)}
+  </script>
+  <script type="application/ld+json">
+${JSON.stringify(articleLd, null, 2)}
+  </script>
   <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
   <script defer src="https://analytics.habeas.dev/script.js" data-website-id="84a75f7a-c014-4ce8-a3be-1f8dd1899a28" data-domains="habeas.dev"></script>
 </head>
@@ -264,7 +417,7 @@ ${t.nav.map(([href, label]) => `        <a href="${href}">${esc(label)}</a>`).jo
     </div>
   </header>
 
-  <main class="doc">
+  <main class="doc"${enriched ? ' data-habeas-enriched' : ''}>
     <h1>${esc(copy.h1)}</h1>
     <p class="lead">${esc(copy.intro)}</p>
 
@@ -273,7 +426,7 @@ ${t.nav.map(([href, label]) => `        <a href="${href}">${esc(label)}</a>`).jo
     <ul>
 ${rows}
     </ul>
-${note}${gaps}
+${detail}${retention}${quirksBlock}${note}${gaps}
     <h2>${esc(t.how)}</h2>
     <p>${t.howIntro(esc(meta.domain))}</p>
     <ol>
@@ -291,6 +444,7 @@ ${steps.map((x) => `      <li>${esc(x)}</li>`).join('\n')}
     <h2>${esc(t.faqH)}</h2>
 ${faq.map(([q, a]) => `    <h3>${esc(q)}</h3>\n    <p>${esc(a)}</p>`).join('\n')}
 
+${history}${credit}${provenance}
 ${siblings.length ? `    <h2>${esc(t.siblings(groupOf(meta)[lang]))}</h2>
     <ul>
 ${siblings.map((sb) => `      <li><a href="${LANGS[lang].path(sb.slug)}">${esc(sb.h1)}</a></li>`).join('\n')}
@@ -423,7 +577,7 @@ for (const meta of index) {
   if (meta.beta || full.beta) { if (full.content) skipped.push(`${meta.id} (beta)`); continue; }
   const override = overrides[meta.id] || {};
   // Registry content is the source of truth; the local file overrides it field by field.
-  const entry = { brand: override.brand || full.brand || meta.name };
+  const entry = { brand: override.brand || full.brand || meta.name, credit: override.credit || full.credit, attribution: override.attribution || full.attribution };
   for (const lang of Object.keys(LANGS)) {
     const base = full.content?.[lang];
     if (base || override[lang]) entry[lang] = { ...base, ...override[lang] };
@@ -460,4 +614,5 @@ writeFileSync(join(DOCS, 'guides.json'), JSON.stringify(guides, null, 2) + '\n')
 
 console.log(`${written} pages written (${Object.keys(LANGS).join(', ')}) from ${resolved.length} sources`);
 if (skipped.length) console.log(`no guide: ${skipped.join(', ')}`);
+if (MONOLINGUAL.size) console.error(`  ! changelog notes are plain strings on ${MONOLINGUAL.size} source(s), so one language's text is served to every language: ${[...MONOLINGUAL].join(', ')}. Key "changes" by language to fix.`);
 if (UNGROUPED.size) console.error(`  ! ungrouped, filed under "${GROUPS[1].en}" — add their category to GROUPS: ${[...UNGROUPED].join('; ')}`);

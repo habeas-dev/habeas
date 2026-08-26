@@ -40,6 +40,30 @@
   "mainEntity": [
     {
       "@type": "Question",
+      "name": "Can I download my PayPal transactions as PDFs?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No, because PayPal does not issue a PDF per movement. What you get is each operation's data in the normalised manifest. If you need one specific receipt, it is still on PayPal's own site."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is this different from the export PayPal already offers?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "PayPal does let you download activity reports, but it is a manual chore you have to repeat and the result lands on its own. Here the history ends up in the same archive as your other services, in the same shape, without a monthly detour through the export screen."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it pick up payments I received, not just ones I made?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Personal activity covers movements in both directions, and each one is tagged with its direction."
+      }
+    },
+    {
+      "@type": "Question",
       "name": "Does Habeas store my PayPal password?",
       "acceptedAnswer": {
         "@type": "Answer",
@@ -91,22 +115,78 @@
     {
       "@type": "HowToStep",
       "position": 1,
-      "name": "You go to paypal.",
+      "name": "Sign in yourself",
       "text": "You go to paypal.com and sign in yourself, as always, with your MFA or whatever code you use."
     },
     {
       "@type": "HowToStep",
       "position": 2,
-      "name": "Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does.",
+      "name": "Habeas reuses that session",
       "text": "Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does."
     },
     {
       "@type": "HowToStep",
       "position": 3,
-      "name": "You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own.",
+      "name": "You choose where it goes",
       "text": "You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own."
     }
   ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://habeas.dev/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Guides",
+      "item": "https://habeas.dev/download/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "How to download your PayPal transaction history",
+      "item": "https://habeas.dev/download/paypal-transactions.html"
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "inLanguage": "en",
+  "headline": "How to download your PayPal transaction history",
+  "description": "PayPal does let you download activity reports, but they arrive separately from everything else you are trying to keep, and pulling them regularly is a manual chore you have to remember. Habeas downloads them from inside your own browser session, without ever storing your password.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://habeas.dev/download/paypal-transactions.html"
+  },
+  "dateModified": "2026-08-13",
+  "author": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev"
+  },
+  "about": {
+    "@type": "Thing",
+    "name": "PayPal"
+  },
+  "isAccessibleForFree": true,
+  "license": "https://www.gnu.org/licenses/agpl-3.0.html"
 }
   </script>
   <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
@@ -130,7 +210,7 @@
     </div>
   </header>
 
-  <main class="doc">
+  <main class="doc" data-habeas-enriched>
     <h1>How to download your PayPal transaction history</h1>
     <p class="lead">PayPal does let you download activity reports, but they arrive separately from everything else you are trying to keep, and pulling them regularly is a manual chore you have to remember.</p>
 
@@ -139,6 +219,16 @@
     <ul>
         <li><strong>transactions</strong> — each movement with its date, amount, currency, description and counterparty.</li>
     </ul>
+      <h2>What PayPal actually gives you</h2>
+      <p>PayPal does not issue an invoice per movement, so what there is to keep is the activity record: the payments you have sent and received, each with its date, amount, currency and counterparty. Habeas collects them by paging the same call the site itself makes when you hit “load more”, and leaves them normalised in the manifest alongside your other sources.</p>
+      <h2>How far back it goes</h2>
+      <p class="retention">There is no retention cliff here like there is on other services: the query accepts a wide date window and walks a cursor until the history runs out, so it reaches as far back as your own account does.</p>
+      <h2>Worth knowing about this source</h2>
+      <ul class="quirks">
+        <li>Amounts arrive pre-formatted for your locale (“-9,00 €”), with the currency in a separate field; Habeas parses them and honours the real currency instead of assuming euros.</li>
+        <li>The session rests on your browser cookie plus a rotating CSRF token, captured from your own requests as you browse.</li>
+        <li>This is a community source: its definition is public and reviewable, but it is not audited by the project.</li>
+      </ul>
       <div class="box"><strong>Worth knowing:</strong> Habeas is not here because PayPal hides your history — it does not. It is here so that history lands in the same archive as your other services, automatically, without a monthly detour through the export screen.</div>
 
     <h2>How it works</h2>
@@ -158,6 +248,12 @@
     <p class="lead">Chrome will warn you that the extension is not trusted. That happens to any developer account recently registered on the Chrome Web Store, it fades after a few months, and it says nothing about the code — which you can read in full.</p>
 
     <h2>Frequently asked questions</h2>
+    <h3>Can I download my PayPal transactions as PDFs?</h3>
+    <p>No, because PayPal does not issue a PDF per movement. What you get is each operation's data in the normalised manifest. If you need one specific receipt, it is still on PayPal's own site.</p>
+    <h3>How is this different from the export PayPal already offers?</h3>
+    <p>PayPal does let you download activity reports, but it is a manual chore you have to repeat and the result lands on its own. Here the history ends up in the same archive as your other services, in the same shape, without a monthly detour through the export screen.</p>
+    <h3>Does it pick up payments I received, not just ones I made?</h3>
+    <p>Yes. Personal activity covers movements in both directions, and each one is tagged with its direction.</p>
     <h3>Does Habeas store my PayPal password?</h3>
     <p>No. You sign in yourself, on the usual website, including any verification code. Habeas reuses the session your browser already has open and never reads or stores your credentials.</p>
     <h3>Is my data sent to a server?</h3>
@@ -166,6 +262,13 @@
     <p>The original documents exactly as the service issues them (JSON), together with a manifest holding the normalised data.</p>
     <h3>Is it free?</h3>
     <p>Yes. Habeas is free software under the AGPL-3.0 licence and its code is public on GitHub.</p>
+
+      <h2>What has changed in this source</h2>
+      <p>This source is a public definition, and every change to it is on the record. Most recent first:</p>
+      <ul class="changelog">
+        <li class="rev"><time datetime="2026-08-13">2026-08-13</time> — Declara country: global. PayPal funciona en cualquier país, pero al no declararlo quedaba sin clasificar justo cuando la extensión y la web han empezado a ordenar las fuentes por relevancia geográfica.</li>
+        <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.</li>
+      </ul>
 
     <h2>More banks, cards &amp; investments guides</h2>
     <ul>
