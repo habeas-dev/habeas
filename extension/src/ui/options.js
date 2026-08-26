@@ -391,8 +391,11 @@ async function render() {
           originId,
           signal: copyAbort.signal,
           onStatus: (p) => {
-            $('#copystatus').textContent = t('opt_copy_progress', [p.source, String(p.done), String(p.total)])
-              + (p.skipped ? ' · ' + t('opt_copy_skipped', [String(p.skipped)]) : '');
+            const where = `[${p.n}/${p.of}] `;
+            $('#copystatus').textContent = p.phase === 'reading'
+              ? where + t('opt_copy_reading', [p.source])
+              : where + t('opt_copy_progress', [p.source, String(p.done), String(p.total)])
+                + (p.skipped ? ' · ' + t('opt_copy_skipped', [String(p.skipped)]) : '');
           },
         });
         sent = f.sent; skipped = f.skipped; stopped = f.stopped;

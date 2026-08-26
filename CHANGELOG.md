@@ -61,6 +61,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   only at the moment of use. It is now labelled "not available here" and left out of every operation that
   could only fail. It is deliberately NOT deleted: configuration sync adopts and never prunes, so removing
   the entry in Firefox would remove a working destination from Chrome as well.
+- **The copy reports each SOURCE before reading it**, not only once documents start moving. Reading a
+  source's records means fetching them from wherever the archive lives — over the network for a
+  Dropbox-backed store — and a source with nothing outstanding then reported nothing at all. With two
+  dozen sources that is minutes of a frozen message before the first document is reached, which from the
+  outside is indistinguishable from a hang. The status now carries a source counter throughout.
 - **The copy reports every document, and is called what it is.** It only reported on flushing a batch of
   25, so nothing moved on screen while the first 25 were fetched one round-trip at a time — and nothing
   moved at all for an archive of record-only movements, where no batch ever fills because there is no file

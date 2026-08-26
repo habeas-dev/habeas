@@ -3796,5 +3796,13 @@
         "content": "$1"
       }
     }
+  },
+  "opt_copy_reading": {
+    "message": "Leyendo $SRC$…",
+    "placeholders": {
+      "src": {
+        "content": "$1"
+      }
+    }
   }
 }

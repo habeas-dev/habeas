@@ -256,7 +256,10 @@ test('progress is reported per document, not per flushed batch', () => {
   const lib = read('src/lib/foldercopy.js');
   const i = lib.indexOf('for (const d of docs) {');
   const body = lib.slice(i, lib.indexOf('await flush();', i));
-  assert.match(body, /onStatus\(\{ done: \+\+seen, total: docs\.length/, 'each document must report');
+  assert.match(body, /onStatus\(\{ phase: 'copying', done: \+\+seen, total: docs\.length/, 'each document must report');
+  // …and each SOURCE must report before it is read: a source with nothing outstanding produces no
+  // document events at all, so with two dozen of them the screen sits still for minutes.
+  assert.match(lib, /onStatus\(\{ phase: 'reading', source/, 'each source must report before reading');
   assert.ok(!/onStatus\(\{ sending:/.test(lib), 'the per-batch-only report must be gone');
 });
 

@@ -75,11 +75,17 @@ export async function copyArchivePageSide(cfg, adapters, target, { originId = ''
   }
 
   let sent = 0, found = 0, skipped = 0;
-  for (const ds of (cfg.datasources || [])) {
+  // Report BEFORE reading, not only once documents appear. Reading one source's records means fetching
+  // them from wherever the archive lives — over the network, for a Dropbox-backed store — and a source
+  // with nothing outstanding then reports nothing at all. With two dozen sources that is minutes of a
+  // frozen message before the first document is even reached, which reads exactly like a hang.
+  const enabled = (cfg.datasources || []).filter((d) => d.enabled !== false && adapters[d.adapter]);
+  let n = 0;
+  for (const ds of enabled) {
     if (signal && signal.aborted) break;
-    if (ds.enabled === false) continue;
     const adapter = adapters[ds.adapter];
-    if (!adapter) continue;
+    n++;
+    if (onStatus) onStatus({ phase: 'reading', source: adapter.name || ds.adapter, n, of: enabled.length });
     const picked = await pending(ds, adapter, target).catch(() => []);
     if (!picked.length) continue;
 
@@ -126,7 +132,7 @@ export async function copyArchivePageSide(cfg, adapters, target, { originId = ''
         // the first 25 documents — each of which costs a round-trip to the origin — and nothing moved AT
         // ALL for an archive of record-only movements, where no batch ever fills because there is no file
         // to put in one. A silent operation is indistinguishable from a stuck one.
-        if (onStatus) onStatus({ done: ++seen, total: docs.length, source: adapter.name || ds.adapter, skipped });
+        if (onStatus) onStatus({ phase: 'copying', done: ++seen, total: docs.length, source: adapter.name || ds.adapter, skipped, n, of: enabled.length });
         const rec = { ...d.record, internalId: d.internalId, date: d.date, group: d.group };
         const arts = [];
         for (const fmt of (fmts.length ? fmts : [''])) {
