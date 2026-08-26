@@ -42,6 +42,37 @@ export function applyNormalize(doc, adapter) {
     if (Object.prototype.hasOwnProperty.call(spec.map, key)) doc[name] = spec.map[key];
     else if (spec.default != null) doc[name] = spec.default;
   }
+  // A value read from the mapped doc, falling back to the RAW item — by dotted path, since the fields that
+  // decide these rules (fromAccount.type) are nested and were never mapped.
+  const pick = (path) => {
+    const direct = doc[path];
+    if (direct != null && direct !== '') return direct;
+    return String(path).split('.').reduce((a, k) => (a == null ? a : a[k]), doc._raw);
+  };
+  const test = (cond) => {
+    if (!cond || !cond.field) return false;
+    const v = pick(cond.field);
+    if (typeof cond.present === 'boolean') return (v != null && v !== '') === cond.present;
+    if (cond.equals !== undefined) return String(v) === String(cond.equals);
+    return v != null && v !== '';
+  };
+  // sign: { <field>: { when?, positiveWhen } } — an amount reported from the OTHER party's perspective.
+  // Revolut books a vault transfer from the side that PAYS, so money arriving into the personal account
+  // from a savings vault turns up negative, exactly like the money leaving for it. Summed, the two cancel
+  // in the wrong direction and the statement stops adding up.
+  for (const [name, spec] of Object.entries(n.sign || {})) {
+    if (!spec || !spec.positiveWhen) continue;
+    if (spec.when && !test(spec.when)) continue;   // scoped, so correctly-signed movements stay untouched
+    const v = doc[name];
+    if (typeof v !== 'number' || v === 0) continue;
+    doc[name] = test(spec.positiveWhen) ? Math.abs(v) : -Math.abs(v);
+  }
+  // unset: { <field>: { when } } — a value that belongs to a DIFFERENT account and would corrupt a series
+  // if kept. A vault transfer carries the vault's closing balance, not the personal account's, so a running
+  // balance built from it jumps by thousands at exactly those rows. Better absent than confidently wrong.
+  for (const [name, spec] of Object.entries(n.unset || {})) {
+    if (spec && spec.when && test(spec.when)) delete doc[name];
+  }
   return doc;
 }
 

@@ -20,6 +20,20 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   legitimately total nothing (a full refund), a bank movement cannot. An ABSENT amount is deliberately
   left alone — that is an adapter defect for validation to name, not a row for the runtime to delete.
 
+- **Revolut: card verifications are no longer emitted, and vault transfers are read correctly.** Against
+  167 real movements, 151 of 166 balance links already chained to the cent — the ingest was right in the
+  general case, and two narrow shapes accounted for everything that was not. The 14 zero-amount rows were
+  the 0 EUR authorisation a merchant makes to check a card is live: the zero is CORRECT, they simply are
+  not movements, and the flag `cardVerification` separated them perfectly from the 153 that were. The 15
+  vault transfers were booked from the paying side, so money returning from a savings vault arrived
+  negative exactly like money going into it, and each carried the VAULT's closing balance rather than the
+  personal account's — which is why the running series jumped by thousands at those rows. Together they
+  account for the whole −10.253,24 against a real balance movement of 7,56. Nothing was missing.
+- **Minor-unit amounts now divide instead of multiplying by a reciprocal.** `200536 * 0.01` is
+  `2005.3600000000001`, because one hundredth is not exactly representable; `200536 / 100` lands on the
+  number a person would write. Invisible until a few thousand movements are summed, or until someone
+  reads one — and this is a ledger, so both happen. Affects every source declaring `minorUnits`.
+
 ### Added
 - **`lib/reconcile.js` — the arithmetic a statement can do on itself.** Each movement carries the balance
   it left behind, so the amounts between any two must equal the difference between their balances. When

@@ -1829,8 +1829,14 @@ function mapDoc(adapter, p, group) {
   // `minorUnits:true` scales by the transaction's OWN currency exponent (ISO 4217) so a JPY amount (0 decimals)
   // and a EUR amount (2) both come out right. Raw values stay untouched in record.extra via keepRaw. The
   // running balance shares the movement's currency, so it scales the same way.
-  const scale = adapter.minorUnits ? Math.pow(10, -minorExp(doc.currency)) : adapter.amountScale;
-  if (scale) for (const k of ['total', 'amount', 'balance', 'balanceAfter']) if (typeof doc[k] === 'number') doc[k] = doc[k] * scale;
+  // DIVIDE by the power of ten rather than multiply by its reciprocal. Multiplying 200536 by 0.01 yields
+  // 2005.3600000000001 — the reciprocal is not exactly representable — while dividing by 100 lands on the
+  // nearest double to 2005.36. The difference is invisible until a few thousand movements are summed, or
+  // until someone reads the number, and this is a ledger. `amountScale` stays a multiplication: it is an
+  // arbitrary factor, not necessarily a power of ten.
+  const exp = adapter.minorUnits ? minorExp(doc.currency) : null;
+  if (exp != null) { const div = Math.pow(10, exp); for (const k of ['total', 'amount', 'balance', 'balanceAfter']) if (typeof doc[k] === 'number') doc[k] = doc[k] / div; }
+  else if (adapter.amountScale) for (const k of ['total', 'amount', 'balance', 'balanceAfter']) if (typeof doc[k] === 'number') doc[k] = doc[k] * adapter.amountScale;
   doc.category = categorize(adapter, p);
   // A generic display label across schemas (store / issuer / counterparty / instrument / …). When none
   // resolve (e.g. a source whose list encrypts everything but the id, like Amazon), fall back to the

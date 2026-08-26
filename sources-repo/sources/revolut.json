@@ -3,12 +3,22 @@
   "name": "Revolut",
   "service": "revolut",
   "trust": "community",
+  "credit": {
+    "author": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    },
+    "capture": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    }
+  },
   "domain": "revolut.com",
   "country": "global",
   "categories": [
     "banking"
   ],
-  "version": "2026-08-12",
+  "version": "2026-08-26",
   "minVersion": "0.9.3",
   "minorUnits": true,
   "keepRaw": true,
@@ -54,6 +64,26 @@
           "re": [
             "^(?:To|From|Payment to|Payment from)\\s+(.+)$"
           ]
+        },
+        "sign": {
+          "amount": {
+            "when": {
+              "field": "vault",
+              "present": true
+            },
+            "positiveWhen": {
+              "field": "fromAccount.type",
+              "equals": "SAVINGS"
+            }
+          }
+        },
+        "unset": {
+          "balanceAfter": {
+            "when": {
+              "field": "vault",
+              "present": true
+            }
+          }
         }
       },
       "api": {
@@ -71,7 +101,13 @@
             "x-browser-application": "WEB_CLIENT",
             "x-client-version": "100.0"
           },
-          "referer": "https://app.revolut.com/home"
+          "referer": "https://app.revolut.com/home",
+          "keep": {
+            "field": "cardVerification",
+            "exclude": [
+              true
+            ]
+          }
         }
       },
       "fields": {
@@ -147,6 +183,17 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-08-26",
+      "changes": "Drops card verifications (0 EUR authorisations, flagged cardVerification) — they move no money and are not movements. Fixes vault transfers: Revolut books them from the paying side, so money returning from a savings vault arrived negative, and the balance they carry belongs to the vault rather than to the personal account. Reported against 167 real movements, of which 151 of 166 balance links already chained to the cent."
+    },
+    {
+      "version": "2026-08-26",
+      "changes": {
+        "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+        "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+      }
+    },
     {
       "version": "2026-08-12",
       "changes": "La sincronización automática ya no arranca hasta que app.revolut.com/home ha terminado de cargar. La app dispara peticiones autenticadas en pantallas anteriores, así que una sincronización podía empezar antes de que existiera la vista con los datos."
