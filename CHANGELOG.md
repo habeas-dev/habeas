@@ -41,6 +41,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   copy FROM. Choosing it anyway is allowed (a document delivered only to a folder really is
   missing there) but now says so. Destinations with no name are described by their type rather
   than by a raw id like "local-folder-1".
+- **The copy now has two pickers, an origin and a destination**, because "copy A to B" is how
+  people hold this in their heads and inferring the origin silently made the operation hard to
+  reason about. The origin defaults to wherever the archive lives and the destination to something
+  else, which is the pairing almost always meant. Choosing the same on both sides is refused. The
+  first option, "wherever each file is", keeps the old behaviour available: with an archive spread
+  over two destinations it does in one pass what a fixed origin would need two for. A pinned
+  origin is honoured by both passes — naming Dropbox must not quietly also pull from a local
+  folder, which would undo the point of having chosen.
 
 ### Fixed
 - **Saving a source to a destination no longer fails just because you are logged out.** It reported

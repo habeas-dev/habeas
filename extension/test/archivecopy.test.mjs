@@ -77,10 +77,11 @@ test('the destination is never used as one of the origins', () => {
   const bg = read('src/background.js');
   const i = bg.indexOf('const stores = ');
   assert.ok(i > 0, 'the origin list was not found');
-  assert.match(bg.slice(i, bg.indexOf('\n', i)), /s\.id !== sink\.id/, 'the background must exclude the target');
+  assert.match(bg.slice(i, bg.indexOf(';', i)), /s\.id !== sink\.id/, 'the background must exclude the target');
 
   const ui = read('src/ui/options.js');
-  assert.match(ui, /type === 'local-folder' && s\.id !== target\.id/, 'the page pass must exclude the target too');
+  assert.match(ui, /s\.type === 'local-folder' && s\.id !== target\.id/, 'the page pass must exclude the target too');
+  assert.match(ui, /const same = !!\(src && target && src\.id === target\.id\)/, 'and the user must be told when they collide');
 });
 
 test('the user is told what the copy will read from, not only where it writes', () => {
@@ -88,11 +89,13 @@ test('the user is told what the copy will read from, not only where it writes', 
   // without this the user approves an operation without being told what it touches.
   const ui = read('src/ui/options.js');
   assert.match(ui, /describeCopy/, 'no origin/destination description');
-  assert.match(ui, /opt_copy_from/, 'the description must name both ends');
-  assert.match(ui, /copySel\.onchange = describeCopy/, 'it must follow the chosen destination');
+  assert.match(ui, /opt_copy_pair/, 'the description must name both ends');
+  assert.match(ui, /copySrc\.onchange = copySel\.onchange = describeCopy/, 'it must follow BOTH pickers');
   for (const lang of ['en', 'es']) {
     const msg = JSON.parse(read(`_locales/${lang}/messages.json`));
-    assert.ok(msg.opt_copy_from && msg.opt_copy_noorigin, `${lang} is missing the copy description strings`);
+    for (const k of ['opt_copy_pair', 'opt_copy_noorigin', 'opt_copy_same', 'opt_copy_any_src']) {
+      assert.ok(msg[k], `${lang} is missing ${k}`);
+    }
   }
 });
 
@@ -129,7 +132,9 @@ test('the copy does not open on the destination the archive itself lives in', ()
   // "will read from local-folder-1 and write to Dropbox" — correct by the rule, and backwards for the
   // person reading it. That destination is what you copy FROM.
   const ui = read('src/ui/options.js');
-  assert.match(ui, /copyTargets\.find\(\(s\) => s\.id !== archiveSinkId\)/, 'the default must skip the archive sink');
+  assert.match(ui, /copySrc\.value = archiveSinkId/, 'the ORIGIN should default to where the archive lives');
+  assert.match(ui, /copyTargets\.find\(\(s\) => s\.id !== \(copySrc\.value \|\| archiveSinkId\)\)/,
+    'and the destination must default to something else');
   assert.match(ui, /opt_copy_into_archive/, 'and choosing it anyway must be called out');
 });
 
@@ -139,3 +144,13 @@ test('a destination with no name is described by its type, never by its raw id',
     '"local-folder-1" tells the user nothing');
   assert.ok(!/origins\.map\(\(s\) => s\.name \|\| s\.id\)/.test(ui), 'the origin list must use the same naming');
 })
+
+test('a pinned origin is honoured by BOTH passes, not just the background', () => {
+  // Naming Dropbox as the origin must not quietly pull from a local folder as well — that would undo
+  // the whole point of having chosen one.
+  const bg = read('src/background.js');
+  assert.match(bg, /!opts\.originId \|\| s\.id === opts\.originId/, 'the sender must respect a pinned origin');
+  assert.match(bg, /originId: msg\.from \|\| ''/, 'and the message must carry it');
+  const ui = read('src/ui/options.js');
+  assert.match(ui, /&& \(!originId \|\| s\.id === originId\)/, 'the page-side folder pass must respect it too');
+});

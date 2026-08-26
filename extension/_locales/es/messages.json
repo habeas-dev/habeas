@@ -3705,17 +3705,6 @@
       }
     }
   },
-  "opt_copy_from": {
-    "message": "Leerá de $LIST$ y escribirá en $SINK$. Cada fichero se toma del que ya lo tenga; el destino nunca se usa como origen.",
-    "placeholders": {
-      "list": {
-        "content": "$1"
-      },
-      "sink": {
-        "content": "$2"
-      }
-    }
-  },
   "opt_copy_noorigin": {
     "message": "$SINK$ es el único destino del que se pueden releer ficheros, así que no hay de dónde copiar. Elige otro destino, o añade uno que guarde ficheros.",
     "placeholders": {
@@ -3731,5 +3720,28 @@
         "content": "$1"
       }
     }
+  },
+  "opt_copy_from_lbl": {
+    "message": "De"
+  },
+  "opt_copy_to_lbl": {
+    "message": "a"
+  },
+  "opt_copy_any_src": {
+    "message": "Donde esté cada fichero"
+  },
+  "opt_copy_pair": {
+    "message": "Leerá de $SRC$ y escribirá en $DST$.",
+    "placeholders": {
+      "src": {
+        "content": "$1"
+      },
+      "dst": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_copy_same": {
+    "message": "Origen y destino son el mismo. Elige otro."
   }
 }

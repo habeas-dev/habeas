@@ -423,6 +423,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const signal = startOp();
       const r = await runArchiveCopy(cfg, adapters, sink, {
         signal,
+        originId: msg.from || '',
         // Progress rides the same storage channel the Archive already listens on, so the Settings page
         // gets live counts without a port that a sleeping service worker would drop.
         onProgress: (p) => setStatus(p.phase === 'source' ? t('status_fetching', [String(p.found), p.name]) : t('status_sending', [String(p.sent), sink.id])),
@@ -812,7 +813,11 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
     // local-folder is absent because the service worker has no directory handle — only a page does, so a
     // folder-backed archive is copied page-side instead (see the Settings migration).
     const SW_RETRIEVABLE = new Set(['dropbox', 'webdav', 's3', 'drive']);
-    const stores = opts.force ? [] : (cfg.sinks || []).filter((s) => s.id !== sink.id && SW_RETRIEVABLE.has(s.type));
+    // opts.originId pins the copy to ONE destination: chosen explicitly, the operation reads as
+    // "A → B" and cannot silently pull a file from somewhere the user did not name. Left unset,
+    // every readable destination is tried, which is what handles an archive spread across two.
+    const stores = opts.force ? [] : (cfg.sinks || []).filter((s) =>
+      s.id !== sink.id && SW_RETRIEVABLE.has(s.type) && (!opts.originId || s.id === opts.originId));
     // One Drive cache for the whole send: Drive resolves names to ids, so without this every file costs
     // an extra lookup and a few thousand documents run into rate limits.
     const dcache = driveCache();
@@ -1500,7 +1505,7 @@ async function runExternalStoreSend(ds, adapter, sink, { label, force } = {}) {
 //
 // local-folder is not among the origins here: the service worker has no directory handle. The Settings
 // page copies that case itself, since only a page can hold one.
-export async function runArchiveCopy(cfg, adapters, sink, { signal, onProgress } = {}) {
+export async function runArchiveCopy(cfg, adapters, sink, { signal, onProgress, originId } = {}) {
   const per = [];
   let sent = 0, found = 0, skipped = 0;
   for (const ds of (cfg.datasources || [])) {
@@ -1516,7 +1521,7 @@ export async function runArchiveCopy(cfg, adapters, sink, { signal, onProgress }
     if (onProgress) onProgress({ phase: 'source', name, found: picked.length });
     let r;
     try {
-      r = await sendStoredDocs(ds, adapter, sink, picked, { noOpen: true, noSource: true, signal });
+      r = await sendStoredDocs(ds, adapter, sink, picked, { noOpen: true, noSource: true, signal, originId });
     } catch (e) {
       per.push({ datasource: ds.id, name, found: picked.length, sent: 0, error: (e && e.message) || String(e) });
       continue;

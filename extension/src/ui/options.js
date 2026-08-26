@@ -312,38 +312,45 @@ async function render() {
   // archive spread across Dropbox and Drive comes across in a single pass.
   const KEEPS_FILES = ['local-folder', 'drive', 'dropbox', 'webdav', 's3', 'http'];
   const copyTargets = cfg.sinks.filter((s) => KEEPS_FILES.includes(s.type));
-  const copySel = $('#copyto');
   // A destination with no name shows its id ("local-folder-1"), which tells the user nothing. Fall back
-  // to the TYPE's own label instead — "Local folder" is at least true and readable.
+  // to the TYPE's own label — "Local folder" is at least true and readable.
   const destName = (s) => s.name || t(SINK_TL[s.type]) || s.id;
+
+  // Two pickers, because "copy A to B" is how people hold this in their heads. RETRIEVABLE is imported
+  // rather than restated, so the origin list cannot drift from what the code can actually read back.
+  const copySrc = $('#copysrc'), copySel = $('#copyto');
+  const readable = cfg.sinks.filter((s) => RETRIEVABLE.has(s.type));
+  // The empty option keeps the old behaviour available: with an archive spread over two destinations,
+  // taking each file from wherever it happens to be does in one pass what a fixed origin needs two for.
+  copySrc.innerHTML = `<option value="">${esc(t('opt_copy_any_src'))}</option>`
+    + readable.map((s) => `<option value="${esc(s.id)}">${esc(destName(s))}</option>`).join('');
   copySel.innerHTML = copyTargets.map((s) => `<option value="${esc(s.id)}">${esc(destName(s))}</option>`).join('');
-  copySel.disabled = copyTargets.length < 1;
-  // Do not open on the archive's own destination. That is where everything already is, so it is what
-  // you copy FROM; offering it as the default invites exactly the copy that has nothing to do.
-  const firstUseful = copyTargets.find((s) => s.id !== archiveSinkId);
+  copySrc.disabled = copySel.disabled = copyTargets.length < 1;
+  // Open on the pairing that is almost always meant: OUT of wherever the archive lives, INTO something
+  // else. Defaulting the target to the archive's own destination invited the copy with nothing to do.
+  if (archiveSinkId && readable.some((s) => s.id === archiveSinkId)) copySrc.value = archiveSinkId;
+  const firstUseful = copyTargets.find((s) => s.id !== (copySrc.value || archiveSinkId));
   if (firstUseful) copySel.value = firstUseful.id;
 
-  // Say where the files will come FROM, not only where they go. The origins are not chosen — each file
-  // is taken from whichever destination happens to hold it — so without this the operation is opaque:
-  // you would be asked to approve a copy without being told what it reads. RETRIEVABLE is imported
-  // rather than restated so this cannot drift from what the code can actually read.
   const describeCopy = () => {
     const target = cfg.sinks.find((s) => s.id === copySel.value);
-    // The destination is never its own origin (enforced in the sender too) — copying a file onto
-    // itself is at best a no-op and at worst a rewrite of the thing being preserved.
-    const origins = cfg.sinks.filter((s) => RETRIEVABLE.has(s.type) && (!target || s.id !== target.id));
-    const ok = !!target && origins.length > 0;
+    const src = copySrc.value ? cfg.sinks.find((s) => s.id === copySrc.value) : null;
+    // Reading a file from the very place being written to is at best a no-op and at worst a rewrite of
+    // the thing the copy exists to preserve. The senders exclude it too; this is so the user is told.
+    const same = !!(src && target && src.id === target.id);
+    const origins = readable.filter((s) => (!target || s.id !== target.id) && (!src || s.id === src.id));
+    const ok = !!target && !same && origins.length > 0;
     $('#copystart').disabled = !ok;
     if (!copyTargets.length) { $('#copyfrom').textContent = t('opt_copy_nodests'); return; }
+    if (same) { $('#copyfrom').textContent = t('opt_copy_same'); return; }
     if (!ok) { $('#copyfrom').textContent = t('opt_copy_noorigin', [target ? destName(target) : '']); return; }
     // Copying INTO the archive's own destination is not forbidden — a document delivered only to a
-    // local folder genuinely is missing there — but it is the wrong way round for almost everyone, so
-    // say so rather than let the operation look like the obvious one.
+    // local folder genuinely is missing there — but it is the wrong way round for almost everyone.
     const intoArchive = !!archiveSinkId && target.id === archiveSinkId;
     $('#copyfrom').textContent = (intoArchive ? t('opt_copy_into_archive', [destName(target)]) + ' ' : '')
-      + t('opt_copy_from', [origins.map(destName).join(', '), destName(target)]);
+      + t('opt_copy_pair', [src ? destName(src) : origins.map(destName).join(', '), destName(target)]);
   };
-  copySel.onchange = describeCopy;
+  copySrc.onchange = copySel.onchange = describeCopy;
   describeCopy();
 
   let copyAbort = null;
@@ -361,12 +368,17 @@ async function render() {
     const onStatus = (ch, area) => { const v = area === 'local' && ch['habeas:status'] && ch['habeas:status'].newValue; if (v && v.msg) $('#copystatus').textContent = v.msg; };
     chrome.storage.onChanged.addListener(onStatus);
     try {
-      const r = await chrome.runtime.sendMessage({ type: 'habeas:archiveCopy', sink: target.id });
+      const originId = copySrc.value || '';
+      const r = await chrome.runtime.sendMessage({ type: 'habeas:archiveCopy', sink: target.id, from: originId });
       if (!r || !r.ok) { $('#copystatus').textContent = t('opt_copy_err', [(r && r.error) || 'error']); return; }
       let sent = r.sent || 0, skipped = r.skipped || 0, stopped = r.status === 'stopped';
       // Second pass, page-side: a local folder can only be read where a directory handle lives, which
       // is here and never in the service worker. Skipped when the folder IS the target.
-      const folder = cfg.sinks.find((s) => s.type === 'local-folder' && s.id !== target.id);
+      // Only when the local folder is actually the chosen origin — or when no origin was pinned and it
+      // may therefore hold files nothing else does. Naming Dropbox as the origin must not quietly pull
+      // from a folder as well; that is the whole point of having chosen.
+      const folder = cfg.sinks.find((s) => s.type === 'local-folder' && s.id !== target.id
+        && (!originId || s.id === originId));
       if (folder && !stopped && !copyAbort.signal.aborted) {
         const f = await copyFolderBackedDocs(cfg, CATALOG, folder, target, {
           signal: copyAbort.signal,

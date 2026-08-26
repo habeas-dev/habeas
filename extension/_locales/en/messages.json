@@ -3705,17 +3705,6 @@
       }
     }
   },
-  "opt_copy_from": {
-    "message": "Will read from $LIST$ and write to $SINK$. Each file is taken from whichever of those already holds it; the destination is never used as a source.",
-    "placeholders": {
-      "list": {
-        "content": "$1"
-      },
-      "sink": {
-        "content": "$2"
-      }
-    }
-  },
   "opt_copy_noorigin": {
     "message": "$SINK$ is the only destination files can be read back from, so there is nothing to copy from. Choose another destination, or add one that keeps files.",
     "placeholders": {
@@ -3731,5 +3720,28 @@
         "content": "$1"
       }
     }
+  },
+  "opt_copy_from_lbl": {
+    "message": "From"
+  },
+  "opt_copy_to_lbl": {
+    "message": "to"
+  },
+  "opt_copy_any_src": {
+    "message": "Wherever each file is"
+  },
+  "opt_copy_pair": {
+    "message": "Will read from $SRC$ and write to $DST$.",
+    "placeholders": {
+      "src": {
+        "content": "$1"
+      },
+      "dst": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_copy_same": {
+    "message": "Origin and destination are the same. Choose a different one."
   }
 }
