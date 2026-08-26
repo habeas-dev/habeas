@@ -216,6 +216,15 @@ scaffolding kept as design notes (safe to consolidate later).
    `adapters/validate.js` (`checkHosts`) + `lib/consent.js`.
 5. **Triggers are user-initiated / on-login.** No background scraping with a stored session
    while the user is away.
+6. **`docs/` IS the website.** It is the GitHub Pages source, so anything committed there is served at
+   habeas.dev the moment it is pushed — it is not a documentation folder, though it reads like one.
+   **Ask the maintainer before adding any NEW file under `docs/`**, and say where it will be reachable
+   (`habeas.dev/<name>`). Editing an already-published page is ordinary work; creating one is
+   publishing. Stage `docs/` paths explicitly — never `git add -A docs/`, which once swept in
+   `docs/incidencias/` (real captures, real amounts) and would have served them at
+   habeas.dev/incidencias/. The PII guard caught it on a long digit run, which is luck: a capture with
+   no long numbers goes straight through. Regenerated output from a committed generator (`llms.txt`,
+   `sitemap.xml`, the guide pages) is not a new document.
 
 ## Legal posture
 

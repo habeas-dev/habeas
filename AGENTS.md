@@ -160,5 +160,8 @@ the user's behalf server-side or store their credentials.
 - Don't put imperative logic in a source, or fetch remote code.
 - Don't add AI-attribution commit trailers.
 - Don't commit real user data / captures / secrets, or reuse real values as test data.
+- Don't add a NEW file under `docs/` without asking the maintainer first. `docs/` is the GitHub
+  Pages source: committing there PUBLISHES at habeas.dev. Editing an already-published page is
+  fine; creating one is publishing. Stage those paths explicitly, never `git add -A docs/`.
 - Don't broaden host permissions or cross the same-domain boundary without `crossDomainHosts` + consent.
 - Don't publish an unverified/invented source to the live catalog.
