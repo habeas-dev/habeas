@@ -3643,10 +3643,10 @@
     }
   },
   "opt_copy_h": {
-    "message": "Copy your archive to another destination"
+    "message": "Copy files between destinations"
   },
   "opt_copy_intro": {
-    "message": "Copies the documents you already have into another destination, reading them from the ones that hold them. It never contacts the services, so no login is needed — and it is the only way some documents survive a change of destination, because many shops and banks refuse to hand an old document over a second time."
+    "message": "Copies files you already have from one destination into another, reading each from wherever it is. It never contacts the services, so no login is needed — and it is the only way some documents survive a change of destination, because many shops and banks refuse to hand an old document over a second time."
   },
   "opt_copy_start": {
     "message": "Copy"
@@ -3774,5 +3774,27 @@
   },
   "dest_unavailable_hint": {
     "message": "A local folder needs the File System Access API, which Firefox does not have. The destination is kept — it still works in Chrome, and removing it here would remove it there too."
+  },
+  "opt_copy_progress": {
+    "message": "$SRC$ — $N$ of $T$",
+    "placeholders": {
+      "src": {
+        "content": "$1"
+      },
+      "n": {
+        "content": "$2"
+      },
+      "t": {
+        "content": "$3"
+      }
+    }
+  },
+  "opt_copy_allskipped": {
+    "message": "Nothing was copied: none of the $N$ documents had a file in the origin. Their data lives in the manifest — a bank movement has no file of its own.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
   }
 }

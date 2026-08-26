@@ -247,3 +247,25 @@ test('…but it is KEPT and labelled, never deleted', () => {
     assert.ok(msg.dest_unavailable && msg.dest_unavailable_hint, `${lang} lacks the unavailable labels`);
   }
 });
+
+test('progress is reported per document, not per flushed batch', () => {
+  // Reported from real use: "Copying to Folder …" and nothing further, no files. Reporting only on flush
+  // meant nothing moved for the first 25 documents — each of which costs a round-trip to the origin — and
+  // nothing moved AT ALL for an archive of record-only movements, where no batch ever fills because there
+  // is no file to put in one. Silent and stuck look identical from the outside.
+  const lib = read('src/lib/foldercopy.js');
+  const i = lib.indexOf('for (const d of docs) {');
+  const body = lib.slice(i, lib.indexOf('await flush();', i));
+  assert.match(body, /onStatus\(\{ done: \+\+seen, total: docs\.length/, 'each document must report');
+  assert.ok(!/onStatus\(\{ sending:/.test(lib), 'the per-batch-only report must be gone');
+});
+
+test('a run that skipped everything does not claim the destination already had it', () => {
+  const ui = read('src/ui/options.js');
+  assert.match(ui, /!sent && skipped/, 'all-skipped needs its own message');
+  assert.ok(ui.indexOf("t('opt_copy_allskipped'") < ui.indexOf("t('opt_copy_none'"),
+    'the truthful case must be tested before the reassuring one');
+  for (const lang of ['en', 'es']) {
+    assert.ok(JSON.parse(read(`_locales/${lang}/messages.json`)).opt_copy_allskipped, `${lang} lacks it`);
+  }
+});

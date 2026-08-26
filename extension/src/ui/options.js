@@ -390,12 +390,18 @@ async function render() {
         const f = await copyArchivePageSide(cfg, CATALOG, target, {
           originId,
           signal: copyAbort.signal,
-          onStatus: (p) => { $('#copystatus').textContent = t('status_sending', [String(p.sending), p.sink]); },
+          onStatus: (p) => {
+            $('#copystatus').textContent = t('opt_copy_progress', [p.source, String(p.done), String(p.total)])
+              + (p.skipped ? ' · ' + t('opt_copy_skipped', [String(p.skipped)]) : '');
+          },
         });
         sent = f.sent; skipped = f.skipped; stopped = f.stopped;
       }
 
       if (stopped) $('#copystatus').textContent = t('opt_copy_stopped', [String(sent)]);
+      // "already has everything" is only true when there was nothing to move. When everything was skipped
+      // for want of a file in the origin, saying that is a plain lie about where the user's documents are.
+      else if (!sent && skipped) $('#copystatus').textContent = t('opt_copy_allskipped', [String(skipped)]);
       else if (!sent) $('#copystatus').textContent = t('opt_copy_none', [label]);
       else $('#copystatus').textContent = t('opt_copy_done', [String(sent), label]);
       if (skipped) { $('#copyreport').hidden = false; $('#copyreport').textContent = t('opt_copy_skipped', [String(skipped)]); }

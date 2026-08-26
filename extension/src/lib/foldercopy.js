@@ -107,7 +107,6 @@ export async function copyArchivePageSide(cfg, adapters, target, { originId = ''
       const flush = async () => {
         if (!batch.length) return;
         const b = batch; batch = [];
-        if (onStatus) onStatus({ sending: b.length, sink: target.name || target.id });
         const res = await writeToSink(target, b, files, { service: adapter.service || ds.adapter, source: sk,
           ext: documentExt(eff) || 'pdf', interactive: true, dirHandle });
         // A destination answering with per-record `accepted` decides what enters the ledger; one that does
@@ -120,8 +119,14 @@ export async function copyArchivePageSide(cfg, adapters, target, { originId = ''
         sent += ok.length;
       };
 
+      let seen = 0;
       for (const d of docs) {
         if (signal && signal.aborted) break;
+        // Per DOCUMENT, not per flushed batch. Reporting only on flush meant nothing moved on screen for
+        // the first 25 documents — each of which costs a round-trip to the origin — and nothing moved AT
+        // ALL for an archive of record-only movements, where no batch ever fills because there is no file
+        // to put in one. A silent operation is indistinguishable from a stuck one.
+        if (onStatus) onStatus({ done: ++seen, total: docs.length, source: adapter.name || ds.adapter, skipped });
         const rec = { ...d.record, internalId: d.internalId, date: d.date, group: d.group };
         const arts = [];
         for (const fmt of (fmts.length ? fmts : [''])) {

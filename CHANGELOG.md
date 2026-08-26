@@ -61,6 +61,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   only at the moment of use. It is now labelled "not available here" and left out of every operation that
   could only fail. It is deliberately NOT deleted: configuration sync adopts and never prunes, so removing
   the entry in Firefox would remove a working destination from Chrome as well.
+- **The copy reports every document, and is called what it is.** It only reported on flushing a batch of
+  25, so nothing moved on screen while the first 25 were fetched one round-trip at a time — and nothing
+  moved at all for an archive of record-only movements, where no batch ever fills because there is no file
+  to put in one. Silent and stuck are indistinguishable from outside. A run that skipped everything also
+  claimed the destination "already holds everything in your archive", which was a plain lie about where
+  the user's documents are; it now says none of them had a file in the origin, and why. Renamed to "copy
+  files between destinations": it moves files between destinations, and "your archive" collides with the
+  canonical store, which is a different thing.
 - **A copy that fails says so.** Per-source failures were recorded and never shown, so a copy that could
   not write a single file read exactly like a copy with nothing left to do. That is what made the above
   hard to diagnose from the outside. A lapsed folder permission gets its own words rather than "error".

@@ -3643,10 +3643,10 @@
     }
   },
   "opt_copy_h": {
-    "message": "Copiar tu archivo a otro destino"
+    "message": "Copiar ficheros entre destinos"
   },
   "opt_copy_intro": {
-    "message": "Copia a otro destino los documentos que ya tienes, leyéndolos de los destinos que los guardan. No contacta con los servicios, así que no hace falta iniciar sesión — y es la única forma de que algunos documentos sobrevivan a un cambio de destino, porque muchas tiendas y bancos se niegan a darte otra vez un documento antiguo."
+    "message": "Copia de un destino a otro los ficheros que ya tienes, leyendo cada uno de donde esté. No contacta con los servicios, así que no hace falta iniciar sesión — y es la única forma de que algunos documentos sobrevivan a un cambio de destino, porque muchas tiendas y bancos se niegan a darte otra vez un documento antiguo."
   },
   "opt_copy_start": {
     "message": "Copiar"
@@ -3774,5 +3774,27 @@
   },
   "dest_unavailable_hint": {
     "message": "Una carpeta local necesita la API de File System Access, que Firefox no tiene. El destino se conserva: sigue funcionando en Chrome, y quitarlo aquí lo quitaría también allí."
+  },
+  "opt_copy_progress": {
+    "message": "$SRC$ — $N$ de $T$",
+    "placeholders": {
+      "src": {
+        "content": "$1"
+      },
+      "n": {
+        "content": "$2"
+      },
+      "t": {
+        "content": "$3"
+      }
+    }
+  },
+  "opt_copy_allskipped": {
+    "message": "No se copió nada: ninguno de los $N$ documentos tenía fichero en el origen. Sus datos viven en el manifiesto — un movimiento bancario no tiene fichero propio.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
   }
 }
