@@ -1,4 +1,5 @@
 import { chrome } from '../lib/ext.js';
+import { sinkLabel } from '../lib/sinklabel.js';
 import { getConfig, saveConfig, upsert, remove } from '../lib/config.js';
 import { driveSignIn, driveConnected, disconnectDrive, preferDeviceFlow, driveDeviceConnect } from '../sinks/drive.js';
 import { dropboxConnect } from '../sinks/dropbox.js';
@@ -225,7 +226,7 @@ async function render() {
       <div class="dest-top">
         <div class="dest-ic">${SINK_IC[s.type] || '📤'}</div>
         <div class="dest-id">
-          <div class="dest-name">${esc(s.name || s.id)}${isDef ? ` <span class="pill sent">★ ${t('default_sink')}</span>` : ''}${isArchive ? ` <span class="pill type" title="${esc(t('dest_is_archive_hint'))}">🗄️ ${t('dest_is_archive')}</span>` : ''}</div>
+          <div class="dest-name">${esc(sinkLabel(s))}${isDef ? ` <span class="pill sent">★ ${t('default_sink')}</span>` : ''}${isArchive ? ` <span class="pill type" title="${esc(t('dest_is_archive_hint'))}">🗄️ ${t('dest_is_archive')}</span>` : ''}</div>
           <div class="dest-meta">${esc(typeLabel)}${s.name ? ` · <code>${esc(s.id)}</code>` : ''}${detail ? ` · ${detail}` : ''}</div>
         </div>
       </div>
@@ -314,7 +315,6 @@ async function render() {
   const copyTargets = cfg.sinks.filter((s) => KEEPS_FILES.includes(s.type));
   // A destination with no name shows its id ("local-folder-1"), which tells the user nothing. Fall back
   // to the TYPE's own label — "Local folder" is at least true and readable.
-  const destName = (s) => s.name || t(SINK_TL[s.type]) || s.id;
 
   // Two pickers, because "copy A to B" is how people hold this in their heads. RETRIEVABLE is imported
   // rather than restated, so the origin list cannot drift from what the code can actually read back.
@@ -323,8 +323,8 @@ async function render() {
   // The empty option keeps the old behaviour available: with an archive spread over two destinations,
   // taking each file from wherever it happens to be does in one pass what a fixed origin needs two for.
   copySrc.innerHTML = `<option value="">${esc(t('opt_copy_any_src'))}</option>`
-    + readable.map((s) => `<option value="${esc(s.id)}">${esc(destName(s))}</option>`).join('');
-  copySel.innerHTML = copyTargets.map((s) => `<option value="${esc(s.id)}">${esc(destName(s))}</option>`).join('');
+    + readable.map((s) => `<option value="${esc(s.id)}">${esc(sinkLabel(s))}</option>`).join('');
+  copySel.innerHTML = copyTargets.map((s) => `<option value="${esc(s.id)}">${esc(sinkLabel(s))}</option>`).join('');
   copySrc.disabled = copySel.disabled = copyTargets.length < 1;
   // Open on the pairing that is almost always meant: OUT of wherever the archive lives, INTO something
   // else. Defaulting the target to the archive's own destination invited the copy with nothing to do.
@@ -343,12 +343,12 @@ async function render() {
     $('#copystart').disabled = !ok;
     if (!copyTargets.length) { $('#copyfrom').textContent = t('opt_copy_nodests'); return; }
     if (same) { $('#copyfrom').textContent = t('opt_copy_same'); return; }
-    if (!ok) { $('#copyfrom').textContent = t('opt_copy_noorigin', [target ? destName(target) : '']); return; }
+    if (!ok) { $('#copyfrom').textContent = t('opt_copy_noorigin', [target ? sinkLabel(target) : '']); return; }
     // Copying INTO the archive's own destination is not forbidden — a document delivered only to a
     // local folder genuinely is missing there — but it is the wrong way round for almost everyone.
     const intoArchive = !!archiveSinkId && target.id === archiveSinkId;
-    $('#copyfrom').textContent = (intoArchive ? t('opt_copy_into_archive', [destName(target)]) + ' ' : '')
-      + t('opt_copy_pair', [src ? destName(src) : origins.map(destName).join(', '), destName(target)]);
+    $('#copyfrom').textContent = (intoArchive ? t('opt_copy_into_archive', [sinkLabel(target)]) + ' ' : '')
+      + t('opt_copy_pair', [src ? sinkLabel(src) : origins.map(sinkLabel).join(', '), sinkLabel(target)]);
   };
   copySrc.onchange = copySel.onchange = describeCopy;
   describeCopy();
@@ -358,9 +358,9 @@ async function render() {
   $('#copystart').onclick = async () => {
     const target = cfg.sinks.find((s) => s.id === copySel.value);
     if (!target) return;
-    const label = target.name || target.id;
+    const label = sinkLabel(target);
     copyAbort = new AbortController();
-    $('#copystart').hidden = true; $('#copystop').hidden = false; copySel.disabled = true;
+    $('#copystart').disabled = true; $('#copystop').disabled = false; copySrc.disabled = copySel.disabled = true;
     $('#copyreport').hidden = true; $('#copyreport').textContent = '';
     $('#copystatus').textContent = t('opt_copy_running', [label]);
     // Live counts ride chrome.storage, the channel the Archive already listens on: a port would be torn
@@ -394,7 +394,7 @@ async function render() {
     finally {
       chrome.storage.onChanged.removeListener(onStatus);
       copyAbort = null;
-      $('#copystart').hidden = false; $('#copystop').hidden = true; copySel.disabled = false;
+      $('#copystop').disabled = true; copySrc.disabled = copySel.disabled = false; describeCopy();
     }
   };
 
@@ -414,7 +414,7 @@ async function render() {
     const sinks = swSinks.filter((s) => !dsAdapter || sinkAcceptsSource(s, dsAdapter));
     const hay = [nameOf(d), d.id].join(' ').toLowerCase();
     const dests = sinks.length
-      ? sinks.map((s) => `<label class="destchk"><input type="checkbox" data-rsink="${esc(d.id)}" data-sink="${esc(s.id)}"${onSet.has(s.id) ? ' checked' : ''}> ${esc(s.name || s.id)} <span class="muted">(${esc(s.type)})</span></label>`).join('')
+      ? sinks.map((s) => `<label class="destchk"><input type="checkbox" data-rsink="${esc(d.id)}" data-sink="${esc(s.id)}"${onSet.has(s.id) ? ' checked' : ''}> ${esc(sinkLabel(s))} <span class="muted">(${esc(s.type)})</span></label>`).join('')
       : `<span class="muted">${t('no_sw_sinks')}</span>`;
     return `<div class="src-card${on.length ? ' on' : ''}" data-hay="${esc(hay)}">
       <div class="src-info">
@@ -444,7 +444,7 @@ async function render() {
   const siteIds = new Set();
   for (const s of (cfg.sinks || [])) if (String(s.id).startsWith('ext-')) siteIds.add(s.id);
   for (const g of grants) if (g.sinkId) siteIds.add(g.sinkId);
-  const sinkName = (id) => { const s = (cfg.sinks || []).find((x) => x.id === id); return (s && (s.name || s.id)) || String(id).replace(/^ext-/, ''); };
+  const sinkName = (id) => sinkLabel((cfg.sinks || []).find((x) => x.id === id)) || id;
   const row = (inner) => `<div class="row" style="display:flex;align-items:center;gap:8px;padding:4px 0">${inner}</div>`;
   const group = (title, note, rows) => `<div style="margin-top:8px"><div style="font-weight:600">${esc(title)}</div><p class="muted" style="margin:2px 0 4px">${esc(note)}</p>${rows}</div>`;
   const siteCards = [...siteIds].map((sid) => {
@@ -565,7 +565,7 @@ async function renderPlanner(cfg) {
   const opt = (v, label, sel) => `<option value="${esc(v)}"${sel === v ? ' selected' : ''}>${esc(label)}</option>`;
   const dsSel = $('#pl-ds'), sinkSel = $('#pl-sink');
   if (dsSel) dsSel.innerHTML = dsList.map((d) => opt(d.id, ((adapters[d.adapter] && adapters[d.adapter].name) || d.adapter) + (d.brandDomain ? ' (' + d.brandDomain.replace(/^[^.]*\./, '').toUpperCase() + ')' : ''), dsSel.value)).join('') || opt('', t('sched_no_sources'));
-  if (sinkSel) sinkSel.innerHTML = sinkList.map((s) => opt(s.id, `${s.name || s.id} (${s.type})`, sinkSel.value)).join('') || opt('', t('sched_no_sinks'));
+  if (sinkSel) sinkSel.innerHTML = sinkList.map((s) => opt(s.id, `${sinkLabel(s)} (${s.type})`, sinkSel.value)).join('') || opt('', t('sched_no_sinks'));
   const wd = $('#pl-weekdays'); if (wd && !wd.dataset.built) { wd.dataset.built = '1'; wd.innerHTML = WEEKDAYS.map(([n, k]) => `<label class="pill" style="cursor:pointer">${esc(t(k))}<input type="checkbox" value="${n}" style="margin-left:3px"></label>`).join(''); }
   const wdSel = $('#pl-weekday'); if (wdSel && !wdSel.options.length) wdSel.innerHTML = WEEKDAYS.map(([n, k]) => `<option value="${n}">${esc(t(k))}</option>`).join('');
   syncPlannerForm();
@@ -615,7 +615,7 @@ function renderStoreFields() {
     const sel = document.createElement('select'); sel.id = 'store-sink'; f.append(sel);
     getConfig().then(async (c) => {
       const sinks = (c.sinks || []).filter((s) => s.type === b);
-      sel.innerHTML = sinks.length ? sinks.map((s) => `<option value="${esc(s.id)}">${esc(s.name || s.id)}</option>`).join('') : `<option value="">${t('store_no_sink')}</option>`;
+      sel.innerHTML = sinks.length ? sinks.map((s) => `<option value="${esc(s.id)}">${esc(sinkLabel(s))}</option>`).join('') : `<option value="">${t('store_no_sink')}</option>`;
       const cur = await getStoreConfig(); if (cur.backend === b && cur.sinkId) sel.value = cur.sinkId;
     });
   }

@@ -138,11 +138,28 @@ test('the copy does not open on the destination the archive itself lives in', ()
   assert.match(ui, /opt_copy_into_archive/, 'and choosing it anyway must be called out');
 });
 
-test('a destination with no name is described by its type, never by its raw id', () => {
-  const ui = read('src/ui/options.js');
-  assert.match(ui, /const destName = \(s\) => s\.name \|\| t\(SINK_TL\[s\.type\]\) \|\| s\.id/,
-    '"local-folder-1" tells the user nothing');
-  assert.ok(!/origins\.map\(\(s\) => s\.name \|\| s\.id\)/.test(ui), 'the origin list must use the same naming');
+test('an unnamed local folder is named by its folder, not by its internal id', () => {
+  // "local-folder-1" says nothing about WHICH folder, and that is the one destination whose identity
+  // lives outside the extension. The File System Access API exposes no path — deliberately, since that
+  // would reveal the disk's layout — but it does give the directory's own name, already stored as
+  // folderName on creation and on every reconnect. It simply was not being read.
+  const lbl = read('src/lib/sinklabel.js');
+  assert.match(lbl, /sink\.type === 'local-folder' && sink\.folderName/, 'folderName must be preferred');
+  assert.match(lbl, /sink_local_named/, 'and shown as "Folder <name>", so it says what it is as well as which');
+  assert.match(lbl, /if \(sink\.name\) return sink\.name/, 'a name the user gave must still win');
+  for (const lang of ['en', 'es']) {
+    assert.ok(JSON.parse(read(`_locales/${lang}/messages.json`)).sink_local_named, `${lang} lacks sink_local_named`);
+  }
+});
+
+test('every place that shows a destination name uses the one helper', () => {
+  // Three copies of this had drifted across popup, archive and settings, so an unnamed folder read
+  // differently depending on which screen you were on.
+  for (const f of ['src/ui/options.js', 'src/ui/archive.js', 'src/ui/popup.js']) {
+    const src = read(f);
+    assert.match(src, /import \{ sinkLabel \} from '\.\.\/lib\/sinklabel\.js'/, `${f} must import it`);
+    assert.ok(!/\bs\.name \|\| s\.id\b/.test(src), `${f} still builds a destination name by hand`);
+  }
 })
 
 test('a pinned origin is honoured by BOTH passes, not just the background', () => {

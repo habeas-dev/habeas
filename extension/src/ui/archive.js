@@ -6,6 +6,7 @@
 //   C  the root "Everything" is an INDEX of sources, not a merged timeline
 //   D  a selection mode for batch actions
 import { chrome } from '../lib/ext.js';
+import { sinkLabel } from '../lib/sinklabel.js';
 import { getConfig, saveConfig } from '../lib/config.js';
 import { getAdapters } from '../adapters/index.js';
 import { listSources, getSource, getSourceCached, getStoreConfig } from '../lib/store.js';
@@ -809,7 +810,7 @@ function detailHtml(view, record) {
   if (rows.length) html += `<div class="dsec"><dl class="kvx">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(String(v))}</dd>`).join('')}</dl></div>`;
   return html;
 }
-const sinkLabel = (s) => s.name || s.id || s.type;
+// sinkLabel now lives in lib/sinklabel.js — three copies had drifted apart.
 // Software destinations the background can deliver to unattended (mirrors the Auto-sync tab). 'download' and
 // 'local-folder' need a page/user context, so they're not offered as an on-demand archive save.
 const AUTO_SINK_TYPES = new Set(['drive', 'http', 'webdav', 's3', 'dropbox', 'email']);

@@ -3743,5 +3743,13 @@
   },
   "opt_copy_same": {
     "message": "Origin and destination are the same. Choose a different one."
+  },
+  "sink_local_named": {
+    "message": "Folder $NAME$",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
   }
 }

@@ -3743,5 +3743,13 @@
   },
   "opt_copy_same": {
     "message": "Origen y destino son el mismo. Elige otro."
+  },
+  "sink_local_named": {
+    "message": "Carpeta $NAME$",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
   }
 }

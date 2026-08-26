@@ -49,6 +49,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   over two destinations it does in one pass what a fixed origin would need two for. A pinned
   origin is honoured by both passes — naming Dropbox must not quietly also pull from a local
   folder, which would undo the point of having chosen.
+- **A local folder you never renamed is now called "Folder <its name>"** instead of the internal id
+  "local-folder-1", which said nothing about which folder it was — and that is the one destination
+  whose identity lives outside the extension. The File System Access API exposes no path, by design,
+  since that would reveal the disk's layout; the directory's own name was already stored and simply
+  was not read. Destination naming also moved into one helper: three copies had drifted across the
+  popup, the Archive and Settings, so the same destination could read differently per screen.
+- **The stop control is now always visible, merely disabled when idle.** Hidden until a copy began,
+  nothing suggested the operation could be interrupted at all, and a run with nothing to do never
+  revealed it.
 
 ### Fixed
 - **Saving a source to a destination no longer fails just because you are logged out.** It reported

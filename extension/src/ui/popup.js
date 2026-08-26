@@ -1,4 +1,5 @@
 import { chrome } from '../lib/ext.js';
+import { sinkLabel } from '../lib/sinklabel.js';
 import { getConfig, saveConfig } from '../lib/config.js';
 import { displayName, displayAmount } from '../lib/recdisplay.js';
 import { manageAccounts } from './accountpicker.js';
@@ -713,7 +714,7 @@ async function renderActivity() {
 let docsRows = null;       // flattened rows, or null = not loaded yet
 let docsFiltered = [];     // currently-rendered subset (index target for row handlers)
 
-const sinkLabel = (s) => s.name || s.id || s.type;
+// sinkLabel now lives in lib/sinklabel.js — three copies had drifted apart.
 const docStore = displayName; // instrument (investments) → store/issuer/counterparty/description (recdisplay.js)
 
 // Quick hero: a friendly landing that frames the popup as the fast lane to the visual Archive. Cheap — reads
