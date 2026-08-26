@@ -3,13 +3,23 @@
   "name": "AliExpress",
   "service": "aliexpress",
   "trust": "community",
+  "credit": {
+    "author": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    },
+    "capture": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    }
+  },
   "domain": "aliexpress.com",
   "country": "global",
   "categories": [
     "marketplace",
     "retail"
   ],
-  "version": "2026-08-08",
+  "version": "2026-08-26",
   "minVersion": "0.3.0",
   "keepRaw": true,
   "schema": "receipt@1",
@@ -143,12 +153,25 @@
   },
   "changelog": [
     {
+      "version": "2026-08-26",
+      "changes": {
+        "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+        "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+      }
+    },
+    {
       "version": "2026-08-08",
-      "changes": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`."
+      "changes": {
+        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.",
+        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`."
+      }
     },
     {
       "version": "2026-07-16",
-      "changes": "Initial: order history via Alibaba's mtop gateway. Runs in the site tab and reuses the app's own live request payload (hook stashes it) + its lib.mtop signing (no hardcoded blob, no forged signature); paginates by bumping the component pageIndex. Orders extracted from the DIDA component response (itemsFromKeys). Per-order receipt as a self-contained printable HTML invoice, generated from mtop queryorderreceiptinfo (no seed needed — a known flat payload) via a declarative template using AliExpress's own labels."
+      "changes": {
+        "en": "Initial: order history via Alibaba's mtop gateway. Runs in the site tab and reuses the app's own live request payload (hook stashes it) + its lib.mtop signing (no hardcoded blob, no forged signature); paginates by bumping the component pageIndex. Orders extracted from the DIDA component response (itemsFromKeys). Per-order receipt as a self-contained printable HTML invoice, generated from mtop queryorderreceiptinfo (no seed needed — a known flat payload) via a declarative template using AliExpress's own labels.",
+        "es": "Inicial: historial de pedidos a través de la pasarela mtop de Alibaba. Se ejecuta en la pestaña del sitio y reutiliza el payload real de la propia app (el hook lo guarda) junto a su firma lib.mtop (sin blob incrustado ni firma falsificada); pagina incrementando el pageIndex del componente. Los pedidos se extraen de la respuesta del componente DIDA (itemsFromKeys). Recibo por pedido como factura HTML imprimible y autocontenida, generada desde mtop queryorderreceiptinfo (no hace falta semilla: es un payload plano conocido) mediante una plantilla declarativa que usa las propias etiquetas de AliExpress."
+      }
     }
   ],
   "content": {

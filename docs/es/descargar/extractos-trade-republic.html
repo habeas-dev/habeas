@@ -162,11 +162,16 @@
     "@type": "WebPage",
     "@id": "https://habeas.dev/es/descargar/extractos-trade-republic.html"
   },
-  "dateModified": "2026-08-08",
+  "dateModified": "2026-08-26",
   "author": {
-    "@type": "Organization",
-    "name": "Habeas",
-    "url": "https://habeas.dev"
+    "@type": "Person",
+    "name": "David Marín",
+    "url": "https://davefx.com"
+  },
+  "contributor": {
+    "@type": "Person",
+    "name": "David Marín",
+    "url": "https://davefx.com"
   },
   "publisher": {
     "@type": "Organization",
@@ -254,13 +259,15 @@
       <h2>Qué ha cambiado en esta fuente</h2>
       <p>Esta fuente es una definición pública y cada cambio queda registrado. De lo más reciente a lo más antiguo:</p>
       <ul class="changelog">
-        <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.</li>
-        <li class="rev"><time datetime="2026-07-17">2026-07-17</time> — Parse the trade breakdown into structured fields: units (Shares), price (Share price) and commission (Fee) from the timelineDetailV2 'Transaction' table (English labels — the WS connect requests locale 'en'). 'Free' fees resolve to 0. Requires extension &gt;= 0.3.0.24.</li>
-        <li class="rev"><time datetime="2026-07-16">2026-07-16</time> — Timeline stream now emits investment@2 (broker trade/cash): recordType inferred from the extracted ISIN, side/kind mapped from the timeline eventType, instrument{isin,name}, and the settlement account (cashAccountNumber). Trade quantity/price/fees remain in record.extra.detail (localized text) pending structured parsing. Requires extension &gt;= 0.3.0.24.</li>
-        <li class="rev"><time datetime="2026-07-15">2026-07-15</time> — Add monthly documents: the account statement PDF (accountstatement/statement?fromDate&amp;toDate) and the monthly transactions CSV (async export job: POST request → poll status → download), per completed month.</li>
-        <li class="rev"><time datetime="2026-07-15">2026-07-15</time> — Extract the traded instrument ISIN from the timeline icon into record.isin.</li>
+        <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.</li>
+        <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`.</li>
+        <li class="rev"><time datetime="2026-07-17">2026-07-17</time> — Analiza el desglose de la operación en campos estructurados: títulos (Shares), precio (Share price) y comisión (Fee) desde la tabla 'Transaction' de timelineDetailV2 (etiquetas en inglés — la conexión WS pide locale 'en'). Las comisiones 'Free' se resuelven como 0. Requiere extensión &gt;= 0.3.0.24.</li>
+        <li class="rev"><time datetime="2026-07-16">2026-07-16</time> — El stream de timeline emite ya investment@2 (operación/efectivo de bróker): el recordType se infiere del ISIN extraído, side/kind se mapean desde el eventType del timeline, instrument{isin,name} y la cuenta de liquidación (cashAccountNumber). La cantidad, el precio y las comisiones de la operación siguen en record.extra.detail (texto localizado) a la espera de un análisis estructurado. Requiere extensión &gt;= 0.3.0.24.</li>
+        <li class="rev"><time datetime="2026-07-15">2026-07-15</time> — Añade documentos mensuales: el PDF del extracto de cuenta (accountstatement/statement?fromDate&amp;toDate) y el CSV mensual de transacciones (trabajo de exportación asíncrono: POST de la petición → consulta de estado → descarga), por cada mes cerrado.</li>
       </ul>
       <p class="lead"><a href="/sources.html#traderepublic">Ver el historial completo en el catálogo →</a></p>
+      <h2>Agradecimientos</h2>
+      <p class="credit"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella. Habeas existe porque hay gente que mapea los servicios que usa y comparte el resultado.</p>
 
     <h2>Más guías de bancos, tarjetas e inversión</h2>
     <ul>

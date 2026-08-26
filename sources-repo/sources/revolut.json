@@ -18,7 +18,7 @@
   "categories": [
     "banking"
   ],
-  "version": "2026-08-26.2",
+  "version": "2026-08-26.3",
   "minVersion": "0.9.3",
   "minorUnits": true,
   "keepRaw": true,
@@ -192,7 +192,7 @@
   ],
   "changelog": [
     {
-      "version": "2026-08-26.2",
+      "version": "2026-08-26.3",
       "changes": {
         "en": "Documents a known limit rather than fixing it: weekend foreign-currency card payments arrive about 1% short, because Revolut’s out-of-hours surcharge leaves the balance but never appears in the data. 1.48 EUR across 3 of 167 movements, and every way of correcting it costs more than it recovers.",
         "es": "Documenta un límite conocido en vez de arreglarlo: los pagos con tarjeta en divisa hechos en fin de semana llegan un 1% cortos, porque el recargo de Revolut fuera de horario sale del saldo pero no aparece en los datos. Son 1,48 € en 3 de 167 movimientos, y cualquier forma de corregirlo cuesta más de lo que recupera."
@@ -200,7 +200,10 @@
     },
     {
       "version": "2026-08-26.1",
-      "changes": "Drops card verifications (0 EUR authorisations, flagged cardVerification) — they move no money and are not movements. Fixes vault transfers: Revolut books them from the paying side, so money returning from a savings vault arrived negative, and the balance they carry belongs to the vault rather than to the personal account. Reported against 167 real movements, of which 151 of 166 balance links already chained to the cent. Also drops anything whose state is not COMPLETED (5 DECLINED + 1 REVERTED in the sample were retried charges whose successful twin also arrived)."
+      "changes": {
+        "en": "Drops card verifications (0 EUR authorisations, flagged cardVerification) — they move no money and are not movements. Fixes vault transfers: Revolut books them from the paying side, so money returning from a savings vault arrived negative, and the balance they carry belongs to the vault rather than to the personal account. Reported against 167 real movements, of which 151 of 166 balance links already chained to the cent. Also drops anything whose state is not COMPLETED (5 DECLINED + 1 REVERTED in the sample were retried charges whose successful twin also arrived).",
+        "es": "Descarta las verificaciones de tarjeta (autorizaciones de 0 EUR, marcadas con cardVerification): no mueven dinero y no son movimientos. Corrige las transferencias con vaults: Revolut las contabiliza desde el lado que paga, así que el dinero que volvía de un bolsillo de ahorro llegaba en negativo, y el saldo que arrastran pertenece al vault y no a la cuenta personal. Reportado contra 167 movimientos reales, de los cuales 151 de 166 enlaces de saldo ya encadenaban al céntimo. Descarta además todo lo que no esté en estado COMPLETED (los 5 DECLINED y 1 REVERTED de la muestra eran cargos reintentados cuyo gemelo correcto también llegaba)."
+      }
     },
     {
       "version": "2026-08-26",
@@ -211,27 +214,45 @@
     },
     {
       "version": "2026-08-12",
-      "changes": "La sincronización automática ya no arranca hasta que app.revolut.com/home ha terminado de cargar. La app dispara peticiones autenticadas en pantallas anteriores, así que una sincronización podía empezar antes de que existiera la vista con los datos."
+      "changes": {
+        "en": "Automatic sync no longer starts until app.revolut.com/home has finished loading. The app fires authenticated requests on earlier screens, so a sync could begin before the view holding the data existed.",
+        "es": "La sincronización automática ya no arranca hasta que app.revolut.com/home ha terminado de cargar. La app dispara peticiones autenticadas en pantallas anteriores, así que una sincronización podía empezar antes de que existiera la vista con los datos."
+      }
     },
     {
       "version": "2026-08-08",
-      "changes": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`."
+      "changes": {
+        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.",
+        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`."
+      }
     },
     {
       "version": "2026-07-16",
-      "changes": "Map the running balance (minor-unit scaled) to record.balanceAfter and the completed date to record.valueDate — promoted to canonical fields for the Cuéntamo contract. Requires extension >= 0.3.0.24."
+      "changes": {
+        "en": "Map the running balance (minor-unit scaled) to record.balanceAfter and the completed date to record.valueDate — promoted to canonical fields for the Cuéntamo contract. Requires extension >= 0.3.0.24.",
+        "es": "Mapea el saldo tras el movimiento (escalado desde unidades menores) a record.balanceAfter y la fecha de completado a record.valueDate — promovidos a campos canónicos para el contrato del consumidor. Requiere extensión >= 0.3.0.24."
+      }
     },
     {
       "version": "2026-07-15.2",
-      "changes": "Add account statements (PDF/CSV) per account × month: async-generated (poll account-statements until READY) then download the signed Google Storage URL (crossDomainHosts + consent). Statements bounded to the last ~12 months."
+      "changes": {
+        "en": "Add account statements (PDF/CSV) per account × month: async-generated (poll account-statements until READY) then download the signed Google Storage URL (crossDomainHosts + consent). Statements bounded to the last ~12 months.",
+        "es": "Añade extractos de cuenta (PDF/CSV) por cuenta × mes: se generan de forma asíncrona (se consulta account-statements hasta READY) y luego se descarga la URL firmada de Google Storage (crossDomainHosts + consentimiento). Los extractos se limitan a los últimos ~12 meses."
+      }
     },
     {
       "version": "2026-07-15.1",
-      "changes": "Add per-account (pocket) filter with a currency-labelled Accounts picker."
+      "changes": {
+        "en": "Add per-account (pocket) filter with a currency-labelled Accounts picker.",
+        "es": "Añade filtro por cuenta (bolsillo) con un selector de cuentas etiquetado por divisa."
+      }
     },
     {
       "version": "2026-07-15",
-      "changes": "Initial: personal transactions across all accounts, paged by the `to` timestamp cursor; cookie + captured x-device-id; minor-unit amounts scaled per ISO 4217."
+      "changes": {
+        "en": "Initial: personal transactions across all accounts, paged by the `to` timestamp cursor; cookie + captured x-device-id; minor-unit amounts scaled per ISO 4217.",
+        "es": "Inicial: movimientos personales de todas las cuentas, paginados por el cursor de marca temporal `to`; cookie más x-device-id capturado; importes en unidades menores escalados según ISO 4217."
+      }
     }
   ],
   "content": {

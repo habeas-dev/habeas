@@ -3,9 +3,19 @@
   "name": "WiZink España",
   "service": "wizink",
   "trust": "first-party",
+  "credit": {
+    "author": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    },
+    "capture": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    }
+  },
   "domain": "wizink.es",
   "country": "ES",
-  "version": "2026-08-08",
+  "version": "2026-08-26",
   "currency": "EUR",
   "categories": [
     "card",
@@ -217,16 +227,32 @@
   ],
   "changelog": [
     {
+      "version": "2026-08-26",
+      "changes": {
+        "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+        "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+      }
+    },
+    {
       "version": "2026-08-08",
-      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+      "changes": {
+        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+      }
     },
     {
       "version": "2026-07-10",
-      "changes": "Los extractos ahora muestran una etiqueta legible («Extracto <fecha>») en lugar del identificador interno, y llevan el tipo «Extracto»."
+      "changes": {
+        "en": "Statements now show a readable label (\"Statement <date>\") instead of the internal identifier, and carry the type \"Statement\".",
+        "es": "Los extractos ahora muestran una etiqueta legible («Extracto <fecha>») en lugar del identificador interno, y llevan el tipo «Extracto»."
+      }
     },
     {
       "version": "2026-07-09",
-      "changes": "Fuente unificada: reemplaza las tres fuentes WiZink (movimientos, extractos-PDF, extractos-Excel) por un único source con salidas seleccionables (stream × formato). El stream «Movimientos» captura las transacciones de tarjeta; el stream «Extractos» ofrece cada extracto en PDF o Excel compartiendo el mismo listado. Requiere la extensión 0.1.52+ (soporte de salidas)."
+      "changes": {
+        "en": "Unified source: replaces the three WiZink sources (movements, statements-PDF, statements-Excel) with a single source offering selectable outputs (stream × format). The \"Movements\" stream captures card transactions; the \"Statements\" stream offers each statement as PDF or Excel, sharing one listing. Requires extension 0.1.52+ (output support).",
+        "es": "Fuente unificada: reemplaza las tres fuentes WiZink (movimientos, extractos-PDF, extractos-Excel) por un único source con salidas seleccionables (stream × formato). El stream «Movimientos» captura las transacciones de tarjeta; el stream «Extractos» ofrece cada extracto en PDF o Excel compartiendo el mismo listado. Requiere la extensión 0.1.52+ (soporte de salidas)."
+      }
     }
   ],
   "minVersion": "0.9.3",

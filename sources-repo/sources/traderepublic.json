@@ -3,13 +3,23 @@
   "name": "Trade Republic",
   "service": "traderepublic",
   "trust": "community",
+  "credit": {
+    "author": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    },
+    "capture": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    }
+  },
   "domain": "traderepublic.com",
   "country": "global",
   "categories": [
     "banking",
     "investment"
   ],
-  "version": "2026-08-08",
+  "version": "2026-08-26",
   "minVersion": "0.3.0.24",
   "keepRaw": true,
   "match": [
@@ -164,32 +174,60 @@
   ],
   "changelog": [
     {
+      "version": "2026-08-26",
+      "changes": {
+        "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+        "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+      }
+    },
+    {
       "version": "2026-08-08",
-      "changes": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`."
+      "changes": {
+        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.",
+        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`."
+      }
     },
     {
       "version": "2026-07-17",
-      "changes": "Parse the trade breakdown into structured fields: units (Shares), price (Share price) and commission (Fee) from the timelineDetailV2 'Transaction' table (English labels — the WS connect requests locale 'en'). 'Free' fees resolve to 0. Requires extension >= 0.3.0.24."
+      "changes": {
+        "en": "Parse the trade breakdown into structured fields: units (Shares), price (Share price) and commission (Fee) from the timelineDetailV2 'Transaction' table (English labels — the WS connect requests locale 'en'). 'Free' fees resolve to 0. Requires extension >= 0.3.0.24.",
+        "es": "Analiza el desglose de la operación en campos estructurados: títulos (Shares), precio (Share price) y comisión (Fee) desde la tabla 'Transaction' de timelineDetailV2 (etiquetas en inglés — la conexión WS pide locale 'en'). Las comisiones 'Free' se resuelven como 0. Requiere extensión >= 0.3.0.24."
+      }
     },
     {
       "version": "2026-07-16",
-      "changes": "Timeline stream now emits investment@2 (broker trade/cash): recordType inferred from the extracted ISIN, side/kind mapped from the timeline eventType, instrument{isin,name}, and the settlement account (cashAccountNumber). Trade quantity/price/fees remain in record.extra.detail (localized text) pending structured parsing. Requires extension >= 0.3.0.24."
+      "changes": {
+        "en": "Timeline stream now emits investment@2 (broker trade/cash): recordType inferred from the extracted ISIN, side/kind mapped from the timeline eventType, instrument{isin,name}, and the settlement account (cashAccountNumber). Trade quantity/price/fees remain in record.extra.detail (localized text) pending structured parsing. Requires extension >= 0.3.0.24.",
+        "es": "El stream de timeline emite ya investment@2 (operación/efectivo de bróker): el recordType se infiere del ISIN extraído, side/kind se mapean desde el eventType del timeline, instrument{isin,name} y la cuenta de liquidación (cashAccountNumber). La cantidad, el precio y las comisiones de la operación siguen en record.extra.detail (texto localizado) a la espera de un análisis estructurado. Requiere extensión >= 0.3.0.24."
+      }
     },
     {
       "version": "2026-07-15.3",
-      "changes": "Add monthly documents: the account statement PDF (accountstatement/statement?fromDate&toDate) and the monthly transactions CSV (async export job: POST request → poll status → download), per completed month."
+      "changes": {
+        "en": "Add monthly documents: the account statement PDF (accountstatement/statement?fromDate&toDate) and the monthly transactions CSV (async export job: POST request → poll status → download), per completed month.",
+        "es": "Añade documentos mensuales: el PDF del extracto de cuenta (accountstatement/statement?fromDate&toDate) y el CSV mensual de transacciones (trabajo de exportación asíncrono: POST de la petición → consulta de estado → descarga), por cada mes cerrado."
+      }
     },
     {
       "version": "2026-07-15.2",
-      "changes": "Extract the traded instrument ISIN from the timeline icon into record.isin."
+      "changes": {
+        "en": "Extract the traded instrument ISIN from the timeline icon into record.isin.",
+        "es": "Extrae el ISIN del instrumento negociado desde el icono del timeline a record.isin."
+      }
     },
     {
       "version": "2026-07-15.1",
-      "changes": "Enrich each timeline transaction with its timelineDetailV2 detail in record.extra.detail."
+      "changes": {
+        "en": "Enrich each timeline transaction with its timelineDetailV2 detail in record.extra.detail.",
+        "es": "Enriquece cada transacción del timeline con su detalle de timelineDetailV2 en record.extra.detail."
+      }
     },
     {
       "version": "2026-07-15",
-      "changes": "Initial: the whole transaction timeline via Trade Republic’s WebSocket API."
+      "changes": {
+        "en": "Initial: the whole transaction timeline via Trade Republic’s WebSocket API.",
+        "es": "Inicial: el timeline completo de transacciones a través de la API WebSocket de Trade Republic."
+      }
     }
   ],
   "content": {

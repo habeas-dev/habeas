@@ -146,11 +146,16 @@
     "@type": "WebPage",
     "@id": "https://habeas.dev/es/descargar/extractos-financiera-el-corte-ingles.html"
   },
-  "dateModified": "2026-08-08",
+  "dateModified": "2026-08-26",
   "author": {
-    "@type": "Organization",
-    "name": "Habeas",
-    "url": "https://habeas.dev"
+    "@type": "Person",
+    "name": "David Marín",
+    "url": "https://davefx.com"
+  },
+  "contributor": {
+    "@type": "Person",
+    "name": "David Marín",
+    "url": "https://davefx.com"
   },
   "publisher": {
     "@type": "Organization",
@@ -227,13 +232,15 @@
       <h2>Qué ha cambiado en esta fuente</h2>
       <p>Esta fuente es una definición pública y cada cambio queda registrado. De lo más reciente a lo más antiguo:</p>
       <ul class="changelog">
+        <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.</li>
         <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.</li>
-        <li class="rev"><time datetime="2026-07-20">2026-07-20</time> — First publish to the live registry. Requires extension &gt;= 0.5.0 (the milestone that ships declarative capturePaths, the login-safe scoped token observer, and the {date:FORMAT} document token this source relies on). Verified end-to-end by the contributor.</li>
-        <li class="rev"><time datetime="2026-07-20">2026-07-20</time> — Fix the statement PDF datePurchase format: the generate-file endpoint wants DD/MM/YYYY (e.g. 01/09/2025), but on a store re-download the date falls back to the normalized ISO value (2025-09-01), which the server rejected with HTTP 400. Now formatted explicitly via {date:DD/MM/YYYY}. Requires extension &gt;= 0.4.1.15.</li>
-        <li class="rev"><time datetime="2026-07-20">2026-07-20</time> — Declare auth.capturePaths = ['/dashboard/'] so the token is only captured from the authenticated dashboard area (where it first appears, after login) and the header observer never engages with the sign-in flow — this keeps the extension from interfering with the bank's Transmit Security login.</li>
-        <li class="rev"><time datetime="2026-07-20">2026-07-20</time> — Send the per-card eci-custom-encrypted-pan header on the aplazamientos (financing-purchases) and extractos (shopping-summaries) LIST requests too — the SPA sends it on every card-scoped call (as movements already does), so the server needs it to return those lists per card, not just for movements + the statement PDF.</li>
+        <li class="rev"><time datetime="2026-07-20">2026-07-20</time> — Primera publicación en el registro vivo. Requiere extensión &gt;= 0.5.0 (el hito que incorpora capturePaths declarativo, el observador de token acotado y seguro ante el login, y el token de documento {date:FORMAT} del que depende esta fuente). Verificada de extremo a extremo por quien la aportó.</li>
+        <li class="rev"><time datetime="2026-07-20">2026-07-20</time> — Corrige el formato de datePurchase del PDF de extracto: el endpoint generate-file espera DD/MM/YYYY (p. ej. 01/09/2025), pero al re-descargar desde el archivo la fecha volvía al valor ISO normalizado (2025-09-01), que el servidor rechazaba con HTTP 400. Ahora se formatea explícitamente con {date:DD/MM/YYYY}. Requiere extensión &gt;= 0.4.1.15.</li>
+        <li class="rev"><time datetime="2026-07-20">2026-07-20</time> — Declara auth.capturePaths = ['/dashboard/'] para que el token solo se capture en el área autenticada del panel (donde aparece por primera vez, tras el login) y el observador de cabeceras no intervenga nunca en el flujo de acceso: así la extensión no interfiere con el login de Transmit Security del banco.</li>
       </ul>
       <p class="lead"><a href="/sources.html#financiera-elcorteingles-es">Ver el historial completo en el catálogo →</a></p>
+      <h2>Agradecimientos</h2>
+      <p class="credit"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella. Habeas existe porque hay gente que mapea los servicios que usa y comparte el resultado.</p>
 
     <h2>Más guías de bancos, tarjetas e inversión</h2>
     <ul>

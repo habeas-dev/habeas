@@ -3,13 +3,23 @@
   "name": "Raisin",
   "service": "raisin",
   "trust": "community",
+  "credit": {
+    "author": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    },
+    "capture": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    }
+  },
   "domain": "raisin.com",
   "country": "global",
   "categories": [
     "banking",
     "investment"
   ],
-  "version": "2026-08-08",
+  "version": "2026-08-26",
   "minVersion": "0.5.0.32",
   "keepRaw": true,
   "contributors": [
@@ -320,88 +330,158 @@
   ],
   "changelog": [
     {
+      "version": "2026-08-26",
+      "changes": {
+        "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+        "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+      }
+    },
+    {
       "version": "2026-08-08",
-      "changes": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`."
+      "changes": {
+        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.",
+        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`."
+      }
     },
     {
       "version": "2026-07-21",
-      "changes": "Declared country: \"global\" — the field was missing since the multi-market rename (raisin-es -> raisin), so the catalog showed no 🌐 badge and country filters didn't treat it as worldwide."
+      "changes": {
+        "en": "Declared country: \"global\" — the field was missing since the multi-market rename (raisin-es -> raisin), so the catalog showed no 🌐 badge and country filters didn't treat it as worldwide.",
+        "es": "Declara country: \"global\" — el campo faltaba desde el renombrado multimercado (raisin-es -> raisin), así que el catálogo no mostraba el distintivo 🌐 y los filtros por país no la trataban como mundial."
+      }
     },
     {
       "version": "2026-07-20.18",
-      "changes": "Multi-language labels: the product-type word (Deposit/Account) is translated per browser locale via a source i18n dictionary (en/es/de/fr/nl — every Raisin market; en fallback), since the API only returns it as an enum. Dropped the TAE abbreviation (varies by country; % is universal). Requires 0.5.0.32 ({i18n:key} token)."
+      "changes": {
+        "en": "Multi-language labels: the product-type word (Deposit/Account) is translated per browser locale via a source i18n dictionary (en/es/de/fr/nl — every Raisin market; en fallback), since the API only returns it as an enum. Dropped the TAE abbreviation (varies by country; % is universal). Requires 0.5.0.32 ({i18n:key} token).",
+        "es": "Etiquetas multiidioma: la palabra del tipo de producto (Depósito/Cuenta) se traduce según el idioma del navegador mediante un diccionario i18n de la fuente (en/es/de/fr/nl — todos los mercados de Raisin; en por defecto), ya que la API solo la devuelve como enum. Se elimina la abreviatura TAE (varía por país; el % es universal). Requiere 0.5.0.32 (token {i18n:key})."
+      }
     },
     {
       "version": "2026-07-20.17",
-      "changes": "Multi-market: renamed raisin-es -> raisin (the API api2.weltsparen.de is shared across all Raisin countries); the response-language `locale` param now follows the browser locale via {locale}/{locale:lower} instead of a hardcoded es-ES. Requires 0.5.0.30. (Account-label WORDS Depósito/Cuenta/TAE remain Spanish for now.)"
+      "changes": {
+        "en": "Multi-market: renamed raisin-es -> raisin (the API api2.weltsparen.de is shared across all Raisin countries); the response-language `locale` param now follows the browser locale via {locale}/{locale:lower} instead of a hardcoded es-ES. Requires 0.5.0.30. (Account-label WORDS Depósito/Cuenta/TAE remain Spanish for now.)",
+        "es": "Multimercado: renombrada raisin-es -> raisin (la API api2.weltsparen.de es común a todos los países de Raisin); el parámetro `locale` del idioma de respuesta sigue ahora al del navegador vía {locale}/{locale:lower} en lugar de un es-ES fijo. Requiere 0.5.0.30. (Las PALABRAS de las etiquetas de cuenta —Depósito/Cuenta/TAE— siguen en español por ahora.)"
+      }
     },
     {
       "version": "2026-07-20.16",
-      "changes": "A deposit account now shows the SAME name everywhere: its own record, its documents, and the account picker all use the full \"Depósito <bank> <rate>% TAE <term> - <opening>\" label (the record previously showed a shorter \"Depósito <bank>\"). The bank moved to the store/counterparty column."
+      "changes": {
+        "en": "A deposit account now shows the SAME name everywhere: its own record, its documents, and the account picker all use the full \"Depósito <bank> <rate>% TAE <term> - <opening>\" label (the record previously showed a shorter \"Depósito <bank>\"). The bank moved to the store/counterparty column.",
+        "es": "Una cuenta de depósito muestra ya el MISMO nombre en todas partes: su propio registro, sus documentos y el selector de cuentas usan la etiqueta completa «Depósito <banco> <tipo>% TAE <plazo> - <apertura>» (antes el registro mostraba un «Depósito <banco>» más corto). El banco pasa a la columna de tienda/contraparte."
+      }
     },
     {
       "version": "2026-07-20.15",
-      "changes": "Split documents by product: FDA_ deposits keep the \"Depósito … % TAE … plazo\" label; OMA_ savings accounts now show \"Cuenta <bank>\" (no rate/term — variable). Deposit records carry their own account label. Requires 0.5.0.29 (ungrouped-stream account label)."
+      "changes": {
+        "en": "Split documents by product: FDA_ deposits keep the \"Depósito … % TAE … plazo\" label; OMA_ savings accounts now show \"Cuenta <bank>\" (no rate/term — variable). Deposit records carry their own account label. Requires 0.5.0.29 (ungrouped-stream account label).",
+        "es": "Separa los documentos por producto: los depósitos FDA_ mantienen la etiqueta «Depósito … % TAE … plazo»; las cuentas de ahorro OMA_ muestran ahora «Cuenta <banco>» (sin tipo ni plazo, que son variables). Los registros de depósito llevan su propia etiqueta de cuenta. Requiere 0.5.0.29 (etiqueta de cuenta en stream no agrupado)."
+      }
     },
     {
       "version": "2026-07-20.14",
-      "changes": "Requires 0.5.0.28: group-field templates now resolve (the account picker AND the Account column show the readable name instead of a raw id)."
+      "changes": {
+        "en": "Requires 0.5.0.28: group-field templates now resolve (the account picker AND the Account column show the readable name instead of a raw id).",
+        "es": "Requiere 0.5.0.28: las plantillas de campo de grupo ya se resuelven (tanto el selector de cuentas como la columna Cuenta muestran el nombre legible en vez de un id crudo)."
+      }
     },
     {
       "version": "2026-07-20.13",
-      "changes": "Deposit labels now use browser-locale formatting: rate with the locale decimal comma and term as words (\"Depósito Banca Progetto 2,45% TAE 6 meses - 2024-03-22\"). Requires runtime 0.5.0.27 ({field:num|pct|duration|date} format directives)."
+      "changes": {
+        "en": "Deposit labels now use browser-locale formatting: rate with the locale decimal comma and term as words (\"Depósito Banca Progetto 2,45% TAE 6 meses - 2024-03-22\"). Requires runtime 0.5.0.27 ({field:num|pct|duration|date} format directives).",
+        "es": "Las etiquetas de depósito usan ya el formato del idioma del navegador: el tipo con la coma decimal local y el plazo en palabras («Depósito Banca Progetto 2,45% TAE 6 meses - 2024-03-22»). Requiere runtime 0.5.0.27 (directivas de formato {field:num|pct|duration|date})."
+      }
     },
     {
       "version": "2026-07-20.12",
-      "changes": "Readable account/deposit names: savings show \"Cuenta <bank>\", deposits \"Depósito <bank> <rate>% TAE - <opening date>\" using the real bank name (deposit_taking_bank.name). Deposit date is now the opening date (deposit.opening_date). (Term wording and decimal comma still pending a formatting helper.)"
+      "changes": {
+        "en": "Readable account/deposit names: savings show \"Cuenta <bank>\", deposits \"Depósito <bank> <rate>% TAE - <opening date>\" using the real bank name (deposit_taking_bank.name). Deposit date is now the opening date (deposit.opening_date). (Term wording and decimal comma still pending a formatting helper.)",
+        "es": "Nombres legibles de cuenta y depósito: el ahorro muestra «Cuenta <banco>» y los depósitos «Depósito <banco> <tipo>% TAE - <fecha de apertura>», con el nombre real del banco (deposit_taking_bank.name). La fecha del depósito es ahora la de apertura (deposit.opening_date). (La redacción del plazo y la coma decimal siguen pendientes de un ayudante de formato.)"
+      }
     },
     {
       "version": "2026-07-20.11",
-      "changes": "Deposits, savings and documents now enumerate BOTH dashboard/active AND dashboard/inactive (api paths[]), so inactive/cancelled deposits and ALL their documents are captured (documents come from /dds per deposit). Requires runtime 0.5.0.26 (paths[] support)."
+      "changes": {
+        "en": "Deposits, savings and documents now enumerate BOTH dashboard/active AND dashboard/inactive (api paths[]), so inactive/cancelled deposits and ALL their documents are captured (documents come from /dds per deposit). Requires runtime 0.5.0.26 (paths[] support).",
+        "es": "Los depósitos, el ahorro y los documentos enumeran ahora TANTO dashboard/active COMO dashboard/inactive (api paths[]), de modo que se capturan los depósitos inactivos o cancelados y TODOS sus documentos (los documentos vienen de /dds por depósito). Requiere runtime 0.5.0.26 (soporte de paths[])."
+      }
     },
     {
       "version": "2026-07-20.10",
-      "changes": "Savings/deposit accounts now carry a readable name (the deposit-taking bank) + type, so the account list and per-account labels show a bank name instead of a raw id. Requires 0.5.0.25 (account picker enumerates every grouped stream: current account + savings + deposits)."
+      "changes": {
+        "en": "Savings/deposit accounts now carry a readable name (the deposit-taking bank) + type, so the account list and per-account labels show a bank name instead of a raw id. Requires 0.5.0.25 (account picker enumerates every grouped stream: current account + savings + deposits).",
+        "es": "Las cuentas de ahorro y depósito llevan ya un nombre legible (el banco que capta el depósito) más su tipo, así que la lista de cuentas y las etiquetas por cuenta muestran un nombre de banco en vez de un id crudo. Requiere 0.5.0.25 (el selector de cuentas enumera todos los streams agrupados: cuenta corriente, ahorro y depósitos)."
+      }
     },
     {
       "version": "2026-07-20.9",
-      "changes": "Requires runtime 0.5.0.24: list params now resolve {ctx.*} (depositos/ahorro/documentos send the real customer_id, was literal → dbff/dbs 403) and pdf.params apply to the document fetch (dds ?preview=true). All 4 outputs verified offline against the capture."
+      "changes": {
+        "en": "Requires runtime 0.5.0.24: list params now resolve {ctx.*} (depositos/ahorro/documentos send the real customer_id, was literal → dbff/dbs 403) and pdf.params apply to the document fetch (dds ?preview=true). All 4 outputs verified offline against the capture.",
+        "es": "Requiere runtime 0.5.0.24: los parámetros de lista resuelven ya {ctx.*} (depositos/ahorro/documentos envían el customer_id real, antes literal → 403 en dbff/dbs) y los pdf.params se aplican a la descarga del documento (dds ?preview=true). Las 4 salidas verificadas offline contra la captura."
+      }
     },
     {
       "version": "2026-07-20.8",
-      "changes": "Account list uses the real OData filter customerId eq {ctx.customer_id} & type eq TA_INTERNAL (was the invalid filter=all → 401). The customerId is templated from captured context, never hardcoded. Requires group-param ctx templating (minVersion 0.5.0.19)."
+      "changes": {
+        "en": "Account list uses the real OData filter customerId eq {ctx.customer_id} & type eq TA_INTERNAL (was the invalid filter=all → 401). The customerId is templated from captured context, never hardcoded. Requires group-param ctx templating (minVersion 0.5.0.19).",
+        "es": "La lista de cuentas usa el filtro OData real customerId eq {ctx.customer_id} & type eq TA_INTERNAL (antes el filtro inválido filter=all → 401). El customerId se plantilla desde el contexto capturado, nunca fijo. Requiere plantillado ctx en parámetros de grupo (minVersion 0.5.0.19)."
+      }
     },
     {
       "version": "2026-07-20.7",
-      "changes": "Send the browser-style Accept header (application/json, text/plain, */*) on every list/groups request. Instrumentation proved the ONLY difference between the SPA’s working request and our 401 was the Accept value (bare application/json); the API gateway rejects it. Same token, same everything else."
+      "changes": {
+        "en": "Send the browser-style Accept header (application/json, text/plain, */*) on every list/groups request. Instrumentation proved the ONLY difference between the SPA’s working request and our 401 was the Accept value (bare application/json); the API gateway rejects it. Same token, same everything else.",
+        "es": "Envía la cabecera Accept al estilo del navegador (application/json, text/plain, */*) en toda petición de lista y de grupos. La instrumentación demostró que la ÚNICA diferencia entre la petición que funcionaba en la SPA y nuestro 401 era el valor de Accept (application/json a secas); la pasarela de la API lo rechaza. Mismo token, todo lo demás idéntico."
+      }
     },
     {
       "version": "2026-07-20.6",
-      "changes": "auth.cookies:false — send the bearer WITHOUT cookies. Instrumentation proved the token is valid (not expired), so the 401 Authorization-required on a valid token points to a weltsparen.de session cookie interfering with the bearer on the cross-domain call (like Openbank 413). Bearer-only request."
+      "changes": {
+        "en": "auth.cookies:false — send the bearer WITHOUT cookies. Instrumentation proved the token is valid (not expired), so the 401 Authorization-required on a valid token points to a weltsparen.de session cookie interfering with the bearer on the cross-domain call (like Openbank 413). Bearer-only request.",
+        "es": "auth.cookies:false — envía el bearer SIN cookies. La instrumentación demostró que el token es válido (no caducado), así que un 401 Authorization-required con un token válido apunta a que una cookie de sesión de weltsparen.de interfiere con el bearer en la llamada cross-domain (como el 413 de Openbank). Petición solo con bearer."
+      }
     },
     {
       "version": "2026-07-20.5",
-      "changes": "Re-enable tokenFromStorage {key:auth_token, field:access_token}: token-correlation in a fresh capture PROVED the /tams bearer IS localStorage.auth_token.access_token (same [jwt#1] tag on all 19 API calls). Reading it fresh avoids the ~5min Keycloak expiry."
+      "changes": {
+        "en": "Re-enable tokenFromStorage {key:auth_token, field:access_token}: token-correlation in a fresh capture PROVED the /tams bearer IS localStorage.auth_token.access_token (same [jwt#1] tag on all 19 API calls). Reading it fresh avoids the ~5min Keycloak expiry.",
+        "es": "Reactiva tokenFromStorage {key:auth_token, field:access_token}: la correlación de tokens en una captura nueva DEMOSTRÓ que el bearer de /tams ES localStorage.auth_token.access_token (misma marca [jwt#1] en las 19 llamadas a la API). Leerlo fresco evita la caducidad de Keycloak a los ~5 min."
+      }
     },
     {
       "version": "2026-07-20.4",
-      "changes": "Revert tokenFromStorage: localStorage.auth_token.access_token is the Keycloak access token, NOT the weltsparen API bearer (a distinct api_ticket token, likely in-memory) — sending it gave 401 Authorization required. Back to the captured API bearer (capturePaths); token freshness/exchange still under investigation."
+      "changes": {
+        "en": "Revert tokenFromStorage: localStorage.auth_token.access_token is the Keycloak access token, NOT the weltsparen API bearer (a distinct api_ticket token, likely in-memory) — sending it gave 401 Authorization required. Back to the captured API bearer (capturePaths); token freshness/exchange still under investigation.",
+        "es": "Revierte tokenFromStorage: localStorage.auth_token.access_token es el token de acceso de Keycloak, NO el bearer de la API de weltsparen (un api_ticket distinto, probablemente en memoria) — enviarlo daba 401 Authorization required. Vuelta al bearer capturado de la API (capturePaths); la frescura y el intercambio del token siguen en investigación."
+      }
     },
     {
       "version": "2026-07-20.3",
-      "changes": "Point tokenFromStorage at the explicit field access_token (localStorage.auth_token.access_token) — unambiguous and works without the auto-detect. minVersion 0.5.0.8."
+      "changes": {
+        "en": "Point tokenFromStorage at the explicit field access_token (localStorage.auth_token.access_token) — unambiguous and works without the auto-detect. minVersion 0.5.0.8.",
+        "es": "Apunta tokenFromStorage al campo explícito access_token (localStorage.auth_token.access_token) — inequívoco y funciona sin la autodetección. minVersion 0.5.0.8."
+      }
     },
     {
       "version": "2026-07-20.2",
-      "changes": "Read the bearer FRESH from localStorage.auth_token on every request (auth.tokenFromStorage, access-token auto-detected) — Raisin uses a short-lived Keycloak JWT (~5 min) that expired between capture and listing (401 Jwt is expired). This always sends a valid, current user token."
+      "changes": {
+        "en": "Read the bearer FRESH from localStorage.auth_token on every request (auth.tokenFromStorage, access-token auto-detected) — Raisin uses a short-lived Keycloak JWT (~5 min) that expired between capture and listing (401 Jwt is expired). This always sends a valid, current user token.",
+        "es": "Lee el bearer FRESCO de localStorage.auth_token en cada petición (auth.tokenFromStorage, con el access-token autodetectado) — Raisin usa un JWT de Keycloak de vida corta (~5 min) que caducaba entre la captura y el listado (401 Jwt is expired). Así siempre se envía un token de usuario válido y actual."
+      }
     },
     {
       "version": "2026-07-20.1",
-      "changes": "Scope token capture to the user-data endpoints (auth.capturePaths /tams/ /dbff/ /dds/ /cas/) so the replayed bearer is the logged-in user's token, not a client/anonymous token the public catalog (/dcms) may carry — which caused a 401 UNAUTHORIZED on /tams/v1/accounts even with an authorization sent."
+      "changes": {
+        "en": "Scope token capture to the user-data endpoints (auth.capturePaths /tams/ /dbff/ /dds/ /cas/) so the replayed bearer is the logged-in user's token, not a client/anonymous token the public catalog (/dcms) may carry — which caused a 401 UNAUTHORIZED on /tams/v1/accounts even with an authorization sent.",
+        "es": "Acota la captura del token a los endpoints de datos del usuario (auth.capturePaths /tams/ /dbff/ /dds/ /cas/) para que el bearer replicado sea el del usuario identificado y no un token de cliente o anónimo que puede llevar el catálogo público (/dcms) — lo que provocaba un 401 UNAUTHORIZED en /tams/v1/accounts incluso enviando authorization."
+      }
     },
     {
       "version": "2026-07-20",
-      "changes": "Initial: Raisin (WeltSparen). Cross-domain login raisin.com -> API api2.weltsparen.de (Keycloak bearer), customer_id captured as context, 90-day window (SCA-free). Four outputs: movimientos (Raisin transaction account, tams), depósitos (fixed-term deposits FDA_, investment@2 with keepRaw), ahorro (flexible savings-account movements OMA_, from the deposit detail's embedded transactions), documentos (terms/condiciones via dds). OMA (flexible cuenta corriente) vs FDA (fixed deposit) split by the product-id prefix (auth.keep prefix on accounting.deposit_id)."
+      "changes": {
+        "en": "Initial: Raisin (WeltSparen). Cross-domain login raisin.com -> API api2.weltsparen.de (Keycloak bearer), customer_id captured as context, 90-day window (SCA-free). Four outputs: movimientos (Raisin transaction account, tams), depósitos (fixed-term deposits FDA_, investment@2 with keepRaw), ahorro (flexible savings-account movements OMA_, from the deposit detail's embedded transactions), documentos (terms/condiciones via dds). OMA (flexible cuenta corriente) vs FDA (fixed deposit) split by the product-id prefix (auth.keep prefix on accounting.deposit_id).",
+        "es": "Inicial: Raisin (WeltSparen). Login cross-domain raisin.com -> API api2.weltsparen.de (bearer de Keycloak), customer_id capturado como contexto, ventana de 90 días (sin SCA). Cuatro salidas: movimientos (cuenta de transacciones de Raisin, tams), depósitos (a plazo fijo FDA_, investment@2 con keepRaw), ahorro (movimientos de cuenta flexible OMA_, desde las transacciones incrustadas en el detalle del depósito) y documentos (condiciones vía dds). La separación entre OMA (cuenta corriente flexible) y FDA (depósito a plazo) se hace por el prefijo del id de producto (auth.keep prefix sobre accounting.deposit_id)."
+      }
     }
   ],
   "i18n": {

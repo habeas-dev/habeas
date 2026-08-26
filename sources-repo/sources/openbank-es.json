@@ -3,9 +3,19 @@
   "name": "Openbank España",
   "service": "openbank",
   "trust": "community",
+  "credit": {
+    "author": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    },
+    "capture": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    }
+  },
   "domain": "openbank.es",
   "country": "ES",
-  "version": "2026-08-08",
+  "version": "2026-08-26",
   "minVersion": "0.3.0.24",
   "categories": [
     "banking"
@@ -289,24 +299,46 @@
   ],
   "changelog": [
     {
+      "version": "2026-08-26",
+      "changes": {
+        "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+        "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+      }
+    },
+    {
       "version": "2026-08-08",
-      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+      "changes": {
+        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+      }
     },
     {
       "version": "2026-07-16",
-      "changes": "Map the movement's running balance (saldo.importe) to record.balanceAfter (promoted to a canonical field for the Cuéntamo contract). Requires extension >= 0.3.0.24."
+      "changes": {
+        "en": "Map the movement's running balance (saldo.importe) to record.balanceAfter (promoted to a canonical field for the Cuéntamo contract). Requires extension >= 0.3.0.24.",
+        "es": "Mapea el saldo tras el movimiento (saldo.importe) a record.balanceAfter (promovido a campo canónico para el contrato del consumidor). Requiere extensión >= 0.3.0.24."
+      }
     },
     {
       "version": "2026-07-15.1",
-      "changes": "Fix `movimientos`: the first (non-SCA) page returns a flat `movimientos` array, not `methodResult.movimientos` — itemsPath now accepts both shapes."
+      "changes": {
+        "en": "Fix `movimientos`: the first (non-SCA) page returns a flat `movimientos` array, not `methodResult.movimientos` — itemsPath now accepts both shapes.",
+        "es": "Corrige `movimientos`: la primera página (sin SCA) devuelve un array `movimientos` plano, no `methodResult.movimientos` — itemsPath acepta ahora ambas formas."
+      }
     },
     {
       "version": "2026-07-15",
-      "changes": "Add `movimientos` (transactions) per account — 90-day window, full-URL nextPage pager, stops at the SCA boundary (no OTP triggered). Add per-account monthly movement statements (PDF/Excel). Token-only auth (auth.cookies:false, avoids HTTP 413) + session keep-alive. Movements is no longer a declared gap."
+      "changes": {
+        "en": "Add `movimientos` (transactions) per account — 90-day window, full-URL nextPage pager, stops at the SCA boundary (no OTP triggered). Add per-account monthly movement statements (PDF/Excel). Token-only auth (auth.cookies:false, avoids HTTP 413) + session keep-alive. Movements is no longer a declared gap.",
+        "es": "Añade `movimientos` (transactions) por cuenta — ventana de 90 días, paginador nextPage con URL completa, que se detiene en la frontera de SCA (sin disparar OTP). Añade extractos mensuales de movimientos por cuenta (PDF/Excel). Autenticación solo con token (auth.cookies:false, evita el HTTP 413) más mantenimiento de sesión. Los movimientos dejan de ser una carencia declarada."
+      }
     },
     {
       "version": "2026-07-14",
-      "changes": "Initial: integrated monthly statements (PDF) across all accounts. Movements/cards/investments are declared gaps for community contribution."
+      "changes": {
+        "en": "Initial: integrated monthly statements (PDF) across all accounts. Movements/cards/investments are declared gaps for community contribution.",
+        "es": "Inicial: extractos mensuales integrados (PDF) de todas las cuentas. Movimientos, tarjetas e inversiones quedan como carencias declaradas, abiertas a la comunidad."
+      }
     }
   ],
   "content": {

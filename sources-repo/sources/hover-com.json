@@ -3,9 +3,19 @@
   "name": "Hover — Receipts",
   "service": "hover",
   "trust": "community",
+  "credit": {
+    "author": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    },
+    "capture": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    }
+  },
   "domain": "hover.com",
   "country": "global",
-  "version": "2026-08-08",
+  "version": "2026-08-26",
   "categories": [
     "domains"
   ],
@@ -45,16 +55,32 @@
   "currency": "USD",
   "changelog": [
     {
+      "version": "2026-08-26",
+      "changes": {
+        "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+        "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+      }
+    },
+    {
       "version": "2026-08-08",
-      "changes": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`."
+      "changes": {
+        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.",
+        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`."
+      }
     },
     {
       "version": "2026-07-13",
-      "changes": "Bill in USD (Hover charges USD; was defaulting to EUR)."
+      "changes": {
+        "en": "Bill in USD (Hover charges USD; was defaulting to EUR).",
+        "es": "Factura en USD (Hover cobra en USD; antes se asumía EUR por defecto)."
+      }
     },
     {
       "version": "2026-07-08",
-      "changes": "Facturas de dominios (JSON + recibo HTML)."
+      "changes": {
+        "en": "Domain invoices (JSON + HTML receipt).",
+        "es": "Facturas de dominios (JSON + recibo HTML)."
+      }
     }
   ],
   "content": {

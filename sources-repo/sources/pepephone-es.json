@@ -4,7 +4,17 @@
   "service": "pepephone",
   "country": "ES",
   "trust": "community",
-  "version": "2026-08-08",
+  "credit": {
+    "author": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    },
+    "capture": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    }
+  },
+  "version": "2026-08-26",
   "minVersion": "0.9.2",
   "schema": "invoice@1",
   "categories": [
@@ -84,8 +94,18 @@
   "brand": "Pepephone",
   "changelog": [
     {
+      "version": "2026-08-26",
+      "changes": {
+        "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+        "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+      }
+    },
+    {
       "version": "2026-08-08",
-      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+      "changes": {
+        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+      }
     }
   ]
 }

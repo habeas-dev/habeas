@@ -3,6 +3,16 @@
   "name": "Leroy Merlin España",
   "service": "leroymerlin",
   "trust": "community",
+  "credit": {
+    "author": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    },
+    "capture": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    }
+  },
   "domain": "leroymerlin.es",
   "country": "ES",
   "categories": [
@@ -86,32 +96,57 @@
       }
     }
   ],
-  "version": "2026-08-08",
+  "version": "2026-08-26",
   "minVersion": "0.1.53.13",
   "changelog": [
     {
+      "version": "2026-08-26",
+      "changes": {
+        "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+        "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+      }
+    },
+    {
       "version": "2026-08-08",
-      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+      "changes": {
+        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+      }
     },
     {
       "version": "2026-07-10.3",
-      "changes": "Tickets: no cortar al llegar a un año sin compras (stopAfterEmpty) — antes se paraba en 2025 (sin compras) y ocultaba los tickets más antiguos."
+      "changes": {
+        "en": "Receipts: do not stop on reaching a year with no purchases (stopAfterEmpty) — it previously stopped at 2025 (no purchases) and hid the older receipts.",
+        "es": "Tickets: no cortar al llegar a un año sin compras (stopAfterEmpty) — antes se paraba en 2025 (sin compras) y ocultaba los tickets más antiguos."
+      }
     },
     {
       "version": "2026-07-10.2",
-      "changes": "Stream «Pedidos»: mostrar TODOS los pedidos de «mis pedidos» (se quita el filtro que dejaba solo los ONLINE y ocultaba pedidos de tienda que también aparecen ahí)."
+      "changes": {
+        "en": "\"Orders\" stream: show ALL orders from \"my orders\" (removes the filter that kept only the ONLINE ones and hid in-store orders that appear there too).",
+        "es": "Stream «Pedidos»: mostrar TODOS los pedidos de «mis pedidos» (se quita el filtro que dejaba solo los ONLINE y ocultaba pedidos de tienda que también aparecen ahí)."
+      }
     },
     {
       "version": "2026-07-10.1",
-      "changes": "Tickets de tienda: empezar en el año actual (yearOffset 0) — antes empezaba 2 años atrás y se saltaba las compras de este año y el anterior."
+      "changes": {
+        "en": "In-store receipts: start from the current year (yearOffset 0) — it previously started two years back and skipped this year's purchases and last year's.",
+        "es": "Tickets de tienda: empezar en el año actual (yearOffset 0) — antes empezaba 2 años atrás y se saltaba las compras de este año y el anterior."
+      }
     },
     {
       "version": "2026-07-10",
-      "changes": "Añade compras online (stream «Pedidos online» vía /order-followup/backend/v2/orders, filtradas a ONLINE) junto a los tickets de tienda existentes; fuente multi-salida (streams)."
+      "changes": {
+        "en": "Adds online purchases (the \"Online orders\" stream via /order-followup/backend/v2/orders, filtered to ONLINE) alongside the existing in-store receipts; multi-output source (streams).",
+        "es": "Añade compras online (stream «Pedidos online» vía /order-followup/backend/v2/orders, filtradas a ONLINE) junto a los tickets de tienda existentes; fuente multi-salida (streams)."
+      }
     },
     {
       "version": "2026-07-08",
-      "changes": "Recibos vía API JSON (cookie)."
+      "changes": {
+        "en": "Receipts via a JSON API (cookie).",
+        "es": "Recibos vía API JSON (cookie)."
+      }
     }
   ],
   "content": {

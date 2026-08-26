@@ -3,6 +3,16 @@
   "name": "CaixaBank Consumer — extractos",
   "service": "caixabank-consumer",
   "trust": "first-party",
+  "credit": {
+    "author": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    },
+    "capture": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    }
+  },
   "domain": "caixabankconsumer.com",
   "country": "ES",
   "currency": "EUR",
@@ -68,15 +78,28 @@
   },
   "schema": "invoice@1",
   "minVersion": "0.1.35",
-  "version": "2026-08-08",
+  "version": "2026-08-26",
   "changelog": [
     {
+      "version": "2026-08-26",
+      "changes": {
+        "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+        "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+      }
+    },
+    {
       "version": "2026-08-08",
-      "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+      "changes": {
+        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+      }
     },
     {
       "version": "2026-07-08",
-      "changes": "Versión inicial: extractos (cross-domain api.caixabankpc.com), captura de DNI, PDF por URL absoluta."
+      "changes": {
+        "en": "Initial version: statements (cross-domain api.caixabankpc.com), DNI capture, PDF by absolute URL.",
+        "es": "Versión inicial: extractos (cross-domain api.caixabankpc.com), captura de DNI, PDF por URL absoluta."
+      }
     }
   ],
   "content": {

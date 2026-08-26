@@ -146,11 +146,16 @@
     "@type": "WebPage",
     "@id": "https://habeas.dev/es/descargar/movimientos-openbank.html"
   },
-  "dateModified": "2026-08-08",
+  "dateModified": "2026-08-26",
   "author": {
-    "@type": "Organization",
-    "name": "Habeas",
-    "url": "https://habeas.dev"
+    "@type": "Person",
+    "name": "David Marín",
+    "url": "https://davefx.com"
+  },
+  "contributor": {
+    "@type": "Person",
+    "name": "David Marín",
+    "url": "https://davefx.com"
   },
   "publisher": {
     "@type": "Organization",
@@ -228,12 +233,15 @@
       <h2>Qué ha cambiado en esta fuente</h2>
       <p>Esta fuente es una definición pública y cada cambio queda registrado. De lo más reciente a lo más antiguo:</p>
       <ul class="changelog">
+        <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.</li>
         <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.</li>
-        <li class="rev"><time datetime="2026-07-16">2026-07-16</time> — Map the movement's running balance (saldo.importe) to record.balanceAfter (promoted to a canonical field for the Cuéntamo contract). Requires extension &gt;= 0.3.0.24.</li>
-        <li class="rev"><time datetime="2026-07-15">2026-07-15</time> — Fix `movimientos`: the first (non-SCA) page returns a flat `movimientos` array, not `methodResult.movimientos` — itemsPath now accepts both shapes.</li>
-        <li class="rev"><time datetime="2026-07-15">2026-07-15</time> — Add `movimientos` (transactions) per account — 90-day window, full-URL nextPage pager, stops at the SCA boundary (no OTP triggered). Add per-account monthly movement statements (PDF/Excel). Token-only auth (auth.cookies:false, avoids HTTP 413) + session keep-alive. Movements is no longer a declared gap.</li>
-        <li class="rev"><time datetime="2026-07-14">2026-07-14</time> — Initial: integrated monthly statements (PDF) across all accounts. Movements/cards/investments are declared gaps for community contribution.</li>
+        <li class="rev"><time datetime="2026-07-16">2026-07-16</time> — Mapea el saldo tras el movimiento (saldo.importe) a record.balanceAfter (promovido a campo canónico para el contrato del consumidor). Requiere extensión &gt;= 0.3.0.24.</li>
+        <li class="rev"><time datetime="2026-07-15">2026-07-15</time> — Corrige `movimientos`: la primera página (sin SCA) devuelve un array `movimientos` plano, no `methodResult.movimientos` — itemsPath acepta ahora ambas formas.</li>
+        <li class="rev"><time datetime="2026-07-15">2026-07-15</time> — Añade `movimientos` (transactions) por cuenta — ventana de 90 días, paginador nextPage con URL completa, que se detiene en la frontera de SCA (sin disparar OTP). Añade extractos mensuales de movimientos por cuenta (PDF/Excel). Autenticación solo con token (auth.cookies:false, evita el HTTP 413) más mantenimiento de sesión. Los movimientos dejan de ser una carencia declarada.</li>
       </ul>
+      <p class="lead"><a href="/sources.html#openbank-es">Ver el historial completo en el catálogo →</a></p>
+      <h2>Agradecimientos</h2>
+      <p class="credit"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella. Habeas existe porque hay gente que mapea los servicios que usa y comparte el resultado.</p>
 
     <h2>Más guías de bancos, tarjetas e inversión</h2>
     <ul>

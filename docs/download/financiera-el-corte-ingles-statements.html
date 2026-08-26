@@ -146,11 +146,16 @@
     "@type": "WebPage",
     "@id": "https://habeas.dev/download/financiera-el-corte-ingles-statements.html"
   },
-  "dateModified": "2026-08-08",
+  "dateModified": "2026-08-26",
   "author": {
-    "@type": "Organization",
-    "name": "Habeas",
-    "url": "https://habeas.dev"
+    "@type": "Person",
+    "name": "David Marín",
+    "url": "https://davefx.com"
+  },
+  "contributor": {
+    "@type": "Person",
+    "name": "David Marín",
+    "url": "https://davefx.com"
   },
   "publisher": {
     "@type": "Organization",
@@ -227,13 +232,15 @@
       <h2>What has changed in this source</h2>
       <p>This source is a public definition, and every change to it is on the record. Most recent first:</p>
       <ul class="changelog">
-        <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.</li>
+        <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
+        <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.</li>
         <li class="rev"><time datetime="2026-07-20">2026-07-20</time> — First publish to the live registry. Requires extension &gt;= 0.5.0 (the milestone that ships declarative capturePaths, the login-safe scoped token observer, and the {date:FORMAT} document token this source relies on). Verified end-to-end by the contributor.</li>
         <li class="rev"><time datetime="2026-07-20">2026-07-20</time> — Fix the statement PDF datePurchase format: the generate-file endpoint wants DD/MM/YYYY (e.g. 01/09/2025), but on a store re-download the date falls back to the normalized ISO value (2025-09-01), which the server rejected with HTTP 400. Now formatted explicitly via {date:DD/MM/YYYY}. Requires extension &gt;= 0.4.1.15.</li>
         <li class="rev"><time datetime="2026-07-20">2026-07-20</time> — Declare auth.capturePaths = ['/dashboard/'] so the token is only captured from the authenticated dashboard area (where it first appears, after login) and the header observer never engages with the sign-in flow — this keeps the extension from interfering with the bank's Transmit Security login.</li>
-        <li class="rev"><time datetime="2026-07-20">2026-07-20</time> — Send the per-card eci-custom-encrypted-pan header on the aplazamientos (financing-purchases) and extractos (shopping-summaries) LIST requests too — the SPA sends it on every card-scoped call (as movements already does), so the server needs it to return those lists per card, not just for movements + the statement PDF.</li>
       </ul>
       <p class="lead"><a href="/sources.html#financiera-elcorteingles-es">See the full history in the catalog →</a></p>
+      <h2>Credit</h2>
+      <p class="credit"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> recorded their own session and wrote this source definition from it. Habeas exists because people map the services they use and share the result.</p>
 
     <h2>More banks, cards &amp; investments guides</h2>
     <ul>

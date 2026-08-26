@@ -4,7 +4,17 @@
   "service": "paypal",
   "country": "global",
   "trust": "community",
-  "version": "2026-08-13",
+  "credit": {
+    "author": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    },
+    "capture": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    }
+  },
+  "version": "2026-08-26",
   "minVersion": "0.7.0.10",
   "domain": "paypal.com",
   "match": [
@@ -113,12 +123,25 @@
   "brand": "PayPal",
   "changelog": [
     {
+      "version": "2026-08-26",
+      "changes": {
+        "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+        "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+      }
+    },
+    {
       "version": "2026-08-13",
-      "changes": "Declara country: global. PayPal funciona en cualquier país, pero al no declararlo quedaba sin clasificar justo cuando la extensión y la web han empezado a ordenar las fuentes por relevancia geográfica."
+      "changes": {
+        "en": "Declares country: global. PayPal works in any country, but leaving it undeclared left it unclassified just as the extension and the website began ordering sources by geographic relevance.",
+        "es": "Declara country: global. PayPal funciona en cualquier país, pero al no declararlo quedaba sin clasificar justo cuando la extensión y la web han empezado a ordenar las fuentes por relevancia geográfica."
+      }
     },
     {
       "version": "2026-08-08",
-      "changes": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`."
+      "changes": {
+        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.",
+        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`."
+      }
     }
   ]
 }

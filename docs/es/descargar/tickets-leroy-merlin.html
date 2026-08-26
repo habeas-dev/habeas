@@ -146,11 +146,16 @@
     "@type": "WebPage",
     "@id": "https://habeas.dev/es/descargar/tickets-leroy-merlin.html"
   },
-  "dateModified": "2026-08-08",
+  "dateModified": "2026-08-26",
   "author": {
-    "@type": "Organization",
-    "name": "Habeas",
-    "url": "https://habeas.dev"
+    "@type": "Person",
+    "name": "David Marín",
+    "url": "https://davefx.com"
+  },
+  "contributor": {
+    "@type": "Person",
+    "name": "David Marín",
+    "url": "https://davefx.com"
   },
   "publisher": {
     "@type": "Organization",
@@ -226,13 +231,15 @@
       <h2>Qué ha cambiado en esta fuente</h2>
       <p>Esta fuente es una definición pública y cada cambio queda registrado. De lo más reciente a lo más antiguo:</p>
       <ul class="changelog">
+        <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.</li>
         <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.</li>
         <li class="rev"><time datetime="2026-07-10">2026-07-10</time> — Tickets: no cortar al llegar a un año sin compras (stopAfterEmpty) — antes se paraba en 2025 (sin compras) y ocultaba los tickets más antiguos.</li>
         <li class="rev"><time datetime="2026-07-10">2026-07-10</time> — Stream «Pedidos»: mostrar TODOS los pedidos de «mis pedidos» (se quita el filtro que dejaba solo los ONLINE y ocultaba pedidos de tienda que también aparecen ahí).</li>
         <li class="rev"><time datetime="2026-07-10">2026-07-10</time> — Tickets de tienda: empezar en el año actual (yearOffset 0) — antes empezaba 2 años atrás y se saltaba las compras de este año y el anterior.</li>
-        <li class="rev"><time datetime="2026-07-10">2026-07-10</time> — Añade compras online (stream «Pedidos online» vía /order-followup/backend/v2/orders, filtradas a ONLINE) junto a los tickets de tienda existentes; fuente multi-salida (streams).</li>
       </ul>
       <p class="lead"><a href="/sources.html#leroymerlin-es">Ver el historial completo en el catálogo →</a></p>
+      <h2>Agradecimientos</h2>
+      <p class="credit"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella. Habeas existe porque hay gente que mapea los servicios que usa y comparte el resultado.</p>
 
     <h2>Más guías de tiendas</h2>
     <ul>
