@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.10.1] — 2026-08-26
+
 ### Added
 - **A field may declare several source paths, and the first that resolves wins.** Until now a field mapped
   to exactly one path, which is right until a service reports the same quantity under two names — one
