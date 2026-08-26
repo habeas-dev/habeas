@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-24T18:11:36.419Z",
+  "generated": "2026-08-26T12:41:45.597Z",
   "sources": [
     {
       "id": "aliexpress",
@@ -17,22 +17,35 @@
         "html"
       ],
       "crossDomain": [],
-      "version": "2026-08-08",
+      "version": "2026-08-26",
       "minVersion": "0.3.0",
       "gaps": [],
       "contributors": [],
       "changelog": [
         {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-08",
-          "changes": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`."
+          }
         },
         {
           "version": "2026-07-16",
-          "changes": "Initial: order history via Alibaba's mtop gateway. Runs in the site tab and reuses the app's own live request payload (hook stashes it) + its lib.mtop signing (no hardcoded blob, no forged signature); paginates by bumping the component pageIndex. Orders extracted from the DIDA component response (itemsFromKeys). Per-order receipt as a self-contained printable HTML invoice, generated from mtop queryorderreceiptinfo (no seed needed — a known flat payload) via a declarative template using AliExpress's own labels."
+          "changes": {
+            "en": "Initial: order history via Alibaba's mtop gateway. Runs in the site tab and reuses the app's own live request payload (hook stashes it) + its lib.mtop signing (no hardcoded blob, no forged signature); paginates by bumping the component pageIndex. Orders extracted from the DIDA component response (itemsFromKeys). Per-order receipt as a self-contained printable HTML invoice, generated from mtop queryorderreceiptinfo (no seed needed — a known flat payload) via a declarative template using AliExpress's own labels.",
+            "es": "Inicial: historial de pedidos a través de la pasarela mtop de Alibaba. Se ejecuta en la pestaña del sitio y reutiliza el payload real de la propia app (el hook lo guarda) junto a su firma lib.mtop (sin blob incrustado ni firma falsificada); pagina incrementando el pageIndex del componente. Los pedidos se extraen de la respuesta del componente DIDA (itemsFromKeys). Recibo por pedido como factura HTML imprimible y autocontenida, generada desde mtop queryorderreceiptinfo (no hace falta semilla: es un payload plano conocido) mediante una plantilla declarativa que usa las propias etiquetas de AliExpress."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/aliexpress.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:42:44+02:00"
     },
     {
       "id": "amazon",
@@ -50,22 +63,35 @@
         "pdf"
       ],
       "crossDomain": [],
-      "version": "2026-08-24",
+      "version": "2026-08-26",
       "minVersion": "0.7.0.11",
       "gaps": [],
       "contributors": [],
       "changelog": [
         {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-24",
-          "changes": "Licence of the definition moved to CC0-1.0 (and the guide `content` to CC-BY-4.0), stated once in sources/LICENSE instead of a per-file field."
+          "changes": {
+            "en": "Licence of the definition moved to CC0-1.0 (and the guide `content` to CC-BY-4.0), stated once in sources/LICENSE instead of a per-file field.",
+            "es": "La licencia de la definición pasa a CC0-1.0 (y el `content` de la guía a CC-BY-4.0), declarada una sola vez en sources/LICENSE en lugar de en un campo por fichero."
+          }
         },
         {
           "version": "2026-08-08",
-          "changes": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/amazon.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:42:44+02:00"
     },
     {
       "id": "americanexpress",
@@ -86,7 +112,7 @@
       "contributors": [],
       "changelog": [],
       "url": "https://habeas-dev.github.io/sources/americanexpress.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-24T20:03:35+02:00"
     },
     {
       "id": "bipdrive-es",
@@ -103,22 +129,35 @@
         "pdf"
       ],
       "crossDomain": [],
-      "version": "2026-08-08",
+      "version": "2026-08-26",
       "minVersion": null,
       "gaps": [],
       "contributors": [],
       "changelog": [
         {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-08",
-          "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          }
         },
         {
           "version": "2026-07-08",
-          "changes": "Facturas vía tabla AJAX (from:html); PDF por POST de formulario."
+          "changes": {
+            "en": "Invoices via an AJAX table (from:html); PDF by form POST.",
+            "es": "Facturas vía tabla AJAX (from:html); PDF por POST de formulario."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/bipdrive-es.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:42:44+02:00"
     },
     {
       "id": "caixabank-consumer-es",
@@ -137,22 +176,35 @@
       "crossDomain": [
         "api.caixabankpc.com"
       ],
-      "version": "2026-08-08",
+      "version": "2026-08-26",
       "minVersion": "0.1.35",
       "gaps": [],
       "contributors": [],
       "changelog": [
         {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-08",
-          "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          }
         },
         {
           "version": "2026-07-08",
-          "changes": "Versión inicial: extractos (cross-domain api.caixabankpc.com), captura de DNI, PDF por URL absoluta."
+          "changes": {
+            "en": "Initial version: statements (cross-domain api.caixabankpc.com), DNI capture, PDF by absolute URL.",
+            "es": "Versión inicial: extractos (cross-domain api.caixabankpc.com), captura de DNI, PDF por URL absoluta."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/caixabank-consumer-es.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:42:44+02:00"
     },
     {
       "id": "carrefour-es",
@@ -171,22 +223,35 @@
         "pdf"
       ],
       "crossDomain": [],
-      "version": "2026-08-08",
+      "version": "2026-08-26",
       "minVersion": null,
       "gaps": [],
       "contributors": [],
       "changelog": [
         {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-08",
-          "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          }
         },
         {
           "version": "2026-07-08",
-          "changes": "Tickets y pedidos online (offset pagination); PDF cuando existe."
+          "changes": {
+            "en": "Receipts and online orders (offset pagination); PDF where one exists.",
+            "es": "Tickets y pedidos online (offset pagination); PDF cuando existe."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/carrefour-es.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:42:44+02:00"
     },
     {
       "id": "decathlon-es",
@@ -203,22 +268,35 @@
         "json"
       ],
       "crossDomain": [],
-      "version": "2026-08-08",
+      "version": "2026-08-26",
       "minVersion": null,
       "gaps": [],
       "contributors": [],
       "changelog": [
         {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-08",
-          "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          }
         },
         {
           "version": "2026-07-08",
-          "changes": "Pedidos/recibos con detalle JSON."
+          "changes": {
+            "en": "Orders and receipts with JSON detail.",
+            "es": "Pedidos/recibos con detalle JSON."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/decathlon-es.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:42:44+02:00"
     },
     {
       "id": "degiro",
@@ -239,7 +317,7 @@
       "contributors": [],
       "changelog": [],
       "url": "https://habeas-dev.github.io/sources/degiro.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-24T20:03:35+02:00"
     },
     {
       "id": "dia-es",
@@ -257,22 +335,35 @@
         "pdf"
       ],
       "crossDomain": [],
-      "version": "2026-08-08",
+      "version": "2026-08-26",
       "minVersion": null,
       "gaps": [],
       "contributors": [],
       "changelog": [
         {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-08",
-          "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          }
         },
         {
           "version": "2026-07-08",
-          "changes": "Tickets desde el SSR (Vike); factura en PDF por artículo."
+          "changes": {
+            "en": "Receipts from the SSR (Vike); per-item PDF invoice.",
+            "es": "Tickets desde el SSR (Vike); factura en PDF por artículo."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/dia-es.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:42:44+02:00"
     },
     {
       "id": "financiera-elcorteingles-es",
@@ -282,13 +373,13 @@
         "card",
         "loan"
       ],
-      "trust": "community",
+      "trust": "first-party",
       "beta": false,
       "domain": "financieraelcorteingles.es",
       "country": "ES",
       "formats": [],
       "crossDomain": [],
-      "version": "2026-08-08",
+      "version": "2026-08-26.1",
       "minVersion": "0.5.0",
       "gaps": [],
       "contributors": [
@@ -296,52 +387,99 @@
       ],
       "changelog": [
         {
+          "version": "2026-08-26.1",
+          "changes": {
+            "en": "Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.",
+            "es": "Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga."
+          }
+        },
+        {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-08",
-          "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          }
         },
         {
           "version": "2026-07-20.3",
-          "changes": "First publish to the live registry. Requires extension >= 0.5.0 (the milestone that ships declarative capturePaths, the login-safe scoped token observer, and the {date:FORMAT} document token this source relies on). Verified end-to-end by the contributor."
+          "changes": {
+            "en": "First publish to the live registry. Requires extension >= 0.5.0 (the milestone that ships declarative capturePaths, the login-safe scoped token observer, and the {date:FORMAT} document token this source relies on). Verified end-to-end by the contributor.",
+            "es": "Primera publicación en el registro vivo. Requiere extensión >= 0.5.0 (el hito que incorpora capturePaths declarativo, el observador de token acotado y seguro ante el login, y el token de documento {date:FORMAT} del que depende esta fuente). Verificada de extremo a extremo por quien la aportó."
+          }
         },
         {
           "version": "2026-07-20.2",
-          "changes": "Fix the statement PDF datePurchase format: the generate-file endpoint wants DD/MM/YYYY (e.g. 01/09/2025), but on a store re-download the date falls back to the normalized ISO value (2025-09-01), which the server rejected with HTTP 400. Now formatted explicitly via {date:DD/MM/YYYY}. Requires extension >= 0.4.1.15."
+          "changes": {
+            "en": "Fix the statement PDF datePurchase format: the generate-file endpoint wants DD/MM/YYYY (e.g. 01/09/2025), but on a store re-download the date falls back to the normalized ISO value (2025-09-01), which the server rejected with HTTP 400. Now formatted explicitly via {date:DD/MM/YYYY}. Requires extension >= 0.4.1.15.",
+            "es": "Corrige el formato de datePurchase del PDF de extracto: el endpoint generate-file espera DD/MM/YYYY (p. ej. 01/09/2025), pero al re-descargar desde el archivo la fecha volvía al valor ISO normalizado (2025-09-01), que el servidor rechazaba con HTTP 400. Ahora se formatea explícitamente con {date:DD/MM/YYYY}. Requiere extensión >= 0.4.1.15."
+          }
         },
         {
           "version": "2026-07-20.1",
-          "changes": "Declare auth.capturePaths = ['/dashboard/'] so the token is only captured from the authenticated dashboard area (where it first appears, after login) and the header observer never engages with the sign-in flow — this keeps the extension from interfering with the bank's Transmit Security login."
+          "changes": {
+            "en": "Declare auth.capturePaths = ['/dashboard/'] so the token is only captured from the authenticated dashboard area (where it first appears, after login) and the header observer never engages with the sign-in flow — this keeps the extension from interfering with the bank's Transmit Security login.",
+            "es": "Declara auth.capturePaths = ['/dashboard/'] para que el token solo se capture en el área autenticada del panel (donde aparece por primera vez, tras el login) y el observador de cabeceras no intervenga nunca en el flujo de acceso: así la extensión no interfiere con el login de Transmit Security del banco."
+          }
         },
         {
           "version": "2026-07-20",
-          "changes": "Send the per-card eci-custom-encrypted-pan header on the aplazamientos (financing-purchases) and extractos (shopping-summaries) LIST requests too — the SPA sends it on every card-scoped call (as movements already does), so the server needs it to return those lists per card, not just for movements + the statement PDF."
+          "changes": {
+            "en": "Send the per-card eci-custom-encrypted-pan header on the aplazamientos (financing-purchases) and extractos (shopping-summaries) LIST requests too — the SPA sends it on every card-scoped call (as movements already does), so the server needs it to return those lists per card, not just for movements + the statement PDF.",
+            "es": "Envía también la cabecera eci-custom-encrypted-pan por tarjeta en las peticiones de LISTA de aplazamientos (financing-purchases) y extractos (shopping-summaries) — la SPA la manda en toda llamada acotada a una tarjeta (como ya hacía movimientos), así que el servidor la necesita para devolver esas listas por tarjeta, no solo para los movimientos y el PDF del extracto."
+          }
         },
         {
           "version": "2026-07-17.4",
-          "changes": "Revert tokenFromStorage: FECI's API bearer is a WSO2 OAuth JWT held in memory (obtained via /api/accessTokenTransmit), NOT in localStorage — aphishi-lws_at.t is a session id, so injecting it gave WSO2 900901 'Invalid Credentials'. Back to capturing the bearer from the SPA's own requests (auth.replayHeaders)."
+          "changes": {
+            "en": "Revert tokenFromStorage: FECI's API bearer is a WSO2 OAuth JWT held in memory (obtained via /api/accessTokenTransmit), NOT in localStorage — aphishi-lws_at.t is a session id, so injecting it gave WSO2 900901 'Invalid Credentials'. Back to capturing the bearer from the SPA's own requests (auth.replayHeaders).",
+            "es": "Revierte tokenFromStorage: el bearer de la API de FECI es un JWT OAuth de WSO2 que vive en memoria (se obtiene vía /api/accessTokenTransmit), NO en localStorage — aphishi-lws_at.t es un identificador de sesión, así que inyectarlo daba 'Invalid Credentials' 900901 de WSO2. Vuelve a capturarse el bearer de las propias peticiones de la SPA (auth.replayHeaders)."
+          }
         },
         {
           "version": "2026-07-17.3",
-          "changes": "(reverted) read the bearer from localStorage via auth.tokenFromStorage — wrong field for FECI (the token isn't in localStorage)."
+          "changes": {
+            "en": "(reverted) read the bearer from localStorage via auth.tokenFromStorage — wrong field for FECI (the token isn't in localStorage).",
+            "es": "(revertido) leer el bearer de localStorage vía auth.tokenFromStorage — campo equivocado para FECI (el token no está en localStorage)."
+          }
         },
         {
           "version": "2026-07-17.2",
-          "changes": "Fix extractos statement PDF download (the real cause): the generate-file POST also needs the per-card eci-custom-encrypted-pan header (same as movements), which the server requires to return the file. Sent via api.pdf.headers {group.pan}. Requires extension >= 0.4.1.2."
+          "changes": {
+            "en": "Fix extractos statement PDF download (the real cause): the generate-file POST also needs the per-card eci-custom-encrypted-pan header (same as movements), which the server requires to return the file. Sent via api.pdf.headers {group.pan}. Requires extension >= 0.4.1.2.",
+            "es": "Corrige la descarga del PDF de extractos (la causa real): el POST a generate-file necesita además la cabecera eci-custom-encrypted-pan de la tarjeta (igual que movimientos), que el servidor exige para devolver el fichero. Se envía vía api.pdf.headers {group.pan}. Requiere extensión >= 0.4.1.2."
+          }
         },
         {
           "version": "2026-07-17.1",
-          "changes": "extractos generate-file POST sends the {} JSON body + application/json content-type the SPA sends. datePurchase correct (the raw item date, DD/MM/YYYY)."
+          "changes": {
+            "en": "extractos generate-file POST sends the {} JSON body + application/json content-type the SPA sends. datePurchase correct (the raw item date, DD/MM/YYYY).",
+            "es": "El POST a generate-file de extractos envía el cuerpo JSON {} y el content-type application/json que manda la SPA. datePurchase correcto (la fecha cruda del elemento, DD/MM/YYYY)."
+          }
         },
         {
           "version": "2026-07-17",
-          "changes": "Fix empty aplazamientos + extractos lists: send the query params the SPA sends. aplazamientos/financing-purchases now sends page_number=0&page_size=100 (the endpoint is paged); extractos/shopping-summaries now sends date_bill (the current billing date the SPA stamps), via the new {monthEnd:DD/MM/YYYY} computed-date token. Requires extension >= 0.4.1.1."
+          "changes": {
+            "en": "Fix empty aplazamientos + extractos lists: send the query params the SPA sends. aplazamientos/financing-purchases now sends page_number=0&page_size=100 (the endpoint is paged); extractos/shopping-summaries now sends date_bill (the current billing date the SPA stamps), via the new {monthEnd:DD/MM/YYYY} computed-date token. Requires extension >= 0.4.1.1.",
+            "es": "Corrige las listas vacías de aplazamientos y extractos: envía los parámetros de consulta que manda la SPA. aplazamientos/financing-purchases envía ahora page_number=0&page_size=100 (el endpoint es paginado); extractos/shopping-summaries envía date_bill (la fecha de facturación actual que estampa la SPA), mediante el nuevo token de fecha calculada {monthEnd:DD/MM/YYYY}. Requiere extensión >= 0.4.1.1."
+          }
         },
         {
           "version": "2026-07-16",
-          "changes": "Initial (authored from a redacted handoff recording, verified live by the contributor). Multi-card (grouped by contract): card movements (transactions), aplazamientos/financing purchases, and monthly statement PDFs (generated per month, base64). Cookie session + replayed bearer + per-card eci-custom-encrypted-pan header."
+          "changes": {
+            "en": "Initial (authored from a redacted handoff recording, verified live by the contributor). Multi-card (grouped by contract): card movements (transactions), aplazamientos/financing purchases, and monthly statement PDFs (generated per month, base64). Cookie session + replayed bearer + per-card eci-custom-encrypted-pan header.",
+            "es": "Inicial (escrita a partir de una grabación redactada del handoff, verificada en vivo por quien la aportó). Multitarjeta (agrupada por contrato): movimientos de tarjeta (transactions), aplazamientos/financing purchases y PDF de extracto mensual (generados por mes, en base64). Sesión por cookie + bearer replicado + cabecera eci-custom-encrypted-pan por tarjeta."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/financiera-elcorteingles-es.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:56:50+02:00"
     },
     {
       "id": "hover-com",
@@ -359,26 +497,42 @@
         "html"
       ],
       "crossDomain": [],
-      "version": "2026-08-08",
+      "version": "2026-08-26",
       "minVersion": null,
       "gaps": [],
       "contributors": [],
       "changelog": [
         {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-08",
-          "changes": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`."
+          }
         },
         {
           "version": "2026-07-13",
-          "changes": "Bill in USD (Hover charges USD; was defaulting to EUR)."
+          "changes": {
+            "en": "Bill in USD (Hover charges USD; was defaulting to EUR).",
+            "es": "Factura en USD (Hover cobra en USD; antes se asumía EUR por defecto)."
+          }
         },
         {
           "version": "2026-07-08",
-          "changes": "Facturas de dominios (JSON + recibo HTML)."
+          "changes": {
+            "en": "Domain invoices (JSON + HTML receipt).",
+            "es": "Facturas de dominios (JSON + recibo HTML)."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/hover-com.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:42:44+02:00"
     },
     {
       "id": "ikea-es",
@@ -397,18 +551,35 @@
       "crossDomain": [
         "cssom-prod.ingka.com"
       ],
-      "version": "2026-08-08",
+      "version": "2026-08-26",
       "minVersion": "0.1.36",
       "gaps": [],
       "contributors": [],
       "changelog": [
         {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
+          "version": "2026-08-25.1",
+          "changes": {
+            "en": "Waits for the loyalty hub before auto-running, and opens it rather than /purchases/ in a dedicated tab. IKEA fires capturable requests on earlier screens, so both paths could reach the purchase-history API before the session was good for it. The documents come from the API, not from the page, so the page only has to be the one that establishes a usable session.",
+            "es": "Espera al hub de fidelización antes de auto-ejecutarse, y abre ese hub en lugar de /purchases/ en la pestaña dedicada. IKEA dispara peticiones capturables en pantallas anteriores, así que ambas vías podían llegar a la API de historial de compras antes de que la sesión sirviera. Los documentos vienen de la API, no de la página, así que a la página solo le toca establecer una sesión utilizable."
+          }
+        },
+        {
           "version": "2026-08-08",
-          "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/ikea-es.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:42:44+02:00"
     },
     {
       "id": "ing-es",
@@ -417,13 +588,13 @@
       "categories": [
         "banking"
       ],
-      "trust": "community",
+      "trust": "first-party",
       "beta": false,
       "domain": "ingdirect.es",
       "country": "ES",
       "formats": [],
       "crossDomain": [],
-      "version": "2026-08-09",
+      "version": "2026-08-26.1",
       "minVersion": "0.9.11.4",
       "gaps": [
         "inversión"
@@ -431,40 +602,78 @@
       "contributors": [],
       "changelog": [
         {
+          "version": "2026-08-26.1",
+          "changes": {
+            "en": "Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.",
+            "es": "Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga."
+          }
+        },
+        {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-09",
-          "changes": "La guía dice ya que ING solo sirve unos 90 días de histórico y que en cuenta corriente lo aplica de forma estricta. Quien busca \"descargar mis extractos de ING\" espera su histórico completo; encontrarse tres meses sin aviso es peor que no tener página. Verificado contra una cuenta real: con el recorte del mes que cruza la ventana (extensión 0.9.12) los extractos de ese mes ya se descargan."
+          "changes": {
+            "en": "The guide now says that ING serves only about 90 days of history, and that it applies this strictly on a current account. Somebody searching for \"download my ING statements\" expects their full history; finding three months with no warning is worse than having no page at all. Verified against a real account: with the trimming of the month that straddles the window (extension 0.9.12), that month's statements now download.",
+            "es": "La guía dice ya que ING solo sirve unos 90 días de histórico y que en cuenta corriente lo aplica de forma estricta. Quien busca \"descargar mis extractos de ING\" espera su histórico completo; encontrarse tres meses sin aviso es peor que no tener página. Verificado contra una cuenta real: con el recorte del mes que cruza la ventana (extensión 0.9.12) los extractos de ese mes ya se descargan."
+          }
         },
         {
           "version": "2026-08-08.2",
-          "changes": "Ventana a 89 días (no 90): el límite de ING cuenta el día de hoy, así que el día más antiguo válido es hoy−89 y pedir hoy−90 se sale por uno. Requiere extensión 0.9.11.4, que además recorta el fromDate del informe mensual a la ventana en vez de pedir desde el día 1 del mes."
+          "changes": {
+            "en": "Window down to 89 days, not 90: ING's limit counts today, so the oldest valid day is today−89 and asking for today−90 is off by one. Requires extension 0.9.11.4, which also trims the monthly report's fromDate to the window instead of asking from the 1st of the month.",
+            "es": "Ventana a 89 días (no 90): el límite de ING cuenta el día de hoy, así que el día más antiguo válido es hoy−89 y pedir hoy−90 se sale por uno. Requiere extensión 0.9.11.4, que además recorta el fromDate del informe mensual a la ventana en vez de pedir desde el día 1 del mes."
+          }
         },
         {
           "version": "2026-08-08.1",
-          "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          }
         },
         {
           "version": "2026-08-08",
-          "changes": "Corrige `gaps`: los movimientos de tarjeta ya se extraen (ver 2026-07-23.3), así que solo queda inversión fuera de cobertura. El dato anterior era obsoleto y se publicaba como limitación."
+          "changes": {
+            "en": "Fixes `gaps`: card movements are extracted already (see 2026-07-23.3), so only investments remain out of coverage. The previous entry was stale and was being published as a limitation.",
+            "es": "Corrige `gaps`: los movimientos de tarjeta ya se extraen (ver 2026-07-23.3), así que solo queda inversión fuera de cobertura. El dato anterior era obsoleto y se publicaba como limitación."
+          }
         },
         {
           "version": "2026-07-31.1",
-          "changes": "Fix intermittent 401 'Authorization Required' (ING Webserver edge) that aborted the whole sync — most often at the account-enumeration step (/position-keeping). Verified via mitmproxy that the SAME authenticated request (same bearer, same 36 session cookies, browser-agnostic) returns 401 one call and 200 the next — a load-balancer/pool routing race (dual lb-3-p-288 / lb-4-p-288 + x-pool-from-dc cookies). ING's own SPA rides it out by retrying; Habeas now does the same via a bounded retry (retry: 401 ×4, 700ms), gated on the raw edge-HTML body so a genuine token-expiry (JSON) 401 still surfaces for re-login. Also replay `baggage` to mirror the SPA. Needs extension >= 0.9.7 (declarative retry in netFetch)."
+          "changes": {
+            "en": "Fix intermittent 401 'Authorization Required' (ING Webserver edge) that aborted the whole sync — most often at the account-enumeration step (/position-keeping). Verified via mitmproxy that the SAME authenticated request (same bearer, same 36 session cookies, browser-agnostic) returns 401 one call and 200 the next — a load-balancer/pool routing race (dual lb-3-p-288 / lb-4-p-288 + x-pool-from-dc cookies). ING's own SPA rides it out by retrying; Habeas now does the same via a bounded retry (retry: 401 ×4, 700ms), gated on the raw edge-HTML body so a genuine token-expiry (JSON) 401 still surfaces for re-login. Also replay `baggage` to mirror the SPA. Needs extension >= 0.9.7 (declarative retry in netFetch).",
+            "es": "Corrige el 401 'Authorization Required' intermitente (borde del Webserver de ING) que abortaba la sincronización entera — casi siempre al enumerar cuentas (/position-keeping). Verificado con mitmproxy: la MISMA petición autenticada (mismo bearer, mismas 36 cookies de sesión, con independencia del navegador) devuelve 401 en una llamada y 200 en la siguiente — una carrera de enrutado en el balanceador (dual lb-3-p-288 / lb-4-p-288 más cookies x-pool-from-dc). La propia SPA de ING lo sortea reintentando; Habeas hace ahora lo mismo con un reintento acotado (retry: 401 ×4, 700 ms), condicionado al cuerpo HTML crudo del borde para que un 401 por caducidad real del token (JSON) siga saliendo a la luz y se pueda volver a entrar. Además replica `baggage` para imitar a la SPA. Necesita extensión >= 0.9.7 (reintento declarativo en netFetch)."
+          }
         },
         {
           "version": "2026-07-23.3",
-          "changes": "Fix credit-card duplicates WITHOUT hiding real movements. A current-month card purchase is confirmed but stays \"Pendiente de liquidar\" until the monthly settlement, and ING re-lists a still-pending charge with a fresh transactionLocalUUID every sync → duplicates. Card movements (items with a `status`) now key by a stable natural id {date|amount|productId} PLUS a per-import ordinal (list.idOverride): two genuinely-distinct charges sharing (date,amount,productId) arrive together in one import → they get ordinals 0,1 and stay separate; a churning re-list of one charge is always ordinal 0 → dedupes; the pending→settled transition dedupes too. Account movements (no status) keep their stable UUID. Needs extension >= 0.7.0.25."
+          "changes": {
+            "en": "Fix credit-card duplicates WITHOUT hiding real movements. A current-month card purchase is confirmed but stays \"Pendiente de liquidar\" until the monthly settlement, and ING re-lists a still-pending charge with a fresh transactionLocalUUID every sync → duplicates. Card movements (items with a `status`) now key by a stable natural id {date|amount|productId} PLUS a per-import ordinal (list.idOverride): two genuinely-distinct charges sharing (date,amount,productId) arrive together in one import → they get ordinals 0,1 and stay separate; a churning re-list of one charge is always ordinal 0 → dedupes; the pending→settled transition dedupes too. Account movements (no status) keep their stable UUID. Needs extension >= 0.7.0.25.",
+            "es": "Corrige los duplicados de tarjeta SIN ocultar movimientos reales. Una compra con tarjeta del mes en curso está confirmada pero permanece «Pendiente de liquidar» hasta la liquidación mensual, e ING vuelve a listar el cargo pendiente con un transactionLocalUUID nuevo en cada sincronización → duplicados. Los movimientos de tarjeta (elementos con `status`) se indexan ahora por una clave natural estable {date|amount|productId} MÁS un ordinal por importación (list.idOverride): dos cargos genuinamente distintos que comparten (fecha, importe, producto) llegan juntos en una importación → reciben los ordinales 0 y 1 y se mantienen separados; un mismo cargo relistado una y otra vez es siempre el ordinal 0 → deduplica; y la transición de pendiente a liquidado también deduplica. Los movimientos de cuenta (sin status) conservan su UUID estable. Necesita extensión >= 0.7.0.25."
+          }
         },
         {
           "version": "2026-07-16",
-          "changes": "Map the movement's running balance to record.balanceAfter (promoted to a canonical field for the Cuéntamo contract). Requires extension >= 0.3.0.24."
+          "changes": {
+            "en": "Map the movement's running balance to record.balanceAfter (promoted to a canonical field for the Cuéntamo contract). Requires extension >= 0.3.0.24.",
+            "es": "Mapea el saldo tras el movimiento a record.balanceAfter (promovido a campo canónico para el contrato del consumidor). Requiere extensión >= 0.3.0.24."
+          }
         },
         {
           "version": "2026-07-14",
-          "changes": "Initial: movements (transactions), per-account monthly statements (PDF/Excel), and the integrated monthly statement (PDF). Grouped by account, 90-day window."
+          "changes": {
+            "en": "Initial: movements (transactions), per-account monthly statements (PDF/Excel), and the integrated monthly statement (PDF). Grouped by account, 90-day window.",
+            "es": "Inicial: movimientos (transactions), extractos mensuales por cuenta (PDF/Excel) y el extracto mensual integrado (PDF). Agrupada por cuenta, ventana de 90 días."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/ing-es.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:56:50+02:00"
     },
     {
       "id": "leroymerlin-es",
@@ -479,38 +688,63 @@
       "country": "ES",
       "formats": [],
       "crossDomain": [],
-      "version": "2026-08-08",
+      "version": "2026-08-26",
       "minVersion": "0.1.53.13",
       "gaps": [],
       "contributors": [],
       "changelog": [
         {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-08",
-          "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          }
         },
         {
           "version": "2026-07-10.3",
-          "changes": "Tickets: no cortar al llegar a un año sin compras (stopAfterEmpty) — antes se paraba en 2025 (sin compras) y ocultaba los tickets más antiguos."
+          "changes": {
+            "en": "Receipts: do not stop on reaching a year with no purchases (stopAfterEmpty) — it previously stopped at 2025 (no purchases) and hid the older receipts.",
+            "es": "Tickets: no cortar al llegar a un año sin compras (stopAfterEmpty) — antes se paraba en 2025 (sin compras) y ocultaba los tickets más antiguos."
+          }
         },
         {
           "version": "2026-07-10.2",
-          "changes": "Stream «Pedidos»: mostrar TODOS los pedidos de «mis pedidos» (se quita el filtro que dejaba solo los ONLINE y ocultaba pedidos de tienda que también aparecen ahí)."
+          "changes": {
+            "en": "\"Orders\" stream: show ALL orders from \"my orders\" (removes the filter that kept only the ONLINE ones and hid in-store orders that appear there too).",
+            "es": "Stream «Pedidos»: mostrar TODOS los pedidos de «mis pedidos» (se quita el filtro que dejaba solo los ONLINE y ocultaba pedidos de tienda que también aparecen ahí)."
+          }
         },
         {
           "version": "2026-07-10.1",
-          "changes": "Tickets de tienda: empezar en el año actual (yearOffset 0) — antes empezaba 2 años atrás y se saltaba las compras de este año y el anterior."
+          "changes": {
+            "en": "In-store receipts: start from the current year (yearOffset 0) — it previously started two years back and skipped this year's purchases and last year's.",
+            "es": "Tickets de tienda: empezar en el año actual (yearOffset 0) — antes empezaba 2 años atrás y se saltaba las compras de este año y el anterior."
+          }
         },
         {
           "version": "2026-07-10",
-          "changes": "Añade compras online (stream «Pedidos online» vía /order-followup/backend/v2/orders, filtradas a ONLINE) junto a los tickets de tienda existentes; fuente multi-salida (streams)."
+          "changes": {
+            "en": "Adds online purchases (the \"Online orders\" stream via /order-followup/backend/v2/orders, filtered to ONLINE) alongside the existing in-store receipts; multi-output source (streams).",
+            "es": "Añade compras online (stream «Pedidos online» vía /order-followup/backend/v2/orders, filtradas a ONLINE) junto a los tickets de tienda existentes; fuente multi-salida (streams)."
+          }
         },
         {
           "version": "2026-07-08",
-          "changes": "Recibos vía API JSON (cookie)."
+          "changes": {
+            "en": "Receipts via a JSON API (cookie).",
+            "es": "Recibos vía API JSON (cookie)."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/leroymerlin-es.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:42:44+02:00"
     },
     {
       "id": "n26",
@@ -533,7 +767,7 @@
       "contributors": [],
       "changelog": [],
       "url": "https://habeas-dev.github.io/sources/n26.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-24T20:03:35+02:00"
     },
     {
       "id": "openbank-es",
@@ -542,13 +776,13 @@
       "categories": [
         "banking"
       ],
-      "trust": "community",
+      "trust": "first-party",
       "beta": false,
       "domain": "openbank.es",
       "country": "ES",
       "formats": [],
       "crossDomain": [],
-      "version": "2026-08-08",
+      "version": "2026-08-26.1",
       "minVersion": "0.3.0.24",
       "gaps": [
         "tarjetas"
@@ -556,28 +790,57 @@
       "contributors": [],
       "changelog": [
         {
+          "version": "2026-08-26.1",
+          "changes": {
+            "en": "Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.",
+            "es": "Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga."
+          }
+        },
+        {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-08",
-          "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          }
         },
         {
           "version": "2026-07-16",
-          "changes": "Map the movement's running balance (saldo.importe) to record.balanceAfter (promoted to a canonical field for the Cuéntamo contract). Requires extension >= 0.3.0.24."
+          "changes": {
+            "en": "Map the movement's running balance (saldo.importe) to record.balanceAfter (promoted to a canonical field for the Cuéntamo contract). Requires extension >= 0.3.0.24.",
+            "es": "Mapea el saldo tras el movimiento (saldo.importe) a record.balanceAfter (promovido a campo canónico para el contrato del consumidor). Requiere extensión >= 0.3.0.24."
+          }
         },
         {
           "version": "2026-07-15.1",
-          "changes": "Fix `movimientos`: the first (non-SCA) page returns a flat `movimientos` array, not `methodResult.movimientos` — itemsPath now accepts both shapes."
+          "changes": {
+            "en": "Fix `movimientos`: the first (non-SCA) page returns a flat `movimientos` array, not `methodResult.movimientos` — itemsPath now accepts both shapes.",
+            "es": "Corrige `movimientos`: la primera página (sin SCA) devuelve un array `movimientos` plano, no `methodResult.movimientos` — itemsPath acepta ahora ambas formas."
+          }
         },
         {
           "version": "2026-07-15",
-          "changes": "Add `movimientos` (transactions) per account — 90-day window, full-URL nextPage pager, stops at the SCA boundary (no OTP triggered). Add per-account monthly movement statements (PDF/Excel). Token-only auth (auth.cookies:false, avoids HTTP 413) + session keep-alive. Movements is no longer a declared gap."
+          "changes": {
+            "en": "Add `movimientos` (transactions) per account — 90-day window, full-URL nextPage pager, stops at the SCA boundary (no OTP triggered). Add per-account monthly movement statements (PDF/Excel). Token-only auth (auth.cookies:false, avoids HTTP 413) + session keep-alive. Movements is no longer a declared gap.",
+            "es": "Añade `movimientos` (transactions) por cuenta — ventana de 90 días, paginador nextPage con URL completa, que se detiene en la frontera de SCA (sin disparar OTP). Añade extractos mensuales de movimientos por cuenta (PDF/Excel). Autenticación solo con token (auth.cookies:false, evita el HTTP 413) más mantenimiento de sesión. Los movimientos dejan de ser una carencia declarada."
+          }
         },
         {
           "version": "2026-07-14",
-          "changes": "Initial: integrated monthly statements (PDF) across all accounts. Movements/cards/investments are declared gaps for community contribution."
+          "changes": {
+            "en": "Initial: integrated monthly statements (PDF) across all accounts. Movements/cards/investments are declared gaps for community contribution.",
+            "es": "Inicial: extractos mensuales integrados (PDF) de todas las cuentas. Movimientos, tarjetas e inversiones quedan como carencias declaradas, abiertas a la comunidad."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/openbank-es.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:56:50+02:00"
     },
     {
       "id": "pagatelia-es",
@@ -594,7 +857,7 @@
         "pdf"
       ],
       "crossDomain": [],
-      "version": "2026-08-08",
+      "version": "2026-08-26",
       "minVersion": "0.7.0.48",
       "gaps": [],
       "contributors": [
@@ -602,12 +865,22 @@
       ],
       "changelog": [
         {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-08",
-          "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/pagatelia-es.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:42:44+02:00"
     },
     {
       "id": "paypal",
@@ -616,7 +889,7 @@
       "categories": [
         "banking"
       ],
-      "trust": "community",
+      "trust": "first-party",
       "beta": false,
       "domain": "paypal.com",
       "country": "global",
@@ -624,22 +897,42 @@
         "json"
       ],
       "crossDomain": [],
-      "version": "2026-08-13",
+      "version": "2026-08-26.1",
       "minVersion": "0.7.0.10",
       "gaps": [],
       "contributors": [],
       "changelog": [
         {
+          "version": "2026-08-26.1",
+          "changes": {
+            "en": "Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.",
+            "es": "Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga."
+          }
+        },
+        {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-13",
-          "changes": "Declara country: global. PayPal funciona en cualquier país, pero al no declararlo quedaba sin clasificar justo cuando la extensión y la web han empezado a ordenar las fuentes por relevancia geográfica."
+          "changes": {
+            "en": "Declares country: global. PayPal works in any country, but leaving it undeclared left it unclassified just as the extension and the website began ordering sources by geographic relevance.",
+            "es": "Declara country: global. PayPal funciona en cualquier país, pero al no declararlo quedaba sin clasificar justo cuando la extensión y la web han empezado a ordenar las fuentes por relevancia geográfica."
+          }
         },
         {
           "version": "2026-08-08",
-          "changes": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/paypal.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:56:50+02:00"
     },
     {
       "id": "pepeenergy-es",
@@ -656,7 +949,7 @@
         "pdf"
       ],
       "crossDomain": [],
-      "version": "2026-08-08",
+      "version": "2026-08-26",
       "minVersion": "0.8.0",
       "gaps": [],
       "contributors": [
@@ -664,12 +957,22 @@
       ],
       "changelog": [
         {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-08",
-          "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/pepeenergy-es.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:42:44+02:00"
     },
     {
       "id": "pepephone-es",
@@ -686,18 +989,28 @@
         "pdf"
       ],
       "crossDomain": [],
-      "version": "2026-08-08",
+      "version": "2026-08-26",
       "minVersion": "0.9.2",
       "gaps": [],
       "contributors": [],
       "changelog": [
         {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-08",
-          "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/pepephone-es.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:42:44+02:00"
     },
     {
       "id": "raisin",
@@ -707,7 +1020,7 @@
         "banking",
         "investment"
       ],
-      "trust": "community",
+      "trust": "first-party",
       "beta": false,
       "domain": "raisin.com",
       "country": "global",
@@ -715,7 +1028,7 @@
       "crossDomain": [
         "api2.weltsparen.de"
       ],
-      "version": "2026-08-08",
+      "version": "2026-08-26.1",
       "minVersion": "0.5.0.32",
       "gaps": [],
       "contributors": [
@@ -723,92 +1036,169 @@
       ],
       "changelog": [
         {
+          "version": "2026-08-26.1",
+          "changes": {
+            "en": "Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.",
+            "es": "Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga."
+          }
+        },
+        {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-08",
-          "changes": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`."
+          }
         },
         {
           "version": "2026-07-21",
-          "changes": "Declared country: \"global\" — the field was missing since the multi-market rename (raisin-es -> raisin), so the catalog showed no 🌐 badge and country filters didn't treat it as worldwide."
+          "changes": {
+            "en": "Declared country: \"global\" — the field was missing since the multi-market rename (raisin-es -> raisin), so the catalog showed no 🌐 badge and country filters didn't treat it as worldwide.",
+            "es": "Declara country: \"global\" — el campo faltaba desde el renombrado multimercado (raisin-es -> raisin), así que el catálogo no mostraba el distintivo 🌐 y los filtros por país no la trataban como mundial."
+          }
         },
         {
           "version": "2026-07-20.18",
-          "changes": "Multi-language labels: the product-type word (Deposit/Account) is translated per browser locale via a source i18n dictionary (en/es/de/fr/nl — every Raisin market; en fallback), since the API only returns it as an enum. Dropped the TAE abbreviation (varies by country; % is universal). Requires 0.5.0.32 ({i18n:key} token)."
+          "changes": {
+            "en": "Multi-language labels: the product-type word (Deposit/Account) is translated per browser locale via a source i18n dictionary (en/es/de/fr/nl — every Raisin market; en fallback), since the API only returns it as an enum. Dropped the TAE abbreviation (varies by country; % is universal). Requires 0.5.0.32 ({i18n:key} token).",
+            "es": "Etiquetas multiidioma: la palabra del tipo de producto (Depósito/Cuenta) se traduce según el idioma del navegador mediante un diccionario i18n de la fuente (en/es/de/fr/nl — todos los mercados de Raisin; en por defecto), ya que la API solo la devuelve como enum. Se elimina la abreviatura TAE (varía por país; el % es universal). Requiere 0.5.0.32 (token {i18n:key})."
+          }
         },
         {
           "version": "2026-07-20.17",
-          "changes": "Multi-market: renamed raisin-es -> raisin (the API api2.weltsparen.de is shared across all Raisin countries); the response-language `locale` param now follows the browser locale via {locale}/{locale:lower} instead of a hardcoded es-ES. Requires 0.5.0.30. (Account-label WORDS Depósito/Cuenta/TAE remain Spanish for now.)"
+          "changes": {
+            "en": "Multi-market: renamed raisin-es -> raisin (the API api2.weltsparen.de is shared across all Raisin countries); the response-language `locale` param now follows the browser locale via {locale}/{locale:lower} instead of a hardcoded es-ES. Requires 0.5.0.30. (Account-label WORDS Depósito/Cuenta/TAE remain Spanish for now.)",
+            "es": "Multimercado: renombrada raisin-es -> raisin (la API api2.weltsparen.de es común a todos los países de Raisin); el parámetro `locale` del idioma de respuesta sigue ahora al del navegador vía {locale}/{locale:lower} en lugar de un es-ES fijo. Requiere 0.5.0.30. (Las PALABRAS de las etiquetas de cuenta —Depósito/Cuenta/TAE— siguen en español por ahora.)"
+          }
         },
         {
           "version": "2026-07-20.16",
-          "changes": "A deposit account now shows the SAME name everywhere: its own record, its documents, and the account picker all use the full \"Depósito <bank> <rate>% TAE <term> - <opening>\" label (the record previously showed a shorter \"Depósito <bank>\"). The bank moved to the store/counterparty column."
+          "changes": {
+            "en": "A deposit account now shows the SAME name everywhere: its own record, its documents, and the account picker all use the full \"Depósito <bank> <rate>% TAE <term> - <opening>\" label (the record previously showed a shorter \"Depósito <bank>\"). The bank moved to the store/counterparty column.",
+            "es": "Una cuenta de depósito muestra ya el MISMO nombre en todas partes: su propio registro, sus documentos y el selector de cuentas usan la etiqueta completa «Depósito <banco> <tipo>% TAE <plazo> - <apertura>» (antes el registro mostraba un «Depósito <banco>» más corto). El banco pasa a la columna de tienda/contraparte."
+          }
         },
         {
           "version": "2026-07-20.15",
-          "changes": "Split documents by product: FDA_ deposits keep the \"Depósito … % TAE … plazo\" label; OMA_ savings accounts now show \"Cuenta <bank>\" (no rate/term — variable). Deposit records carry their own account label. Requires 0.5.0.29 (ungrouped-stream account label)."
+          "changes": {
+            "en": "Split documents by product: FDA_ deposits keep the \"Depósito … % TAE … plazo\" label; OMA_ savings accounts now show \"Cuenta <bank>\" (no rate/term — variable). Deposit records carry their own account label. Requires 0.5.0.29 (ungrouped-stream account label).",
+            "es": "Separa los documentos por producto: los depósitos FDA_ mantienen la etiqueta «Depósito … % TAE … plazo»; las cuentas de ahorro OMA_ muestran ahora «Cuenta <banco>» (sin tipo ni plazo, que son variables). Los registros de depósito llevan su propia etiqueta de cuenta. Requiere 0.5.0.29 (etiqueta de cuenta en stream no agrupado)."
+          }
         },
         {
           "version": "2026-07-20.14",
-          "changes": "Requires 0.5.0.28: group-field templates now resolve (the account picker AND the Account column show the readable name instead of a raw id)."
+          "changes": {
+            "en": "Requires 0.5.0.28: group-field templates now resolve (the account picker AND the Account column show the readable name instead of a raw id).",
+            "es": "Requiere 0.5.0.28: las plantillas de campo de grupo ya se resuelven (tanto el selector de cuentas como la columna Cuenta muestran el nombre legible en vez de un id crudo)."
+          }
         },
         {
           "version": "2026-07-20.13",
-          "changes": "Deposit labels now use browser-locale formatting: rate with the locale decimal comma and term as words (\"Depósito Banca Progetto 2,45% TAE 6 meses - 2024-03-22\"). Requires runtime 0.5.0.27 ({field:num|pct|duration|date} format directives)."
+          "changes": {
+            "en": "Deposit labels now use browser-locale formatting: rate with the locale decimal comma and term as words (\"Depósito Banca Progetto 2,45% TAE 6 meses - 2024-03-22\"). Requires runtime 0.5.0.27 ({field:num|pct|duration|date} format directives).",
+            "es": "Las etiquetas de depósito usan ya el formato del idioma del navegador: el tipo con la coma decimal local y el plazo en palabras («Depósito Banca Progetto 2,45% TAE 6 meses - 2024-03-22»). Requiere runtime 0.5.0.27 (directivas de formato {field:num|pct|duration|date})."
+          }
         },
         {
           "version": "2026-07-20.12",
-          "changes": "Readable account/deposit names: savings show \"Cuenta <bank>\", deposits \"Depósito <bank> <rate>% TAE - <opening date>\" using the real bank name (deposit_taking_bank.name). Deposit date is now the opening date (deposit.opening_date). (Term wording and decimal comma still pending a formatting helper.)"
+          "changes": {
+            "en": "Readable account/deposit names: savings show \"Cuenta <bank>\", deposits \"Depósito <bank> <rate>% TAE - <opening date>\" using the real bank name (deposit_taking_bank.name). Deposit date is now the opening date (deposit.opening_date). (Term wording and decimal comma still pending a formatting helper.)",
+            "es": "Nombres legibles de cuenta y depósito: el ahorro muestra «Cuenta <banco>» y los depósitos «Depósito <banco> <tipo>% TAE - <fecha de apertura>», con el nombre real del banco (deposit_taking_bank.name). La fecha del depósito es ahora la de apertura (deposit.opening_date). (La redacción del plazo y la coma decimal siguen pendientes de un ayudante de formato.)"
+          }
         },
         {
           "version": "2026-07-20.11",
-          "changes": "Deposits, savings and documents now enumerate BOTH dashboard/active AND dashboard/inactive (api paths[]), so inactive/cancelled deposits and ALL their documents are captured (documents come from /dds per deposit). Requires runtime 0.5.0.26 (paths[] support)."
+          "changes": {
+            "en": "Deposits, savings and documents now enumerate BOTH dashboard/active AND dashboard/inactive (api paths[]), so inactive/cancelled deposits and ALL their documents are captured (documents come from /dds per deposit). Requires runtime 0.5.0.26 (paths[] support).",
+            "es": "Los depósitos, el ahorro y los documentos enumeran ahora TANTO dashboard/active COMO dashboard/inactive (api paths[]), de modo que se capturan los depósitos inactivos o cancelados y TODOS sus documentos (los documentos vienen de /dds por depósito). Requiere runtime 0.5.0.26 (soporte de paths[])."
+          }
         },
         {
           "version": "2026-07-20.10",
-          "changes": "Savings/deposit accounts now carry a readable name (the deposit-taking bank) + type, so the account list and per-account labels show a bank name instead of a raw id. Requires 0.5.0.25 (account picker enumerates every grouped stream: current account + savings + deposits)."
+          "changes": {
+            "en": "Savings/deposit accounts now carry a readable name (the deposit-taking bank) + type, so the account list and per-account labels show a bank name instead of a raw id. Requires 0.5.0.25 (account picker enumerates every grouped stream: current account + savings + deposits).",
+            "es": "Las cuentas de ahorro y depósito llevan ya un nombre legible (el banco que capta el depósito) más su tipo, así que la lista de cuentas y las etiquetas por cuenta muestran un nombre de banco en vez de un id crudo. Requiere 0.5.0.25 (el selector de cuentas enumera todos los streams agrupados: cuenta corriente, ahorro y depósitos)."
+          }
         },
         {
           "version": "2026-07-20.9",
-          "changes": "Requires runtime 0.5.0.24: list params now resolve {ctx.*} (depositos/ahorro/documentos send the real customer_id, was literal → dbff/dbs 403) and pdf.params apply to the document fetch (dds ?preview=true). All 4 outputs verified offline against the capture."
+          "changes": {
+            "en": "Requires runtime 0.5.0.24: list params now resolve {ctx.*} (depositos/ahorro/documentos send the real customer_id, was literal → dbff/dbs 403) and pdf.params apply to the document fetch (dds ?preview=true). All 4 outputs verified offline against the capture.",
+            "es": "Requiere runtime 0.5.0.24: los parámetros de lista resuelven ya {ctx.*} (depositos/ahorro/documentos envían el customer_id real, antes literal → 403 en dbff/dbs) y los pdf.params se aplican a la descarga del documento (dds ?preview=true). Las 4 salidas verificadas offline contra la captura."
+          }
         },
         {
           "version": "2026-07-20.8",
-          "changes": "Account list uses the real OData filter customerId eq {ctx.customer_id} & type eq TA_INTERNAL (was the invalid filter=all → 401). The customerId is templated from captured context, never hardcoded. Requires group-param ctx templating (minVersion 0.5.0.19)."
+          "changes": {
+            "en": "Account list uses the real OData filter customerId eq {ctx.customer_id} & type eq TA_INTERNAL (was the invalid filter=all → 401). The customerId is templated from captured context, never hardcoded. Requires group-param ctx templating (minVersion 0.5.0.19).",
+            "es": "La lista de cuentas usa el filtro OData real customerId eq {ctx.customer_id} & type eq TA_INTERNAL (antes el filtro inválido filter=all → 401). El customerId se plantilla desde el contexto capturado, nunca fijo. Requiere plantillado ctx en parámetros de grupo (minVersion 0.5.0.19)."
+          }
         },
         {
           "version": "2026-07-20.7",
-          "changes": "Send the browser-style Accept header (application/json, text/plain, */*) on every list/groups request. Instrumentation proved the ONLY difference between the SPA’s working request and our 401 was the Accept value (bare application/json); the API gateway rejects it. Same token, same everything else."
+          "changes": {
+            "en": "Send the browser-style Accept header (application/json, text/plain, */*) on every list/groups request. Instrumentation proved the ONLY difference between the SPA’s working request and our 401 was the Accept value (bare application/json); the API gateway rejects it. Same token, same everything else.",
+            "es": "Envía la cabecera Accept al estilo del navegador (application/json, text/plain, */*) en toda petición de lista y de grupos. La instrumentación demostró que la ÚNICA diferencia entre la petición que funcionaba en la SPA y nuestro 401 era el valor de Accept (application/json a secas); la pasarela de la API lo rechaza. Mismo token, todo lo demás idéntico."
+          }
         },
         {
           "version": "2026-07-20.6",
-          "changes": "auth.cookies:false — send the bearer WITHOUT cookies. Instrumentation proved the token is valid (not expired), so the 401 Authorization-required on a valid token points to a weltsparen.de session cookie interfering with the bearer on the cross-domain call (like Openbank 413). Bearer-only request."
+          "changes": {
+            "en": "auth.cookies:false — send the bearer WITHOUT cookies. Instrumentation proved the token is valid (not expired), so the 401 Authorization-required on a valid token points to a weltsparen.de session cookie interfering with the bearer on the cross-domain call (like Openbank 413). Bearer-only request.",
+            "es": "auth.cookies:false — envía el bearer SIN cookies. La instrumentación demostró que el token es válido (no caducado), así que un 401 Authorization-required con un token válido apunta a que una cookie de sesión de weltsparen.de interfiere con el bearer en la llamada cross-domain (como el 413 de Openbank). Petición solo con bearer."
+          }
         },
         {
           "version": "2026-07-20.5",
-          "changes": "Re-enable tokenFromStorage {key:auth_token, field:access_token}: token-correlation in a fresh capture PROVED the /tams bearer IS localStorage.auth_token.access_token (same [jwt#1] tag on all 19 API calls). Reading it fresh avoids the ~5min Keycloak expiry."
+          "changes": {
+            "en": "Re-enable tokenFromStorage {key:auth_token, field:access_token}: token-correlation in a fresh capture PROVED the /tams bearer IS localStorage.auth_token.access_token (same [jwt#1] tag on all 19 API calls). Reading it fresh avoids the ~5min Keycloak expiry.",
+            "es": "Reactiva tokenFromStorage {key:auth_token, field:access_token}: la correlación de tokens en una captura nueva DEMOSTRÓ que el bearer de /tams ES localStorage.auth_token.access_token (misma marca [jwt#1] en las 19 llamadas a la API). Leerlo fresco evita la caducidad de Keycloak a los ~5 min."
+          }
         },
         {
           "version": "2026-07-20.4",
-          "changes": "Revert tokenFromStorage: localStorage.auth_token.access_token is the Keycloak access token, NOT the weltsparen API bearer (a distinct api_ticket token, likely in-memory) — sending it gave 401 Authorization required. Back to the captured API bearer (capturePaths); token freshness/exchange still under investigation."
+          "changes": {
+            "en": "Revert tokenFromStorage: localStorage.auth_token.access_token is the Keycloak access token, NOT the weltsparen API bearer (a distinct api_ticket token, likely in-memory) — sending it gave 401 Authorization required. Back to the captured API bearer (capturePaths); token freshness/exchange still under investigation.",
+            "es": "Revierte tokenFromStorage: localStorage.auth_token.access_token es el token de acceso de Keycloak, NO el bearer de la API de weltsparen (un api_ticket distinto, probablemente en memoria) — enviarlo daba 401 Authorization required. Vuelta al bearer capturado de la API (capturePaths); la frescura y el intercambio del token siguen en investigación."
+          }
         },
         {
           "version": "2026-07-20.3",
-          "changes": "Point tokenFromStorage at the explicit field access_token (localStorage.auth_token.access_token) — unambiguous and works without the auto-detect. minVersion 0.5.0.8."
+          "changes": {
+            "en": "Point tokenFromStorage at the explicit field access_token (localStorage.auth_token.access_token) — unambiguous and works without the auto-detect. minVersion 0.5.0.8.",
+            "es": "Apunta tokenFromStorage al campo explícito access_token (localStorage.auth_token.access_token) — inequívoco y funciona sin la autodetección. minVersion 0.5.0.8."
+          }
         },
         {
           "version": "2026-07-20.2",
-          "changes": "Read the bearer FRESH from localStorage.auth_token on every request (auth.tokenFromStorage, access-token auto-detected) — Raisin uses a short-lived Keycloak JWT (~5 min) that expired between capture and listing (401 Jwt is expired). This always sends a valid, current user token."
+          "changes": {
+            "en": "Read the bearer FRESH from localStorage.auth_token on every request (auth.tokenFromStorage, access-token auto-detected) — Raisin uses a short-lived Keycloak JWT (~5 min) that expired between capture and listing (401 Jwt is expired). This always sends a valid, current user token.",
+            "es": "Lee el bearer FRESCO de localStorage.auth_token en cada petición (auth.tokenFromStorage, con el access-token autodetectado) — Raisin usa un JWT de Keycloak de vida corta (~5 min) que caducaba entre la captura y el listado (401 Jwt is expired). Así siempre se envía un token de usuario válido y actual."
+          }
         },
         {
           "version": "2026-07-20.1",
-          "changes": "Scope token capture to the user-data endpoints (auth.capturePaths /tams/ /dbff/ /dds/ /cas/) so the replayed bearer is the logged-in user's token, not a client/anonymous token the public catalog (/dcms) may carry — which caused a 401 UNAUTHORIZED on /tams/v1/accounts even with an authorization sent."
+          "changes": {
+            "en": "Scope token capture to the user-data endpoints (auth.capturePaths /tams/ /dbff/ /dds/ /cas/) so the replayed bearer is the logged-in user's token, not a client/anonymous token the public catalog (/dcms) may carry — which caused a 401 UNAUTHORIZED on /tams/v1/accounts even with an authorization sent.",
+            "es": "Acota la captura del token a los endpoints de datos del usuario (auth.capturePaths /tams/ /dbff/ /dds/ /cas/) para que el bearer replicado sea el del usuario identificado y no un token de cliente o anónimo que puede llevar el catálogo público (/dcms) — lo que provocaba un 401 UNAUTHORIZED en /tams/v1/accounts incluso enviando authorization."
+          }
         },
         {
           "version": "2026-07-20",
-          "changes": "Initial: Raisin (WeltSparen). Cross-domain login raisin.com -> API api2.weltsparen.de (Keycloak bearer), customer_id captured as context, 90-day window (SCA-free). Four outputs: movimientos (Raisin transaction account, tams), depósitos (fixed-term deposits FDA_, investment@2 with keepRaw), ahorro (flexible savings-account movements OMA_, from the deposit detail's embedded transactions), documentos (terms/condiciones via dds). OMA (flexible cuenta corriente) vs FDA (fixed deposit) split by the product-id prefix (auth.keep prefix on accounting.deposit_id)."
+          "changes": {
+            "en": "Initial: Raisin (WeltSparen). Cross-domain login raisin.com -> API api2.weltsparen.de (Keycloak bearer), customer_id captured as context, 90-day window (SCA-free). Four outputs: movimientos (Raisin transaction account, tams), depósitos (fixed-term deposits FDA_, investment@2 with keepRaw), ahorro (flexible savings-account movements OMA_, from the deposit detail's embedded transactions), documentos (terms/condiciones via dds). OMA (flexible cuenta corriente) vs FDA (fixed deposit) split by the product-id prefix (auth.keep prefix on accounting.deposit_id).",
+            "es": "Inicial: Raisin (WeltSparen). Login cross-domain raisin.com -> API api2.weltsparen.de (bearer de Keycloak), customer_id capturado como contexto, ventana de 90 días (sin SCA). Cuatro salidas: movimientos (cuenta de transacciones de Raisin, tams), depósitos (a plazo fijo FDA_, investment@2 con keepRaw), ahorro (movimientos de cuenta flexible OMA_, desde las transacciones incrustadas en el detalle del depósito) y documentos (condiciones vía dds). La separación entre OMA (cuenta corriente flexible) y FDA (depósito a plazo) se hace por el prefijo del id de producto (auth.keep prefix sobre accounting.deposit_id)."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/raisin.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:56:50+02:00"
     },
     {
       "id": "revolut",
@@ -817,7 +1207,7 @@
       "categories": [
         "banking"
       ],
-      "trust": "community",
+      "trust": "first-party",
       "beta": false,
       "domain": "revolut.com",
       "country": "global",
@@ -825,38 +1215,84 @@
       "crossDomain": [
         "storage.googleapis.com"
       ],
-      "version": "2026-08-12",
-      "minVersion": "0.9.3",
+      "version": "2026-08-26.5",
+      "minVersion": "0.10.0.1",
       "gaps": [],
       "contributors": [],
       "changelog": [
         {
+          "version": "2026-08-26.4",
+          "changes": {
+            "en": "Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.",
+            "es": "Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga."
+          }
+        },
+        {
+          "version": "2026-08-26.3",
+          "changes": {
+            "en": "Documents a known limit rather than fixing it: weekend foreign-currency card payments arrive about 1% short, because Revolut’s out-of-hours surcharge leaves the balance but never appears in the data. 1.48 EUR across 3 of 167 movements, and every way of correcting it costs more than it recovers.",
+            "es": "Documenta un límite conocido en vez de arreglarlo: los pagos con tarjeta en divisa hechos en fin de semana llegan un 1% cortos, porque el recargo de Revolut fuera de horario sale del saldo pero no aparece en los datos. Son 1,48 € en 3 de 167 movimientos, y cualquier forma de corregirlo cuesta más de lo que recupera."
+          }
+        },
+        {
+          "version": "2026-08-26.1",
+          "changes": {
+            "en": "Drops card verifications (0 EUR authorisations, flagged cardVerification) — they move no money and are not movements. Fixes vault transfers: Revolut books them from the paying side, so money returning from a savings vault arrived negative, and the balance they carry belongs to the vault rather than to the personal account. Reported against 167 real movements, of which 151 of 166 balance links already chained to the cent. Also drops anything whose state is not COMPLETED (5 DECLINED + 1 REVERTED in the sample were retried charges whose successful twin also arrived).",
+            "es": "Descarta las verificaciones de tarjeta (autorizaciones de 0 EUR, marcadas con cardVerification): no mueven dinero y no son movimientos. Corrige las transferencias con vaults: Revolut las contabiliza desde el lado que paga, así que el dinero que volvía de un bolsillo de ahorro llegaba en negativo, y el saldo que arrastran pertenece al vault y no a la cuenta personal. Reportado contra 167 movimientos reales, de los cuales 151 de 166 enlaces de saldo ya encadenaban al céntimo. Descarta además todo lo que no esté en estado COMPLETED (los 5 DECLINED y 1 REVERTED de la muestra eran cargos reintentados cuyo gemelo correcto también llegaba)."
+          }
+        },
+        {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-12",
-          "changes": "La sincronización automática ya no arranca hasta que app.revolut.com/home ha terminado de cargar. La app dispara peticiones autenticadas en pantallas anteriores, así que una sincronización podía empezar antes de que existiera la vista con los datos."
+          "changes": {
+            "en": "Automatic sync no longer starts until app.revolut.com/home has finished loading. The app fires authenticated requests on earlier screens, so a sync could begin before the view holding the data existed.",
+            "es": "La sincronización automática ya no arranca hasta que app.revolut.com/home ha terminado de cargar. La app dispara peticiones autenticadas en pantallas anteriores, así que una sincronización podía empezar antes de que existiera la vista con los datos."
+          }
         },
         {
           "version": "2026-08-08",
-          "changes": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`."
+          }
         },
         {
           "version": "2026-07-16",
-          "changes": "Map the running balance (minor-unit scaled) to record.balanceAfter and the completed date to record.valueDate — promoted to canonical fields for the Cuéntamo contract. Requires extension >= 0.3.0.24."
+          "changes": {
+            "en": "Map the running balance (minor-unit scaled) to record.balanceAfter and the completed date to record.valueDate — promoted to canonical fields for the Cuéntamo contract. Requires extension >= 0.3.0.24.",
+            "es": "Mapea el saldo tras el movimiento (escalado desde unidades menores) a record.balanceAfter y la fecha de completado a record.valueDate — promovidos a campos canónicos para el contrato del consumidor. Requiere extensión >= 0.3.0.24."
+          }
         },
         {
           "version": "2026-07-15.2",
-          "changes": "Add account statements (PDF/CSV) per account × month: async-generated (poll account-statements until READY) then download the signed Google Storage URL (crossDomainHosts + consent). Statements bounded to the last ~12 months."
+          "changes": {
+            "en": "Add account statements (PDF/CSV) per account × month: async-generated (poll account-statements until READY) then download the signed Google Storage URL (crossDomainHosts + consent). Statements bounded to the last ~12 months.",
+            "es": "Añade extractos de cuenta (PDF/CSV) por cuenta × mes: se generan de forma asíncrona (se consulta account-statements hasta READY) y luego se descarga la URL firmada de Google Storage (crossDomainHosts + consentimiento). Los extractos se limitan a los últimos ~12 meses."
+          }
         },
         {
           "version": "2026-07-15.1",
-          "changes": "Add per-account (pocket) filter with a currency-labelled Accounts picker."
+          "changes": {
+            "en": "Add per-account (pocket) filter with a currency-labelled Accounts picker.",
+            "es": "Añade filtro por cuenta (bolsillo) con un selector de cuentas etiquetado por divisa."
+          }
         },
         {
           "version": "2026-07-15",
-          "changes": "Initial: personal transactions across all accounts, paged by the `to` timestamp cursor; cookie + captured x-device-id; minor-unit amounts scaled per ISO 4217."
+          "changes": {
+            "en": "Initial: personal transactions across all accounts, paged by the `to` timestamp cursor; cookie + captured x-device-id; minor-unit amounts scaled per ISO 4217.",
+            "es": "Inicial: movimientos personales de todas las cuentas, paginados por el cursor de marca temporal `to`; cookie más x-device-id capturado; importes en unidades menores escalados según ISO 4217."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/revolut.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T14:36:01+02:00"
     },
     {
       "id": "traderepublic",
@@ -866,48 +1302,83 @@
         "banking",
         "investment"
       ],
-      "trust": "community",
+      "trust": "first-party",
       "beta": false,
       "domain": "traderepublic.com",
       "country": "global",
       "formats": [],
       "crossDomain": [],
-      "version": "2026-08-08",
+      "version": "2026-08-26.1",
       "minVersion": "0.3.0.24",
       "gaps": [],
       "contributors": [],
       "changelog": [
         {
+          "version": "2026-08-26.1",
+          "changes": {
+            "en": "Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.",
+            "es": "Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga."
+          }
+        },
+        {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-08",
-          "changes": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`."
+          }
         },
         {
           "version": "2026-07-17",
-          "changes": "Parse the trade breakdown into structured fields: units (Shares), price (Share price) and commission (Fee) from the timelineDetailV2 'Transaction' table (English labels — the WS connect requests locale 'en'). 'Free' fees resolve to 0. Requires extension >= 0.3.0.24."
+          "changes": {
+            "en": "Parse the trade breakdown into structured fields: units (Shares), price (Share price) and commission (Fee) from the timelineDetailV2 'Transaction' table (English labels — the WS connect requests locale 'en'). 'Free' fees resolve to 0. Requires extension >= 0.3.0.24.",
+            "es": "Analiza el desglose de la operación en campos estructurados: títulos (Shares), precio (Share price) y comisión (Fee) desde la tabla 'Transaction' de timelineDetailV2 (etiquetas en inglés — la conexión WS pide locale 'en'). Las comisiones 'Free' se resuelven como 0. Requiere extensión >= 0.3.0.24."
+          }
         },
         {
           "version": "2026-07-16",
-          "changes": "Timeline stream now emits investment@2 (broker trade/cash): recordType inferred from the extracted ISIN, side/kind mapped from the timeline eventType, instrument{isin,name}, and the settlement account (cashAccountNumber). Trade quantity/price/fees remain in record.extra.detail (localized text) pending structured parsing. Requires extension >= 0.3.0.24."
+          "changes": {
+            "en": "Timeline stream now emits investment@2 (broker trade/cash): recordType inferred from the extracted ISIN, side/kind mapped from the timeline eventType, instrument{isin,name}, and the settlement account (cashAccountNumber). Trade quantity/price/fees remain in record.extra.detail (localized text) pending structured parsing. Requires extension >= 0.3.0.24.",
+            "es": "El stream de timeline emite ya investment@2 (operación/efectivo de bróker): el recordType se infiere del ISIN extraído, side/kind se mapean desde el eventType del timeline, instrument{isin,name} y la cuenta de liquidación (cashAccountNumber). La cantidad, el precio y las comisiones de la operación siguen en record.extra.detail (texto localizado) a la espera de un análisis estructurado. Requiere extensión >= 0.3.0.24."
+          }
         },
         {
           "version": "2026-07-15.3",
-          "changes": "Add monthly documents: the account statement PDF (accountstatement/statement?fromDate&toDate) and the monthly transactions CSV (async export job: POST request → poll status → download), per completed month."
+          "changes": {
+            "en": "Add monthly documents: the account statement PDF (accountstatement/statement?fromDate&toDate) and the monthly transactions CSV (async export job: POST request → poll status → download), per completed month.",
+            "es": "Añade documentos mensuales: el PDF del extracto de cuenta (accountstatement/statement?fromDate&toDate) y el CSV mensual de transacciones (trabajo de exportación asíncrono: POST de la petición → consulta de estado → descarga), por cada mes cerrado."
+          }
         },
         {
           "version": "2026-07-15.2",
-          "changes": "Extract the traded instrument ISIN from the timeline icon into record.isin."
+          "changes": {
+            "en": "Extract the traded instrument ISIN from the timeline icon into record.isin.",
+            "es": "Extrae el ISIN del instrumento negociado desde el icono del timeline a record.isin."
+          }
         },
         {
           "version": "2026-07-15.1",
-          "changes": "Enrich each timeline transaction with its timelineDetailV2 detail in record.extra.detail."
+          "changes": {
+            "en": "Enrich each timeline transaction with its timelineDetailV2 detail in record.extra.detail.",
+            "es": "Enriquece cada transacción del timeline con su detalle de timelineDetailV2 en record.extra.detail."
+          }
         },
         {
           "version": "2026-07-15",
-          "changes": "Initial: the whole transaction timeline via Trade Republic’s WebSocket API."
+          "changes": {
+            "en": "Initial: the whole transaction timeline via Trade Republic’s WebSocket API.",
+            "es": "Inicial: el timeline completo de transacciones a través de la API WebSocket de Trade Republic."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/traderepublic.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:56:50+02:00"
     },
     {
       "id": "wizink-es",
@@ -923,26 +1394,42 @@
       "country": "ES",
       "formats": [],
       "crossDomain": [],
-      "version": "2026-08-08",
+      "version": "2026-08-26",
       "minVersion": "0.9.3",
       "gaps": [],
       "contributors": [],
       "changelog": [
         {
+          "version": "2026-08-26",
+          "changes": {
+            "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
+            "es": "Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción."
+          }
+        },
+        {
           "version": "2026-08-08",
-          "changes": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          "changes": {
+            "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
+            "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+          }
         },
         {
           "version": "2026-07-10",
-          "changes": "Los extractos ahora muestran una etiqueta legible («Extracto <fecha>») en lugar del identificador interno, y llevan el tipo «Extracto»."
+          "changes": {
+            "en": "Statements now show a readable label (\"Statement <date>\") instead of the internal identifier, and carry the type \"Statement\".",
+            "es": "Los extractos ahora muestran una etiqueta legible («Extracto <fecha>») en lugar del identificador interno, y llevan el tipo «Extracto»."
+          }
         },
         {
           "version": "2026-07-09",
-          "changes": "Fuente unificada: reemplaza las tres fuentes WiZink (movimientos, extractos-PDF, extractos-Excel) por un único source con salidas seleccionables (stream × formato). El stream «Movimientos» captura las transacciones de tarjeta; el stream «Extractos» ofrece cada extracto en PDF o Excel compartiendo el mismo listado. Requiere la extensión 0.1.52+ (soporte de salidas)."
+          "changes": {
+            "en": "Unified source: replaces the three WiZink sources (movements, statements-PDF, statements-Excel) with a single source offering selectable outputs (stream × format). The \"Movements\" stream captures card transactions; the \"Statements\" stream offers each statement as PDF or Excel, sharing one listing. Requires extension 0.1.52+ (output support).",
+            "es": "Fuente unificada: reemplaza las tres fuentes WiZink (movimientos, extractos-PDF, extractos-Excel) por un único source con salidas seleccionables (stream × formato). El stream «Movimientos» captura las transacciones de tarjeta; el stream «Extractos» ofrece cada extracto en PDF o Excel compartiendo el mismo listado. Requiere la extensión 0.1.52+ (soporte de salidas)."
+          }
         }
       ],
       "url": "https://habeas-dev.github.io/sources/wizink-es.json",
-      "updated": "2026-08-24T18:11:36.419Z"
+      "updated": "2026-08-26T10:42:44+02:00"
     }
   ]
 }
