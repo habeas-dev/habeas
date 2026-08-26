@@ -10,6 +10,22 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **A consumer can receive records without files, and ask Habeas to display one.** An app reconciling
+  bank movements wants the *list* of invoices, not the invoices: Cuéntamo needs Amazon's records to match
+  a card charge against and emphatically does not want five thousand PDFs — but when the user asks what a
+  charge was, something has to show it. A sink declaring an empty artifact list now receives records and
+  no files (an empty list is a statement — "these kinds, and there are none" — where before it was read
+  as an omission and ignored). `show-document` then displays one in Habeas's own viewer. The document
+  never crosses: nothing returns but an acknowledgement, and that absence of a return channel is what
+  makes the capability grantable. Bounded to records already routed to that consumer, and every refusal
+  is identical — "not yours", "no such document" and "not paired" must not be distinguishable, or the
+  refusal itself becomes a way to learn what somebody owns.
+- **`lib/match.js` — which archived documents a bank movement could be.** The amount is the entry ticket
+  and currencies are never converted: guessing a rate manufactures a match, and a manufactured match in a
+  ledger is worse than a missing one. Each candidate carries its reasons in words, because a score nobody
+  can argue with is worse than no score when it sits next to somebody's money.
+
 ### Fixed
 - **A bank movement whose amount resolved to zero is no longer emitted.** Reported from production: 167
   Revolut movements arrived, 14 of them card payments with `amount: 0`. At the destination that is not an
