@@ -135,7 +135,7 @@ Once a grant for your `source` appears, you have a `grantId` to collect with.
 
 **Don't want to pick a source?** Use `register-sink` instead of `propose-workflow` to register only your
 destination (no source, no grant); the user then routes sources to you from Habeas's Settings and they
-show up in `status.routes`. See [`consumers/external-hooks.md`](../consumers/external-hooks.md) §A′.
+show up in `status.routes`. See [`external-hooks.md`](../external-hooks.md) §A′.
 
 ## 4. (Optional) List accounts/portfolios (`list-groups`)
 
@@ -223,7 +223,7 @@ receipt whose PDF the service no longer serves) — the record is still delivere
 
 > Want one **uniform** shape regardless of source? Ask for it in your integration and Habeas can
 > deliver a canonical record `{ id, date, amount, currency, direction, description, counterparty,
-> category, account, source, extra }` (see the full [`../consumers/cuentamo-data-contract.md`]).
+> category, account, source, extra }` (see the full [`RECORD-CONTRACT.md`]).
 
 ---
 
@@ -287,6 +287,6 @@ strict HTTPS requirement.
 
 ## See also
 
-- [`../consumers/external-hooks.md`](../consumers/external-hooks.md) — the same protocol, from the extension's side.
-- [`../consumers/list-sources.md`](../consumers/list-sources.md) — the `list-sources` discovery hook in depth.
-- [`../consumers/cuentamo-data-contract.md`](../consumers/cuentamo-data-contract.md) — the full normalized/canonical record contract.
+- [`../external-hooks.md`](../external-hooks.md) — the same protocol, from the extension's side.
+- [`../list-sources.md`](../list-sources.md) — the `list-sources` discovery hook in depth.
+- [`RECORD-CONTRACT.md`](RECORD-CONTRACT.md) — the full normalized/canonical record contract.

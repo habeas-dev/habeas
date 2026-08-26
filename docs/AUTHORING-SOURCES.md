@@ -212,7 +212,7 @@ raw field into `record.extra` (nothing captured is lost).
 | `investment@2` | discriminated `trade` / `cash` (settlement breakdown, `instrument:{isin,ticker,mic,name}`) | many aliases — see `buildInvestment2` |
 
 `amount`/`total` are parsed (symbols/ISO/`,`/`.` handled); currency resolves embedded → per-doc →
-`adapter.currency` → EUR. See [cuentamo-data-contract.md](../consumers/cuentamo-data-contract.md) for
+`adapter.currency` → EUR. See [RECORD-CONTRACT.md](RECORD-CONTRACT.md) for
 finance field semantics.
 
 ### 3.6 Paging strategies

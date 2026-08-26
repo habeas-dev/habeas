@@ -1,17 +1,16 @@
-# Contrato de datos que Cuéntamo necesita de una fuente (banco / bróker)
+# Contrato del registro entregado (banco / bróker)
 
-> Documento para el proyecto **[Habeas](https://github.com/habeas-dev/habeas)**.
-> Define **qué campos mínimos** debe entregar un adaptador de Habeas para que
-> Cuéntamo pueda ingerir, sin pérdida de información, (A) los **movimientos de una
-> cuenta bancaria** y (B) los **movimientos de una cuenta de bróker/inversión**.
+> Qué debe entregar una fuente de Habeas para que **cualquier** consumidor pueda ingerir, sin pérdida de
+> información, (A) los **movimientos de una cuenta bancaria** y (B) los de una **cuenta de bróker**.
 >
-> Complementa a [`integracion-habeas.md`](integracion-habeas.md) (el *cómo*: bridge,
-> consentimiento, token, endpoint). Aquí sólo está el *qué* (la forma de los datos).
+> Es el *qué* — la forma de los datos. El *cómo* (bridge, consentimiento, token, endpoint) está en
+> [`external-hooks.md`](external-hooks.md) y [`INTEGRATION.md`](INTEGRATION.md).
 >
-> Estos requisitos están **derivados del modelo real de Cuéntamo** ya en producción:
-> el pipeline de importación `push` (`RawBankTransaction` → `Transaction`, dedup por
-> `reference`, mapeo de cuenta por `externalReference`) y el importador de bróker
-> (`InvestmentOperation` + *cash movements*, hoy DeGiro y Trade Republic).
+> Estas reglas nacieron del análisis de un consumidor real de finanzas personales en producción, que es
+> de donde salió el esquema `investment@2` y el enriquecimiento canónico bancario. Se conservan porque
+> son generales: quien concilie apuntes contra un libro contable necesita lo mismo, se llame como se
+> llame. Donde una regla existe por una razón concreta, la razón está escrita; ningún consumidor
+> particular es normativo.
 
 ---
 
@@ -26,21 +25,21 @@ Cada campo se marca con su nivel de exigencia:
 Convenciones **obligatorias** para todos los valores:
 
 1. **Un registro = un evento contable.** Nunca agregados (ni netos diarios, ni resúmenes). Un apunte bancario = un registro; una operación de bróker = un registro.
-2. **`internalId` estable e idempotente.** Cada registro lleva un identificador **único y estable en el tiempo**: la misma operación debe producir **el mismo `internalId`** en cada `collect`. Es la clave de deduplicación en Cuéntamo (mapea a `Transaction.reference`). Re-sincronizar debe ser inofensivo.
+2. **`internalId` estable e idempotente.** Cada registro lleva un identificador **único y estable en el tiempo**: la misma operación debe producir **el mismo `internalId`** en cada `collect`. Es la clave de deduplicación en el consumidor (suele mapear a su clave de deduplicación). Re-sincronizar debe ser inofensivo.
    - Si la fuente **no** expone un id nativo estable, el adaptador debe **sintetizar un hash determinista** a partir de campos inmutables (p. ej. `cuenta + fechaContable + importe + descripción + nº de secuencia del día`) y mantenerlo estable entre ejecuciones. **No vale** un id aleatorio por descarga.
-3. **Importes en UNIDADES MAYORES decimales** (euros, no céntimos), como cadena o número con **punto** decimal: `-45.80`, no `-4580`. Si la fuente da céntimos, el adaptador **debe** convertir antes de entregar. Cuéntamo **no puede adivinar** la unidad.
+3. **Importes en UNIDADES MAYORES decimales** (euros, no céntimos), como cadena o número con **punto** decimal: `-45.80`, no `-4580`. Si la fuente da céntimos, el adaptador **debe** convertir antes de entregar. el consumidor **no puede adivinar** la unidad.
 4. **El signo es autoritativo vía `direction`** (`debit`/`credit`) cuando exista; si se entrega `amount` ya con signo, debe ser coherente (`credit` = +, `debit` = −).
 5. **Fechas en ISO 8601** `YYYY-MM-DD` (fecha) o `YYYY-MM-DDThh:mm:ssZ` (si hay hora). Nada de formatos locales ambiguos.
 6. **Moneda en ISO 4217** de 3 letras (`EUR`, `USD`).
 7. **UTF-8** en todo texto.
-8. **`extra`** — objeto libre con los campos crudos de la fuente que el canónico deje fuera. Cuéntamo lo conserva (trazabilidad); no lo interpreta. Mejor pasar de más que perder.
+8. **`extra`** — objeto libre con los campos crudos de la fuente que el canónico deje fuera. el consumidor lo conserva (trazabilidad); no lo interpreta. Mejor pasar de más que perder.
 
 ---
 
 ## A. Cuenta bancaria — movimientos
 
 Un registro por **apunte** de la cuenta (cargo o abono). Alineado con el *canonical
-record* de Habeas (`sink.normalize: true`) y con lo que Cuéntamo ya acepta en `push`.
+record* de Habeas (`sink.normalize: true`) y con lo que acepta un ingestor de apuntes.
 
 | Campo | Nivel | Tipo | Mapea a | Notas |
 |---|---|---|---|---|
@@ -54,14 +53,14 @@ record* de Habeas (`sink.normalize: true`) y con lo que Cuéntamo ya acepta en `
 | `valueDate` | SHOULD | date | (nota / conciliación) | Fecha valor, si difiere de la contable. |
 | `balanceAfter` | SHOULD | decimal | anclas de conciliación | Saldo tras el apunte: permite validar el cuadre y sugerir anclas. |
 | `counterparty` | SHOULD | objeto | tercero (CIF) | `{ name, iban?, taxId? }`. Alimenta terceros/CIF y categorización. |
-| `category` | SHOULD | string | pista de categoría | Categoría del banco; Cuéntamo la usa como sugerencia. |
+| `category` | SHOULD | string | pista de categoría | Categoría del banco; el consumidor la usa como sugerencia. |
 | `type` / `subtype` | MAY | string | pista | `transfer` / `card` / `direct_debit` / `fee`… Útil para reglas. |
 | `endToEndId` | MAY | string | `extra` | Referencia SEPA end-to-end, si existe. |
 | `extra` | MAY | objeto | crudo | Regla global 8. |
 
 ### A.1 Identificación de la cuenta (`account`)
 
-Cuéntamo debe poder decir **a qué `Account` del libro** va cada apunte. Basta con
+El consumidor debe poder decir **a qué `Account` del libro** va cada apunte. Basta con
 **uno** de estos, en orden de preferencia:
 
 ```
@@ -74,7 +73,7 @@ account: {
 ```
 
 - **MUST**: al menos `iban` **o** `last4` **o** un `groupId` estable.
-- Cuéntamo empareja por **últimos 4 dígitos** contra `Account.externalReference`; si no hay match, el usuario elige/crea la cuenta y se guarda el identificador para futuras sincronizaciones. El `groupId` debe ser **estable entre ejecuciones** (se usará como ancla de mapeo).
+- un consumidor típico empareja por **últimos 4 dígitos** contra `Account.externalReference`; si no hay match, el usuario elige/crea la cuenta y se guarda el identificador para futuras sincronizaciones. El `groupId` debe ser **estable entre ejecuciones** (se usará como ancla de mapeo).
 
 ### A.2 Ejemplo (bancario)
 
@@ -99,7 +98,7 @@ account: {
 
 ## B. Cuenta de bróker — movimientos
 
-Un export de bróker **mezcla dos cosas** que Cuéntamo modela por separado:
+Un export de bróker **mezcla dos cosas** que un libro contable modela por separado:
 
 - **Operaciones sobre un instrumento** (`trade`) → `InvestmentOperation`.
 - **Movimientos de efectivo** sin instrumento (`cash`) → una `Transaction` en la cuenta de efectivo del bróker (intereses, ingresos, retiradas, comisiones sueltas, impuestos).
@@ -167,13 +166,13 @@ instrument: {
 ```
 
 - **MUST**: al menos **un identificador de máquina** — `isin` **o** (`ticker` [+ `mic`]). Sólo `name` es un fallback débil (dos activos distintos pueden compartir nombre).
-- Precedencia de resolución en Cuéntamo: **`isin` > `ticker`+`mic` > `name`**. El `isin` es el ancla ideal porque Cuéntamo lo cruza con su catálogo global y con OpenFIGI.
+- Precedencia de resolución habitual: **`isin` > `ticker`+`mic` > `name`**. El `isin` es el ancla ideal porque un consumidor puede cruzarlo con un catálogo global y con OpenFIGI.
 - Cripto: si no hay ISIN, el `ticker` (`BTC`, `ETH`) con `assetClass: "crypto"` es suficiente.
 
 ### B.5 Consistencia de importes (trade)
 
-- Regla: `grossAmount ≈ units × price`. **Entrega al menos dos de los tres** (`units`, `price`, `grossAmount`); Cuéntamo puede derivar el tercero, pero **no** puede inventar dos.
-- `netAmount` es el efectivo que realmente entra/sale de la cuenta de liquidación; si no viene, Cuéntamo lo estima como `grossAmount ∓ commission ∓ taxWithheld`.
+- Regla: `grossAmount ≈ units × price`. **Entrega al menos dos de los tres** (`units`, `price`, `grossAmount`); el consumidor puede derivar el tercero, pero **no** puede inventar dos.
+- `netAmount` es el efectivo que realmente entra/sale de la cuenta de liquidación; si no viene, el consumidor lo estima como `grossAmount ∓ commission ∓ taxWithheld`.
 - **Una posición = (instrumento, cuenta de bróker).** El mismo ISIN en dos brókers son dos posiciones distintas; por eso `settlementAccount` importa.
 
 ### B.6 Ejemplos (bróker)
@@ -242,11 +241,11 @@ instrument: {
 
 ## D. Preguntas abiertas para el lado Habeas
 
-1. **Unidades de `amount` en el canónico**: ¿mayores (decimal) o menores (céntimos)? Cuéntamo **requiere decimal mayor**; confirmar contra un payload real (`ing-es`) o normalizar en el adaptador.
+1. **Unidades de `amount` en el canónico**: ¿mayores (decimal) o menores (céntimos)? un libro contable **requiere decimal mayor**; confirmar contra un payload real (`ing-es`) o normalizar en el adaptador.
 2. **`internalId`**: ¿lo expone la fuente de forma estable, o hay que sintetizarlo? Necesitamos garantía de **estabilidad entre ejecuciones**.
 3. **Enmascarado del IBAN**: ¿los últimos 4 dígitos son siempre visibles y estables? Es nuestra clave de mapeo de cuenta.
 4. **Bróker**: ¿Habeas contempla un `source` de bróker (además de banca) y un canónico con `recordType` trade/cash, o hay que definirlo? Si aún no existe, este documento es la **propuesta de contrato**.
-5. **Divisa de la operación vs. de la cuenta**: para `trade` en divisa extranjera, ¿la fuente da `exchangeRate`, o Cuéntamo lo resuelve con su FX histórico por fecha? (Cuéntamo sabe hacerlo, pero el dato de la fuente es más fiel.)
+5. **Divisa de la operación vs. de la cuenta**: para `trade` en divisa extranjera, ¿la fuente da `exchangeRate`, o lo resuelve el consumidor con su propio FX histórico por fecha? (Puede hacerse, pero el dato de la fuente es más fiel.)
 
 ---
 
@@ -264,7 +263,7 @@ source, extra }`.
 1. **Unidades de `amount` → DECIMAL MAYOR ✅.** `format.js#money()` parsea el importe a `Number` en unidades
    mayores (`"$9.00"→9`, `"2,28€"→2.28`); `minorUnits:true` (`inventory.js#minorExp`, ISO 4217) escala
    céntimos→mayor por-divisa antes de entregar. El canónico ya cumple la regla 3. **No hace falta que
-   Cuéntamo adivine.**
+   lo adivine el consumidor.**
 2. **`internalId` → estable si la fuente lo expone; si no, se sintetiza en el adaptador.** El adaptador mapea
    `fields.internalId` a un campo nativo estable (p. ej. FECI usa `invoiceNumber`). Cuando no hay id nativo,
    hoy se compone declarativamente (`internalId: "{group.id}-{date}-{seq}"`). **Gap:** no hay un helper de
@@ -283,7 +282,7 @@ source, extra }`.
    `instrument` estructurado (`isin+ticker+mic`). **Este documento ES la propuesta de contrato** de bróker
    que Habeas debe implementar (schema `investment@2` + `cash`).
 5. **`exchangeRate` → hoy no está en el canónico.** Si la fuente lo da, se conservaría en `extra`
-   (`keepRaw`); para cumplir §B habría que promocionarlo a campo canónico. Cuéntamo puede resolver FX por
+   (`keepRaw`); para cumplir §B habría que promocionarlo a campo canónico. un consumidor puede resolver FX por
    fecha, pero el dato de la fuente es más fiel → **SHOULD** exponerlo cuando exista.
 
 ### Resumen de brecha
@@ -347,20 +346,3 @@ nombres de campo y códigos de sistema tipo enum). Estado tras esa inferencia (e
   estructurados. `side` sólo mapea los `eventType` de ejecución vistos (savings-plan → `buy`); ventas y
   dividendos se conservan verbatim hasta muestrear esos `eventType`.
 - **WiZink / FECI / CaixaBank**: sus feeds no exponen saldo por movimiento; `balanceAfter` no aplica.
-
-
----
-
-## C. Listas sin ficheros, y poder enseñar uno
-
-Cuéntamo necesita la **lista** de facturas para conciliar un cargo, no las facturas — pero cuando el
-usuario pregunta *«¿de qué era este cargo?»*, algo tiene que poder enseñarle el documento.
-
-Eso **no es una capacidad de Cuéntamo**: cualquier consumidor puede pedir `accepts:{artifacts:[]}` para
-recibir registros sin ficheros, y usar `show-document` para que Habeas muestre uno en su propio visor.
-Está descrito una sola vez, para todos, en **[`external-hooks.md`](external-hooks.md)** — sección
-*«Records without files, and showing one on demand»*.
-
-Lo único que conviene repetir aquí, porque es un error fácil de cometer al conciliar: el asa de un
-documento es el par **`(source, internalId)`**, no el `internalId` suelto. Es único dentro de su fuente y
-su stream, no globalmente, y dos fuentes distintas pueden reutilizarlo.

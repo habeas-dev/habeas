@@ -47,7 +47,7 @@ The security-critical logic is unit-tested (origin-bound rejection, `validatePro
 binding) and the existing e2e suite is green, but the **live interactive flow is browser-behaviour
 heavy and not yet covered by e2e**. Needs a manual pass (or a dedicated https e2e):
 
-- [ ] Build an **https test page** that calls `propose-workflow` (see `consumers/external-hooks.md`):
+- [ ] Build an **https test page** that calls `propose-workflow` (see `docs/external-hooks.md`):
   - [ ] origin-bound OK (sink URL host == page origin) → consent screen opens → **Allow** → grant created.
   - [ ] cross-origin sink (different host) → rejected outright (`status:'denied'`, no side effects).
   - [ ] unlisted/any origin still reaches the bridge (no allowlist) — confirm it works from a fresh origin.

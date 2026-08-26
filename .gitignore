@@ -39,3 +39,34 @@ tools/store-screenshots/out/
 
 # Claude Code local worktrees + config
 .claude/
+
+# ---------------------------------------------------------------------------
+# Another project's business — never Habeas's.
+#
+# Habeas publishes ITS OWN contract: the record shape (docs/RECORD-CONTRACT.md)
+# and the integration API (docs/external-hooks.md, docs/INTEGRATION.md). How any
+# particular consumer ingests that — its endpoint, its model mapping, its
+# roadmap, its progress — belongs to that project's repository, not this one.
+# A consumer's notes living here make Habeas look like it serves one of them,
+# and they rot, because nobody who can correct them is reading this repo.
+#
+# Kept deliberately broad: the point is that NOTHING consumer-specific is
+# committed again, not that these particular filenames stay out.
+consumers/
+*-progress.md
+*-progress-*.md
+*-progress.html
+*-data-contract.md
+
+# Working notes about real accounts — and docs/ is the PUBLISHED web root.
+#
+# docs/incidencias/ holds incident write-ups and the captures behind them: real
+# transaction ids, real amounts, real dates from somebody's bank. Committing them
+# would not merely put them in the repository, it would SERVE them at
+# habeas.dev/incidencias/, because GitHub Pages publishes this directory.
+#
+# The PII guard caught this once, on a long digit run. It must not be the only
+# thing standing between a capture and the open web: a capture with no long
+# numbers in it would have gone straight through.
+docs/incidencias/
+

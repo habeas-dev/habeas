@@ -56,7 +56,7 @@ enforced rules: **origin-bound sink** (the sink URL host MUST equal the requesti
 can only route your data back to itself) and **explicit consent** (`ui/authorize.html`). Approval
 mints a **grant** (`storage.local habeas:grants`, one origin→one route) revocable in Settings →
 Site integrations. `collect` always runs in a **dedicated tab** (foregrounded only for manual login;
-never handles credentials), debounced + logged, no notification. See `consumers/external-hooks.md`.
+never handles credentials), debounced + logged, no notification. See `docs/external-hooks.md`.
 
 **Community sources system** (LIVE — 16 sources published): a **generalized runtime**
 (declarative pager `offsets|offset|page|cursor|none|years|synthetic`, dotted field paths **+ array
@@ -99,7 +99,6 @@ habeas/
 │       ├── sinks/           # sinks.js · format.js (schema-aware records) · drive.js
 │       └── ui/              # popup · options · author (record mode) · marketplace · theme.css
 ├── docs/                   # habeas.dev landing (GitHub Pages) + FUNCTIONAL-SPEC.md + CNAME
-├── consumers/              # docs for external consumers (tiquetera.md)
 ├── package.json            # npm scripts: lint/build/package via web-ext
 ├── .github/workflows/build.yml   # CI: build MV3 zip on push, attach to releases on v* tags
 └── adapters/ schemas/ core/ …    # EARLY-SKELETON design artifacts (spec docs), NOT the runtime code
@@ -272,7 +271,7 @@ update; `YYYY-MM-DD`, or `YYYY-MM-DD.N` same day). `minVersion` gates by extensi
 ## Consumers (decoupled — separate projects)
 
 - **Tiquetera** (Spanish grocery-receipt app) — accepts `grocery` via an HTTP sink
-  `accepts:{categories:["grocery"]}`. See `consumers/tiquetera.md`.
+  `accepts:{categories:["grocery"]}`.
 - **Cuéntamo** (personal finance) — future `transaction`/`investment` sources. Note: for banks,
   PSD2 AIS (licensed aggregator) is the primary path; Habeas covers what PSD2 doesn't (cards,
   investments, pensions). Financial sources are allowed from the community under the same-domain
