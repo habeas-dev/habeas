@@ -313,8 +313,15 @@ async function render() {
   const KEEPS_FILES = ['local-folder', 'drive', 'dropbox', 'webdav', 's3', 'http'];
   const copyTargets = cfg.sinks.filter((s) => KEEPS_FILES.includes(s.type));
   const copySel = $('#copyto');
-  copySel.innerHTML = copyTargets.map((s) => `<option value="${esc(s.id)}">${esc(s.name || s.id)}</option>`).join('');
+  // A destination with no name shows its id ("local-folder-1"), which tells the user nothing. Fall back
+  // to the TYPE's own label instead — "Local folder" is at least true and readable.
+  const destName = (s) => s.name || t(SINK_TL[s.type]) || s.id;
+  copySel.innerHTML = copyTargets.map((s) => `<option value="${esc(s.id)}">${esc(destName(s))}</option>`).join('');
   copySel.disabled = copyTargets.length < 1;
+  // Do not open on the archive's own destination. That is where everything already is, so it is what
+  // you copy FROM; offering it as the default invites exactly the copy that has nothing to do.
+  const firstUseful = copyTargets.find((s) => s.id !== archiveSinkId);
+  if (firstUseful) copySel.value = firstUseful.id;
 
   // Say where the files will come FROM, not only where they go. The origins are not chosen — each file
   // is taken from whichever destination happens to hold it — so without this the operation is opaque:
@@ -328,9 +335,13 @@ async function render() {
     const ok = !!target && origins.length > 0;
     $('#copystart').disabled = !ok;
     if (!copyTargets.length) { $('#copyfrom').textContent = t('opt_copy_nodests'); return; }
-    $('#copyfrom').textContent = ok
-      ? t('opt_copy_from', [origins.map((s) => s.name || s.id).join(', '), (target.name || target.id)])
-      : t('opt_copy_noorigin', [target ? (target.name || target.id) : '']);
+    if (!ok) { $('#copyfrom').textContent = t('opt_copy_noorigin', [target ? destName(target) : '']); return; }
+    // Copying INTO the archive's own destination is not forbidden — a document delivered only to a
+    // local folder genuinely is missing there — but it is the wrong way round for almost everyone, so
+    // say so rather than let the operation look like the obvious one.
+    const intoArchive = !!archiveSinkId && target.id === archiveSinkId;
+    $('#copyfrom').textContent = (intoArchive ? t('opt_copy_into_archive', [destName(target)]) + ' ' : '')
+      + t('opt_copy_from', [origins.map(destName).join(', '), destName(target)]);
   };
   copySel.onchange = describeCopy;
   describeCopy();

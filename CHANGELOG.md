@@ -35,6 +35,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   "already holds everything", which was false: there was nowhere to read from. The destination was
   already excluded as an origin in both senders (copying a file onto itself is at best a no-op, at
   worst a rewrite of the thing being preserved); that is now covered by tests, as is the stop control.
+  The picker no longer opens on the destination the archive itself lives in: with an archive in
+  Dropbox it defaulted to Dropbox and offered to read from a local folder and write there —
+  correct by the rule, and backwards for the person reading it, since that destination is what you
+  copy FROM. Choosing it anyway is allowed (a document delivered only to a folder really is
+  missing there) but now says so. Destinations with no name are described by their type rather
+  than by a raw id like "local-folder-1".
 
 ### Fixed
 - **Saving a source to a destination no longer fails just because you are logged out.** It reported

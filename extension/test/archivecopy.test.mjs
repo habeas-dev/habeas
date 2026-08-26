@@ -123,3 +123,19 @@ test('a running copy can be stopped, and stopping actually reaches the loop', ()
   const fn = bg.slice(bg.indexOf('export async function runArchiveCopy'));
   assert.match(fn.slice(0, fn.indexOf('\n}\n')), /signal\.aborted/, 'the copy loop must check the signal');
 });
+
+test('the copy does not open on the destination the archive itself lives in', () => {
+  // Reported from real use: with the archive in Dropbox, the picker defaulted to Dropbox and offered
+  // "will read from local-folder-1 and write to Dropbox" — correct by the rule, and backwards for the
+  // person reading it. That destination is what you copy FROM.
+  const ui = read('src/ui/options.js');
+  assert.match(ui, /copyTargets\.find\(\(s\) => s\.id !== archiveSinkId\)/, 'the default must skip the archive sink');
+  assert.match(ui, /opt_copy_into_archive/, 'and choosing it anyway must be called out');
+});
+
+test('a destination with no name is described by its type, never by its raw id', () => {
+  const ui = read('src/ui/options.js');
+  assert.match(ui, /const destName = \(s\) => s\.name \|\| t\(SINK_TL\[s\.type\]\) \|\| s\.id/,
+    '"local-folder-1" tells the user nothing');
+  assert.ok(!/origins\.map\(\(s\) => s\.name \|\| s\.id\)/.test(ui), 'the origin list must use the same naming');
+})

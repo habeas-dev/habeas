@@ -3723,5 +3723,13 @@
         "content": "$1"
       }
     }
+  },
+  "opt_copy_into_archive": {
+    "message": "$SINK$ is where your archive already lives, so this is normally what you copy FROM, not to.",
+    "placeholders": {
+      "sink": {
+        "content": "$1"
+      }
+    }
   }
 }

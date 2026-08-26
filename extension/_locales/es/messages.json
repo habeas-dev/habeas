@@ -3723,5 +3723,13 @@
         "content": "$1"
       }
     }
+  },
+  "opt_copy_into_archive": {
+    "message": "$SINK$ es donde ya vive tu archivo, así que normalmente es de donde se copia, no hacia donde.",
+    "placeholders": {
+      "sink": {
+        "content": "$1"
+      }
+    }
   }
 }
