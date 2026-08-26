@@ -230,8 +230,8 @@
       <div class="card">
         <h2>About this source</h2>
         <dl>
-          <dt>Version</dt><dd>2026-08-26</dd>
-          <dt>Trust</dt><dd>community</dd>
+          <dt>Version</dt><dd>2026-08-26.1</dd>
+          <dt>Trust</dt><dd>first-party</dd>
           <dt>Coverage</dt><dd>global</dd>
           <dt>Licence</dt><dd>CC0-1.0</dd>
         </dl>
@@ -253,7 +253,7 @@
   &quot;id&quot;: &quot;raisin&quot;,
   &quot;name&quot;: &quot;Raisin&quot;,
   &quot;service&quot;: &quot;raisin&quot;,
-  &quot;trust&quot;: &quot;community&quot;,
+  &quot;trust&quot;: &quot;first-party&quot;,
   &quot;credit&quot;: {
     &quot;author&quot;: {
       &quot;name&quot;: &quot;David Marín&quot;,
@@ -270,7 +270,7 @@
     &quot;banking&quot;,
     &quot;investment&quot;
   ],
-  &quot;version&quot;: &quot;2026-08-26&quot;,
+  &quot;version&quot;: &quot;2026-08-26.1&quot;,
   &quot;minVersion&quot;: &quot;0.5.0.32&quot;,
   &quot;keepRaw&quot;: true,
   &quot;contributors&quot;: [
@@ -581,6 +581,13 @@
   ],
   &quot;changelog&quot;: [
     {
+      &quot;version&quot;: &quot;2026-08-26.1&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.&quot;,
+        &quot;es&quot;: &quot;Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga.&quot;
+      }
+    },
+    {
       &quot;version&quot;: &quot;2026-08-26&quot;,
       &quot;changes&quot;: {
         &quot;en&quot;: &quot;Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.&quot;,
@@ -793,7 +800,7 @@
       <li>Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does.</li>
       <li>You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own.</li>
     </ol>
-    <p><strong>Your password is never read, never stored and never sent anywhere</strong>, and nothing runs in the background while you are away. This is a <strong>community</strong> source: its definition is public and reviewable, and it runs under the same security rules as every other.</p>
+    <p><strong>Your password is never read, never stored and never sent anywhere</strong>, and nothing runs in the background while you are away. This is an <strong>audited</strong> source, verified by the project against the real service.</p>
 
     <div class="cta">
       <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="raisin">Install on Chrome</a>
@@ -815,11 +822,11 @@
       <h2>What has changed in this source</h2>
       <p>This source is a public definition, and every change to it is on the record. Most recent first:</p>
       <ul class="changelog">
+        <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.</li>
         <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
         <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.</li>
         <li class="rev"><time datetime="2026-07-21">2026-07-21</time> — Declared country: &quot;global&quot; — the field was missing since the multi-market rename (raisin-es -&gt; raisin), so the catalog showed no 🌐 badge and country filters didn't treat it as worldwide.</li>
         <li class="rev"><time datetime="2026-07-20">2026-07-20</time> — Multi-language labels: the product-type word (Deposit/Account) is translated per browser locale via a source i18n dictionary (en/es/de/fr/nl — every Raisin market; en fallback), since the API only returns it as an enum. Dropped the TAE abbreviation (varies by country; % is universal). Requires 0.5.0.32 ({i18n:key} token).</li>
-        <li class="rev"><time datetime="2026-07-20">2026-07-20</time> — Multi-market: renamed raisin-es -&gt; raisin (the API api2.weltsparen.de is shared across all Raisin countries); the response-language `locale` param now follows the browser locale via {locale}/{locale:lower} instead of a hardcoded es-ES. Requires 0.5.0.30. (Account-label WORDS Depósito/Cuenta/TAE remain Spanish for now.)</li>
       </ul>
       <p class="lead"><a href="/sources.html#raisin">See the full history in the catalog →</a></p>
 

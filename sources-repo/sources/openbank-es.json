@@ -2,7 +2,7 @@
   "id": "openbank-es",
   "name": "Openbank España",
   "service": "openbank",
-  "trust": "community",
+  "trust": "first-party",
   "credit": {
     "author": {
       "name": "David Marín",
@@ -15,7 +15,7 @@
   },
   "domain": "openbank.es",
   "country": "ES",
-  "version": "2026-08-26",
+  "version": "2026-08-26.1",
   "minVersion": "0.3.0.24",
   "categories": [
     "banking"
@@ -298,6 +298,13 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-08-26.1",
+      "changes": {
+        "en": "Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.",
+        "es": "Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga."
+      }
+    },
     {
       "version": "2026-08-26",
       "changes": {

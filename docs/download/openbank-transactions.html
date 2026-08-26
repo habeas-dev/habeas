@@ -230,8 +230,8 @@
       <div class="card">
         <h2>About this source</h2>
         <dl>
-          <dt>Version</dt><dd>2026-08-26</dd>
-          <dt>Trust</dt><dd>community</dd>
+          <dt>Version</dt><dd>2026-08-26.1</dd>
+          <dt>Trust</dt><dd>first-party</dd>
           <dt>Coverage</dt><dd>ES</dd>
           <dt>Licence</dt><dd>CC0-1.0</dd>
         </dl>
@@ -253,7 +253,7 @@
   &quot;id&quot;: &quot;openbank-es&quot;,
   &quot;name&quot;: &quot;Openbank España&quot;,
   &quot;service&quot;: &quot;openbank&quot;,
-  &quot;trust&quot;: &quot;community&quot;,
+  &quot;trust&quot;: &quot;first-party&quot;,
   &quot;credit&quot;: {
     &quot;author&quot;: {
       &quot;name&quot;: &quot;David Marín&quot;,
@@ -266,7 +266,7 @@
   },
   &quot;domain&quot;: &quot;openbank.es&quot;,
   &quot;country&quot;: &quot;ES&quot;,
-  &quot;version&quot;: &quot;2026-08-26&quot;,
+  &quot;version&quot;: &quot;2026-08-26.1&quot;,
   &quot;minVersion&quot;: &quot;0.3.0.24&quot;,
   &quot;categories&quot;: [
     &quot;banking&quot;
@@ -550,6 +550,13 @@
   ],
   &quot;changelog&quot;: [
     {
+      &quot;version&quot;: &quot;2026-08-26.1&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.&quot;,
+        &quot;es&quot;: &quot;Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga.&quot;
+      }
+    },
+    {
       &quot;version&quot;: &quot;2026-08-26&quot;,
       &quot;changes&quot;: {
         &quot;en&quot;: &quot;Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.&quot;,
@@ -633,7 +640,7 @@
       <li>Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does.</li>
       <li>You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own.</li>
     </ol>
-    <p><strong>Your password is never read, never stored and never sent anywhere</strong>, and nothing runs in the background while you are away. This is a <strong>community</strong> source: its definition is public and reviewable, and it runs under the same security rules as every other.</p>
+    <p><strong>Your password is never read, never stored and never sent anywhere</strong>, and nothing runs in the background while you are away. This is an <strong>audited</strong> source, verified by the project against the real service.</p>
 
     <div class="cta">
       <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="openbank-es">Install on Chrome</a>
@@ -655,11 +662,11 @@
       <h2>What has changed in this source</h2>
       <p>This source is a public definition, and every change to it is on the record. Most recent first:</p>
       <ul class="changelog">
+        <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.</li>
         <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
         <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.</li>
         <li class="rev"><time datetime="2026-07-16">2026-07-16</time> — Map the movement's running balance (saldo.importe) to record.balanceAfter (promoted to a canonical field for the Cuéntamo contract). Requires extension &gt;= 0.3.0.24.</li>
         <li class="rev"><time datetime="2026-07-15">2026-07-15</time> — Fix `movimientos`: the first (non-SCA) page returns a flat `movimientos` array, not `methodResult.movimientos` — itemsPath now accepts both shapes.</li>
-        <li class="rev"><time datetime="2026-07-15">2026-07-15</time> — Add `movimientos` (transactions) per account — 90-day window, full-URL nextPage pager, stops at the SCA boundary (no OTP triggered). Add per-account monthly movement statements (PDF/Excel). Token-only auth (auth.cookies:false, avoids HTTP 413) + session keep-alive. Movements is no longer a declared gap.</li>
       </ul>
       <p class="lead"><a href="/sources.html#openbank-es">See the full history in the catalog →</a></p>
 

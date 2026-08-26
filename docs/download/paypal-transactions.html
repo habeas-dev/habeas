@@ -254,8 +254,8 @@
       <div class="card">
         <h2>About this source</h2>
         <dl>
-          <dt>Version</dt><dd>2026-08-26</dd>
-          <dt>Trust</dt><dd>community</dd>
+          <dt>Version</dt><dd>2026-08-26.1</dd>
+          <dt>Trust</dt><dd>first-party</dd>
           <dt>Coverage</dt><dd>global</dd>
           <dt>Licence</dt><dd>CC0-1.0</dd>
         </dl>
@@ -278,7 +278,7 @@
   &quot;name&quot;: &quot;PayPal&quot;,
   &quot;service&quot;: &quot;paypal&quot;,
   &quot;country&quot;: &quot;global&quot;,
-  &quot;trust&quot;: &quot;community&quot;,
+  &quot;trust&quot;: &quot;first-party&quot;,
   &quot;credit&quot;: {
     &quot;author&quot;: {
       &quot;name&quot;: &quot;David Marín&quot;,
@@ -289,7 +289,7 @@
       &quot;url&quot;: &quot;https://davefx.com&quot;
     }
   },
-  &quot;version&quot;: &quot;2026-08-26&quot;,
+  &quot;version&quot;: &quot;2026-08-26.1&quot;,
   &quot;minVersion&quot;: &quot;0.7.0.10&quot;,
   &quot;domain&quot;: &quot;paypal.com&quot;,
   &quot;match&quot;: [
@@ -398,6 +398,13 @@
   &quot;brand&quot;: &quot;PayPal&quot;,
   &quot;changelog&quot;: [
     {
+      &quot;version&quot;: &quot;2026-08-26.1&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.&quot;,
+        &quot;es&quot;: &quot;Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga.&quot;
+      }
+    },
+    {
       &quot;version&quot;: &quot;2026-08-26&quot;,
       &quot;changes&quot;: {
         &quot;en&quot;: &quot;Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.&quot;,
@@ -453,7 +460,7 @@
       <li>Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does.</li>
       <li>You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own.</li>
     </ol>
-    <p><strong>Your password is never read, never stored and never sent anywhere</strong>, and nothing runs in the background while you are away. This is a <strong>community</strong> source: its definition is public and reviewable, and it runs under the same security rules as every other.</p>
+    <p><strong>Your password is never read, never stored and never sent anywhere</strong>, and nothing runs in the background while you are away. This is an <strong>audited</strong> source, verified by the project against the real service.</p>
 
     <div class="cta">
       <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="paypal">Install on Chrome</a>
@@ -481,6 +488,7 @@
       <h2>What has changed in this source</h2>
       <p>This source is a public definition, and every change to it is on the record. Most recent first:</p>
       <ul class="changelog">
+        <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.</li>
         <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
         <li class="rev"><time datetime="2026-08-13">2026-08-13</time> — Declares country: global. PayPal works in any country, but leaving it undeclared left it unclassified just as the extension and the website began ordering sources by geographic relevance.</li>
         <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.</li>
