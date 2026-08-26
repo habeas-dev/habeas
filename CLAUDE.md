@@ -40,6 +40,15 @@ capture → inventory → sinks (download / local-folder / **native Google Drive
 normalization** layer (counterparty extraction + a uniform `canonicalize` output, opt-in per sink) with
 **`record.extra` keepRaw**, full **i18n (en default + es)**, a **landing site**, and **CI packaging**.
 
+**Consumer-facing extras**: a sink may declare `accepts:{artifacts:[]}` to receive **records with no
+files** (an empty list means "these kinds, and there are none"), and `show-document` then displays one in
+Habeas's own viewer — the document never crosses, only an acknowledgement, bounded to what was routed to
+that origin, with every refusal identical so it cannot be used to probe. `lib/reconcile.js` checks that a
+statement adds up (amounts between two movements must equal the difference of their balances);
+`lib/match.js` ranks archived documents as candidates for a bank movement. Copying an archive BETWEEN
+destinations lives in Settings → Destinations (`lib/foldercopy.js` for the page-side half, since a local
+folder is reachable only through a directory handle a page can hold).
+
 **External hooks** (`lib/exthooks.js` · `lib/grants.js` · `content/extbridge.js` · `ui/authorize.*`):
 any website can, via `window.postMessage` (bridge on all https pages, both browsers — no allowlist),
 **propose** a `source → its-own-origin http sink` workflow and later **request collection**. Two

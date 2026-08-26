@@ -347,3 +347,48 @@ nombres de campo y códigos de sistema tipo enum). Estado tras esa inferencia (e
   estructurados. `side` sólo mapea los `eventType` de ejecución vistos (savings-plan → `buy`); ventas y
   dividendos se conservan verbatim hasta muestrear esos `eventType`.
 - **WiZink / FECI / CaixaBank**: sus feeds no exponen saldo por movimiento; `balanceAfter` no aplica.
+
+---
+
+## C. Recibir listas sin ficheros, y poder enseñar uno
+
+Cuéntamo necesita la **lista** de facturas para conciliar un cargo, no las facturas. Nadie quiere cinco
+mil PDF de Amazon dentro de una aplicación de finanzas — pero cuando el usuario pregunta *«¿de qué era
+este cargo?»*, algo tiene que poder enseñarle el documento.
+
+**Pide registros y ningún fichero** declarando una lista de artefactos vacía:
+
+```js
+await habeas('register-sink', {
+  sink: { type: 'http', url: 'https://cuentamo.app/ingest',
+          accepts: { artifacts: [] } },   // [] = «acepto estas clases, y no hay ninguna»
+});
+```
+
+La entrega sigue siendo la de siempre (multipart con `records`), simplemente sin `files[]`.
+
+**Y cuando haga falta verlo**, pídele a Habeas que lo muestre:
+
+```js
+await habeas('show-document', { source: 'amazon:', internalId: '405-1234567-1234567' });
+// → { ok:true, status:'shown' }
+```
+
+El par `(source, internalId)` es el que ya recibiste: `source` es el campo homónimo del multipart — la
+clave de store `id:stream` — e `internalId` el del registro. **`internalId` por sí solo no es un asa**:
+es único dentro de su fuente y su stream, no globalmente. Dos fuentes distintas pueden usar el mismo.
+
+**El documento no cruza.** Vuelve un acuse y nada más: Habeas abre su propio visor, en su propia
+pestaña, y lo que aparece ahí queda entre la extensión y quien mira. Esa ausencia de canal de vuelta es
+lo que permite conceder la capacidad; un `fetch` que devolviera bytes solo podría autorizarse para
+documentos que Cuéntamo ya tuviera, que es justo el caso que aquí no sirve.
+
+Dos límites, ambos aplicados:
+
+- **Solo lo que se te ha enrutado.** El registro debe constar como entregado a tu propio sink.
+- **Toda negativa es idéntica.** `denied` cubre por igual «no es tuyo», «no existe» y «no estás
+  emparejado»: si se distinguieran, recorrer identificadores permitiría averiguar qué tiene alguien sin
+  recibir un byte.
+
+Detalle completo en [`external-hooks.md`](external-hooks.md).
+

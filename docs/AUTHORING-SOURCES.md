@@ -154,7 +154,7 @@ optional `api.groups` (accounts) and `api.pdf`/`api.document`/`api.detail` (docu
 | `params` | query params (values may use templates, §3.8). |
 | `paging` | `offsets` \| `offset` \| `page` \| `cursor` \| `none` \| `years` \| `synthetic` (see §3.6). |
 | **`itemsPath`** | where the item array is in the response: a dotted path (`data.results`), `"$"` (the response IS the array), an **array selector** `key[field=value].sub`, or an array of candidate paths (first non-empty wins). |
-| `keep` | `{ field, values[] \| present:true \| prefix }` — keep only matching items (whitelist / has-field / id-prefix routing). |
+| `keep` | `{ field, values[] \| exclude[] \| present:true \| prefix }` — keep only matching items (whitelist / blacklist / has-field / id-prefix routing). Also accepts an **array of rules**, applied in turn, for a list needing two unrelated filters: Revolut drops card verifications (a flag) *and* anything whose state is not `COMPLETED`, and neither discriminator subsumes the other. |
 | `paramSets[]` | replay several disjoint filter-views and union them (e.g. status tabs). |
 | `window` / `range` | `{ from, to, format }` — a date window stamped into params/body. |
 | `maxAgeDays` | drop items older than N days. |
@@ -263,6 +263,27 @@ selectable **output** is a `(stream, format)` pair. Validation runs **per output
 `extension/src/lib/outputs.js` and a multi-stream published source (e.g. WiZink, ING, Raisin).
 
 ### 3.10 Normalization (optional)
+
+`normalize.sign { <field>: { when?, positiveWhen } }` fixes an amount a service reports from the OTHER
+party's point of view. Revolut books a vault transfer from the side that PAYS, so money returning from a
+savings vault arrives negative exactly like money going into it, and the statement stops adding up.
+Always scope it with `when` — the movements that were already right must not move:
+
+```json
+"sign": { "amount": {
+  "when":         { "field": "vault",            "present": true },
+  "positiveWhen": { "field": "fromAccount.type", "equals": "SAVINGS" }
+} }
+```
+
+`normalize.unset { <field>: { when } }` drops a value that belongs to a DIFFERENT account and would
+corrupt a series if kept — the same Revolut transfer carries the vault's closing balance, not the
+personal account's, which made a running balance leap by thousands at exactly those rows. Better absent
+than confidently wrong.
+
+Conditions read the mapped doc first and then the RAW item, **by dotted path**, so nested fields nobody
+mapped (`fromAccount.type`) are usable. `{ field, equals }` compares as strings; `{ field, present }`
+tests existence.
 
 `normalize.counterparty {from, re}` extracts a clean counterparty from free text; `normalize.map`
 maps a raw enum to a stable value; `canonicalize(record)` produces a uniform cross-schema shape for
