@@ -272,3 +272,44 @@ test('a run that skipped everything does not claim the destination already had i
     assert.ok(JSON.parse(read(`_locales/${lang}/messages.json`)).opt_copy_allskipped, `${lang} lacks it`);
   }
 });
+
+test('when nothing is found, the copy shows where it looked', () => {
+  // "Zero bytes written" is unanswerable on its own: a document with no file and a document whose file is
+  // filed under a path the retrieval does not reconstruct look exactly the same from here. Only one of
+  // those is a bug. retrieveDelivered already reports the paths it tried; throwing them away was the
+  // reason three rounds of this went undiagnosed.
+  const lib = read('src/lib/foldercopy.js');
+  assert.match(lib, /Array\.isArray\(r\.tried\) && r\.tried\.length/, 'the attempted paths must be kept');
+  assert.match(lib, /misses\.length < 5/, 'a handful is enough — this is a diagnosis, not a log');
+  assert.match(lib, /return \{ sent, found, skipped, misses/, 'and returned to the caller');
+  const ui = read('src/ui/options.js');
+  assert.match(ui, /if \(!sent && f\.misses && f\.misses\.length\)/, 'shown only when nothing came across');
+  assert.match(ui, /opt_copy_looked/);
+});
+
+test('folders are created by writing a file, never as empty scaffolding', () => {
+  // Asked directly, and the answer is no: the local-folder writer builds the path it needs on the way to
+  // putting a file in it. Creating structure for documents that have no file would be inventing shape
+  // where there is no content.
+  const sinks = read('src/sinks/sinks.js');
+  const i = sinks.indexOf("async ['local-folder']");
+  const body = sinks.slice(i, sinks.indexOf('\n  },', i));
+  assert.match(body, /for \(const art of files\.get\(d\.internalId\) \|\| \[\]\)[\s\S]*?ensureDir/,
+    'the directory is made inside the per-artifact loop, so no artifact means no directory');
+});
+
+test('the copy asks what a document HAS before going to look for it', () => {
+  // Asked directly: does Habeas not already know whether an entry has a file? It does. getDocMeta records
+  // each document's formats at delivery time and again on the Archive's format scan, and the Archive, the
+  // popup and the viewer all read it. The copy did not, so it rediscovered by request what was already
+  // written down — one round-trip per document per candidate format, to be told a bank movement has no
+  // file. That is where the five silent minutes went.
+  const lib = read('src/lib/foldercopy.js');
+  assert.match(lib, /getDocMeta\(storeIdOf\(ds, adapter\)\)/, 'the recorded formats must be read');
+  assert.match(lib, /if \(Array\.isArray\(ex\) && !ex\.length\) \{ skipped\+\+; continue; \}/,
+    'a document known to have no file must cost no request at all');
+  assert.match(lib, /if \(wanted && !wanted\.has\(String\(kind\)\.toLowerCase\(\)\)\) continue;/,
+    'and a known format list must not be probed beyond');
+  // Absent knowledge is different from knowing there is nothing: only then may it look.
+  assert.match(lib, /Array\.isArray\(ex\) && ex\.length \? new Set/, 'probing stays the fallback for the unknown');
+});

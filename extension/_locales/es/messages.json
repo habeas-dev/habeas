@@ -3804,5 +3804,8 @@
         "content": "$1"
       }
     }
+  },
+  "opt_copy_looked": {
+    "message": "Buscó en:"
   }
 }

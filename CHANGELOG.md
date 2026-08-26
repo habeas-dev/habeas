@@ -61,6 +61,16 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   only at the moment of use. It is now labelled "not available here" and left out of every operation that
   could only fail. It is deliberately NOT deleted: configuration sync adopts and never prunes, so removing
   the entry in Firefox would remove a working destination from Chrome as well.
+- **The copy now asks what a document has before going to look for it.** Habeas already records each
+  document's formats — at delivery time, and again on the Archive's format scan — and the Archive, the
+  popup and the viewer all read it. The copy did not: it rediscovered by request what was already written
+  down, one round-trip per document per candidate format, largely to be told that a bank movement has no
+  file of its own. A document known to have none now costs no request at all, and one with a known format
+  is not probed for others. Probing remains the fallback for documents nobody has looked at yet.
+- **When nothing is copied, the copy says where it looked.** "Zero bytes written" cannot be diagnosed on
+  its own: a document with no file and a document whose file is filed under a path the retrieval does not
+  reconstruct look identical from outside, and only one of those is a bug. The attempted paths were
+  already available and were being discarded.
 - **The copy reports each SOURCE before reading it**, not only once documents start moving. Reading a
   source's records means fetching them from wherever the archive lives — over the network for a
   Dropbox-backed store — and a source with nothing outstanding then reported nothing at all. With two

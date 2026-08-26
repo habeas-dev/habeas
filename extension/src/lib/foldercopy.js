@@ -12,7 +12,7 @@
 // The delivery ledger is the cursor. Running this after the background pass is therefore free of
 // double work: whatever the background already delivered is no longer pending.
 import { getRecords, recordDelivered } from './store.js';
-import { deliveredSet, markDelivered, rememberDocMeta } from './state.js';
+import { deliveredSet, markDelivered, rememberDocMeta, getDocMeta } from './state.js';
 import { retrieveDelivered, RETRIEVABLE } from './retrieve.js';
 import { getHandle, verifyPermission } from './fs.js';
 import { writeToSink } from '../sinks/sinks.js';
@@ -75,6 +75,12 @@ export async function copyArchivePageSide(cfg, adapters, target, { originId = ''
   }
 
   let sent = 0, found = 0, skipped = 0;
+  // retrieveDelivered already reports the paths it looked under when it finds nothing, and throwing that
+  // away is what made "zero bytes written" unanswerable: a document with no file and a document whose
+  // file is filed somewhere else look identical from here. A handful of examples is enough to tell them
+  // apart — if the paths look right, the files are genuinely absent; if they look wrong, the delivery
+  // path and the retrieval path disagree, which is a bug rather than an empty archive.
+  const misses = [];
   // Report BEFORE reading, not only once documents appear. Reading one source's records means fetching
   // them from wherever the archive lives — over the network, for a Dropbox-backed store — and a source
   // with nothing outstanding then reports nothing at all. With two dozen sources that is minutes of a
@@ -88,6 +94,12 @@ export async function copyArchivePageSide(cfg, adapters, target, { originId = ''
     if (onStatus) onStatus({ phase: 'reading', source: adapter.name || ds.adapter, n, of: enabled.length });
     const picked = await pending(ds, adapter, target).catch(() => []);
     if (!picked.length) continue;
+    // What Habeas already KNOWS each document has. Recorded at delivery time and by the Archive's format
+    // scan, and consulted by the Archive, the popup and the viewer — but not, until now, by this. Probing
+    // instead meant a request per document per candidate format, to rediscover something already written
+    // down: a bank movement has no file, and asking a server to confirm that, once per movement, is how a
+    // copy spends five minutes doing nothing visible.
+    const known = await getDocMeta(storeIdOf(ds, adapter)).catch(() => ({}));
 
     const byStream = new Map();
     for (const d of picked) { const s = d.stream || ''; if (!byStream.has(s)) byStream.set(s, []); byStream.get(s).push(d); }
@@ -134,13 +146,22 @@ export async function copyArchivePageSide(cfg, adapters, target, { originId = ''
         // to put in one. A silent operation is indistinguishable from a stuck one.
         if (onStatus) onStatus({ phase: 'copying', done: ++seen, total: docs.length, source: adapter.name || ds.adapter, skipped, n, of: enabled.length });
         const rec = { ...d.record, internalId: d.internalId, date: d.date, group: d.group };
+        // exts is authoritative when present: an empty list means "this has no file", which is a fact, not
+        // something to go and check. Absent means nobody has looked yet, and only then is probing right.
+        const ex = known[d.internalId] && known[d.internalId].exts;
+        if (Array.isArray(ex) && !ex.length) { skipped++; continue; }
+        const wanted = Array.isArray(ex) && ex.length ? new Set(ex.map((x) => String(x).toLowerCase())) : null;
         const arts = [];
         for (const fmt of (fmts.length ? fmts : [''])) {
           const oeff = resolveOutput(adapter, sid + (fmt ? '/' + fmt : ''));
           for (const kind of artifactKinds(oeff, d)) {
+            if (wanted && !wanted.has(String(kind).toLowerCase())) continue; // known not to exist
             for (const from of origins) {
               const r = await retrieveDelivered(from, adapter, rec, kind, { only: true }).catch(() => null);
               if (r && r.blob) { arts.push({ blob: r.blob, ext: r.ext || kind }); break; }
+              if (misses.length < 5 && r && Array.isArray(r.tried) && r.tried.length) {
+                misses.push({ sink: from.name || from.id, source: adapter.id, id: d.internalId, tried: r.tried.slice(0, 2) });
+              }
             }
           }
         }
@@ -154,5 +175,5 @@ export async function copyArchivePageSide(cfg, adapters, target, { originId = ''
       await flush();
     }
   }
-  return { sent, found, skipped, stopped: !!(signal && signal.aborted) };
+  return { sent, found, skipped, misses, stopped: !!(signal && signal.aborted) };
 }

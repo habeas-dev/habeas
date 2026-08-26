@@ -399,6 +399,13 @@ async function render() {
           },
         });
         sent = f.sent; skipped = f.skipped; stopped = f.stopped;
+        // Nothing found anywhere: show WHERE it looked. Without this, "no file in the origin" and "the
+        // file is there but under another path" are the same sentence, and only one of them is a bug.
+        if (!sent && f.misses && f.misses.length) {
+          $('#copyreport').hidden = false;
+          $('#copyreport').textContent = t('opt_copy_looked')
+            + ' ' + f.misses.map((m) => `${m.sink}: ${m.tried.join(' , ')}`).join(' · ');
+        }
       }
 
       if (stopped) $('#copystatus').textContent = t('opt_copy_stopped', [String(sent)]);
