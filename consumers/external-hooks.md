@@ -102,6 +102,46 @@ re-proposal does (omit `headers` to keep the paired token). This is the push cou
 pairing credential it already stores (you only ever saw the token once, so absence means "don't change
 it"). Send `headers` again only to rotate the credential.
 
+## A″. Records without files, and showing one on demand
+
+A consumer that reconciles bank movements wants the **list** of invoices, not the invoices. Cuéntamo
+needs Amazon's records to match a card charge against and emphatically does not want five thousand
+PDFs — but when the user asks *what was this charge?*, something has to be able to show the document.
+
+Declare an **empty** artifact list on your sink and you receive records and no files:
+
+```js
+await habeas('register-sink', {
+  sink: { type: 'http', url: 'https://cuentamo.app/ingest',
+          accepts: { artifacts: [] } },   // [] = "these kinds, and there are none" → records only
+});
+```
+
+Then, when the user wants to see one, ask Habeas to display it:
+
+```js
+await habeas('show-document', { source: 'amazon:', internalId: '405-1234567-1234567' });
+// → { ok:true, status:'shown' }    Habeas opened its own viewer, in its own tab
+// → { ok:false, status:'denied' }
+```
+
+`source` and `internalId` are the pair you were already given: `source` is the `source` field of the
+multipart delivery (the `id:stream` store key), `internalId` is the record's own. `internalId` alone is
+NOT a handle — it is unique within its source and stream, not globally.
+
+**The document never crosses.** Nothing comes back but an acknowledgement: Habeas opens the file in its
+own tab, and what appears there is between the extension and the person looking at it. That absence of a
+return channel is what makes the capability safe to grant at all.
+
+Two rules, both enforced:
+
+- **You may only show what was routed to you.** The record must appear in the delivery ledger for your
+  own sink. A consumer can display something it holds; it cannot go fishing through documents the user
+  never sent it.
+- **Every refusal is identical.** `denied` covers "not yours", "no such document", "no readable copy" and
+  "you are not a paired integration" alike. If they read differently you could walk ids and learn what
+  somebody owns without receiving a byte, and the refusal would become the leak.
+
 ## B. Request collection
 
 ```js

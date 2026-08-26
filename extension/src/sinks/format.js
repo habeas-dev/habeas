@@ -275,7 +275,11 @@ export function sinkAcceptsArtifact(sink, artifact) {
   const kind = artifact && typeof artifact === 'object' ? artifact.kind : artifact;
   const ext = artifact && typeof artifact === 'object' ? artifact.ext : undefined;
   const acc = (sink && sink.accepts) || {};
-  if (acc.artifacts && acc.artifacts.length && !acc.artifacts.includes(kind)) return false;
+  // Array.isArray, not a truthy length: an EMPTY list is a statement, not an omission — "I accept these
+  // artifact kinds, and there are none of them". That is a consumer which wants the records and not the
+  // files: Cuentamo needs the list of Amazon invoices to reconcile against, and emphatically does not
+  // want five thousand PDFs. It can ask Habeas to display one when the user wants to see it.
+  if (Array.isArray(acc.artifacts) && !acc.artifacts.includes(kind)) return false;
   // accepts.formats: file formats the sink takes (e.g. ['pdf'] or ['xls','csv']). Absent → any.
   if (acc.formats && acc.formats.length && ext != null && !acc.formats.includes(ext)) return false;
   return true;

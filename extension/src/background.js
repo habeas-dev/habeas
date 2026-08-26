@@ -12,7 +12,7 @@ import { applyStoredConfigIfNewer, writeSnapshotIfChanged } from './lib/configsy
 import { syncVaultIfUnlocked } from './lib/secretsync.js';
 import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } from './runtime/inventory.js';
 import { resolveSiteFetch, ensureSiteFetch, recoverSession, clearSiteCookies, withBrandHost, findSiteTab, foregroundTab } from './lib/pagefetch.js';
-import { retrieveDelivered } from './lib/retrieve.js';
+import { retrieveDelivered, isRetrievable } from './lib/retrieve.js';
 import { driveCache } from './sinks/drive.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink, readSinkRecords } from './sinks/sinks.js';
@@ -1186,6 +1186,7 @@ async function handleExt(api, payload, origin) {
   if (api === 'list-groups') return listGroupsForGrant(origin, payload);
   if (api === 'list-sources') return listSourcesForOrigin(origin);
   if (api === 'status') return extStatus(origin);
+  if (api === 'show-document') return showDocumentForOrigin(origin, payload);
   if (api === 'revoke-grant') return revokeGrantForOrigin(origin, payload);
   return { ok: false, status: 'error', error: 'unknown api' };
 }
@@ -1196,6 +1197,47 @@ async function handleExt(api, payload, origin) {
 // trust + route mode), never accounts, documents or data. No cross-origin leak: a site only ever sees
 // what feeds its own sink. Surfaced as `status.routes` so a consumer gets the full delivery picture
 // (not just its grant-backed routes) in the same poll it already makes.
+// Show a document the consumer was ALREADY GIVEN THE RECORD OF, in Habeas's own viewer.
+//
+// A consumer that reconciles bank movements needs the LIST of invoices and not the invoices: Cuentamo
+// wants Amazon's records to match against, and emphatically does not want five thousand PDFs. But when
+// the user asks "what was this charge?", somebody has to be able to show the thing. This is that.
+//
+// The document never crosses. Nothing is returned but an acknowledgement — Habeas opens its own viewer,
+// in its own tab, and what appears there is between the extension and the person looking at it. Which is
+// why this can be permitted at all: there is no channel out.
+//
+// Bounded by what was already delivered to this origin's own sink. A consumer may ask to display a
+// record it holds; it may not go fishing through documents the user never routed to it. And the refusal
+// is the ONE piece of information this can leak, so it must never distinguish "not yours" from "does not
+// exist": both answer the same way, or the API becomes an oracle for guessing what somebody owns.
+async function showDocumentForOrigin(origin, payload) {
+  const denied = { ok: false, status: 'denied' };            // identical for absent and for not-yours
+  const sinkId = sinkIdForOrigin(origin);
+  if (!sinkId) return denied;                                 // not a paired integration at all
+  const source = String((payload && payload.source) || '');
+  const internalId = payload && payload.internalId;
+  if (!source || internalId == null) return denied;
+  const base = source.split(':')[0];
+
+  const cfg = await getConfig();
+  const ds = (cfg.datasources || []).find((d) => d.id === base || d.adapter === base);
+  if (!ds) return denied;
+  const delivered = await deliveredSet(ds.id, sinkId).catch(() => ({}));
+  if (!delivered[internalId]) return denied;                  // the record was never routed here
+
+  // Rendered from a destination that can actually be read back — never the consumer's own, which is
+  // typically an HTTP endpoint and holds nothing retrievable.
+  const from = (cfg.sinks || []).find((s) => s.id !== sinkId && isRetrievable(s));
+  if (!from) return denied;
+  const url = chrome.runtime.getURL('src/ui/docview.html')
+    + `?sink=${encodeURIComponent(from.id)}&src=${encodeURIComponent(base)}&id=${encodeURIComponent(String(internalId))}`
+    + (payload && payload.ext ? `&ext=${encodeURIComponent(String(payload.ext))}` : '');
+  await chrome.tabs.create({ url, active: true });
+  await appendLog({ kind: 'ext-show', datasource: ds.id, sink: sinkId, status: 'ok', count: 1 });
+  return { ok: true, status: 'shown' };
+}
+
 async function routesForOrigin(origin) {
   const sinkId = sinkIdForOrigin(origin);
   const [cfg, adapters] = await Promise.all([getConfig(), getAdapters()]);
