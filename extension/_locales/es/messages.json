@@ -3807,5 +3807,16 @@
   },
   "opt_copy_looked": {
     "message": "Buscó en:"
+  },
+  "opt_copy_nofiles": {
+    "message": "$SRC$ — ninguno de sus $T$ documentos tiene fichero",
+    "placeholders": {
+      "src": {
+        "content": "$1"
+      },
+      "t": {
+        "content": "$2"
+      }
+    }
   }
 }

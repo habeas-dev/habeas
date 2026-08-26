@@ -394,6 +394,8 @@ async function render() {
             const where = `[${p.n}/${p.of}] `;
             $('#copystatus').textContent = p.phase === 'reading'
               ? where + t('opt_copy_reading', [p.source])
+              : p.phase === 'nofiles'
+              ? where + t('opt_copy_nofiles', [p.source, String(p.total)])
               : where + t('opt_copy_progress', [p.source, String(p.done), String(p.total)])
                 + (p.skipped ? ' · ' + t('opt_copy_skipped', [String(p.skipped)]) : '');
           },

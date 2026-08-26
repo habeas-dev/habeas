@@ -137,19 +137,33 @@ export async function copyArchivePageSide(cfg, adapters, target, { originId = ''
         sent += ok.length;
       };
 
+      // Partitioned BEFORE the loop, not inside it. Knowing a document has no file and then visiting it
+      // anyway to decide not to fetch it is the same mistake one layer up: the counter crawls through
+      // hundreds of entries announcing work it is not doing, and the total it reports is a total of
+      // documents rather than of things that will actually be copied. An archive of bank movements
+      // resolves here, in one step, with no loop and no requests.
+      const hasNoFile = (d) => { const e = known[d.internalId] && known[d.internalId].exts; return Array.isArray(e) && !e.length; };
+      const withFiles = docs.filter((d) => !hasNoFile(d));
+      skipped += docs.length - withFiles.length;
+      if (!withFiles.length) {
+        // Said out loud. If every source resolves this way — an archive of bank movements does — no
+        // copying message would ever appear, and the run would look like it had done nothing again.
+        if (onStatus) onStatus({ phase: 'nofiles', source: adapter.name || ds.adapter, total: docs.length, n, of: enabled.length });
+        continue;
+      }
+
       let seen = 0;
-      for (const d of docs) {
+      for (const d of withFiles) {
         if (signal && signal.aborted) break;
         // Per DOCUMENT, not per flushed batch. Reporting only on flush meant nothing moved on screen for
         // the first 25 documents — each of which costs a round-trip to the origin — and nothing moved AT
         // ALL for an archive of record-only movements, where no batch ever fills because there is no file
         // to put in one. A silent operation is indistinguishable from a stuck one.
-        if (onStatus) onStatus({ phase: 'copying', done: ++seen, total: docs.length, source: adapter.name || ds.adapter, skipped, n, of: enabled.length });
+        if (onStatus) onStatus({ phase: 'copying', done: ++seen, total: withFiles.length, source: adapter.name || ds.adapter, skipped, n, of: enabled.length });
         const rec = { ...d.record, internalId: d.internalId, date: d.date, group: d.group };
         // exts is authoritative when present: an empty list means "this has no file", which is a fact, not
         // something to go and check. Absent means nobody has looked yet, and only then is probing right.
         const ex = known[d.internalId] && known[d.internalId].exts;
-        if (Array.isArray(ex) && !ex.length) { skipped++; continue; }
         const wanted = Array.isArray(ex) && ex.length ? new Set(ex.map((x) => String(x).toLowerCase())) : null;
         const arts = [];
         for (const fmt of (fmts.length ? fmts : [''])) {

@@ -254,9 +254,9 @@ test('progress is reported per document, not per flushed batch', () => {
   // nothing moved AT ALL for an archive of record-only movements, where no batch ever fills because there
   // is no file to put in one. Silent and stuck look identical from the outside.
   const lib = read('src/lib/foldercopy.js');
-  const i = lib.indexOf('for (const d of docs) {');
+  const i = lib.indexOf('for (const d of withFiles) {');
   const body = lib.slice(i, lib.indexOf('await flush();', i));
-  assert.match(body, /onStatus\(\{ phase: 'copying', done: \+\+seen, total: docs\.length/, 'each document must report');
+  assert.match(body, /onStatus\(\{ phase: 'copying', done: \+\+seen, total: withFiles\.length/, 'each document must report');
   // …and each SOURCE must report before it is read: a source with nothing outstanding produces no
   // document events at all, so with two dozen of them the screen sits still for minutes.
   assert.match(lib, /onStatus\(\{ phase: 'reading', source/, 'each source must report before reading');
@@ -306,8 +306,10 @@ test('the copy asks what a document HAS before going to look for it', () => {
   // file. That is where the five silent minutes went.
   const lib = read('src/lib/foldercopy.js');
   assert.match(lib, /getDocMeta\(storeIdOf\(ds, adapter\)\)/, 'the recorded formats must be read');
-  assert.match(lib, /if \(Array\.isArray\(ex\) && !ex\.length\) \{ skipped\+\+; continue; \}/,
-    'a document known to have no file must cost no request at all');
+  assert.match(lib, /const withFiles = docs\.filter\(\(d\) => !hasNoFile\(d\)\)/,
+    'documents without files must be partitioned out BEFORE the loop, not visited to be skipped');
+  assert.match(lib, /if \(!withFiles\.length\) \{/, 'a source with none resolves in one step');
+  assert.match(lib, /total: withFiles\.length/, 'and the counter must count what will be copied, not what exists');
   assert.match(lib, /if \(wanted && !wanted\.has\(String\(kind\)\.toLowerCase\(\)\)\) continue;/,
     'and a known format list must not be probed beyond');
   // Absent knowledge is different from knowing there is nothing: only then may it look.
