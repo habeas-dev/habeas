@@ -230,7 +230,7 @@
       <div class="card">
         <h2>Sobre esta fuente</h2>
         <dl>
-          <dt>Versión</dt><dd>2026-08-26.4</dd>
+          <dt>Versión</dt><dd>2026-08-26.5</dd>
           <dt>Confianza</dt><dd>first-party</dd>
           <dt>Cobertura</dt><dd>global</dd>
           <dt>Licencia</dt><dd>CC0-1.0</dd>
@@ -269,8 +269,8 @@
   &quot;categories&quot;: [
     &quot;banking&quot;
   ],
-  &quot;version&quot;: &quot;2026-08-26.4&quot;,
-  &quot;minVersion&quot;: &quot;0.9.3&quot;,
+  &quot;version&quot;: &quot;2026-08-26.5&quot;,
+  &quot;minVersion&quot;: &quot;0.10.0.1&quot;,
   &quot;minorUnits&quot;: true,
   &quot;keepRaw&quot;: true,
   &quot;throttle&quot;: {
@@ -372,7 +372,10 @@
       &quot;fields&quot;: {
         &quot;internalId&quot;: &quot;id&quot;,
         &quot;date&quot;: &quot;startedDate&quot;,
-        &quot;amount&quot;: &quot;amount&quot;,
+        &quot;amount&quot;: [
+          &quot;amountWithCharges&quot;,
+          &quot;amount&quot;
+        ],
         &quot;currency&quot;: &quot;currency&quot;,
         &quot;description&quot;: &quot;description&quot;,
         &quot;type&quot;: &quot;type&quot;,
