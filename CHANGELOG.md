@@ -10,7 +10,20 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-08-26
+
 ### Added
+- **Experimental sources have a page of their own — one that says it is unverified.** American Express,
+  DeGiro and N26 are drafts written from public documentation and never run against a real account, so
+  they were left out of the site entirely: the guide template would have produced a how-to for a procedure
+  nobody has performed. But the only person who can turn a draft into a verified source is somebody who
+  holds that account, and they cannot do that if the draft is invisible. So the page leads with the
+  warning, carries no FAQ or HowTo markup — describing a procedure that was never executed asks a search
+  engine to repeat a claim the project cannot make — stays `noindex` and out of the sitemap, keeps the
+  provenance of the endpoint map it was drafted from, and asks for the one useful thing: run it once and
+  report what happened, including "nothing at all". `llms.txt` lists such drafts under their own heading,
+  outside the supported count, with an explicit instruction not to present them as services Habeas can
+  extract from.
 - **A consumer can receive records without files, and ask Habeas to display one.** An app reconciling
   bank movements wants the *list* of invoices, not the invoices: Cuéntamo needs Amazon's records to match
   a card charge against and emphatically does not want five thousand PDFs — but when the user asks what a
@@ -25,6 +38,60 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   and currencies are never converted: guessing a rate manufactures a match, and a manufactured match in a
   ledger is worse than a missing one. Each candidate carries its reasons in words, because a score nobody
   can argue with is worse than no score when it sits next to somebody's money.
+- **`lib/reconcile.js` — the arithmetic a statement can do on itself.** Each movement carries the balance
+  it left behind, so the amounts between any two must equal the difference between their balances. When
+  they do not, a movement is missing or an amount is wrong, and both are otherwise silent: the Revolut
+  import summed to −10.253,24 against a real balance movement of 7,56 and reported success. Runs are
+  checked per (account, currency), since a multi-currency account shares no balance line. Known limit,
+  documented rather than hidden: the FIRST movement of a run is unverifiable, because its own balance is
+  what establishes the opening figure.
+- **Copy your archive from one destination to another, in Settings → Destinations.** Changing where
+  Habeas saves things used to mean re-collecting everything from the services — and for a great many
+  documents that is simply not possible: Carrefour answers 406 for an old ticket, ING keeps about
+  ninety days. So the only copy of a five-year-old receipt could be destroyed by moving from a folder
+  to Dropbox. The copy reads each file from whichever OTHER destination already holds it and never
+  contacts a service, so it needs no login and cannot disturb a bank session. It checkpoints every 25
+  documents into the delivery ledger, which doubles as its cursor: stop it, close the tab, lose the
+  service worker — pressing Copy again carries on where it left off. Documents whose file is in no
+  readable destination are reported as skipped rather than quietly fetched.
+- **Drive can now be read back from**, not only written to. It was excluded for no better reason than
+  nobody having written the retrieval; the `drive.file` scope already covers files Habeas created.
+  Because Drive addresses by id rather than by path, a folder's names are indexed once per run — a few
+  thousand documents would otherwise be two requests each and straight into rate limits. Resolution is
+  read-only on purpose: the writer's helper creates folders it cannot find, and a *reader* doing that
+  would turn "copy from this destination" into "write to it".
+
+### Changed
+- **The archive copy now says what it will read from, not only where it writes.** The origins are not
+  chosen — each file is taken from whichever destination happens to hold it — so the operation asked
+  for approval without stating what it touches. It now names both ends before you start. Picking your
+  only readable destination as the target is refused with the reason, instead of running and reporting
+  "already holds everything", which was false: there was nowhere to read from. The destination was
+  already excluded as an origin in both senders (copying a file onto itself is at best a no-op, at
+  worst a rewrite of the thing being preserved); that is now covered by tests, as is the stop control.
+  The picker no longer opens on the destination the archive itself lives in: with an archive in
+  Dropbox it defaulted to Dropbox and offered to read from a local folder and write there —
+  correct by the rule, and backwards for the person reading it, since that destination is what you
+  copy FROM. Choosing it anyway is allowed (a document delivered only to a folder really is
+  missing there) but now says so. Destinations with no name are described by their type rather
+  than by a raw id like "local-folder-1".
+- **The copy now has two pickers, an origin and a destination**, because "copy A to B" is how
+  people hold this in their heads and inferring the origin silently made the operation hard to
+  reason about. The origin defaults to wherever the archive lives and the destination to something
+  else, which is the pairing almost always meant. Choosing the same on both sides is refused. The
+  first option, "wherever each file is", keeps the old behaviour available: with an archive spread
+  over two destinations it does in one pass what a fixed origin would need two for. A pinned
+  origin is honoured by both passes — naming Dropbox must not quietly also pull from a local
+  folder, which would undo the point of having chosen.
+- **A local folder you never renamed is now called "Folder <its name>"** instead of the internal id
+  "local-folder-1", which said nothing about which folder it was — and that is the one destination
+  whose identity lives outside the extension. The File System Access API exposes no path, by design,
+  since that would reveal the disk's layout; the directory's own name was already stored and simply
+  was not read. Destination naming also moved into one helper: three copies had drifted across the
+  popup, the Archive and Settings, so the same destination could read differently per screen.
+- **The stop control is now always visible, merely disabled when idle.** Hidden until a copy began,
+  nothing suggested the operation could be interrupted at all, and a run with nothing to do never
+  revealed it.
 
 ### Fixed
 - **A bank movement whose amount resolved to zero is no longer emitted.** Reported from production: 167
@@ -132,70 +199,16 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   answers nothing for a record-only movement, the case where the question is hardest: a bank line has no
   file to open, so nothing on screen said where its data had gone. Shown for one destination as well as
   several.
-
-### Added
-- **`lib/reconcile.js` — the arithmetic a statement can do on itself.** Each movement carries the balance
-  it left behind, so the amounts between any two must equal the difference between their balances. When
-  they do not, a movement is missing or an amount is wrong, and both are otherwise silent: the Revolut
-  import summed to −10.253,24 against a real balance movement of 7,56 and reported success. Runs are
-  checked per (account, currency), since a multi-currency account shares no balance line. Known limit,
-  documented rather than hidden: the FIRST movement of a run is unverifiable, because its own balance is
-  what establishes the opening figure.
-
-
-### Added
-- **Copy your archive from one destination to another, in Settings → Destinations.** Changing where
-  Habeas saves things used to mean re-collecting everything from the services — and for a great many
-  documents that is simply not possible: Carrefour answers 406 for an old ticket, ING keeps about
-  ninety days. So the only copy of a five-year-old receipt could be destroyed by moving from a folder
-  to Dropbox. The copy reads each file from whichever OTHER destination already holds it and never
-  contacts a service, so it needs no login and cannot disturb a bank session. It checkpoints every 25
-  documents into the delivery ledger, which doubles as its cursor: stop it, close the tab, lose the
-  service worker — pressing Copy again carries on where it left off. Documents whose file is in no
-  readable destination are reported as skipped rather than quietly fetched.
-- **Drive can now be read back from**, not only written to. It was excluded for no better reason than
-  nobody having written the retrieval; the `drive.file` scope already covers files Habeas created.
-  Because Drive addresses by id rather than by path, a folder's names are indexed once per run — a few
-  thousand documents would otherwise be two requests each and straight into rate limits. Resolution is
-  read-only on purpose: the writer's helper creates folders it cannot find, and a *reader* doing that
-  would turn "copy from this destination" into "write to it".
-
-### Changed
-- **The archive copy now says what it will read from, not only where it writes.** The origins are not
-  chosen — each file is taken from whichever destination happens to hold it — so the operation asked
-  for approval without stating what it touches. It now names both ends before you start. Picking your
-  only readable destination as the target is refused with the reason, instead of running and reporting
-  "already holds everything", which was false: there was nowhere to read from. The destination was
-  already excluded as an origin in both senders (copying a file onto itself is at best a no-op, at
-  worst a rewrite of the thing being preserved); that is now covered by tests, as is the stop control.
-  The picker no longer opens on the destination the archive itself lives in: with an archive in
-  Dropbox it defaulted to Dropbox and offered to read from a local folder and write there —
-  correct by the rule, and backwards for the person reading it, since that destination is what you
-  copy FROM. Choosing it anyway is allowed (a document delivered only to a folder really is
-  missing there) but now says so. Destinations with no name are described by their type rather
-  than by a raw id like "local-folder-1".
-- **The copy now has two pickers, an origin and a destination**, because "copy A to B" is how
-  people hold this in their heads and inferring the origin silently made the operation hard to
-  reason about. The origin defaults to wherever the archive lives and the destination to something
-  else, which is the pairing almost always meant. Choosing the same on both sides is refused. The
-  first option, "wherever each file is", keeps the old behaviour available: with an archive spread
-  over two destinations it does in one pass what a fixed origin would need two for. A pinned
-  origin is honoured by both passes — naming Dropbox must not quietly also pull from a local
-  folder, which would undo the point of having chosen.
-- **A local folder you never renamed is now called "Folder <its name>"** instead of the internal id
-  "local-folder-1", which said nothing about which folder it was — and that is the one destination
-  whose identity lives outside the extension. The File System Access API exposes no path, by design,
-  since that would reveal the disk's layout; the directory's own name was already stored and simply
-  was not read. Destination naming also moved into one helper: three copies had drifted across the
-  popup, the Archive and Settings, so the same destination could read differently per screen.
-- **The stop control is now always visible, merely disabled when idle.** Hidden until a copy began,
-  nothing suggested the operation could be interrupted at all, and a run with nothing to do never
-  revealed it.
-
-### Fixed
 - **Saving a source to a destination no longer fails just because you are logged out.** It reported
   "no session" and stopped, even when every document it needed was already in the archive. It now
   falls back to a store-only send for those, and asks for a session only for what is genuinely new.
+- **The store check stopped crying wolf at weekends.** Its "this is no longer propagation" warning fired
+  24 hours after a release regardless of when that was — so a Saturday release raised the alarm on Sunday,
+  while nobody at Google was reviewing anything. It now counts only Monday–Friday, so a Friday-evening
+  release stays quiet all weekend and only speaks up once real working time has passed. Whole days rather
+  than office hours on purpose: this answers "should I be worried yet", and pretending to know Mountain
+  View's schedule would be false precision. A warning that fires when nothing is wrong is a warning you
+  learn to ignore.
 
 ### Security
 - **The same-domain guard now sees every host a source declares.** It used to check a hand-written list
@@ -210,15 +223,6 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   statement stream does declare its own host, passed only because that host was also listed in `match`.
   Found while auditing `ing-es` line by line. The registry's copy of the validator is fixed identically,
   so the catalogue's PR check rejects it too.
-
-### Fixed
-- **The store check stopped crying wolf at weekends.** Its "this is no longer propagation" warning fired
-  24 hours after a release regardless of when that was — so a Saturday release raised the alarm on Sunday,
-  while nobody at Google was reviewing anything. It now counts only Monday–Friday, so a Friday-evening
-  release stays quiet all weekend and only speaks up once real working time has passed. Whole days rather
-  than office hours on purpose: this answers "should I be worried yet", and pretending to know Mountain
-  View's schedule would be false precision. A warning that fires when nothing is wrong is a warning you
-  learn to ignore.
 
 ## [0.9.18] — 2026-08-22
 
