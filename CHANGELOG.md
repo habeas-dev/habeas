@@ -61,6 +61,16 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   only at the moment of use. It is now labelled "not available here" and left out of every operation that
   could only fail. It is deliberately NOT deleted: configuration sync adopts and never prunes, so removing
   the entry in Firefox would remove a working destination from Chrome as well.
+- **Copying files between destinations actually finds them.** `artifactKinds` returns `{kind, ext}`
+  objects, which the background has always destructured; the page-side copy passed the whole object where
+  an extension belongs. Every reconstructed path therefore contained `[object Object]`, and the
+  format filter compared an object against a string — so no file could ever be found, whatever the archive
+  held. This was the real cause of "zero bytes written"; the several rounds of progress reporting that
+  preceded it made the failure visible without touching it.
+- **A stream that declares no file is settled without touching its documents.** AliExpress orders carry a
+  JSON detail and no document, so all 639 of them were being probed to discover something the adapter
+  states outright. This check needs no per-document metadata, which matters because an archive filled
+  before those records existed has none.
 - **The copy now asks what a document has before going to look for it**, and settles the ones without a
   file in a single step rather than visiting each to decide not to fetch it. Habeas already records each
   document's formats — at delivery time, and again on the Archive's format scan — and the Archive, the

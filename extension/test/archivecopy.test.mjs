@@ -310,8 +310,15 @@ test('the copy asks what a document HAS before going to look for it', () => {
     'documents without files must be partitioned out BEFORE the loop, not visited to be skipped');
   assert.match(lib, /if \(!withFiles\.length\) \{/, 'a source with none resolves in one step');
   assert.match(lib, /total: withFiles\.length/, 'and the counter must count what will be copied, not what exists');
-  assert.match(lib, /if \(wanted && !wanted\.has\(String\(kind\)\.toLowerCase\(\)\)\) continue;/,
+  assert.match(lib, /if \(wanted && !wanted\.has\(String\(k\.ext\)\.toLowerCase\(\)\)\) continue;/,
     'and a known format list must not be probed beyond');
+  // artifactKinds yields {kind, ext} objects. Passing one where an extension belongs put "[object Object]"
+  // into every reconstructed path and made the `only` filter compare an object against a string, so no
+  // file could ever be found — which is what wrote zero bytes, whatever the archive held.
+  assert.match(lib, /retrieveDelivered\(from, adapter, rec, k\.ext, \{ only: true \}\)/,
+    'the artifact EXTENSION must be passed, never the artifact object');
+  assert.match(lib, /const streamKinds = /,
+    'a stream that declares no file at all must be settled without touching its documents');
   // Absent knowledge is different from knowing there is nothing: only then may it look.
   assert.match(lib, /Array\.isArray\(ex\) && ex\.length \? new Set/, 'probing stays the fallback for the unknown');
 });

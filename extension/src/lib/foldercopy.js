@@ -16,7 +16,7 @@ import { deliveredSet, markDelivered, rememberDocMeta, getDocMeta } from './stat
 import { retrieveDelivered, RETRIEVABLE } from './retrieve.js';
 import { getHandle, verifyPermission } from './fs.js';
 import { writeToSink } from '../sinks/sinks.js';
-import { acceptsDoc } from '../sinks/format.js';
+import { acceptsDoc, sinkAcceptsArtifact } from '../sinks/format.js';
 import { storeIdOf } from './instances.js';
 import { storeKeyOf, outputsOf, resolveOutput } from './outputs.js';
 import { artifactKinds, documentExt } from '../runtime/inventory.js';
@@ -109,6 +109,17 @@ export async function copyArchivePageSide(cfg, adapters, target, { originId = ''
       const eff = resolveOutput(adapter, sid);
       const sk = storeKeyOf(storeIdOf(ds, adapter), sid);
       const fmts = outputsOf(adapter).filter((o) => o.stream === sid).map((o) => o.format);
+      // Can this STREAM produce a file at all? Adapter-level and free — no metadata, no requests. A source
+      // whose stream declares no document (AliExpress orders carry a JSON detail and nothing else) has
+      // zero files by construction, and probing 639 of them to discover that is pure waste. This is the
+      // check that works even when nothing was ever recorded about the individual documents.
+      const streamKinds = (fmts.length ? fmts : ['']).flatMap((fmt) =>
+        artifactKinds(resolveOutput(adapter, sid + (fmt ? '/' + fmt : ''))).filter((k) => sinkAcceptsArtifact(target, k)));
+      if (!streamKinds.length) {
+        skipped += docs.length;
+        if (onStatus) onStatus({ phase: 'nofiles', source: adapter.name || ds.adapter, total: docs.length, n, of: enabled.length });
+        continue;
+      }
       const docs = list.map((d) => {
         const rec = d.record || {};
         // category must sit on the doc itself — acceptsDoc reads doc.category, not record.category.
@@ -168,11 +179,18 @@ export async function copyArchivePageSide(cfg, adapters, target, { originId = ''
         const arts = [];
         for (const fmt of (fmts.length ? fmts : [''])) {
           const oeff = resolveOutput(adapter, sid + (fmt ? '/' + fmt : ''));
-          for (const kind of artifactKinds(oeff, d)) {
-            if (wanted && !wanted.has(String(kind).toLowerCase())) continue; // known not to exist
+          // artifactKinds returns {kind, ext} objects, as the background has always treated them. Passing
+          // the object where an extension belongs put "[object Object]" in every reconstructed path and
+          // made the `only` filter compare an object against a string — so no file could EVER be found.
+          // That, not the archive's contents, is why this wrote zero bytes.
+          const kinds = artifactKinds(oeff).filter((k) => sinkAcceptsArtifact(target, k));
+          const avail = artifactKinds(oeff, d); // per-doc: an item that lacks this kind
+          for (const k of kinds) {
+            if (!avail.some((a) => a.kind === k.kind)) continue;
+            if (wanted && !wanted.has(String(k.ext).toLowerCase())) continue; // recorded as not existing
             for (const from of origins) {
-              const r = await retrieveDelivered(from, adapter, rec, kind, { only: true }).catch(() => null);
-              if (r && r.blob) { arts.push({ blob: r.blob, ext: r.ext || kind }); break; }
+              const r = await retrieveDelivered(from, adapter, rec, k.ext, { only: true }).catch(() => null);
+              if (r && r.blob) { arts.push({ blob: r.blob, ext: r.ext || k.ext }); break; }
               if (misses.length < 5 && r && Array.isArray(r.tried) && r.tried.length) {
                 misses.push({ sink: from.name || from.id, source: adapter.id, id: d.internalId, tried: r.tried.slice(0, 2) });
               }
