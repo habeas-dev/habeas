@@ -10,6 +10,26 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **A bank movement whose amount resolved to zero is no longer emitted.** Reported from production: 167
+  Revolut movements arrived, 14 of them card payments with `amount: 0`. At the destination that is not an
+  error but a real 0,00 entry — it imports cleanly, sits in the ledger and throws the balance out by
+  exactly what went missing, with nothing anywhere reporting a failure. Losing the row is strictly better
+  than corrupting the account, provided the loss is countable, so the run now reports `skippedNoAmount`.
+  Only amounts that RESOLVED to zero, and only for schemas where the amount IS the record: a receipt can
+  legitimately total nothing (a full refund), a bank movement cannot. An ABSENT amount is deliberately
+  left alone — that is an adapter defect for validation to name, not a row for the runtime to delete.
+
+### Added
+- **`lib/reconcile.js` — the arithmetic a statement can do on itself.** Each movement carries the balance
+  it left behind, so the amounts between any two must equal the difference between their balances. When
+  they do not, a movement is missing or an amount is wrong, and both are otherwise silent: the Revolut
+  import summed to −10.253,24 against a real balance movement of 7,56 and reported success. Runs are
+  checked per (account, currency), since a multi-currency account shares no balance line. Known limit,
+  documented rather than hidden: the FIRST movement of a run is unverifiable, because its own balance is
+  what establishes the opening figure.
+
+
 ### Added
 - **Copy your archive from one destination to another, in Settings → Destinations.** Changing where
   Habeas saves things used to mean re-collecting everything from the services — and for a great many

@@ -129,6 +129,14 @@ export async function listInventory(adapter, auth, net, opts) {
     const res = await wsFn({ ...adapter.api.ws });
     if (res && res.error) throw new Error('list ws — ' + res.error);
     const seen = new Set(opts && opts.knownIds ? opts.knownIds : []), all = [];
+  // Counted, not silent: a movement dropped for having no amount must be visible somewhere, or the fix
+  // for one bug (records arriving at 0) becomes the cause of another (records quietly vanishing).
+  // Attached to the array at birth rather than at each return: these listers exit from several places
+  // (and one of them behind a trailing comment), so anything done per-exit is a path waiting to be
+  // missed. Callers keep treating the result as the plain array it has always been; .sort() preserves
+  // the property because it sorts in place.
+  const stats = { skippedNoAmount: 0 };
+  all.stats = stats;
     for (const it of (res && res.items) || []) {
       const doc = mapDoc(adapter, it, null);
       const id = doc.internalId;
@@ -148,6 +156,14 @@ export async function listInventory(adapter, auth, net, opts) {
     if (res && res.error) throw new Error('list mtop — ' + res.error);
     const listCfg = { itemsFromKeys: adapter.api.itemsFromKeys };
     const seen = new Set(opts && opts.knownIds ? opts.knownIds : []), all = [];
+  // Counted, not silent: a movement dropped for having no amount must be visible somewhere, or the fix
+  // for one bug (records arriving at 0) becomes the cause of another (records quietly vanishing).
+  // Attached to the array at birth rather than at each return: these listers exit from several places
+  // (and one of them behind a trailing comment), so anything done per-exit is a path waiting to be
+  // missed. Callers keep treating the result as the plain array it has always been; .sort() preserves
+  // the property because it sorts in place.
+  const stats = { skippedNoAmount: 0 };
+  all.stats = stats;
     for (const page of (res && res.pages) || []) {
       for (const it of getItems(page, listCfg)) {
         const doc = mapDoc(adapter, it, null);
@@ -174,17 +190,28 @@ export async function listInventory(adapter, auth, net, opts) {
     let errs = 0, lastErr;
     // Tolerate a single account failing (e.g. a product with no transactions endpoint → 404): don't let it
     // kill the whole run. But if EVERY account failed (e.g. no session), surface the error to the caller.
+    // Skipped-movement counts have to be carried across explicitly: the spread below drops any property
+    // on the per-group array, and capAge returns a filtered copy. Losing the count would leave the drop
+    // silent again, which is the exact failure the guard exists to end.
+    let skipped = 0;
     for (const g of groups) {
-      try { all.push(...await pageList(adapter, a, net, g, opts)); }
+      try { const part = await pageList(adapter, a, net, g, opts); skipped += (part.stats && part.stats.skippedNoAmount) || 0; all.push(...part); }
       catch (e) { errs++; lastErr = e; }
     }
     if (groups.length && errs === groups.length) throw lastErr;
     all.sort(byDate);
-    return capAge(all);
+    return withStats(capAge(all), skipped);
   }
   const all = await pageList(adapter, a, net, null, opts);
+  const skipped = (all.stats && all.stats.skippedNoAmount) || 0;
   all.sort(byDate);
-  return capAge(all);
+  return withStats(capAge(all), skipped);
+}
+
+// Re-attach the run's counters to whatever array is finally handed back.
+function withStats(arr, skippedNoAmount) {
+  if (skippedNoAmount) arr.stats = { skippedNoAmount };
+  return arr;
 }
 
 // CSRF prelude: GET a page and extract a token (e.g. WiZink's securityToken hidden input / JS var) with
@@ -286,6 +313,14 @@ async function pageList(adapter, auth, net, group, opts) {
   const count = list.params && list.params.count;
   const maxPages = list.maxPages || 100;
   const seen = new Set(opts && opts.knownIds ? opts.knownIds : []), all = []; // incremental: seed with store ids → known items dedup out + paging stops early
+  // Counted, not silent: a movement dropped for having no amount must be visible somewhere, or the fix
+  // for one bug (records arriving at 0) becomes the cause of another (records quietly vanishing).
+  // Attached to the array at birth rather than at each return: these listers exit from several places
+  // (and one of them behind a trailing comment), so anything done per-exit is a path waiting to be
+  // missed. Callers keep treating the result as the plain array it has always been; .sort() preserves
+  // the property because it sorts in place.
+  const stats = { skippedNoAmount: 0 };
+  all.stats = stats;
   const call = (params) => fetchList(adapter, auth, params, net, group);
 
   // list.paths: the items come from SEVERAL endpoints merged (Raisin's deposits live in dashboard/active AND
@@ -295,7 +330,7 @@ async function pageList(adapter, auth, net, group, opts) {
       if (stop()) break;
       const a2 = { ...adapter, api: { ...adapter.api, list: { ...list, path: p, paths: undefined } } };
       const data = await fetchList(a2, auth, { ...range, ...baseParams }, net, group);
-      collect(adapter, data, seen, all, group);
+      collect(adapter, data, seen, all, group, stats);
     }
     return all.sort((x, y) => ((x.date || '') < (y.date || '') ? 1 : -1));
   }
@@ -307,7 +342,7 @@ async function pageList(adapter, auth, net, group, opts) {
     for (let i = 0; i < list.paramSets.length; i++) {
       if (stop()) break;
       const data = await call({ ...range, ...baseParams, ...list.paramSets[i] });
-      collect(adapter, data, seen, all, group);
+      collect(adapter, data, seen, all, group, stats);
       report({ page: i + 1 });
     }
     return all.sort((x, y) => ((x.date || '') < (y.date || '') ? 1 : -1));
@@ -318,7 +353,7 @@ async function pageList(adapter, auth, net, group, opts) {
     for (let g = 0; g < maxPages; g++) {
       if (stop()) break;
       const data = await call({ ...range, ...baseParams, ...offs });
-      const added = collect(adapter, data, seen, all, group);
+      const added = collect(adapter, data, seen, all, group, stats);
       report({ page: g + 1 });
       if (!added) break;
       offs = Object.assign(offs, get(data, list.offsetsPath) || {});
@@ -331,7 +366,7 @@ async function pageList(adapter, auth, net, group, opts) {
     for (let g = 0; g < maxPages; g++) {
       if (stop()) break;
       const data = await call({ ...range, ...baseParams, [pageParam]: page });
-      const added = collect(adapter, data, seen, all, group);
+      const added = collect(adapter, data, seen, all, group, stats);
       report({ page: g + 1 });
       // A page that adds NOTHING NEW (empty, OR — incrementally — all-known) is a candidate stop. For a
       // year-partitioned list (pageParam yearOffset) an empty/known year in the MIDDLE (e.g. 2025 with no
@@ -349,7 +384,7 @@ async function pageList(adapter, auth, net, group, opts) {
       if (stop()) break;
       const data = await call({ ...range, ...baseParams, [offsetParam]: offset });
       const items = getItems(data, list);
-      const added = collect(adapter, data, seen, all, group);
+      const added = collect(adapter, data, seen, all, group, stats);
       report({ page: g + 1 });
       if (!items.length || !added) break;
       offset += step;
@@ -374,7 +409,7 @@ async function pageList(adapter, auth, net, group, opts) {
       // for" (Openbank's `scaRequired` past ~90 days). Keep what THIS page returned — it arrived without a
       // challenge — then STOP. Habeas never crosses the boundary, so no SMS/OTP is ever triggered.
       const scaStop = list.stopPath && String(get(data, list.stopPath)) === String(list.stopValue ?? true);
-      const added = collect(adapter, data, seen, all, group);
+      const added = collect(adapter, data, seen, all, group, stats);
       report({ page: g + 1 });
       if (scaStop) break;
       // `cursorFromItem`: the next cursor is derived from the PAGE's own items, not a field in the response
@@ -401,7 +436,7 @@ async function pageList(adapter, auth, net, group, opts) {
       all.push(doc);
     }
   } else { // 'none' — single request
-    collect(adapter, await call({ ...range, ...baseParams }), seen, all, group);
+    collect(adapter, await call({ ...range, ...baseParams }), seen, all, group, stats);
     report({ page: 1, docs: all }); // emit once so a single-call source still reports its document count
   }
   return all; // sorted by the caller (listInventory) across all groups
@@ -488,6 +523,14 @@ async function pageListYears(adapter, auth, net, group, opts) {
   const baseParams = { ...(list.params || {}) };
   const now = new Date().getFullYear();
   const seen = new Set(opts && opts.knownIds ? opts.knownIds : []), all = []; // incremental: seed with store ids → known items dedup out + paging stops early
+  // Counted, not silent: a movement dropped for having no amount must be visible somewhere, or the fix
+  // for one bug (records arriving at 0) becomes the cause of another (records quietly vanishing).
+  // Attached to the array at birth rather than at each return: these listers exit from several places
+  // (and one of them behind a trailing comment), so anything done per-exit is a path waiting to be
+  // missed. Callers keep treating the result as the plain array it has always been; .sort() preserves
+  // the property because it sorts in place.
+  const stats = { skippedNoAmount: 0 };
+  all.stats = stats;
   let pages = 0, emptyRun = 0;
   // Walk years back until N consecutive years are empty (adapts to each account's real history — a fixed
   // `back` would truncate older orders) or the safety cap / page cap / Stop is hit. stopAfterEmpty>1
@@ -505,7 +548,7 @@ async function pageListYears(adapter, auth, net, group, opts) {
       // Stamp the page's year onto each item so the listing carries at least year precision (the full date
       // is encrypted in the list; it's recovered from the per-order detail). Map it via fields.date:"_year".
       for (const it of items) if (it && typeof it === 'object' && it._year == null) it._year = String(yr);
-      const added = collect(adapter, data, seen, all, group);
+      const added = collect(adapter, data, seen, all, group, stats);
       pages++;
       yearItems += items.length; yearAdded += added;
       if (opts && opts.onProgress) { try { opts.onProgress({ year: yr, page: (idx / startStep) + 1, docs: all }); } catch (e) {} } // live: "listing 2026, page 3"
@@ -571,7 +614,15 @@ async function pageListPeriods(adapter, auth, net, group, opts) {
   }
   // Map + dedup exactly like the paged path (collect builds each doc's record + internalId).
   const seen = new Set(opts && opts.knownIds ? opts.knownIds : []), all = []; // incremental: seed with store ids → known items dedup out + paging stops early
-  collect(adapter, { __items: raw }, seen, all, group);
+  // Counted, not silent: a movement dropped for having no amount must be visible somewhere, or the fix
+  // for one bug (records arriving at 0) becomes the cause of another (records quietly vanishing).
+  // Attached to the array at birth rather than at each return: these listers exit from several places
+  // (and one of them behind a trailing comment), so anything done per-exit is a path waiting to be
+  // missed. Callers keep treating the result as the plain array it has always been; .sort() preserves
+  // the property because it sorts in place.
+  const stats = { skippedNoAmount: 0 };
+  all.stats = stats;
+  collect(adapter, { __items: raw }, seen, all, group, stats);
   return all;
 }
 
@@ -1687,7 +1738,29 @@ export function normalizeAmount(v) {
 }
 
 // Map fresh items onto the shared docs array; returns how many were newly added.
-function collect(adapter, data, seen, all, group) {
+// A movement whose amount did not survive the mapping is worse than a movement that never arrived. It
+// looks like a real 0,00 entry at the destination, so it passes every import check, sits silently in the
+// ledger and throws the balance out by exactly the amount that went missing — which is the hardest kind
+// of error to find, because nothing anywhere reports a failure. Revolut card payments arrived this way:
+// the API returns amount 0 at the top level for them and the real figure is not in the list response at
+// all, so the record was emitted as a genuine zero. Dropping them loses nothing that was ever there, and
+// `skippedNoAmount` on the result makes the loss countable instead of silent.
+//
+// Deliberately limited to schemas where the amount IS the record: a receipt or an invoice can legitimately
+// total zero (a full refund, a free order), a bank movement of exactly nothing cannot.
+const AMOUNT_IS_THE_POINT = new Set(['transaction', 'investment']);
+// Only an amount that RESOLVED to zero (or to NaN), never one that is simply absent. The bug this exists
+// for produces an explicit 0, and dropping absent amounts as well would be a far bigger policy than the
+// evidence supports: a source that maps no amount at all is an adapter defect, which validation should
+// name loudly, not something the runtime should quietly delete rows over.
+function amountIsZero(adapter, doc) {
+  const kind = String(adapter.schema || '').split('@')[0];
+  if (!AMOUNT_IS_THE_POINT.has(kind)) return false;
+  const v = doc.amount ?? doc.total;
+  return typeof v === 'number' && (!Number.isFinite(v) || v === 0);
+}
+
+function collect(adapter, data, seen, all, group, stats) {
   const list = adapter.api.list;
   let items = getItems(data, list);
   items = keepFilter(items, list.keep);
@@ -1696,6 +1769,7 @@ function collect(adapter, data, seen, all, group) {
     const doc = mapDoc(adapter, p, group); // carries doc.internalId (templated {group.*}, or synthesized for periods)
     const id = doc.internalId;
     if (id != null && seen.has(id)) continue;
+    if (amountIsZero(adapter, doc)) { if (stats) stats.skippedNoAmount = (stats.skippedNoAmount || 0) + 1; continue; }
     if (id != null) seen.add(id);
     all.push(doc); added++;
   }
