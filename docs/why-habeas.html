@@ -136,29 +136,48 @@
     </div>
   </header>
 
-  <main class="doc">
-        <h1>Why Habeas?</h1>
-    <p class="lead">Habeas exists for a simple reason: people should be able to keep and move their own data without surrendering more control in the process.</p>
+  <section class="band">
+    <div class="wrap">
+      <p class="kicker">Why Habeas</p>
+      <h1>Why Habeas?</h1>
+      <p class="lead">Habeas exists for a simple reason: people should be able to keep and move their own data without surrendering more control in the process.</p>
+    </div>
+  </section>
 
-    <p>Receipts, invoices, statements, investment reports, and similar records are often visible on the websites that created them. But visibility is not the same as control. Many services offer no useful export, keep only partial history, or force people to download documents one by one.</p>
+  <main class="doc has-toc">
+    <div class="docgrid">
+      <!-- toc:start -->
+      <nav class="toc" aria-label="On this page">
+        <a href="#what-problem-does-habeas-solve">What problem does Habeas solve?</a>
+        <a href="#why-isn-t-data-portability-already-enough">Why isn't data portability already enough?</a>
+        <a href="#captcha">Why can a site still show you a CAPTCHA?</a>
+        <a href="#why-should-users-have-direct-control">Why should users have direct control?</a>
+        <a href="#what-principles-guide-habeas">What principles guide Habeas?</a>
+        <a href="#why-does-the-architecture-follow-these-principles">Why does the architecture follow these principles?</a>
+        <a href="#audit">Why should you trust the extension with your bank session?</a>
+        <a href="#psd2">Why a browser extension instead of official open-banking (PSD2) channels?</a>
+      </nav>
+      <!-- toc:end -->
+      <div class="doccol">
+<p>Receipts, invoices, statements, investment reports, and similar records are often visible on the websites that created them. But visibility is not the same as control. Many services offer no useful export, keep only partial history, or force people to download documents one by one.</p>
 
     <div class="box"><strong>The practical gap:</strong> your data may legally be yours, but in practice it can still be difficult to preserve, reuse, or move to another tool.</div>
 
-    <h2>What problem does Habeas solve?</h2>
+    <h2 id="what-problem-does-habeas-solve">What problem does Habeas solve?</h2>
     <p>Habeas helps you recover access to your own records when a service already lets you see them, but makes them hard to keep. It gives you a way to collect those documents from inside your normal browser session and save them where <em>you</em> choose.</p>
 
-    <h2>Why isn't data portability already enough?</h2>
+    <h2 id="why-isn-t-data-portability-already-enough">Why isn't data portability already enough?</h2>
     <p>In theory, people are supposed to have access to their own information. In everyday life, that promise often stops at a website dashboard. The service may not provide an API, may not support bulk export, or may make automation fail behind anti-bot systems.</p>
     <p>Just as importantly, many existing workarounds ask users to trust yet another intermediary with their credentials and their history. That solves one barrier by creating another.</p>
 
     <h2 id="captcha">Why can a site still show you a CAPTCHA?</h2>
     <p>Because Habeas works inside your own already-open session, most of the time you never hit anti-bot friction. But Habeas makes no promise of immunity: it does not try to defeat those systems, and behind aggressive defenses a collection can simply fail. If a site does show a challenge, you solve it yourself — exactly as you would while browsing by hand. That is a deliberate limit, not a bug.</p>
 
-    <h2>Why should users have direct control?</h2>
+    <h2 id="why-should-users-have-direct-control">Why should users have direct control?</h2>
     <p>Your records are not valuable only on the website that generated them. You may need them for budgeting, accounting, taxes, switching apps, or simply keeping your own archive. Direct control matters because access should not depend on whether a platform decides to keep a convenient export button forever.</p>
     <p>Habeas is built around the idea that people should be able to exercise their rights with tools they can inspect, run themselves, and point at destinations they trust.</p>
 
-    <h2>What principles guide Habeas?</h2>
+    <h2 id="what-principles-guide-habeas">What principles guide Habeas?</h2>
     <div class="grid principles">
       <div class="card">
         <h3>Data sovereignty</h3>
@@ -178,7 +197,7 @@
       </div>
     </div>
 
-    <h2>Why does the architecture follow these principles?</h2>
+    <h2 id="why-does-the-architecture-follow-these-principles">Why does the architecture follow these principles?</h2>
     <p>Habeas runs where the website already knows it is talking to you: inside your own authenticated browser session. That means you log in yourself, handle MFA yourself, and keep your credentials to yourself.</p>
     <p>This architecture is not a technical gimmick. It is a consequence of the project's values. If the goal is to give users more control, the tool should avoid unnecessary intermediaries, avoid storing your logins, and keep the flow understandable.</p>
 
@@ -199,7 +218,9 @@
       <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="why">Install on Firefox</a>
     </div>
     <p class="lead" style="margin:0 0 28px">Free and open source (AGPL-3.0). Chrome will warn you that the extension is not trusted: that happens to any developer account recently registered on the Chrome Web Store, it fades after a few months, and it says nothing about the code — which you can read in full.</p>
-      </main>
+      </div>
+    </div>
+  </main>
 
   <script src="nav-i18n.js"></script>
   <script>

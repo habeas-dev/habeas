@@ -61,9 +61,32 @@
     </div>
   </header>
 
-  <main class="doc">
-        <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: 8 August 2026</p>
+  <section class="page-head">
+    <div class="wrap">
+      <h1>Privacy Policy</h1>
+    </div>
+  </section>
+
+  <main class="doc has-toc">
+    <div class="docgrid">
+      <!-- toc:start -->
+      <nav class="toc" aria-label="On this page">
+        <a href="#1-what-data-habeas-accesses">1. What data Habeas accesses</a>
+        <a href="#2-where-your-data-goes-destinations">2. Where your data goes (destinations)</a>
+        <a href="#3-google-user-data-google-drive">3. Google user data (Google Drive)</a>
+        <a href="#4-community-sources-catalog">4. Community sources catalog</a>
+        <a href="#5-ratings-amp-comments-optional">5. Ratings &amp;amp; comments (optional)</a>
+        <a href="#6-site-integrations-external-hooks">6. Site integrations (external hooks)</a>
+        <a href="#7-analytics-amp-tracking">7. Analytics &amp;amp; tracking</a>
+        <a href="#8-data-retention-amp-your-control">8. Data retention &amp;amp; your control</a>
+        <a href="#9-legal-basis">9. Legal basis</a>
+        <a href="#10-children">10. Children</a>
+        <a href="#11-changes">11. Changes</a>
+        <a href="#12-contact">12. Contact</a>
+      </nav>
+      <!-- toc:end -->
+      <div class="doccol">
+<p class="updated">Last updated: 8 August 2026</p>
 
     <p><strong>Habeas</strong> is a free, open-source (AGPL-3.0) browser extension that helps you extract
       <em>your own</em> personal data — receipts, invoices, card and investment records — from services that
@@ -76,7 +99,7 @@
       transmits your passwords. It only ever sends your data to a place you pick (a download, a local folder,
       your own Google Drive, or an endpoint you configure).</div>
 
-    <h2>1. What data Habeas accesses</h2>
+    <h2 id="1-what-data-habeas-accesses">1. What data Habeas accesses</h2>
     <ul>
       <li><strong>Your own account data</strong> on services you are logged into (e.g. a store's receipts), read
         through the service's own web API using the session you already established in your browser.</li>
@@ -94,7 +117,7 @@
       ciphertext is ever stored — useless without your passphrase), so you can reuse your destinations across
       browsers.</p>
 
-    <h2>2. Where your data goes (destinations)</h2>
+    <h2 id="2-where-your-data-goes-destinations">2. Where your data goes (destinations)</h2>
     <p>Nothing leaves your browser unless you select a destination for a document. The destinations are:</p>
     <ul>
       <li><strong>Download</strong> — a file saved by your browser to your computer.</li>
@@ -103,7 +126,7 @@
       <li><strong>HTTP endpoint</strong> — a URL <em>you</em> configure (e.g. a personal-finance app you use).</li>
     </ul>
 
-    <h2>3. Google user data (Google Drive)</h2>
+    <h2 id="3-google-user-data-google-drive">3. Google user data (Google Drive)</h2>
     <p>If, and only if, you connect Google Drive as a destination, Habeas requests the
       <code>https://www.googleapis.com/auth/drive.file</code> scope.</p>
     <ul>
@@ -119,24 +142,24 @@
       adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services
       User Data Policy</a>, including the Limited Use requirements.</div>
 
-    <h2>4. Community sources catalog</h2>
+    <h2 id="4-community-sources-catalog">4. Community sources catalog</h2>
     <p>The extension can browse a public catalog of community-contributed "source" definitions
       (<code>habeas-dev.github.io/sources</code>). These are static JSON files describing how to read a given
       service. Browsing or installing them sends no personal data.</p>
 
-    <h2>5. Ratings &amp; comments (optional)</h2>
+    <h2 id="5-ratings-amp-comments-optional">5. Ratings &amp; comments (optional)</h2>
     <p>If you rate or comment on a source, that text and star rating are sent to <code>api.habeas.dev</code> and
       stored so others can see them. To limit abuse we store a <strong>salted hash of your IP address</strong>
       (never the raw IP) for rate-limiting. No account, name, or email is required or collected. Don't submit
       personal information in a comment.</p>
 
-    <h2>6. Site integrations (external hooks)</h2>
+    <h2 id="6-site-integrations-external-hooks">6. Site integrations (external hooks)</h2>
     <p>A website you use may ask Habeas to set up a data flow or to collect on your behalf. This never happens
       silently: a site can only route data <strong>back to its own origin</strong>, and nothing is registered or
       run until <strong>you explicitly approve it</strong> in Habeas. You can revoke any such integration at any
       time in Settings.</p>
 
-    <h2>7. Analytics &amp; tracking</h2>
+    <h2 id="7-analytics-amp-tracking">7. Analytics &amp; tracking</h2>
     <p><strong>The extension</strong> contains <strong>no analytics, telemetry, or third-party trackers</strong>.
       It never phones home: what you extract, from which service, and when, is known only to your own browser.
       It also self-hosts its fonts, so it makes no third-party font requests.</p>
@@ -148,30 +171,32 @@
       visited, referrer, country, browser and device type. It is never sold, shared, or used for advertising or
       profiling. Blocking it changes nothing about how the site works.</p>
 
-    <h2>8. Data retention &amp; your control</h2>
+    <h2 id="8-data-retention-amp-your-control">8. Data retention &amp; your control</h2>
     <p>Everything Habeas keeps lives on your own device. Remove documents from a destination as you would any file;
       clear the extension's settings, ledger, and activity log at any time from its options or by removing the
       extension. Session data is memory-only and gone when you close the browser.</p>
 
-    <h2>9. Legal basis</h2>
+    <h2 id="9-legal-basis">9. Legal basis</h2>
     <p>Habeas operates on <em>your</em> own data, in <em>your</em> own session, via software <em>you</em> run
       (GDPR Art. 20 data portability / <em>habeas data</em>). Each service's Terms of Service may restrict
       automated access; complying with them is your responsibility.</p>
 
-    <h2>10. Children</h2>
+    <h2 id="10-children">10. Children</h2>
     <p>Habeas is not directed to children under 13 (or the equivalent minimum age in your jurisdiction).</p>
 
-    <h2>11. Changes</h2>
+    <h2 id="11-changes">11. Changes</h2>
     <p>We may update this policy; the "Last updated" date will change and material changes will be noted in the
       GitHub repository.</p>
 
-    <h2>12. Contact</h2>
+    <h2 id="12-contact">12. Contact</h2>
     <p>Questions or requests: open an issue at
       <a href="https://github.com/habeas-dev/habeas">github.com/habeas-dev/habeas</a>.</p>
 
     <!-- /en -->
 
     
+  </div>
+    </div>
   </main>
 
   <script src="nav-i18n.js"></script>

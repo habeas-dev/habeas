@@ -157,3 +157,79 @@ footer a { color: var(--ink); }
   .compare-table { display: block; overflow-x: auto; }
   .section-badge { display: inline-flex; max-width: 100%; }
 }
+
+/* ── Interior pages ───────────────────────────────────────────────────────────
+   The home page has eleven sections and thirty-five classes; the interior pages
+   had none, which is why they read as a stack of headings and paragraphs in the
+   same palette. These are the pieces they were missing. No token changes.
+   The heading inside .band is the page's REAL h1 — never a decorative copy with
+   the true one hidden below, which drains the signal it is there to carry. */
+.band {
+  background: linear-gradient(160deg, var(--green-700), var(--green-900));
+  color: #fff; padding: 54px 0 48px; position: relative; overflow: hidden;
+}
+.band::after {
+  content: ""; position: absolute; right: -110px; top: -110px; width: 320px; height: 320px;
+  border-radius: 50%; background: radial-gradient(circle, #2a7d6d55, transparent 70%);
+}
+.band .wrap { position: relative; z-index: 1; }
+.band .kicker {
+  font-family: var(--font-head); font-size: 11.5px; letter-spacing: .16em;
+  text-transform: uppercase; color: #8fc7b8; margin-bottom: 10px;
+}
+.band h1 { font-size: clamp(28px, 4.4vw, 40px); margin: 0 0 12px; max-width: 22ch; color: #fff; }
+.band .lead { color: #c7ded7; margin: 0; max-width: 64ch; font-size: 17px; }
+.band .cta { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+.band .btn { font-family: var(--font-head); font-size: 14px; font-weight: 600; text-decoration: none;
+             border-radius: 10px; padding: 11px 18px; display: inline-block; }
+.band .btn-p { background: var(--accent); color: #231202; }
+.band .btn-s { background: #ffffff1a; color: #fff; border: 1px solid #ffffff33; }
+
+/* Legal pages get structure without a campaign banner: a policy under a marketing
+   header reads as marketing, which is the opposite of what it is for. */
+.page-head { border-bottom: 1px solid var(--line); padding: 40px 0 26px; margin-bottom: 8px; }
+.page-head h1 { font-size: clamp(26px, 3.4vw, 34px); margin: 0 0 10px; }
+.page-head .lead { color: var(--muted); margin: 0; max-width: 68ch; }
+
+/* Prose with a sticky table of contents. The anchors are what let a search engine
+   surface a passage rather than the whole page, so every h2 keeps a stable id. */
+.doc.has-toc { max-width: 1080px; }
+.docgrid { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 40px; align-items: start; }
+.toc { position: sticky; top: 78px; font-size: 13.5px; border-left: 2px solid var(--line); padding-left: 14px; }
+.toc a { display: block; color: var(--muted); text-decoration: none; padding: 5px 0; line-height: 1.35; }
+.toc a:hover { color: var(--ink); }
+.toc a[aria-current="true"] { color: var(--green-600); font-weight: 600; box-shadow: -16px 0 0 -14px var(--accent); }
+.pull { border-left: 3px solid var(--accent); padding: 4px 0 4px 18px; margin: 26px 0;
+        font-family: var(--font-head); font-size: 19px; line-height: 1.4; color: var(--green-700); }
+@media (prefers-color-scheme: dark) { .pull { color: #7fc9b6; } }
+
+/* Figures a person — or a model quoting the page — can lift as a single fact. */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+         gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.stats .stat { background: var(--surface); padding: 20px 22px; }
+.stats b { display: block; font-family: var(--font-head); font-size: 28px; letter-spacing: -.02em; color: var(--green-600); }
+.stats span { font-size: 13px; color: var(--muted); }
+
+/* Filters act on cards that are already in the HTML: filtering never removes a
+   card from the document, so a crawler always sees the whole catalogue. */
+.filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 22px 0 18px; }
+.filters .chip { font-family: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--surface);
+                 border-radius: 99px; padding: 6px 14px; color: var(--muted); cursor: pointer; }
+.filters .chip[aria-pressed="true"] { background: var(--green-600); border-color: var(--green-600); color: #fff; }
+
+/* Numbered steps. On a source page these are generated from the same HowTo data
+   the page already marks up — visible text and structured data must not diverge. */
+.steps { counter-reset: step; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; margin: 26px 0; }
+.steps .step { position: relative; border-top: 2px solid var(--line); padding-top: 15px; }
+.steps .step::before {
+  counter-increment: step; content: counter(step); position: absolute; top: -11px; left: 0;
+  width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #231202;
+  font-family: var(--font-head); font-size: 12px; display: grid; place-items: center;
+}
+.steps .step h3 { font-size: 15px; margin: 4px 0 5px; }
+.steps .step p { font-size: 14px; color: var(--muted); margin: 0; }
+
+@media (max-width: 860px) {
+  .docgrid { grid-template-columns: 1fr; gap: 0; }
+  .toc { display: none; }
+}

@@ -61,9 +61,32 @@
     </div>
   </header>
 
-  <main class="doc">
-    <h1>Condiciones del Servicio</h1>
-    <p class="updated">Última actualización: 6 de julio de 2026</p>
+  <section class="page-head">
+    <div class="wrap">
+      <h1>Condiciones del Servicio</h1>
+    </div>
+  </section>
+
+  <main class="doc has-toc">
+    <div class="docgrid">
+      <!-- toc:start -->
+      <nav class="toc" aria-label="En esta página">
+        <a href="#1-que-es-habeas-y-que-no">1. Qué es Habeas (y qué no)</a>
+        <a href="#2-licencia">2. Licencia</a>
+        <a href="#3-tus-datos-tu-sesion-tu-responsabilidad">3. Tus datos, tu sesión, tu responsabilidad</a>
+        <a href="#4-uso-aceptable">4. Uso aceptable</a>
+        <a href="#5-servicios-de-terceros-y-google-drive">5. Servicios de terceros y Google Drive</a>
+        <a href="#6-fuentes-comunitarias-y-contribuciones">6. Fuentes comunitarias y contribuciones</a>
+        <a href="#7-sin-garantia">7. Sin garantía</a>
+        <a href="#8-limitacion-de-responsabilidad">8. Limitación de responsabilidad</a>
+        <a href="#9-no-es-un-actor-financiero-regulado">9. No es un actor financiero regulado</a>
+        <a href="#10-cambios-en-las-condiciones">10. Cambios en las Condiciones</a>
+        <a href="#11-ley-aplicable">11. Ley aplicable</a>
+        <a href="#12-contacto">12. Contacto</a>
+      </nav>
+      <!-- toc:end -->
+      <div class="doccol">
+<p class="updated">Última actualización: 6 de julio de 2026</p>
 
     <p><strong>Habeas</strong> es una extensión de navegador libre y de código abierto (AGPL-3.0) que te ayuda a
       extraer <em>tus propios</em> datos —tickets, facturas, movimientos de tarjeta e inversiones— de servicios sin
@@ -75,18 +98,18 @@
       en tu propia sesión. Se ofrece gratis y <em>tal cual</em>, sin garantía. Eres responsable de cómo lo usas,
       incluido cumplir los términos de los servicios a los que lo apuntes.</div>
 
-    <h2>1. Qué es Habeas (y qué no)</h2>
+    <h2 id="1-que-es-habeas-y-que-no">1. Qué es Habeas (y qué no)</h2>
     <p>Habeas es una herramienta, no un servicio que actúe por ti en un servidor. No es una empresa, no gestiona
       cuentas y no tiene servidores que vean tus documentos ni tu sesión. Nunca guarda ni transmite tus
       contraseñas —inicias sesión tú—. No hay scraping en segundo plano mientras no estás.</p>
 
-    <h2>2. Licencia</h2>
+    <h2 id="2-licencia">2. Licencia</h2>
     <p>Habeas se licencia bajo la <strong>GNU Affero General Public License v3.0 (AGPL-3.0)</strong>. Tus derechos
       de uso, estudio, modificación y redistribución se rigen por esa licencia, cuyo texto completo acompaña al
       código en <a href="https://github.com/habeas-dev/habeas">github.com/habeas-dev/habeas</a>. Estas Condiciones
       no limitan ningún derecho que te otorgue la AGPL.</p>
 
-    <h2>3. Tus datos, tu sesión, tu responsabilidad</h2>
+    <h2 id="3-tus-datos-tu-sesion-tu-responsabilidad">3. Tus datos, tu sesión, tu responsabilidad</h2>
     <ul>
       <li>Habeas opera sobre <strong>tus propios</strong> datos, en <strong>tu propia</strong> sesión autenticada
         (GDPR Art. 20 / <em>habeas data</em>). Úsalo solo para acceder a datos a los que tengas derecho.</li>
@@ -96,12 +119,12 @@
       <li>Tú eliges cada destino. Habeas no envía nada a ningún sitio salvo que lo configures y lo dispares.</li>
     </ul>
 
-    <h2>4. Uso aceptable</h2>
+    <h2 id="4-uso-aceptable">4. Uso aceptable</h2>
     <p>Aceptas no usar Habeas para acceder a datos que no son tuyos, eludir controles de seguridad que protegen datos
       de otras personas, ni con fines ilícitos. Eres el único responsable de las definiciones de "source" que
       instales y de cualquier endpoint que configures como destino.</p>
 
-    <h2>5. Servicios de terceros y Google Drive</h2>
+    <h2 id="5-servicios-de-terceros-y-google-drive">5. Servicios de terceros y Google Drive</h2>
     <p>Habeas interactúa con servicios que ya usas; tu relación con cada uno se rige por sus propios términos y
       políticas. Si conectas <strong>Google Drive</strong> como destino, Habeas usa el permiso <code>drive.file</code>
       para escribir <em>solo los ficheros que él crea</em> en tu Drive; su uso de datos de usuario de Google sigue
@@ -109,42 +132,44 @@
       <a href="https://developers.google.com/terms/api-services-user-data-policy">Política de Datos de Usuario de las
       APIs de Google</a>, incluidos los requisitos de Uso Limitado.</p>
 
-    <h2>6. Fuentes comunitarias y contribuciones</h2>
+    <h2 id="6-fuentes-comunitarias-y-contribuciones">6. Fuentes comunitarias y contribuciones</h2>
     <p>Las definiciones "source" comunitarias son datos JSON estáticos (sin código ejecutable) que describen cómo
       leer un servicio. Las aportan colaboradores y se ofrecen sin garantía; la etiqueta <em>community</em> marca las
       que no están auditadas por el proyecto. Si contribuyes una fuente, confirmas que tienes derecho a hacerlo y la
       licencias bajo los términos del proyecto.</p>
 
-    <h2>7. Sin garantía</h2>
+    <h2 id="7-sin-garantia">7. Sin garantía</h2>
     <p>Habeas se ofrece <strong>"TAL CUAL" y "SEGÚN DISPONIBILIDAD", sin garantía de ningún tipo</strong>, expresa o
       implícita, incluidas sin limitación las de comerciabilidad, idoneidad para un fin, exactitud y no infracción.
       No garantizamos que funcione con un servicio concreto, que los datos extraídos sean completos o correctos, ni
       que sea ininterrumpido o sin errores. Los servicios cambian y pueden romper una fuente en cualquier momento.</p>
 
-    <h2>8. Limitación de responsabilidad</h2>
+    <h2 id="8-limitacion-de-responsabilidad">8. Limitación de responsabilidad</h2>
     <p>En la máxima medida permitida por la ley, los autores y colaboradores no serán responsables de daños
       indirectos, incidentales, especiales, consecuentes o punitivos, ni de pérdida de datos, beneficios o fondo de
       comercio, derivados del uso (o la imposibilidad de uso) de Habeas. Esto no excluye la responsabilidad que no
       pueda excluirse conforme a la ley aplicable.</p>
 
-    <h2>9. No es un actor financiero regulado</h2>
+    <h2 id="9-no-es-un-actor-financiero-regulado">9. No es un actor financiero regulado</h2>
     <p>Habeas no realiza iniciación de pagos y no es un proveedor de servicios de pago ni de información de cuentas
       bajo PSD2 ni régimen equivalente. Es una herramienta de portabilidad de datos personales. No ofrece
       asesoramiento financiero, legal ni fiscal.</p>
 
-    <h2>10. Cambios en las Condiciones</h2>
+    <h2 id="10-cambios-en-las-condiciones">10. Cambios en las Condiciones</h2>
     <p>Podemos actualizar estas Condiciones; cambiará la fecha de "Última actualización" y los cambios materiales se
       anotarán en el repositorio de GitHub. Seguir usándolo tras un cambio implica que aceptas las nuevas
       Condiciones.</p>
 
-    <h2>11. Ley aplicable</h2>
+    <h2 id="11-ley-aplicable">11. Ley aplicable</h2>
     <p>Estas Condiciones se rigen por la legislación de España, sin perjuicio de las normas imperativas de protección
       al consumidor de tu país de residencia.</p>
 
-    <h2>12. Contacto</h2>
+    <h2 id="12-contacto">12. Contacto</h2>
     <p>Dudas: abre una incidencia en
       <a href="https://github.com/habeas-dev/habeas">github.com/habeas-dev/habeas</a>.
       Consulta también nuestra <a href="/es/privacidad.html">Política de Privacidad</a>.</p>
+  </div>
+    </div>
   </main>
 
   <script src="/nav-i18n.js"></script>

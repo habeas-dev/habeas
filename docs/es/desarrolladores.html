@@ -70,22 +70,40 @@
     </div>
   </header>
 
-  <main class="doc">
-    <h1>Conexión bancaria para tu app, sin agregador</h1>
-    <p class="lead">Si construyes una aplicación de finanzas personales ya conoces el muro: leer los movimientos bancarios de tus usuarios de forma programática pasa por pagar a un agregador, y el precio de entrada está fuera del alcance de un equipo pequeño. Habeas es otra vía. Es gratis, es software libre y puede usarlo cualquier aplicación.</p>
+  <section class="band">
+    <div class="wrap">
+      <p class="kicker">Developers</p>
+      <h1>Conexión bancaria para tu app, sin agregador</h1>
+      <p class="lead">Si construyes una aplicación de finanzas personales ya conoces el muro: leer los movimientos bancarios de tus usuarios de forma programática pasa por pagar a un agregador, y el precio de entrada está fuera del alcance de un equipo pequeño. Habeas es otra vía. Es gratis, es software libre y puede usarlo cualquier aplicación.</p>
+    </div>
+  </section>
 
-    <div class="box">
+  <main class="doc has-toc">
+    <div class="docgrid">
+      <!-- toc:start -->
+      <nav class="toc" aria-label="En esta página">
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#dos-formas-de-integrarlo">Dos formas de integrarlo</a>
+        <a href="#que-recibes">Qué recibes</a>
+        <a href="#las-reglas-que-hacen-que-esto-sea-seguro">Las reglas que hacen que esto sea seguro</a>
+        <a href="#el-banco-que-necesitan-tus-usuarios-pueden-anadirlo-ellos">El banco que necesitan tus usuarios: pueden añadirlo ellos</a>
+        <a href="#lo-que-no-es">Lo que no es</a>
+        <a href="#por-donde-empezar">Por dónde empezar</a>
+      </nav>
+      <!-- toc:end -->
+      <div class="doccol">
+<div class="box">
     <strong>La versión corta.</strong> Habeas es una extensión de navegador que instala tu usuario. Lee <em>sus propios</em> datos desde <em>su propia</em> sesión autenticada, en su equipo, y los entrega a un endpoint <strong>de tu dominio</strong>. Sin scraping en servidor, sin guardar credenciales, sin un tercero acumulando el historial financiero de nadie.
     </div>
 
-    <h2>Cómo funciona</h2>
+    <h2 id="como-funciona">Cómo funciona</h2>
     <ol class="steps">
     <li><strong>Tu usuario instala Habeas</strong> y activa las fuentes que le interesan (su banco, su bróker).</li>
     <li><strong>Tu aplicación pide la conexión.</strong> Habeas abre <em>su propia</em> pantalla de consentimiento. No corre nada hasta que el usuario aprueba ahí.</li>
     <li><strong>Los datos llegan a tu endpoint</strong>, ya normalizados, según van apareciendo. Tú confirmas lo que has guardado de verdad; el resto se reintenta.</li>
     </ol>
 
-    <h2>Dos formas de integrarlo</h2>
+    <h2 id="dos-formas-de-integrarlo">Dos formas de integrarlo</h2>
     <div class="cols">
     <div class="card">
       <h3>Pull — los pides tú</h3>
@@ -115,7 +133,7 @@ await habeas('collect', { grantId });</code></pre>
     </div>
     <p>Las dos están documentadas en <a href="https://github.com/habeas-dev/habeas/blob/main/docs/external-hooks.md">external-hooks.md</a>. La mayoría empieza por pull y añade push después.</p>
 
-    <h2>Qué recibes</h2>
+    <h2 id="que-recibes">Qué recibes</h2>
     <ul>
     <li><strong>Registros normalizados</strong>, no HTML en bruto: fecha, importe con signo, concepto, saldo, un identificador para deduplicar y la cuenta a la que pertenecen. Cada registro conserva además los campos originales de la fuente, así que no se pierde nada.</li>
     <li><strong>Banca y bróker.</strong> Movimientos bancarios y, en bróker, operaciones y movimientos de efectivo (títulos, precio, comisiones, retención, instrumento).</li>
@@ -123,7 +141,7 @@ await habeas('collect', { grantId });</code></pre>
     <li><strong>Confirmación por registro.</strong> Tu endpoint responde con los identificadores que ha incorporado realmente; lo demás queda pendiente y se reintenta. Sin pérdidas silenciosas.</li>
     </ul>
 
-    <h2>Las reglas que hacen que esto sea seguro</h2>
+    <h2 id="las-reglas-que-hacen-que-esto-sea-seguro">Las reglas que hacen que esto sea seguro</h2>
     <p>Están implementadas en el código, no prometidas en un contrato:</p>
     <ul>
     <li><strong>Ligado al origen.</strong> El host del endpoint tiene que ser el de tu propio dominio. Un sitio solo puede dirigir los datos hacia <em>sí mismo</em>. No hay lista blanca porque no hace falta.</li>
@@ -132,7 +150,7 @@ await habeas('collect', { grantId });</code></pre>
     <li><strong>Revocable.</strong> El usuario puede retirar cualquier integración cuando quiera desde los ajustes de Habeas.</li>
     </ul>
 
-    <h2>El banco que necesitan tus usuarios: pueden añadirlo ellos</h2>
+    <h2 id="el-banco-que-necesitan-tus-usuarios-pueden-anadirlo-ellos">El banco que necesitan tus usuarios: pueden añadirlo ellos</h2>
     <p>La objeción evidente a cualquier catálogo es «el banco de mis usuarios no está». Aquí está lo importante: <strong>nadie tiene que esperar a que lo añadamos nosotros</strong>.</p>
     <p>La lectura ocurre dentro de la sesión del propio titular, así que quien puede enseñarle un banco nuevo a Habeas es <em>quien ya es cliente de ese banco</em>, no nosotros. Por eso la extensión trae un grabador justo para eso, en <strong>Ajustes → Grabar y contribuir</strong>:</p>
     <ol class="steps">
@@ -144,7 +162,7 @@ await habeas('collect', { grantId });</code></pre>
     <p><strong>Nadie escribe una línea de código</strong>, y una fuente es un fichero de definición y no un programa, que es lo que permite que esto sea un bien común. Si prefieres escribir una a mano, esa vía también está abierta: <a href="https://github.com/habeas-dev/habeas/blob/main/docs/AUTHORING-SOURCES.md">AUTHORING-SOURCES.md</a> y <a href="https://github.com/habeas-dev/habeas/blob/main/docs/ASSISTED-AUTHORING.md">ASSISTED-AUTHORING.md</a>.</p>
     <p>Esta es la parte donde colaborar sale a cuenta de verdad. Los adaptadores son fontanería compartida; donde compites es en el producto que construyes encima.</p>
 
-    <h2>Lo que no es</h2>
+    <h2 id="lo-que-no-es">Lo que no es</h2>
     <p>Para que decidas con las contrapartidas reales sobre la mesa:</p>
     <ul>
     <li><strong>No es sincronización silenciosa en segundo plano.</strong> Tu usuario tiene que tener sesión activa; si no la hay, Habeas le saca la pestaña de acceso y espera. Es una decisión de diseño, no una carencia.</li>
@@ -153,7 +171,7 @@ await habeas('collect', { grantId });</code></pre>
     <li><strong>Cada servicio tiene sus condiciones de uso</strong>, y cumplirlas es responsabilidad de quien lo usa. Habeas opera sobre los datos propios de una persona, en su propia sesión.</li>
     </ul>
 
-    <h2>Por dónde empezar</h2>
+    <h2 id="por-donde-empezar">Por dónde empezar</h2>
     <p>
     <a class="cta" href="https://github.com/habeas-dev/habeas/blob/main/docs/INTEGRATION.md">Guía de integración</a>
     <a class="cta" href="https://github.com/habeas-dev/habeas/blob/main/docs/external-hooks.md">Referencia de la API</a>
@@ -163,6 +181,8 @@ await habeas('collect', { grantId });</code></pre>
     <p>Con las definiciones de fuentes es distinto, y a propósito. Cada definición del <a href="https://github.com/habeas-dev/sources">catálogo</a> está en el dominio público bajo <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0-1.0</a>, y la prosa de las guías bajo <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY-4.0</a>. Una definición solo registra cómo un servicio ha ordenado datos que ya son de su usuario, así que úsala donde quieras: con fines comerciales o no, con crédito o sin él.</p>
     <p>¿Estás construyendo algo y te topaste con el mismo muro? Abre un issue en GitHub o escribe a <a href="mailto:hola@habeas.dev">hola@habeas.dev</a>.</p>
     
+  </div>
+    </div>
   </main>
 
   <script src="/nav-i18n.js"></script>

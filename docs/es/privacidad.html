@@ -61,9 +61,32 @@
     </div>
   </header>
 
-  <main class="doc">
-    <h1>Política de Privacidad</h1>
-    <p class="updated">Última actualización: 8 de agosto de 2026</p>
+  <section class="page-head">
+    <div class="wrap">
+      <h1>Política de Privacidad</h1>
+    </div>
+  </section>
+
+  <main class="doc has-toc">
+    <div class="docgrid">
+      <!-- toc:start -->
+      <nav class="toc" aria-label="En esta página">
+        <a href="#1-que-datos-usa">1. Qué datos usa</a>
+        <a href="#2-a-donde-van-tus-datos">2. A dónde van tus datos</a>
+        <a href="#3-datos-de-usuario-de-google-google-drive">3. Datos de usuario de Google (Google Drive)</a>
+        <a href="#4-catalogo-comunitario">4. Catálogo comunitario</a>
+        <a href="#5-valoraciones-y-comentarios-opcional">5. Valoraciones y comentarios (opcional)</a>
+        <a href="#6-integraciones-de-sitios">6. Integraciones de sitios</a>
+        <a href="#7-analitica-y-rastreo">7. Analítica y rastreo</a>
+        <a href="#8-conservacion-y-control">8. Conservación y control</a>
+        <a href="#9-base-legal">9. Base legal</a>
+        <a href="#10-menores">10. Menores</a>
+        <a href="#11-cambios">11. Cambios</a>
+        <a href="#12-contacto">12. Contacto</a>
+      </nav>
+      <!-- toc:end -->
+      <div class="doccol">
+<p class="updated">Última actualización: 8 de agosto de 2026</p>
       <p><strong>Habeas</strong> es una extensión de navegador libre y de código abierto (AGPL-3.0) que te ayuda a
         extraer <em>tus propios</em> datos —tickets, facturas, movimientos de tarjeta e inversiones— de servicios
         sin API ni exportación, íntegramente dentro de tu propia sesión ya autenticada. Habeas no es una empresa y
@@ -74,7 +97,7 @@
         datos al lugar que tú elijas (descarga, carpeta local, tu propio Google Drive, o un endpoint que
         configures).</div>
 
-      <h2>1. Qué datos usa</h2>
+      <h2 id="1-que-datos-usa">1. Qué datos usa</h2>
       <ul>
         <li>Los datos de <strong>tu cuenta</strong> en servicios donde ya has iniciado sesión, leídos por la API web
           del propio servicio con tu sesión.</li>
@@ -91,12 +114,12 @@
         tienes (solo se almacena ese cifrado, inservible sin tu contraseña), para reutilizar tus destinos entre
         navegadores.</p>
 
-      <h2>2. A dónde van tus datos</h2>
+      <h2 id="2-a-donde-van-tus-datos">2. A dónde van tus datos</h2>
       <p>Nada sale del navegador salvo que elijas un destino: <strong>Descarga</strong>, <strong>Carpeta
         local</strong>, <strong>Google Drive</strong> (sección 3), o un <strong>endpoint HTTP</strong> que tú
         configuras.</p>
 
-      <h2>3. Datos de usuario de Google (Google Drive)</h2>
+      <h2 id="3-datos-de-usuario-de-google-google-drive">3. Datos de usuario de Google (Google Drive)</h2>
       <p>Si —y solo si— conectas Google Drive como destino, Habeas solicita el permiso
         <code>drive.file</code>, que da acceso <strong>únicamente a los ficheros que la propia extensión crea</strong>
         en tu Drive. Habeas <strong>no puede ver ni tocar tus demás ficheros</strong>. El token OAuth se guarda solo
@@ -107,21 +130,21 @@
         APIs de Google se adhiere a la <a href="https://developers.google.com/terms/api-services-user-data-policy">Política
         de Datos de Usuario de los Servicios de API de Google</a>, incluidos los requisitos de Uso Limitado.</div>
 
-      <h2>4. Catálogo comunitario</h2>
+      <h2 id="4-catalogo-comunitario">4. Catálogo comunitario</h2>
       <p>La extensión puede consultar un catálogo público de "sources" comunitarios (JSON estático). Explorar o
         instalar no envía datos personales.</p>
 
-      <h2>5. Valoraciones y comentarios (opcional)</h2>
+      <h2 id="5-valoraciones-y-comentarios-opcional">5. Valoraciones y comentarios (opcional)</h2>
       <p>Si valoras o comentas una fuente, ese texto se envía a <code>api.habeas.dev</code> y se guarda. Para
         limitar el abuso guardamos un <strong>hash con sal de tu IP</strong> (nunca la IP en claro). No se requiere
         ni recoge cuenta, nombre o email. No incluyas datos personales en un comentario.</p>
 
-      <h2>6. Integraciones de sitios</h2>
+      <h2 id="6-integraciones-de-sitios">6. Integraciones de sitios</h2>
       <p>Una web puede pedir a Habeas crear un flujo de datos o recolectar por ti. Nunca ocurre en silencio: un sitio
         solo puede enviar datos <strong>a su propio dominio</strong>, y nada se registra ni ejecuta hasta que
         <strong>lo apruebas explícitamente</strong>. Puedes revocarlo cuando quieras en Ajustes.</p>
 
-      <h2>7. Analítica y rastreo</h2>
+      <h2 id="7-analitica-y-rastreo">7. Analítica y rastreo</h2>
       <p><strong>La extensión</strong> <strong>no tiene analítica, telemetría ni rastreadores</strong> de terceros.
         Nunca llama a casa: qué extraes, de qué servicio y cuándo lo sabe solo tu navegador. Además aloja sus
         propias fuentes tipográficas, así que no hace peticiones de fuentes a terceros.</p>
@@ -133,24 +156,26 @@
         navegador y tipo de dispositivo. No se vende, no se comparte y no se usa para publicidad ni para crear
         perfiles. Si lo bloqueas, la web funciona exactamente igual.</p>
 
-      <h2>8. Conservación y control</h2>
+      <h2 id="8-conservacion-y-control">8. Conservación y control</h2>
       <p>Todo lo que Habeas guarda vive en tu dispositivo. Puedes borrar ajustes, registro y log cuando quieras, o
         eliminar la extensión. Los datos de sesión son solo de memoria.</p>
 
-      <h2>9. Base legal</h2>
+      <h2 id="9-base-legal">9. Base legal</h2>
       <p>Habeas opera sobre <em>tus</em> datos, en <em>tu</em> sesión, con software que <em>tú</em> ejecutas
         (GDPR Art. 20 / <em>habeas data</em>). Cumplir los Términos de cada servicio es tu responsabilidad.</p>
 
-      <h2>10. Menores</h2>
+      <h2 id="10-menores">10. Menores</h2>
       <p>Habeas no está dirigido a menores de 13 años (o la edad mínima equivalente en tu jurisdicción).</p>
 
-      <h2>11. Cambios</h2>
+      <h2 id="11-cambios">11. Cambios</h2>
       <p>Podemos actualizar esta política; cambiará la fecha de "Última actualización" y los cambios materiales se
         anotarán en el repositorio de GitHub.</p>
 
-      <h2>12. Contacto</h2>
+      <h2 id="12-contacto">12. Contacto</h2>
       <p>Dudas o solicitudes: abre una incidencia en
         <a href="https://github.com/habeas-dev/habeas">github.com/habeas-dev/habeas</a>.</p>
+  </div>
+    </div>
   </main>
 
   <script src="/nav-i18n.js"></script>

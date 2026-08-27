@@ -136,29 +136,48 @@
     </div>
   </header>
 
-  <main class="doc">
-    <h1>¿Por qué Habeas?</h1>
-    <p class="lead">Habeas existe por una razón sencilla: las personas deberían poder conservar y mover sus propios datos sin perder aún más control en el proceso.</p>
+  <section class="band">
+    <div class="wrap">
+      <p class="kicker">Por qué Habeas</p>
+      <h1>¿Por qué Habeas?</h1>
+      <p class="lead">Habeas existe por una razón sencilla: las personas deberían poder conservar y mover sus propios datos sin perder aún más control en el proceso.</p>
+    </div>
+  </section>
 
-    <p>Tickets, facturas, extractos, informes de inversión y registros similares suelen ser visibles en las webs que los generaron. Pero verlos no es lo mismo que controlarlos. Muchos servicios no ofrecen una exportación útil, conservan solo parte del historial o fuerzan a descargar documento por documento.</p>
+  <main class="doc has-toc">
+    <div class="docgrid">
+      <!-- toc:start -->
+      <nav class="toc" aria-label="En esta página">
+        <a href="#que-problema-resuelve-habeas">¿Qué problema resuelve Habeas?</a>
+        <a href="#por-que-la-portabilidad-de-datos-actual-no-basta">¿Por qué la portabilidad de datos actual no basta?</a>
+        <a href="#captcha">¿Por qué una web puede mostrarte aún un CAPTCHA?</a>
+        <a href="#por-que-importa-el-control-directo">¿Por qué importa el control directo?</a>
+        <a href="#que-principios-guian-habeas">¿Qué principios guían Habeas?</a>
+        <a href="#por-que-la-arquitectura-sigue-esos-principios">¿Por qué la arquitectura sigue esos principios?</a>
+        <a href="#audit">¿Por qué deberías confiarle a la extensión tu sesión bancaria?</a>
+        <a href="#psd2">¿Por qué una extensión del navegador y no los canales oficiales de open banking (PSD2)?</a>
+      </nav>
+      <!-- toc:end -->
+      <div class="doccol">
+<p>Tickets, facturas, extractos, informes de inversión y registros similares suelen ser visibles en las webs que los generaron. Pero verlos no es lo mismo que controlarlos. Muchos servicios no ofrecen una exportación útil, conservan solo parte del historial o fuerzan a descargar documento por documento.</p>
 
     <div class="box"><strong>La brecha práctica:</strong> tus datos pueden ser tuyos en lo legal, pero en la práctica seguir siendo difíciles de conservar, reutilizar o mover a otra herramienta.</div>
 
-    <h2>¿Qué problema resuelve Habeas?</h2>
+    <h2 id="que-problema-resuelve-habeas">¿Qué problema resuelve Habeas?</h2>
     <p>Habeas te ayuda a recuperar acceso práctico a tus propios registros cuando un servicio ya te deja verlos, pero te lo pone difícil para conservarlos. Te da una forma de recoger esos documentos desde tu sesión normal del navegador y guardarlos donde <em>tú</em> elijas.</p>
 
-    <h2>¿Por qué la portabilidad de datos actual no basta?</h2>
+    <h2 id="por-que-la-portabilidad-de-datos-actual-no-basta">¿Por qué la portabilidad de datos actual no basta?</h2>
     <p>En teoría, las personas deberían poder acceder a su propia información. En la vida real, esa promesa muchas veces se queda en un panel web. El servicio puede no tener API, no ofrecer exportación masiva o hacer que la automatización falle detrás de sistemas anti-bot.</p>
     <p>Y además, muchos atajos existentes piden confiar tus credenciales y tu historial a otro intermediario. Eso resuelve una barrera creando otra.</p>
 
     <h2 id="captcha">¿Por qué una web puede mostrarte aún un CAPTCHA?</h2>
     <p>Como Habeas funciona dentro de tu propia sesión ya abierta, la mayoría de las veces no te topas con fricción anti-bot. Pero Habeas no promete inmunidad: no intenta burlar esos sistemas y, tras defensas agresivas, una recogida puede simplemente fallar. Si una web muestra un reto, lo resuelves tú, igual que navegando a mano. Es un límite deliberado, no un fallo.</p>
 
-    <h2>¿Por qué importa el control directo?</h2>
+    <h2 id="por-que-importa-el-control-directo">¿Por qué importa el control directo?</h2>
     <p>Tus registros no solo valen dentro de la web que los generó. Puedes necesitarlos para contabilidad, impuestos, cambiar de app o simplemente mantener tu propio archivo. El control directo importa porque el acceso no debería depender de que una plataforma decida mantener para siempre un botón de exportación cómodo.</p>
     <p>Habeas parte de la idea de que la gente debería poder ejercer sus derechos con herramientas que pueda inspeccionar, ejecutar por sí misma y conectar con destinos en los que confía.</p>
 
-    <h2>¿Qué principios guían Habeas?</h2>
+    <h2 id="que-principios-guian-habeas">¿Qué principios guían Habeas?</h2>
     <div class="grid principles">
       <div class="card">
         <h3>Soberanía de los datos</h3>
@@ -178,7 +197,7 @@
       </div>
     </div>
 
-    <h2>¿Por qué la arquitectura sigue esos principios?</h2>
+    <h2 id="por-que-la-arquitectura-sigue-esos-principios">¿Por qué la arquitectura sigue esos principios?</h2>
     <p>Habeas se ejecuta donde la web ya sabe que está hablando contigo: dentro de tu propia sesión autenticada del navegador. Eso significa que inicias sesión tú, resuelves la MFA tú y mantienes tus credenciales para ti.</p>
     <p>Esta arquitectura no es un truco técnico. Es una consecuencia de los valores del proyecto. Si el objetivo es dar más control a los usuarios, la herramienta debe evitar intermediarios innecesarios, evitar guardar tus logins y mantener el flujo comprensible.</p>
 
@@ -198,6 +217,8 @@
       <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="why">Instalar en Firefox</a>
     </div>
     <p class="lead" style="margin:0 0 28px">Libre y de código abierto (AGPL-3.0). Chrome te avisará de que la extensión no es de confianza: le ocurre a cualquier cuenta de desarrollador registrada hace poco en la Chrome Web Store, se disipa en unos meses y no dice nada del código, que puedes leer entero.</p>
+  </div>
+    </div>
   </main>
 
   <script src="/nav-i18n.js"></script>
