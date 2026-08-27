@@ -295,6 +295,24 @@ update; `YYYY-MM-DD`, or `YYYY-MM-DD.N` same day). `minVersion` gates by extensi
   against real services. Keep going via record mode / community PRs (the fictional test fixtures must
   never be published or shipped). Pending targets: obramat, AliExpress, Pepe Energy, Pepephone,
   Financiera El Corte Inglés, Revolut, TradeRepublic, Openbank, Raisin, Telepizza.
+- **AEAT (Agencia Tributaria) — EVALUATED AND REJECTED** (2026-08-27), so nobody spends a capture on it
+  again. The eTLD+1 rule is NOT the obstacle: `gob.es` is a public suffix, so every sede host shares
+  `agenciatributaria.gob.es`. Three independent findings, any one of them sufficient:
+  1. The authenticated consultation is **ZK Framework** (`…/CONSUL/index.zul` + POST to `…/zkau`), a
+     stateful server-side component protocol. The browser sends EVENTS against a component tree whose
+     UUIDs are minted per session, and gets DOM update commands back. There is no URL that returns the
+     list, so the declarative pagers have nothing to vary and a "field path" has nothing to point at.
+     Supporting it means shipping a ZK client inside the runtime — code, not data, for one source.
+  2. The authenticated apps live on **`www1`, which requests a TLS client certificate** (verified: 100
+     Spanish CAs offered in the handshake; `sede` and `www6` request none). It works silently only where
+     the browser auto-selects, and where several certificates are installed — a gestoría has many — the
+     user gets a prompt per request or, worse, syncs under the wrong identity in the background.
+  3. **There is no enumerable index.** Declarations can only be consulted model by model and year by
+     year, with no way to know in advance which combinations hold anything. Habeas inventories first and
+     fetches second; with no list there is no inventory, and a sweep would mean hundreds of empty
+     queries per run against a tax authority.
+  What would change the verdict: a stable export endpoint (a plain GET per model/year returning a file),
+  which would make it a `years` source over a document rather than over a listing.
 - **HTTP → Tiquetera / Cuéntamo** ingest endpoint (POST normalized records + PDFs; pairing token). The
   category model + the opt-in **`sink.normalize` uniform canonical record** (`lib/normalize.js`) already
   support it — the consumer side still needs building.
