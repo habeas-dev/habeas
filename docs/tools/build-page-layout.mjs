@@ -67,10 +67,14 @@ function transform(html, page) {
   const main = /<main([^>]*)>([\s\S]*?)<\/main>/.exec(html);
   if (!main) throw new Error(`${page.file}: no <main>`);
 
+  // The highlight script is loaded only where there is a contents list to highlight.
+  const withScript = (h) => (h.includes('/toc.js') || !h.includes(TOC_START)) ? h
+    : h.replace('</body>', '  <script defer src="/toc.js"></script>\n</body>');
+
   if (html.includes(TOC_START)) {                       // already laid out: refresh only
     const { body, items } = indexHeadings(main[2]);
     const refreshed = body.replace(new RegExp(`${TOC_START}[\\s\\S]*?${TOC_END}`), () => tocHtml(items, page.toc));
-    return html.slice(0, main.index) + `<main${main[1]}>` + refreshed + '</main>' + html.slice(main.index + main[0].length);
+    return withScript(html.slice(0, main.index) + `<main${main[1]}>` + refreshed + '</main>' + html.slice(main.index + main[0].length));
   }
 
   let body = main[2];
@@ -95,8 +99,8 @@ ${lead ? `      <p class="lead">${lead[1].trim()}</p>\n` : ''}`;
   // than a media query or an !important.
   const attrs = idx.items.length >= 3 && !/class="[^"]*has-toc/.test(main[1])
     ? main[1].replace(/class="([^"]*)"/, 'class="$1 has-toc"') : main[1];
-  return html.slice(0, main.index).replace(/[ \t]*$/, '') + header
-       + `  <main${attrs}>` + laid + `</main>` + html.slice(main.index + main[0].length);
+  return withScript(html.slice(0, main.index).replace(/[ \t]*$/, '') + header
+       + `  <main${attrs}>` + laid + `</main>` + html.slice(main.index + main[0].length));
 }
 
 let stale = 0;
