@@ -264,6 +264,8 @@ footer a { color: var(--ink); }
          border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px; background: var(--surface);
          transition: transform .16s, box-shadow .16s, border-color .16s; }
 .gcard:hover { transform: translateY(-2px); box-shadow: 0 8px 22px #0d2e2914; border-color: #cfe0da; }
-.gcard .mark { flex: none; width: 30px; height: 30px; border-radius: 8px; background: var(--green-600);
-               color: #fff; display: grid; place-items: center; font-family: var(--font-head); font-size: 12px; }
+.gcard .mark { flex: none; width: 32px; height: 32px; border-radius: 9px;
+               background: color-mix(in srgb, var(--tint, #1c5a4f) 16%, transparent);
+               display: grid; place-items: center; font-size: 16px; line-height: 1; }
+.gcard:hover { border-color: color-mix(in srgb, var(--tint, #1c5a4f) 45%, var(--line)); }
 .gcard .gt { font-size: 14.5px; line-height: 1.35; }

@@ -25,6 +25,7 @@ const DOCS = join(here, '..');
 const INDEX_URL = 'https://habeas-dev.github.io/sources/index.json';
 const ORIGIN_SOURCES = 'https://habeas-dev.github.io/sources';
 import { installAside } from './install-cta.mjs';
+import { GROUPS } from './groups.mjs';   // one grouping for the whole site, not a second copy here
 const ORIGIN = 'https://habeas.dev';
 const CWS = 'https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog';
 const AMO = 'https://addons.mozilla.org/firefox/addon/habeas/';
@@ -209,13 +210,6 @@ const LANGS = {
 
 // Registry categories bucketed into groups a reader recognises. Drives both the index page and the
 // sibling links at the foot of each guide — pages in the same bucket are the ones worth cross-linking.
-const GROUPS = [
-  { id: 'grocery',  cats: ['grocery'],                          en: 'Supermarkets',      es: 'Supermercados' },
-  { id: 'retail',   cats: ['retail', 'home', 'diy', 'sports', 'marketplace'], en: 'Shops', es: 'Tiendas' },
-  { id: 'banking',  cats: ['banking', 'card', 'loan', 'investment'], en: 'Banks, cards & investments', es: 'Bancos, tarjetas e inversión' },
-  { id: 'tolls',    cats: ['tolls'],                            en: 'Tolls & parking',   es: 'Peajes y parking' },
-  { id: 'utility',  cats: ['energy', 'telecom', 'domains'],     en: 'Services & subscriptions', es: 'Servicios y suscripciones' },
-];
 const UNGROUPED = new Set();
 const MONOLINGUAL = new Set();
 const groupOf = (meta) => {
@@ -608,19 +602,10 @@ function indexPage({ lang, groups }) {
   // Cards rather than a bulleted list: the same treatment the catalogue page uses, so a reader moving
   // between the two meets one visual language. The link is still the guide's own h1, so the wording that
   // is indexed and the wording on screen stay identical.
-  // From the SOURCE id, not from the heading: every Spanish heading opens with "Cómo descargar", so
-  // deriving them from the title stamped "CD" on almost every card.
-  // From the service's own NAME. The items previously carried only a slug and a heading, and both start
-  // with the document type in Spanish — deriving initials from either stamped "CD" or "TI" on nearly
-  // every card. The name is what a reader recognises.
-  const initials = (name) => {
-    const words = String(name).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
-    return (words.length > 1 ? words[0][0] + words[1][0] : words[0].slice(0, 2)).toUpperCase();
-  };
   const sections = groups.filter((g) => g.items.length).map((g) => `    <h2 id="g-${esc(g.id)}">${esc(g[lang])}</h2>
     <div class="guidecards">
-${g.items.map((i) => `      <a class="gcard" href="${L.path(i.slug)}">
-        <span class="mark" aria-hidden="true">${esc(initials(i.name || i.id))}</span>
+${g.items.map((i) => `      <a class="gcard" href="${L.path(i.slug)}" style="--tint:${g.tint}">
+        <span class="mark" aria-hidden="true">${g.icon}</span>
         <span class="gt">${esc(i.h1)}</span>
       </a>`).join('\n')}
     </div>`).join('\n\n');
