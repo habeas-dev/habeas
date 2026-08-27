@@ -225,7 +225,7 @@
     </div>
   </header>
 
-  <main class="doc">
+  <main class="doc" data-habeas-enriched>
     <aside>
       <div class="card">
         <h2>Sobre esta fuente</h2>
@@ -548,6 +548,16 @@
         <li><strong>transactions</strong> — cada movimiento con su fecha, importe, moneda, concepto y contraparte.</li>
         <li><strong>extracto</strong> · PDF o CSV — cada documento con su fecha, importe, moneda y numeración.</li>
     </ul>
+      <h2>Qué te da Revolut en realidad</h2>
+      <p>Revolut guarda dos cosas que merece la pena conservar y aquí se tratan por separado. Una es el histórico de movimientos: cada pago, transferencia y cambio de divisa, con el importe que de verdad se movió y la contraparte detrás. La otra es el extracto mensual, el documento periódico que te piden como justificante, disponible en PDF o en CSV sobre las mismas operaciones.</p>
+      <h2>Hasta dónde llega el histórico</h2>
+      <p class="retention">Los extractos existen uno por mes y por bolsillo, y llegan alrededor de un año atrás, así que el más antiguo que puedes recuperar tiene unos doce meses. El histórico de movimientos no tiene ese techo: se recorre por cursor hasta que no queda nada más antiguo.</p>
+      <h2>Particularidades de esta fuente</h2>
+      <ul class="quirks">
+        <li>Los extractos no salen de los servidores de Revolut: tanto el PDF como el CSV se sirven desde Google Cloud Storage. Habeas trata cualquier host fuera de revolut.com como una frontera y te pide consentimiento explícito antes de replicar allí tu sesión, así que esta fuente enseña una pantalla de salida que casi ninguna otra muestra.</li>
+        <li>Se registra lo que de verdad salió de tu cuenta, comisiones incluidas, y no la cifra previa a la conversión. En un pago con tarjeta en otra divisa son dos números distintos, y solo el primero cuadra con tu saldo.</li>
+        <li>Aquí tus cuentas son bolsillos por divisa, así que el selector de cuentas las lista por moneda en vez de por nombre, y activar una no arrastra las demás.</li>
+      </ul>
 
     <h2>Cómo funciona</h2>
     <p>No es un servicio que se conecte a revolut.com por su cuenta. Funciona <strong>dentro de tu propio navegador</strong>, aprovechando la sesión que ya tienes abierta:</p>

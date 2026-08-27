@@ -225,7 +225,7 @@
     </div>
   </header>
 
-  <main class="doc">
+  <main class="doc" data-habeas-enriched>
     <aside>
       <div class="card">
         <h2>Sobre esta fuente</h2>
@@ -364,6 +364,14 @@
     <ul>
         <li><strong>recibos de dominios</strong> — cada compra con su fecha, importe, moneda, tienda y categoría.</li>
     </ul>
+      <h2>Qué te da Hover en realidad</h2>
+      <p>Hover te cobra por registrar y renovar dominios, así que lo que hay que conservar es el histórico de facturación: cada recibo con su número, fecha y total. Son documentos pequeños, pero son los que te pide un asesor y los que desaparecen sin ruido si alguna vez se te cae la cuenta.</p>
+      <h2>Particularidades de esta fuente</h2>
+      <ul class="quirks">
+        <li>Hover no pagina. Los recibos llegan incrustados en la misma llamada del panel de control que la web usa para pintar la página, así que todo el histórico vuelve en una sola petición.</li>
+        <li>No hay fichero de recibo que descargar: Hover muestra cada uno como página web, así que lo que obtienes es un render de esa página y no un documento emitido por el servicio, al que se dan unos segundos para dibujarse antes de capturarlo.</li>
+        <li>La respuesta no trae divisa propia, así que los importes se registran en dólares estadounidenses, que es en lo que factura Hover.</li>
+      </ul>
 
     <h2>Cómo funciona</h2>
     <p>No es un servicio que se conecte a hover.com por su cuenta. Funciona <strong>dentro de tu propio navegador</strong>, aprovechando la sesión que ya tienes abierta:</p>

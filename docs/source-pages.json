@@ -184,5 +184,95 @@
       ],
       "note": ""
     }
+  },
+  "revolut": {
+    "en": {
+      "whatYouGet": "Revolut holds two things worth keeping and they are handled separately here. One is the movement history: every payment, transfer and exchange, with the amount that actually moved and the counterparty behind it. The other is the monthly statement, the periodic document you are asked for as proof, available as a PDF or as a CSV over the same operations.",
+      "retention": "Statements exist one per month and per pocket, and reach roughly a year back, so the oldest you can retrieve is around twelve months old. The movement history has no such ceiling: it is walked by cursor until there is nothing older left.",
+      "quirks": [
+        "The statements do not come from Revolut's own servers: both the PDF and the CSV are served from Google Cloud Storage. Habeas treats any host outside revolut.com as a boundary and asks for your explicit consent before replaying your session there, so this source shows an off-site screen most others never do.",
+        "What gets recorded is what actually left your account, fees included, rather than the pre-conversion figure. On a card payment in another currency those are two different numbers, and only the first reconciles against your balance.",
+        "Your accounts here are currency pockets, so the account picker lists them by currency rather than by name, and enabling one does not pull the rest."
+      ]
+    },
+    "es": {
+      "whatYouGet": "Revolut guarda dos cosas que merece la pena conservar y aquí se tratan por separado. Una es el histórico de movimientos: cada pago, transferencia y cambio de divisa, con el importe que de verdad se movió y la contraparte detrás. La otra es el extracto mensual, el documento periódico que te piden como justificante, disponible en PDF o en CSV sobre las mismas operaciones.",
+      "retention": "Los extractos existen uno por mes y por bolsillo, y llegan alrededor de un año atrás, así que el más antiguo que puedes recuperar tiene unos doce meses. El histórico de movimientos no tiene ese techo: se recorre por cursor hasta que no queda nada más antiguo.",
+      "quirks": [
+        "Los extractos no salen de los servidores de Revolut: tanto el PDF como el CSV se sirven desde Google Cloud Storage. Habeas trata cualquier host fuera de revolut.com como una frontera y te pide consentimiento explícito antes de replicar allí tu sesión, así que esta fuente enseña una pantalla de salida que casi ninguna otra muestra.",
+        "Se registra lo que de verdad salió de tu cuenta, comisiones incluidas, y no la cifra previa a la conversión. En un pago con tarjeta en otra divisa son dos números distintos, y solo el primero cuadra con tu saldo.",
+        "Aquí tus cuentas son bolsillos por divisa, así que el selector de cuentas las lista por moneda en vez de por nombre, y activar una no arrastra las demás."
+      ]
+    }
+  },
+  "raisin": {
+    "en": {
+      "whatYouGet": "Raisin is really several products under one login, and the source keeps them apart instead of flattening them: the movements of your accounts, the fixed-term deposits you hold with each partner bank, the balance of the savings side, and the documents the platform issues — contracts, certificates and statements — which come down as files.",
+      "quirks": [
+        "Part of Raisin's API still answers on weltsparen.de, the brand it grew out of. That is a different registrable domain, so Habeas asks for your explicit consent before replaying your session there — the same boundary it applies to every source.",
+        "Raisin keeps its data behind five separate endpoints and the source mirrors that: transactions, deposits, savings and two document sets. You can enable only the ones you actually use.",
+        "Every field Raisin returns that the schema does not consume is kept alongside the record, so nothing the account exposed is discarded just because it has no column of its own."
+      ]
+    },
+    "es": {
+      "whatYouGet": "Raisin son en realidad varios productos bajo un mismo acceso, y la fuente los mantiene separados en vez de aplanarlos: los movimientos de tus cuentas, los depósitos a plazo que tienes con cada banco asociado, el saldo de la parte de ahorro, y los documentos que emite la plataforma —contratos, certificados y extractos— que bajan como ficheros.",
+      "quirks": [
+        "Parte de la API de Raisin sigue respondiendo en weltsparen.de, la marca de la que nació. Es un dominio registrable distinto, así que Habeas te pide consentimiento explícito antes de replicar allí tu sesión: la misma frontera que aplica a todas las fuentes.",
+        "Raisin guarda sus datos tras cinco endpoints distintos y la fuente refleja eso: movimientos, depósitos, ahorro y dos conjuntos de documentos. Puedes activar solo los que uses.",
+        "Cada campo que devuelve Raisin y que el esquema no consume se conserva junto al registro, así que no se descarta nada de lo que expone la cuenta solo porque no tenga columna propia."
+      ]
+    }
+  },
+  "amazon": {
+    "en": {
+      "whatYouGet": "What Amazon has is your order history: every purchase with its date, total, currency and the store behind it, whether that store is Amazon or a marketplace seller. Where the seller issued a proper invoice there is also a PDF, and Habeas attaches it to the order rather than leaving you to hunt for it.",
+      "quirks": [
+        "Orders are listed a year at a time, exactly as Amazon's own orders page does it. There is no single call that returns your whole history, so a sweep walks year by year.",
+        "The invoice PDF has no predictable address. Habeas opens the same invoice popover the website shows and follows whatever link it finds there, which is why an order the seller never invoiced comes back as order data with no document attached."
+      ]
+    },
+    "es": {
+      "whatYouGet": "Lo que tiene Amazon es tu histórico de pedidos: cada compra con su fecha, total, divisa y la tienda que hay detrás, sea Amazon o un vendedor del marketplace. Donde el vendedor emitió factura de verdad hay además un PDF, y Habeas lo engancha al pedido en lugar de dejarte buscarlo.",
+      "quirks": [
+        "Los pedidos se listan año a año, exactamente como hace la propia página de pedidos de Amazon. No hay una sola llamada que devuelva todo tu histórico, así que el barrido avanza año por año.",
+        "El PDF de la factura no tiene una dirección predecible. Habeas abre el mismo aviso de factura que enseña la web y sigue el enlace que encuentre allí, y por eso un pedido que el vendedor nunca facturó vuelve con los datos del pedido y sin documento."
+      ]
+    }
+  },
+  "aliexpress": {
+    "en": {
+      "whatYouGet": "AliExpress records each order with its date, total, currency and the shop that sold it, and separately holds the receipt detail behind a second call. Habeas puts the two together, so an order arrives already carrying the receipt information rather than a bare line you would still have to open.",
+      "quirks": [
+        "AliExpress does not expose a REST API: its web app talks to Alibaba's mtop gateway with signed requests. Habeas issues those same signed calls from the session you already have open.",
+        "Orders do not arrive as a list. They come back as dynamically named fields inside a single blob, so the source collects them by key prefix rather than by position.",
+        "The receipt detail is a separate request per order, so a long history takes proportionally longer here than on a source that returns everything in one page."
+      ]
+    },
+    "es": {
+      "whatYouGet": "AliExpress registra cada pedido con su fecha, total, divisa y la tienda que lo vendió, y guarda aparte el detalle del recibo tras una segunda llamada. Habeas junta las dos cosas, así que un pedido llega ya con la información del recibo y no como una línea suelta que aún tendrías que abrir.",
+      "quirks": [
+        "AliExpress no expone una API REST: su web habla con la pasarela mtop de Alibaba mediante peticiones firmadas. Habeas emite esas mismas llamadas firmadas desde la sesión que ya tienes abierta.",
+        "Los pedidos no llegan como una lista. Vuelven como campos de nombre dinámico dentro de un mismo bloque, así que la fuente los recoge por prefijo de clave y no por posición.",
+        "El detalle del recibo es una petición aparte por pedido, así que un histórico largo tarda aquí proporcionalmente más que en una fuente que lo devuelve todo en una página."
+      ]
+    }
+  },
+  "hover-com": {
+    "en": {
+      "whatYouGet": "Hover charges you for domain registrations and renewals, so what there is to keep is the billing history: each receipt with its number, date and total. They are small documents, but they are the ones an accountant asks for and the ones that vanish quietly if the account ever lapses.",
+      "quirks": [
+        "Hover does not paginate. The receipts arrive embedded in the same control-panel call the site makes to draw the page, so the whole history comes back in a single request.",
+        "There is no receipt file to download: Hover shows each one as a web page, so what you get is a render of that page rather than a document the service issued, given a few seconds to draw before it is captured.",
+        "The response carries no currency of its own, so amounts are recorded as US dollars, which is what Hover bills in."
+      ]
+    },
+    "es": {
+      "whatYouGet": "Hover te cobra por registrar y renovar dominios, así que lo que hay que conservar es el histórico de facturación: cada recibo con su número, fecha y total. Son documentos pequeños, pero son los que te pide un asesor y los que desaparecen sin ruido si alguna vez se te cae la cuenta.",
+      "quirks": [
+        "Hover no pagina. Los recibos llegan incrustados en la misma llamada del panel de control que la web usa para pintar la página, así que todo el histórico vuelve en una sola petición.",
+        "No hay fichero de recibo que descargar: Hover muestra cada uno como página web, así que lo que obtienes es un render de esa página y no un documento emitido por el servicio, al que se dan unos segundos para dibujarse antes de capturarlo.",
+        "La respuesta no trae divisa propia, así que los importes se registran en dólares estadounidenses, que es en lo que factura Hover."
+      ]
+    }
   }
 }

@@ -225,7 +225,7 @@
     </div>
   </header>
 
-  <main class="doc">
+  <main class="doc" data-habeas-enriched>
     <aside>
       <div class="card">
         <h2>About this source</h2>
@@ -364,6 +364,14 @@
     <ul>
         <li><strong>domain renewal receipts</strong> — each purchase with its date, amount, currency, store and category.</li>
     </ul>
+      <h2>What Hover actually gives you</h2>
+      <p>Hover charges you for domain registrations and renewals, so what there is to keep is the billing history: each receipt with its number, date and total. They are small documents, but they are the ones an accountant asks for and the ones that vanish quietly if the account ever lapses.</p>
+      <h2>Worth knowing about this source</h2>
+      <ul class="quirks">
+        <li>Hover does not paginate. The receipts arrive embedded in the same control-panel call the site makes to draw the page, so the whole history comes back in a single request.</li>
+        <li>There is no receipt file to download: Hover shows each one as a web page, so what you get is a render of that page rather than a document the service issued, given a few seconds to draw before it is captured.</li>
+        <li>The response carries no currency of its own, so amounts are recorded as US dollars, which is what Hover bills in.</li>
+      </ul>
 
     <h2>How it works</h2>
     <p>It is not a service that connects to hover.com on its own. It runs <strong>inside your own browser</strong>, reusing the session you already have open:</p>

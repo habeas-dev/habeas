@@ -225,7 +225,7 @@
     </div>
   </header>
 
-  <main class="doc">
+  <main class="doc" data-habeas-enriched>
     <aside>
       <div class="card">
         <h2>About this source</h2>
@@ -455,6 +455,14 @@
     <ul>
         <li><strong>order receipts</strong> — each purchase with its date, amount, currency, store and category.</li>
     </ul>
+      <h2>What AliExpress actually gives you</h2>
+      <p>AliExpress records each order with its date, total, currency and the shop that sold it, and separately holds the receipt detail behind a second call. Habeas puts the two together, so an order arrives already carrying the receipt information rather than a bare line you would still have to open.</p>
+      <h2>Worth knowing about this source</h2>
+      <ul class="quirks">
+        <li>AliExpress does not expose a REST API: its web app talks to Alibaba's mtop gateway with signed requests. Habeas issues those same signed calls from the session you already have open.</li>
+        <li>Orders do not arrive as a list. They come back as dynamically named fields inside a single blob, so the source collects them by key prefix rather than by position.</li>
+        <li>The receipt detail is a separate request per order, so a long history takes proportionally longer here than on a source that returns everything in one page.</li>
+      </ul>
 
     <h2>How it works</h2>
     <p>It is not a service that connects to aliexpress.com on its own. It runs <strong>inside your own browser</strong>, reusing the session you already have open:</p>

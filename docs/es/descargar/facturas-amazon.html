@@ -225,7 +225,7 @@
     </div>
   </header>
 
-  <main class="doc">
+  <main class="doc" data-habeas-enriched>
     <aside>
       <div class="card">
         <h2>Sobre esta fuente</h2>
@@ -465,6 +465,13 @@
     <ul>
         <li><strong>facturas de pedidos</strong> — cada compra con su fecha, importe, moneda, tienda y categoría.</li>
     </ul>
+      <h2>Qué te da Amazon en realidad</h2>
+      <p>Lo que tiene Amazon es tu histórico de pedidos: cada compra con su fecha, total, divisa y la tienda que hay detrás, sea Amazon o un vendedor del marketplace. Donde el vendedor emitió factura de verdad hay además un PDF, y Habeas lo engancha al pedido en lugar de dejarte buscarlo.</p>
+      <h2>Particularidades de esta fuente</h2>
+      <ul class="quirks">
+        <li>Los pedidos se listan año a año, exactamente como hace la propia página de pedidos de Amazon. No hay una sola llamada que devuelva todo tu histórico, así que el barrido avanza año por año.</li>
+        <li>El PDF de la factura no tiene una dirección predecible. Habeas abre el mismo aviso de factura que enseña la web y sigue el enlace que encuentre allí, y por eso un pedido que el vendedor nunca facturó vuelve con los datos del pedido y sin documento.</li>
+      </ul>
 
     <h2>Cómo funciona</h2>
     <p>No es un servicio que se conecte a amazon.com por su cuenta. Funciona <strong>dentro de tu propio navegador</strong>, aprovechando la sesión que ya tienes abierta:</p>

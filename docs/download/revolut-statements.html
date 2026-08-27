@@ -225,7 +225,7 @@
     </div>
   </header>
 
-  <main class="doc">
+  <main class="doc" data-habeas-enriched>
     <aside>
       <div class="card">
         <h2>About this source</h2>
@@ -548,6 +548,16 @@
         <li><strong>transactions</strong> — each movement with its date, amount, currency, description and counterparty.</li>
         <li><strong>extracto</strong> · PDF or CSV — each document with its date, amount, currency and numbering.</li>
     </ul>
+      <h2>What Revolut actually gives you</h2>
+      <p>Revolut holds two things worth keeping and they are handled separately here. One is the movement history: every payment, transfer and exchange, with the amount that actually moved and the counterparty behind it. The other is the monthly statement, the periodic document you are asked for as proof, available as a PDF or as a CSV over the same operations.</p>
+      <h2>How far back it goes</h2>
+      <p class="retention">Statements exist one per month and per pocket, and reach roughly a year back, so the oldest you can retrieve is around twelve months old. The movement history has no such ceiling: it is walked by cursor until there is nothing older left.</p>
+      <h2>Worth knowing about this source</h2>
+      <ul class="quirks">
+        <li>The statements do not come from Revolut's own servers: both the PDF and the CSV are served from Google Cloud Storage. Habeas treats any host outside revolut.com as a boundary and asks for your explicit consent before replaying your session there, so this source shows an off-site screen most others never do.</li>
+        <li>What gets recorded is what actually left your account, fees included, rather than the pre-conversion figure. On a card payment in another currency those are two different numbers, and only the first reconciles against your balance.</li>
+        <li>Your accounts here are currency pockets, so the account picker lists them by currency rather than by name, and enabling one does not pull the rest.</li>
+      </ul>
 
     <h2>How it works</h2>
     <p>It is not a service that connects to revolut.com on its own. It runs <strong>inside your own browser</strong>, reusing the session you already have open:</p>

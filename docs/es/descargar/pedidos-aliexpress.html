@@ -225,7 +225,7 @@
     </div>
   </header>
 
-  <main class="doc">
+  <main class="doc" data-habeas-enriched>
     <aside>
       <div class="card">
         <h2>Sobre esta fuente</h2>
@@ -455,6 +455,14 @@
     <ul>
         <li><strong>recibos de pedidos</strong> — cada compra con su fecha, importe, moneda, tienda y categoría.</li>
     </ul>
+      <h2>Qué te da AliExpress en realidad</h2>
+      <p>AliExpress registra cada pedido con su fecha, total, divisa y la tienda que lo vendió, y guarda aparte el detalle del recibo tras una segunda llamada. Habeas junta las dos cosas, así que un pedido llega ya con la información del recibo y no como una línea suelta que aún tendrías que abrir.</p>
+      <h2>Particularidades de esta fuente</h2>
+      <ul class="quirks">
+        <li>AliExpress no expone una API REST: su web habla con la pasarela mtop de Alibaba mediante peticiones firmadas. Habeas emite esas mismas llamadas firmadas desde la sesión que ya tienes abierta.</li>
+        <li>Los pedidos no llegan como una lista. Vuelven como campos de nombre dinámico dentro de un mismo bloque, así que la fuente los recoge por prefijo de clave y no por posición.</li>
+        <li>El detalle del recibo es una petición aparte por pedido, así que un histórico largo tarda aquí proporcionalmente más que en una fuente que lo devuelve todo en una página.</li>
+      </ul>
 
     <h2>Cómo funciona</h2>
     <p>No es un servicio que se conecte a aliexpress.com por su cuenta. Funciona <strong>dentro de tu propio navegador</strong>, aprovechando la sesión que ya tienes abierta:</p>

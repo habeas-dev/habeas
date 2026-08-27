@@ -225,7 +225,7 @@
     </div>
   </header>
 
-  <main class="doc">
+  <main class="doc" data-habeas-enriched>
     <aside>
       <div class="card">
         <h2>About this source</h2>
@@ -792,6 +792,14 @@
         <li><strong>documentos</strong> — each document with its date, amount, currency and numbering.</li>
         <li><strong>documentos-ahorro</strong> — each document with its date, amount, currency and numbering.</li>
     </ul>
+      <h2>What Raisin actually gives you</h2>
+      <p>Raisin is really several products under one login, and the source keeps them apart instead of flattening them: the movements of your accounts, the fixed-term deposits you hold with each partner bank, the balance of the savings side, and the documents the platform issues — contracts, certificates and statements — which come down as files.</p>
+      <h2>Worth knowing about this source</h2>
+      <ul class="quirks">
+        <li>Part of Raisin's API still answers on weltsparen.de, the brand it grew out of. That is a different registrable domain, so Habeas asks for your explicit consent before replaying your session there — the same boundary it applies to every source.</li>
+        <li>Raisin keeps its data behind five separate endpoints and the source mirrors that: transactions, deposits, savings and two document sets. You can enable only the ones you actually use.</li>
+        <li>Every field Raisin returns that the schema does not consume is kept alongside the record, so nothing the account exposed is discarded just because it has no column of its own.</li>
+      </ul>
 
     <h2>How it works</h2>
     <p>It is not a service that connects to raisin.com on its own. It runs <strong>inside your own browser</strong>, reusing the session you already have open:</p>
