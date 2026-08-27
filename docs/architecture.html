@@ -62,8 +62,246 @@
 
   <main class="doc">
     <article id="architecture-content" aria-live="polite">
-      <p class="status">Loading architecture…</p>
-    </article>
+<!-- prerendered:architecture -->
+<h1 id="habeas-architecture">Habeas Architecture</h1>
+<p>This document explains the architectural principles behind Habeas.</p>
+<p>It is intentionally technology-agnostic. It describes <em>what</em> Habeas is and <em>why</em> it is designed this way, rather than documenting implementation details.</p>
+<p>---</p>
+<h2 id="design-goals">Design goals</h2>
+<p>Habeas exists to solve a simple problem:</p>
+<blockquote><p>Users should be able to retrieve <strong>their own data</strong> from websites that already expose it through their normal web interface.</p></blockquote>
+<p>The project is built around a few fundamental principles.</p>
+<h3 id="local-first">Local-first</h3>
+<p>Everything runs inside the user's own browser.</p>
+<p>There are no aggregation servers.</p>
+<p>There are no remote logins.</p>
+<p>The project never receives user credentials or personal data.</p>
+<p>---</p>
+<h3 id="user-controlled-authentication">User-controlled authentication</h3>
+<p>Authentication always remains the responsibility of the user.</p>
+<p>Users:</p>
+<ul>
+<li>open the website;</li>
+<li>log in normally;</li>
+<li>complete MFA if required.</li>
+</ul>
+<p>Habeas simply operates inside that already authenticated session.</p>
+<p>---</p>
+<h3 id="separation-of-concerns">Separation of concerns</h3>
+<p>Habeas deliberately separates four independent concepts:</p>
+<ul>
+<li>Sources</li>
+<li>Runtime</li>
+<li>Sinks</li>
+<li>Source definitions</li>
+</ul>
+<p>Each can evolve independently.</p>
+<p>---</p>
+<h2 id="high-level-architecture">High-level architecture</h2>
+<pre><code>                Session recorder
+                       │
+                       ▼
+              Source definitions
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│                                            │
+│               Habeas Runtime               │
+│                                            │
+└────────────────────────────────────────────┘
+         ▲                           ▲
+         │                           │
+         │                           │
+     Sources                     Sinks</code></pre>
+<p>The runtime itself knows nothing about Carrefour, banks or investment platforms.</p>
+<p>Those are provided by Source definitions.</p>
+<p>Likewise, the runtime has no opinion about where retrieved data should go.</p>
+<p>That is the responsibility of Sinks.</p>
+<p>---</p>
+<h2 id="sources">Sources</h2>
+<p>A Source knows how to retrieve data from one website.</p>
+<p>Examples include:</p>
+<ul>
+<li>supermarkets</li>
+<li>banks</li>
+<li>brokers</li>
+<li>utility companies</li>
+<li>government portals</li>
+<li>online marketplaces</li>
+</ul>
+<p>A Source understands:</p>
+<ul>
+<li>navigation</li>
+<li>authentication state</li>
+<li>document discovery</li>
+<li>data extraction</li>
+</ul>
+<p>A Source <strong>does not</strong> decide what happens to the retrieved data.</p>
+<p>---</p>
+<h2 id="source-outputs">Source outputs</h2>
+<p>Sources expose the provider's own data.</p>
+<p>Typical outputs include:</p>
+<ul>
+<li>PDF documents</li>
+<li>spreadsheets</li>
+<li>structured JSON</li>
+<li>images</li>
+<li>provider-specific formats</li>
+</ul>
+<p>An important design decision is that Habeas does <strong>not</strong> attempt to define a universal document format.</p>
+<p>Instead:</p>
+<ul>
+<li>documents remain native;</li>
+<li>structured data remains provider-specific;</li>
+<li>consumers decide how to interpret it.</li>
+</ul>
+<p>Habeas standardizes <strong>access</strong>, not <strong>content</strong>.</p>
+<p>---</p>
+<h2 id="runtime">Runtime</h2>
+<p>The Runtime is responsible for executing Source definitions safely inside the browser.</p>
+<p>Its responsibilities include:</p>
+<ul>
+<li>loading Sources;</li>
+<li>coordinating extraction;</li>
+<li>presenting progress to the user;</li>
+<li>managing destinations;</li>
+<li>inventory management;</li>
+<li>a canonical store of everything retrieved (browsable across sources);</li>
+<li>duplicate detection;</li>
+<li>automatic synchronization;</li>
+<li>permissions;</li>
+<li>user interface.</li>
+</ul>
+<p>The Runtime deliberately contains no provider-specific logic.</p>
+<p>---</p>
+<h2 id="sinks">Sinks</h2>
+<p>Sinks consume data produced by Sources.</p>
+<p>Examples include:</p>
+<ul>
+<li>Downloads</li>
+<li>Local folders</li>
+<li>Google Drive</li>
+<li>Dropbox</li>
+<li>WebDAV servers</li>
+<li>S3 (and S3-compatible) object storage</li>
+<li>HTTP endpoints</li>
+</ul>
+<p>Future Sinks may include:</p>
+<ul>
+<li>desktop applications;</li>
+<li>personal finance software;</li>
+<li>home automation;</li>
+<li>backup systems;</li>
+<li>document management platforms.</li>
+</ul>
+<p>A Sink should not need to understand how each website works.</p>
+<p>Its only concern is consuming data exposed through the Runtime.</p>
+<p>---</p>
+<h2 id="source-definitions">Source definitions</h2>
+<p>Source definitions describe how a Source behaves.</p>
+<p>They are intentionally independent from the Runtime.</p>
+<p>This provides several advantages:</p>
+<ul>
+<li>new websites can be supported without modifying Habeas itself;</li>
+<li>community contributions remain small and reviewable;</li>
+<li>Source development can evolve independently from Runtime releases.</li>
+</ul>
+<p>The Runtime executes Source definitions.</p>
+<p>It does not contain them.</p>
+<p>---</p>
+<h2 id="session-recorder">Session recorder</h2>
+<p>One of Habeas's goals is making Source creation increasingly accessible.</p>
+<p>The Session Recorder assists developers by observing a real browsing session and inferring an initial Source definition.</p>
+<p>Typical workflow:</p>
+<ol>
+<li>The user performs the normal workflow.</li>
+<li>Habeas records browser activity.</li>
+<li>An initial Source definition is inferred.</li>
+<li>The developer reviews the generated result.</li>
+<li>The Source definition is refined.</li>
+<li>It may then be contributed back to the community.</li>
+</ol>
+<p>The recorder assists development.</p>
+<p>It does not replace human review.</p>
+<p>---</p>
+<h2 id="why-not-server-side">Why not server-side?</h2>
+<p>Many existing data aggregation services operate by:</p>
+<ul>
+<li>collecting credentials;</li>
+<li>storing them;</li>
+<li>logging into websites remotely;</li>
+<li>downloading user data on behalf of users.</li>
+</ul>
+<p>Habeas deliberately avoids this architecture.</p>
+<p>Instead:</p>
+<ul>
+<li>users authenticate themselves;</li>
+<li>websites see the user's normal browser;</li>
+<li>MFA remains unchanged;</li>
+<li>credentials never leave the device.</li>
+</ul>
+<p>This greatly simplifies both trust and privacy.</p>
+<p>---</p>
+<h2 id="why-not-normalize-data">Why not normalize data?</h2>
+<p>Many aggregation platforms attempt to create a universal data model.</p>
+<p>Habeas deliberately does not.</p>
+<p>Different providers expose fundamentally different information.</p>
+<p>Trying to normalize every possible document would inevitably discard information or require an ever-growing abstraction layer.</p>
+<p>Instead, Habeas standardizes the interface between Sources and Sinks while preserving native outputs.</p>
+<p>Applications remain free to interpret those outputs however they choose.</p>
+<p>---</p>
+<h2 id="community-driven-ecosystem">Community-driven ecosystem</h2>
+<p>The Runtime is intentionally generic.</p>
+<p>Its usefulness grows through the ecosystem around it:</p>
+<ul>
+<li>Source definitions</li>
+<li>Sinks</li>
+<li>developer tools</li>
+<li>documentation</li>
+<li>community contributions</li>
+</ul>
+<p>This architecture allows the project to scale horizontally without continually increasing Runtime complexity.</p>
+<p>---</p>
+<h2 id="typical-data-flow">Typical data flow</h2>
+<pre><code>User opens website
+        │
+        ▼
+User authenticates
+        │
+        ▼
+Source executes
+        │
+        ▼
+Native documents / JSON produced
+        │
+        ▼
+Runtime
+        │
+        ▼
+Selected Sink
+        │
+        ▼
+Folder / Drive / HTTP / Application</code></pre>
+<p>Every step occurs under the user's control.</p>
+<p>---</p>
+<h2 id="architectural-principles">Architectural principles</h2>
+<p>The project can be summarized by a few simple rules.</p>
+<ul>
+<li>Users authenticate themselves.</li>
+<li>Habeas never stores credentials.</li>
+<li>Everything runs locally.</li>
+<li>Sources retrieve data.</li>
+<li>Sinks consume data.</li>
+<li>Source definitions remain independent.</li>
+<li>Native documents remain unchanged.</li>
+<li>Habeas standardizes access, not content.</li>
+<li>Users decide where their data goes.</li>
+</ul>
+<p>These principles should guide future development.</p>
+<p>Any new feature should be evaluated against them.</p>
+<p>If a feature violates one of these principles, it probably does not belong in Habeas.</p>
+<!-- /prerendered:architecture -->
+      </article>
   </main>
 
   <script src="nav-i18n.js"></script>
@@ -157,10 +395,13 @@
           const next = button.getAttribute('data-lang');
           localStorage.setItem('habeas-lang', next);
           setLanguage(next);
-          renderArchitecture(lang);
+          renderArchitecture(next);
         });
       });
-      renderArchitecture(lang);
+      // English is baked into the page at build time (docs/tools/prerender-architecture.mjs), so it needs
+      // no network at all: no blank page when GitHub is slow, and real text for anything that does not run
+      // JavaScript. Only Spanish is still fetched, and only when somebody asks for it.
+      if (lang !== 'en') renderArchitecture(lang);
     })();
   </script>
 </body>
