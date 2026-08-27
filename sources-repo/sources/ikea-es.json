@@ -89,8 +89,8 @@
     {
       "version": "2026-08-25.1",
       "changes": {
-        "en": "Waits for the loyalty hub before auto-running, and opens it rather than /purchases/ in a dedicated tab. IKEA fires capturable requests on earlier screens, so both paths could reach the purchase-history API before the session was good for it. The documents come from the API, not from the page, so the page only has to be the one that establishes a usable session.",
-        "es": "Espera al hub de fidelización antes de auto-ejecutarse, y abre ese hub en lugar de /purchases/ en la pestaña dedicada. IKEA dispara peticiones capturables en pantallas anteriores, así que ambas vías podían llegar a la API de historial de compras antes de que la sesión sirviera. Los documentos vienen de la API, no de la página, así que a la página solo le toca establecer una sesión utilizable."
+        "en": "Automatic sync now waits until you are properly signed in to IKEA before it starts. It used to begin too early and find nothing.",
+        "es": "La sincronización automática espera ahora a que tengas bien iniciada la sesión de IKEA antes de empezar. Antes arrancaba demasiado pronto y no encontraba nada."
       }
     },
     {

@@ -178,8 +178,8 @@
     {
       "version": "2026-07-20.3",
       "changes": {
-        "en": "First publish to the live registry. Requires extension >= 0.5.0 (the milestone that ships declarative capturePaths, the login-safe scoped token observer, and the {date:FORMAT} document token this source relies on). Verified end-to-end by the contributor.",
-        "es": "Primera publicación en el registro vivo. Requiere extensión >= 0.5.0 (el hito que incorpora capturePaths declarativo, el observador de token acotado y seguro ante el login, y el token de documento {date:FORMAT} del que depende esta fuente). Verificada de extremo a extremo por quien la aportó."
+        "en": "First published version. Verified end to end by the contributor. Needs Habeas 0.5.0 or newer.",
+        "es": "Primera versión publicada. Verificada de principio a fin por quien la aportó. Requiere Habeas 0.5.0 o posterior."
       }
     },
     {
@@ -192,15 +192,15 @@
     {
       "version": "2026-07-20.1",
       "changes": {
-        "en": "Declare auth.capturePaths = ['/dashboard/'] so the token is only captured from the authenticated dashboard area (where it first appears, after login) and the header observer never engages with the sign-in flow — this keeps the extension from interfering with the bank's Transmit Security login.",
-        "es": "Declara auth.capturePaths = ['/dashboard/'] para que el token solo se capture en el área autenticada del panel (donde aparece por primera vez, tras el login) y el observador de cabeceras no intervenga nunca en el flujo de acceso: así la extensión no interfiere con el login de Transmit Security del banco."
+        "en": "The extension no longer touches the sign-in screen: it only starts looking once you are inside your account, so it cannot interfere with the bank's login.",
+        "es": "La extensión ya no toca la pantalla de acceso: solo empieza a mirar cuando ya estás dentro de tu cuenta, así que no puede interferir con el login del banco."
       }
     },
     {
       "version": "2026-07-20",
       "changes": {
-        "en": "Send the per-card eci-custom-encrypted-pan header on the aplazamientos (financing-purchases) and extractos (shopping-summaries) LIST requests too — the SPA sends it on every card-scoped call (as movements already does), so the server needs it to return those lists per card, not just for movements + the statement PDF.",
-        "es": "Envía también la cabecera eci-custom-encrypted-pan por tarjeta en las peticiones de LISTA de aplazamientos (financing-purchases) y extractos (shopping-summaries) — la SPA la manda en toda llamada acotada a una tarjeta (como ya hacía movimientos), así que el servidor la necesita para devolver esas listas por tarjeta, no solo para los movimientos y el PDF del extracto."
+        "en": "Fixes instalment purchases and monthly statements coming back empty when you hold more than one card.",
+        "es": "Corrige las compras aplazadas y los extractos mensuales, que llegaban vacíos si tienes más de una tarjeta."
       }
     },
     {
@@ -220,8 +220,8 @@
     {
       "version": "2026-07-17.2",
       "changes": {
-        "en": "Fix extractos statement PDF download (the real cause): the generate-file POST also needs the per-card eci-custom-encrypted-pan header (same as movements), which the server requires to return the file. Sent via api.pdf.headers {group.pan}. Requires extension >= 0.4.1.2.",
-        "es": "Corrige la descarga del PDF de extractos (la causa real): el POST a generate-file necesita además la cabecera eci-custom-encrypted-pan de la tarjeta (igual que movimientos), que el servidor exige para devolver el fichero. Se envía vía api.pdf.headers {group.pan}. Requiere extensión >= 0.4.1.2."
+        "en": "Fixes the monthly statement PDF failing to download. Needs Habeas 0.4.1.2 or newer.",
+        "es": "Corrige el PDF del extracto mensual, que no se descargaba. Requiere Habeas 0.4.1.2 o posterior."
       }
     },
     {

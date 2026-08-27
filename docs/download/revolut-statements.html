@@ -464,15 +464,15 @@
     {
       &quot;version&quot;: &quot;2026-08-26.3&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Documents a known limit rather than fixing it: weekend foreign-currency card payments arrive about 1% short, because Revolut’s out-of-hours surcharge leaves the balance but never appears in the data. 1.48 EUR across 3 of 167 movements, and every way of correcting it costs more than it recovers.&quot;,
-        &quot;es&quot;: &quot;Documenta un límite conocido en vez de arreglarlo: los pagos con tarjeta en divisa hechos en fin de semana llegan un 1% cortos, porque el recargo de Revolut fuera de horario sale del saldo pero no aparece en los datos. Son 1,48 € en 3 de 167 movimientos, y cualquier forma de corregirlo cuesta más de lo que recupera.&quot;
+        &quot;en&quot;: &quot;Documents a limit rather than fixing it: a card payment made abroad at the weekend arrived about 1% short, because Revolut's out-of-hours surcharge left the balance without ever appearing in the data. Fixed later, in 2026-08-26.6.&quot;,
+        &quot;es&quot;: &quot;Documenta un límite en vez de arreglarlo: un pago con tarjeta en divisa hecho en fin de semana llegaba un 1% corto, porque el recargo de Revolut fuera de horario salía del saldo sin aparecer nunca en los datos. Corregido después, en la 2026-08-26.6.&quot;
       }
     },
     {
       &quot;version&quot;: &quot;2026-08-26.1&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Drops card verifications (0 EUR authorisations, flagged cardVerification) — they move no money and are not movements. Fixes vault transfers: Revolut books them from the paying side, so money returning from a savings vault arrived negative, and the balance they carry belongs to the vault rather than to the personal account. Reported against 167 real movements, of which 151 of 166 balance links already chained to the cent. Also drops anything whose state is not COMPLETED (5 DECLINED + 1 REVERTED in the sample were retried charges whose successful twin also arrived).&quot;,
-        &quot;es&quot;: &quot;Descarta las verificaciones de tarjeta (autorizaciones de 0 EUR, marcadas con cardVerification): no mueven dinero y no son movimientos. Corrige las transferencias con vaults: Revolut las contabiliza desde el lado que paga, así que el dinero que volvía de un bolsillo de ahorro llegaba en negativo, y el saldo que arrastran pertenece al vault y no a la cuenta personal. Reportado contra 167 movimientos reales, de los cuales 151 de 166 enlaces de saldo ya encadenaban al céntimo. Descarta además todo lo que no esté en estado COMPLETED (los 5 DECLINED y 1 REVERTED de la muestra eran cargos reintentados cuyo gemelo correcto también llegaba).&quot;
+        &quot;en&quot;: &quot;Three kinds of entry stop being listed as movements, because they are not. The 0 EUR authorisation a shop makes to check your card is alive; declined and reverted charges, whose successful retry also arrives, so the purchase was counted up to three times. And money coming back from a savings vault no longer arrives negative, nor carrying the vault's balance instead of your account's.&quot;,
+        &quot;es&quot;: &quot;Tres tipos de apunte dejan de listarse como movimientos, porque no lo son. La autorización de 0 € que hace un comercio para comprobar que tu tarjeta está viva; los cargos denegados y revertidos, cuyo reintento correcto también llega, de modo que la compra se contaba hasta tres veces. Y el dinero que vuelve de un bolsillo de ahorro ya no llega en negativo, ni arrastrando el saldo del bolsillo en lugar del de tu cuenta.&quot;
       }
     },
     {
@@ -499,8 +499,8 @@
     {
       &quot;version&quot;: &quot;2026-07-16&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Map the running balance (minor-unit scaled) to record.balanceAfter and the completed date to record.valueDate — promoted to canonical fields for the Cuéntamo contract. Requires extension &gt;= 0.3.0.24.&quot;,
-        &quot;es&quot;: &quot;Mapea el saldo tras el movimiento (escalado desde unidades menores) a record.balanceAfter y la fecha de completado a record.valueDate — promovidos a campos canónicos para el contrato del consumidor. Requiere extensión &gt;= 0.3.0.24.&quot;
+        &quot;en&quot;: &quot;Each movement now carries the account balance left after it, and the date it was settled. Needs Habeas 0.3.0.24 or newer.&quot;,
+        &quot;es&quot;: &quot;Cada movimiento lleva ahora el saldo que queda en la cuenta después de él, y la fecha en que se liquidó. Requiere Habeas 0.3.0.24 o posterior.&quot;
       }
     },
     {
@@ -599,8 +599,8 @@
       <ul class="changelog">
         <li class="rev"><span class="ver">2026-08-26.6</span> — Movements now show the amount that actually left your account, fees included. Payments that carried one — a card payment in another currency at the weekend, for instance — used to arrive slightly below what you were really charged. Needs Habeas 0.10.1 or newer.</li>
         <li class="rev"><span class="ver">2026-08-26.4</span> — Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.</li>
-        <li class="rev"><span class="ver">2026-08-26.3</span> — Documents a known limit rather than fixing it: weekend foreign-currency card payments arrive about 1% short, because Revolut’s out-of-hours surcharge leaves the balance but never appears in the data. 1.48 EUR across 3 of 167 movements, and every way of correcting it costs more than it recovers.</li>
-        <li class="rev"><span class="ver">2026-08-26.1</span> — Drops card verifications (0 EUR authorisations, flagged cardVerification) — they move no money and are not movements. Fixes vault transfers: Revolut books them from the paying side, so money returning from a savings vault arrived negative, and the balance they carry belongs to the vault rather than to the personal account. Reported against 167 real movements, of which 151 of 166 balance links already chained to the cent. Also drops anything whose state is not COMPLETED (5 DECLINED + 1 REVERTED in the sample were retried charges whose successful twin also arrived).</li>
+        <li class="rev"><span class="ver">2026-08-26.3</span> — Documents a limit rather than fixing it: a card payment made abroad at the weekend arrived about 1% short, because Revolut's out-of-hours surcharge left the balance without ever appearing in the data. Fixed later, in 2026-08-26.6.</li>
+        <li class="rev"><span class="ver">2026-08-26.1</span> — Three kinds of entry stop being listed as movements, because they are not. The 0 EUR authorisation a shop makes to check your card is alive; declined and reverted charges, whose successful retry also arrives, so the purchase was counted up to three times. And money coming back from a savings vault no longer arrives negative, nor carrying the vault's balance instead of your account's.</li>
         <li class="rev"><span class="ver">2026-08-26</span> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
       </ul>
       <p class="lead"><a href="/sources.html#revolut">See the full history in the catalog →</a></p>

@@ -197,22 +197,22 @@
     {
       "version": "2026-07-17",
       "changes": {
-        "en": "Parse the trade breakdown into structured fields: units (Shares), price (Share price) and commission (Fee) from the timelineDetailV2 'Transaction' table (English labels — the WS connect requests locale 'en'). 'Free' fees resolve to 0. Requires extension >= 0.3.0.24.",
-        "es": "Analiza el desglose de la operación en campos estructurados: títulos (Shares), precio (Share price) y comisión (Fee) desde la tabla 'Transaction' de timelineDetailV2 (etiquetas en inglés — la conexión WS pide locale 'en'). Las comisiones 'Free' se resuelven como 0. Requiere extensión >= 0.3.0.24."
+        "en": "Trades now arrive with the number of shares, the price and the commission as separate figures instead of only as text. Needs Habeas 0.3.0.24 or newer.",
+        "es": "Las operaciones llegan ahora con el número de títulos, el precio y la comisión como cifras separadas, en vez de solo como texto. Requiere Habeas 0.3.0.24 o posterior."
       }
     },
     {
       "version": "2026-07-16",
       "changes": {
-        "en": "Timeline stream now emits investment@2 (broker trade/cash): recordType inferred from the extracted ISIN, side/kind mapped from the timeline eventType, instrument{isin,name}, and the settlement account (cashAccountNumber). Trade quantity/price/fees remain in record.extra.detail (localized text) pending structured parsing. Requires extension >= 0.3.0.24.",
-        "es": "El stream de timeline emite ya investment@2 (operación/efectivo de bróker): el recordType se infiere del ISIN extraído, side/kind se mapean desde el eventType del timeline, instrument{isin,name} y la cuenta de liquidación (cashAccountNumber). La cantidad, el precio y las comisiones de la operación siguen en record.extra.detail (texto localizado) a la espera de un análisis estructurado. Requiere extensión >= 0.3.0.24."
+        "en": "Your timeline now arrives as investment records: each one says whether it was a trade or a cash movement, which instrument it concerned and into which account it settled. The quantity, price and fees of a trade still arrive only as the text Trade Republic shows. Needs Habeas 0.3.0.24 or newer.",
+        "es": "Tu timeline llega ya como registros de inversión: cada uno indica si fue una operación o un movimiento de efectivo, sobre qué instrumento y en qué cuenta se liquidó. La cantidad, el precio y las comisiones de una operación siguen llegando solo como el texto que muestra Trade Republic. Requiere Habeas 0.3.0.24 o posterior."
       }
     },
     {
       "version": "2026-07-15.3",
       "changes": {
-        "en": "Add monthly documents: the account statement PDF (accountstatement/statement?fromDate&toDate) and the monthly transactions CSV (async export job: POST request → poll status → download), per completed month.",
-        "es": "Añade documentos mensuales: el PDF del extracto de cuenta (accountstatement/statement?fromDate&toDate) y el CSV mensual de transacciones (trabajo de exportación asíncrono: POST de la petición → consulta de estado → descarga), por cada mes cerrado."
+        "en": "Adds the monthly account statement as a PDF and the month's transactions as a CSV, one of each per completed month.",
+        "es": "Añade el extracto mensual de la cuenta en PDF y las transacciones del mes en CSV, uno de cada por cada mes cerrado."
       }
     },
     {

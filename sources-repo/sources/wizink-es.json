@@ -250,8 +250,8 @@
     {
       "version": "2026-07-09",
       "changes": {
-        "en": "Unified source: replaces the three WiZink sources (movements, statements-PDF, statements-Excel) with a single source offering selectable outputs (stream × format). The \"Movements\" stream captures card transactions; the \"Statements\" stream offers each statement as PDF or Excel, sharing one listing. Requires extension 0.1.52+ (output support).",
-        "es": "Fuente unificada: reemplaza las tres fuentes WiZink (movimientos, extractos-PDF, extractos-Excel) por un único source con salidas seleccionables (stream × formato). El stream «Movimientos» captura las transacciones de tarjeta; el stream «Extractos» ofrece cada extracto en PDF o Excel compartiendo el mismo listado. Requiere la extensión 0.1.52+ (soporte de salidas)."
+        "en": "One WiZink source instead of three. You now choose what you want from it: your card movements, or your statements as PDF or as Excel. Needs Habeas 0.1.52 or newer.",
+        "es": "Una sola fuente de WiZink en lugar de tres. Ahora eliges qué quieres de ella: los movimientos de tu tarjeta, o tus extractos en PDF o en Excel. Requiere Habeas 0.1.52 o posterior."
       }
     }
   ],

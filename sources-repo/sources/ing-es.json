@@ -228,15 +228,15 @@
     {
       "version": "2026-08-09",
       "changes": {
-        "en": "The guide now says that ING serves only about 90 days of history, and that it applies this strictly on a current account. Somebody searching for \"download my ING statements\" expects their full history; finding three months with no warning is worse than having no page at all. Verified against a real account: with the trimming of the month that straddles the window (extension 0.9.12), that month's statements now download.",
-        "es": "La guía dice ya que ING solo sirve unos 90 días de histórico y que en cuenta corriente lo aplica de forma estricta. Quien busca \"descargar mis extractos de ING\" espera su histórico completo; encontrarse tres meses sin aviso es peor que no tener página. Verificado contra una cuenta real: con el recorte del mes que cruza la ventana (extensión 0.9.12) los extractos de ese mes ya se descargan."
+        "en": "The guide now says plainly that ING serves only about 90 days of history, so nobody arrives expecting their whole statement archive. Also fixes the month that straddles that limit: its statements now download.",
+        "es": "La guía dice ahora claramente que ING solo sirve unos 90 días de histórico, para que nadie llegue esperando todo su archivo de extractos. Corrige además el mes que queda a caballo de ese límite: sus extractos ya se descargan."
       }
     },
     {
       "version": "2026-08-08.2",
       "changes": {
-        "en": "Window down to 89 days, not 90: ING's limit counts today, so the oldest valid day is today−89 and asking for today−90 is off by one. Requires extension 0.9.11.4, which also trims the monthly report's fromDate to the window instead of asking from the 1st of the month.",
-        "es": "Ventana a 89 días (no 90): el límite de ING cuenta el día de hoy, así que el día más antiguo válido es hoy−89 y pedir hoy−90 se sale por uno. Requiere extensión 0.9.11.4, que además recorta el fromDate del informe mensual a la ventana en vez de pedir desde el día 1 del mes."
+        "en": "Corrects the history window by one day, so Habeas no longer asks ING for a day it will refuse. Needs Habeas 0.9.11.4 or newer.",
+        "es": "Corrige la ventana de histórico en un día, para que Habeas no pida a ING un día que va a rechazar. Requiere Habeas 0.9.11.4 o posterior."
       }
     },
     {

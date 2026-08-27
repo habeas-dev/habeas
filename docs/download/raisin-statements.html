@@ -613,8 +613,8 @@
     {
       &quot;version&quot;: &quot;2026-07-20.18&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Multi-language labels: the product-type word (Deposit/Account) is translated per browser locale via a source i18n dictionary (en/es/de/fr/nl — every Raisin market; en fallback), since the API only returns it as an enum. Dropped the TAE abbreviation (varies by country; % is universal). Requires 0.5.0.32 ({i18n:key} token).&quot;,
-        &quot;es&quot;: &quot;Etiquetas multiidioma: la palabra del tipo de producto (Depósito/Cuenta) se traduce según el idioma del navegador mediante un diccionario i18n de la fuente (en/es/de/fr/nl — todos los mercados de Raisin; en por defecto), ya que la API solo la devuelve como enum. Se elimina la abreviatura TAE (varía por país; el % es universal). Requiere 0.5.0.32 (token {i18n:key}).&quot;
+        &quot;en&quot;: &quot;Product names now appear in your language, in any Raisin country. Needs Habeas 0.5.0.32 or newer.&quot;,
+        &quot;es&quot;: &quot;Los nombres de producto aparecen ahora en tu idioma, en cualquier país de Raisin. Requiere Habeas 0.5.0.32 o posterior.&quot;
       }
     },
     {
@@ -627,15 +627,15 @@
     {
       &quot;version&quot;: &quot;2026-07-20.16&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;A deposit account now shows the SAME name everywhere: its own record, its documents, and the account picker all use the full \&quot;Depósito &lt;bank&gt; &lt;rate&gt;% TAE &lt;term&gt; - &lt;opening&gt;\&quot; label (the record previously showed a shorter \&quot;Depósito &lt;bank&gt;\&quot;). The bank moved to the store/counterparty column.&quot;,
-        &quot;es&quot;: &quot;Una cuenta de depósito muestra ya el MISMO nombre en todas partes: su propio registro, sus documentos y el selector de cuentas usan la etiqueta completa «Depósito &lt;banco&gt; &lt;tipo&gt;% TAE &lt;plazo&gt; - &lt;apertura&gt;» (antes el registro mostraba un «Depósito &lt;banco&gt;» más corto). El banco pasa a la columna de tienda/contraparte.&quot;
+        &quot;en&quot;: &quot;A deposit now shows the same full name everywhere: in its records, in its documents and in the account picker.&quot;,
+        &quot;es&quot;: &quot;Un depósito muestra ahora el mismo nombre completo en todas partes: en sus registros, en sus documentos y en el selector de cuentas.&quot;
       }
     },
     {
       &quot;version&quot;: &quot;2026-07-20.15&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Split documents by product: FDA_ deposits keep the \&quot;Depósito … % TAE … plazo\&quot; label; OMA_ savings accounts now show \&quot;Cuenta &lt;bank&gt;\&quot; (no rate/term — variable). Deposit records carry their own account label. Requires 0.5.0.29 (ungrouped-stream account label).&quot;,
-        &quot;es&quot;: &quot;Separa los documentos por producto: los depósitos FDA_ mantienen la etiqueta «Depósito … % TAE … plazo»; las cuentas de ahorro OMA_ muestran ahora «Cuenta &lt;banco&gt;» (sin tipo ni plazo, que son variables). Los registros de depósito llevan su propia etiqueta de cuenta. Requiere 0.5.0.29 (etiqueta de cuenta en stream no agrupado).&quot;
+        &quot;en&quot;: &quot;Deposits and savings accounts now carry names that match what each one actually is, and each deposit's documents are filed under it. Needs Habeas 0.5.0.29 or newer.&quot;,
+        &quot;es&quot;: &quot;Los depósitos y las cuentas de ahorro llevan ahora nombres acordes a lo que es cada uno, y los documentos de cada depósito quedan archivados bajo él. Requiere Habeas 0.5.0.29 o posterior.&quot;
       }
     },
     {
@@ -655,8 +655,8 @@
     {
       &quot;version&quot;: &quot;2026-07-20.12&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Readable account/deposit names: savings show \&quot;Cuenta &lt;bank&gt;\&quot;, deposits \&quot;Depósito &lt;bank&gt; &lt;rate&gt;% TAE - &lt;opening date&gt;\&quot; using the real bank name (deposit_taking_bank.name). Deposit date is now the opening date (deposit.opening_date). (Term wording and decimal comma still pending a formatting helper.)&quot;,
-        &quot;es&quot;: &quot;Nombres legibles de cuenta y depósito: el ahorro muestra «Cuenta &lt;banco&gt;» y los depósitos «Depósito &lt;banco&gt; &lt;tipo&gt;% TAE - &lt;fecha de apertura&gt;», con el nombre real del banco (deposit_taking_bank.name). La fecha del depósito es ahora la de apertura (deposit.opening_date). (La redacción del plazo y la coma decimal siguen pendientes de un ayudante de formato.)&quot;
+        &quot;en&quot;: &quot;Accounts and deposits now have readable names, with the real bank, the rate and the opening date, instead of an internal code.&quot;,
+        &quot;es&quot;: &quot;Las cuentas y los depósitos tienen ya nombres legibles, con el banco real, el tipo y la fecha de apertura, en vez de un código interno.&quot;
       }
     },
     {
@@ -669,8 +669,8 @@
     {
       &quot;version&quot;: &quot;2026-07-20.10&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Savings/deposit accounts now carry a readable name (the deposit-taking bank) + type, so the account list and per-account labels show a bank name instead of a raw id. Requires 0.5.0.25 (account picker enumerates every grouped stream: current account + savings + deposits).&quot;,
-        &quot;es&quot;: &quot;Las cuentas de ahorro y depósito llevan ya un nombre legible (el banco que capta el depósito) más su tipo, así que la lista de cuentas y las etiquetas por cuenta muestran un nombre de banco en vez de un id crudo. Requiere 0.5.0.25 (el selector de cuentas enumera todos los streams agrupados: cuenta corriente, ahorro y depósitos).&quot;
+        &quot;en&quot;: &quot;Savings and deposit accounts show the bank's name instead of an internal identifier. Needs Habeas 0.5.0.25 or newer.&quot;,
+        &quot;es&quot;: &quot;Las cuentas de ahorro y los depósitos muestran el nombre del banco en lugar de un identificador interno. Requiere Habeas 0.5.0.25 o posterior.&quot;
       }
     },
     {
@@ -683,15 +683,15 @@
     {
       &quot;version&quot;: &quot;2026-07-20.8&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Account list uses the real OData filter customerId eq {ctx.customer_id} &amp; type eq TA_INTERNAL (was the invalid filter=all → 401). The customerId is templated from captured context, never hardcoded. Requires group-param ctx templating (minVersion 0.5.0.19).&quot;,
-        &quot;es&quot;: &quot;La lista de cuentas usa el filtro OData real customerId eq {ctx.customer_id} &amp; type eq TA_INTERNAL (antes el filtro inválido filter=all → 401). El customerId se plantilla desde el contexto capturado, nunca fijo. Requiere plantillado ctx en parámetros de grupo (minVersion 0.5.0.19).&quot;
+        &quot;en&quot;: &quot;Fixes the account list failing to load. Needs Habeas 0.5.0.19 or newer.&quot;,
+        &quot;es&quot;: &quot;Corrige la lista de cuentas, que no cargaba. Requiere Habeas 0.5.0.19 o posterior.&quot;
       }
     },
     {
       &quot;version&quot;: &quot;2026-07-20.7&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Send the browser-style Accept header (application/json, text/plain, */*) on every list/groups request. Instrumentation proved the ONLY difference between the SPA’s working request and our 401 was the Accept value (bare application/json); the API gateway rejects it. Same token, same everything else.&quot;,
-        &quot;es&quot;: &quot;Envía la cabecera Accept al estilo del navegador (application/json, text/plain, */*) en toda petición de lista y de grupos. La instrumentación demostró que la ÚNICA diferencia entre la petición que funcionaba en la SPA y nuestro 401 era el valor de Accept (application/json a secas); la pasarela de la API lo rechaza. Mismo token, todo lo demás idéntico.&quot;
+        &quot;en&quot;: &quot;Fixes an 'unauthorised' error that was blocking every listing.&quot;,
+        &quot;es&quot;: &quot;Corrige un error de 'no autorizado' que bloqueaba todos los listados.&quot;
       }
     },
     {
@@ -836,7 +836,7 @@
         <li class="rev"><span class="ver">2026-08-26</span> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
         <li class="rev"><span class="ver">2026-08-08</span> — No change to what this source extracts. This version gave it its guide page on habeas.dev.</li>
         <li class="rev"><span class="ver">2026-07-21</span> — Declared country: &quot;global&quot; — the field was missing since the multi-market rename (raisin-es -&gt; raisin), so the catalog showed no 🌐 badge and country filters didn't treat it as worldwide.</li>
-        <li class="rev"><span class="ver">2026-07-20.18</span> — Multi-language labels: the product-type word (Deposit/Account) is translated per browser locale via a source i18n dictionary (en/es/de/fr/nl — every Raisin market; en fallback), since the API only returns it as an enum. Dropped the TAE abbreviation (varies by country; % is universal). Requires 0.5.0.32 ({i18n:key} token).</li>
+        <li class="rev"><span class="ver">2026-07-20.18</span> — Product names now appear in your language, in any Raisin country. Needs Habeas 0.5.0.32 or newer.</li>
       </ul>
       <p class="lead"><a href="/sources.html#raisin">See the full history in the catalog →</a></p>
 

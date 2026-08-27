@@ -481,15 +481,15 @@
     {
       &quot;version&quot;: &quot;2026-08-09&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;The guide now says that ING serves only about 90 days of history, and that it applies this strictly on a current account. Somebody searching for \&quot;download my ING statements\&quot; expects their full history; finding three months with no warning is worse than having no page at all. Verified against a real account: with the trimming of the month that straddles the window (extension 0.9.12), that month's statements now download.&quot;,
-        &quot;es&quot;: &quot;La guía dice ya que ING solo sirve unos 90 días de histórico y que en cuenta corriente lo aplica de forma estricta. Quien busca \&quot;descargar mis extractos de ING\&quot; espera su histórico completo; encontrarse tres meses sin aviso es peor que no tener página. Verificado contra una cuenta real: con el recorte del mes que cruza la ventana (extensión 0.9.12) los extractos de ese mes ya se descargan.&quot;
+        &quot;en&quot;: &quot;The guide now says plainly that ING serves only about 90 days of history, so nobody arrives expecting their whole statement archive. Also fixes the month that straddles that limit: its statements now download.&quot;,
+        &quot;es&quot;: &quot;La guía dice ahora claramente que ING solo sirve unos 90 días de histórico, para que nadie llegue esperando todo su archivo de extractos. Corrige además el mes que queda a caballo de ese límite: sus extractos ya se descargan.&quot;
       }
     },
     {
       &quot;version&quot;: &quot;2026-08-08.2&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Window down to 89 days, not 90: ING's limit counts today, so the oldest valid day is today−89 and asking for today−90 is off by one. Requires extension 0.9.11.4, which also trims the monthly report's fromDate to the window instead of asking from the 1st of the month.&quot;,
-        &quot;es&quot;: &quot;Ventana a 89 días (no 90): el límite de ING cuenta el día de hoy, así que el día más antiguo válido es hoy−89 y pedir hoy−90 se sale por uno. Requiere extensión 0.9.11.4, que además recorta el fromDate del informe mensual a la ventana en vez de pedir desde el día 1 del mes.&quot;
+        &quot;en&quot;: &quot;Corrects the history window by one day, so Habeas no longer asks ING for a day it will refuse. Needs Habeas 0.9.11.4 or newer.&quot;,
+        &quot;es&quot;: &quot;Corrige la ventana de histórico en un día, para que Habeas no pida a ING un día que va a rechazar. Requiere Habeas 0.9.11.4 o posterior.&quot;
       }
     },
     {
@@ -603,8 +603,8 @@
       <ul class="changelog">
         <li class="rev"><span class="ver">2026-08-26.1</span> — Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga.</li>
         <li class="rev"><span class="ver">2026-08-26</span> — Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.</li>
-        <li class="rev"><span class="ver">2026-08-09</span> — La guía dice ya que ING solo sirve unos 90 días de histórico y que en cuenta corriente lo aplica de forma estricta. Quien busca &quot;descargar mis extractos de ING&quot; espera su histórico completo; encontrarse tres meses sin aviso es peor que no tener página. Verificado contra una cuenta real: con el recorte del mes que cruza la ventana (extensión 0.9.12) los extractos de ese mes ya se descargan.</li>
-        <li class="rev"><span class="ver">2026-08-08.2</span> — Ventana a 89 días (no 90): el límite de ING cuenta el día de hoy, así que el día más antiguo válido es hoy−89 y pedir hoy−90 se sale por uno. Requiere extensión 0.9.11.4, que además recorta el fromDate del informe mensual a la ventana en vez de pedir desde el día 1 del mes.</li>
+        <li class="rev"><span class="ver">2026-08-09</span> — La guía dice ahora claramente que ING solo sirve unos 90 días de histórico, para que nadie llegue esperando todo su archivo de extractos. Corrige además el mes que queda a caballo de ese límite: sus extractos ya se descargan.</li>
+        <li class="rev"><span class="ver">2026-08-08.2</span> — Corrige la ventana de histórico en un día, para que Habeas no pida a ING un día que va a rechazar. Requiere Habeas 0.9.11.4 o posterior.</li>
         <li class="rev"><span class="ver">2026-08-08.1</span> — Sin cambios en lo que extrae esta fuente. Esta versión le dio su página de guía en habeas.dev.</li>
       </ul>
       <p class="lead"><a href="/sources.html#ing-es">Ver el historial completo en el catálogo →</a></p>

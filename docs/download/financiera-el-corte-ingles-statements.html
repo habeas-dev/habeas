@@ -431,8 +431,8 @@
     {
       &quot;version&quot;: &quot;2026-07-20.3&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;First publish to the live registry. Requires extension &gt;= 0.5.0 (the milestone that ships declarative capturePaths, the login-safe scoped token observer, and the {date:FORMAT} document token this source relies on). Verified end-to-end by the contributor.&quot;,
-        &quot;es&quot;: &quot;Primera publicación en el registro vivo. Requiere extensión &gt;= 0.5.0 (el hito que incorpora capturePaths declarativo, el observador de token acotado y seguro ante el login, y el token de documento {date:FORMAT} del que depende esta fuente). Verificada de extremo a extremo por quien la aportó.&quot;
+        &quot;en&quot;: &quot;First published version. Verified end to end by the contributor. Needs Habeas 0.5.0 or newer.&quot;,
+        &quot;es&quot;: &quot;Primera versión publicada. Verificada de principio a fin por quien la aportó. Requiere Habeas 0.5.0 o posterior.&quot;
       }
     },
     {
@@ -445,15 +445,15 @@
     {
       &quot;version&quot;: &quot;2026-07-20.1&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Declare auth.capturePaths = ['/dashboard/'] so the token is only captured from the authenticated dashboard area (where it first appears, after login) and the header observer never engages with the sign-in flow — this keeps the extension from interfering with the bank's Transmit Security login.&quot;,
-        &quot;es&quot;: &quot;Declara auth.capturePaths = ['/dashboard/'] para que el token solo se capture en el área autenticada del panel (donde aparece por primera vez, tras el login) y el observador de cabeceras no intervenga nunca en el flujo de acceso: así la extensión no interfiere con el login de Transmit Security del banco.&quot;
+        &quot;en&quot;: &quot;The extension no longer touches the sign-in screen: it only starts looking once you are inside your account, so it cannot interfere with the bank's login.&quot;,
+        &quot;es&quot;: &quot;La extensión ya no toca la pantalla de acceso: solo empieza a mirar cuando ya estás dentro de tu cuenta, así que no puede interferir con el login del banco.&quot;
       }
     },
     {
       &quot;version&quot;: &quot;2026-07-20&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Send the per-card eci-custom-encrypted-pan header on the aplazamientos (financing-purchases) and extractos (shopping-summaries) LIST requests too — the SPA sends it on every card-scoped call (as movements already does), so the server needs it to return those lists per card, not just for movements + the statement PDF.&quot;,
-        &quot;es&quot;: &quot;Envía también la cabecera eci-custom-encrypted-pan por tarjeta en las peticiones de LISTA de aplazamientos (financing-purchases) y extractos (shopping-summaries) — la SPA la manda en toda llamada acotada a una tarjeta (como ya hacía movimientos), así que el servidor la necesita para devolver esas listas por tarjeta, no solo para los movimientos y el PDF del extracto.&quot;
+        &quot;en&quot;: &quot;Fixes instalment purchases and monthly statements coming back empty when you hold more than one card.&quot;,
+        &quot;es&quot;: &quot;Corrige las compras aplazadas y los extractos mensuales, que llegaban vacíos si tienes más de una tarjeta.&quot;
       }
     },
     {
@@ -473,8 +473,8 @@
     {
       &quot;version&quot;: &quot;2026-07-17.2&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Fix extractos statement PDF download (the real cause): the generate-file POST also needs the per-card eci-custom-encrypted-pan header (same as movements), which the server requires to return the file. Sent via api.pdf.headers {group.pan}. Requires extension &gt;= 0.4.1.2.&quot;,
-        &quot;es&quot;: &quot;Corrige la descarga del PDF de extractos (la causa real): el POST a generate-file necesita además la cabecera eci-custom-encrypted-pan de la tarjeta (igual que movimientos), que el servidor exige para devolver el fichero. Se envía vía api.pdf.headers {group.pan}. Requiere extensión &gt;= 0.4.1.2.&quot;
+        &quot;en&quot;: &quot;Fixes the monthly statement PDF failing to download. Needs Habeas 0.4.1.2 or newer.&quot;,
+        &quot;es&quot;: &quot;Corrige el PDF del extracto mensual, que no se descargaba. Requiere Habeas 0.4.1.2 o posterior.&quot;
       }
     },
     {
@@ -564,7 +564,7 @@
         <li class="rev"><span class="ver">2026-08-26.1</span> — Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.</li>
         <li class="rev"><span class="ver">2026-08-26</span> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
         <li class="rev"><span class="ver">2026-08-08</span> — No change to what this source extracts. This version gave it its guide page on habeas.dev.</li>
-        <li class="rev"><span class="ver">2026-07-20.3</span> — First publish to the live registry. Requires extension &gt;= 0.5.0 (the milestone that ships declarative capturePaths, the login-safe scoped token observer, and the {date:FORMAT} document token this source relies on). Verified end-to-end by the contributor.</li>
+        <li class="rev"><span class="ver">2026-07-20.3</span> — First published version. Verified end to end by the contributor. Needs Habeas 0.5.0 or newer.</li>
         <li class="rev"><span class="ver">2026-07-20.2</span> — Fixes monthly statement PDFs that failed to download once the statement had already been saved.</li>
       </ul>
       <p class="lead"><a href="/sources.html#financiera-elcorteingles-es">See the full history in the catalog →</a></p>

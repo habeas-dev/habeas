@@ -342,8 +342,8 @@
     {
       &quot;version&quot;: &quot;2026-08-25.1&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Waits for the loyalty hub before auto-running, and opens it rather than /purchases/ in a dedicated tab. IKEA fires capturable requests on earlier screens, so both paths could reach the purchase-history API before the session was good for it. The documents come from the API, not from the page, so the page only has to be the one that establishes a usable session.&quot;,
-        &quot;es&quot;: &quot;Espera al hub de fidelización antes de auto-ejecutarse, y abre ese hub en lugar de /purchases/ en la pestaña dedicada. IKEA dispara peticiones capturables en pantallas anteriores, así que ambas vías podían llegar a la API de historial de compras antes de que la sesión sirviera. Los documentos vienen de la API, no de la página, así que a la página solo le toca establecer una sesión utilizable.&quot;
+        &quot;en&quot;: &quot;Automatic sync now waits until you are properly signed in to IKEA before it starts. It used to begin too early and find nothing.&quot;,
+        &quot;es&quot;: &quot;La sincronización automática espera ahora a que tengas bien iniciada la sesión de IKEA antes de empezar. Antes arrancaba demasiado pronto y no encontraba nada.&quot;
       }
     },
     {
@@ -400,7 +400,7 @@
       <p>This source is a public definition, and every change to it is on the record. Most recent first:</p>
       <ul class="changelog">
         <li class="rev"><span class="ver">2026-08-26</span> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
-        <li class="rev"><span class="ver">2026-08-25.1</span> — Waits for the loyalty hub before auto-running, and opens it rather than /purchases/ in a dedicated tab. IKEA fires capturable requests on earlier screens, so both paths could reach the purchase-history API before the session was good for it. The documents come from the API, not from the page, so the page only has to be the one that establishes a usable session.</li>
+        <li class="rev"><span class="ver">2026-08-25.1</span> — Automatic sync now waits until you are properly signed in to IKEA before it starts. It used to begin too early and find nothing.</li>
         <li class="rev"><span class="ver">2026-08-08</span> — No change to what this source extracts. This version gave it its guide page on habeas.dev.</li>
       </ul>
 
