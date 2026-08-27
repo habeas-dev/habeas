@@ -67,14 +67,16 @@
     "en": {
       "slug": "ikea-receipts",
       "docs": "receipts and purchases",
-      "h1": "How to download your IKEA receipts and purchases",
-      "intro": "IKEA keeps your purchases and receipts in your account, but saving them means opening each one in turn."
+      "h1": "Download all your IKEA receipts and purchases at once",
+      "intro": "IKEA keeps your purchases and receipts in your account, but saving them means opening each one in turn.",
+      "title": "How to download your IKEA receipts and purchases"
     },
     "es": {
       "slug": "tickets-ikea",
       "docs": "tiquets y compras",
-      "h1": "Cómo descargar tus tiquets y compras de IKEA",
-      "intro": "IKEA conserva tus compras y tiquets en tu cuenta, pero para guardarlos hay que ir entrando en cada uno."
+      "h1": "Descarga todos tus tiquets y compras de IKEA de una vez",
+      "intro": "IKEA conserva tus compras y tiquets en tu cuenta, pero para guardarlos hay que ir entrando en cada uno.",
+      "title": "Cómo descargar tus tiquets y compras de IKEA"
     }
   },
   "brand": "IKEA",

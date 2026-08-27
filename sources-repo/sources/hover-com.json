@@ -87,14 +87,16 @@
     "en": {
       "slug": "hover-receipts",
       "docs": "domain renewal receipts",
-      "h1": "How to download your Hover receipts",
-      "intro": "Hover keeps a receipt for every domain registration and renewal in your account. They are small, they are easy to forget, and at tax time you need all of them — one at a time."
+      "h1": "Download all your Hover receipts at once",
+      "intro": "Hover keeps a receipt for every domain registration and renewal in your account. They are small, they are easy to forget, and at tax time you need all of them — one at a time.",
+      "title": "How to download your Hover receipts"
     },
     "es": {
       "slug": "facturas-hover",
       "docs": "recibos de dominios",
-      "h1": "Cómo descargar tus recibos de Hover",
-      "intro": "Hover guarda un recibo por cada registro y renovación de dominio en tu cuenta. Son pequeños, se olvidan con facilidad y cuando toca justificar gastos los necesitas todos, de uno en uno."
+      "h1": "Descarga todos tus recibos de Hover de una vez",
+      "intro": "Hover guarda un recibo por cada registro y renovación de dominio en tu cuenta. Son pequeños, se olvidan con facilidad y cuando toca justificar gastos los necesitas todos, de uno en uno.",
+      "title": "Cómo descargar tus recibos de Hover"
     }
   },
   "brand": "Hover"

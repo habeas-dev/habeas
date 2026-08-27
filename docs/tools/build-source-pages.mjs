@@ -252,7 +252,10 @@ function page({ lang, meta, full, entry, siblings, isBeta }) {
   const url = ORIGIN + L.path(copy.slug);
   const outputs = outputsOf(full);
   const formats = [...new Set([...(meta.formats || []), ...outputs.flatMap((o) => o.formats)])].map((f) => FORMAT[f] || f.toUpperCase());
-  const title = `${copy.h1} — Habeas`;
+  // The title and the heading do different jobs. The title is what Google shows in results and is worded
+  // for the query somebody typed; the h1 is what a reader lands on and promises the result. They used to
+  // be the same string, so improving one silently rewrote the other.
+  const title = `${copy.title || copy.h1} — Habeas`;
   // A draft is reachable from the catalogue and absent from search. Ranking for "how to download your X"
   // while the extraction is unverified would be selling something that may not exist; and structured data
   // is a claim made to a machine, so an unrun procedure gets no HowTo and no FAQ.

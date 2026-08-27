@@ -108,16 +108,18 @@
     "en": {
       "slug": "paypal-transactions",
       "docs": "transactions",
-      "h1": "How to download your PayPal transaction history",
+      "h1": "Download all your PayPal transaction history at once",
       "intro": "PayPal does let you download activity reports, but they arrive separately from everything else you are trying to keep, and pulling them regularly is a manual chore you have to remember.",
-      "note": "Habeas is not here because PayPal hides your history — it does not. It is here so that history lands in the same archive as your other services, automatically, without a monthly detour through the export screen."
+      "note": "Habeas is not here because PayPal hides your history — it does not. It is here so that history lands in the same archive as your other services, automatically, without a monthly detour through the export screen.",
+      "title": "How to download your PayPal transaction history"
     },
     "es": {
       "slug": "movimientos-paypal",
       "docs": "movimientos",
-      "h1": "Cómo descargar tus movimientos de PayPal",
+      "h1": "Descarga todos tus movimientos de PayPal de una vez",
       "intro": "PayPal sí te deja descargar informes de actividad, pero llegan aparte de todo lo demás que intentas conservar, y hacerlo con regularidad es una tarea manual que tienes que acordarte de repetir.",
-      "note": "Habeas no está aquí porque PayPal esconda tu historial —no lo hace—. Está para que ese historial acabe en el mismo archivo que el resto de tus servicios, automáticamente y sin pasar cada mes por la pantalla de exportación."
+      "note": "Habeas no está aquí porque PayPal esconda tu historial —no lo hace—. Está para que ese historial acabe en el mismo archivo que el resto de tus servicios, automáticamente y sin pasar cada mes por la pantalla de exportación.",
+      "title": "Cómo descargar tus movimientos de PayPal"
     }
   },
   "brand": "PayPal",

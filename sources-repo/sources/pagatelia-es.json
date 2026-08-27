@@ -73,14 +73,16 @@
     "en": {
       "slug": "pagatelia-invoices",
       "docs": "toll invoices",
-      "h1": "How to download your Pagatelia invoices",
-      "intro": "Pagatelia builds up one invoice per period for tolls and car parks. Recovering the full history means downloading them one by one."
+      "h1": "Download all your Pagatelia invoices at once",
+      "intro": "Pagatelia builds up one invoice per period for tolls and car parks. Recovering the full history means downloading them one by one.",
+      "title": "How to download your Pagatelia invoices"
     },
     "es": {
       "slug": "facturas-pagatelia",
       "docs": "facturas de peaje",
-      "h1": "Cómo descargar tus facturas de Pagatelia",
-      "intro": "Pagatelia acumula una factura por periodo de peajes y parkings. Recuperar el histórico completo significa descargarlas una a una."
+      "h1": "Descarga todos tus facturas de Pagatelia de una vez",
+      "intro": "Pagatelia acumula una factura por periodo de peajes y parkings. Recuperar el histórico completo significa descargarlas una a una.",
+      "title": "Cómo descargar tus facturas de Pagatelia"
     }
   },
   "brand": "Pagatelia",

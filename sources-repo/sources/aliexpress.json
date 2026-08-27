@@ -178,14 +178,16 @@
     "en": {
       "slug": "aliexpress-orders",
       "docs": "order receipts",
-      "h1": "How to download your AliExpress order receipts",
-      "intro": "AliExpress keeps your order history in your account, but the receipt for each order lives on its own screen and there is no way to take the lot with you."
+      "h1": "Download all your AliExpress order receipts at once",
+      "intro": "AliExpress keeps your order history in your account, but the receipt for each order lives on its own screen and there is no way to take the lot with you.",
+      "title": "How to download your AliExpress order receipts"
     },
     "es": {
       "slug": "pedidos-aliexpress",
       "docs": "recibos de pedidos",
-      "h1": "Cómo descargar tus pedidos y recibos de AliExpress",
-      "intro": "AliExpress guarda tu historial de pedidos en tu cuenta, pero el recibo de cada uno vive en su propia pantalla y no hay forma de llevártelos todos."
+      "h1": "Descarga todos tus pedidos y recibos de AliExpress de una vez",
+      "intro": "AliExpress guarda tu historial de pedidos en tu cuenta, pero el recibo de cada uno vive en su propia pantalla y no hay forma de llevártelos todos.",
+      "title": "Cómo descargar tus pedidos y recibos de AliExpress"
     }
   },
   "brand": "AliExpress"

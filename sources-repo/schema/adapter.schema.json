@@ -1309,6 +1309,10 @@
                   }
                 }
               }
+            },
+            "title": {
+              "type": "string",
+              "description": "Wording for the page's <title>, aimed at the query somebody types. Optional: without it the title falls back to h1. Separate because the two do different jobs — the title is what a search result shows, the h1 is what a reader lands on."
             }
           }
         }

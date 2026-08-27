@@ -85,14 +85,16 @@
     "en": {
       "slug": "dia-receipts",
       "docs": "purchase receipts",
-      "h1": "How to download your Dia receipts",
-      "intro": "Your Dia purchase history lives in your account, receipt by receipt. There is no bulk export and no way to move it into a spreadsheet."
+      "h1": "Download all your Dia receipts at once",
+      "intro": "Your Dia purchase history lives in your account, receipt by receipt. There is no bulk export and no way to move it into a spreadsheet.",
+      "title": "How to download your Dia receipts"
     },
     "es": {
       "slug": "tickets-dia",
       "docs": "tickets de compra",
-      "h1": "Cómo descargar tus tickets de Dia",
-      "intro": "Tu historial de compra en Dia está en tu cuenta, ticket a ticket. No hay exportación masiva ni una forma de llevártelo a una hoja de cálculo."
+      "h1": "Descarga todos tus tickets de Dia de una vez",
+      "intro": "Tu historial de compra en Dia está en tu cuenta, ticket a ticket. No hay exportación masiva ni una forma de llevártelo a una hoja de cálculo.",
+      "title": "Cómo descargar tus tickets de Dia"
     }
   },
   "brand": "Dia"

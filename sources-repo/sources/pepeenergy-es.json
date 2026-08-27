@@ -80,14 +80,16 @@
     "en": {
       "slug": "pepe-energy-invoices",
       "docs": "electricity and gas bills",
-      "h1": "How to download your Pepe Energy bills",
-      "intro": "Your Pepe Energy bills sit in your customer area as PDFs. If you need several years — for a tax return, a subsidy, or to compare consumption — you go one by one."
+      "h1": "Download all your Pepe Energy bills at once",
+      "intro": "Your Pepe Energy bills sit in your customer area as PDFs. If you need several years — for a tax return, a subsidy, or to compare consumption — you go one by one.",
+      "title": "How to download your Pepe Energy bills"
     },
     "es": {
       "slug": "facturas-pepe-energy",
       "docs": "facturas de luz y gas",
-      "h1": "Cómo descargar tus facturas de Pepe Energy",
-      "intro": "Tus facturas de Pepe Energy están en tu área de cliente en PDF. Si necesitas varios años —para la declaración, para una ayuda, o para comparar consumos— hay que ir una por una."
+      "h1": "Descarga todos tus facturas de Pepe Energy de una vez",
+      "intro": "Tus facturas de Pepe Energy están en tu área de cliente en PDF. Si necesitas varios años —para la declaración, para una ayuda, o para comparar consumos— hay que ir una por una.",
+      "title": "Cómo descargar tus facturas de Pepe Energy"
     }
   },
   "brand": "Pepe Energy",

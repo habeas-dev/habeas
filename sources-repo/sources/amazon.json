@@ -165,14 +165,16 @@
     "en": {
       "slug": "amazon-invoices",
       "docs": "order invoices",
-      "h1": "How to download your Amazon invoices",
-      "intro": "Amazon keeps years of orders in your account, each with its own invoice behind its own page. Collecting a year of them — for expenses, a tax return, or a warranty claim — means opening every order in turn."
+      "h1": "Download all your Amazon invoices at once",
+      "intro": "Amazon keeps years of orders in your account, each with its own invoice behind its own page. Collecting a year of them — for expenses, a tax return, or a warranty claim — means opening every order in turn.",
+      "title": "How to download your Amazon invoices"
     },
     "es": {
       "slug": "facturas-amazon",
       "docs": "facturas de pedidos",
-      "h1": "Cómo descargar tus facturas de Amazon",
-      "intro": "Amazon guarda años de pedidos en tu cuenta, cada uno con su factura tras su propia página. Reunir un año entero —para gastos, la declaración o una garantía— significa abrir pedido por pedido."
+      "h1": "Descarga todos tus facturas de Amazon de una vez",
+      "intro": "Amazon guarda años de pedidos en tu cuenta, cada uno con su factura tras su propia página. Reunir un año entero —para gastos, la declaración o una garantía— significa abrir pedido por pedido.",
+      "title": "Cómo descargar tus facturas de Amazon"
     }
   },
   "brand": "Amazon",

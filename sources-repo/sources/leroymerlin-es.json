@@ -153,14 +153,16 @@
     "en": {
       "slug": "leroy-merlin-receipts",
       "docs": "receipts and orders",
-      "h1": "How to download your Leroy Merlin receipts and orders",
-      "intro": "Leroy Merlin keeps in-store receipts separate from online orders. Both live in your account and neither can be downloaded in bulk."
+      "h1": "Download all your Leroy Merlin receipts and orders at once",
+      "intro": "Leroy Merlin keeps in-store receipts separate from online orders. Both live in your account and neither can be downloaded in bulk.",
+      "title": "How to download your Leroy Merlin receipts and orders"
     },
     "es": {
       "slug": "tickets-leroy-merlin",
       "docs": "tickets y pedidos",
-      "h1": "Cómo descargar tus tickets y pedidos de Leroy Merlin",
-      "intro": "Leroy Merlin separa los tickets de tienda de los pedidos online. Ambos están en tu cuenta y ninguno se puede descargar en bloque."
+      "h1": "Descarga todos tus tickets y pedidos de Leroy Merlin de una vez",
+      "intro": "Leroy Merlin separa los tickets de tienda de los pedidos online. Ambos están en tu cuenta y ninguno se puede descargar en bloque.",
+      "title": "Cómo descargar tus tickets y pedidos de Leroy Merlin"
     }
   },
   "brand": "Leroy Merlin"

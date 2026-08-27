@@ -99,14 +99,16 @@
     "en": {
       "slug": "bipdrive-invoices",
       "docs": "toll invoices",
-      "h1": "How to download your Bip&Drive invoices",
-      "intro": "Bip&Drive issues one invoice per period covering your tolls and parking. They are all in your customer area, as PDFs, one at a time."
+      "h1": "Download all your Bip&Drive invoices at once",
+      "intro": "Bip&Drive issues one invoice per period covering your tolls and parking. They are all in your customer area, as PDFs, one at a time.",
+      "title": "How to download your Bip&Drive invoices"
     },
     "es": {
       "slug": "facturas-bipdrive",
       "docs": "facturas de peaje",
-      "h1": "Cómo descargar tus facturas de Bip&Drive",
-      "intro": "Bip&Drive emite una factura por periodo con tus peajes y aparcamientos. Están todas en tu área de cliente, en PDF y de una en una."
+      "h1": "Descarga todos tus facturas de Bip&Drive de una vez",
+      "intro": "Bip&Drive emite una factura por periodo con tus peajes y aparcamientos. Están todas en tu área de cliente, en PDF y de una en una.",
+      "title": "Cómo descargar tus facturas de Bip&Drive"
     }
   },
   "brand": "Bip&Drive"

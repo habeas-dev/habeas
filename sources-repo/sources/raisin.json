@@ -511,14 +511,16 @@
     "en": {
       "slug": "raisin-statements",
       "docs": "transactions, deposits and documents",
-      "h1": "How to download your Raisin transactions, deposits and documents",
-      "intro": "Raisin spreads what matters across several products: the account movements, the fixed-term deposits, the savings balance and the documents for each. Each lives on its own screen, so the full picture is never in one place."
+      "h1": "Download all your Raisin transactions, deposits and documents at once",
+      "intro": "Raisin spreads what matters across several products: the account movements, the fixed-term deposits, the savings balance and the documents for each. Each lives on its own screen, so the full picture is never in one place.",
+      "title": "How to download your Raisin transactions, deposits and documents"
     },
     "es": {
       "slug": "extractos-raisin",
       "docs": "movimientos, depósitos y documentos",
-      "h1": "Cómo descargar tus movimientos, depósitos y documentos de Raisin",
-      "intro": "Raisin reparte lo importante entre varios productos: los movimientos de la cuenta, los depósitos a plazo, el saldo de ahorro y los documentos de cada uno. Cada cosa vive en su pantalla, así que la foto completa nunca está en un solo sitio."
+      "h1": "Descarga todos tus movimientos, depósitos y documentos de Raisin de una vez",
+      "intro": "Raisin reparte lo importante entre varios productos: los movimientos de la cuenta, los depósitos a plazo, el saldo de ahorro y los documentos de cada uno. Cada cosa vive en su pantalla, así que la foto completa nunca está en un solo sitio.",
+      "title": "Cómo descargar tus movimientos, depósitos y documentos de Raisin"
     }
   },
   "brand": "Raisin"

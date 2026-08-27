@@ -250,14 +250,16 @@
     "en": {
       "slug": "financiera-el-corte-ingles-statements",
       "docs": "transactions, instalments and statements",
-      "h1": "How to download your Financiera El Corte Inglés transactions and statements",
-      "intro": "The El Corte Inglés card has three things worth keeping: the transactions, the payment instalments and the monthly statements. Each lives on its own screen."
+      "h1": "Download all your Financiera El Corte Inglés transactions and statements at once",
+      "intro": "The El Corte Inglés card has three things worth keeping: the transactions, the payment instalments and the monthly statements. Each lives on its own screen.",
+      "title": "How to download your Financiera El Corte Inglés transactions and statements"
     },
     "es": {
       "slug": "extractos-financiera-el-corte-ingles",
       "docs": "movimientos, aplazamientos y extractos",
-      "h1": "Cómo descargar tus movimientos y extractos de Financiera El Corte Inglés",
-      "intro": "La tarjeta de El Corte Inglés tiene tres cosas distintas que interesan: los movimientos, los aplazamientos de pago y los extractos mensuales. Cada uno vive en su propia pantalla."
+      "h1": "Descarga todos tus movimientos y extractos de Financiera El Corte Inglés de una vez",
+      "intro": "La tarjeta de El Corte Inglés tiene tres cosas distintas que interesan: los movimientos, los aplazamientos de pago y los extractos mensuales. Cada uno vive en su propia pantalla.",
+      "title": "Cómo descargar tus movimientos y extractos de Financiera El Corte Inglés"
     }
   },
   "brand": "Financiera El Corte Inglés"

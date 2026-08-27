@@ -352,14 +352,16 @@
     "en": {
       "slug": "openbank-transactions",
       "docs": "transactions and statements",
-      "h1": "How to download your Openbank transactions and statements",
-      "intro": "Openbank shows your transactions on its website and lets you download individual documents, but not gather them into a single file you can work with."
+      "h1": "Download all your Openbank transactions and statements at once",
+      "intro": "Openbank shows your transactions on its website and lets you download individual documents, but not gather them into a single file you can work with.",
+      "title": "How to download your Openbank transactions and statements"
     },
     "es": {
       "slug": "movimientos-openbank",
       "docs": "movimientos y extractos",
-      "h1": "Cómo descargar tus movimientos y extractos de Openbank",
-      "intro": "Openbank muestra tus movimientos en su web y permite descargar documentos sueltos, pero no reunirlos en un único archivo con el que puedas trabajar."
+      "h1": "Descarga todos tus movimientos y extractos de Openbank de una vez",
+      "intro": "Openbank muestra tus movimientos en su web y permite descargar documentos sueltos, pero no reunirlos en un único archivo con el que puedas trabajar.",
+      "title": "Cómo descargar tus movimientos y extractos de Openbank"
     }
   },
   "brand": "Openbank"

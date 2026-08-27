@@ -106,14 +106,16 @@
     "en": {
       "slug": "caixabank-consumer-statements",
       "docs": "card statements",
-      "h1": "How to download your CaixaBank Consumer statements",
-      "intro": "Your CaixaBank Consumer card statements are available as PDFs, one per period, with no combined download."
+      "h1": "Download all your CaixaBank Consumer statements at once",
+      "intro": "Your CaixaBank Consumer card statements are available as PDFs, one per period, with no combined download.",
+      "title": "How to download your CaixaBank Consumer statements"
     },
     "es": {
       "slug": "extractos-caixabank-consumer",
       "docs": "extractos de tarjeta",
-      "h1": "Cómo descargar tus extractos de CaixaBank Consumer",
-      "intro": "Los extractos de tu tarjeta de CaixaBank Consumer están disponibles en PDF, uno por periodo, sin opción de descarga conjunta."
+      "h1": "Descarga todos tus extractos de CaixaBank Consumer de una vez",
+      "intro": "Los extractos de tu tarjeta de CaixaBank Consumer están disponibles en PDF, uno por periodo, sin opción de descarga conjunta.",
+      "title": "Cómo descargar tus extractos de CaixaBank Consumer"
     }
   },
   "brand": "CaixaBank Consumer"

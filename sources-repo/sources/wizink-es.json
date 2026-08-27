@@ -260,14 +260,16 @@
     "en": {
       "slug": "wizink-statements",
       "docs": "card transactions and statements",
-      "h1": "How to download your WiZink transactions and statements",
-      "intro": "WiZink publishes one statement per period plus a transaction list. Getting the full history means downloading each statement separately."
+      "h1": "Download all your WiZink transactions and statements at once",
+      "intro": "WiZink publishes one statement per period plus a transaction list. Getting the full history means downloading each statement separately.",
+      "title": "How to download your WiZink transactions and statements"
     },
     "es": {
       "slug": "extractos-wizink",
       "docs": "movimientos y extractos de tarjeta",
-      "h1": "Cómo descargar tus movimientos y extractos de WiZink",
-      "intro": "WiZink publica un extracto por periodo y un listado de movimientos. Para tener el histórico completo hay que ir descargando cada extracto por separado."
+      "h1": "Descarga todos tus movimientos y extractos de WiZink de una vez",
+      "intro": "WiZink publica un extracto por periodo y un listado de movimientos. Para tener el histórico completo hay que ir descargando cada extracto por separado.",
+      "title": "Cómo descargar tus movimientos y extractos de WiZink"
     }
   },
   "brand": "WiZink"
