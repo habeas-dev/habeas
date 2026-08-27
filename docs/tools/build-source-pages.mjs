@@ -526,10 +526,7 @@ ${[[t.asideVersion, esc(String(full.version || '-'))],
 ${line ? `        <p class="who">${line}</p>\n` : ''}        <p class="note">${esc(t.asideLicenceBody)}</p>
       </div>
 
-      <div class="cta">
-        <a class="btn primary" href="${CWS}" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="${esc(meta.id)}">${esc(t.installChrome)}</a>
-        <a class="btn primary" href="${AMO}" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="${esc(meta.id)}">${esc(t.installFirefox)}</a>
-      </div>
+      ${installAside(t, meta.id)}
 
       <div class="card defn">
         <h2>${esc(t.asideDefinition)}</h2>
@@ -572,20 +569,13 @@ ${isBeta ? '' : `    <h2>${esc(t.whatYouGet)}</h2>
     <ul>
 ${rows}
     </ul>
-${detail}${retention}${quirksBlock}${note}${gaps}
     <h2>${esc(t.how)}</h2>
     <p>${t.howIntro(esc(meta.domain))}</p>
     <ol class="steps">
 ${steps.map((x, i) => `      <li class="step"><h3>${esc(t.stepNames[i])}</h3><p>${esc(x)}</p></li>`).join('\n')}
     </ol>
     <p>${t.never} ${trust}</p>
-
-    <div class="cta">
-      <a class="btn primary" href="${CWS}" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="${esc(meta.id)}">${esc(t.installChrome)}</a>
-      <a class="btn primary" href="${AMO}" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="${esc(meta.id)}">${esc(t.installFirefox)}</a>
-    </div>
-    <p class="lead">${esc(t.free(meta.name))}</p>
-    <p class="lead">${esc(t.chromeNote)}</p>
+${detail}${retention}${quirksBlock}${note}${gaps}
 
     <h2>${esc(t.faqH)}</h2>
 ${faq.map(([q, a]) => `    <h3>${esc(q)}</h3>\n    <p>${esc(a)}</p>`).join('\n')}`}

@@ -249,10 +249,12 @@
         <p class="note">Definition in the public domain (CC0-1.0); this page’s text CC-BY-4.0.</p>
       </div>
 
-      <div class="cta">
-        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="aliexpress">Install on Chrome</a>
-        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="aliexpress">Install on Firefox</a>
-      </div>
+      <aside class="install-cta" aria-label="Install on Chrome">
+      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="aliexpress">Install on Chrome</a>
+      <a class="btn" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="aliexpress">Install on Firefox</a>
+      <p class="note">Free and open source (AGPL-3.0). Install it, then turn on the source you need from Settings → Browse sources.</p>
+      <p class="note">Chrome will warn you that the extension is not trusted. That happens to any developer account recently registered on the Chrome Web Store, it fades after a few months, and it says nothing about the code — which you can read in full.</p>
+    </aside>
 
       <div class="card defn">
         <h2>The definition itself</h2>
@@ -465,6 +467,14 @@
     <ul>
         <li><strong>order receipts</strong> — each purchase with its date, amount, currency, store and category.</li>
     </ul>
+    <h2>How it works</h2>
+    <p>It is not a service that connects to aliexpress.com on its own. It runs <strong>inside your own browser</strong>, reusing the session you already have open:</p>
+    <ol class="steps">
+      <li class="step"><h3>Sign in yourself</h3><p>You go to aliexpress.com and sign in yourself, as always, with your MFA or whatever code you use.</p></li>
+      <li class="step"><h3>Habeas reuses that session</h3><p>Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does.</p></li>
+      <li class="step"><h3>You choose where it goes</h3><p>You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own.</p></li>
+    </ol>
+    <p><strong>Your password is never read, never stored and never sent anywhere</strong>, and nothing runs in the background while you are away. This is a <strong>community</strong> source: its definition is public and reviewable, and it runs under the same security rules as every other.</p>
       <h2>What AliExpress actually gives you</h2>
       <p>AliExpress records each order with its date, total, currency and the shop that sold it, and separately holds the receipt detail behind a second call. Habeas puts the two together, so an order arrives already carrying the receipt information rather than a bare line you would still have to open.</p>
       <h2>Worth knowing about this source</h2>
@@ -474,21 +484,6 @@
         <li>The receipt detail is a separate request per order, so a long history takes proportionally longer here than on a source that returns everything in one page.</li>
       </ul>
 
-    <h2>How it works</h2>
-    <p>It is not a service that connects to aliexpress.com on its own. It runs <strong>inside your own browser</strong>, reusing the session you already have open:</p>
-    <ol class="steps">
-      <li class="step"><h3>Sign in yourself</h3><p>You go to aliexpress.com and sign in yourself, as always, with your MFA or whatever code you use.</p></li>
-      <li class="step"><h3>Habeas reuses that session</h3><p>Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does.</p></li>
-      <li class="step"><h3>You choose where it goes</h3><p>You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own.</p></li>
-    </ol>
-    <p><strong>Your password is never read, never stored and never sent anywhere</strong>, and nothing runs in the background while you are away. This is a <strong>community</strong> source: its definition is public and reviewable, and it runs under the same security rules as every other.</p>
-
-    <div class="cta">
-      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="aliexpress">Install on Chrome</a>
-      <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="aliexpress">Install on Firefox</a>
-    </div>
-    <p class="lead">Free and open source (AGPL-3.0). Install the extension and enable the “AliExpress” source from Settings → Browse sources.</p>
-    <p class="lead">Chrome will warn you that the extension is not trusted. That happens to any developer account recently registered on the Chrome Web Store, it fades after a few months, and it says nothing about the code — which you can read in full.</p>
 
     <h2>Frequently asked questions</h2>
     <h3>Does Habeas store my AliExpress password?</h3>

@@ -297,10 +297,12 @@
         <p class="note">La definición, de dominio público (CC0-1.0); el texto de esta página, CC-BY-4.0.</p>
       </div>
 
-      <div class="cta">
-        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="paypal">Instalar en Chrome</a>
-        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="paypal">Instalar en Firefox</a>
-      </div>
+      <aside class="install-cta" aria-label="Instalar en Chrome">
+      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="paypal">Instalar en Chrome</a>
+      <a class="btn" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="paypal">Instalar en Firefox</a>
+      <p class="note">Libre y de código abierto (AGPL-3.0). Instálala y activa en Ajustes → Explorar fuentes la que necesites.</p>
+      <p class="note">Chrome te avisará de que la extensión no es de confianza. Le ocurre a cualquier cuenta de desarrollador registrada hace poco en la Chrome Web Store, se disipa en unos meses y no dice nada del código, que puedes leer entero.</p>
+    </aside>
 
       <div class="card defn">
         <h2>La definición en sí</h2>
@@ -475,6 +477,14 @@
     <ul>
         <li><strong>movimientos</strong> — cada movimiento con su fecha, importe, moneda, concepto y contraparte.</li>
     </ul>
+    <h2>Cómo funciona</h2>
+    <p>No es un servicio que se conecte a paypal.com por su cuenta. Funciona <strong>dentro de tu propio navegador</strong>, aprovechando la sesión que ya tienes abierta:</p>
+    <ol class="steps">
+      <li class="step"><h3>Inicias sesión tú</h3><p>Entras en paypal.com y te identificas tú, como siempre, con tu MFA o el código que uses.</p></li>
+      <li class="step"><h3>Habeas reutiliza esa sesión</h3><p>Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web.</p></li>
+      <li class="step"><h3>Eliges el destino</h3><p>Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio.</p></li>
+    </ol>
+    <p><strong>Tu contraseña nunca se lee, ni se guarda, ni se envía a ningún sitio</strong>, y no hay ningún proceso trabajando en segundo plano mientras no estás. Es una fuente <strong>auditada</strong> por el proyecto y verificada contra el servicio real.</p>
       <h2>Qué te da PayPal en realidad</h2>
       <p>PayPal no emite una factura por cada movimiento, así que lo que se puede conservar es el registro de actividad —tu historial de compras—: los pagos que has enviado y recibido, cada uno con su fecha, importe, moneda y contraparte. Habeas los recoge paginando la misma llamada que usa la web cuando pulsas «cargar más», y los deja normalizados en el manifiesto junto al resto de tus fuentes.</p>
       <h2>Hasta dónde llega el histórico</h2>
@@ -486,21 +496,6 @@
       </ul>
       <div class="box"><strong>A tener en cuenta:</strong> Habeas no está aquí porque PayPal esconda tu historial —no lo hace—. Está para que ese historial acabe en el mismo archivo que el resto de tus servicios, automáticamente y sin pasar cada mes por la pantalla de exportación.</div>
 
-    <h2>Cómo funciona</h2>
-    <p>No es un servicio que se conecte a paypal.com por su cuenta. Funciona <strong>dentro de tu propio navegador</strong>, aprovechando la sesión que ya tienes abierta:</p>
-    <ol class="steps">
-      <li class="step"><h3>Inicias sesión tú</h3><p>Entras en paypal.com y te identificas tú, como siempre, con tu MFA o el código que uses.</p></li>
-      <li class="step"><h3>Habeas reutiliza esa sesión</h3><p>Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web.</p></li>
-      <li class="step"><h3>Eliges el destino</h3><p>Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio.</p></li>
-    </ol>
-    <p><strong>Tu contraseña nunca se lee, ni se guarda, ni se envía a ningún sitio</strong>, y no hay ningún proceso trabajando en segundo plano mientras no estás. Es una fuente <strong>auditada</strong> por el proyecto y verificada contra el servicio real.</p>
-
-    <div class="cta">
-      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="paypal">Instalar en Chrome</a>
-      <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="paypal">Instalar en Firefox</a>
-    </div>
-    <p class="lead">Gratis y de código abierto (AGPL-3.0). Instala la extensión y activa la fuente «PayPal» desde Ajustes → Explorar fuentes.</p>
-    <p class="lead">Chrome te avisará de que la extensión no es de confianza. Le ocurre a cualquier cuenta de desarrollador registrada hace poco en la Chrome Web Store, se disipa en unos meses y no dice nada del código, que puedes leer entero.</p>
 
     <h2>Preguntas frecuentes</h2>
     <h3>¿Hasta cuándo llega el histórico de PayPal?</h3>

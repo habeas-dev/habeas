@@ -249,10 +249,12 @@
         <p class="note">Definition in the public domain (CC0-1.0); this page’s text CC-BY-4.0.</p>
       </div>
 
-      <div class="cta">
-        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="revolut">Install on Chrome</a>
-        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="revolut">Install on Firefox</a>
-      </div>
+      <aside class="install-cta" aria-label="Install on Chrome">
+      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="revolut">Install on Chrome</a>
+      <a class="btn" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="revolut">Install on Firefox</a>
+      <p class="note">Free and open source (AGPL-3.0). Install it, then turn on the source you need from Settings → Browse sources.</p>
+      <p class="note">Chrome will warn you that the extension is not trusted. That happens to any developer account recently registered on the Chrome Web Store, it fades after a few months, and it says nothing about the code — which you can read in full.</p>
+    </aside>
 
       <div class="card defn">
         <h2>The definition itself</h2>
@@ -565,6 +567,14 @@
         <li><strong>transactions</strong> — each movement with its date, amount, currency, description and counterparty.</li>
         <li><strong>extracto</strong> · PDF or CSV — each document with its date, amount, currency and numbering.</li>
     </ul>
+    <h2>How it works</h2>
+    <p>It is not a service that connects to revolut.com on its own. It runs <strong>inside your own browser</strong>, reusing the session you already have open:</p>
+    <ol class="steps">
+      <li class="step"><h3>Sign in yourself</h3><p>You go to revolut.com and sign in yourself, as always, with your MFA or whatever code you use.</p></li>
+      <li class="step"><h3>Habeas reuses that session</h3><p>Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does.</p></li>
+      <li class="step"><h3>You choose where it goes</h3><p>You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own.</p></li>
+    </ol>
+    <p><strong>Your password is never read, never stored and never sent anywhere</strong>, and nothing runs in the background while you are away. This is an <strong>audited</strong> source, verified by the project against the real service.</p>
       <h2>What Revolut actually gives you</h2>
       <p>Revolut holds two things worth keeping and they are handled separately here. One is the movement history: every payment, transfer and exchange, with the amount that actually moved and the counterparty behind it. The other is the monthly statement, the periodic document you are asked for as proof, available as a PDF or as a CSV over the same operations.</p>
       <h2>How far back it goes</h2>
@@ -576,21 +586,6 @@
         <li>Your accounts here are currency pockets, so the account picker lists them by currency rather than by name, and enabling one does not pull the rest.</li>
       </ul>
 
-    <h2>How it works</h2>
-    <p>It is not a service that connects to revolut.com on its own. It runs <strong>inside your own browser</strong>, reusing the session you already have open:</p>
-    <ol class="steps">
-      <li class="step"><h3>Sign in yourself</h3><p>You go to revolut.com and sign in yourself, as always, with your MFA or whatever code you use.</p></li>
-      <li class="step"><h3>Habeas reuses that session</h3><p>Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does.</p></li>
-      <li class="step"><h3>You choose where it goes</h3><p>You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own.</p></li>
-    </ol>
-    <p><strong>Your password is never read, never stored and never sent anywhere</strong>, and nothing runs in the background while you are away. This is an <strong>audited</strong> source, verified by the project against the real service.</p>
-
-    <div class="cta">
-      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="revolut">Install on Chrome</a>
-      <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="revolut">Install on Firefox</a>
-    </div>
-    <p class="lead">Free and open source (AGPL-3.0). Install the extension and enable the “Revolut” source from Settings → Browse sources.</p>
-    <p class="lead">Chrome will warn you that the extension is not trusted. That happens to any developer account recently registered on the Chrome Web Store, it fades after a few months, and it says nothing about the code — which you can read in full.</p>
 
     <h2>Frequently asked questions</h2>
     <h3>Does Habeas store my Revolut password?</h3>

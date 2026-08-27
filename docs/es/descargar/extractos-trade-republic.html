@@ -273,10 +273,12 @@
         <p class="note">La definición, de dominio público (CC0-1.0); el texto de esta página, CC-BY-4.0.</p>
       </div>
 
-      <div class="cta">
-        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="traderepublic">Instalar en Chrome</a>
-        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="traderepublic">Instalar en Firefox</a>
-      </div>
+      <aside class="install-cta" aria-label="Instalar en Chrome">
+      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="traderepublic">Instalar en Chrome</a>
+      <a class="btn" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="traderepublic">Instalar en Firefox</a>
+      <p class="note">Libre y de código abierto (AGPL-3.0). Instálala y activa en Ajustes → Explorar fuentes la que necesites.</p>
+      <p class="note">Chrome te avisará de que la extensión no es de confianza. Le ocurre a cualquier cuenta de desarrollador registrada hace poco en la Chrome Web Store, se disipa en unos meses y no dice nada del código, que puedes leer entero.</p>
+    </aside>
 
       <div class="card defn">
         <h2>La definición en sí</h2>
@@ -553,6 +555,14 @@
         <li><strong>transactions</strong> — cada posición con su fecha, importe, moneda e instrumento.</li>
         <li><strong>extracto</strong> · PDF o CSV — cada documento con su fecha, importe, moneda y numeración.</li>
     </ul>
+    <h2>Cómo funciona</h2>
+    <p>No es un servicio que se conecte a traderepublic.com por su cuenta. Funciona <strong>dentro de tu propio navegador</strong>, aprovechando la sesión que ya tienes abierta:</p>
+    <ol class="steps">
+      <li class="step"><h3>Inicias sesión tú</h3><p>Entras en traderepublic.com y te identificas tú, como siempre, con tu MFA o el código que uses.</p></li>
+      <li class="step"><h3>Habeas reutiliza esa sesión</h3><p>Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web.</p></li>
+      <li class="step"><h3>Eliges el destino</h3><p>Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio.</p></li>
+    </ol>
+    <p><strong>Tu contraseña nunca se lee, ni se guarda, ni se envía a ningún sitio</strong>, y no hay ningún proceso trabajando en segundo plano mientras no estás. Es una fuente <strong>auditada</strong> por el proyecto y verificada contra el servicio real.</p>
       <h2>Qué te da Trade Republic en realidad</h2>
       <p>Trade Republic da dos conjuntos distintos que aquí se tratan por separado: por un lado el histórico de operaciones, con cada posición y su instrumento; por otro los extractos, que son documentos periódicos y se pueden obtener tanto en PDF como en CSV. Puedes activar solo uno de los dos o los dos a la vez.</p>
       <h2>Hasta dónde llega el histórico</h2>
@@ -564,21 +574,6 @@
         <li>Las operaciones y los extractos se llevan la cuenta por separado, así que activar el segundo más tarde no te obliga a volver a descargar lo primero.</li>
       </ul>
 
-    <h2>Cómo funciona</h2>
-    <p>No es un servicio que se conecte a traderepublic.com por su cuenta. Funciona <strong>dentro de tu propio navegador</strong>, aprovechando la sesión que ya tienes abierta:</p>
-    <ol class="steps">
-      <li class="step"><h3>Inicias sesión tú</h3><p>Entras en traderepublic.com y te identificas tú, como siempre, con tu MFA o el código que uses.</p></li>
-      <li class="step"><h3>Habeas reutiliza esa sesión</h3><p>Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web.</p></li>
-      <li class="step"><h3>Eliges el destino</h3><p>Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio.</p></li>
-    </ol>
-    <p><strong>Tu contraseña nunca se lee, ni se guarda, ni se envía a ningún sitio</strong>, y no hay ningún proceso trabajando en segundo plano mientras no estás. Es una fuente <strong>auditada</strong> por el proyecto y verificada contra el servicio real.</p>
-
-    <div class="cta">
-      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="traderepublic">Instalar en Chrome</a>
-      <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="traderepublic">Instalar en Firefox</a>
-    </div>
-    <p class="lead">Gratis y de código abierto (AGPL-3.0). Instala la extensión y activa la fuente «Trade Republic» desde Ajustes → Explorar fuentes.</p>
-    <p class="lead">Chrome te avisará de que la extensión no es de confianza. Le ocurre a cualquier cuenta de desarrollador registrada hace poco en la Chrome Web Store, se disipa en unos meses y no dice nada del código, que puedes leer entero.</p>
 
     <h2>Preguntas frecuentes</h2>
     <h3>¿Trade Republic tiene una API que pueda usar?</h3>

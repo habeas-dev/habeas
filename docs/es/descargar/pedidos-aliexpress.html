@@ -249,10 +249,12 @@
         <p class="note">La definición, de dominio público (CC0-1.0); el texto de esta página, CC-BY-4.0.</p>
       </div>
 
-      <div class="cta">
-        <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="aliexpress">Instalar en Chrome</a>
-        <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="aliexpress">Instalar en Firefox</a>
-      </div>
+      <aside class="install-cta" aria-label="Instalar en Chrome">
+      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="aliexpress">Instalar en Chrome</a>
+      <a class="btn" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="aliexpress">Instalar en Firefox</a>
+      <p class="note">Libre y de código abierto (AGPL-3.0). Instálala y activa en Ajustes → Explorar fuentes la que necesites.</p>
+      <p class="note">Chrome te avisará de que la extensión no es de confianza. Le ocurre a cualquier cuenta de desarrollador registrada hace poco en la Chrome Web Store, se disipa en unos meses y no dice nada del código, que puedes leer entero.</p>
+    </aside>
 
       <div class="card defn">
         <h2>La definición en sí</h2>
@@ -465,6 +467,14 @@
     <ul>
         <li><strong>recibos de pedidos</strong> — cada compra con su fecha, importe, moneda, tienda y categoría.</li>
     </ul>
+    <h2>Cómo funciona</h2>
+    <p>No es un servicio que se conecte a aliexpress.com por su cuenta. Funciona <strong>dentro de tu propio navegador</strong>, aprovechando la sesión que ya tienes abierta:</p>
+    <ol class="steps">
+      <li class="step"><h3>Inicias sesión tú</h3><p>Entras en aliexpress.com y te identificas tú, como siempre, con tu MFA o el código que uses.</p></li>
+      <li class="step"><h3>Habeas reutiliza esa sesión</h3><p>Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web.</p></li>
+      <li class="step"><h3>Eliges el destino</h3><p>Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio.</p></li>
+    </ol>
+    <p><strong>Tu contraseña nunca se lee, ni se guarda, ni se envía a ningún sitio</strong>, y no hay ningún proceso trabajando en segundo plano mientras no estás. Es una fuente <strong>de la comunidad</strong>: su definición es pública y revisable, y funciona bajo las mismas reglas de seguridad que el resto.</p>
       <h2>Qué te da AliExpress en realidad</h2>
       <p>AliExpress registra cada pedido con su fecha, total, divisa y la tienda que lo vendió, y guarda aparte el detalle del recibo tras una segunda llamada. Habeas junta las dos cosas, así que un pedido llega ya con la información del recibo y no como una línea suelta que aún tendrías que abrir.</p>
       <h2>Particularidades de esta fuente</h2>
@@ -474,21 +484,6 @@
         <li>El detalle del recibo es una petición aparte por pedido, así que un histórico largo tarda aquí proporcionalmente más que en una fuente que lo devuelve todo en una página.</li>
       </ul>
 
-    <h2>Cómo funciona</h2>
-    <p>No es un servicio que se conecte a aliexpress.com por su cuenta. Funciona <strong>dentro de tu propio navegador</strong>, aprovechando la sesión que ya tienes abierta:</p>
-    <ol class="steps">
-      <li class="step"><h3>Inicias sesión tú</h3><p>Entras en aliexpress.com y te identificas tú, como siempre, con tu MFA o el código que uses.</p></li>
-      <li class="step"><h3>Habeas reutiliza esa sesión</h3><p>Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web.</p></li>
-      <li class="step"><h3>Eliges el destino</h3><p>Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio.</p></li>
-    </ol>
-    <p><strong>Tu contraseña nunca se lee, ni se guarda, ni se envía a ningún sitio</strong>, y no hay ningún proceso trabajando en segundo plano mientras no estás. Es una fuente <strong>de la comunidad</strong>: su definición es pública y revisable, y funciona bajo las mismas reglas de seguridad que el resto.</p>
-
-    <div class="cta">
-      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="aliexpress">Instalar en Chrome</a>
-      <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="aliexpress">Instalar en Firefox</a>
-    </div>
-    <p class="lead">Gratis y de código abierto (AGPL-3.0). Instala la extensión y activa la fuente «AliExpress» desde Ajustes → Explorar fuentes.</p>
-    <p class="lead">Chrome te avisará de que la extensión no es de confianza. Le ocurre a cualquier cuenta de desarrollador registrada hace poco en la Chrome Web Store, se disipa en unos meses y no dice nada del código, que puedes leer entero.</p>
 
     <h2>Preguntas frecuentes</h2>
     <h3>¿Habeas guarda mi contraseña de AliExpress?</h3>
