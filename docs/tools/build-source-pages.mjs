@@ -85,6 +85,7 @@ const LANGS = {
       siblings: (group) => `More ${group.toLowerCase()} guides`,
       teachH: 'Your service is not on the list?',
       teachBody: 'Habeas can learn a new one <strong>without any code</strong>. Record mode watches the site’s own API while you browse it normally and drafts the source for you; you test it against your own account, and then keep it to yourself or share it so everyone gets it. That is where most of the catalog came from.',
+      indexKicker: 'Step-by-step guides',
       indexTitle: 'How to download your documents, service by service',
       indexIntro: 'A guide per service: what Habeas extracts from it, in what formats, and what it does not cover.',
       indexAll: 'See the full source catalog',
@@ -168,6 +169,7 @@ const LANGS = {
       siblings: (group) => `Más guías de ${group.toLowerCase()}`,
       teachH: '¿Tu servicio no está en la lista?',
       teachBody: 'Habeas puede aprender uno nuevo <strong>sin programar nada</strong>. El modo grabación observa la propia API del sitio mientras navegas con normalidad y te redacta la fuente; la pruebas contra tu propia cuenta y luego te la quedas o la compartes para que la tenga todo el mundo. De ahí sale la mayor parte del catálogo.',
+      indexKicker: 'Guías paso a paso',
       indexTitle: 'Cómo descargar tus documentos, servicio a servicio',
       indexIntro: 'Una guía por servicio: qué extrae Habeas de él, en qué formatos y qué no cubre.',
       indexAll: 'Ver el catálogo completo de fuentes',
@@ -669,14 +671,19 @@ ${t.nav.map(([href, label]) => `        <a href="${href}">${esc(label)}</a>`).jo
     </div>
   </header>
 
-  <main class="doc">
-    <h1>${esc(t.indexTitle)}</h1>
-    <p class="lead">${esc(t.indexIntro)}</p>
-
-    <div class="cta">
-      <a class="btn primary" href="${CWS}" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="guide-index">${esc(t.installChrome)}</a>
-      <a class="btn primary" href="${AMO}" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="guide-index">${esc(t.installFirefox)}</a>
+  <section class="band">
+    <div class="wrap">
+      <p class="kicker">${esc(t.indexKicker)}</p>
+      <h1>${esc(t.indexTitle)}</h1>
+      <p class="lead">${esc(t.indexIntro)}</p>
+      <div class="cta">
+        <a class="btn btn-p" href="${CWS}" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="guide-index-hero">${esc(t.installChrome)}</a>
+        <a class="btn btn-s" href="${AMO}" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="guide-index-hero">${esc(t.installFirefox)}</a>
+      </div>
     </div>
+  </section>
+
+  <main class="doc">
     <p class="lead">${esc(t.installLead)} ${esc(t.chromeNote)}</p>
 
 ${sections}
