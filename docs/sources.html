@@ -72,10 +72,15 @@
     </div>
   </header>
 
+  <section class="band">
+    <div class="wrap">
+      <p class="kicker" data-t="kicker">Catalogue</p>
+      <h1 data-t="title">Your documents, on your disk.</h1>
+      <p class="sub" data-t="intro">Every source is a readable file stating exactly which service it talks to and what it extracts — as data, never code. Install one from the extension in a click. First-party sources are written and verified by the project; community ones are contributed and open to scrutiny.</p>
+    </div>
+  </section>
+
   <main class="doc">
-    <p class="kicker" data-t="kicker">Catalogue</p>
-    <h1 data-t="title">Your documents, on your disk.</h1>
-    <p class="sub" data-t="intro">The catalog of sources you can install in the Habeas extension. Each one describes — as data, never code — how to read your own documents from a service, within your own session. First-party sources are audited; community ones are contributed and open to ratings &amp; scrutiny.</p>
     <p class="guide-index" style="margin:0 0 18px"><a href="/download/" data-t="guideIndex" data-umami-event="guide-index">Browse the how-to guides</a> →</p>
     <!-- The catalog's obvious failure mode: someone scans the grid, doesn't find their bank, and leaves —
          never learning they could have added it in ten minutes. So the answer sits ABOVE the grid. -->
@@ -345,6 +350,13 @@
     function render() {
       const t = STR[LANG];
       document.querySelectorAll('[data-t]').forEach((el) => { const v = t[el.getAttribute('data-t')]; if (typeof v === 'string') el.textContent = v; });
+      // Generated text — the filter chips and the figures — carries its own translations rather than a
+      // key, because the strings come from the catalogue at build time and there is no table to add a key
+      // to. Same switch, second source: without this they stayed English on the Spanish page.
+      document.querySelectorAll('[data-t-en][data-t-es]').forEach((el) => {
+        const v = el.getAttribute(LANG === 'es' ? 'data-t-es' : 'data-t-en');
+        if (typeof v === 'string') el.textContent = v;
+      });
       document.querySelectorAll('.langswitch button[data-lang]').forEach((b) => b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === LANG)));
       const gi = document.querySelector('.guide-index a');
       if (gi) gi.setAttribute('href', LANG === 'es' ? '/es/descargar/' : '/download/');
