@@ -24,6 +24,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const DOCS = join(here, '..');
 const INDEX_URL = 'https://habeas-dev.github.io/sources/index.json';
 const ORIGIN_SOURCES = 'https://habeas-dev.github.io/sources';
+import { installAside } from './install-cta.mjs';
 const ORIGIN = 'https://habeas.dev';
 const CWS = 'https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog';
 const AMO = 'https://addons.mozilla.org/firefox/addon/habeas/';
@@ -684,9 +685,13 @@ ${t.nav.map(([href, label]) => `        <a href="${href}">${esc(label)}</a>`).jo
   </section>
 
   <main class="doc">
-    <p class="lead">${esc(t.installLead)} ${esc(t.chromeNote)}</p>
-
+    <div class="withaside">
+      <div>
 ${sections}
+
+      </div>
+      ${installAside(t, 'guide-index')}
+    </div>
 
     <h2>${esc(t.teachH)}</h2>
     <p>${t.teachBody}</p>

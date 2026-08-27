@@ -242,3 +242,16 @@ footer a { color: var(--ink); }
   .cards:has(> :nth-child(4):last-child),
   .steps:has(> :nth-child(4):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* The install call to action lives beside the text, never inside it: a reader who has already decided
+   should not scroll back for a button, and one who has not should not be stopped mid-sentence by one.
+   It sticks so it stays reachable down a long page, and drops below the prose on a narrow screen. */
+.install-cta { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: var(--surface); }
+.install-cta .btn { display: block; text-align: center; margin-bottom: 8px; }
+.install-cta .note { font-size: 12.5px; line-height: 1.5; color: var(--muted); margin: 10px 0 0; }
+.withaside { display: grid; grid-template-columns: minmax(0, 1fr) 268px; gap: 40px; align-items: start; }
+.withaside > .install-cta { position: sticky; top: 78px; }
+@media (max-width: 860px) {
+  .withaside { grid-template-columns: 1fr; gap: 22px; }
+  .withaside > .install-cta { position: static; }
+}
