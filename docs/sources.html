@@ -395,7 +395,15 @@
     document.getElementById('country').addEventListener('change', (e) => { FILTER = e.target.value; render(); });
     document.getElementById('format').addEventListener('change', (e) => { FMT = e.target.value; render(); });
     document.getElementById('group').addEventListener('change', (e) => { GROUP = e.target.value; render(); });
-    (function () { let l; try { l = localStorage.getItem('habeas-lang'); } catch (e) {} if (l !== 'en' && l !== 'es') l = (navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en'; LANG = l; document.documentElement.lang = l; globalThis.habeasApplyTopNavLanguage?.(l); })();
+    (function () {
+      // ?lang= wins over everything. This page is one document in two languages, so arriving from a
+      // Spanish page has to state the language rather than hope for it: a reader who once pressed EN
+      // carries that preference for good, and would land here in English from every Spanish page.
+      let l = new URLSearchParams(location.search).get('lang');
+      if (l !== 'en' && l !== 'es') { try { l = localStorage.getItem('habeas-lang'); } catch (e) {} }
+      if (l !== 'en' && l !== 'es') l = (navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en';
+      try { localStorage.setItem('habeas-lang', l); } catch (e) {}
+      LANG = l; document.documentElement.lang = l; globalThis.habeasApplyTopNavLanguage?.(l); })();
     render();
 
     fetch(INDEX).then((r) => r.json()).then((data) => {

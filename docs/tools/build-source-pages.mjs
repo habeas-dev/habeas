@@ -93,6 +93,7 @@ const LANGS = {
       indexAll: 'See the full source catalog',
       other: 'Other sources',
       otherBody: 'Habeas works with more Spanish and international services. <a href="/sources.html">See the full catalog</a> or read <a href="/why-habeas.html">why Habeas exists</a>.',
+      cat: '/sources.html',
       nav: [['/', 'Home'], ['/why-habeas.html', 'Why Habeas?'], ['/sources.html', 'Sources'], ['/developers.html', 'Developers'],
             ['/architecture.html', 'Architecture'], ['/privacy.html', 'Privacy'], ['/terms.html', 'Terms']],
       otherLang: 'Español', otherLangCode: 'ES',
@@ -176,8 +177,9 @@ const LANGS = {
       indexIntro: 'Una guía por servicio: qué extrae Habeas de él, en qué formatos y qué no cubre.',
       indexAll: 'Ver el catálogo completo de fuentes',
       other: 'Otras fuentes',
-      otherBody: 'Habeas funciona con más servicios españoles e internacionales. <a href="/sources.html">Mira el catálogo completo</a> o lee <a href="/es/por-que-habeas.html">por qué existe Habeas</a>.',
-      nav: [['/', 'Inicio'], ['/es/por-que-habeas.html', '¿Por qué Habeas?'], ['/sources.html', 'Fuentes'], ['/es/desarrolladores.html', 'Desarrolladores'],
+      otherBody: 'Habeas funciona con más servicios españoles e internacionales. <a href="/sources.html?lang=es">Mira el catálogo completo</a> o lee <a href="/es/por-que-habeas.html">por qué existe Habeas</a>.',
+      cat: '/sources.html?lang=es',
+      nav: [['/', 'Inicio'], ['/es/por-que-habeas.html', '¿Por qué Habeas?'], ['/sources.html?lang=es', 'Fuentes'], ['/es/desarrolladores.html', 'Desarrolladores'],
             ['/architecture.html', 'Arquitectura'], ['/es/privacidad.html', 'Privacidad'], ['/es/terminos.html', 'Términos']],
       otherLang: 'English', otherLangCode: 'EN',
       betaH1: (brand) => `${brand} — fuente experimental, sin verificar`,
@@ -228,6 +230,20 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': 
 // Black or white lettering, whichever is readable on the colour behind it. Amazon's orange and Leroy
 // Merlin's green are light enough that white on them fails contrast; assuming white because most brand
 // colours are dark would leave exactly those two unreadable.
+// The same mark the index card carries, at the head of the source's own sidebar: a reader arriving from
+// the index meets the thing they clicked. Falls back to the group's icon and colour exactly as the card
+// does, so a source added without an entry still renders.
+function sourceMark(meta) {
+  const mark = ((typeof overrides !== 'undefined' && overrides[meta.id]) || {}).mark || {};
+  const g = groupOf(meta);
+  const tint = mark.tint || g.tint;
+  const glyph = mark.initials ? esc(mark.initials) : g.icon;
+  return `<div class="srcmark" style="--tint:${tint};--ink:${onColour(tint)}">
+        <span class="mark${mark.initials ? ' letters' : ''}" aria-hidden="true">${glyph}</span>
+        <span class="nm">${esc(meta.name || meta.service || meta.id)}</span>
+      </div>`;
+}
+
 function onColour(hex) {
   const h = String(hex).replace('#', '');
   const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
@@ -312,7 +328,7 @@ function page({ lang, meta, full, entry, siblings, isBeta }) {
       <ul class="changelog">
 ${shown.map((e) => `        <li class="rev"><span class="ver">${esc(String(e.version))}</span> — ${esc(noteIn(e.changes))}</li>`).join('\n')}
       </ul>
-${log.length > HISTORY_MAX ? `      <p class="lead"><a href="/sources.html#${esc(meta.id)}">${esc(t.historyMore)} →</a></p>\n` : ''}` : '';
+${log.length > HISTORY_MAX ? `      <p class="lead"><a href="${L.cat}#${esc(meta.id)}">${esc(t.historyMore)} →</a></p>\n` : ''}` : '';
 
   // Only ever what each person themselves supplied. Never derived from git, a PR author or a handoff —
   // publishing someone's name is theirs to consent to. The name is the link so the sentence reads as a
@@ -519,6 +535,7 @@ ${other ? `        <a class="langlink" href="${LANGS[other].path(entry[other].sl
 
   <main class="doc"${enriched ? ' data-habeas-enriched' : ''}>
     <aside>
+      ${sourceMark(meta)}
       <div class="card">
         <h2>${esc(t.asideAbout)}</h2>
         <dl>
@@ -706,7 +723,7 @@ ${sections}
     <h2>${esc(t.teachH)}</h2>
     <p>${t.teachBody}</p>
 
-    <p style="margin-top:32px"><a href="/sources.html">${esc(t.indexAll)} →</a></p>
+    <p style="margin-top:32px"><a href="${L.cat}">${esc(t.indexAll)} →</a></p>
   </main>
 </body>
 </html>

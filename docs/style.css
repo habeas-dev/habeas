@@ -273,3 +273,11 @@ footer a { color: var(--ink); }
    letters need contrast to be read and an icon does not. */
 .gcard .mark.letters { background: var(--tint, #1c5a4f); color: var(--ink, #fff);
                        font-family: var(--font-head); font-size: 12.5px; letter-spacing: .02em; }
+/* The source's mark heads its own sidebar, matching the card the reader clicked to get here. */
+.srcmark { display: flex; align-items: center; gap: 11px; margin: 0 0 14px; }
+.srcmark .mark { flex: none; width: 40px; height: 40px; border-radius: 11px; display: grid;
+                 place-items: center; font-size: 19px; line-height: 1;
+                 background: color-mix(in srgb, var(--tint, #1c5a4f) 16%, transparent); }
+.srcmark .mark.letters { background: var(--tint, #1c5a4f); color: var(--ink, #fff);
+                         font-family: var(--font-head); font-size: 14px; }
+.srcmark .nm { font-family: var(--font-head); font-size: 15.5px; line-height: 1.2; }
