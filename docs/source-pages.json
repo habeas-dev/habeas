@@ -87,7 +87,7 @@
       ]
     },
     "mark": {
-      "initials": "PA",
+      "initials": "PP",
       "tint": "#003087"
     }
   },
@@ -259,7 +259,7 @@
       ]
     },
     "mark": {
-      "initials": "AM",
+      "initials": "a",
       "tint": "#FF9900"
     }
   },
@@ -365,7 +365,7 @@
   },
   "ing-es": {
     "mark": {
-      "initials": "IN",
+      "initials": "ING",
       "tint": "#FF6200"
     }
   },
@@ -377,13 +377,13 @@
   },
   "n26": {
     "mark": {
-      "initials": "N2",
+      "initials": "N26",
       "tint": ""
     }
   },
   "openbank-es": {
     "mark": {
-      "initials": "OP",
+      "initials": "OB",
       "tint": "#EC0000"
     }
   },
@@ -401,7 +401,7 @@
   },
   "pepephone-es": {
     "mark": {
-      "initials": "PE",
+      "initials": "PP",
       "tint": "#E30613"
     }
   },
