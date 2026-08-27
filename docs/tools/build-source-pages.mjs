@@ -225,6 +225,17 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': 
 // shape can be described differently, but a bump that only adds fields must not make the page fall back to
 // printing the raw identifier at the reader — so an unknown version borrows the base schema's wording, and
 // an unknown schema says something true rather than something technical.
+// Black or white lettering, whichever is readable on the colour behind it. Amazon's orange and Leroy
+// Merlin's green are light enough that white on them fails contrast; assuming white because most brand
+// colours are dark would leave exactly those two unreadable.
+function onColour(hex) {
+  const h = String(hex).replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16) / 255)
+    .map((v) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)));
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) > 0.42 ? '#17211d' : '#ffffff';
+}
+
 function schemaText(L, lang, schema) {
   if (!schema) return lang === 'es' ? 'los datos que el servicio expone' : 'the data the service exposes';
   if (L.schema[schema]) return L.schema[schema];
@@ -604,7 +615,7 @@ function indexPage({ lang, groups }) {
   // is indexed and the wording on screen stay identical.
   const sections = groups.filter((g) => g.items.length).map((g) => `    <h2 id="g-${esc(g.id)}">${esc(g[lang])}</h2>
     <div class="guidecards">
-${g.items.map((i) => `      <a class="gcard" href="${L.path(i.slug)}" style="--tint:${(i.mark && i.mark.tint) || g.tint}">
+${g.items.map((i) => `      <a class="gcard" href="${L.path(i.slug)}" style="--tint:${(i.mark && i.mark.tint) || g.tint};--ink:${onColour((i.mark && i.mark.tint) || g.tint)}">
         <span class="mark${i.mark && i.mark.initials ? ' letters' : ''}" aria-hidden="true">${i.mark && i.mark.initials ? esc(i.mark.initials) : g.icon}</span>
         <span class="gt">${esc(i.h1)}</span>
       </a>`).join('\n')}

@@ -88,7 +88,7 @@
     },
     "mark": {
       "initials": "PA",
-      "tint": ""
+      "tint": "#003087"
     }
   },
   "traderepublic": {
@@ -140,7 +140,7 @@
     },
     "mark": {
       "initials": "TR",
-      "tint": ""
+      "tint": "#000000"
     }
   },
   "carrefour-es": {
@@ -194,7 +194,7 @@
     },
     "mark": {
       "initials": "CA",
-      "tint": ""
+      "tint": "#004E9F"
     }
   },
   "revolut": {
@@ -218,7 +218,7 @@
     },
     "mark": {
       "initials": "RE",
-      "tint": ""
+      "tint": "#191C1F"
     }
   },
   "raisin": {
@@ -260,7 +260,7 @@
     },
     "mark": {
       "initials": "AM",
-      "tint": ""
+      "tint": "#FF9900"
     }
   },
   "aliexpress": {
@@ -282,7 +282,7 @@
     },
     "mark": {
       "initials": "AL",
-      "tint": ""
+      "tint": "#E62E04"
     }
   },
   "hover-com": {
@@ -318,7 +318,7 @@
   "americanexpress": {
     "mark": {
       "initials": "AE",
-      "tint": ""
+      "tint": "#006FCF"
     }
   },
   "bipdrive-es": {
@@ -330,13 +330,13 @@
   "caixabank-consumer-es": {
     "mark": {
       "initials": "CC",
-      "tint": ""
+      "tint": "#007DC5"
     }
   },
   "decathlon-es": {
     "mark": {
       "initials": "DE",
-      "tint": ""
+      "tint": "#0082C3"
     }
   },
   "degiro": {
@@ -348,31 +348,31 @@
   "dia-es": {
     "mark": {
       "initials": "DI",
-      "tint": ""
+      "tint": "#E30613"
     }
   },
   "financiera-elcorteingles-es": {
     "mark": {
       "initials": "FEC",
-      "tint": ""
+      "tint": "#00694E"
     }
   },
   "ikea-es": {
     "mark": {
       "initials": "IK",
-      "tint": ""
+      "tint": "#0058A3"
     }
   },
   "ing-es": {
     "mark": {
       "initials": "IN",
-      "tint": ""
+      "tint": "#FF6200"
     }
   },
   "leroymerlin-es": {
     "mark": {
       "initials": "LM",
-      "tint": ""
+      "tint": "#78BE20"
     }
   },
   "n26": {
@@ -384,7 +384,7 @@
   "openbank-es": {
     "mark": {
       "initials": "OP",
-      "tint": ""
+      "tint": "#EC0000"
     }
   },
   "pagatelia-es": {
@@ -396,19 +396,19 @@
   "pepeenergy-es": {
     "mark": {
       "initials": "PE",
-      "tint": ""
+      "tint": "#CC0000"
     }
   },
   "pepephone-es": {
     "mark": {
       "initials": "PE",
-      "tint": ""
+      "tint": "#E30613"
     }
   },
   "wizink-es": {
     "mark": {
       "initials": "WI",
-      "tint": ""
+      "tint": "#E5007E"
     }
   }
 }
