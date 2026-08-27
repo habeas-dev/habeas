@@ -563,8 +563,8 @@ ${rows}
 ${detail}${retention}${quirksBlock}${note}${gaps}
     <h2>${esc(t.how)}</h2>
     <p>${t.howIntro(esc(meta.domain))}</p>
-    <ol>
-${steps.map((x) => `      <li>${esc(x)}</li>`).join('\n')}
+    <ol class="steps">
+${steps.map((x, i) => `      <li class="step"><h3>${esc(t.stepNames[i])}</h3><p>${esc(x)}</p></li>`).join('\n')}
     </ol>
     <p>${t.never} ${trust}</p>
 

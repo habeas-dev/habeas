@@ -543,10 +543,10 @@
 
     <h2>How it works</h2>
     <p>It is not a service that connects to wizink.es on its own. It runs <strong>inside your own browser</strong>, reusing the session you already have open:</p>
-    <ol>
-      <li>You go to wizink.es and sign in yourself, as always, with your MFA or whatever code you use.</li>
-      <li>Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does.</li>
-      <li>You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own.</li>
+    <ol class="steps">
+      <li class="step"><h3>Sign in yourself</h3><p>You go to wizink.es and sign in yourself, as always, with your MFA or whatever code you use.</p></li>
+      <li class="step"><h3>Habeas reuses that session</h3><p>Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does.</p></li>
+      <li class="step"><h3>You choose where it goes</h3><p>You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own.</p></li>
     </ol>
     <p><strong>Your password is never read, never stored and never sent anywhere</strong>, and nothing runs in the background while you are away. This is an <strong>audited</strong> source, verified by the project against the real service.</p>
 

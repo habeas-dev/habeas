@@ -219,7 +219,7 @@ footer a { color: var(--ink); }
 
 /* Numbered steps. On a source page these are generated from the same HowTo data
    the page already marks up — visible text and structured data must not diverge. */
-.steps { counter-reset: step; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; margin: 26px 0; }
+.steps { counter-reset: step; list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; margin: 26px 0; }
 .steps .step { position: relative; border-top: 2px solid var(--line); padding-top: 15px; }
 .steps .step::before {
   counter-increment: step; content: counter(step); position: absolute; top: -11px; left: 0;

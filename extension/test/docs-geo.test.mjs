@@ -36,7 +36,9 @@ test('every guide declares its FAQ and its procedure', () => {
 
 test('the steps are marked up as ordered, because they are', () => {
   const h = read(guides()[0]);
-  assert.match(h, /<ol>[\s\S]*?<li>[\s\S]*?<\/ol>/, 'the procedure is still an unordered list');
+  // Attributes allowed: the steps are presented as a numbered grid, so the list carries a class. What
+  // matters is that three sequential steps stay an <ol> of <li> and not a stack of styled divs.
+  assert.match(h, /<ol[^>]*>[\s\S]*?<li[^>]*>[\s\S]*?<\/ol>/, 'the procedure is still an unordered list');
 });
 
 test('every JSON-LD block on every guide actually parses', () => {
