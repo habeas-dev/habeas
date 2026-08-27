@@ -18,7 +18,7 @@
   "categories": [
     "banking"
   ],
-  "version": "2026-08-26.5",
+  "version": "2026-08-26.6",
   "minVersion": "0.10.0.1",
   "minorUnits": true,
   "keepRaw": true,
@@ -194,6 +194,13 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-08-26.6",
+      "changes": {
+        "en": "Reports the amount actually charged (`amountWithCharges`) rather than the interbank conversion (`amount`). The two agree whenever nothing was charged, so the old field looked right in almost every movement and was wrong in exactly those carrying a fee — the weekend currency surcharge that 2026-08-26.3 could only document among them. Verified against a real archive of 208 movements: five change, all five to the value the service itself declares, and none loses its amount. The behaviour shipped in 2026-08-26.5, which went out without this note. Needs extension 0.10.1 or newer, which can read a field with a fallback path.",
+        "es": "Informa del importe realmente cargado (`amountWithCharges`) en lugar de la conversión interbancaria (`amount`). Ambos coinciden siempre que no hubo comisión, así que el campo anterior parecía correcto en casi todos los movimientos y fallaba justo en los que llevaban una — entre ellos el recargo por divisa en fin de semana que 2026-08-26.3 solo pudo documentar. Verificado contra un archivo real de 208 movimientos: cambian cinco, los cinco al valor que declara el propio servicio, y ninguno se queda sin importe. El comportamiento salió en 2026-08-26.5, que se publicó sin esta nota. Requiere la extensión 0.10.1 o posterior, que sabe leer un campo con ruta de reserva."
+      }
+    },
     {
       "version": "2026-08-26.4",
       "changes": {

@@ -197,6 +197,19 @@ export function validateAdapter(adapter) {
     // resolved output must be a valid extraction; otherwise the source itself is the single output.
     if (adapter.streams && adapter.streams.length) { for (const o of outputsOf(adapter)) checkExtraction(resolveOutput(adapter, o.id), req, o.id); }
     else checkExtraction(adapter, req);
+
+    // A published version must say what it changed. The failure this catches is quiet and expensive: a
+    // source is bumped, the catalog serves the new version, and its guide page on habeas.dev renders a
+    // history that stops one entry earlier — so the page shows a version whose change is undocumented,
+    // and any older entry describing the old behaviour keeps standing as if it were still true. That is
+    // worse than an absent changelog, because a reader has no way to tell the history is behind.
+    // Only enforced once a source keeps a changelog at all: the first version of a new source has
+    // nothing to report against, and demanding an entry there would just invite a filler line.
+    if (Array.isArray(adapter.changelog) && adapter.changelog.length) {
+      const versions = adapter.changelog.map((e) => e && e.version);
+      req(versions.includes(adapter.version),
+        `changelog has no entry for the current version (${adapter.version}); newest entry is ${versions[0]}`);
+    }
     const auth = adapter.auth || {};
     req(Array.isArray(auth.replayHeaders), 'auth.replayHeaders must be an array (may be empty for cookie auth)');
     if (adapter.throttle != null) {

@@ -230,7 +230,7 @@
       <div class="card">
         <h2>Sobre esta fuente</h2>
         <dl>
-          <dt>Versión</dt><dd>2026-08-26.5</dd>
+          <dt>Versión</dt><dd>2026-08-26.6</dd>
           <dt>Confianza</dt><dd>first-party</dd>
           <dt>Cobertura</dt><dd>global</dd>
           <dt>Licencia</dt><dd>CC0-1.0</dd>
@@ -269,7 +269,7 @@
   &quot;categories&quot;: [
     &quot;banking&quot;
   ],
-  &quot;version&quot;: &quot;2026-08-26.5&quot;,
+  &quot;version&quot;: &quot;2026-08-26.6&quot;,
   &quot;minVersion&quot;: &quot;0.10.0.1&quot;,
   &quot;minorUnits&quot;: true,
   &quot;keepRaw&quot;: true,
@@ -446,6 +446,13 @@
   ],
   &quot;changelog&quot;: [
     {
+      &quot;version&quot;: &quot;2026-08-26.6&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Reports the amount actually charged (`amountWithCharges`) rather than the interbank conversion (`amount`). The two agree whenever nothing was charged, so the old field looked right in almost every movement and was wrong in exactly those carrying a fee — the weekend currency surcharge that 2026-08-26.3 could only document among them. Verified against a real archive of 208 movements: five change, all five to the value the service itself declares, and none loses its amount. The behaviour shipped in 2026-08-26.5, which went out without this note. Needs extension 0.10.1 or newer, which can read a field with a fallback path.&quot;,
+        &quot;es&quot;: &quot;Informa del importe realmente cargado (`amountWithCharges`) en lugar de la conversión interbancaria (`amount`). Ambos coinciden siempre que no hubo comisión, así que el campo anterior parecía correcto en casi todos los movimientos y fallaba justo en los que llevaban una — entre ellos el recargo por divisa en fin de semana que 2026-08-26.3 solo pudo documentar. Verificado contra un archivo real de 208 movimientos: cambian cinco, los cinco al valor que declara el propio servicio, y ninguno se queda sin importe. El comportamiento salió en 2026-08-26.5, que se publicó sin esta nota. Requiere la extensión 0.10.1 o posterior, que sabe leer un campo con ruta de reserva.&quot;
+      }
+    },
+    {
       &quot;version&quot;: &quot;2026-08-26.4&quot;,
       &quot;changes&quot;: {
         &quot;en&quot;: &quot;Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.&quot;,
@@ -588,11 +595,11 @@
       <h2>Qué ha cambiado en esta fuente</h2>
       <p>Esta fuente es una definición pública y cada cambio queda registrado. De lo más reciente a lo más antiguo:</p>
       <ul class="changelog">
+        <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Informa del importe realmente cargado (`amountWithCharges`) en lugar de la conversión interbancaria (`amount`). Ambos coinciden siempre que no hubo comisión, así que el campo anterior parecía correcto en casi todos los movimientos y fallaba justo en los que llevaban una — entre ellos el recargo por divisa en fin de semana que 2026-08-26.3 solo pudo documentar. Verificado contra un archivo real de 208 movimientos: cambian cinco, los cinco al valor que declara el propio servicio, y ninguno se queda sin importe. El comportamiento salió en 2026-08-26.5, que se publicó sin esta nota. Requiere la extensión 0.10.1 o posterior, que sabe leer un campo con ruta de reserva.</li>
         <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga.</li>
         <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Documenta un límite conocido en vez de arreglarlo: los pagos con tarjeta en divisa hechos en fin de semana llegan un 1% cortos, porque el recargo de Revolut fuera de horario sale del saldo pero no aparece en los datos. Son 1,48 € en 3 de 167 movimientos, y cualquier forma de corregirlo cuesta más de lo que recupera.</li>
         <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Descarta las verificaciones de tarjeta (autorizaciones de 0 EUR, marcadas con cardVerification): no mueven dinero y no son movimientos. Corrige las transferencias con vaults: Revolut las contabiliza desde el lado que paga, así que el dinero que volvía de un bolsillo de ahorro llegaba en negativo, y el saldo que arrastran pertenece al vault y no a la cuenta personal. Reportado contra 167 movimientos reales, de los cuales 151 de 166 enlaces de saldo ya encadenaban al céntimo. Descarta además todo lo que no esté en estado COMPLETED (los 5 DECLINED y 1 REVERTED de la muestra eran cargos reintentados cuyo gemelo correcto también llegaba).</li>
         <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.</li>
-        <li class="rev"><time datetime="2026-08-12">2026-08-12</time> — La sincronización automática ya no arranca hasta que app.revolut.com/home ha terminado de cargar. La app dispara peticiones autenticadas en pantallas anteriores, así que una sincronización podía empezar antes de que existiera la vista con los datos.</li>
       </ul>
       <p class="lead"><a href="/sources.html#revolut">Ver el historial completo en el catálogo →</a></p>
 
