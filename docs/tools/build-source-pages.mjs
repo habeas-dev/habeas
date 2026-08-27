@@ -174,7 +174,7 @@ const LANGS = {
       other: 'Otras fuentes',
       otherBody: 'Habeas funciona con más servicios españoles e internacionales. <a href="/sources.html">Mira el catálogo completo</a> o lee <a href="/es/por-que-habeas.html">por qué existe Habeas</a>.',
       nav: [['/', 'Inicio'], ['/es/por-que-habeas.html', '¿Por qué Habeas?'], ['/sources.html', 'Fuentes'], ['/es/desarrolladores.html', 'Desarrolladores'],
-            ['/architecture.html', 'Arquitectura'], ['/privacy.html', 'Privacidad'], ['/terms.html', 'Términos']],
+            ['/architecture.html', 'Arquitectura'], ['/es/privacidad.html', 'Privacidad'], ['/es/terminos.html', 'Términos']],
       otherLang: 'English', otherLangCode: 'EN',
       betaH1: (brand) => `${brand} — fuente experimental, sin verificar`,
       betaIntro: (brand) => `Un borrador de definición para ${brand}. Nadie la ha ejecutado todavía contra una cuenta real, así que puede no extraer nada. Esta página existe para que quien SÍ tenga cuenta pueda probarla y contar qué pasó.`,

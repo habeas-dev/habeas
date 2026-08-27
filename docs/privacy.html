@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Habeas — Privacy Policy</title>
   <meta name="description" content="How Habeas handles your data: local-first, no stored logins, and Google user data used only to write your own exported documents to your Drive." />
+  <link rel="alternate" hreflang="en" href="https://habeas.dev/privacy.html" />
+  <link rel="alternate" hreflang="es" href="https://habeas.dev/es/privacidad.html" />
+  <link rel="alternate" hreflang="x-default" href="https://habeas.dev/privacy.html" />
   <link rel="canonical" href="https://habeas.dev/privacy.html" />
   <link rel="icon" type="image/svg+xml" href="logo.svg" />
   <link rel="stylesheet" href="style.css" />
@@ -59,8 +62,7 @@
   </header>
 
   <main class="doc">
-    <div data-lang-content="en">
-    <h1>Privacy Policy</h1>
+        <h1>Privacy Policy</h1>
     <p class="updated">Last updated: 8 August 2026</p>
 
     <p><strong>Habeas</strong> is a free, open-source (AGPL-3.0) browser extension that helps you extract
@@ -167,105 +169,16 @@
     <p>Questions or requests: open an issue at
       <a href="https://github.com/habeas-dev/habeas">github.com/habeas-dev/habeas</a>.</p>
 
-    </div><!-- /en -->
+    <!-- /en -->
 
-    <div data-lang-content="es" lang="es" hidden>
-    <h1>Política de Privacidad</h1>
-    <p class="updated">Última actualización: 8 de agosto de 2026</p>
-      <p><strong>Habeas</strong> es una extensión de navegador libre y de código abierto (AGPL-3.0) que te ayuda a
-        extraer <em>tus propios</em> datos —tickets, facturas, movimientos de tarjeta e inversiones— de servicios
-        sin API ni exportación, íntegramente dentro de tu propia sesión ya autenticada. Habeas no es una empresa y
-        no tiene servidores que vean tus documentos.</p>
-
-      <div class="box"><strong>En corto:</strong> Habeas es local-first. Tus documentos y tu sesión no salen del
-        navegador <em>salvo que elijas un destino</em>. Nunca lee, guarda ni transmite tus contraseñas. Solo envía
-        datos al lugar que tú elijas (descarga, carpeta local, tu propio Google Drive, o un endpoint que
-        configures).</div>
-
-      <h2>1. Qué datos usa</h2>
-      <ul>
-        <li>Los datos de <strong>tu cuenta</strong> en servicios donde ya has iniciado sesión, leídos por la API web
-          del propio servicio con tu sesión.</li>
-        <li><strong>Tokens/cabeceras de sesión</strong> para esas peticiones: viven solo en memoria, nunca en disco,
-          y se borran al cerrar el navegador.</li>
-        <li><strong>Ajustes</strong>, registro de entregas y log de actividad, guardados en tu dispositivo y que
-          Habeas no envía a ningún sitio.</li>
-      </ul>
-      <p><strong>Habeas nunca lee, guarda, transmite ni autocompleta las credenciales con las que inicias
-        sesión.</strong> Inicias sesión tú mismo (MFA incluido). No hay scraping en segundo plano mientras no estás.</p>
-      <p>El acceso que configuras para un <em>destino</em> —un token de Dropbox/Drive/S3, la clave de un endpoint
-        HTTP— es otra cosa distinta, y nunca incluye tu login a ninguna fuente. Queda bajo tu control: una
-        <strong>Bóveda de credenciales</strong> opcional puede guardarlo cifrado bajo una contraseña que solo tú
-        tienes (solo se almacena ese cifrado, inservible sin tu contraseña), para reutilizar tus destinos entre
-        navegadores.</p>
-
-      <h2>2. A dónde van tus datos</h2>
-      <p>Nada sale del navegador salvo que elijas un destino: <strong>Descarga</strong>, <strong>Carpeta
-        local</strong>, <strong>Google Drive</strong> (sección 3), o un <strong>endpoint HTTP</strong> que tú
-        configuras.</p>
-
-      <h2>3. Datos de usuario de Google (Google Drive)</h2>
-      <p>Si —y solo si— conectas Google Drive como destino, Habeas solicita el permiso
-        <code>drive.file</code>, que da acceso <strong>únicamente a los ficheros que la propia extensión crea</strong>
-        en tu Drive. Habeas <strong>no puede ver ni tocar tus demás ficheros</strong>. El token OAuth se guarda solo
-        en memoria y se usa exclusivamente para subir a tu Drive los documentos que pediste exportar. Los datos de
-        usuario de Google <strong>no</strong> se venden, comparten, ni se usan para publicidad o para entrenar
-        modelos.</p>
-      <div class="box"><strong>Uso limitado.</strong> El uso por parte de Habeas de la información recibida de las
-        APIs de Google se adhiere a la <a href="https://developers.google.com/terms/api-services-user-data-policy">Política
-        de Datos de Usuario de los Servicios de API de Google</a>, incluidos los requisitos de Uso Limitado.</div>
-
-      <h2>4. Catálogo comunitario</h2>
-      <p>La extensión puede consultar un catálogo público de "sources" comunitarios (JSON estático). Explorar o
-        instalar no envía datos personales.</p>
-
-      <h2>5. Valoraciones y comentarios (opcional)</h2>
-      <p>Si valoras o comentas una fuente, ese texto se envía a <code>api.habeas.dev</code> y se guarda. Para
-        limitar el abuso guardamos un <strong>hash con sal de tu IP</strong> (nunca la IP en claro). No se requiere
-        ni recoge cuenta, nombre o email. No incluyas datos personales en un comentario.</p>
-
-      <h2>6. Integraciones de sitios</h2>
-      <p>Una web puede pedir a Habeas crear un flujo de datos o recolectar por ti. Nunca ocurre en silencio: un sitio
-        solo puede enviar datos <strong>a su propio dominio</strong>, y nada se registra ni ejecuta hasta que
-        <strong>lo apruebas explícitamente</strong>. Puedes revocarlo cuando quieras en Ajustes.</p>
-
-      <h2>7. Analítica y rastreo</h2>
-      <p><strong>La extensión</strong> <strong>no tiene analítica, telemetría ni rastreadores</strong> de terceros.
-        Nunca llama a casa: qué extraes, de qué servicio y cuándo lo sabe solo tu navegador. Además aloja sus
-        propias fuentes tipográficas, así que no hace peticiones de fuentes a terceros.</p>
-      <p><strong>Esta web</strong> (habeas.dev) mide su propio tráfico con <a href="https://umami.is">Umami</a>,
-        alojado en nuestra infraestructura: no es un servicio de analítica de terceros ni se comparte nada con
-        ninguno. <strong>No usa cookies</strong> ni guarda <strong>direcciones IP</strong>; las visitas se cuentan
-        mediante un hash que rota a diario, así que no se te puede seguir de un día para otro, y nunca entre
-        sitios distintos. Lo que se registra es agregado y no identificativo: página visitada, referente, país,
-        navegador y tipo de dispositivo. No se vende, no se comparte y no se usa para publicidad ni para crear
-        perfiles. Si lo bloqueas, la web funciona exactamente igual.</p>
-
-      <h2>8. Conservación y control</h2>
-      <p>Todo lo que Habeas guarda vive en tu dispositivo. Puedes borrar ajustes, registro y log cuando quieras, o
-        eliminar la extensión. Los datos de sesión son solo de memoria.</p>
-
-      <h2>9. Base legal</h2>
-      <p>Habeas opera sobre <em>tus</em> datos, en <em>tu</em> sesión, con software que <em>tú</em> ejecutas
-        (GDPR Art. 20 / <em>habeas data</em>). Cumplir los Términos de cada servicio es tu responsabilidad.</p>
-
-      <h2>10. Menores</h2>
-      <p>Habeas no está dirigido a menores de 13 años (o la edad mínima equivalente en tu jurisdicción).</p>
-
-      <h2>11. Cambios</h2>
-      <p>Podemos actualizar esta política; cambiará la fecha de "Última actualización" y los cambios materiales se
-        anotarán en el repositorio de GitHub.</p>
-
-      <h2>12. Contacto</h2>
-      <p>Dudas o solicitudes: abre una incidencia en
-        <a href="https://github.com/habeas-dev/habeas">github.com/habeas-dev/habeas</a>.</p>
-    </div>
+    
   </main>
 
   <script src="nav-i18n.js"></script>
   <script>
+      const KEY = 'habeas-lang', HERE = 'en', ALT = { en: '/privacy.html', es: '/es/privacidad.html' };
     (function () {
-      const KEY = 'habeas-lang';
+      const KEY = 'habeas-lang', HERE = 'en', ALT = { en: '/privacy.html', es: '/es/privacidad.html' };
       const saved = localStorage.getItem(KEY);
       const lang = (saved === 'en' || saved === 'es') ? saved
         : ((navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en');
@@ -273,7 +186,7 @@
       function apply(l) {
         document.documentElement.lang = l;
         globalThis.habeasApplyTopNavLanguage?.(l);
-        document.querySelectorAll('[data-lang-content]').forEach((el) => { el.hidden = el.getAttribute('data-lang-content') !== l; });
+        if (l !== HERE) location.href = ALT[l]; });
         btns.forEach((b) => b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === l)));
       }
       btns.forEach((b) => b.addEventListener('click', () => { const l = b.getAttribute('data-lang'); localStorage.setItem(KEY, l); apply(l); }));
