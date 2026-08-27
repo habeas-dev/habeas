@@ -33,8 +33,14 @@ transaction@1 | investment@1`.
 
 ## `changelog` — one entry per published version
 
-Bumping `version` without adding an entry is refused by CI. A version identifies one exact
-content permanently, so the entry is the only place a reader can find out what changed.
+Bumping `version` without adding an entry is refused by CI. A version identifies one
+*behaviour* permanently, so the entry is the only place a reader can find out what changed.
+
+You do **not** need a bump to fix the wording of a note, the guide copy, the brand or the
+attribution. Those are served from `index.json`, so a correction reaches the website and the
+marketplace immediately, and bumping for a sentence would offer every user a pointless update.
+Change the definition and you must bump: CI publishes a hash of everything except those
+presentational fields and refuses a same-version republish whose hash moved.
 
 Write it **for the person installing the source**, not for whoever made the change: one or
 two plain sentences on what is different for them, and whether they need to do anything.

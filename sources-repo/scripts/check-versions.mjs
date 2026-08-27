@@ -14,6 +14,7 @@
 // It bites on same-day re-publishes, because the `YYYY-MM-DD.N` suffix gets derived from the local file
 // instead of from what is already published. Hence `next`: always take the suffix from the live catalog.
 import { readFileSync, readdirSync } from 'node:fs';
+import { behaviourHash } from './behaviour-hash.mjs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -25,7 +26,9 @@ const live = await fetch(INDEX_URL).then((r) => r.json()).catch((e) => {
   console.error(`could not read the live index (${e.message})`);
   process.exit(2);
 });
-const published = new Map((live.sources || live).map((s) => [s.id, String(s.version || '')]));
+const entries = live.sources || live;
+const published = new Map(entries.map((s) => [s.id, String(s.version || '')]));
+const liveHash = new Map(entries.map((s) => [s.id, s.behaviourHash || null]));
 
 /** The next free version for today, always above whatever is live. */
 function nextVersion(id, today) {
@@ -52,7 +55,20 @@ for (const file of readdirSync(SOURCES).filter((f) => f.endsWith('.json') && f !
   const cur = published.get(src.id);
   if (cur === undefined) continue;        // brand new source — nothing to compare against
   checked++;
-  if (local === cur) continue;            // same version means no changes, by definition
+  if (local === cur) {
+    // Republishing under the same version is ALLOWED for prose — a changelog note, guide copy,
+    // attribution — because those are served from index.json rather than from the copy a user has
+    // installed. The correction reaches everybody immediately, and nobody is offered an update whose
+    // only difference is wording. What may not change is behaviour: the version would stop identifying
+    // one thing, and anyone already on it would never be offered the fix. The published hash makes that
+    // checkable rather than a matter of trust.
+    const want = liveHash.get(src.id);
+    if (want && behaviourHash(src) !== want) {
+      problems.push(`${src.id}: republishing ${local} with a CHANGED definition — prose may be corrected `
+        + `under a published version, behaviour may not (next free: ${nextVersion(src.id, new Date().toISOString().slice(0, 10))})`);
+    }
+    continue;
+  }
   if (!(local > cur)) {
     problems.push(`${src.id}: ${local} is not above the live ${cur} — the update would reach nobody`
       + ` (next free: ${nextVersion(src.id, local.slice(0, 10))})`);

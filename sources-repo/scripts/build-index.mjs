@@ -3,6 +3,7 @@
 // (extension/src/registry/client.js) and where Pages serves the files.
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { behaviourHash } from './behaviour-hash.mjs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -71,6 +72,7 @@ const entries = readdirSync(dir)
       // A source added but not yet committed (a PR being validated) has no git date; the build time is
       // the honest answer there, not a missing field.
       url: `${BASE}/${f}`, updated: lastChange.get(f) || now,
+      behaviourHash: behaviourHash(a),
     };
   })
   .sort((x, y) => x.id.localeCompare(y.id));
