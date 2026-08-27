@@ -15,7 +15,6 @@ const HTML = join(here, '..', 'sources.html');
 import { GROUPS, groupsOf } from './groups.mjs';
 const START = '<!-- SOURCES:START -->', END = '<!-- SOURCES:END -->';
 const S_START = '<!-- STATS:START -->', S_END = '<!-- STATS:END -->';
-const F_START = '<!-- FILTERS:START -->', F_END = '<!-- FILTERS:END -->';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const flag = (code) => !code ? '' : code === 'global' ? '🌐'
@@ -66,12 +65,6 @@ const statsHtml = '\n      <div class="stats">' + stats.map(([n, en, es]) =>
 
 // Chips filter cards that are already in the document. Filtering hides, never removes: without JS, and
 // to any crawler, the whole catalogue is present.
-// Chips are the five groups people browse by, not the fifteen raw categories — and only the groups this
-// catalogue actually has something in, so no chip ever filters to an empty grid.
-const present = GROUPS.filter((g) => sources.some((x) => groupsOf(x.categories).some((h) => h.id === g.id)));
-const chips = ['<button class="chip" data-group="" aria-pressed="true" data-t-en="All" data-t-es="Todo">All</button>']
-  .concat(present.map((g) => `<button class="chip" data-group="${esc(g.id)}" aria-pressed="false" data-t-en="${esc(g.en)}" data-t-es="${esc(g.es)}">${esc(g.en)}</button>`));
-const filtersHtml = '\n      <div class="filters" role="group">' + chips.join('') + '</div>\n    ';
 
 // The catalogue as data. This page answers "which services does Habeas support"; without a list a machine
 // reading it has to infer the answer from markup.
@@ -96,11 +89,12 @@ const fill = (str, a, b, body) => {
   return str.slice(0, x + a.length) + body + str.slice(y);
 };
 html = fill(html, S_START, S_END, statsHtml);
-html = fill(html, F_START, F_END, filtersHtml);
 html = html.replace(/\n    <script type="application\/ld\+json">[\s\S]*?<\/script>\n  /, '');
 html = html.replace('</head>', `${ldHtml}</head>`);
 html = html.replace(/(\n    const GUIDES = )[^\n]*/, `$1${JSON.stringify(GUIDES)};`);
 const groupsOfId = Object.fromEntries(sources.map((x) => [x.id, groupsOf(x.categories).map((g) => g.id)]));
 html = html.replace(/(\n    const GROUPS_OF = )[^\n]*/, `$1${JSON.stringify(groupsOfId)};`);
+const labels = GROUPS.map((g) => ({ id: g.id, en: g.en, es: g.es }));
+html = html.replace(/(\n    const GROUP_LABELS = )[^\n]*/, `$1${JSON.stringify(labels)};`);
 writeFileSync(HTML, html);
 console.log(`baked ${sources.length} sources into docs/sources.html`);

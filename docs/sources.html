@@ -96,15 +96,13 @@
     <div class="filters" style="margin:0 0 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <label><span data-t="country">Country:</span> <select id="country"></select></label>
       <label><span data-t="format">Format:</span> <select id="format"></select></label>
+      <label><span data-t="kind">Type:</span> <select id="group"></select></label>
     </div>
     <!-- The list below is pre-rendered STATICALLY at build time (tools/render-sources.mjs) so it's visible
          without JavaScript. The script hydrates it with live data, ratings and filters on load. -->
     <!-- STATS:START -->
       <div class="stats"><div class="stat"><b>21</b><span data-t-en="services covered" data-t-es="servicios cubiertos">services covered</span></div><div class="stat"><b>13</b><span data-t-en="verified by the project" data-t-es="verificados por el proyecto">verified by the project</span></div><div class="stat"><b>15</b><span data-t-en="kinds of document" data-t-es="tipos de documento">kinds of document</span></div><div class="stat"><b>0</b><span data-t-en="passwords stored" data-t-es="contraseñas almacenadas">passwords stored</span></div></div>
     <!-- STATS:END -->
-    <!-- FILTERS:START -->
-      <div class="filters" role="group"><button class="chip" data-group="" aria-pressed="true" data-t-en="All" data-t-es="Todo">All</button><button class="chip" data-group="grocery" aria-pressed="false" data-t-en="Supermarkets" data-t-es="Supermercados">Supermarkets</button><button class="chip" data-group="retail" aria-pressed="false" data-t-en="Shops" data-t-es="Tiendas">Shops</button><button class="chip" data-group="banking" aria-pressed="false" data-t-en="Banks, cards &amp; investments" data-t-es="Bancos, tarjetas e inversión">Banks, cards &amp; investments</button><button class="chip" data-group="road" aria-pressed="false" data-t-en="Fuel, tolls &amp; parking" data-t-es="Combustible, peajes y parking">Fuel, tolls &amp; parking</button><button class="chip" data-group="utility" aria-pressed="false" data-t-en="Services &amp; subscriptions" data-t-es="Servicios y suscripciones">Services &amp; subscriptions</button></div>
-    <!-- FILTERS:END -->
     <div id="list" class="srcgrid" aria-live="polite"><!-- SOURCES:START -->
       <div class="src" data-groups="retail" id="amazon">
         <div class="top"><span class="name">Amazon</span><span class="pill fp">first-party</span></div>
@@ -285,6 +283,7 @@
       en: {
         title: 'Your documents, on your disk.',
         kicker: 'Catalogue',
+        kind: 'Type:',
         intro: 'Every source is a readable file stating exactly which service it talks to and what it extracts — as data, never code. Install one from the extension in a click. First-party sources are written and verified by the project; community ones are contributed and open to scrutiny.',
         guide: 'How to download',
         guideIndex: 'Browse the how-to guides',
@@ -305,6 +304,7 @@
       es: {
         title: 'Tus documentos, en tu disco.',
         kicker: 'Catálogo',
+        kind: 'Tipo:',
         intro: 'Cada fuente es un fichero legible que dice exactamente a qué servicio se conecta y qué extrae —como datos, nunca código—. Se instala desde la extensión, en un clic. Las first-party las escribe y verifica el proyecto; las de la comunidad son aportadas y abiertas al escrutinio.',
         guide: 'Cómo descargar',
         guideIndex: 'Ver las guías paso a paso',
@@ -330,6 +330,7 @@
     // Which groups each source belongs to, baked at build time so the client filter and the server-rendered
     // cards agree on one answer instead of computing it twice.
     const GROUPS_OF = {"amazon":["retail"],"bipdrive-es":["road"],"caixabank-consumer-es":["banking"],"carrefour-es":["grocery","retail","road"],"financiera-elcorteingles-es":["banking"],"ikea-es":["retail"],"ing-es":["banking"],"openbank-es":["banking"],"paypal":["banking"],"raisin":["banking"],"revolut":["banking"],"traderepublic":["banking"],"wizink-es":["banking"],"aliexpress":["retail"],"americanexpress":["banking"],"decathlon-es":["retail"],"degiro":["banking"],"dia-es":["grocery"],"hover-com":["utility"],"leroymerlin-es":["retail"],"n26":["banking"],"pagatelia-es":["road"],"pepeenergy-es":["utility"],"pepephone-es":["utility"]};
+    const GROUP_LABELS = [{"id":"grocery","en":"Supermarkets","es":"Supermercados"},{"id":"retail","en":"Shops","es":"Tiendas"},{"id":"banking","en":"Banks, cards & investments","es":"Bancos, tarjetas e inversión"},{"id":"road","en":"Fuel, tolls & parking","es":"Combustible, peajes y parking"},{"id":"utility","en":"Services & subscriptions","es":"Servicios y suscripciones"}];
     const flag = (code) => !code ? '' : code === 'global' ? '🌐' : (/^[A-Za-z]{2}$/.test(code) ? code.toUpperCase().replace(/./g, (c) => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)) : '');
 
     // Sources with a Spanish how-to page under /es/descargar/.
@@ -373,6 +374,11 @@
       const sel = document.getElementById('country');
       const countries = [...new Set(SOURCES.map((s) => s.country).filter(Boolean))].sort();
       sel.innerHTML = `<option value="">${t.all}</option>` + countries.map((c) => `<option value="${esc(c)}"${c === FILTER ? ' selected' : ''}>${flag(c)} ${c === 'global' ? t.global : esc(c)}</option>`).join('');
+      const gsel = document.getElementById('group');
+      // Only the groups this catalogue has something in, so no option can filter to an empty grid.
+      const present = GROUP_LABELS.filter((g) => Object.values(GROUPS_OF).some((ids) => ids.includes(g.id)));
+      gsel.innerHTML = `<option value="">${t.all}</option>` + present.map((g) =>
+        `<option value="${esc(g.id)}"${g.id === GROUP ? ' selected' : ''}>${esc(LANG === 'es' ? g.es : g.en)}</option>`).join('');
       const fsel = document.getElementById('format');
       const formats = [...new Set(SOURCES.flatMap((s) => s.formats || []))].sort();
       fsel.innerHTML = `<option value="">${t.all}</option>` + formats.map((f) => `<option value="${esc(f)}"${f === FMT ? ' selected' : ''}>${esc(f.toUpperCase())}</option>`).join('');
@@ -387,6 +393,7 @@
     document.querySelectorAll('.langswitch button[data-lang]').forEach((b) => b.addEventListener('click', () => setLang(b.getAttribute('data-lang'))));
     document.getElementById('country').addEventListener('change', (e) => { FILTER = e.target.value; render(); });
     document.getElementById('format').addEventListener('change', (e) => { FMT = e.target.value; render(); });
+    document.getElementById('group').addEventListener('change', (e) => { GROUP = e.target.value; render(); });
     (function () { let l; try { l = localStorage.getItem('habeas-lang'); } catch (e) {} if (l !== 'en' && l !== 'es') l = (navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en'; LANG = l; document.documentElement.lang = l; globalThis.habeasApplyTopNavLanguage?.(l); })();
     render();
 
@@ -397,27 +404,7 @@
       SOURCES.forEach((s) => fetch(`${API}/sources/${encodeURIComponent(s.id)}/ratings`).then((r) => r.json()).then((v) => { RATINGS[s.id] = v; render(); }).catch(() => {}));
     }).catch(() => { SOURCES = false; render(); });
   
-    // Chips feed the SAME filter as the country and format selectors. An earlier version hid cards on
-    // its own, which could never work: render() replaces the grid's innerHTML, so every hidden flag — and
-    // the data-groups attributes it read — was wiped on the next redraw. One pipeline, not two.
-    (function () {
-      const bar = document.querySelector('.filters');
-      if (!bar) return;
-      bar.addEventListener('click', (e) => {
-        const chip = e.target.closest('.chip');
-        if (!chip) return;
-        GROUP = chip.dataset.group || '';
-        try { history.replaceState(null, '', GROUP ? `#g=${GROUP}` : location.pathname); } catch (err) {}
-        render();
-      });
-      // A shared link keeps its filter. Set before the first paint, and re-rendered only if the catalogue
-      // has already loaded — an unrecognised group falls back to the whole list, never to an empty grid.
-      const want = (location.hash.match(/^#g=([a-z]+)$/) || [])[1] || '';
-      if ([...bar.querySelectorAll('.chip')].some((c) => (c.dataset.group || '') === want)) {
-        GROUP = want;
-        if (SOURCES) render();
-      }
-    })();
+
 
   </script>
 </body>
