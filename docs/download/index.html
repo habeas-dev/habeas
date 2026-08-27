@@ -341,11 +341,12 @@
 
       </div>
       <aside class="install-cta" aria-label="Install on Chrome">
-      <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="guide-index">Install on Chrome</a>
-      <a class="btn" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="guide-index">Install on Firefox</a>
+      <a class="btn" data-browser="chrome" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="guide-index">Install on Chrome</a>
+      <a class="btn" data-browser="firefox" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="guide-index">Install on Firefox</a>
       <p class="note">Free and open source (AGPL-3.0). Install it, then turn on the source you need from Settings → Browse sources.</p>
       <p class="note">Chrome will warn you that the extension is not trusted. That happens to any developer account recently registered on the Chrome Web Store, it fades after a few months, and it says nothing about the code — which you can read in full.</p>
     </aside>
+    <script defer src="/install-cta.js"></script>
     </div>
 
     <h2>Your service is not on the list?</h2>

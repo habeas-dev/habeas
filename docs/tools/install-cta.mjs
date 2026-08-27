@@ -18,9 +18,10 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
  */
 export function installAside(t, where) {
   return `<aside class="install-cta" aria-label="${esc(t.installChrome)}">
-      <a class="btn primary" href="${CWS}" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="${esc(where)}">${esc(t.installChrome)}</a>
-      <a class="btn" href="${AMO}" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="${esc(where)}">${esc(t.installFirefox)}</a>
+      <a class="btn" data-browser="chrome" href="${CWS}" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="${esc(where)}">${esc(t.installChrome)}</a>
+      <a class="btn" data-browser="firefox" href="${AMO}" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="${esc(where)}">${esc(t.installFirefox)}</a>
       <p class="note">${esc(t.installLead)}</p>
       <p class="note">${esc(t.chromeNote)}</p>
-    </aside>`;
+    </aside>
+    <script defer src="/install-cta.js"></script>`;
 }
