@@ -604,8 +604,8 @@ function indexPage({ lang, groups }) {
   // is indexed and the wording on screen stay identical.
   const sections = groups.filter((g) => g.items.length).map((g) => `    <h2 id="g-${esc(g.id)}">${esc(g[lang])}</h2>
     <div class="guidecards">
-${g.items.map((i) => `      <a class="gcard" href="${L.path(i.slug)}" style="--tint:${g.tint}">
-        <span class="mark" aria-hidden="true">${g.icon}</span>
+${g.items.map((i) => `      <a class="gcard" href="${L.path(i.slug)}" style="--tint:${(i.mark && i.mark.tint) || g.tint}">
+        <span class="mark${i.mark && i.mark.initials ? ' letters' : ''}" aria-hidden="true">${i.mark && i.mark.initials ? esc(i.mark.initials) : g.icon}</span>
         <span class="gt">${esc(i.h1)}</span>
       </a>`).join('\n')}
     </div>`).join('\n\n');
@@ -763,7 +763,8 @@ for (const { id, entry, meta, full, isBeta } of resolved) {
 for (const lang of Object.keys(LANGS)) {
   const groups = GROUPS.map((g) => ({ ...g, items: resolved
     .filter((r) => r.entry[lang] && groupOf(r.meta).id === g.id)
-    .map((r) => ({ slug: r.entry[lang].slug, h1: r.entry[lang].h1, id: r.meta.id, name: r.meta.name })) }));
+    .map((r) => ({ slug: r.entry[lang].slug, h1: r.entry[lang].h1, id: r.meta.id, name: r.meta.name,
+      mark: (overrides[r.meta.id] || {}).mark })) }));
   writeFileSync(join(DOCS, ...LANGS[lang].dir.split('/'), 'index.html'), indexPage({ lang, groups }));
   written++;
 }

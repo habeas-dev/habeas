@@ -85,6 +85,10 @@
           "a": "Yes. Personal activity covers movements in both directions, and each one is tagged with its direction."
         }
       ]
+    },
+    "mark": {
+      "initials": "PA",
+      "tint": ""
     }
   },
   "traderepublic": {
@@ -133,6 +137,10 @@
           "a": "Yes: both formats come from the same set of operations. The wrapper changes, the content does not."
         }
       ]
+    },
+    "mark": {
+      "initials": "TR",
+      "tint": ""
     }
   },
   "carrefour-es": {
@@ -183,6 +191,10 @@
         }
       ],
       "note": ""
+    },
+    "mark": {
+      "initials": "CA",
+      "tint": ""
     }
   },
   "revolut": {
@@ -203,6 +215,10 @@
         "Se registra lo que de verdad salió de tu cuenta, comisiones incluidas, y no la cifra previa a la conversión. En un pago con tarjeta en otra divisa son dos números distintos, y solo el primero cuadra con tu saldo.",
         "Aquí tus cuentas son bolsillos por divisa, así que el selector de cuentas las lista por moneda en vez de por nombre, y activar una no arrastra las demás."
       ]
+    },
+    "mark": {
+      "initials": "RE",
+      "tint": ""
     }
   },
   "raisin": {
@@ -221,6 +237,10 @@
         "Raisin guarda sus datos tras cinco endpoints distintos y la fuente refleja eso: movimientos, depósitos, ahorro y dos conjuntos de documentos. Puedes activar solo los que uses.",
         "Cada campo que devuelve Raisin y que el esquema no consume se conserva junto al registro, así que no se descarta nada de lo que expone la cuenta solo porque no tenga columna propia."
       ]
+    },
+    "mark": {
+      "initials": "RA",
+      "tint": ""
     }
   },
   "amazon": {
@@ -237,6 +257,10 @@
         "Los pedidos se listan año a año, exactamente como hace la propia página de pedidos de Amazon. No hay una sola llamada que devuelva todo tu histórico, así que el barrido avanza año por año.",
         "El PDF de la factura no tiene una dirección predecible. Habeas abre el mismo aviso de factura que enseña la web y sigue el enlace que encuentre allí, y por eso un pedido que el vendedor nunca facturó vuelve con los datos del pedido y sin documento."
       ]
+    },
+    "mark": {
+      "initials": "AM",
+      "tint": ""
     }
   },
   "aliexpress": {
@@ -255,6 +279,10 @@
         "Los pedidos no llegan como una lista. Vuelven como campos de nombre dinámico dentro de un mismo bloque, así que la fuente los recoge por prefijo de clave y no por posición.",
         "El detalle del recibo es una petición aparte por pedido, así que un histórico largo tarda aquí proporcionalmente más que en una fuente que lo devuelve todo en una página."
       ]
+    },
+    "mark": {
+      "initials": "AL",
+      "tint": ""
     }
   },
   "hover-com": {
@@ -273,6 +301,114 @@
         "No hay fichero de recibo que descargar: Hover muestra cada uno como página web, así que lo que obtienes es un render de esa página y no un documento emitido por el servicio, al que se dan unos segundos para dibujarse antes de capturarlo.",
         "La respuesta no trae divisa propia, así que los importes se registran en dólares estadounidenses, que es en lo que factura Hover."
       ]
+    },
+    "mark": {
+      "initials": "HO",
+      "tint": ""
+    }
+  },
+  "_mark": [
+    "Per-source card mark on the guide index: `initials` (up to 3 characters) and `tint` (hex).",
+    "Presentation only, and site-side on purpose: it does not belong in a source definition.",
+    "Initials plus a background colour is the ordinary avatar pattern. Recreating a brand's",
+    "distinctive figurative composition — its shape, pattern and colours together — is not, and",
+    "is the one thing to keep out of here. Without an entry a source falls back to its group's",
+    "icon and tint, so the catalogue never breaks when a new source arrives unedited."
+  ],
+  "americanexpress": {
+    "mark": {
+      "initials": "AE",
+      "tint": ""
+    }
+  },
+  "bipdrive-es": {
+    "mark": {
+      "initials": "BD",
+      "tint": ""
+    }
+  },
+  "caixabank-consumer-es": {
+    "mark": {
+      "initials": "CC",
+      "tint": ""
+    }
+  },
+  "decathlon-es": {
+    "mark": {
+      "initials": "DE",
+      "tint": ""
+    }
+  },
+  "degiro": {
+    "mark": {
+      "initials": "DE",
+      "tint": ""
+    }
+  },
+  "dia-es": {
+    "mark": {
+      "initials": "DI",
+      "tint": ""
+    }
+  },
+  "financiera-elcorteingles-es": {
+    "mark": {
+      "initials": "FEC",
+      "tint": ""
+    }
+  },
+  "ikea-es": {
+    "mark": {
+      "initials": "IK",
+      "tint": ""
+    }
+  },
+  "ing-es": {
+    "mark": {
+      "initials": "IN",
+      "tint": ""
+    }
+  },
+  "leroymerlin-es": {
+    "mark": {
+      "initials": "LM",
+      "tint": ""
+    }
+  },
+  "n26": {
+    "mark": {
+      "initials": "N2",
+      "tint": ""
+    }
+  },
+  "openbank-es": {
+    "mark": {
+      "initials": "OP",
+      "tint": ""
+    }
+  },
+  "pagatelia-es": {
+    "mark": {
+      "initials": "PA",
+      "tint": ""
+    }
+  },
+  "pepeenergy-es": {
+    "mark": {
+      "initials": "PE",
+      "tint": ""
+    }
+  },
+  "pepephone-es": {
+    "mark": {
+      "initials": "PE",
+      "tint": ""
+    }
+  },
+  "wizink-es": {
+    "mark": {
+      "initials": "WI",
+      "tint": ""
     }
   }
 }

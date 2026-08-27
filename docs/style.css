@@ -269,3 +269,7 @@ footer a { color: var(--ink); }
                display: grid; place-items: center; font-size: 16px; line-height: 1; }
 .gcard:hover { border-color: color-mix(in srgb, var(--tint, #1c5a4f) 45%, var(--line)); }
 .gcard .gt { font-size: 14.5px; line-height: 1.35; }
+/* Initials sit on the source's own colour; the group icon sits on a tint of it. Two treatments because
+   letters need contrast to be read and an icon does not. */
+.gcard .mark.letters { background: var(--tint, #1c5a4f); color: #fff;
+                       font-family: var(--font-head); font-size: 12.5px; letter-spacing: .02em; }
