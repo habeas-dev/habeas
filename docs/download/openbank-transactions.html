@@ -568,8 +568,8 @@
     {
       &quot;version&quot;: &quot;2026-08-08&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.&quot;,
-        &quot;es&quot;: &quot;Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.&quot;
+        &quot;en&quot;: &quot;No change to what this source extracts. This version gave it its guide page on habeas.dev.&quot;,
+        &quot;es&quot;: &quot;Sin cambios en lo que extrae esta fuente. Esta versión le dio su página de guía en habeas.dev.&quot;
       }
     },
     {
@@ -582,15 +582,15 @@
     {
       &quot;version&quot;: &quot;2026-07-15.1&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Fix `movimientos`: the first (non-SCA) page returns a flat `movimientos` array, not `methodResult.movimientos` — itemsPath now accepts both shapes.&quot;,
-        &quot;es&quot;: &quot;Corrige `movimientos`: la primera página (sin SCA) devuelve un array `movimientos` plano, no `methodResult.movimientos` — itemsPath acepta ahora ambas formas.&quot;
+        &quot;en&quot;: &quot;Fixes the first page of movements coming back empty.&quot;,
+        &quot;es&quot;: &quot;Corrige la primera página de movimientos, que llegaba vacía.&quot;
       }
     },
     {
       &quot;version&quot;: &quot;2026-07-15&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Add `movimientos` (transactions) per account — 90-day window, full-URL nextPage pager, stops at the SCA boundary (no OTP triggered). Add per-account monthly movement statements (PDF/Excel). Token-only auth (auth.cookies:false, avoids HTTP 413) + session keep-alive. Movements is no longer a declared gap.&quot;,
-        &quot;es&quot;: &quot;Añade `movimientos` (transactions) por cuenta — ventana de 90 días, paginador nextPage con URL completa, que se detiene en la frontera de SCA (sin disparar OTP). Añade extractos mensuales de movimientos por cuenta (PDF/Excel). Autenticación solo con token (auth.cookies:false, evita el HTTP 413) más mantenimiento de sesión. Los movimientos dejan de ser una carencia declarada.&quot;
+        &quot;en&quot;: &quot;Adds account movements (last 90 days) and monthly statements in PDF and Excel, one per account. Stops before any step that would ask you for a one-time code.&quot;,
+        &quot;es&quot;: &quot;Añade los movimientos por cuenta (últimos 90 días) y los extractos mensuales en PDF y Excel, uno por cuenta. Se detiene antes de cualquier paso que te pediría un código de un solo uso.&quot;
       }
     },
     {
@@ -666,9 +666,9 @@
       <ul class="changelog">
         <li class="rev"><span class="ver">2026-08-26.1</span> — Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.</li>
         <li class="rev"><span class="ver">2026-08-26</span> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
-        <li class="rev"><span class="ver">2026-08-08</span> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.</li>
+        <li class="rev"><span class="ver">2026-08-08</span> — No change to what this source extracts. This version gave it its guide page on habeas.dev.</li>
         <li class="rev"><span class="ver">2026-07-16</span> — Map the movement's running balance (saldo.importe) to record.balanceAfter (promoted to a canonical field for the Cuéntamo contract). Requires extension &gt;= 0.3.0.24.</li>
-        <li class="rev"><span class="ver">2026-07-15.1</span> — Fix `movimientos`: the first (non-SCA) page returns a flat `movimientos` array, not `methodResult.movimientos` — itemsPath now accepts both shapes.</li>
+        <li class="rev"><span class="ver">2026-07-15.1</span> — Fixes the first page of movements coming back empty.</li>
       </ul>
       <p class="lead"><a href="/sources.html#openbank-es">See the full history in the catalog →</a></p>
 

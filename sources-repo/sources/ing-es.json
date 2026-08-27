@@ -242,29 +242,29 @@
     {
       "version": "2026-08-08.1",
       "changes": {
-        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
-        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+        "en": "No change to what this source extracts. This version gave it its guide page on habeas.dev.",
+        "es": "Sin cambios en lo que extrae esta fuente. Esta versión le dio su página de guía en habeas.dev."
       }
     },
     {
       "version": "2026-08-08",
       "changes": {
-        "en": "Fixes `gaps`: card movements are extracted already (see 2026-07-23.3), so only investments remain out of coverage. The previous entry was stale and was being published as a limitation.",
-        "es": "Corrige `gaps`: los movimientos de tarjeta ya se extraen (ver 2026-07-23.3), así que solo queda inversión fuera de cobertura. El dato anterior era obsoleto y se publicaba como limitación."
+        "en": "Corrects the coverage note: card movements were already being extracted, so only investments remain uncovered.",
+        "es": "Corrige la nota de cobertura: los movimientos de tarjeta ya se extraían, así que solo quedan fuera las inversiones."
       }
     },
     {
       "version": "2026-07-31.1",
       "changes": {
-        "en": "Fix intermittent 401 'Authorization Required' (ING Webserver edge) that aborted the whole sync — most often at the account-enumeration step (/position-keeping). Verified via mitmproxy that the SAME authenticated request (same bearer, same 36 session cookies, browser-agnostic) returns 401 one call and 200 the next — a load-balancer/pool routing race (dual lb-3-p-288 / lb-4-p-288 + x-pool-from-dc cookies). ING's own SPA rides it out by retrying; Habeas now does the same via a bounded retry (retry: 401 ×4, 700ms), gated on the raw edge-HTML body so a genuine token-expiry (JSON) 401 still surfaces for re-login. Also replay `baggage` to mirror the SPA. Needs extension >= 0.9.7 (declarative retry in netFetch).",
-        "es": "Corrige el 401 'Authorization Required' intermitente (borde del Webserver de ING) que abortaba la sincronización entera — casi siempre al enumerar cuentas (/position-keeping). Verificado con mitmproxy: la MISMA petición autenticada (mismo bearer, mismas 36 cookies de sesión, con independencia del navegador) devuelve 401 en una llamada y 200 en la siguiente — una carrera de enrutado en el balanceador (dual lb-3-p-288 / lb-4-p-288 más cookies x-pool-from-dc). La propia SPA de ING lo sortea reintentando; Habeas hace ahora lo mismo con un reintento acotado (retry: 401 ×4, 700 ms), condicionado al cuerpo HTML crudo del borde para que un 401 por caducidad real del token (JSON) siga saliendo a la luz y se pueda volver a entrar. Además replica `baggage` para imitar a la SPA. Necesita extensión >= 0.9.7 (reintento declarativo en netFetch)."
+        "en": "Fixes syncs that stopped partway with an authorisation error. ING sometimes rejects a valid request and accepts the same one moments later; Habeas now retries, as ING's own app does. Needs Habeas 0.9.7 or newer.",
+        "es": "Corrige las sincronizaciones que se cortaban a medias con un error de autorización. ING rechaza a veces una petición válida y acepta esa misma poco después; Habeas ahora reintenta, como hace la propia app de ING. Requiere Habeas 0.9.7 o posterior."
       }
     },
     {
       "version": "2026-07-23.3",
       "changes": {
-        "en": "Fix credit-card duplicates WITHOUT hiding real movements. A current-month card purchase is confirmed but stays \"Pendiente de liquidar\" until the monthly settlement, and ING re-lists a still-pending charge with a fresh transactionLocalUUID every sync → duplicates. Card movements (items with a `status`) now key by a stable natural id {date|amount|productId} PLUS a per-import ordinal (list.idOverride): two genuinely-distinct charges sharing (date,amount,productId) arrive together in one import → they get ordinals 0,1 and stay separate; a churning re-list of one charge is always ordinal 0 → dedupes; the pending→settled transition dedupes too. Account movements (no status) keep their stable UUID. Needs extension >= 0.7.0.25.",
-        "es": "Corrige los duplicados de tarjeta SIN ocultar movimientos reales. Una compra con tarjeta del mes en curso está confirmada pero permanece «Pendiente de liquidar» hasta la liquidación mensual, e ING vuelve a listar el cargo pendiente con un transactionLocalUUID nuevo en cada sincronización → duplicados. Los movimientos de tarjeta (elementos con `status`) se indexan ahora por una clave natural estable {date|amount|productId} MÁS un ordinal por importación (list.idOverride): dos cargos genuinamente distintos que comparten (fecha, importe, producto) llegan juntos en una importación → reciben los ordinales 0 y 1 y se mantienen separados; un mismo cargo relistado una y otra vez es siempre el ordinal 0 → deduplica; y la transición de pendiente a liquidado también deduplica. Los movimientos de cuenta (sin status) conservan su UUID estable. Necesita extensión >= 0.7.0.25."
+        "en": "Fixes duplicated card movements. A purchase stays pending until the monthly settlement, and ING re-listed it under a new identifier on every sync, so it arrived again each time. Two genuinely separate charges on the same day for the same amount are still kept apart. Needs Habeas 0.7.0.25 or newer.",
+        "es": "Corrige los movimientos de tarjeta duplicados. Una compra queda pendiente hasta la liquidación mensual, e ING la volvía a listar con un identificador nuevo en cada sincronización, así que llegaba otra vez. Dos cargos realmente distintos del mismo día y el mismo importe se siguen tratando por separado. Requiere Habeas 0.7.0.25 o posterior."
       }
     },
     {

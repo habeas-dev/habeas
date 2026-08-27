@@ -197,8 +197,8 @@
     {
       "version": "2026-08-26.6",
       "changes": {
-        "en": "Reports the amount actually charged (`amountWithCharges`) rather than the interbank conversion (`amount`). The two agree whenever nothing was charged, so the old field looked right in almost every movement and was wrong in exactly those carrying a fee — the weekend currency surcharge that 2026-08-26.3 could only document among them. Verified against a real archive of 208 movements: five change, all five to the value the service itself declares, and none loses its amount. The behaviour shipped in 2026-08-26.5, which went out without this note. Needs extension 0.10.1 or newer, which can read a field with a fallback path.",
-        "es": "Informa del importe realmente cargado (`amountWithCharges`) en lugar de la conversión interbancaria (`amount`). Ambos coinciden siempre que no hubo comisión, así que el campo anterior parecía correcto en casi todos los movimientos y fallaba justo en los que llevaban una — entre ellos el recargo por divisa en fin de semana que 2026-08-26.3 solo pudo documentar. Verificado contra un archivo real de 208 movimientos: cambian cinco, los cinco al valor que declara el propio servicio, y ninguno se queda sin importe. El comportamiento salió en 2026-08-26.5, que se publicó sin esta nota. Requiere la extensión 0.10.1 o posterior, que sabe leer un campo con ruta de reserva."
+        "en": "Movements now show the amount that actually left your account, fees included. Payments that carried one — a card payment in another currency at the weekend, for instance — used to arrive slightly below what you were really charged. Needs Habeas 0.10.1 or newer.",
+        "es": "Los movimientos muestran ahora el importe que realmente salió de tu cuenta, comisiones incluidas. Los pagos que llevaban alguna —una compra con tarjeta en otra divisa en fin de semana, por ejemplo— llegaban algo por debajo de lo que te cobraron. Requiere Habeas 0.10.1 o posterior."
       }
     },
     {
@@ -239,8 +239,8 @@
     {
       "version": "2026-08-08",
       "changes": {
-        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.",
-        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`."
+        "en": "No change to what this source extracts. This version gave it its guide page on habeas.dev.",
+        "es": "Sin cambios en lo que extrae esta fuente. Esta versión le dio su página de guía en habeas.dev."
       }
     },
     {
@@ -267,8 +267,8 @@
     {
       "version": "2026-07-15",
       "changes": {
-        "en": "Initial: personal transactions across all accounts, paged by the `to` timestamp cursor; cookie + captured x-device-id; minor-unit amounts scaled per ISO 4217.",
-        "es": "Inicial: movimientos personales de todas las cuentas, paginados por el cursor de marca temporal `to`; cookie más x-device-id capturado; importes en unidades menores escalados según ISO 4217."
+        "en": "Your Revolut movements across all of your accounts.",
+        "es": "Tus movimientos de Revolut en todas tus cuentas."
       }
     }
   ],

@@ -190,8 +190,8 @@
     {
       "version": "2026-08-08",
       "changes": {
-        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.",
-        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`."
+        "en": "No change to what this source extracts. This version gave it its guide page on habeas.dev.",
+        "es": "Sin cambios en lo que extrae esta fuente. Esta versión le dio su página de guía en habeas.dev."
       }
     },
     {

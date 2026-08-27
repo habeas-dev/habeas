@@ -599,8 +599,8 @@
     {
       &quot;version&quot;: &quot;2026-08-08&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.&quot;,
-        &quot;es&quot;: &quot;Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`.&quot;
+        &quot;en&quot;: &quot;No change to what this source extracts. This version gave it its guide page on habeas.dev.&quot;,
+        &quot;es&quot;: &quot;Sin cambios en lo que extrae esta fuente. Esta versión le dio su página de guía en habeas.dev.&quot;
       }
     },
     {
@@ -620,8 +620,8 @@
     {
       &quot;version&quot;: &quot;2026-07-20.17&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Multi-market: renamed raisin-es -&gt; raisin (the API api2.weltsparen.de is shared across all Raisin countries); the response-language `locale` param now follows the browser locale via {locale}/{locale:lower} instead of a hardcoded es-ES. Requires 0.5.0.30. (Account-label WORDS Depósito/Cuenta/TAE remain Spanish for now.)&quot;,
-        &quot;es&quot;: &quot;Multimercado: renombrada raisin-es -&gt; raisin (la API api2.weltsparen.de es común a todos los países de Raisin); el parámetro `locale` del idioma de respuesta sigue ahora al del navegador vía {locale}/{locale:lower} en lugar de un es-ES fijo. Requiere 0.5.0.30. (Las PALABRAS de las etiquetas de cuenta —Depósito/Cuenta/TAE— siguen en español por ahora.)&quot;
+        &quot;en&quot;: &quot;Now works for every Raisin country, not only Spain, and follows your browser's language. Needs Habeas 0.5.0.30 or newer.&quot;,
+        &quot;es&quot;: &quot;Ahora funciona en todos los países de Raisin, no solo España, y sigue el idioma de tu navegador. Requiere Habeas 0.5.0.30 o posterior.&quot;
       }
     },
     {
@@ -648,8 +648,8 @@
     {
       &quot;version&quot;: &quot;2026-07-20.13&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Deposit labels now use browser-locale formatting: rate with the locale decimal comma and term as words (\&quot;Depósito Banca Progetto 2,45% TAE 6 meses - 2024-03-22\&quot;). Requires runtime 0.5.0.27 ({field:num|pct|duration|date} format directives).&quot;,
-        &quot;es&quot;: &quot;Las etiquetas de depósito usan ya el formato del idioma del navegador: el tipo con la coma decimal local y el plazo en palabras («Depósito Banca Progetto 2,45% TAE 6 meses - 2024-03-22»). Requiere runtime 0.5.0.27 (directivas de formato {field:num|pct|duration|date}).&quot;
+        &quot;en&quot;: &quot;Deposit names now read in your language, with the rate and the term written out. Needs Habeas 0.5.0.27 or newer.&quot;,
+        &quot;es&quot;: &quot;Los nombres de los depósitos se leen ahora en tu idioma, con el tipo y el plazo escritos. Requiere Habeas 0.5.0.27 o posterior.&quot;
       }
     },
     {
@@ -662,8 +662,8 @@
     {
       &quot;version&quot;: &quot;2026-07-20.11&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Deposits, savings and documents now enumerate BOTH dashboard/active AND dashboard/inactive (api paths[]), so inactive/cancelled deposits and ALL their documents are captured (documents come from /dds per deposit). Requires runtime 0.5.0.26 (paths[] support).&quot;,
-        &quot;es&quot;: &quot;Los depósitos, el ahorro y los documentos enumeran ahora TANTO dashboard/active COMO dashboard/inactive (api paths[]), de modo que se capturan los depósitos inactivos o cancelados y TODOS sus documentos (los documentos vienen de /dds por depósito). Requiere runtime 0.5.0.26 (soporte de paths[]).&quot;
+        &quot;en&quot;: &quot;Cancelled and finished deposits are included now, with all their documents. Needs Habeas 0.5.0.26 or newer.&quot;,
+        &quot;es&quot;: &quot;Se incluyen ahora los depósitos cancelados y finalizados, con todos sus documentos. Requiere Habeas 0.5.0.26 o posterior.&quot;
       }
     },
     {
@@ -676,8 +676,8 @@
     {
       &quot;version&quot;: &quot;2026-07-20.9&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Requires runtime 0.5.0.24: list params now resolve {ctx.*} (depositos/ahorro/documentos send the real customer_id, was literal → dbff/dbs 403) and pdf.params apply to the document fetch (dds ?preview=true). All 4 outputs verified offline against the capture.&quot;,
-        &quot;es&quot;: &quot;Requiere runtime 0.5.0.24: los parámetros de lista resuelven ya {ctx.*} (depositos/ahorro/documentos envían el customer_id real, antes literal → 403 en dbff/dbs) y los pdf.params se aplican a la descarga del documento (dds ?preview=true). Las 4 salidas verificadas offline contra la captura.&quot;
+        &quot;en&quot;: &quot;Fixes deposits, savings and documents coming back empty. Needs Habeas 0.5.0.24 or newer.&quot;,
+        &quot;es&quot;: &quot;Corrige los depósitos, el ahorro y los documentos, que llegaban vacíos. Requiere Habeas 0.5.0.24 o posterior.&quot;
       }
     },
     {
@@ -697,50 +697,50 @@
     {
       &quot;version&quot;: &quot;2026-07-20.6&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;auth.cookies:false — send the bearer WITHOUT cookies. Instrumentation proved the token is valid (not expired), so the 401 Authorization-required on a valid token points to a weltsparen.de session cookie interfering with the bearer on the cross-domain call (like Openbank 413). Bearer-only request.&quot;,
-        &quot;es&quot;: &quot;auth.cookies:false — envía el bearer SIN cookies. La instrumentación demostró que el token es válido (no caducado), así que un 401 Authorization-required con un token válido apunta a que una cookie de sesión de weltsparen.de interfiere con el bearer en la llamada cross-domain (como el 413 de Openbank). Petición solo con bearer.&quot;
+        &quot;en&quot;: &quot;Fixes sign-in errors on the request that reads your Raisin data.&quot;,
+        &quot;es&quot;: &quot;Corrige los errores de acceso en la petición que lee tus datos de Raisin.&quot;
       }
     },
     {
       &quot;version&quot;: &quot;2026-07-20.5&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Re-enable tokenFromStorage {key:auth_token, field:access_token}: token-correlation in a fresh capture PROVED the /tams bearer IS localStorage.auth_token.access_token (same [jwt#1] tag on all 19 API calls). Reading it fresh avoids the ~5min Keycloak expiry.&quot;,
-        &quot;es&quot;: &quot;Reactiva tokenFromStorage {key:auth_token, field:access_token}: la correlación de tokens en una captura nueva DEMOSTRÓ que el bearer de /tams ES localStorage.auth_token.access_token (misma marca [jwt#1] en las 19 llamadas a la API). Leerlo fresco evita la caducidad de Keycloak a los ~5 min.&quot;
+        &quot;en&quot;: &quot;Restores the session fix, this time correctly: a long sync no longer stops partway.&quot;,
+        &quot;es&quot;: &quot;Restaura el arreglo de la sesión, esta vez bien: una sincronización larga ya no se detiene a medias.&quot;
       }
     },
     {
       &quot;version&quot;: &quot;2026-07-20.4&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Revert tokenFromStorage: localStorage.auth_token.access_token is the Keycloak access token, NOT the weltsparen API bearer (a distinct api_ticket token, likely in-memory) — sending it gave 401 Authorization required. Back to the captured API bearer (capturePaths); token freshness/exchange still under investigation.&quot;,
-        &quot;es&quot;: &quot;Revierte tokenFromStorage: localStorage.auth_token.access_token es el token de acceso de Keycloak, NO el bearer de la API de weltsparen (un api_ticket distinto, probablemente en memoria) — enviarlo daba 401 Authorization required. Vuelta al bearer capturado de la API (capturePaths); la frescura y el intercambio del token siguen en investigación.&quot;
+        &quot;en&quot;: &quot;Undoes the previous change, which caused sign-in errors. Nothing new for you.&quot;,
+        &quot;es&quot;: &quot;Deshace el cambio anterior, que provocaba errores de acceso. Nada nuevo para ti.&quot;
       }
     },
     {
       &quot;version&quot;: &quot;2026-07-20.3&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Point tokenFromStorage at the explicit field access_token (localStorage.auth_token.access_token) — unambiguous and works without the auto-detect. minVersion 0.5.0.8.&quot;,
-        &quot;es&quot;: &quot;Apunta tokenFromStorage al campo explícito access_token (localStorage.auth_token.access_token) — inequívoco y funciona sin la autodetección. minVersion 0.5.0.8.&quot;
+        &quot;en&quot;: &quot;Another step in the same sign-in fix, superseded two versions later. Nothing new for you.&quot;,
+        &quot;es&quot;: &quot;Otro paso del mismo arreglo de acceso, sustituido dos versiones después. Nada nuevo para ti.&quot;
       }
     },
     {
       &quot;version&quot;: &quot;2026-07-20.2&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Read the bearer FRESH from localStorage.auth_token on every request (auth.tokenFromStorage, access-token auto-detected) — Raisin uses a short-lived Keycloak JWT (~5 min) that expired between capture and listing (401 Jwt is expired). This always sends a valid, current user token.&quot;,
-        &quot;es&quot;: &quot;Lee el bearer FRESCO de localStorage.auth_token en cada petición (auth.tokenFromStorage, con el access-token autodetectado) — Raisin usa un JWT de Keycloak de vida corta (~5 min) que caducaba entre la captura y el listado (401 Jwt is expired). Así siempre se envía un token de usuario válido y actual.&quot;
+        &quot;en&quot;: &quot;Keeps your session valid through a long sync. It used to expire after a few minutes and the sync stopped.&quot;,
+        &quot;es&quot;: &quot;Mantiene tu sesión válida durante una sincronización larga. Antes caducaba a los pocos minutos y la sincronización se detenía.&quot;
       }
     },
     {
       &quot;version&quot;: &quot;2026-07-20.1&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Scope token capture to the user-data endpoints (auth.capturePaths /tams/ /dbff/ /dds/ /cas/) so the replayed bearer is the logged-in user's token, not a client/anonymous token the public catalog (/dcms) may carry — which caused a 401 UNAUTHORIZED on /tams/v1/accounts even with an authorization sent.&quot;,
-        &quot;es&quot;: &quot;Acota la captura del token a los endpoints de datos del usuario (auth.capturePaths /tams/ /dbff/ /dds/ /cas/) para que el bearer replicado sea el del usuario identificado y no un token de cliente o anónimo que puede llevar el catálogo público (/dcms) — lo que provocaba un 401 UNAUTHORIZED en /tams/v1/accounts incluso enviando authorization.&quot;
+        &quot;en&quot;: &quot;Fixes an 'unauthorised' error when listing your accounts.&quot;,
+        &quot;es&quot;: &quot;Corrige un error de 'no autorizado' al listar tus cuentas.&quot;
       }
     },
     {
       &quot;version&quot;: &quot;2026-07-20&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Initial: Raisin (WeltSparen). Cross-domain login raisin.com -&gt; API api2.weltsparen.de (Keycloak bearer), customer_id captured as context, 90-day window (SCA-free). Four outputs: movimientos (Raisin transaction account, tams), depósitos (fixed-term deposits FDA_, investment@2 with keepRaw), ahorro (flexible savings-account movements OMA_, from the deposit detail's embedded transactions), documentos (terms/condiciones via dds). OMA (flexible cuenta corriente) vs FDA (fixed deposit) split by the product-id prefix (auth.keep prefix on accounting.deposit_id).&quot;,
-        &quot;es&quot;: &quot;Inicial: Raisin (WeltSparen). Login cross-domain raisin.com -&gt; API api2.weltsparen.de (bearer de Keycloak), customer_id capturado como contexto, ventana de 90 días (sin SCA). Cuatro salidas: movimientos (cuenta de transacciones de Raisin, tams), depósitos (a plazo fijo FDA_, investment@2 con keepRaw), ahorro (movimientos de cuenta flexible OMA_, desde las transacciones incrustadas en el detalle del depósito) y documentos (condiciones vía dds). La separación entre OMA (cuenta corriente flexible) y FDA (depósito a plazo) se hace por el prefijo del id de producto (auth.keep prefix sobre accounting.deposit_id).&quot;
+        &quot;en&quot;: &quot;Raisin (WeltSparen): your account movements, fixed-term deposits, flexible savings movements and your deposit documents. Last 90 days, without asking you for a one-time code.&quot;,
+        &quot;es&quot;: &quot;Raisin (WeltSparen): los movimientos de tu cuenta, los depósitos a plazo, los movimientos del ahorro flexible y los documentos de tus depósitos. Últimos 90 días, sin pedirte código de un solo uso.&quot;
       }
     }
   ],
@@ -834,7 +834,7 @@
       <ul class="changelog">
         <li class="rev"><span class="ver">2026-08-26.1</span> — Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.</li>
         <li class="rev"><span class="ver">2026-08-26</span> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
-        <li class="rev"><span class="ver">2026-08-08</span> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.</li>
+        <li class="rev"><span class="ver">2026-08-08</span> — No change to what this source extracts. This version gave it its guide page on habeas.dev.</li>
         <li class="rev"><span class="ver">2026-07-21</span> — Declared country: &quot;global&quot; — the field was missing since the multi-market rename (raisin-es -&gt; raisin), so the catalog showed no 🌐 badge and country filters didn't treat it as worldwide.</li>
         <li class="rev"><span class="ver">2026-07-20.18</span> — Multi-language labels: the product-type word (Deposit/Account) is translated per browser locale via a source i18n dictionary (en/es/de/fr/nl — every Raisin market; en fallback), since the API only returns it as an enum. Dropped the TAE abbreviation (varies by country; % is universal). Requires 0.5.0.32 ({i18n:key} token).</li>
       </ul>

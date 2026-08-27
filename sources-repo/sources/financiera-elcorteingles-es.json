@@ -171,8 +171,8 @@
     {
       "version": "2026-08-08",
       "changes": {
-        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
-        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+        "en": "No change to what this source extracts. This version gave it its guide page on habeas.dev.",
+        "es": "Sin cambios en lo que extrae esta fuente. Esta versión le dio su página de guía en habeas.dev."
       }
     },
     {
@@ -185,8 +185,8 @@
     {
       "version": "2026-07-20.2",
       "changes": {
-        "en": "Fix the statement PDF datePurchase format: the generate-file endpoint wants DD/MM/YYYY (e.g. 01/09/2025), but on a store re-download the date falls back to the normalized ISO value (2025-09-01), which the server rejected with HTTP 400. Now formatted explicitly via {date:DD/MM/YYYY}. Requires extension >= 0.4.1.15.",
-        "es": "Corrige el formato de datePurchase del PDF de extracto: el endpoint generate-file espera DD/MM/YYYY (p. ej. 01/09/2025), pero al re-descargar desde el archivo la fecha volvía al valor ISO normalizado (2025-09-01), que el servidor rechazaba con HTTP 400. Ahora se formatea explícitamente con {date:DD/MM/YYYY}. Requiere extensión >= 0.4.1.15."
+        "en": "Fixes monthly statement PDFs that failed to download once the statement had already been saved.",
+        "es": "Corrige los PDF de extracto mensual, que fallaban al descargarse si el extracto ya se había guardado antes."
       }
     },
     {
@@ -206,15 +206,15 @@
     {
       "version": "2026-07-17.4",
       "changes": {
-        "en": "Revert tokenFromStorage: FECI's API bearer is a WSO2 OAuth JWT held in memory (obtained via /api/accessTokenTransmit), NOT in localStorage — aphishi-lws_at.t is a session id, so injecting it gave WSO2 900901 'Invalid Credentials'. Back to capturing the bearer from the SPA's own requests (auth.replayHeaders).",
-        "es": "Revierte tokenFromStorage: el bearer de la API de FECI es un JWT OAuth de WSO2 que vive en memoria (se obtiene vía /api/accessTokenTransmit), NO en localStorage — aphishi-lws_at.t es un identificador de sesión, así que inyectarlo daba 'Invalid Credentials' 900901 de WSO2. Vuelve a capturarse el bearer de las propias peticiones de la SPA (auth.replayHeaders)."
+        "en": "Fixes the sign-in error that stopped this source from reading anything.",
+        "es": "Corrige el error de acceso que impedía a esta fuente leer nada."
       }
     },
     {
       "version": "2026-07-17.3",
       "changes": {
-        "en": "(reverted) read the bearer from localStorage via auth.tokenFromStorage — wrong field for FECI (the token isn't in localStorage).",
-        "es": "(revertido) leer el bearer de localStorage vía auth.tokenFromStorage — campo equivocado para FECI (el token no está en localStorage)."
+        "en": "An attempt at the sign-in problem that did not work and was undone in the next version. Nothing changed for you.",
+        "es": "Un intento de arreglar el acceso que no funcionó y se deshizo en la versión siguiente. Nada cambió para ti."
       }
     },
     {
@@ -234,15 +234,15 @@
     {
       "version": "2026-07-17",
       "changes": {
-        "en": "Fix empty aplazamientos + extractos lists: send the query params the SPA sends. aplazamientos/financing-purchases now sends page_number=0&page_size=100 (the endpoint is paged); extractos/shopping-summaries now sends date_bill (the current billing date the SPA stamps), via the new {monthEnd:DD/MM/YYYY} computed-date token. Requires extension >= 0.4.1.1.",
-        "es": "Corrige las listas vacías de aplazamientos y extractos: envía los parámetros de consulta que manda la SPA. aplazamientos/financing-purchases envía ahora page_number=0&page_size=100 (el endpoint es paginado); extractos/shopping-summaries envía date_bill (la fecha de facturación actual que estampa la SPA), mediante el nuevo token de fecha calculada {monthEnd:DD/MM/YYYY}. Requiere extensión >= 0.4.1.1."
+        "en": "Fixes aplazamientos and monthly statements coming back empty.",
+        "es": "Corrige los aplazamientos y los extractos mensuales, que llegaban vacíos."
       }
     },
     {
       "version": "2026-07-16",
       "changes": {
-        "en": "Initial (authored from a redacted handoff recording, verified live by the contributor). Multi-card (grouped by contract): card movements (transactions), aplazamientos/financing purchases, and monthly statement PDFs (generated per month, base64). Cookie session + replayed bearer + per-card eci-custom-encrypted-pan header.",
-        "es": "Inicial (escrita a partir de una grabación redactada del handoff, verificada en vivo por quien la aportó). Multitarjeta (agrupada por contrato): movimientos de tarjeta (transactions), aplazamientos/financing purchases y PDF de extracto mensual (generados por mes, en base64). Sesión por cookie + bearer replicado + cabecera eci-custom-encrypted-pan por tarjeta."
+        "en": "Your El Corte Ingles store-card movements, instalment purchases and monthly statement PDFs, for each card you hold.",
+        "es": "Los movimientos de tu tarjeta de El Corte Inglés, las compras aplazadas y los PDF de extracto mensual, para cada tarjeta que tengas."
       }
     }
   ],

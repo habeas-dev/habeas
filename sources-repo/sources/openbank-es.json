@@ -315,8 +315,8 @@
     {
       "version": "2026-08-08",
       "changes": {
-        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.",
-        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web."
+        "en": "No change to what this source extracts. This version gave it its guide page on habeas.dev.",
+        "es": "Sin cambios en lo que extrae esta fuente. Esta versión le dio su página de guía en habeas.dev."
       }
     },
     {
@@ -329,15 +329,15 @@
     {
       "version": "2026-07-15.1",
       "changes": {
-        "en": "Fix `movimientos`: the first (non-SCA) page returns a flat `movimientos` array, not `methodResult.movimientos` — itemsPath now accepts both shapes.",
-        "es": "Corrige `movimientos`: la primera página (sin SCA) devuelve un array `movimientos` plano, no `methodResult.movimientos` — itemsPath acepta ahora ambas formas."
+        "en": "Fixes the first page of movements coming back empty.",
+        "es": "Corrige la primera página de movimientos, que llegaba vacía."
       }
     },
     {
       "version": "2026-07-15",
       "changes": {
-        "en": "Add `movimientos` (transactions) per account — 90-day window, full-URL nextPage pager, stops at the SCA boundary (no OTP triggered). Add per-account monthly movement statements (PDF/Excel). Token-only auth (auth.cookies:false, avoids HTTP 413) + session keep-alive. Movements is no longer a declared gap.",
-        "es": "Añade `movimientos` (transactions) por cuenta — ventana de 90 días, paginador nextPage con URL completa, que se detiene en la frontera de SCA (sin disparar OTP). Añade extractos mensuales de movimientos por cuenta (PDF/Excel). Autenticación solo con token (auth.cookies:false, evita el HTTP 413) más mantenimiento de sesión. Los movimientos dejan de ser una carencia declarada."
+        "en": "Adds account movements (last 90 days) and monthly statements in PDF and Excel, one per account. Stops before any step that would ask you for a one-time code.",
+        "es": "Añade los movimientos por cuenta (últimos 90 días) y los extractos mensuales en PDF y Excel, uno por cuenta. Se detiene antes de cualquier paso que te pediría un código de un solo uso."
       }
     },
     {

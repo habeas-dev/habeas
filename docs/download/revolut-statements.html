@@ -450,8 +450,8 @@
     {
       &quot;version&quot;: &quot;2026-08-26.6&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Reports the amount actually charged (`amountWithCharges`) rather than the interbank conversion (`amount`). The two agree whenever nothing was charged, so the old field looked right in almost every movement and was wrong in exactly those carrying a fee — the weekend currency surcharge that 2026-08-26.3 could only document among them. Verified against a real archive of 208 movements: five change, all five to the value the service itself declares, and none loses its amount. The behaviour shipped in 2026-08-26.5, which went out without this note. Needs extension 0.10.1 or newer, which can read a field with a fallback path.&quot;,
-        &quot;es&quot;: &quot;Informa del importe realmente cargado (`amountWithCharges`) en lugar de la conversión interbancaria (`amount`). Ambos coinciden siempre que no hubo comisión, así que el campo anterior parecía correcto en casi todos los movimientos y fallaba justo en los que llevaban una — entre ellos el recargo por divisa en fin de semana que 2026-08-26.3 solo pudo documentar. Verificado contra un archivo real de 208 movimientos: cambian cinco, los cinco al valor que declara el propio servicio, y ninguno se queda sin importe. El comportamiento salió en 2026-08-26.5, que se publicó sin esta nota. Requiere la extensión 0.10.1 o posterior, que sabe leer un campo con ruta de reserva.&quot;
+        &quot;en&quot;: &quot;Movements now show the amount that actually left your account, fees included. Payments that carried one — a card payment in another currency at the weekend, for instance — used to arrive slightly below what you were really charged. Needs Habeas 0.10.1 or newer.&quot;,
+        &quot;es&quot;: &quot;Los movimientos muestran ahora el importe que realmente salió de tu cuenta, comisiones incluidas. Los pagos que llevaban alguna —una compra con tarjeta en otra divisa en fin de semana, por ejemplo— llegaban algo por debajo de lo que te cobraron. Requiere Habeas 0.10.1 o posterior.&quot;
       }
     },
     {
@@ -492,8 +492,8 @@
     {
       &quot;version&quot;: &quot;2026-08-08&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.&quot;,
-        &quot;es&quot;: &quot;Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`.&quot;
+        &quot;en&quot;: &quot;No change to what this source extracts. This version gave it its guide page on habeas.dev.&quot;,
+        &quot;es&quot;: &quot;Sin cambios en lo que extrae esta fuente. Esta versión le dio su página de guía en habeas.dev.&quot;
       }
     },
     {
@@ -520,8 +520,8 @@
     {
       &quot;version&quot;: &quot;2026-07-15&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Initial: personal transactions across all accounts, paged by the `to` timestamp cursor; cookie + captured x-device-id; minor-unit amounts scaled per ISO 4217.&quot;,
-        &quot;es&quot;: &quot;Inicial: movimientos personales de todas las cuentas, paginados por el cursor de marca temporal `to`; cookie más x-device-id capturado; importes en unidades menores escalados según ISO 4217.&quot;
+        &quot;en&quot;: &quot;Your Revolut movements across all of your accounts.&quot;,
+        &quot;es&quot;: &quot;Tus movimientos de Revolut en todas tus cuentas.&quot;
       }
     }
   ],
@@ -597,7 +597,7 @@
       <h2>What has changed in this source</h2>
       <p>This source is a public definition, and every change to it is on the record. Most recent first:</p>
       <ul class="changelog">
-        <li class="rev"><span class="ver">2026-08-26.6</span> — Reports the amount actually charged (`amountWithCharges`) rather than the interbank conversion (`amount`). The two agree whenever nothing was charged, so the old field looked right in almost every movement and was wrong in exactly those carrying a fee — the weekend currency surcharge that 2026-08-26.3 could only document among them. Verified against a real archive of 208 movements: five change, all five to the value the service itself declares, and none loses its amount. The behaviour shipped in 2026-08-26.5, which went out without this note. Needs extension 0.10.1 or newer, which can read a field with a fallback path.</li>
+        <li class="rev"><span class="ver">2026-08-26.6</span> — Movements now show the amount that actually left your account, fees included. Payments that carried one — a card payment in another currency at the weekend, for instance — used to arrive slightly below what you were really charged. Needs Habeas 0.10.1 or newer.</li>
         <li class="rev"><span class="ver">2026-08-26.4</span> — Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.</li>
         <li class="rev"><span class="ver">2026-08-26.3</span> — Documents a known limit rather than fixing it: weekend foreign-currency card payments arrive about 1% short, because Revolut’s out-of-hours surcharge leaves the balance but never appears in the data. 1.48 EUR across 3 of 167 movements, and every way of correcting it costs more than it recovers.</li>
         <li class="rev"><span class="ver">2026-08-26.1</span> — Drops card verifications (0 EUR authorisations, flagged cardVerification) — they move no money and are not movements. Fixes vault transfers: Revolut books them from the paying side, so money returning from a savings vault arrived negative, and the balance they carry belongs to the vault rather than to the personal account. Reported against 167 real movements, of which 151 of 166 balance links already chained to the cent. Also drops anything whose state is not COMPLETED (5 DECLINED + 1 REVERTED in the sample were retried charges whose successful twin also arrived).</li>

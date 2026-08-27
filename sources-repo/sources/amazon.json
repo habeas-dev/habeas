@@ -187,15 +187,15 @@
     {
       "version": "2026-08-24",
       "changes": {
-        "en": "Licence of the definition moved to CC0-1.0 (and the guide `content` to CC-BY-4.0), stated once in sources/LICENSE instead of a per-file field.",
-        "es": "La licencia de la definición pasa a CC0-1.0 (y el `content` de la guía a CC-BY-4.0), declarada una sola vez en sources/LICENSE en lugar de en un campo por fichero."
+        "en": "No change to what is extracted. The definition is now public domain (CC0-1.0) and this guide's text CC-BY-4.0, stated once for the whole catalogue.",
+        "es": "Sin cambios en lo que se extrae. La definición pasa a dominio público (CC0-1.0) y el texto de esta guía a CC-BY-4.0, declarado una sola vez para todo el catálogo."
       }
     },
     {
       "version": "2026-08-08",
       "changes": {
-        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.",
-        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`."
+        "en": "No change to what this source extracts. This version gave it its guide page on habeas.dev.",
+        "es": "Sin cambios en lo que extrae esta fuente. Esta versión le dio su página de guía en habeas.dev."
       }
     }
   ]

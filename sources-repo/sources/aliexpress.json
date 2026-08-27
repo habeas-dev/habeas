@@ -162,15 +162,15 @@
     {
       "version": "2026-08-08",
       "changes": {
-        "en": "Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.",
-        "es": "Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`."
+        "en": "No change to what this source extracts. This version gave it its guide page on habeas.dev.",
+        "es": "Sin cambios en lo que extrae esta fuente. Esta versión le dio su página de guía en habeas.dev."
       }
     },
     {
       "version": "2026-07-16",
       "changes": {
-        "en": "Initial: order history via Alibaba's mtop gateway. Runs in the site tab and reuses the app's own live request payload (hook stashes it) + its lib.mtop signing (no hardcoded blob, no forged signature); paginates by bumping the component pageIndex. Orders extracted from the DIDA component response (itemsFromKeys). Per-order receipt as a self-contained printable HTML invoice, generated from mtop queryorderreceiptinfo (no seed needed — a known flat payload) via a declarative template using AliExpress's own labels.",
-        "es": "Inicial: historial de pedidos a través de la pasarela mtop de Alibaba. Se ejecuta en la pestaña del sitio y reutiliza el payload real de la propia app (el hook lo guarda) junto a su firma lib.mtop (sin blob incrustado ni firma falsificada); pagina incrementando el pageIndex del componente. Los pedidos se extraen de la respuesta del componente DIDA (itemsFromKeys). Recibo por pedido como factura HTML imprimible y autocontenida, generada desde mtop queryorderreceiptinfo (no hace falta semilla: es un payload plano conocido) mediante una plantilla declarativa que usa las propias etiquetas de AliExpress."
+        "en": "Your AliExpress order history, with a printable invoice for each order.",
+        "es": "Tu historial de pedidos de AliExpress, con una factura imprimible por cada pedido."
       }
     }
   ],

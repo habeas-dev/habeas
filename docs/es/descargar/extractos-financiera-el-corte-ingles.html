@@ -424,8 +424,8 @@
     {
       &quot;version&quot;: &quot;2026-08-08&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.&quot;,
-        &quot;es&quot;: &quot;Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.&quot;
+        &quot;en&quot;: &quot;No change to what this source extracts. This version gave it its guide page on habeas.dev.&quot;,
+        &quot;es&quot;: &quot;Sin cambios en lo que extrae esta fuente. Esta versión le dio su página de guía en habeas.dev.&quot;
       }
     },
     {
@@ -438,8 +438,8 @@
     {
       &quot;version&quot;: &quot;2026-07-20.2&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Fix the statement PDF datePurchase format: the generate-file endpoint wants DD/MM/YYYY (e.g. 01/09/2025), but on a store re-download the date falls back to the normalized ISO value (2025-09-01), which the server rejected with HTTP 400. Now formatted explicitly via {date:DD/MM/YYYY}. Requires extension &gt;= 0.4.1.15.&quot;,
-        &quot;es&quot;: &quot;Corrige el formato de datePurchase del PDF de extracto: el endpoint generate-file espera DD/MM/YYYY (p. ej. 01/09/2025), pero al re-descargar desde el archivo la fecha volvía al valor ISO normalizado (2025-09-01), que el servidor rechazaba con HTTP 400. Ahora se formatea explícitamente con {date:DD/MM/YYYY}. Requiere extensión &gt;= 0.4.1.15.&quot;
+        &quot;en&quot;: &quot;Fixes monthly statement PDFs that failed to download once the statement had already been saved.&quot;,
+        &quot;es&quot;: &quot;Corrige los PDF de extracto mensual, que fallaban al descargarse si el extracto ya se había guardado antes.&quot;
       }
     },
     {
@@ -459,15 +459,15 @@
     {
       &quot;version&quot;: &quot;2026-07-17.4&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Revert tokenFromStorage: FECI's API bearer is a WSO2 OAuth JWT held in memory (obtained via /api/accessTokenTransmit), NOT in localStorage — aphishi-lws_at.t is a session id, so injecting it gave WSO2 900901 'Invalid Credentials'. Back to capturing the bearer from the SPA's own requests (auth.replayHeaders).&quot;,
-        &quot;es&quot;: &quot;Revierte tokenFromStorage: el bearer de la API de FECI es un JWT OAuth de WSO2 que vive en memoria (se obtiene vía /api/accessTokenTransmit), NO en localStorage — aphishi-lws_at.t es un identificador de sesión, así que inyectarlo daba 'Invalid Credentials' 900901 de WSO2. Vuelve a capturarse el bearer de las propias peticiones de la SPA (auth.replayHeaders).&quot;
+        &quot;en&quot;: &quot;Fixes the sign-in error that stopped this source from reading anything.&quot;,
+        &quot;es&quot;: &quot;Corrige el error de acceso que impedía a esta fuente leer nada.&quot;
       }
     },
     {
       &quot;version&quot;: &quot;2026-07-17.3&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;(reverted) read the bearer from localStorage via auth.tokenFromStorage — wrong field for FECI (the token isn't in localStorage).&quot;,
-        &quot;es&quot;: &quot;(revertido) leer el bearer de localStorage vía auth.tokenFromStorage — campo equivocado para FECI (el token no está en localStorage).&quot;
+        &quot;en&quot;: &quot;An attempt at the sign-in problem that did not work and was undone in the next version. Nothing changed for you.&quot;,
+        &quot;es&quot;: &quot;Un intento de arreglar el acceso que no funcionó y se deshizo en la versión siguiente. Nada cambió para ti.&quot;
       }
     },
     {
@@ -487,15 +487,15 @@
     {
       &quot;version&quot;: &quot;2026-07-17&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Fix empty aplazamientos + extractos lists: send the query params the SPA sends. aplazamientos/financing-purchases now sends page_number=0&amp;page_size=100 (the endpoint is paged); extractos/shopping-summaries now sends date_bill (the current billing date the SPA stamps), via the new {monthEnd:DD/MM/YYYY} computed-date token. Requires extension &gt;= 0.4.1.1.&quot;,
-        &quot;es&quot;: &quot;Corrige las listas vacías de aplazamientos y extractos: envía los parámetros de consulta que manda la SPA. aplazamientos/financing-purchases envía ahora page_number=0&amp;page_size=100 (el endpoint es paginado); extractos/shopping-summaries envía date_bill (la fecha de facturación actual que estampa la SPA), mediante el nuevo token de fecha calculada {monthEnd:DD/MM/YYYY}. Requiere extensión &gt;= 0.4.1.1.&quot;
+        &quot;en&quot;: &quot;Fixes aplazamientos and monthly statements coming back empty.&quot;,
+        &quot;es&quot;: &quot;Corrige los aplazamientos y los extractos mensuales, que llegaban vacíos.&quot;
       }
     },
     {
       &quot;version&quot;: &quot;2026-07-16&quot;,
       &quot;changes&quot;: {
-        &quot;en&quot;: &quot;Initial (authored from a redacted handoff recording, verified live by the contributor). Multi-card (grouped by contract): card movements (transactions), aplazamientos/financing purchases, and monthly statement PDFs (generated per month, base64). Cookie session + replayed bearer + per-card eci-custom-encrypted-pan header.&quot;,
-        &quot;es&quot;: &quot;Inicial (escrita a partir de una grabación redactada del handoff, verificada en vivo por quien la aportó). Multitarjeta (agrupada por contrato): movimientos de tarjeta (transactions), aplazamientos/financing purchases y PDF de extracto mensual (generados por mes, en base64). Sesión por cookie + bearer replicado + cabecera eci-custom-encrypted-pan por tarjeta.&quot;
+        &quot;en&quot;: &quot;Your El Corte Ingles store-card movements, instalment purchases and monthly statement PDFs, for each card you hold.&quot;,
+        &quot;es&quot;: &quot;Los movimientos de tu tarjeta de El Corte Inglés, las compras aplazadas y los PDF de extracto mensual, para cada tarjeta que tengas.&quot;
       }
     }
   ],
@@ -563,9 +563,9 @@
       <ul class="changelog">
         <li class="rev"><span class="ver">2026-08-26.1</span> — Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga.</li>
         <li class="rev"><span class="ver">2026-08-26</span> — Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.</li>
-        <li class="rev"><span class="ver">2026-08-08</span> — Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`. La página por fuente pasa a generarse desde la propia definición, no desde un fichero aparte en la web.</li>
+        <li class="rev"><span class="ver">2026-08-08</span> — Sin cambios en lo que extrae esta fuente. Esta versión le dio su página de guía en habeas.dev.</li>
         <li class="rev"><span class="ver">2026-07-20.3</span> — Primera publicación en el registro vivo. Requiere extensión &gt;= 0.5.0 (el hito que incorpora capturePaths declarativo, el observador de token acotado y seguro ante el login, y el token de documento {date:FORMAT} del que depende esta fuente). Verificada de extremo a extremo por quien la aportó.</li>
-        <li class="rev"><span class="ver">2026-07-20.2</span> — Corrige el formato de datePurchase del PDF de extracto: el endpoint generate-file espera DD/MM/YYYY (p. ej. 01/09/2025), pero al re-descargar desde el archivo la fecha volvía al valor ISO normalizado (2025-09-01), que el servidor rechazaba con HTTP 400. Ahora se formatea explícitamente con {date:DD/MM/YYYY}. Requiere extensión &gt;= 0.4.1.15.</li>
+        <li class="rev"><span class="ver">2026-07-20.2</span> — Corrige los PDF de extracto mensual, que fallaban al descargarse si el extracto ya se había guardado antes.</li>
       </ul>
       <p class="lead"><a href="/sources.html#financiera-elcorteingles-es">Ver el historial completo en el catálogo →</a></p>
 
