@@ -13,6 +13,8 @@ const INDEX_URL = 'https://habeas-dev.github.io/sources/index.json';
 const here = dirname(fileURLToPath(import.meta.url));
 const HTML = join(here, '..', 'sources.html');
 const START = '<!-- SOURCES:START -->', END = '<!-- SOURCES:END -->';
+const S_START = '<!-- STATS:START -->', S_END = '<!-- STATS:END -->';
+const F_START = '<!-- FILTERS:START -->', F_END = '<!-- FILTERS:END -->';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const flag = (code) => !code ? '' : code === 'global' ? '🌐'
@@ -48,10 +50,51 @@ const sources = (data.sources || data || []).slice()
   .sort((a, b) => (a.trust === b.trust ? String(a.name).localeCompare(b.name) : a.trust === 'first-party' ? -1 : 1));
 const cards = '\n      ' + sources.map(card).join('\n      ') + '\n      ';
 
+// Figures, counted from the catalogue rather than typed. A hardcoded "24 services" is the number a
+// model quotes back at people long after it stopped being true, which is worse than showing none.
+const shipped = sources.filter((x) => !x.beta);
+const stats = [
+  [String(shipped.length), 'services covered', 'servicios cubiertos'],
+  [String(shipped.filter((x) => x.trust === 'first-party').length), 'verified by the project', 'verificados por el proyecto'],
+  [String(new Set(shipped.flatMap((x) => x.categories || [])).size), 'kinds of document', 'tipos de documento'],
+  ['0', 'passwords stored', 'contraseñas almacenadas'],
+];
+const statsHtml = '\n      <div class="stats">' + stats.map(([n, en, es]) =>
+  `<div class="stat"><b>${n}</b><span data-t-en="${esc(en)}" data-t-es="${esc(es)}">${esc(en)}</span></div>`).join('') + '</div>\n    ';
+
+// Chips filter cards that are already in the document. Filtering hides, never removes: without JS, and
+// to any crawler, the whole catalogue is present.
+const cats = [...new Set(sources.flatMap((x) => x.categories || []))].sort();
+const chips = ['<button class="chip" data-cat="" aria-pressed="true" data-t-en="All" data-t-es="Todo">All</button>']
+  .concat(cats.map((c) => `<button class="chip" data-cat="${esc(c)}" aria-pressed="false">${esc(c)}</button>`));
+const filtersHtml = '\n      <div class="filters" role="group">' + chips.join('') + '</div>\n    ';
+
+// The catalogue as data. This page answers "which services does Habeas support"; without a list a machine
+// reading it has to infer the answer from markup.
+const itemList = {
+  '@context': 'https://schema.org', '@type': 'ItemList',
+  name: 'Habeas sources', numberOfItems: sources.length,
+  itemListElement: sources.map((x, i) => ({
+    '@type': 'ListItem', position: i + 1,
+    item: { '@type': 'SoftwareApplication', name: x.name, applicationCategory: 'BrowserApplication',
+            url: `https://habeas.dev/sources.html#${x.id}`, softwareVersion: x.version },
+  })),
+};
+const ldHtml = `\n    <script type="application/ld+json">${JSON.stringify(itemList)}<\/script>\n  `;
+
 let html = readFileSync(HTML, 'utf8');
 const i = html.indexOf(START), j = html.indexOf(END);
 if (i < 0 || j < 0) throw new Error('markers not found in sources.html');
 html = html.slice(0, i + START.length) + cards + html.slice(j);
+const fill = (str, a, b, body) => {
+  const x = str.indexOf(a), y = str.indexOf(b);
+  if (x < 0 || y < 0) throw new Error(`markers ${a} not found in sources.html`);
+  return str.slice(0, x + a.length) + body + str.slice(y);
+};
+html = fill(html, S_START, S_END, statsHtml);
+html = fill(html, F_START, F_END, filtersHtml);
+html = html.replace(/\n    <script type="application\/ld\+json">[\s\S]*?<\/script>\n  /, '');
+html = html.replace('</head>', `${ldHtml}</head>`);
 html = html.replace(/(\n    const GUIDES = )[^\n]*/, `$1${JSON.stringify(GUIDES)};`);
 writeFileSync(HTML, html);
 console.log(`baked ${sources.length} sources into docs/sources.html`);
