@@ -70,6 +70,14 @@
   "mainEntity": [
     {
       "@type": "Question",
+      "name": "Does Trade Republic have an API I can use?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Not a public one. There is nothing documented and nothing to request access to, which is precisely why this source exists. The app itself talks to a private WebSocket endpoint, and Habeas speaks that same protocol using the session you already have open. No access is granted to a third party and no credentials change hands."
+      }
+    },
+    {
+      "@type": "Question",
       "name": "Should I pull the transactions or the statements?",
       "acceptedAnswer": {
         "@type": "Answer",
@@ -537,11 +545,13 @@
     </ul>
       <h2>What Trade Republic actually gives you</h2>
       <p>Trade Republic exposes two distinct sets, handled separately here: on one side the transaction history, with each position and its instrument; on the other the statements, which are periodic documents available as either PDF or CSV. You can enable just one of the two, or both.</p>
+      <h2>How far back it goes</h2>
+      <p class="retention">The two sets do not reach back equally far. Statements are generated one per month and go back about three years, so the oldest one you can pull is roughly thirty-six months old. The transaction timeline has no such window: it is walked backwards page by page until it runs out, so it reaches as far as your own account's history does.</p>
       <h2>Worth knowing about this source</h2>
       <ul class="quirks">
+        <li>Trade Republic's app does not call a REST API: it holds a WebSocket open and subscribes to its own timeline. Habeas speaks that same protocol over the session you opened yourself, which is why this source's definition looks unlike the others.</li>
         <li>The statement comes in two formats over the same data: the PDF works as a receipt and the CSV drops into a spreadsheet, and you pick which one when you configure the source.</li>
         <li>Transactions and statements are tracked separately, so switching the second one on later does not make you re-download the first.</li>
-        <li>This is a community source: its definition is public and reviewable, but it is not audited by the project.</li>
       </ul>
 
     <h2>How it works</h2>
@@ -561,6 +571,8 @@
     <p class="lead">Chrome will warn you that the extension is not trusted. That happens to any developer account recently registered on the Chrome Web Store, it fades after a few months, and it says nothing about the code — which you can read in full.</p>
 
     <h2>Frequently asked questions</h2>
+    <h3>Does Trade Republic have an API I can use?</h3>
+    <p>Not a public one. There is nothing documented and nothing to request access to, which is precisely why this source exists. The app itself talks to a private WebSocket endpoint, and Habeas speaks that same protocol using the session you already have open. No access is granted to a third party and no credentials change hands.</p>
     <h3>Should I pull the transactions or the statements?</h3>
     <p>They are different things and you can have both. Transactions are the movement-by-movement detail, useful for reconciling; statements are the periodic document, which is usually what gets asked of you as proof.</p>
     <h3>Does the CSV statement hold the same as the PDF?</h3>

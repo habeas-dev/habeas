@@ -70,6 +70,14 @@
   "mainEntity": [
     {
       "@type": "Question",
+      "name": "¿Trade Republic tiene una API que pueda usar?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Pública no. No hay nada documentado ni a lo que pedir acceso, y justo por eso existe esta fuente. La propia app habla con un endpoint WebSocket privado, y Habeas habla ese mismo protocolo usando la sesión que ya tienes abierta. No se concede acceso a ningún tercero y no cambian de manos tus credenciales."
+      }
+    },
+    {
+      "@type": "Question",
       "name": "¿Me bajo las operaciones o los extractos?",
       "acceptedAnswer": {
         "@type": "Answer",
@@ -537,11 +545,13 @@
     </ul>
       <h2>Qué te da Trade Republic en realidad</h2>
       <p>Trade Republic da dos conjuntos distintos que aquí se tratan por separado: por un lado el histórico de operaciones, con cada posición y su instrumento; por otro los extractos, que son documentos periódicos y se pueden obtener tanto en PDF como en CSV. Puedes activar solo uno de los dos o los dos a la vez.</p>
+      <h2>Hasta dónde llega el histórico</h2>
+      <p class="retention">Los dos conjuntos no llegan igual de atrás. Los extractos se generan uno por mes y alcanzan unos tres años, así que el más antiguo que puedes recuperar tiene unos treinta y seis meses. El histórico de operaciones no tiene esa ventana: se recorre hacia atrás página a página hasta agotarlo, así que llega hasta donde llegue tu propia cuenta.</p>
       <h2>Particularidades de esta fuente</h2>
       <ul class="quirks">
+        <li>La app de Trade Republic no llama a una API REST: mantiene abierto un WebSocket y se suscribe a su propio timeline. Habeas habla ese mismo protocolo sobre la sesión que has abierto tú, y por eso la definición de esta fuente no se parece a las demás.</li>
         <li>El extracto se ofrece en dos formatos sobre los mismos datos: el PDF sirve como justificante y el CSV para meterlo en una hoja de cálculo, y eliges cuál quieres al configurar la fuente.</li>
         <li>Las operaciones y los extractos se llevan la cuenta por separado, así que activar el segundo más tarde no te obliga a volver a descargar lo primero.</li>
-        <li>Es una fuente de la comunidad: su definición es pública y revisable, pero no está auditada por el proyecto.</li>
       </ul>
 
     <h2>Cómo funciona</h2>
@@ -561,6 +571,8 @@
     <p class="lead">Chrome te avisará de que la extensión no es de confianza. Le ocurre a cualquier cuenta de desarrollador registrada hace poco en la Chrome Web Store, se disipa en unos meses y no dice nada del código, que puedes leer entero.</p>
 
     <h2>Preguntas frecuentes</h2>
+    <h3>¿Trade Republic tiene una API que pueda usar?</h3>
+    <p>Pública no. No hay nada documentado ni a lo que pedir acceso, y justo por eso existe esta fuente. La propia app habla con un endpoint WebSocket privado, y Habeas habla ese mismo protocolo usando la sesión que ya tienes abierta. No se concede acceso a ningún tercero y no cambian de manos tus credenciales.</p>
     <h3>¿Me bajo las operaciones o los extractos?</h3>
     <p>Son cosas distintas y puedes tener las dos. Las operaciones son el detalle movimiento a movimiento, útil para cuadrar cuentas; los extractos son el documento periódico, que es lo que normalmente te piden como justificante.</p>
     <h3>¿El extracto en CSV trae lo mismo que el PDF?</h3>

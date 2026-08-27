@@ -542,6 +542,50 @@ test('each guide is substantive, self-describing and correctly marked up', async
   }
 });
 
+// The trust line is generated from the source's `trust` field, but the curated `quirks` in
+// source-pages.json are free prose that can restate it — and did, until four pages ended up asserting both
+// "audited by the project" and "not audited by the project". A source promoted to first-party leaves that
+// prose behind silently, because nothing links the two. The security label is the one claim on these pages
+// that must never be ambiguous, so it is asserted on the built page rather than on either source.
+test('no guide claims to be both audited and unaudited', async () => {
+  const byLang = await loadGuides();
+  const CLAIMS = {
+    en: [/audited source/i, /community source:/i],
+    es: [/fuente auditada/i, /fuente de la comunidad:/i],
+  };
+  for (const [lang, pages] of Object.entries(byLang)) {
+    const [audited, community] = CLAIMS[lang];
+    for (const [, page] of pages) {
+      const text = page.html.replace(/<(script|style)[\s\S]*?<\/\1>/g, ' ')
+        .replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+      assert.ok(!(audited.test(text) && community.test(text)),
+        `${lang}/${page.file}: claims both audited and community trust`);
+    }
+  }
+});
+
+// A guide's FAQ is its own questions concatenated with four boilerplate ones, and the concatenation does
+// not deduplicate. So a curated question phrased like a generic one ships the same Question twice: the
+// reader sees it twice, and the FAQPage hands a search engine a contradiction about its own page. That is
+// invisible in the source (the two halves live in different files) and only shows up in the built HTML,
+// which is why this reads the generated pages.
+test('no guide ships the same FAQ question twice', async () => {
+  const byLang = await loadGuides();
+  for (const [lang, pages] of Object.entries(byLang)) {
+    for (const [, page] of pages) {
+      const where = `${lang}/${page.file}`;
+      const block = page.html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+      const questions = JSON.parse(block[1]).mainEntity.map((q) => q.name.trim().toLowerCase());
+      const dupes = questions.filter((q, i) => questions.indexOf(q) !== i);
+      assert.deepEqual(dupes, [], `${where}: duplicated FAQ question(s): ${dupes.join(' | ')}`);
+      // An answer that is present but empty passes every other check here and says nothing.
+      for (const { name, acceptedAnswer } of JSON.parse(block[1]).mainEntity) {
+        assert.ok(acceptedAnswer.text.trim().length > 40, `${where}: "${name}" has no real answer`);
+      }
+    }
+  }
+});
+
 test('guides are reachable: index groups them, siblings cross-link, catalog links in', async () => {
   const byLang = await loadGuides();
 

@@ -70,6 +70,30 @@
   "mainEntity": [
     {
       "@type": "Question",
+      "name": "¿Hasta cuándo llega el histórico de PayPal?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Hasta donde llegue tu propia cuenta. A diferencia de los servicios que te cortan a los tres o cinco años, aquí no hay corte de retención: la consulta admite una ventana de fechas amplia y va avanzando por un cursor hasta agotar el histórico. Lo que suele limitar es el rango que eliges en la pantalla de exportación, no el registro."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Cómo descargo mi historial de compras de PayPal?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "De dos maneras, y lo honesto es decir que PayPal ya ofrece una: puedes pedir un informe de actividad desde tu cuenta y descargarlo a mano cada vez que lo necesites. Habeas es la otra: lee esa misma actividad desde la sesión que ya tienes abierta y la deja donde guardas todo lo demás, sin tarea que repetir."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Puedo guardar mi propio archivo de la actividad de PayPal?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Sí, y para eso está esta fuente: una copia que vive contigo y no dentro de una cuenta a la que algún día podrías perder el acceso. Archivo aquí significa tu copia duradera —cada pago enviado y recibido, con la misma forma que el resto de tus servicios—, no un ajuste dentro de PayPal."
+      }
+    },
+    {
+      "@type": "Question",
       "name": "¿Puedo descargar mis movimientos de PayPal en PDF?",
       "acceptedAnswer": {
         "@type": "Answer",
@@ -442,14 +466,13 @@
         <li><strong>movimientos</strong> — cada movimiento con su fecha, importe, moneda, concepto y contraparte.</li>
     </ul>
       <h2>Qué te da PayPal en realidad</h2>
-      <p>PayPal no emite una factura por cada movimiento, así que lo que se puede conservar es el registro de actividad: los pagos que has enviado y recibido, cada uno con su fecha, importe, moneda y contraparte. Habeas los recoge paginando la misma llamada que usa la web cuando pulsas «cargar más», y los deja normalizados en el manifiesto junto al resto de tus fuentes.</p>
+      <p>PayPal no emite una factura por cada movimiento, así que lo que se puede conservar es el registro de actividad —tu historial de compras—: los pagos que has enviado y recibido, cada uno con su fecha, importe, moneda y contraparte. Habeas los recoge paginando la misma llamada que usa la web cuando pulsas «cargar más», y los deja normalizados en el manifiesto junto al resto de tus fuentes.</p>
       <h2>Hasta dónde llega el histórico</h2>
       <p class="retention">No hay un corte de retención como en otros servicios: la consulta admite una ventana de fechas amplia y va avanzando por un cursor hasta agotar el histórico, así que llega hasta donde llegue tu propia cuenta.</p>
       <h2>Particularidades de esta fuente</h2>
       <ul class="quirks">
         <li>Los importes llegan ya formateados según tu idioma («-9,00 €»), con la moneda en un campo aparte; Habeas los interpreta y respeta la divisa real en lugar de asumir euros.</li>
         <li>La sesión se sostiene con la cookie de tu navegador más un token CSRF que rota, capturado de tus propias peticiones mientras navegas.</li>
-        <li>Es una fuente de la comunidad: su definición es pública y revisable, pero no está auditada por el proyecto.</li>
       </ul>
       <div class="box"><strong>A tener en cuenta:</strong> Habeas no está aquí porque PayPal esconda tu historial —no lo hace—. Está para que ese historial acabe en el mismo archivo que el resto de tus servicios, automáticamente y sin pasar cada mes por la pantalla de exportación.</div>
 
@@ -470,6 +493,12 @@
     <p class="lead">Chrome te avisará de que la extensión no es de confianza. Le ocurre a cualquier cuenta de desarrollador registrada hace poco en la Chrome Web Store, se disipa en unos meses y no dice nada del código, que puedes leer entero.</p>
 
     <h2>Preguntas frecuentes</h2>
+    <h3>¿Hasta cuándo llega el histórico de PayPal?</h3>
+    <p>Hasta donde llegue tu propia cuenta. A diferencia de los servicios que te cortan a los tres o cinco años, aquí no hay corte de retención: la consulta admite una ventana de fechas amplia y va avanzando por un cursor hasta agotar el histórico. Lo que suele limitar es el rango que eliges en la pantalla de exportación, no el registro.</p>
+    <h3>¿Cómo descargo mi historial de compras de PayPal?</h3>
+    <p>De dos maneras, y lo honesto es decir que PayPal ya ofrece una: puedes pedir un informe de actividad desde tu cuenta y descargarlo a mano cada vez que lo necesites. Habeas es la otra: lee esa misma actividad desde la sesión que ya tienes abierta y la deja donde guardas todo lo demás, sin tarea que repetir.</p>
+    <h3>¿Puedo guardar mi propio archivo de la actividad de PayPal?</h3>
+    <p>Sí, y para eso está esta fuente: una copia que vive contigo y no dentro de una cuenta a la que algún día podrías perder el acceso. Archivo aquí significa tu copia duradera —cada pago enviado y recibido, con la misma forma que el resto de tus servicios—, no un ajuste dentro de PayPal.</p>
     <h3>¿Puedo descargar mis movimientos de PayPal en PDF?</h3>
     <p>No, porque PayPal no emite un PDF por movimiento. Lo que obtienes son los datos de cada operación en el manifiesto normalizado. Si necesitas un justificante concreto, sigue estando en la web de PayPal.</p>
     <h3>¿En qué se diferencia esto de la exportación que ya ofrece PayPal?</h3>

@@ -70,6 +70,30 @@
   "mainEntity": [
     {
       "@type": "Question",
+      "name": "How far back do PayPal records go?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "As far back as your own account does. Unlike services that cut you off after three or five years, there is no retention cliff here: the query takes a wide date window and walks a cursor until the history runs out. What usually limits people is the range they pick on the export screen, not the record itself."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I download my PayPal purchase history?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Two ways, and the honest answer is that PayPal already offers one: you can request an activity report from your own account and download it by hand, every time you want it. Habeas is the other: it reads the same activity from the session you already have open and writes it wherever you keep everything else, so there is no chore to repeat."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I keep my own archive of PayPal activity?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, and that is what this source is for: a copy that lives with you rather than inside an account you might one day lose access to. Archive here means your own durable copy — every payment sent and received, in the same shape as the rest of your services — not a setting inside PayPal."
+      }
+    },
+    {
+      "@type": "Question",
       "name": "Can I download my PayPal transactions as PDFs?",
       "acceptedAnswer": {
         "@type": "Answer",
@@ -442,14 +466,13 @@
         <li><strong>transactions</strong> — each movement with its date, amount, currency, description and counterparty.</li>
     </ul>
       <h2>What PayPal actually gives you</h2>
-      <p>PayPal does not issue an invoice per movement, so what there is to keep is the activity record: the payments you have sent and received, each with its date, amount, currency and counterparty. Habeas collects them by paging the same call the site itself makes when you hit “load more”, and leaves them normalised in the manifest alongside your other sources.</p>
+      <p>PayPal does not issue an invoice per movement, so what there is to keep is the activity record — your purchase history: the payments you have sent and received, each with its date, amount, currency and counterparty. Habeas collects them by paging the same call the site itself makes when you hit “load more”, and leaves them normalised in the manifest alongside your other sources.</p>
       <h2>How far back it goes</h2>
       <p class="retention">There is no retention cliff here like there is on other services: the query accepts a wide date window and walks a cursor until the history runs out, so it reaches as far back as your own account does.</p>
       <h2>Worth knowing about this source</h2>
       <ul class="quirks">
         <li>Amounts arrive pre-formatted for your locale (“-9,00 €”), with the currency in a separate field; Habeas parses them and honours the real currency instead of assuming euros.</li>
         <li>The session rests on your browser cookie plus a rotating CSRF token, captured from your own requests as you browse.</li>
-        <li>This is a community source: its definition is public and reviewable, but it is not audited by the project.</li>
       </ul>
       <div class="box"><strong>Worth knowing:</strong> Habeas is not here because PayPal hides your history — it does not. It is here so that history lands in the same archive as your other services, automatically, without a monthly detour through the export screen.</div>
 
@@ -470,6 +493,12 @@
     <p class="lead">Chrome will warn you that the extension is not trusted. That happens to any developer account recently registered on the Chrome Web Store, it fades after a few months, and it says nothing about the code — which you can read in full.</p>
 
     <h2>Frequently asked questions</h2>
+    <h3>How far back do PayPal records go?</h3>
+    <p>As far back as your own account does. Unlike services that cut you off after three or five years, there is no retention cliff here: the query takes a wide date window and walks a cursor until the history runs out. What usually limits people is the range they pick on the export screen, not the record itself.</p>
+    <h3>How do I download my PayPal purchase history?</h3>
+    <p>Two ways, and the honest answer is that PayPal already offers one: you can request an activity report from your own account and download it by hand, every time you want it. Habeas is the other: it reads the same activity from the session you already have open and writes it wherever you keep everything else, so there is no chore to repeat.</p>
+    <h3>Can I keep my own archive of PayPal activity?</h3>
+    <p>Yes, and that is what this source is for: a copy that lives with you rather than inside an account you might one day lose access to. Archive here means your own durable copy — every payment sent and received, in the same shape as the rest of your services — not a setting inside PayPal.</p>
     <h3>Can I download my PayPal transactions as PDFs?</h3>
     <p>No, because PayPal does not issue a PDF per movement. What you get is each operation's data in the normalised manifest. If you need one specific receipt, it is still on PayPal's own site.</p>
     <h3>How is this different from the export PayPal already offers?</h3>
