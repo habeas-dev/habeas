@@ -31,6 +31,20 @@ See `schema/adapter.schema.json` and the reference sources in `sources/`. Minimu
 itemsPath}, fields.{internalId,date}, schema`. Pick `schema` from `receipt@1 | invoice@1 |
 transaction@1 | investment@1`.
 
+## `changelog` — one entry per published version
+
+Bumping `version` without adding an entry is refused by CI. A version identifies one exact
+content permanently, so the entry is the only place a reader can find out what changed.
+
+Write it **for the person installing the source**, not for whoever made the change: one or
+two plain sentences on what is different for them, and whether they need to do anything.
+Leave out sample sizes, record counts, field names and internal reasoning — the note is
+rendered on the source's public page and in the extension's marketplace, where the reader is
+deciding whether an update affects them. Verification detail belongs in the commit message.
+
+Key `changes` by language (`{"en": "...", "es": "..."}`); a plain string is served to every
+language regardless of what it is written in.
+
 ## `content` — the guide page on habeas.dev (optional)
 
 A source may carry `content`, one entry per language code, and habeas.dev generates a guide page
