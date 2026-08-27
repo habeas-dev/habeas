@@ -12,6 +12,7 @@ import { dirname, join } from 'node:path';
 const INDEX_URL = 'https://habeas-dev.github.io/sources/index.json';
 const here = dirname(fileURLToPath(import.meta.url));
 const HTML = join(here, '..', 'sources.html');
+import { GROUPS, groupsOf } from './groups.mjs';
 const START = '<!-- SOURCES:START -->', END = '<!-- SOURCES:END -->';
 const S_START = '<!-- STATS:START -->', S_END = '<!-- STATS:END -->';
 const F_START = '<!-- FILTERS:START -->', F_END = '<!-- FILTERS:END -->';
@@ -28,7 +29,8 @@ function card(s) {
   const fp = s.trust === 'first-party';
   const cats = (s.categories || []).map((c) => `<span class="cat">${esc(c)}</span>`).join('');
   const fmts = (s.formats || []).map((f) => `<span class="cat fmt">${esc(f)}</span>`).join('');
-  return `<div class="src">
+  const groups = groupsOf(s.categories).map((g) => g.id).join(' ');
+  return `<div class="src" data-groups="${esc(groups)}" id="${esc(s.id)}">
         <div class="top"><span class="name">${esc(s.name)}</span><span class="pill ${fp ? 'fp' : ''}">${fp ? 'first-party' : 'community'}</span>${s.beta ? '<span class="pill beta">experimental</span>' : ''}</div>
         <div class="meta">${s.country ? flag(s.country) + ' ' : ''}${esc(s.service)} · ${esc(s.domain)}</div>
         <div class="cats">${cats}${fmts}</div>
@@ -64,9 +66,11 @@ const statsHtml = '\n      <div class="stats">' + stats.map(([n, en, es]) =>
 
 // Chips filter cards that are already in the document. Filtering hides, never removes: without JS, and
 // to any crawler, the whole catalogue is present.
-const cats = [...new Set(sources.flatMap((x) => x.categories || []))].sort();
-const chips = ['<button class="chip" data-cat="" aria-pressed="true" data-t-en="All" data-t-es="Todo">All</button>']
-  .concat(cats.map((c) => `<button class="chip" data-cat="${esc(c)}" aria-pressed="false">${esc(c)}</button>`));
+// Chips are the five groups people browse by, not the fifteen raw categories — and only the groups this
+// catalogue actually has something in, so no chip ever filters to an empty grid.
+const present = GROUPS.filter((g) => sources.some((x) => groupsOf(x.categories).some((h) => h.id === g.id)));
+const chips = ['<button class="chip" data-group="" aria-pressed="true" data-t-en="All" data-t-es="Todo">All</button>']
+  .concat(present.map((g) => `<button class="chip" data-group="${esc(g.id)}" aria-pressed="false" data-t-en="${esc(g.en)}" data-t-es="${esc(g.es)}">${esc(g.en)}</button>`));
 const filtersHtml = '\n      <div class="filters" role="group">' + chips.join('') + '</div>\n    ';
 
 // The catalogue as data. This page answers "which services does Habeas support"; without a list a machine

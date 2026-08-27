@@ -233,3 +233,12 @@ footer a { color: var(--ink); }
   .docgrid { grid-template-columns: 1fr; gap: 0; }
   .toc { display: none; }
 }
+
+/* Four boxes across three columns leave one orphan on a second row. Two-by-two reads as a deliberate
+   set instead of a row that ran out. `:has(> :nth-child(4):last-child)` means exactly four children —
+   so this applies itself wherever a grid happens to hold four, and stops applying if one is added. */
+@media (min-width: 820px) {
+  .grid:has(> :nth-child(4):last-child),
+  .cards:has(> :nth-child(4):last-child),
+  .steps:has(> :nth-child(4):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

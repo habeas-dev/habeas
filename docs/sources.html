@@ -98,171 +98,171 @@
       <div class="stats"><div class="stat"><b>21</b><span data-t-en="services covered" data-t-es="servicios cubiertos">services covered</span></div><div class="stat"><b>13</b><span data-t-en="verified by the project" data-t-es="verificados por el proyecto">verified by the project</span></div><div class="stat"><b>15</b><span data-t-en="kinds of document" data-t-es="tipos de documento">kinds of document</span></div><div class="stat"><b>0</b><span data-t-en="passwords stored" data-t-es="contraseñas almacenadas">passwords stored</span></div></div>
     <!-- STATS:END -->
     <!-- FILTERS:START -->
-      <div class="filters" role="group"><button class="chip" data-cat="" aria-pressed="true" data-t-en="All" data-t-es="Todo">All</button><button class="chip" data-cat="banking" aria-pressed="false">banking</button><button class="chip" data-cat="card" aria-pressed="false">card</button><button class="chip" data-cat="diy" aria-pressed="false">diy</button><button class="chip" data-cat="domains" aria-pressed="false">domains</button><button class="chip" data-cat="energy" aria-pressed="false">energy</button><button class="chip" data-cat="fuel" aria-pressed="false">fuel</button><button class="chip" data-cat="grocery" aria-pressed="false">grocery</button><button class="chip" data-cat="home" aria-pressed="false">home</button><button class="chip" data-cat="investment" aria-pressed="false">investment</button><button class="chip" data-cat="loan" aria-pressed="false">loan</button><button class="chip" data-cat="marketplace" aria-pressed="false">marketplace</button><button class="chip" data-cat="retail" aria-pressed="false">retail</button><button class="chip" data-cat="sports" aria-pressed="false">sports</button><button class="chip" data-cat="telecom" aria-pressed="false">telecom</button><button class="chip" data-cat="tolls" aria-pressed="false">tolls</button></div>
+      <div class="filters" role="group"><button class="chip" data-group="" aria-pressed="true" data-t-en="All" data-t-es="Todo">All</button><button class="chip" data-group="grocery" aria-pressed="false" data-t-en="Supermarkets" data-t-es="Supermercados">Supermarkets</button><button class="chip" data-group="retail" aria-pressed="false" data-t-en="Shops" data-t-es="Tiendas">Shops</button><button class="chip" data-group="banking" aria-pressed="false" data-t-en="Banks, cards &amp; investments" data-t-es="Bancos, tarjetas e inversión">Banks, cards &amp; investments</button><button class="chip" data-group="road" aria-pressed="false" data-t-en="Fuel, tolls &amp; parking" data-t-es="Combustible, peajes y parking">Fuel, tolls &amp; parking</button><button class="chip" data-group="utility" aria-pressed="false" data-t-en="Services &amp; subscriptions" data-t-es="Servicios y suscripciones">Services &amp; subscriptions</button></div>
     <!-- FILTERS:END -->
     <div id="list" class="srcgrid" aria-live="polite"><!-- SOURCES:START -->
-      <div class="src">
+      <div class="src" data-groups="retail" id="amazon">
         <div class="top"><span class="name">Amazon</span><span class="pill fp">first-party</span></div>
         <div class="meta">🌐 amazon · amazon.com</div>
         <div class="cats"><span class="cat">marketplace</span><span class="cat fmt">json</span><span class="cat fmt">pdf</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/amazon.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="amazon">View JSON →</a></div>
         <a class="guide" href="/download/amazon-invoices.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="road" id="bipdrive-es">
         <div class="top"><span class="name">Bip&amp;Drive — facturas</span><span class="pill fp">first-party</span></div>
         <div class="meta">🇪🇸 bipdrive · bipdrive.com</div>
         <div class="cats"><span class="cat">tolls</span><span class="cat fmt">pdf</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/bipdrive-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="bipdrive-es">View JSON →</a></div>
         <a class="guide" href="/download/bipdrive-invoices.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="banking" id="caixabank-consumer-es">
         <div class="top"><span class="name">CaixaBank Consumer — extractos</span><span class="pill fp">first-party</span></div>
         <div class="meta">🇪🇸 caixabank-consumer · caixabankconsumer.com</div>
         <div class="cats"><span class="cat">card</span><span class="cat fmt">pdf</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/caixabank-consumer-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="caixabank-consumer-es">View JSON →</a></div>
         <a class="guide" href="/download/caixabank-consumer-statements.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="grocery retail road" id="carrefour-es">
         <div class="top"><span class="name">Carrefour España — tickets</span><span class="pill fp">first-party</span></div>
         <div class="meta">🇪🇸 carrefour · carrefour.es</div>
         <div class="cats"><span class="cat">grocery</span><span class="cat">fuel</span><span class="cat">retail</span><span class="cat fmt">pdf</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/carrefour-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="carrefour-es">View JSON →</a></div>
         <a class="guide" href="/download/carrefour-receipts.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="banking" id="financiera-elcorteingles-es">
         <div class="top"><span class="name">Financiera El Corte Inglés</span><span class="pill fp">first-party</span></div>
         <div class="meta">🇪🇸 financiera-elcorteingles · financieraelcorteingles.es</div>
         <div class="cats"><span class="cat">card</span><span class="cat">loan</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/financiera-elcorteingles-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="financiera-elcorteingles-es">View JSON →</a></div>
         <a class="guide" href="/download/financiera-el-corte-ingles-statements.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="retail" id="ikea-es">
         <div class="top"><span class="name">IKEA España — compras y tiquets</span><span class="pill fp">first-party</span></div>
         <div class="meta">🇪🇸 ikea · ikea.com</div>
         <div class="cats"><span class="cat">home</span><span class="cat fmt">pdf</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/ikea-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="ikea-es">View JSON →</a></div>
         <a class="guide" href="/download/ikea-receipts.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="banking" id="ing-es">
         <div class="top"><span class="name">ING España</span><span class="pill fp">first-party</span></div>
         <div class="meta">🇪🇸 ing · ingdirect.es</div>
         <div class="cats"><span class="cat">banking</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/ing-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="ing-es">View JSON →</a></div>
         <a class="guide" href="/download/ing-transactions.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="banking" id="openbank-es">
         <div class="top"><span class="name">Openbank España</span><span class="pill fp">first-party</span></div>
         <div class="meta">🇪🇸 openbank · openbank.es</div>
         <div class="cats"><span class="cat">banking</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/openbank-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="openbank-es">View JSON →</a></div>
         <a class="guide" href="/download/openbank-transactions.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="banking" id="paypal">
         <div class="top"><span class="name">PayPal</span><span class="pill fp">first-party</span></div>
         <div class="meta">🌐 paypal · paypal.com</div>
         <div class="cats"><span class="cat">banking</span><span class="cat fmt">json</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/paypal.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="paypal">View JSON →</a></div>
         <a class="guide" href="/download/paypal-transactions.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="banking" id="raisin">
         <div class="top"><span class="name">Raisin</span><span class="pill fp">first-party</span></div>
         <div class="meta">🌐 raisin · raisin.com</div>
         <div class="cats"><span class="cat">banking</span><span class="cat">investment</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/raisin.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="raisin">View JSON →</a></div>
         <a class="guide" href="/download/raisin-statements.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="banking" id="revolut">
         <div class="top"><span class="name">Revolut</span><span class="pill fp">first-party</span></div>
         <div class="meta">🌐 revolut · revolut.com</div>
         <div class="cats"><span class="cat">banking</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/revolut.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="revolut">View JSON →</a></div>
         <a class="guide" href="/download/revolut-statements.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="banking" id="traderepublic">
         <div class="top"><span class="name">Trade Republic</span><span class="pill fp">first-party</span></div>
         <div class="meta">🌐 traderepublic · traderepublic.com</div>
         <div class="cats"><span class="cat">banking</span><span class="cat">investment</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/traderepublic.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="traderepublic">View JSON →</a></div>
         <a class="guide" href="/download/trade-republic-statements.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="banking" id="wizink-es">
         <div class="top"><span class="name">WiZink España</span><span class="pill fp">first-party</span></div>
         <div class="meta">🇪🇸 wizink · wizink.es</div>
         <div class="cats"><span class="cat">card</span><span class="cat">banking</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/wizink-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="wizink-es">View JSON →</a></div>
         <a class="guide" href="/download/wizink-statements.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="retail" id="aliexpress">
         <div class="top"><span class="name">AliExpress</span><span class="pill ">community</span></div>
         <div class="meta">🌐 aliexpress · aliexpress.com</div>
         <div class="cats"><span class="cat">marketplace</span><span class="cat">retail</span><span class="cat fmt">html</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/aliexpress.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="aliexpress">View JSON →</a></div>
         <a class="guide" href="/download/aliexpress-orders.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="banking" id="americanexpress">
         <div class="top"><span class="name">American Express</span><span class="pill ">community</span><span class="pill beta">experimental</span></div>
         <div class="meta">🌐 amex · americanexpress.com</div>
         <div class="cats"><span class="cat">banking</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/americanexpress.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="americanexpress">View JSON →</a></div>
         <a class="guide" href="/download/americanexpress-beta.html">What this draft covers →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="retail" id="decathlon-es">
         <div class="top"><span class="name">Decathlon España — tickets</span><span class="pill ">community</span></div>
         <div class="meta">🇪🇸 decathlon · decathlon.es</div>
         <div class="cats"><span class="cat">sports</span><span class="cat fmt">json</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/decathlon-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="decathlon-es">View JSON →</a></div>
         <a class="guide" href="/download/decathlon-receipts.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="banking" id="degiro">
         <div class="top"><span class="name">DeGiro</span><span class="pill ">community</span><span class="pill beta">experimental</span></div>
         <div class="meta">🇪🇺 degiro · degiro.nl</div>
         <div class="cats"><span class="cat">investment</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/degiro.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="degiro">View JSON →</a></div>
         <a class="guide" href="/download/degiro-beta.html">What this draft covers →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="grocery" id="dia-es">
         <div class="top"><span class="name">Dia España — tickets</span><span class="pill ">community</span></div>
         <div class="meta">🇪🇸 dia · dia.es</div>
         <div class="cats"><span class="cat">grocery</span><span class="cat fmt">json</span><span class="cat fmt">pdf</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/dia-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="dia-es">View JSON →</a></div>
         <a class="guide" href="/download/dia-receipts.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="utility" id="hover-com">
         <div class="top"><span class="name">Hover — Receipts</span><span class="pill ">community</span></div>
         <div class="meta">🌐 hover · hover.com</div>
         <div class="cats"><span class="cat">domains</span><span class="cat fmt">json</span><span class="cat fmt">html</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/hover-com.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="hover-com">View JSON →</a></div>
         <a class="guide" href="/download/hover-receipts.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="retail" id="leroymerlin-es">
         <div class="top"><span class="name">Leroy Merlin España</span><span class="pill ">community</span></div>
         <div class="meta">🇪🇸 leroymerlin · leroymerlin.es</div>
         <div class="cats"><span class="cat">diy</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/leroymerlin-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="leroymerlin-es">View JSON →</a></div>
         <a class="guide" href="/download/leroy-merlin-receipts.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="banking" id="n26">
         <div class="top"><span class="name">N26</span><span class="pill ">community</span><span class="pill beta">experimental</span></div>
         <div class="meta">🇪🇺 n26 · n26.com</div>
         <div class="cats"><span class="cat">banking</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/n26.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="n26">View JSON →</a></div>
         <a class="guide" href="/download/n26-beta.html">What this draft covers →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="road" id="pagatelia-es">
         <div class="top"><span class="name">Pagatelia — facturas</span><span class="pill ">community</span></div>
         <div class="meta">🇪🇸 pagatelia · pagatelia.com</div>
         <div class="cats"><span class="cat">tolls</span><span class="cat fmt">pdf</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/pagatelia-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="pagatelia-es">View JSON →</a></div>
         <a class="guide" href="/download/pagatelia-invoices.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="utility" id="pepeenergy-es">
         <div class="top"><span class="name">Pepe Energy — facturas</span><span class="pill ">community</span></div>
         <div class="meta">🇪🇸 pepeenergy · pepeenergy.com</div>
         <div class="cats"><span class="cat">energy</span><span class="cat fmt">pdf</span></div>
         <div class="foot"><span class="rate">no ratings yet</span><a class="view" href="https://habeas-dev.github.io/sources/pepeenergy-es.json" rel="noopener" data-umami-event="source-view" data-umami-event-source="pepeenergy-es">View JSON →</a></div>
         <a class="guide" href="/download/pepe-energy-invoices.html">How to download →</a>
       </div>
-      <div class="src">
+      <div class="src" data-groups="utility" id="pepephone-es">
         <div class="top"><span class="name">Pepephone — facturas</span><span class="pill ">community</span></div>
         <div class="meta">🇪🇸 pepephone · pepephone.com</div>
         <div class="cats"><span class="cat">telecom</span><span class="cat fmt">pdf</span></div>
@@ -379,6 +379,40 @@
       // Ratings are a nice-to-have — fetch per source, fail-soft, re-render as they arrive.
       SOURCES.forEach((s) => fetch(`${API}/sources/${encodeURIComponent(s.id)}/ratings`).then((r) => r.json()).then((v) => { RATINGS[s.id] = v; render(); }).catch(() => {}));
     }).catch(() => { SOURCES = false; render(); });
+  
+    // Chip filtering. Cards are HIDDEN, never removed: the whole catalogue stays in the document, so it is
+    // complete without JavaScript and to anything that reads the page without running it. The count says
+    // what is on screen, because a filter that silently empties the grid looks like a broken page.
+    (function () {
+      const bar = document.querySelector('.filters');
+      const grid = document.getElementById('list');
+      if (!bar || !grid) return;
+      const chips = [...bar.querySelectorAll('.chip')];
+      const cards = () => [...grid.querySelectorAll('.src')];
+
+      function apply(group) {
+        let shown = 0;
+        for (const card of cards()) {
+          const groups = (card.getAttribute('data-groups') || '').split(' ').filter(Boolean);
+          const on = !group || groups.includes(group);
+          card.hidden = !on;
+          if (on) shown++;
+        }
+        for (const c of chips) c.setAttribute('aria-pressed', String((c.dataset.group || '') === group));
+        grid.setAttribute('data-shown', String(shown));
+        try { history.replaceState(null, '', group ? `#g=${group}` : location.pathname); } catch (e) {}
+      }
+
+      bar.addEventListener('click', (e) => {
+        const chip = e.target.closest('.chip');
+        if (chip) apply(chip.dataset.group || '');
+      });
+
+      // A shared link keeps its filter. Anything unrecognised falls back to the whole catalogue rather
+      // than to an empty grid.
+      const want = (location.hash.match(/^#g=([a-z]+)$/) || [])[1] || '';
+      apply(chips.some((c) => (c.dataset.group || '') === want) ? want : '');
+    })();
   </script>
 </body>
 </html>
