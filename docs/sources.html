@@ -326,7 +326,10 @@
     const INDEX = 'https://habeas-dev.github.io/sources/index.json';
     const API = 'https://api.habeas.dev';
     const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-    let LANG = 'en', SOURCES = null, RATINGS = {}, FILTER = '', FMT = '';
+    let LANG = 'en', SOURCES = null, RATINGS = {}, FILTER = '', FMT = '', GROUP = '';
+    // Which groups each source belongs to, baked at build time so the client filter and the server-rendered
+    // cards agree on one answer instead of computing it twice.
+    const GROUPS_OF = {"amazon":["retail"],"bipdrive-es":["road"],"caixabank-consumer-es":["banking"],"carrefour-es":["grocery","retail","road"],"financiera-elcorteingles-es":["banking"],"ikea-es":["retail"],"ing-es":["banking"],"openbank-es":["banking"],"paypal":["banking"],"raisin":["banking"],"revolut":["banking"],"traderepublic":["banking"],"wizink-es":["banking"],"aliexpress":["retail"],"americanexpress":["banking"],"decathlon-es":["retail"],"degiro":["banking"],"dia-es":["grocery"],"hover-com":["utility"],"leroymerlin-es":["retail"],"n26":["banking"],"pagatelia-es":["road"],"pepeenergy-es":["utility"],"pepephone-es":["utility"]};
     const flag = (code) => !code ? '' : code === 'global' ? '🌐' : (/^[A-Za-z]{2}$/.test(code) ? code.toUpperCase().replace(/./g, (c) => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)) : '');
 
     // Sources with a Spanish how-to page under /es/descargar/.
@@ -373,7 +376,9 @@
       const fsel = document.getElementById('format');
       const formats = [...new Set(SOURCES.flatMap((s) => s.formats || []))].sort();
       fsel.innerHTML = `<option value="">${t.all}</option>` + formats.map((f) => `<option value="${esc(f)}"${f === FMT ? ' selected' : ''}>${esc(f.toUpperCase())}</option>`).join('');
-      const shown = SOURCES.filter((s) => (!FILTER || s.country === FILTER) && (!FMT || (s.formats || []).includes(FMT)));
+      const shown = SOURCES.filter((s) => (!FILTER || s.country === FILTER) && (!FMT || (s.formats || []).includes(FMT))
+        && (!GROUP || (GROUPS_OF[s.id] || []).includes(GROUP)));
+      document.querySelectorAll('.filters .chip').forEach((c) => c.setAttribute('aria-pressed', String((c.dataset.group || '') === GROUP)));
       list.innerHTML = shown.map(card).join('');
       msg.textContent = t.count(shown.length);
     }
@@ -392,39 +397,28 @@
       SOURCES.forEach((s) => fetch(`${API}/sources/${encodeURIComponent(s.id)}/ratings`).then((r) => r.json()).then((v) => { RATINGS[s.id] = v; render(); }).catch(() => {}));
     }).catch(() => { SOURCES = false; render(); });
   
-    // Chip filtering. Cards are HIDDEN, never removed: the whole catalogue stays in the document, so it is
-    // complete without JavaScript and to anything that reads the page without running it. The count says
-    // what is on screen, because a filter that silently empties the grid looks like a broken page.
+    // Chips feed the SAME filter as the country and format selectors. An earlier version hid cards on
+    // its own, which could never work: render() replaces the grid's innerHTML, so every hidden flag — and
+    // the data-groups attributes it read — was wiped on the next redraw. One pipeline, not two.
     (function () {
       const bar = document.querySelector('.filters');
-      const grid = document.getElementById('list');
-      if (!bar || !grid) return;
-      const chips = [...bar.querySelectorAll('.chip')];
-      const cards = () => [...grid.querySelectorAll('.src')];
-
-      function apply(group) {
-        let shown = 0;
-        for (const card of cards()) {
-          const groups = (card.getAttribute('data-groups') || '').split(' ').filter(Boolean);
-          const on = !group || groups.includes(group);
-          card.hidden = !on;
-          if (on) shown++;
-        }
-        for (const c of chips) c.setAttribute('aria-pressed', String((c.dataset.group || '') === group));
-        grid.setAttribute('data-shown', String(shown));
-        try { history.replaceState(null, '', group ? `#g=${group}` : location.pathname); } catch (e) {}
-      }
-
+      if (!bar) return;
       bar.addEventListener('click', (e) => {
         const chip = e.target.closest('.chip');
-        if (chip) apply(chip.dataset.group || '');
+        if (!chip) return;
+        GROUP = chip.dataset.group || '';
+        try { history.replaceState(null, '', GROUP ? `#g=${GROUP}` : location.pathname); } catch (err) {}
+        render();
       });
-
-      // A shared link keeps its filter. Anything unrecognised falls back to the whole catalogue rather
-      // than to an empty grid.
+      // A shared link keeps its filter. Set before the first paint, and re-rendered only if the catalogue
+      // has already loaded — an unrecognised group falls back to the whole list, never to an empty grid.
       const want = (location.hash.match(/^#g=([a-z]+)$/) || [])[1] || '';
-      apply(chips.some((c) => (c.dataset.group || '') === want) ? want : '');
+      if ([...bar.querySelectorAll('.chip')].some((c) => (c.dataset.group || '') === want)) {
+        GROUP = want;
+        if (SOURCES) render();
+      }
     })();
+
   </script>
 </body>
 </html>

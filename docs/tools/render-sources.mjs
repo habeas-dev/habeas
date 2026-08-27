@@ -100,5 +100,7 @@ html = fill(html, F_START, F_END, filtersHtml);
 html = html.replace(/\n    <script type="application\/ld\+json">[\s\S]*?<\/script>\n  /, '');
 html = html.replace('</head>', `${ldHtml}</head>`);
 html = html.replace(/(\n    const GUIDES = )[^\n]*/, `$1${JSON.stringify(GUIDES)};`);
+const groupsOfId = Object.fromEntries(sources.map((x) => [x.id, groupsOf(x.categories).map((g) => g.id)]));
+html = html.replace(/(\n    const GROUPS_OF = )[^\n]*/, `$1${JSON.stringify(groupsOfId)};`);
 writeFileSync(HTML, html);
 console.log(`baked ${sources.length} sources into docs/sources.html`);
