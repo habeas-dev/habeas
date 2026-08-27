@@ -34,6 +34,8 @@
     .card dd { margin: 0; word-break: break-word; }
     .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
                  border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .rev .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em;
+                white-space: nowrap; color: var(--muted, #888); }
     .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
     aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
     aside .cta .btn { text-align: center; }
@@ -461,11 +463,11 @@
       <h2>What has changed in this source</h2>
       <p>This source is a public definition, and every change to it is on the record. Most recent first:</p>
       <ul class="changelog">
-        <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
-        <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.</li>
-        <li class="rev"><time datetime="2026-07-10">2026-07-10</time> — Receipts: do not stop on reaching a year with no purchases (stopAfterEmpty) — it previously stopped at 2025 (no purchases) and hid the older receipts.</li>
-        <li class="rev"><time datetime="2026-07-10">2026-07-10</time> — &quot;Orders&quot; stream: show ALL orders from &quot;my orders&quot; (removes the filter that kept only the ONLINE ones and hid in-store orders that appear there too).</li>
-        <li class="rev"><time datetime="2026-07-10">2026-07-10</time> — In-store receipts: start from the current year (yearOffset 0) — it previously started two years back and skipped this year's purchases and last year's.</li>
+        <li class="rev"><span class="ver">2026-08-26</span> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
+        <li class="rev"><span class="ver">2026-08-08</span> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.</li>
+        <li class="rev"><span class="ver">2026-07-10.3</span> — Receipts: do not stop on reaching a year with no purchases (stopAfterEmpty) — it previously stopped at 2025 (no purchases) and hid the older receipts.</li>
+        <li class="rev"><span class="ver">2026-07-10.2</span> — &quot;Orders&quot; stream: show ALL orders from &quot;my orders&quot; (removes the filter that kept only the ONLINE ones and hid in-store orders that appear there too).</li>
+        <li class="rev"><span class="ver">2026-07-10.1</span> — In-store receipts: start from the current year (yearOffset 0) — it previously started two years back and skipped this year's purchases and last year's.</li>
       </ul>
       <p class="lead"><a href="/sources.html#leroymerlin-es">See the full history in the catalog →</a></p>
 

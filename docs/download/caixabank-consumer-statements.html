@@ -34,6 +34,8 @@
     .card dd { margin: 0; word-break: break-word; }
     .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
                  border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .rev .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em;
+                white-space: nowrap; color: var(--muted, #888); }
     .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
     aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
     aside .cta .btn { text-align: center; }
@@ -413,9 +415,9 @@
       <h2>What has changed in this source</h2>
       <p>This source is a public definition, and every change to it is on the record. Most recent first:</p>
       <ul class="changelog">
-        <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
-        <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.</li>
-        <li class="rev"><time datetime="2026-07-08">2026-07-08</time> — Initial version: statements (cross-domain api.caixabankpc.com), DNI capture, PDF by absolute URL.</li>
+        <li class="rev"><span class="ver">2026-08-26</span> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
+        <li class="rev"><span class="ver">2026-08-08</span> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`. The per-source page is now generated from the definition itself rather than from a separate file on the website.</li>
+        <li class="rev"><span class="ver">2026-07-08</span> — Initial version: statements (cross-domain api.caixabankpc.com), DNI capture, PDF by absolute URL.</li>
       </ul>
 
     <h2>More banks, cards &amp; investments guides</h2>

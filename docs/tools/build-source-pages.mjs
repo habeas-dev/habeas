@@ -299,7 +299,7 @@ function page({ lang, meta, full, entry, siblings, isBeta }) {
   const history = shown.length ? `      <h2>${esc(t.historyH)}</h2>
       <p>${esc(t.historyLead)}</p>
       <ul class="changelog">
-${shown.map((e) => `        <li class="rev"><time datetime="${esc(String(e.version).slice(0, 10))}">${esc(String(e.version).slice(0, 10))}</time> — ${esc(noteIn(e.changes))}</li>`).join('\n')}
+${shown.map((e) => `        <li class="rev"><span class="ver">${esc(String(e.version))}</span> — ${esc(noteIn(e.changes))}</li>`).join('\n')}
       </ul>
 ${log.length > HISTORY_MAX ? `      <p class="lead"><a href="/sources.html#${esc(meta.id)}">${esc(t.historyMore)} →</a></p>\n` : ''}` : '';
 
@@ -437,7 +437,9 @@ ${hreflang}
                  border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
 ${isBeta ? `    .box.warn { border-color: #c2410c66; background: #c2410c14; }
     .box.warn strong { color: #c2410c; }
-` : ''}    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
+` : ''}    .rev .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em;
+                white-space: nowrap; color: var(--muted, #888); }
+    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
     aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
     aside .cta .btn { text-align: center; }
     /* The definition, in full. It is the project's whole security claim — adapters are data, never code —

@@ -172,7 +172,10 @@ test('a guide whose source has a changelog shows it', () => {
   const withHistory = guides().filter((f) => /class="changelog"/.test(read(f)));
   assert.ok(withHistory.length >= 20, `expected most guides to carry history, found ${withHistory.length}`);
   for (const f of withHistory) {
-    assert.match(read(f), /<time datetime="\d{4}-\d{2}-\d{2}">/, `${f}: history entries carry no date`);
+    // The VERSION, not the day. Versions are `YYYY-MM-DD[.N]` and same-day republishes are routine, so
+    // printing only the date collapses several distinct published contents into one label — on the very
+    // page that exists to tell you which one you are installing.
+    assert.match(read(f), /<span class="ver">\d{4}-\d{2}-\d{2}(\.\d+)?<\/span>/, `${f}: history entries carry no version`);
   }
 });
 

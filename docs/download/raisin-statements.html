@@ -34,6 +34,8 @@
     .card dd { margin: 0; word-break: break-word; }
     .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
                  border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .rev .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em;
+                white-space: nowrap; color: var(--muted, #888); }
     .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
     aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
     aside .cta .btn { text-align: center; }
@@ -830,11 +832,11 @@
       <h2>What has changed in this source</h2>
       <p>This source is a public definition, and every change to it is on the record. Most recent first:</p>
       <ul class="changelog">
-        <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.</li>
-        <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
-        <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.</li>
-        <li class="rev"><time datetime="2026-07-21">2026-07-21</time> — Declared country: &quot;global&quot; — the field was missing since the multi-market rename (raisin-es -&gt; raisin), so the catalog showed no 🌐 badge and country filters didn't treat it as worldwide.</li>
-        <li class="rev"><time datetime="2026-07-20">2026-07-20</time> — Multi-language labels: the product-type word (Deposit/Account) is translated per browser locale via a source i18n dictionary (en/es/de/fr/nl — every Raisin market; en fallback), since the API only returns it as an enum. Dropped the TAE abbreviation (varies by country; % is universal). Requires 0.5.0.32 ({i18n:key} token).</li>
+        <li class="rev"><span class="ver">2026-08-26.1</span> — Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.</li>
+        <li class="rev"><span class="ver">2026-08-26</span> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
+        <li class="rev"><span class="ver">2026-08-08</span> — Adds `content` (bilingual copy for the guide page on habeas.dev) and `brand`.</li>
+        <li class="rev"><span class="ver">2026-07-21</span> — Declared country: &quot;global&quot; — the field was missing since the multi-market rename (raisin-es -&gt; raisin), so the catalog showed no 🌐 badge and country filters didn't treat it as worldwide.</li>
+        <li class="rev"><span class="ver">2026-07-20.18</span> — Multi-language labels: the product-type word (Deposit/Account) is translated per browser locale via a source i18n dictionary (en/es/de/fr/nl — every Raisin market; en fallback), since the API only returns it as an enum. Dropped the TAE abbreviation (varies by country; % is universal). Requires 0.5.0.32 ({i18n:key} token).</li>
       </ul>
       <p class="lead"><a href="/sources.html#raisin">See the full history in the catalog →</a></p>
 

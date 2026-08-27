@@ -34,6 +34,8 @@
     .card dd { margin: 0; word-break: break-word; }
     .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
                  border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .rev .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em;
+                white-space: nowrap; color: var(--muted, #888); }
     .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
     aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
     aside .cta .btn { text-align: center; }
@@ -830,11 +832,11 @@
       <h2>Qué ha cambiado en esta fuente</h2>
       <p>Esta fuente es una definición pública y cada cambio queda registrado. De lo más reciente a lo más antiguo:</p>
       <ul class="changelog">
-        <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga.</li>
-        <li class="rev"><time datetime="2026-08-26">2026-08-26</time> — Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.</li>
-        <li class="rev"><time datetime="2026-08-08">2026-08-08</time> — Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`.</li>
-        <li class="rev"><time datetime="2026-07-21">2026-07-21</time> — Declara country: &quot;global&quot; — el campo faltaba desde el renombrado multimercado (raisin-es -&gt; raisin), así que el catálogo no mostraba el distintivo 🌐 y los filtros por país no la trataban como mundial.</li>
-        <li class="rev"><time datetime="2026-07-20">2026-07-20</time> — Etiquetas multiidioma: la palabra del tipo de producto (Depósito/Cuenta) se traduce según el idioma del navegador mediante un diccionario i18n de la fuente (en/es/de/fr/nl — todos los mercados de Raisin; en por defecto), ya que la API solo la devuelve como enum. Se elimina la abreviatura TAE (varía por país; el % es universal). Requiere 0.5.0.32 (token {i18n:key}).</li>
+        <li class="rev"><span class="ver">2026-08-26.1</span> — Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga.</li>
+        <li class="rev"><span class="ver">2026-08-26</span> — Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.</li>
+        <li class="rev"><span class="ver">2026-08-08</span> — Añade `content` (copy bilingüe de la guía en habeas.dev) y `brand`.</li>
+        <li class="rev"><span class="ver">2026-07-21</span> — Declara country: &quot;global&quot; — el campo faltaba desde el renombrado multimercado (raisin-es -&gt; raisin), así que el catálogo no mostraba el distintivo 🌐 y los filtros por país no la trataban como mundial.</li>
+        <li class="rev"><span class="ver">2026-07-20.18</span> — Etiquetas multiidioma: la palabra del tipo de producto (Depósito/Cuenta) se traduce según el idioma del navegador mediante un diccionario i18n de la fuente (en/es/de/fr/nl — todos los mercados de Raisin; en por defecto), ya que la API solo la devuelve como enum. Se elimina la abreviatura TAE (varía por país; el % es universal). Requiere 0.5.0.32 (token {i18n:key}).</li>
       </ul>
       <p class="lead"><a href="/sources.html#raisin">Ver el historial completo en el catálogo →</a></p>
 
