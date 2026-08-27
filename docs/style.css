@@ -255,3 +255,15 @@ footer a { color: var(--ink); }
   .withaside { grid-template-columns: 1fr; gap: 22px; }
   .withaside > .install-cta { position: static; }
 }
+
+/* Guide index: the same card language as the catalogue, so moving between the two pages does not feel
+   like moving between two sites. The link text stays the guide's own h1 — what is indexed and what is
+   read must be the same words. */
+.guidecards { display: grid; grid-template-columns: repeat(auto-fit, minmax(268px, 1fr)); gap: 12px; margin: 14px 0 30px; }
+.gcard { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink);
+         border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px; background: var(--surface);
+         transition: transform .16s, box-shadow .16s, border-color .16s; }
+.gcard:hover { transform: translateY(-2px); box-shadow: 0 8px 22px #0d2e2914; border-color: #cfe0da; }
+.gcard .mark { flex: none; width: 30px; height: 30px; border-radius: 8px; background: var(--green-600);
+               color: #fff; display: grid; place-items: center; font-family: var(--font-head); font-size: 12px; }
+.gcard .gt { font-size: 14.5px; line-height: 1.35; }

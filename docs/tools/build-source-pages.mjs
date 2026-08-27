@@ -606,10 +606,25 @@ function indexPage({ lang, groups }) {
   const alts = Object.keys(LANGS)
     .map((l) => `  <link rel="alternate" hreflang="${l}" href="${ORIGIN}/${LANGS[l].dir}/" />`).join('\n')
     + `\n  <link rel="alternate" hreflang="x-default" href="${ORIGIN}/${LANGS.en.dir}/" />`;
-  const sections = groups.filter((g) => g.items.length).map((g) => `    <h2>${esc(g[lang])}</h2>
-    <ul>
-${g.items.map((i) => `      <li><a href="${L.path(i.slug)}">${esc(i.h1)}</a></li>`).join('\n')}
-    </ul>`).join('\n\n');
+  // Cards rather than a bulleted list: the same treatment the catalogue page uses, so a reader moving
+  // between the two meets one visual language. The link is still the guide's own h1, so the wording that
+  // is indexed and the wording on screen stay identical.
+  // From the SOURCE id, not from the heading: every Spanish heading opens with "Cómo descargar", so
+  // deriving them from the title stamped "CD" on almost every card.
+  // From the service's own NAME. The items previously carried only a slug and a heading, and both start
+  // with the document type in Spanish — deriving initials from either stamped "CD" or "TI" on nearly
+  // every card. The name is what a reader recognises.
+  const initials = (name) => {
+    const words = String(name).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+    return (words.length > 1 ? words[0][0] + words[1][0] : words[0].slice(0, 2)).toUpperCase();
+  };
+  const sections = groups.filter((g) => g.items.length).map((g) => `    <h2 id="g-${esc(g.id)}">${esc(g[lang])}</h2>
+    <div class="guidecards">
+${g.items.map((i) => `      <a class="gcard" href="${L.path(i.slug)}">
+        <span class="mark" aria-hidden="true">${esc(initials(i.name || i.id))}</span>
+        <span class="gt">${esc(i.h1)}</span>
+      </a>`).join('\n')}
+    </div>`).join('\n\n');
 
   // Declare the list. The page already shows every guide; an ItemList is what lets an extractor state
   // "these services are covered" without scraping cards out of markup.
@@ -764,7 +779,7 @@ for (const { id, entry, meta, full, isBeta } of resolved) {
 for (const lang of Object.keys(LANGS)) {
   const groups = GROUPS.map((g) => ({ ...g, items: resolved
     .filter((r) => r.entry[lang] && groupOf(r.meta).id === g.id)
-    .map((r) => ({ slug: r.entry[lang].slug, h1: r.entry[lang].h1 })) }));
+    .map((r) => ({ slug: r.entry[lang].slug, h1: r.entry[lang].h1, id: r.meta.id, name: r.meta.name })) }));
   writeFileSync(join(DOCS, ...LANGS[lang].dir.split('/'), 'index.html'), indexPage({ lang, groups }));
   written++;
 }
