@@ -504,6 +504,14 @@ ${other ? `        <a class="langlink" href="${LANGS[other].path(entry[other].sl
     </div>
   </header>
 
+  <section class="band">
+    <div class="wrap">
+      <p class="kicker">${esc(meta.name || meta.service || meta.id)}</p>
+      <h1>${esc(copy.h1)}</h1>
+      <p class="lead">${esc(copy.intro)}</p>
+    </div>
+  </section>
+
   <main class="doc"${enriched ? ' data-habeas-enriched' : ''}>
     <aside>
       <div class="card">
@@ -535,8 +543,6 @@ ${line ? `        <p class="who">${line}</p>\n` : ''}        <p class="note">${e
     </aside>
 
     <div class="body">
-    <h1>${esc(copy.h1)}</h1>
-    <p class="lead">${esc(copy.intro)}</p>
 ${isBeta ? `    <div class="box warn">
       <strong>${esc(t.betaWarnH)}</strong>
       <p>${esc(t.betaWarnBody(copy._beta))}</p>

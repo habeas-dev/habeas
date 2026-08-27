@@ -629,7 +629,9 @@ test('beta source pages announce themselves as unverified and are not marked up 
     assert.match(html, /class="box warn"/, `${where}: no unverified warning`);
     // The warning has to be the first thing under the title, before any description of what the draft
     // extracts — pushed below a section it reads as a footnote to a guide rather than as its premise.
-    const afterTitle = html.indexOf('<h1>');
+    // Measured from the CONTENT column, not from the h1: the heading now lives in the header band above
+    // the sidebar, so anchoring on it compared the warning against the sidebar's own headings.
+    const afterTitle = html.indexOf('<div class="body">');
     assert.ok(html.indexOf('class="box warn"', afterTitle) < html.indexOf('<h2>', afterTitle),
       `${where}: the warning does not lead the page`);
   }
