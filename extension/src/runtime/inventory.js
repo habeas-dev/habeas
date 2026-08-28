@@ -1867,16 +1867,18 @@ function mapDoc(adapter, p, group) {
       const ctx = group ? { ...p, group } : p;
       const base = io.template.replace(/\{([^}]+)\}/g, (_, path) => keySegment(path, get(ctx, path)));
       if (base) {
-        // ORDINAL. Default 'run': two items sharing a key WITHIN one import are genuinely distinct charges
-        // (ING lists both), so the Nth gets |N. That only holds while the run's membership is stable, and in
-        // production it is not — a pending charge settling, or a second identical charge arriving, shifts
-        // every ordinal after it and every shifted movement reaches the consumer as new.
+        // ORDINAL. Default 'run': items sharing a key WITHIN one import are distinct charges (ING lists
+        // both), so the Nth gets |N. The counter is scoped to the KEY, so the ids of a key are always the
+        // dense prefix |0…|n-1: a lone movement is |0 in every run, and other movements that day — with
+        // their own keys — cannot renumber it. A movement already delivered as |0 therefore stays |0 for
+        // ever, whatever else the run contains.
         //
-        // 'none' is the statement reading: charges agreeing on account, day, amount and text are ONE line.
-        // Two such charges are indistinguishable in anything the source gives us, so the choice is to merge
-        // them or to let ids churn whenever one appears; a real statement merges. Sources whose same-key
-        // items are genuinely separable (ING: a pending charge settles into an account movement with its own
-        // stable id) keep 'run'.
+        // 'none' is for a source that lists the SAME movement twice in one pass. WiZink does: a charge shows
+        // up under the current unbilled period AND again inside the statement that later bills it, so one
+        // charge yields |0 and |1 and the consumer files it twice. Collapsing the key to one identity is the
+        // statement reading — charges agreeing on account, day, amount and text are one line. The price is
+        // that two genuinely distinct identical same-day charges also merge; on a card statement they are
+        // indistinguishable anyway, which is why this is opt-in per source and not the default.
         if (io.ordinal === 'none') doc.internalId = base;
         else { const st = adapter._idxState || (adapter._idxState = new Map()); const n = st.get(base) || 0; st.set(base, n + 1); doc.internalId = base + '|' + n; }
       }

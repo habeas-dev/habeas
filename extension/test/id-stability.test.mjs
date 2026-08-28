@@ -44,28 +44,52 @@ test('(i-ter) spacing and case in the free text do not change the key either', a
   assert.equal(b[0].internalId, a[0].internalId, 'collapsed spacing + case must land on the same key');
 });
 
-test('(ii) a twin appearing ahead of it must not renumber the movement that was already delivered', async () => {
-  // The reported failure exactly: movement B is alone in one sync and gets ordinal 0. In the next sync a
-  // second charge A, identical in every keyed field, is listed BEFORE it — A takes 0, B becomes 1, and B,
-  // already delivered, arrives at the consumer as new.
-  const A = CARD({ ordinal: 'none' });
-  const first = await listInventory(A, AUTH, netOf([row('B')]));
-  const delivered = first[0].internalId; // what the consumer has already filed
-  const second = await listInventory(A, AUTH, netOf([row('A'), row('B')]));
-  const third = await listInventory(A, AUTH, netOf([row('B')])); // …and the twin settles away again
-  assert.ok(second.map((d) => d.internalId).includes(delivered),
-    'the identity already delivered must still be the one listed when a twin appears ahead of it');
-  assert.deepEqual([...new Set(second.map((d) => d.internalId))], [delivered],
-    'and no NEW identity may be minted for the same line — that is the duplicate the consumer sees');
-  assert.equal(third[0].internalId, delivered, 'nor when the twin goes away again');
+test('(ii) the ordinal is scoped to the KEY: a lone movement is |0 in every run', async () => {
+  // The guarantee the consumer depends on. The ids of one natural key are always the dense prefix
+  // |0…|n-1, so a movement delivered as |0 stays |0 for ever — no other movement that day, and no change
+  // in what else the run contains, can renumber it.
+  const A = CARD();
+  const alone = await listInventory(A, AUTH, netOf([row('B')]));
+  const amongOthers = await listInventory(A, AUTH, netOf([
+    { rowid: 'Z', date: '14 MAR', amount: '-3,10 €', description: 'Cafe Central' },
+    row('B'),
+    { rowid: 'Y', date: '14 MAR', amount: '-9,00 €', description: 'Quiosco' },
+  ]));
+  assert.match(alone[0].internalId, /\|0$/, 'a lone movement is always subID 0');
+  assert.ok(amongOthers.map((d) => d.internalId).includes(alone[0].internalId),
+    'movements with OTHER keys the same day must not renumber it');
+  assert.deepEqual(amongOthers.map((d) => d.internalId).filter((id) => !/\|0$/.test(id)), [],
+    'each distinct key starts its own count at 0');
 });
 
-test("(ii-bis) the price of that: identical same-day charges become one line, as on a statement", async () => {
-  // Stated as a test so the trade-off is explicit rather than discovered. Two charges indistinguishable in
-  // account, day, amount and description cannot be told apart by anything the source gives us; the choice
-  // is to merge them or to let every id churn whenever one of them appears. A statement merges.
-  const docs = await listInventory(CARD({ ordinal: 'none' }), AUTH, netOf([row('A'), row('B')]));
-  assert.equal(new Set(docs.map((d) => d.internalId)).size, 1, 'one identity for the pair');
+test('(ii-bis) identical movements take consecutive subIDs from 0, whatever the listing order', async () => {
+  const A = CARD();
+  const forwards = await listInventory(A, AUTH, netOf([row('A'), row('B')]));
+  const backwards = await listInventory(A, AUTH, netOf([row('B'), row('A')]));
+  const set = (docs) => [...new Set(docs.map((d) => d.internalId))].sort();
+  assert.equal(set(forwards).length, 2, 'two identical movements, two subIDs');
+  assert.deepEqual(set(backwards), set(forwards), 'the same pair of ids regardless of order listed');
+  assert.deepEqual(set(forwards).map((id) => id.slice(-2)), ['|0', '|1'], 'and they are 0 and 1, never other numbers');
+});
+
+test('(ii-ter) growing from one identical movement to three only ADDS ids', async () => {
+  // Why the prefix rule matters: what was already delivered is never re-minted, so a sync that finds more
+  // of the same charge produces exactly the new ones and no duplicates.
+  const A = CARD();
+  const one = (await listInventory(A, AUTH, netOf([row('A')]))).map((d) => d.internalId);
+  const three = (await listInventory(A, AUTH, netOf([row('A'), row('B'), row('C')]))).map((d) => d.internalId);
+  assert.ok(one.every((id) => three.includes(id)), 'every id already delivered survives');
+  assert.equal(three.length - one.length, 2, 'and exactly the genuinely new ones are added');
+});
+
+test("(ii-quater) 'none' is for a source that lists the SAME movement twice in one pass", async () => {
+  // WiZink shows a charge under the current unbilled period and again inside the statement that bills it.
+  // Those are one movement, so one identity — otherwise the consumer files it twice, which is the defect
+  // actually observed. The price, stated so it is a decision and not a surprise: two genuinely distinct
+  // identical same-day charges also become one line, as they are on a paper statement.
+  const docs = await listInventory(CARD({ ordinal: 'none' }), AUTH, netOf([row('pending'), row('billed')]));
+  assert.equal(new Set(docs.map((d) => d.internalId)).size, 1, 'one identity for the two sightings');
+  assert.ok(!/\|\d+$/.test(docs[0].internalId), 'and no ordinal suffix at all');
 });
 
 // The ING contract that must NOT regress: its pending card charges churn their uuid, and two genuinely
