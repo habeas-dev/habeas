@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.10.2] — 2026-08-28
+
 ### Fixed
 - **A movement no longer changes identity between syncs, so a consumer stops filing it twice.** Where a
   source has no usable identifier of its own, Habeas builds one from the movement itself — account, date,
