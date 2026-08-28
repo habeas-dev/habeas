@@ -15,6 +15,7 @@ import { resolveSiteFetch, ensureSiteFetch, recoverSession, clearSiteCookies, wi
 import { retrieveDelivered, isRetrievable } from './lib/retrieve.js';
 import { driveCache } from './sinks/drive.js';
 import { dropboxCache } from './sinks/dropbox.js';
+import { startHeartbeat, stopHeartbeat } from './lib/keepalive.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink, readSinkRecords } from './sinks/sinks.js';
 import { recordDelivered, putItems, getRecords } from './lib/store.js';
@@ -357,16 +358,11 @@ const WS_FRAME_CAP = 200; // WebSocket/SSE frames (own buffer) — enough for th
 // A single in-flight INTERACTIVE background op (Save / Send / Re-download). A `habeas:stop` aborts it; the op's
 // loops poll the signal. (Sync-all has its own sweepController.)
 let __opAbort = null;
-// Keep the MV3 service worker alive during a long op: a periodic extension-API call resets its idle timer so it
-// isn't recycled mid-operation (which would close the message channel before the caller gets a response). A
-// safety timeout stops the heartbeat if an op ends without calling stopOp (there's no explicit "op done" event).
-let __ka = null, __kaStop = null;
-function keepAlive() {
-  if (!__ka) __ka = setInterval(() => { try { chrome.runtime.getPlatformInfo(() => {}); } catch (e) {} }, 20000);
-  if (__kaStop) clearTimeout(__kaStop);
-  __kaStop = setTimeout(stopKeepAlive, 6 * 60 * 1000);
-}
-function stopKeepAlive() { if (__ka) { clearInterval(__ka); __ka = null; } if (__kaStop) { clearTimeout(__kaStop); __kaStop = null; } }
+// Keep the background alive during a long op — see lib/keepalive.js. Chrome recycles an idle service
+// worker, Firefox suspends an idle event page, and either one kills the operation with no error at all.
+// Called again at every checkpoint, so a long run is held open by its own PROGRESS.
+const keepAlive = () => startHeartbeat();
+const stopKeepAlive = () => stopHeartbeat();
 function startOp() { try { if (__opAbort) __opAbort.abort(); } catch (e) {} __opAbort = new AbortController(); keepAlive(); return __opAbort.signal; }
 function stopOp() { try { if (__opAbort) __opAbort.abort(); } catch (e) {} stopKeepAlive(); }
 // Live per-document progress → the Archive updates each card AS it downloads (real date/amount, then "saved"),
@@ -881,6 +877,7 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
       };
       if (wantsDocs) for (const d of eligible) {
         if (opts.signal && opts.signal.aborted) break; // Stop pressed — stop before the next doc (flushed chunks are safe)
+        keepAlive(); // progress renews the watchdog: a long send is held open by its own advance
         const arts = [];
         for (const fmt of (fmts.length ? fmts : [''])) {
           const oeff = resolveOutput(adapter, sid + (fmt ? '/' + fmt : ''));
@@ -979,7 +976,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
       const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(storeIdOf(ds, adapter), sid); const fmts = fmtsFor(sid);
       // onProgress → live per-page status (visible in an open popup during a Sync-all sweep). signal → stop.
       // ds.groups = the user's saved account allow-list (grouped sources): auto/sweep only ever touch those.
-      const all = await listInventory(eff, auth, net, { groupId: opts.groupId, groups: (ds.groups && ds.groups.length) ? ds.groups : undefined, signal: opts.signal, onProgress: (p) => setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])) }); // opts.groupId → one account; opts.groups → allow-list
+      const all = await listInventory(eff, auth, net, { groupId: opts.groupId, groups: (ds.groups && ds.groups.length) ? ds.groups : undefined, signal: opts.signal, onProgress: (p) => { keepAlive(); setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])); } }); // opts.groupId → one account; opts.groups → allow-list
       if (brandCountry) for (const d of all) if (d.record) d.record.country = brandCountry; // which country each record came from (mixed multi-country store)
       const fresh = opts.force ? all : all.filter((d) => !delivered[d.internalId]); // force → re-deliver everything
       // Deliver oldest → newest (the list comes newest-first) — files written + manifest appended + store
@@ -1012,6 +1009,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
       };
       for (const d of eligible) {
         if (opts.signal && opts.signal.aborted) break; // stop fetching mid-source (already-flushed chunks are safe)
+        keepAlive(); // progress renews the watchdog
         const arts = [];
         for (const fmt of (fmts.length ? fmts : [''])) {
           const oeff = resolveOutput(adapter, sid + (fmt ? '/' + fmt : ''));

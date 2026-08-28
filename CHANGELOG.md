@@ -19,6 +19,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   and because it happens before anything is listed, the screen sat on "Listing…" as though the *service*
   were slow. Dropbox is now read the way Google Drive already was: the folder is listed once for the whole
   operation, and a file is downloaded only when that listing says it is really there.
+- **Firefox: a long sync could stop halfway with no error at all.** The background is kept awake during an
+  operation by calling a browser API on a timer — otherwise Firefox suspends it (and Chrome recycles it)
+  mid-run, taking the operation with it: the status line keeps its last words, nothing reaches the activity
+  log, no notification arrives. That call was written in Chrome's older style, which Firefox rejects, and
+  the rejection was being swallowed — so on Firefox the heartbeat never beat, while the identical build was
+  fine on Chrome. It now also renews on every document and every page of a listing, so a long run is held
+  open by its own progress rather than by a fixed six-minute allowance that a sweep across sixteen sources
+  would outlast anyway.
 - **A stalled run now reports itself instead of looking busy forever.** Nothing bounded how long a request
   could take, so one that never came back left the run apparently in progress — no error, no entry in the
   activity log, no notification. A sync could go days producing nothing and give no sign it had stopped.
