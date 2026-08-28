@@ -19,14 +19,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   and because it happens before anything is listed, the screen sat on "Listing…" as though the *service*
   were slow. Dropbox is now read the way Google Drive already was: the folder is listed once for the whole
   operation, and a file is downloaded only when that listing says it is really there.
-- **Firefox: looking up a folder destination could hang, and take the sync with it.** Folder destinations
-  are stored in a browser database, and opening that database has a third outcome besides success and
-  failure: it can be *blocked*, when the open needs to create the database and something else still holds
-  it. Nothing handled that case, so the lookup never finished — no error, no log entry, nothing to see. It
-  only bites on Firefox, and only by accident: a folder destination is set up in Chrome, so the database
-  already exists there, while on Firefox it has to be created — and creating is the only kind of open that
-  can block. Opening now gives up after five seconds, and connections are closed after use so they cannot
-  block the next one.
+- **Looking up a folder destination no longer leaves a database connection open each time.** That lookup
+  happens once per document — browsing an archive walks every one of them — and each call opened a
+  connection and never closed it. It also had no answer for the case where the database refuses to open,
+  which would have waited for ever rather than reporting anything. Connections are now closed after use and
+  the open gives up after five seconds. On a browser where folder destinations cannot work at all, which is
+  all of Firefox, the lookup is now skipped before it starts.
 - **A destination this browser cannot use is no longer treated as one that works.** A folder destination
   only works in Chrome, and configuration syncs between browsers, so a folder set up there arrives in
   Firefox intact. Settings already marked it unavailable — but the background did not, and went on counting

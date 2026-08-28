@@ -9,6 +9,7 @@ import { driveRetrieve, driveExists } from '../sinks/drive.js';
 import { pathFor } from '../sinks/format.js';
 import { documentExt } from '../runtime/inventory.js';
 import { getHandle, verifyPermission } from './fs.js';
+import { sinkUnavailableHere } from './folderavail.js';
 
 // Sink types we can read an individual file back from (→ eligible for a "delivered here, view it" badge).
 // Drive belongs here too: it is addressed by id rather than by path, so it needs a name lookup the
@@ -37,6 +38,10 @@ export async function retrieveDelivered(sink, adapter, record, preferExt, opts =
   if (!isRetrievable(sink)) return { tried: [] };
   let handle = null;
   if (sink.type === 'local-folder') {
+    // Skip BEFORE touching IndexedDB. This runs once per document (the Archive scans formats across a whole
+    // archive), and where a folder destination cannot work at all — every background, and all of Firefox —
+    // each of those is an open of a database that cannot hold what we are asking for.
+    if (sinkUnavailableHere(sink)) return { tried: [], reason: 'folder destinations are not available in this browser' };
     handle = await getHandle('dir:' + sink.id).catch(() => null);
     if (!handle || !(await verifyPermission(handle).catch(() => false))) return { tried: [], reason: 'folder not connected' };
   }

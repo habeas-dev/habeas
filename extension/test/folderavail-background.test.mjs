@@ -62,3 +62,22 @@ test('the background actually applies the guard where it walks destinations', ()
   const raw = bg.split('\n').filter((l) => /\(cfg\.sinks \|\| \[\]\)\.filter/.test(l));
   assert.deepEqual(raw, [], 'no walk over configured destinations may skip the guard:\n  ' + raw.join('\n  '));
 });
+
+test('retrieval skips an unusable folder before it opens a database', async () => {
+  // retrieveDelivered runs once per document — the Archive's format scan walks a whole archive with it. On
+  // a browser where folder destinations cannot work, each of those was an IndexedDB open for a handle that
+  // cannot exist, and before the connection was closed after use, each one also leaked a connection.
+  const saved = globalThis.showDirectoryPicker;
+  delete globalThis.showDirectoryPicker;
+  let opened = 0;
+  globalThis.indexedDB = { open() { opened++; const r = {}; setTimeout(() => r.onerror && r.onerror()); return r; } };
+  try {
+    const { retrieveDelivered } = await import('../src/lib/retrieve.js');
+    const adapter = { id: 'wizink-es', service: 'wizink', api: { host: 'x.invalid', pdf: { path: '/p' } } };
+    for (let i = 0; i < 25; i++) {
+      const r = await retrieveDelivered({ id: 'folder1', type: 'local-folder' }, adapter, { internalId: 'd' + i, date: '2025-03-01' }, 'pdf', { only: true });
+      assert.equal(r.blob, undefined);
+    }
+    assert.equal(opened, 0, `no database may be opened for a destination this browser cannot use (opened ${opened})`);
+  } finally { if (saved) globalThis.showDirectoryPicker = saved; }
+});
