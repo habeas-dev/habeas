@@ -15,7 +15,7 @@
   },
   "domain": "wizink.es",
   "country": "ES",
-  "version": "2026-08-26",
+  "version": "2026-08-28",
   "currency": "EUR",
   "categories": [
     "card",
@@ -143,7 +143,8 @@
             "when": {
               "field": "amount",
               "present": true
-            }
+            },
+            "ordinal": "none"
           }
         }
       },
@@ -227,6 +228,13 @@
   ],
   "changelog": [
     {
+      "version": "2026-08-28",
+      "changes": {
+        "en": "Each movement now keeps the same identity between syncs. Its identity was built from the text exactly as the page painted it, so a movement shown one way while pending and another once settled came back as a second, identical movement; and a charge could be renumbered simply because another one just like it appeared that day. Both are fixed. One consequence, once: on the first sync after this update every card movement is treated as new, because its identity has changed. Two charges on the same card, same day, same amount and same description are from now on one line, as they are on a paper statement.",
+        "es": "Cada movimiento conserva ahora la misma identidad entre sincronizaciones. Su identidad se construía con el texto tal y como lo pintaba la web, así que un movimiento mostrado de una forma mientras estaba pendiente y de otra al liquidarse volvía como un segundo movimiento idéntico; y a un cargo podían renumerarlo sólo porque ese día apareciera otro igual. Ambas cosas quedan corregidas. Una consecuencia, una sola vez: en la primera sincronización tras esta actualización todos los movimientos de tarjeta se tratan como nuevos, porque su identidad ha cambiado. Dos cargos de la misma tarjeta, el mismo día, con el mismo importe y el mismo concepto pasan a ser una sola línea, como en un extracto de papel."
+      }
+    },
+    {
       "version": "2026-08-26",
       "changes": {
         "en": "Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.",
@@ -255,7 +263,7 @@
       }
     }
   ],
-  "minVersion": "0.9.3",
+  "minVersion": "0.10.2",
   "content": {
     "en": {
       "slug": "wizink-statements",

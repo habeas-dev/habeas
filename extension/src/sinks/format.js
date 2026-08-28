@@ -137,7 +137,14 @@ export function buildRecord(d, adapter) {
     }
     return Object.keys(extra).length ? { ...r, extra } : r;
   };
-  const done = (r) => withExtra(withGroupFields(withPdfUrl(withGroup(withNumber(r)))));
+  // `idStable: false` — the source has DECLARED that it regenerates its identifier on each sync and that no
+  // natural key covers it (see `unstableId`). The consumer dedupes by internalId because that is what the
+  // contract promises; where the promise cannot be kept, say so in the record itself so the consumer can
+  // fall back to its own composite key instead of filing the same movement again on every pass. Omitted
+  // entirely for every other source, so their records stay byte-identical.
+  const unstable = !!(adapter && adapter.unstableId);
+  const withIdStable = (r) => (unstable ? { ...r, idStable: false } : r);
+  const done = (r) => withIdStable(withExtra(withGroupFields(withPdfUrl(withGroup(withNumber(r))))));
   if (kind === 'transaction') {
     const r = { internalId: d.internalId, date: d.date, amount: money(d.amount ?? d.total), currency, category: d.category, description: d.description ?? d.label ?? '', counterparty: d.counterparty ?? d.party ?? '', direction: d.direction ?? dirOf(d.amount ?? d.total), source: d.source, type: d.type };
     // Carry any extra per-movement data a card source captures (merchant city, card mask…) so nothing is lost.
@@ -168,7 +175,7 @@ export function buildRecord(d, adapter) {
     // row loaded from the store shows it instead of the opaque internalId. Omitted when absent so
     // existing invoice records stay byte-identical.
     if (d.description != null && d.description !== '') r.description = d.description;
-    return withExtra(withGroupFields(withPdfUrl(withGroup(r))));
+    return withIdStable(withExtra(withGroupFields(withPdfUrl(withGroup(r)))));
   }
   // receipt@1 (default) — unchanged shape (number appended only when present).
   return done({ internalId: d.internalId, date: d.date, total: money(d.total), currency, category: d.category, store: { name: d.storeName, address: d.storeAddress }, source: d.source, type: d.type });

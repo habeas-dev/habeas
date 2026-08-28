@@ -1700,6 +1700,35 @@ export function endOfMonth(v) {
   if (!y || !mo) return normalizeDate(v);
   return `${y}-${pad2(mo)}-${pad2(new Date(y, mo, 0).getDate())}`; // day 0 of month (mo as 0-indexed next) = last day of mo
 }
+// A key SEGMENT for `list.idOverride`. The key is an identity, so it must be built from what a value MEANS,
+// not from how the site happened to render it that day. Resolving the template against the raw scraped row —
+// which is what used to happen, since normalization only runs further down mapDoc — meant a purely visual
+// change minted a new identity for a movement already delivered: the same charge shown "14 MAR" while
+// pending and "14 mar" once settled arrived at the consumer twice.
+//
+// So: dates to ISO, amounts to a canonical number, free text lower-cased with runs of whitespace collapsed.
+// Anything that does not look like a date or an amount is treated as text, which is the safe direction — it
+// only ever removes cosmetic differences, never meaning.
+export function keySegment(path, v) {
+  if (v == null) return '';
+  if (typeof v === 'number') return String(v);
+  const s = String(v).trim();
+  if (!s) return '';
+  if (/date$/i.test(path)) { const d = normalizeDate(s); if (d) return String(d); }
+  if (/^(amount|total|importe|balance)/i.test(path) || /amount$/i.test(path)) {
+    const n = normalizeAmount(s);
+    if (typeof n === 'number' && !isNaN(n)) return String(n);
+  }
+  // Free TEXT is folded — case and spacing are how a site renders a concept, not what it means. An opaque
+  // IDENTIFIER is not: account and product ids are frequently base64url, where case is significant, and
+  // folding two accounts onto one key would mix two people's money. The line drawn here is whitespace: a
+  // value with a space in it is prose ("PANADERIA LA ESPIGA"), a single token is an identifier
+  // ("TbzGMc7ShQv73VGUEJ0E41FZns84oXfhZfCUFT4jdtw") and keeps its case exactly. A one-word description
+  // therefore keeps its case too — accepted, because the cost of being wrong the other way is unbounded.
+  const collapsed = s.replace(/\s+/g, ' ');
+  return collapsed.indexOf(' ') >= 0 ? collapsed.toLowerCase() : collapsed;
+}
+
 export function normalizeDate(v) {
   if (v == null || v === '') return v;
   const s = String(v).trim();
@@ -1836,8 +1865,21 @@ function mapDoc(adapter, p, group) {
       // Resolve {…} against the raw item AND its group (so a grouped source can key by {group.accountNumber} —
       // WiZink card movements have no per-row id and must be keyed per account, not just by date/amount/text).
       const ctx = group ? { ...p, group } : p;
-      const base = io.template.replace(/\{([^}]+)\}/g, (_, path) => { const v = get(ctx, path); return v == null ? '' : String(v); });
-      if (base) { const st = adapter._idxState || (adapter._idxState = new Map()); const n = st.get(base) || 0; st.set(base, n + 1); doc.internalId = base + '|' + n; }
+      const base = io.template.replace(/\{([^}]+)\}/g, (_, path) => keySegment(path, get(ctx, path)));
+      if (base) {
+        // ORDINAL. Default 'run': two items sharing a key WITHIN one import are genuinely distinct charges
+        // (ING lists both), so the Nth gets |N. That only holds while the run's membership is stable, and in
+        // production it is not — a pending charge settling, or a second identical charge arriving, shifts
+        // every ordinal after it and every shifted movement reaches the consumer as new.
+        //
+        // 'none' is the statement reading: charges agreeing on account, day, amount and text are ONE line.
+        // Two such charges are indistinguishable in anything the source gives us, so the choice is to merge
+        // them or to let ids churn whenever one appears; a real statement merges. Sources whose same-key
+        // items are genuinely separable (ING: a pending charge settles into an account movement with its own
+        // stable id) keep 'run'.
+        if (io.ordinal === 'none') doc.internalId = base;
+        else { const st = adapter._idxState || (adapter._idxState = new Map()); const n = st.get(base) || 0; st.set(base, n + 1); doc.internalId = base + '|' + n; }
+      }
     }
   }
   // Date fields → ISO (textual/locale, also epoch ms/s). `valueDate` is the bank movement's value date

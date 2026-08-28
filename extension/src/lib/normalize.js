@@ -105,6 +105,10 @@ export function canonicalize(record) {
   if (record.valueDate != null && record.valueDate !== '') out.valueDate = record.valueDate;
   if (record.balanceAfter != null && record.balanceAfter !== '') out.balanceAfter = num(record.balanceAfter);
   if (record.extra != null) out.extra = record.extra;
+  // Carried through when present: the source has declared this id is NOT stable across syncs, so the
+  // consumer must not use it as its dedupe key. A warning that stops at the record and never reaches the
+  // canonical form the consumer is handed is no warning at all.
+  if (record.idStable === false) out.idStable = false;
   return out;
 }
 

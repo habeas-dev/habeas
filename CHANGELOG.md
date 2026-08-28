@@ -11,6 +11,26 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Fixed
+- **A movement no longer changes identity between syncs, so a consumer stops filing it twice.** Where a
+  source has no usable identifier of its own, Habeas builds one from the movement itself — account, date,
+  amount, description. It was building it from those values *as the page painted them*, before they were
+  interpreted, so a charge shown one way while pending and another once settled ("14 MAR" against "14 mar")
+  arrived as two different movements. The identity is now built from what the values mean: the date as a
+  date, the amount as a number, wording with its spacing and capitalisation ignored. Identifiers that only
+  look like text — an account reference, a product code — keep their exact spelling, because for those a
+  difference in capitals can be a difference in account.
+- **A charge is no longer renumbered because another one like it appeared.** Movements sharing a natural key
+  were told apart by counting them within a sync, which assumed the same charge always lands in the same
+  position. It does not: a pending charge settling, or a second identical charge that day, shifted every
+  charge after it, and each one reached the consumer as new. Sources whose repeats cannot be told apart by
+  anything the service gives us now treat them as one line, the way a paper statement does. Sources that
+  genuinely can tell them apart are unaffected.
+- **A source that cannot promise a stable identifier now says so in the record.** Some services mint a fresh
+  identifier for the same movement on every visit, and no natural key covers them. Those records now carry
+  `idStable: false` through to the consumer, so it knows to use its own key rather than trusting one that
+  was never trustworthy.
+
+### Fixed
 - **A sync that saved to Dropbox could stop finishing, and said nothing about it.** Before asking a service
   for a document again, Habeas checks whether it already has the file in another destination — that is what
   keeps it from re-downloading an archive it already holds, and what lets old documents survive a change of
