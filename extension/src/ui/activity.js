@@ -34,9 +34,10 @@ function detailOf(e) {
     : e.status === 'challenged' ? t('st_challenged')
     : e.status === 'listing' ? t('st_listing')
     : e.status === 'stopped' ? t('st_stopped')
+    : e.status === 'interrupted' ? t('st_interrupted', [e.phase || '?'])
     : t('st_ok', [String(n ?? ''), e.sink || '']);
 }
-const STATUS_CLASS = { error: 'err', none: 'muted', nosession: 'warn', notab: 'warn', challenged: 'warn', stopped: 'muted', listing: 'muted' };
+const STATUS_CLASS = { error: 'err', none: 'muted', nosession: 'warn', notab: 'warn', challenged: 'warn', stopped: 'muted', listing: 'muted', interrupted: 'warn' };
 
 // A plain-language summary of an error, keyed off the HTTP status the runtime attached (never the raw HTML body).
 function humanError(e) {

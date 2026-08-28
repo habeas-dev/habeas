@@ -3818,5 +3818,14 @@
         "content": "$2"
       }
     }
+  },
+  "st_interrupted": {
+    "message": "interrupted — the browser stopped Habeas during “$PHASE$”, so the run never finished",
+    "placeholders": {
+      "phase": {
+        "content": "$1",
+        "example": "listing WiZink page 3"
+      }
+    }
   }
 }

@@ -3818,5 +3818,14 @@
         "content": "$2"
       }
     }
+  },
+  "st_interrupted": {
+    "message": "interrumpido: el navegador detuvo Habeas durante «$PHASE$», así que la sincronización no llegó a terminar",
+    "placeholders": {
+      "phase": {
+        "content": "$1",
+        "example": "listando WiZink página 3"
+      }
+    }
   }
 }

@@ -14,3 +14,11 @@ export const folderSinksUsable = () => typeof globalThis.showDirectoryPicker ===
 
 // A sink this browser cannot act on at all — as a source or as a destination.
 export const sinkUnavailableHere = (sink) => !!sink && sink.type === 'local-folder' && !folderSinksUsable();
+
+// The list of destinations an operation may actually work from. The background has to use this too, not
+// just the UI: a folder sink there is not merely unusable, it is a per-source, per-output IndexedDB lookup
+// for a handle that cannot exist, in a context that could never hold one anyway (a directory handle
+// belongs to a page — so this is false in every service worker and event page, Chrome included). Work
+// that can only come back empty still costs the time, and a startup pass that does not reach its end runs
+// again on the next start-up.
+export const usableSinks = (sinks) => (sinks || []).filter((s) => !sinkUnavailableHere(s));

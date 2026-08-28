@@ -16,6 +16,9 @@ import { retrieveDelivered, isRetrievable } from './lib/retrieve.js';
 import { driveCache } from './sinks/drive.js';
 import { dropboxCache } from './sinks/dropbox.js';
 import { startHeartbeat, stopHeartbeat } from './lib/keepalive.js';
+import { usableSinks } from './lib/folderavail.js';
+import { claimOnce, settleOnce } from './lib/oncegate.js';
+import { beginRun, markPhase, endRun, takeUnfinishedRun } from './lib/runwatch.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink, readSinkRecords } from './sinks/sinks.js';
 import { recordDelivered, putItems, getRecords } from './lib/store.js';
@@ -58,6 +61,12 @@ import { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isL
   applyStoredConfigIfNewer().catch(() => {});
   // One-time: encrypt any pairing-token headers left plaintext in config by older versions.
   migrateSinkHeaders().catch(() => {});
+  // A run marked in-flight that nobody closed means the background was taken away underneath it — Firefox
+  // suspending its event page, Chrome recycling its worker. That leaves no other trace at all, which is how
+  // a stopped sync went days looking busy. Report it, once, naming the phase it died in.
+  takeUnfinishedRun().then((r) => {
+    if (r) appendLog({ kind: r.kind || 'auto', datasource: r.datasource, sink: r.sink, status: 'interrupted', phase: r.phase || '?', startedAt: r.startedAt }).catch(() => {});
+  }).catch(() => {});
   syncWebRequestCapture();
   syncLoginErrorWatch(); // watch a resetCookies source's login page for its "corrupted cookies" status (WiZink 400)
   syncLearnAssetCapture().catch(() => {}); // (re)arm record-mode document capture if a recording is in progress
@@ -718,7 +727,7 @@ function isRichRecord(r) {
 // were upgraded. Best-effort per (output × readable sink); the first sink holding the manifest wins.
 async function reconcileFromDelivered(ds, adapter) {
   const cfg = await getConfig();
-  const readable = (cfg.sinks || []).filter((s) => ['dropbox', 'webdav', 's3', 'local-folder', 'drive'].includes(s.type));
+  const readable = usableSinks(cfg.sinks).filter((s) => ['dropbox', 'webdav', 's3', 'local-folder', 'drive'].includes(s.type));
   const name = adapter.name || ds.adapter;
   let upgraded = 0;
   for (const o of outputsOf(adapter)) {
@@ -759,22 +768,33 @@ async function reconcileFromDelivered(ds, adapter) {
 const MAINT_KEY = 'habeas:automaint';
 const MAINT_VER = 1;
 async function runAutoMaintenance() {
-  let o; try { o = await chrome.storage.local.get(MAINT_KEY); } catch (e) { o = {}; }
-  if (o[MAINT_KEY] === MAINT_VER) return;
   const cfg = await getConfig();
-  const readable = (cfg.sinks || []).filter((s) => ['dropbox', 'webdav', 's3', 'local-folder', 'drive'].includes(s.type));
-  if (!readable.length) return; // no readable destination → nothing to recover; don't mark (re-check once one exists)
+  const readable = usableSinks(cfg.sinks).filter((s) => ['dropbox', 'webdav', 's3', 'local-folder', 'drive'].includes(s.type));
+  if (!readable.length) return; // no readable destination → nothing to recover; don't claim (re-check once one exists)
+  // BOUNDED. This used to record only success, so a pass that never reached its end — an error, or the
+  // background suspended underneath it — ran again at every single start-up, re-reading every source's
+  // manifest from every cloud destination for good. All that traffic goes to the DESTINATION and none to
+  // the source, which is precisely what a stuck sync looked like from the outside.
+  const claim = await claimOnce(MAINT_KEY, MAINT_VER);
+  if (!claim.run) return;
   const adapters = await getAdapters();
   keepAlive();
+  let ok = false;
   try {
     for (const ds of (cfg.datasources || []).filter((d) => d.enabled)) {
+      keepAlive(); // progress renews the watchdog — this pass can be long
       const adapter = adapters[ds.adapter]; if (!adapter) continue;
       try { await reconcileFromDelivered(ds, adapter); } catch (e) { /* best-effort per source */ }
       await new Promise((r) => setTimeout(r, 400)); // throttle between sources — don't hammer the destination
     }
-    try { await chrome.storage.local.set({ [MAINT_KEY]: MAINT_VER }); } catch (e) {}
+    ok = true;
     setStatus('');
-  } finally { stopKeepAlive(); }
+  } finally {
+    await settleOnce(MAINT_KEY, MAINT_VER, ok);
+    // Giving up must be VISIBLE. Silently abandoning a recovery is how the last one went unnoticed.
+    if (!ok && claim.lastAttempt) await appendLog({ kind: 'migrate', ok: false, msg: 'Recovery from destinations did not finish after ' + claim.tries + ' attempts; it will not retry automatically. Use “Recover data from destination” in the Archive.' }).catch(() => {});
+    stopKeepAlive();
+  }
 }
 
 // Deliver a SPECIFIC set of already-stored documents (hand-picked in the Archive) to a sink. Unlike runRoute
@@ -797,6 +817,7 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
   const found = (picked || []).length;
   if (!found) return { status: 'done', sent: 0, found: 0, accepted: 0 };
   await badgeWorking();
+  await beginRun({ kind: 'manual', datasource: ds.id, sink: sink.id });
   setStatus(t('status_fetching', [String(found), name]));
   try {
     const auth = await authFor(adapter);
@@ -813,7 +834,7 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
     // opts.originId pins the copy to ONE destination: chosen explicitly, the operation reads as
     // "A → B" and cannot silently pull a file from somewhere the user did not name. Left unset,
     // every readable destination is tried, which is what handles an archive spread across two.
-    const stores = opts.force ? [] : (cfg.sinks || []).filter((s) =>
+    const stores = opts.force ? [] : usableSinks(cfg.sinks).filter((s) =>
       s.id !== sink.id && SW_RETRIEVABLE.has(s.type) && (!opts.originId || s.id === opts.originId));
     // One cache per remote store for the whole send. Drive resolves names to ids, so without this every
     // file costs an extra lookup and a few thousand documents run into rate limits. Dropbox is worse: a
@@ -878,6 +899,7 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
       if (wantsDocs) for (const d of eligible) {
         if (opts.signal && opts.signal.aborted) break; // Stop pressed — stop before the next doc (flushed chunks are safe)
         keepAlive(); // progress renews the watchdog: a long send is held open by its own advance
+        markPhase('reading back ' + name + ' ' + (n + 1) + '/' + eligible.length);
         const arts = [];
         for (const fmt of (fmts.length ? fmts : [''])) {
           const oeff = resolveOutput(adapter, sid + (fmt ? '/' + fmt : ''));
@@ -920,7 +942,7 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
     await appendLog({ kind: 'manual', datasource: ds.id, sink: sink.id, status: 'error', error: msg, ...errFields(e) });
     await badgeError(); setStatus(t('status_error', [name, msg.slice(0, 80)]));
     return { status: 'error', error: msg };
-  }
+  } finally { await endRun(); } // accounted for either way — only a run nobody closed is reported as killed
 }
 
 async function runRoute(ds, adapter, sink, opts = {}) {
@@ -928,6 +950,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
   const base = { kind, datasource: ds.id, sink: sink.id, ...(opts.origin ? { origin: opts.origin } : {}) };
   const name = adapter.name || ds.adapter;
   await badgeWorking();
+  await beginRun({ kind, datasource: ds.id, sink: sink.id }); // …closed in the finally, by every exit
   setStatus(t('status_listing', [name]));
   let netRef = null; // the page fetcher's tab — surfaced ONLY if a USER-initiated run then FAILS on auth (re-login)
   try {
@@ -976,7 +999,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
       const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(storeIdOf(ds, adapter), sid); const fmts = fmtsFor(sid);
       // onProgress → live per-page status (visible in an open popup during a Sync-all sweep). signal → stop.
       // ds.groups = the user's saved account allow-list (grouped sources): auto/sweep only ever touch those.
-      const all = await listInventory(eff, auth, net, { groupId: opts.groupId, groups: (ds.groups && ds.groups.length) ? ds.groups : undefined, signal: opts.signal, onProgress: (p) => { keepAlive(); setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])); } }); // opts.groupId → one account; opts.groups → allow-list
+      const all = await listInventory(eff, auth, net, { groupId: opts.groupId, groups: (ds.groups && ds.groups.length) ? ds.groups : undefined, signal: opts.signal, onProgress: (p) => { keepAlive(); markPhase('listing ' + name + ' page ' + (p.page || '')); setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])); } }); // opts.groupId → one account; opts.groups → allow-list
       if (brandCountry) for (const d of all) if (d.record) d.record.country = brandCountry; // which country each record came from (mixed multi-country store)
       const fresh = opts.force ? all : all.filter((d) => !delivered[d.internalId]); // force → re-deliver everything
       // Deliver oldest → newest (the list comes newest-first) — files written + manifest appended + store
@@ -1010,6 +1033,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
       for (const d of eligible) {
         if (opts.signal && opts.signal.aborted) break; // stop fetching mid-source (already-flushed chunks are safe)
         keepAlive(); // progress renews the watchdog
+        markPhase('fetching ' + name + ' ' + (fetched + 1) + '/' + eligible.length);
         const arts = [];
         for (const fmt of (fmts.length ? fmts : [''])) {
           const oeff = resolveOutput(adapter, sid + (fmt ? '/' + fmt : ''));
@@ -1073,7 +1097,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     // recovered (we only reach here on a hard failure).
     if ((kind === 'manual' || kind === 'ext') && netRef && netRef.tabId != null && /\b(401|403)\b/.test(msg)) foregroundTab(netRef.tabId);
     return { status: 'error', error: msg };
-  }
+  } finally { await endRun(); } // accounted for either way — only a run nobody closed is reported as killed
 }
 
 // ---- Download planner (scheduled source→sink deliveries) --------------------------------------------

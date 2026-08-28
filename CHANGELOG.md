@@ -19,6 +19,21 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   and because it happens before anything is listed, the screen sat on "Listing…" as though the *service*
   were slow. Dropbox is now read the way Google Drive already was: the folder is listed once for the whole
   operation, and a file is downloaded only when that listing says it is really there.
+- **A destination this browser cannot use is no longer treated as one that works.** A folder destination
+  only works in Chrome, and configuration syncs between browsers, so a folder set up there arrives in
+  Firefox intact. Settings already marked it unavailable — but the background did not, and went on counting
+  it among the places worth reading from: one more destination to walk for every source and every kind of
+  document, and a lookup for a folder handle that cannot exist, at every start-up, all of it certain to come
+  back empty.
+- **The one-off recovery from your destinations no longer repeats forever.** It only recorded having run if
+  it reached the end, so anything that stopped it first — an error, or the browser suspending Habeas —
+  meant it started again at the next launch, re-reading every source's index from every cloud destination,
+  indefinitely. Since all of that traffic goes to the destination and none to the service, it looked from
+  the outside like the service being slow. It now gives up after three attempts and says so in the activity
+  log, pointing at "Recover data from destination" in the Archive.
+- **A run that the browser cuts short now appears in the activity log.** If Habeas is stopped mid-run, the
+  next launch notices the unfinished run and records what it was doing when it went — the one failure that
+  until now left no trace anywhere.
 - **Firefox: a long sync could stop halfway with no error at all.** The background is kept awake during an
   operation by calling a browser API on a timer — otherwise Firefox suspends it (and Chrome recycles it)
   mid-run, taking the operation with it: the status line keeps its last words, nothing reaches the activity
