@@ -27,6 +27,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   fine on Chrome. It now also renews on every document and every page of a listing, so a long run is held
   open by its own progress rather than by a fixed six-minute allowance that a sweep across sixteen sources
   would outlast anyway.
+- **Firefox: site integrations always failed.** A page asking Habeas to collect its data got an error back
+  every time, for the same reason as the heartbeat above — the reply was requested in a style Firefox does
+  not accept, and the resulting type error was reported to the page as though the request itself had failed.
 - **A stalled run now reports itself instead of looking busy forever.** Nothing bounded how long a request
   could take, so one that never came back left the run apparently in progress — no error, no entry in the
   activity log, no notification. A sync could go days producing nothing and give no sign it had stopped.
