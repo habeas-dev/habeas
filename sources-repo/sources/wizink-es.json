@@ -87,12 +87,6 @@
           "method": "POST",
           "maxPeriods": 24,
           "periods": {
-            "current": {
-              "params": {
-                "pagename": "ECOM_SiteEntry/WZPRI/CardDetail/NewToday"
-              },
-              "body": "accountNumber={group.accountNumber}&cardNumber={group.cardNumber}&option=today&securityToken={csrf}"
-            },
             "dates": {
               "params": {
                 "pagename": "ECOM_SiteEntry/WZPRI/CardDetail/Today/ListExtracts"
@@ -143,8 +137,7 @@
             "when": {
               "field": "amount",
               "present": true
-            },
-            "ordinal": "none"
+            }
           }
         }
       },
@@ -230,8 +223,8 @@
     {
       "version": "2026-08-28",
       "changes": {
-        "en": "Each movement now keeps the same identity between syncs, so it is not saved twice. Two things caused it. Its identity was built from the text exactly as the page painted it, so a charge shown one way while pending and another once settled came back as a second, identical charge. And a charge appears twice in a single sync — once among the current unbilled movements and again inside the statement that bills it — which was read as two separate charges. From now on, charges on the same card, the same day, with the same amount and the same description are one movement, as on a paper statement. One consequence, once: on the first sync after this update every card movement is treated as new, because its identity has changed.",
-        "es": "Cada movimiento conserva ahora la misma identidad entre sincronizaciones, así que deja de guardarse dos veces. Lo provocaban dos cosas. Su identidad se construía con el texto tal y como lo pintaba la web, así que un cargo mostrado de una forma mientras estaba pendiente y de otra al liquidarse volvía como un segundo cargo idéntico. Y un cargo aparece dos veces en una misma sincronización — una entre los movimientos pendientes y otra dentro del extracto que lo liquida —, lo que se leía como dos cargos distintos. A partir de ahora, los cargos de la misma tarjeta, el mismo día, con el mismo importe y el mismo concepto son un solo movimiento, como en un extracto de papel. Una consecuencia, una sola vez: en la primera sincronización tras esta actualización todos los movimientos de tarjeta se tratan como nuevos, porque su identidad ha cambiado."
+        "en": "Pending charges are no longer collected, and each movement now keeps the same identity between syncs. A pending charge is provisional — its amount, date and wording can all still change — and WiZink lists it a second time inside the statement that bills it, so the same purchase was being saved twice. From now on a movement is collected once, from its statement, with its final values. Its identity is also built from what the values mean rather than from how the page painted them, so a change of styling on the website can no longer turn one movement into two. One consequence, once: on the first sync after this update your card movements are treated as new, because their identity has changed.",
+        "es": "Ya no se recogen los cargos pendientes, y cada movimiento conserva la misma identidad entre sincronizaciones. Un cargo pendiente es provisional — su importe, su fecha y su texto todavía pueden cambiar — y WiZink lo lista una segunda vez dentro del extracto que lo liquida, así que la misma compra se guardaba dos veces. A partir de ahora un movimiento se recoge una sola vez, desde su extracto y con sus valores definitivos. Su identidad, además, se construye con lo que significan los valores y no con cómo los pintaba la web, así que un cambio de estilo en la página ya no puede convertir un movimiento en dos. Una consecuencia, una sola vez: en la primera sincronización tras esta actualización tus movimientos de tarjeta se tratan como nuevos, porque su identidad ha cambiado."
       }
     },
     {

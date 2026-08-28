@@ -19,14 +19,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   date, the amount as a number, wording with its spacing and capitalisation ignored. Identifiers that only
   look like text — an account reference, a product code — keep their exact spelling, because for those a
   difference in capitals can be a difference in account.
-- **A card charge listed twice in one pass is now one movement, not two.** WiZink shows a charge under the
-  current unbilled period and then again inside the statement that bills it. Both sightings are the same
-  charge, but each was given its own identity, so the consumer filed it a second time. Charges that agree on
-  account, day, amount and description are now one line for such a source, the way they are on a paper
-  statement. Two genuinely separate but identical charges on the same day therefore also become one line —
-  on a statement they are indistinguishable anyway. Sources that can tell their repeats apart are
-  unaffected: there, identical movements keep taking consecutive numbers from zero, and a movement that was
-  already delivered keeps the number it had.
+- **WiZink no longer collects pending charges, which is what was saving each purchase twice.** A pending
+  charge is provisional — amount, date and wording can all still change before it settles — and WiZink
+  lists it again inside the statement that bills it. Both sightings were being saved. A movement is now
+  collected once, from its statement, with its final values. Nothing is merged to achieve this, so two
+  genuinely separate charges on the same day for the same amount remain two movements.
 
 - **A source that cannot promise a stable identifier now says so in the record.** Some services mint a fresh
   identifier for the same movement on every visit, and no natural key covers them. Those records now carry

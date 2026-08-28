@@ -53,9 +53,9 @@ function payRow(concept, date, amount) {
 }
 const wrap = (rows) => `<div class="card-movements"><ul>${rows.join('')}</ul></div>`;
 
-// Current (unbilled) month: 3 movements, with responsive duplicate amount spans.
+// Current (UNBILLED) month. Kept as a fixture precisely so the test can prove it is never requested:
+// pending charges are provisional and are listed again inside the statement that bills them.
 const CURRENT = wrap([
-  movRow('alimentacion', 'ALIEXPRESS.COM', '06 JUL', 'Luxembourg', '14,34 €', true),
   movRow('restaurante', 'MC DONALD\'S ALGETE', '02 JUL', 'SAN SEBASTIAN', '9,90 €', true),
   movRow('coche', 'REPSOL E.S.', '20 jun', 'MADRID', '55,00 €', true),
 ]);
@@ -67,6 +67,7 @@ const PAST = {
     payRow('PAGO RECIBO MES ANTERIOR', '11 may', '-2.884,03&euro;'), // a payment (movItemR, negative)
   ]),
   [D60]: wrap([
+    movRow('alimentacion', 'ALIEXPRESS.COM', '06 abr', 'Luxembourg', '14,34 €', true), // responsive duplicate amount spans
     movRow('compras', 'AMAZON EU', '10 abr', 'Luxembourg', '1.234,56 €', false),
     movRow('servicios', 'NETFLIX', '05 abr', 'AMSTERDAM', '12,00 €', false),
     movRow('otros', 'PAYPAL *STEAM', '02 abr', 'LONDON', '7,77 €', false),
@@ -84,7 +85,7 @@ function mockNet() {
     const reply = (text, ok = true, status = 200) => ({ ok, status, text: async () => text, json: async () => JSON.parse(text) });
     if (u.pathname === '/clientes/posicion-global') return reply(CSRF);
     if (pn.endsWith('NewGlobalPosition')) return reply(GROUPS);
-    if (pn.endsWith('CardDetail/NewToday')) return reply(CURRENT);
+    if (pn.endsWith('CardDetail/NewToday')) { net.pending = true; return reply(CURRENT); } // must never happen
     if (pn.endsWith('Today/ListExtracts')) return reply(DATES);
     if (pn.endsWith('ExtractOnScreenDetail')) {
       const d = (body.match(/statementDate=([0-9-]+)/) || [])[1];
@@ -106,13 +107,18 @@ test('wizink-movimientos source is valid (validateAdapter + JSON-schema-shaped)'
   assert.equal(SRC.api.list.maxAgeDays, 90, 'source caps document age at 90 days');
 });
 
-test('multi-period pipeline: current + reachable past statements; >90-day statement never requested', async () => {
+test('multi-period pipeline: reachable past statements only; >90-day statement never requested', async () => {
   const logs = [];
   const net = mockNet();
   const docs = await listInventory(SRC, { byPath: {}, merged: {} }, net, { log: (m) => logs.push(m) });
 
-  // current(3) + D30(2) + D60(3) = 8; D120 is filtered BEFORE fetching (no SMS trigger).
-  assert.equal(docs.length, 9, 'expected 3 current + 3 (2 gastos + 1 pago) + 3 past = 9 movements');
+  // Unbilled movements are deliberately NOT listed (see the source's `periods`): a pending charge is
+  // provisional — amount, date and wording can all still change — and it is listed a second time inside
+  // the statement that bills it, which is how one charge became two records at the consumer.
+  // D30(3: 2 gastos + 1 pago) + D60(4) = 7; D120 is filtered BEFORE fetching (no SMS trigger).
+  assert.equal(docs.length, 7, 'expected 3 (2 gastos + 1 pago) + 4 past = 7 movements, none of them pending');
+  assert.ok(!docs.some((d) => d._raw._period === 'current'), 'nothing pending may be listed');
+  assert.ok(!net.pending, 'the unbilled-movements endpoint must never be requested at all');
 
   for (const d of docs) {
     assert.match(d.date, /^\d{4}-\d{2}-\d{2}$/, 'date normalized: ' + d.date);
@@ -151,8 +157,7 @@ test('multi-period pipeline: current + reachable past statements; >90-day statem
 test('per-period tagging carries the period into each movement', async () => {
   const docs = await listInventory(SRC, { byPath: {}, merged: {} }, mockNet());
   const periods = new Set(docs.map((d) => d._raw._period));
-  assert.deepEqual([...periods].sort(), [D60, D30, 'current'].sort());
-  assert.equal(docs.filter((d) => d._raw._period === 'current').length, 3);
+  assert.deepEqual([...periods].sort(), [D60, D30].sort(), 'only billed statement periods');
 });
 
 test('internalId is synthesized, unique, and stable across re-runs (delivery ledger dedupes)', async () => {
@@ -169,7 +174,7 @@ test('runtime synthesizes an internalId even when the source omits fields.intern
   const bare = JSON.parse(JSON.stringify(SRC));
   delete bare.fields.internalId;
   const docs = await listInventory(bare, { byPath: {}, merged: {} }, mockNet());
-  assert.equal(docs.length, 9);
+  assert.equal(docs.length, 7);
   assert.ok(docs.every((d) => d.internalId && d.internalId.startsWith('ACC1|')), 'fallback id built');
-  assert.equal(new Set(docs.map((d) => d.internalId)).size, 9, 'fallback ids unique');
+  assert.equal(new Set(docs.map((d) => d.internalId)).size, 7, 'fallback ids unique');
 });
