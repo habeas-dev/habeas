@@ -180,7 +180,7 @@
     "@type": "WebPage",
     "@id": "https://habeas.dev/es/descargar/extractos-revolut.html"
   },
-  "dateModified": "2026-08-26",
+  "dateModified": "2026-08-28",
   "author": {
     "@type": "Person",
     "name": "David Marín",
@@ -246,7 +246,7 @@
       <div class="card">
         <h2>Sobre esta fuente</h2>
         <dl>
-          <dt>Versión</dt><dd>2026-08-26.6</dd>
+          <dt>Versión</dt><dd>2026-08-28</dd>
           <dt>Confianza</dt><dd>first-party</dd>
           <dt>Cobertura</dt><dd>global</dd>
           <dt>Licencia</dt><dd>CC0-1.0</dd>
@@ -288,8 +288,8 @@
   &quot;categories&quot;: [
     &quot;banking&quot;
   ],
-  &quot;version&quot;: &quot;2026-08-26.6&quot;,
-  &quot;minVersion&quot;: &quot;0.10.0.1&quot;,
+  &quot;version&quot;: &quot;2026-08-28&quot;,
+  &quot;minVersion&quot;: &quot;0.10.2&quot;,
   &quot;minorUnits&quot;: true,
   &quot;keepRaw&quot;: true,
   &quot;throttle&quot;: {
@@ -385,7 +385,10 @@
                 &quot;COMPLETED&quot;
               ]
             }
-          ]
+          ],
+          &quot;idOverride&quot;: {
+            &quot;template&quot;: &quot;{group.id}|{startedDate}|{amount}|{currency}|{description}&quot;
+          }
         }
       },
       &quot;fields&quot;: {
@@ -464,6 +467,13 @@
     }
   ],
   &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-08-28&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Each movement now keeps the same identity between syncs, so it is not saved twice. Revolut issues a new internal reference for the same completed movement from one visit to the next, and that reference was what identified it, so the same purchase came back as a new one. It is now identified by the account, date, amount, currency and description instead. One consequence, once: on the first sync after this update your Revolut movements are treated as new, because their identity has changed.&quot;,
+        &quot;es&quot;: &quot;Cada movimiento conserva ahora la misma identidad entre sincronizaciones, así que deja de guardarse dos veces. Revolut emite una referencia interna nueva para el mismo movimiento ya completado de una visita a otra, y esa referencia era lo que lo identificaba, así que la misma compra volvía como si fuera nueva. Ahora se identifica por la cuenta, la fecha, el importe, la divisa y el concepto. Una consecuencia, una sola vez: en la primera sincronización tras esta actualización tus movimientos de Revolut se tratan como nuevos, porque su identidad ha cambiado.&quot;
+      }
+    },
     {
       &quot;version&quot;: &quot;2026-08-26.6&quot;,
       &quot;changes&quot;: {
@@ -607,11 +617,11 @@
       <h2>Qué ha cambiado en esta fuente</h2>
       <p>Esta fuente es una definición pública y cada cambio queda registrado. De lo más reciente a lo más antiguo:</p>
       <ul class="changelog">
+        <li class="rev"><span class="ver">2026-08-28</span> — Cada movimiento conserva ahora la misma identidad entre sincronizaciones, así que deja de guardarse dos veces. Revolut emite una referencia interna nueva para el mismo movimiento ya completado de una visita a otra, y esa referencia era lo que lo identificaba, así que la misma compra volvía como si fuera nueva. Ahora se identifica por la cuenta, la fecha, el importe, la divisa y el concepto. Una consecuencia, una sola vez: en la primera sincronización tras esta actualización tus movimientos de Revolut se tratan como nuevos, porque su identidad ha cambiado.</li>
         <li class="rev"><span class="ver">2026-08-26.6</span> — Los movimientos muestran ahora el importe que realmente salió de tu cuenta, comisiones incluidas. Los pagos que llevaban alguna —una compra con tarjeta en otra divisa en fin de semana, por ejemplo— llegaban algo por debajo de lo que te cobraron. Requiere Habeas 0.10.1 o posterior.</li>
         <li class="rev"><span class="ver">2026-08-26.4</span> — Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga.</li>
         <li class="rev"><span class="ver">2026-08-26.3</span> — Documenta un límite en vez de arreglarlo: un pago con tarjeta en divisa hecho en fin de semana llegaba un 1% corto, porque el recargo de Revolut fuera de horario salía del saldo sin aparecer nunca en los datos. Corregido después, en la 2026-08-26.6.</li>
         <li class="rev"><span class="ver">2026-08-26.1</span> — Tres tipos de apunte dejan de listarse como movimientos, porque no lo son. La autorización de 0 € que hace un comercio para comprobar que tu tarjeta está viva; los cargos denegados y revertidos, cuyo reintento correcto también llega, de modo que la compra se contaba hasta tres veces. Y el dinero que vuelve de un bolsillo de ahorro ya no llega en negativo, ni arrastrando el saldo del bolsillo en lugar del de tu cuenta.</li>
-        <li class="rev"><span class="ver">2026-08-26</span> — Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.</li>
       </ul>
       <p class="lead"><a href="undefined#revolut">Ver el historial completo en el catálogo →</a></p>
 

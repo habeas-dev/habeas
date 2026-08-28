@@ -180,7 +180,7 @@
     "@type": "WebPage",
     "@id": "https://habeas.dev/download/wizink-statements.html"
   },
-  "dateModified": "2026-08-26",
+  "dateModified": "2026-08-28",
   "author": {
     "@type": "Person",
     "name": "David Marín",
@@ -246,7 +246,7 @@
       <div class="card">
         <h2>About this source</h2>
         <dl>
-          <dt>Version</dt><dd>2026-08-26</dd>
+          <dt>Version</dt><dd>2026-08-28</dd>
           <dt>Trust</dt><dd>first-party</dd>
           <dt>Coverage</dt><dd>ES</dd>
           <dt>Licence</dt><dd>CC0-1.0</dd>
@@ -285,7 +285,7 @@
   },
   &quot;domain&quot;: &quot;wizink.es&quot;,
   &quot;country&quot;: &quot;ES&quot;,
-  &quot;version&quot;: &quot;2026-08-26&quot;,
+  &quot;version&quot;: &quot;2026-08-28&quot;,
   &quot;currency&quot;: &quot;EUR&quot;,
   &quot;categories&quot;: [
     &quot;card&quot;,
@@ -357,12 +357,6 @@
           &quot;method&quot;: &quot;POST&quot;,
           &quot;maxPeriods&quot;: 24,
           &quot;periods&quot;: {
-            &quot;current&quot;: {
-              &quot;params&quot;: {
-                &quot;pagename&quot;: &quot;ECOM_SiteEntry/WZPRI/CardDetail/NewToday&quot;
-              },
-              &quot;body&quot;: &quot;accountNumber={group.accountNumber}&amp;cardNumber={group.cardNumber}&amp;option=today&amp;securityToken={csrf}&quot;
-            },
             &quot;dates&quot;: {
               &quot;params&quot;: {
                 &quot;pagename&quot;: &quot;ECOM_SiteEntry/WZPRI/CardDetail/Today/ListExtracts&quot;
@@ -497,6 +491,13 @@
   ],
   &quot;changelog&quot;: [
     {
+      &quot;version&quot;: &quot;2026-08-28&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Pending charges are no longer collected, and each movement now keeps the same identity between syncs. A pending charge is provisional — its amount, date and wording can all still change — and WiZink lists it a second time inside the statement that bills it, so the same purchase was being saved twice. From now on a movement is collected once, from its statement, with its final values. Its identity is also built from what the values mean rather than from how the page painted them, so a change of styling on the website can no longer turn one movement into two. One consequence, once: on the first sync after this update your card movements are treated as new, because their identity has changed.&quot;,
+        &quot;es&quot;: &quot;Ya no se recogen los cargos pendientes, y cada movimiento conserva la misma identidad entre sincronizaciones. Un cargo pendiente es provisional — su importe, su fecha y su texto todavía pueden cambiar — y WiZink lo lista una segunda vez dentro del extracto que lo liquida, así que la misma compra se guardaba dos veces. A partir de ahora un movimiento se recoge una sola vez, desde su extracto y con sus valores definitivos. Su identidad, además, se construye con lo que significan los valores y no con cómo los pintaba la web, así que un cambio de estilo en la página ya no puede convertir un movimiento en dos. Una consecuencia, una sola vez: en la primera sincronización tras esta actualización tus movimientos de tarjeta se tratan como nuevos, porque su identidad ha cambiado.&quot;
+      }
+    },
+    {
       &quot;version&quot;: &quot;2026-08-26&quot;,
       &quot;changes&quot;: {
         &quot;en&quot;: &quot;Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.&quot;,
@@ -525,7 +526,7 @@
       }
     }
   ],
-  &quot;minVersion&quot;: &quot;0.9.3&quot;,
+  &quot;minVersion&quot;: &quot;0.10.2&quot;,
   &quot;content&quot;: {
     &quot;en&quot;: {
       &quot;slug&quot;: &quot;wizink-statements&quot;,
@@ -580,6 +581,7 @@
       <h2>What has changed in this source</h2>
       <p>This source is a public definition, and every change to it is on the record. Most recent first:</p>
       <ul class="changelog">
+        <li class="rev"><span class="ver">2026-08-28</span> — Pending charges are no longer collected, and each movement now keeps the same identity between syncs. A pending charge is provisional — its amount, date and wording can all still change — and WiZink lists it a second time inside the statement that bills it, so the same purchase was being saved twice. From now on a movement is collected once, from its statement, with its final values. Its identity is also built from what the values mean rather than from how the page painted them, so a change of styling on the website can no longer turn one movement into two. One consequence, once: on the first sync after this update your card movements are treated as new, because their identity has changed.</li>
         <li class="rev"><span class="ver">2026-08-26</span> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
         <li class="rev"><span class="ver">2026-08-08</span> — No change to what this source extracts. This version gave it its guide page on habeas.dev.</li>
         <li class="rev"><span class="ver">2026-07-10</span> — Statements now show a readable label (&quot;Statement &lt;date&gt;&quot;) instead of the internal identifier, and carry the type &quot;Statement&quot;.</li>
