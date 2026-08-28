@@ -7,6 +7,7 @@ import { chrome } from '../lib/ext.js';
 import { getSecret, encryptString, decryptString } from '../lib/secrets.js';
 import { pathFor, toRecords, mergeRecords, jsonBlob } from './format.js';
 import { makeShardedStore, pathPrim } from '../lib/store/sharded.js';
+import { timedFetch, DEFAULT_TIMEOUT_MS } from '../lib/timeout.js';
 
 const TOKEN_URL = 'https://api.dropboxapi.com/oauth2/token';
 const UPLOAD_URL = 'https://content.dropboxapi.com/2/files/upload';
@@ -22,6 +23,11 @@ const apiArg = (obj) => JSON.stringify(obj).replace(/[\u0080-\uffff]/g, (c) => '
 // per-sink appKey field then carries a user's own app.
 const DEFAULT_DROPBOX_APP_KEY = 'wv89vk62nf0qnad';
 const dbxAppKey = (sink) => (sink && sink.appKey) || DEFAULT_DROPBOX_APP_KEY;
+
+// Every Dropbox call is BOUNDED. This is where a stalled archive actually stalled: reads here are plain
+// HTTPS with no deadline, so one request that never came back held the whole send open indefinitely with
+// nothing on screen but "Listing…". A timeout turns that into a reported failure the user can see.
+const dbxFetch = timedFetch((u, i) => fetch(u, i), DEFAULT_TIMEOUT_MS, 'Dropbox');
 
 // A single, STABLE redirect registered once on the Dropbox app: a static landing page on habeas.dev.
 // Browser-extension redirect URLs are per-install (and Firefox rejects a custom one in launchWebAuthFlow),
@@ -136,7 +142,7 @@ async function dbxUpload(token, path, blob) {
   if (!r.ok) throw new Error('dropbox upload ' + r.status + ' ' + (await r.text().catch(() => '')).slice(0, 120));
 }
 async function dbxDownloadJson(token, path) {
-  const r = await fetch(DOWNLOAD_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Dropbox-API-Arg': apiArg({ path }) } });
+  const r = await dbxFetch(DOWNLOAD_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Dropbox-API-Arg': apiArg({ path }) } });
   if (r.status === 409) return []; // path/not_found → no manifest yet
   if (!r.ok) throw new Error(`Dropbox download ${r.status}: ${(await r.text().catch(() => '')).slice(0, 200)}`); // e.g. 401 missing files.content.read
   return await r.json().catch(() => []);
@@ -161,22 +167,70 @@ export async function dropboxWrite(sink, docs, files, opts = {}) {
   return { written: n, total: docs.length };
 }
 
+// A per-operation LISTING cache — the Dropbox counterpart of driveCache(). Reading a delivered file back
+// costs a full download here, so a send that probes every document one at a time pulls the whole archive
+// over the wire just to answer yes/no questions, in series, with nothing on screen but "Listing…". One
+// recursive listing per service folder answers all of them, and a download is then only ever issued for a
+// path the listing says is really there. Pass the SAME cache through a whole send/copy.
+export function dropboxCache() { return { dirs: Object.create(null) }; }
+
+// The folder to index for a delivery path. Deliveries live at <root>/<service>/[<group>/]<year>/<file>, so
+// the service folder covers every document of one source in a single recursive listing.
+const idxRoot = (abs) => { const p = abs.split('/').filter(Boolean); return '/' + (p.length > 3 ? p.slice(0, 2) : p.slice(0, -1)).join('/'); };
+
+// Every file path below `dir`, lowercased (Dropbox paths are case-insensitive), in one paged listing.
+// The PROMISE is cached, not the result, so concurrent probes of the same folder share one round trip.
+// Resolves to null when the listing can't be had (no files.metadata.read scope, a network blip) — the
+// caller then falls back to asking about the single path, i.e. exactly the old behaviour.
+function dbxIndex(sink, dir, cache) {
+  const key = dir.toLowerCase();
+  if (!cache.dirs[key]) cache.dirs[key] = (async () => {
+    const set = new Set();
+    const headers = { Authorization: 'Bearer ' + (await dropboxToken(sink)), 'Content-Type': 'application/json' };
+    let url = 'https://api.dropboxapi.com/2/files/list_folder', body = { path: dir, recursive: true, limit: 2000 };
+    for (;;) {
+      const r = await dbxFetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+      if (r.status === 409) break; // the folder isn't there → nothing was ever delivered under it
+      if (!r.ok) throw new Error(`Dropbox list_folder ${r.status}`);
+      const j = await r.json().catch(() => ({}));
+      for (const e of j.entries || []) if (e['.tag'] === 'file' && e.path_lower) set.add(e.path_lower);
+      if (!j.has_more) break;
+      url = 'https://api.dropboxapi.com/2/files/list_folder/continue'; body = { cursor: j.cursor };
+    }
+    return set;
+  })().catch(() => { delete cache.dirs[key]; return null; });
+  return cache.dirs[key];
+}
+
+// Does the cache KNOW about this path? true/false once the folder is indexed, null when it isn't and the
+// caller has to ask the network itself.
+async function cachedHas(sink, path, cache) {
+  if (!cache) return null;
+  const idx = await dbxIndex(sink, idxRoot(path), cache);
+  return idx ? idx.has(path.toLowerCase()) : null;
+}
+
 // Retrieve a previously-delivered artifact (relative path under the sink root) as a Blob, for the in-app
 // document viewer. null if the file isn't there (409). Needs files.content.read (same scope as store read).
-export async function dropboxRetrieve(sink, relPath) {
-  const token = await dropboxToken(sink);
+// opts.cache (dropboxCache()): skip the download entirely for a path the folder listing doesn't hold.
+export async function dropboxRetrieve(sink, relPath, opts = {}) {
   const path = dbxPath(sink.rootFolderName || '', relPath);
-  const r = await fetch(DOWNLOAD_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Dropbox-API-Arg': apiArg({ path }) } });
+  if ((await cachedHas(sink, path, opts.cache)) === false) return null; // known absent — no download
+  const token = await dropboxToken(sink);
+  const r = await dbxFetch(DOWNLOAD_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Dropbox-API-Arg': apiArg({ path }) } });
   if (r.status === 409) return null;
   if (!r.ok) throw new Error(`Dropbox download ${r.status}`);
   return await r.blob();
 }
 
 // Existence check by METADATA (no download) — used to scan which formats a delivered doc has cheaply.
-export async function dropboxExists(sink, relPath) {
-  const token = await dropboxToken(sink);
+// With opts.cache it costs no request at all beyond the one listing.
+export async function dropboxExists(sink, relPath, opts = {}) {
   const path = dbxPath(sink.rootFolderName || '', relPath);
-  const r = await fetch('https://api.dropboxapi.com/2/files/get_metadata', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ path }) });
+  const known = await cachedHas(sink, path, opts.cache);
+  if (known !== null) return known;
+  const token = await dropboxToken(sink);
+  const r = await dbxFetch('https://api.dropboxapi.com/2/files/get_metadata', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ path }) });
   if (r.status === 409) return false; // path/not_found
   if (!r.ok) throw new Error(`Dropbox metadata ${r.status}`);
   return true;
@@ -193,7 +247,7 @@ export function dropboxStore(sink, cfg = {}) {
   const folder = dbxPath(sink.rootFolderName || '', (cfg && cfg.storeFolder) || '_store');
   const io = {
     async readJson(path) {
-      const r = await fetch(DOWNLOAD_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + await dropboxToken(sink), 'Dropbox-API-Arg': apiArg({ path }) } });
+      const r = await dbxFetch(DOWNLOAD_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + await dropboxToken(sink), 'Dropbox-API-Arg': apiArg({ path }) } });
       if (r.status === 409) return null; // path/not_found → nothing there yet
       if (!r.ok) throw new Error(`Dropbox download ${r.status} for ${path}: ${(await r.text().catch(() => '')).slice(0, 200)}`); // 401 token &c. must surface
       const j = await r.json().catch(() => null);
@@ -203,7 +257,7 @@ export function dropboxStore(sink, cfg = {}) {
     async removePath(path) { await dbxDelete(await dropboxToken(sink), path); },
     async removeDir(path) { await dbxDelete(await dropboxToken(sink), path); }, // delete_v2 is recursive on a folder
     async listDir(path) {
-      const r = await fetch('https://api.dropboxapi.com/2/files/list_folder', { method: 'POST', headers: { Authorization: 'Bearer ' + await dropboxToken(sink), 'Content-Type': 'application/json' }, body: JSON.stringify({ path }) });
+      const r = await dbxFetch('https://api.dropboxapi.com/2/files/list_folder', { method: 'POST', headers: { Authorization: 'Bearer ' + await dropboxToken(sink), 'Content-Type': 'application/json' }, body: JSON.stringify({ path }) });
       if (!r.ok) return []; // 409 (folder not found) or any error → treat as empty
       const j = await r.json().catch(() => ({}));
       return (j.entries || []).map((e) => ({ name: e.name || '', isDir: e['.tag'] === 'folder' }));

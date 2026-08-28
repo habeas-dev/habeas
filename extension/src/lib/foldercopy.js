@@ -14,6 +14,8 @@
 import { getRecords, recordDelivered } from './store.js';
 import { deliveredSet, markDelivered, rememberDocMeta, getDocMeta } from './state.js';
 import { retrieveDelivered, RETRIEVABLE } from './retrieve.js';
+import { driveCache } from '../sinks/drive.js';
+import { dropboxCache } from '../sinks/dropbox.js';
 import { getHandle, verifyPermission } from './fs.js';
 import { writeToSink } from '../sinks/sinks.js';
 import { acceptsDoc, sinkAcceptsArtifact } from '../sinks/format.js';
@@ -62,6 +64,9 @@ export async function copyArchivePageSide(cfg, adapters, target, { originId = ''
   const origins = (cfg.sinks || []).filter((s) => RETRIEVABLE.has(s.type) && s.id !== target.id
     && (!originId || s.id === originId));
   if (!origins.length) return { sent: 0, found: 0, skipped: 0, stopped: false };
+  // One listing per origin folder for the whole copy, instead of a lookup (Drive) or a full download
+  // (Dropbox) per document — a long copy is exactly where that difference decides whether it finishes.
+  const caches = { driveCache: driveCache(), dropboxCache: dropboxCache() };
 
   // Resolved once, and up front: if the folder is no longer authorised, asking now — inside the click
   // that started the copy — is the only moment a browser will grant it. Failing here beats failing after
@@ -193,7 +198,7 @@ export async function copyArchivePageSide(cfg, adapters, target, { originId = ''
             if (!avail.some((a) => a.kind === k.kind)) continue;
             if (wanted && !wanted.has(String(k.ext).toLowerCase())) continue; // recorded as not existing
             for (const from of origins) {
-              const r = await retrieveDelivered(from, adapter, rec, k.ext, { only: true }).catch(() => null);
+              const r = await retrieveDelivered(from, adapter, rec, k.ext, { only: true, ...caches }).catch(() => null);
               if (r && r.blob) { arts.push({ blob: r.blob, ext: r.ext || k.ext }); break; }
               if (misses.length < 5 && r && Array.isArray(r.tried) && r.tried.length) {
                 misses.push({ sink: from.name || from.id, source: adapter.id, id: d.internalId, tried: r.tried.slice(0, 2) });

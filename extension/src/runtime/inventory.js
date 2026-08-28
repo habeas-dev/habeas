@@ -12,6 +12,7 @@ import { registrableDomain, hostOf } from '../adapters/validate.js';
 import { needsPageContext } from '../lib/autosync.js';
 import { esc as escH } from '../lib/esc.js';
 import { withDebugMark } from '../lib/debugmark.js';
+import { timedFetch, DEFAULT_TIMEOUT_MS } from '../lib/timeout.js';
 
 // Every fetcher goes through the site's tab (in-session: cookies + cf_clearance + fingerprint, so anti-bot
 // lets it through). But a page-context fetch is bound by THAT page's CSP (connect-src) and can throw a
@@ -59,12 +60,18 @@ export function netFetch(net, adapter, opts = {}) {
   // Tag every request for proxy debugging (a no-op unless the user turned it on in Settings → Advanced).
   // Wrapping the FINAL fetcher means throttled and retried calls carry it too — one place, no gaps.
   const mark = (fn) => withDebugMark(fn, adapter && adapter.id);
+  // Every attempt is BOUNDED. This is the single network choke point, so one deadline here covers listing
+  // pages, detail and document fetches alike. A source may raise it (`timeoutMs`) for an API that genuinely
+  // takes minutes to render a statement. Without this a request that never returns leaves the run on
+  // "Listing…" with nothing logged — a silent stall, which is the one failure nobody notices.
+  const bound = (fn) => timedFetch(fn, (adapter && adapter.timeoutMs) || DEFAULT_TIMEOUT_MS, (adapter && adapter.id) || 'request');
   const retry = adapter && adapter.retry;
-  if (!retry || !Array.isArray(retry.status) || !retry.status.length) return mark(attempt);
+  if (!retry || !Array.isArray(retry.status) || !retry.status.length) return mark(bound(attempt));
   const max = Math.max(1, retry.max || 3);
+  const bounded = bound(attempt); // each try gets its own deadline; a hung try no longer stalls the run
   return mark(async (u, i) => {
     for (let n = 0; ; n++) {
-      const r = await attempt(u, i);
+      const r = await bounded(u, i);
       if (r.ok || n >= max || !retry.status.includes(r.status)) return r;
       if (retry.bodyMatch) { let b = ''; try { b = await r.text(); } catch (e) {} if (String(b).indexOf(retry.bodyMatch) < 0) return r; }
       if (retry.delayMs > 0) await new Promise((res) => setTimeout(res, retry.delayMs));

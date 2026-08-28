@@ -324,8 +324,11 @@ test('the copy asks what a document HAS before going to look for it', () => {
   // artifactKinds yields {kind, ext} objects. Passing one where an extension belongs put "[object Object]"
   // into every reconstructed path and made the `only` filter compare an object against a string, so no
   // file could ever be found — which is what wrote zero bytes, whatever the archive held.
-  assert.match(lib, /retrieveDelivered\(from, adapter, rec, k\.ext, \{ only: true \}\)/,
+  assert.match(lib, /retrieveDelivered\(from, adapter, rec, k\.ext, \{ only: true[^}]*\}\)/,
     'the artifact EXTENSION must be passed, never the artifact object');
+  // …and the listing caches must travel with it: on Dropbox a read is a full download, so probing document
+  // by document pulls the whole archive over the wire before the copy can make progress.
+  assert.match(lib, /\.\.\.caches/, 'one folder listing per origin for the whole copy, not one per document');
   assert.match(lib, /const streamKinds = /,
     'a stream that declares no file at all must be settled without touching its documents');
   // Absent knowledge is different from knowing there is nothing: only then may it look.

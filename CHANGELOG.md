@@ -10,6 +10,20 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **A sync that saved to Dropbox could stop finishing, and said nothing about it.** Before asking a service
+  for a document again, Habeas checks whether it already has the file in another destination — that is what
+  keeps it from re-downloading an archive it already holds, and what lets old documents survive a change of
+  destination when the service will not hand them over twice. On Dropbox that check cost a full download of
+  the file, one document at a time. Past a few hundred documents the pass simply stopped reaching the end,
+  and because it happens before anything is listed, the screen sat on "Listing…" as though the *service*
+  were slow. Dropbox is now read the way Google Drive already was: the folder is listed once for the whole
+  operation, and a file is downloaded only when that listing says it is really there.
+- **A stalled run now reports itself instead of looking busy forever.** Nothing bounded how long a request
+  could take, so one that never came back left the run apparently in progress — no error, no entry in the
+  activity log, no notification. A sync could go days producing nothing and give no sign it had stopped.
+  Every call now has a deadline and passing it is a normal, visible failure, with the affected source named.
+
 ## [0.10.1] — 2026-08-26
 
 ### Added

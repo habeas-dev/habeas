@@ -15,6 +15,8 @@ import { useDriveStore, useFolderStore, useSinkStore, useHttpStore, folderStoreA
 import { mountSinkForm, connectSink, needsConnect, storeCapable } from './sinkform.js';
 import { deliveredSet, getDocMeta, rememberDocMeta } from '../lib/state.js';
 import { isRetrievable, retrieveDelivered } from '../lib/retrieve.js';
+import { driveCache } from '../sinks/drive.js';
+import { dropboxCache } from '../sinks/dropbox.js';
 import { detailView, hasDetail } from '../lib/detailview.js';
 import { sinkAcceptsSource, groupLabelOf } from '../sinks/format.js';
 import { resolveOutput } from '../lib/outputs.js';
@@ -910,13 +912,13 @@ async function reloadFromStore() {
 // exts are already known. Progress in the status line; Stop aborts. `known[id].exts` is read back in loadDocs.
 // Probe ONE delivered document's file formats against its sinks, record the exts, and update the doc's
 // `formats` in place (so a missing-format button disappears). Returns the exts found. `r._scanned` marks it done.
-async function scanDocFormats(entry, r) {
+async function scanDocFormats(entry, r, caches) {
   const fmts = fileFormatsFor(entry.adapter, r._stream); // the document formats this source can produce (e.g. pdf)
   const found = [];
   for (const f of fmts) {
     for (const sink of r.delivered) {
       // existsOnly → probe by metadata/HEAD, no download (a doc that HAS the PDF isn't re-downloaded just to check).
-      const res = await retrieveDelivered(sink, r.adapter, r.record, f.ext, { only: true, existsOnly: true }).catch(() => null);
+      const res = await retrieveDelivered(sink, r.adapter, r.record, f.ext, { only: true, existsOnly: true, ...(caches || {}) }).catch(() => null);
       if (res && res.exists) { found.push(f.ext); break; }
     }
   }
@@ -933,10 +935,13 @@ async function scanFormats() {
   const aborter = new AbortController();
   beginOp(() => { try { aborter.abort(); } catch (e) {} });
   let n = 0;
+  // One folder listing per destination for the whole scan — a per-document probe over a few thousand
+  // documents is what turns "check which formats I have" into an operation that never ends.
+  const caches = { driveCache: driveCache(), dropboxCache: dropboxCache() };
   try {
     for (const r of docs) {
       if (aborter.signal.aborted) break;
-      await scanDocFormats(entry, r);
+      await scanDocFormats(entry, r, caches);
       $('#astatus').textContent = t('archive_scan_progress', [String(++n), String(docs.length)]);
     }
   } finally {

@@ -50,7 +50,7 @@ export async function retrieveDelivered(sink, adapter, record, preferExt, opts =
       // opts.existsOnly: check existence by METADATA/HEAD (no download) — used to scan which formats a doc has.
       if (opts.existsOnly) {
         let ok = false;
-        if (sink.type === 'dropbox') ok = await dropboxExists(sink, path);
+        if (sink.type === 'dropbox') ok = await dropboxExists(sink, path, { cache: opts.dropboxCache });
         else if (sink.type === 'webdav') ok = await webdavExists(sink, path);
         else if (sink.type === 's3') ok = await s3Exists(sink, path);
         else if (sink.type === 'local-folder') ok = await folderExists(handle, path);
@@ -59,11 +59,12 @@ export async function retrieveDelivered(sink, adapter, record, preferExt, opts =
         tried.push(path); continue;
       }
       let blob = null;
-      if (sink.type === 'dropbox') blob = await dropboxRetrieve(sink, path);
+      if (sink.type === 'dropbox') blob = await dropboxRetrieve(sink, path, { cache: opts.dropboxCache });
       else if (sink.type === 'webdav') blob = await webdavRetrieve(sink, path);
       else if (sink.type === 's3') blob = await s3Retrieve(sink, path);
       else if (sink.type === 'local-folder') blob = await folderRetrieve(handle, path);
-      // opts.driveCache: one shared cache across a whole copy so folder listings are not repeated per file.
+      // opts.driveCache / opts.dropboxCache: one shared cache across a whole copy so folder listings are
+      // not repeated per file — and, on Dropbox, so a file that isn't there costs no download at all.
       else if (sink.type === 'drive') blob = await driveRetrieve(sink, path, { cache: opts.driveCache });
       if (blob) return { blob, ext, path };
       tried.push(path); // reached the backend, got a clean "not found"

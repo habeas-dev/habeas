@@ -14,6 +14,7 @@ import { listInventory, listGroups, artifactKinds, fetchArtifact, documentExt } 
 import { resolveSiteFetch, ensureSiteFetch, recoverSession, clearSiteCookies, withBrandHost, findSiteTab, foregroundTab } from './lib/pagefetch.js';
 import { retrieveDelivered, isRetrievable } from './lib/retrieve.js';
 import { driveCache } from './sinks/drive.js';
+import { dropboxCache } from './sinks/dropbox.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink, readSinkRecords } from './sinks/sinks.js';
 import { recordDelivered, putItems, getRecords } from './lib/store.js';
@@ -818,12 +819,14 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
     // every readable destination is tried, which is what handles an archive spread across two.
     const stores = opts.force ? [] : (cfg.sinks || []).filter((s) =>
       s.id !== sink.id && SW_RETRIEVABLE.has(s.type) && (!opts.originId || s.id === opts.originId));
-    // One Drive cache for the whole send: Drive resolves names to ids, so without this every file costs
-    // an extra lookup and a few thousand documents run into rate limits.
-    const dcache = driveCache();
+    // One cache per remote store for the whole send. Drive resolves names to ids, so without this every
+    // file costs an extra lookup and a few thousand documents run into rate limits. Dropbox is worse: a
+    // read there is a full download, so probing document by document pulls the entire archive over the
+    // wire and the pass simply stops finishing once the archive is big enough. One folder listing each.
+    const dcache = driveCache(), bcache = dropboxCache();
     const retrieveArt = async (d, ext) => {
       const rec = { ...(d.record || {}), internalId: d.internalId, date: d.date ?? (d.record && d.record.date), group: d.group ?? (d.record && d.record.group) };
-      for (const st of stores) { try { const r = await retrieveDelivered(st, adapter, rec, ext, { only: true, driveCache: dcache }); if (r && r.blob) return { blob: r.blob, ext: r.ext || ext }; } catch (e) {} }
+      for (const st of stores) { try { const r = await retrieveDelivered(st, adapter, rec, ext, { only: true, driveCache: dcache, dropboxCache: bcache }); if (r && r.blob) return { blob: r.blob, ext: r.ext || ext }; } catch (e) {} }
       return null;
     };
     // The source page-fetch, opened LAZILY — only when a file genuinely can't be read back from a store. So a
