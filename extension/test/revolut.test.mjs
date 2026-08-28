@@ -51,9 +51,9 @@ test('transactions: to-cursor paging, minor-unit scaling, epoch dates, x-device-
   const docs = await listInventory(EFF, auth, net, {});
   // page1 = 4 rows (cursor = min startedDate = t1) → page2 = rows < t1 = none → stop. 4 unique.
   assert.equal(docs.length, 4);
-  assert.equal(new Set(docs.map((d) => d.internalId)).size, 4);
+  assert.equal(new Set(docs.map((d) => d.internalId)).size, 4, 'four distinct natural keys');
 
-  const byId = Object.fromEntries(docs.map((d) => [d.internalId, d.record]));
+  const byId = Object.fromEntries(docs.map((d) => [d._raw.id, d.record])); // by the source's own id
   assert.equal(byId.t3.amount, -7.91, 'EUR (2 decimals): −791 → −7.91');
   assert.equal(byId.t3.direction, 'debit');
   assert.equal(byId.t2.amount, 9);                                          // 900 → 9.00

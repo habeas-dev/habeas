@@ -25,6 +25,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   collected once, from its statement, with its final values. Nothing is merged to achieve this, so two
   genuinely separate charges on the same day for the same amount remain two movements.
 
+- **Revolut no longer saves the same movement twice.** Revolut issues a new internal reference for the same
+  already-completed movement from one visit to the next, and that reference was what identified it — so the
+  same purchase arrived as a new one on every sync. It is now identified by its account, date, amount,
+  currency and description. As with WiZink, this means one last batch that looks new: identity has changed,
+  so the first sync after the update re-sends your Revolut movements once.
 - **A source that cannot promise a stable identifier now says so in the record.** Some services mint a fresh
   identifier for the same movement on every visit, and no natural key covers them. Those records now carry
   `idStable: false` through to the consumer, so it knows to use its own key rather than trusting one that

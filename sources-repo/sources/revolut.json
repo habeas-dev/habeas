@@ -18,8 +18,8 @@
   "categories": [
     "banking"
   ],
-  "version": "2026-08-26.6",
-  "minVersion": "0.10.0.1",
+  "version": "2026-08-28",
+  "minVersion": "0.10.2",
   "minorUnits": true,
   "keepRaw": true,
   "throttle": {
@@ -115,7 +115,10 @@
                 "COMPLETED"
               ]
             }
-          ]
+          ],
+          "idOverride": {
+            "template": "{group.id}|{startedDate}|{amount}|{currency}|{description}"
+          }
         }
       },
       "fields": {
@@ -194,6 +197,13 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-08-28",
+      "changes": {
+        "en": "Each movement now keeps the same identity between syncs, so it is not saved twice. Revolut issues a new internal reference for the same completed movement from one visit to the next, and that reference was what identified it, so the same purchase came back as a new one. It is now identified by the account, date, amount, currency and description instead. One consequence, once: on the first sync after this update your Revolut movements are treated as new, because their identity has changed.",
+        "es": "Cada movimiento conserva ahora la misma identidad entre sincronizaciones, así que deja de guardarse dos veces. Revolut emite una referencia interna nueva para el mismo movimiento ya completado de una visita a otra, y esa referencia era lo que lo identificaba, así que la misma compra volvía como si fuera nueva. Ahora se identifica por la cuenta, la fecha, el importe, la divisa y el concepto. Una consecuencia, una sola vez: en la primera sincronización tras esta actualización tus movimientos de Revolut se tratan como nuevos, porque su identidad ha cambiado."
+      }
+    },
     {
       "version": "2026-08-26.6",
       "changes": {

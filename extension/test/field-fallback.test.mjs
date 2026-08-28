@@ -43,7 +43,7 @@ const LEGACY = {
 
 test('a movement reports what actually left the account, not the pre-fee conversion', async () => {
   const docs = await listInventory(ADP, AUTH, feed([CHARGED, PLAIN, LEGACY]), {});
-  const by = Object.fromEntries(docs.map((d) => [d.internalId, d]));
+  const by = Object.fromEntries(docs.map((d) => [d._raw.id, d])); // by the SOURCE's own id: internalId is now the natural key
   assert.equal(by.F1.amount, -45, 'the fee was dropped from the charged amount');
   assert.equal(by.F2.amount, -3.2, 'a fee-free movement changed');
   assert.equal(by.F3.amount, -1.8, 'no fallback when the authoritative field is absent');

@@ -1856,11 +1856,18 @@ function mapDoc(adapter, p, group) {
   // listed both), so append a per-run ORDINAL (0,1,2…) — the Nth same-key item in a run is always the same
   // charge across runs (stable order) → still dedupes, while a second distinct same-key charge gets its own id.
   const io = adapter.api && adapter.api.list && adapter.api.list.idOverride;
-  if (io && io.template && io.when && io.when.field) {
-    const wv = get(p, io.when.field);
-    const match = io.when.present === true ? (wv != null && wv !== '')
-      : io.when.present === false ? (wv == null || wv === '')
-        : (Array.isArray(io.when.values) ? io.when.values.map(String).includes(String(wv)) : false);
+  if (io && io.template) {
+    // `when` narrows the override to the items whose own id cannot be trusted — ING's pending card
+    // charges, told apart by having a `status`. It is OPTIONAL: a source that re-mints the identifier for
+    // EVERY row (Revolut does so even for completed transactions) has nothing to discriminate on, and
+    // making it write an always-true predicate would put a fiction in the definition. Absent → all items.
+    let match = true;
+    if (io.when && io.when.field) {
+      const wv = get(p, io.when.field);
+      match = io.when.present === true ? (wv != null && wv !== '')
+        : io.when.present === false ? (wv == null || wv === '')
+          : (Array.isArray(io.when.values) ? io.when.values.map(String).includes(String(wv)) : false);
+    }
     if (match) {
       // Resolve {…} against the raw item AND its group (so a grouped source can key by {group.accountNumber} —
       // WiZink card movements have no per-row id and must be keyed per account, not just by date/amount/text).

@@ -113,3 +113,28 @@ test('ING re-import with churned uuids still dedupes', async () => {
   const again = await listInventory(ING, AUTH, netOf([pending('u3'), pending('u4')]), { knownIds: known });
   assert.equal(again.length, 0, 'nothing new on a re-import of the same two charges');
 });
+
+// `when` gates the override to the items whose id is untrustworthy — ING's pending card charges. A source
+// whose id is untrustworthy for EVERY row (Revolut re-mints it for completed transactions too) had nothing
+// to discriminate on, and the only way to express "all of them" was a predicate that is always true. That
+// is a lie in the definition, so `when` is optional: absent means every item.
+const ALL = {
+  id: 'rev', service: 'rev', schema: 'transaction@1', currency: 'EUR',
+  api: { host: 'https://z.test', list: { path: '/m', itemsPath: 'movements', paging: 'none',
+    idOverride: { template: '{startedDate}|{amount}|{currency}|{description}' } } },
+  fields: { internalId: 'id', date: 'startedDate', amount: 'amount', currency: 'currency', description: 'description' },
+};
+const tx = (id) => ({ id, startedDate: '2026-03-14', amount: -12.4, currency: 'EUR', description: 'Panaderia La Espiga' });
+
+test('idOverride without `when` applies to every item', async () => {
+  const first = await listInventory(ALL, AUTH, netOf([tx('11111111-1111-4111-8111-111111111111')]));
+  const second = await listInventory(ALL, AUTH, netOf([tx('22222222-2222-4222-8222-222222222222')]));
+  assert.ok(!/1111|2222/.test(first[0].internalId), 'the volatile id must not survive into the key');
+  assert.equal(second[0].internalId, first[0].internalId,
+    'a re-minted identifier for the same transaction must not produce a second record');
+});
+
+test('and it still numbers genuine repeats 0,1 — the prefix rule holds here too', async () => {
+  const docs = await listInventory(ALL, AUTH, netOf([tx('a'), tx('b')]));
+  assert.deepEqual([...new Set(docs.map((d) => d.internalId))].sort().map((s) => s.slice(-2)), ['|0', '|1']);
+});

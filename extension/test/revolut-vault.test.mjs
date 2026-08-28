@@ -29,7 +29,7 @@ const ok = (b) => ({ ok: true, status: 200, json: async () => b, text: async () 
 const feed = (items) => async (url) => (String(url).includes('/wallet')
   ? ok({ pockets: [{ id: 'p1', currency: 'EUR', type: 'CURRENT' }] })
   : ok(items));
-const ids = (docs) => docs.map((d) => d.internalId).sort();
+const ids = (docs) => docs.map((d) => d._raw.id).sort(); // the SOURCE's own id: internalId is now the natural key
 
 const CARD_VERIFICATION = {
   id: 'CV1', startedDate: '2025-02-24', amount: 0, currency: 'EUR', balance: 100000, state: 'COMPLETED',
@@ -115,7 +115,7 @@ test('minor units divide, so an amount is the number a person would write', asyn
     { id: 'F1', startedDate: '2025-04-01', amount: 200536, currency: 'EUR', balance: 200536, state: 'COMPLETED', description: 'x' },
     { id: 'F2', startedDate: '2025-04-02', amount: -1071, currency: 'EUR', balance: 199465, state: 'COMPLETED', description: 'y' },
   ]), {});
-  const by = Object.fromEntries(docs.map((d) => [d.internalId, d]));
+  const by = Object.fromEntries(docs.map((d) => [d._raw.id, d])); // by the SOURCE's own id: internalId is now the natural key
   assert.equal(by.F1.amount, 2005.36);
   assert.equal(by.F2.amount, -10.71);
   assert.equal(by.F2.balanceAfter, 1994.65);
@@ -188,7 +188,7 @@ test('the reported shape end to end: 20 dropped of three kinds, and the rest clo
   assert.equal(docs.filter((d) => /^(DEC|REV)/.test(d.internalId)).length, 0);
 
   // The sign is corrected on the way in, which is what makes the sum meaningful at all.
-  const by = Object.fromEntries(docs.map((d) => [d.internalId, d]));
+  const by = Object.fromEntries(docs.map((d) => [d._raw.id, d])); // by the SOURCE's own id: internalId is now the natural key
   assert.equal(by['V-out'].amount, -500);
   assert.equal(by['V-in'].amount, 200, 'money returning from the vault is income');
   assert.equal(by['V-out'].balanceAfter, undefined, 'the vault\'s balance must not enter the series');
