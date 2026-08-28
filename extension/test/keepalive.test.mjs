@@ -4,10 +4,14 @@
 // keeps its last value ("Listing…"), nothing reaches the activity log, no notification fires. It looks
 // exactly like a slow service.
 //
-// The heartbeat was written Chrome-style, `getPlatformInfo(() => {})`. lib/ext.js resolves `chrome` to
-// `browser` on Firefox, and Firefox's browser.* APIs are promise-only: they VALIDATE their arguments and
-// throw on an unexpected callback. Wrapped in try/catch, that made the heartbeat a silent no-op — on
-// Firefox alone, which is why the same build kept working on Chrome.
+// The heartbeat must therefore work under BOTH namespaces. lib/ext.js resolves `chrome` to `browser` on
+// Firefox, and Firefox's browser.* APIs are promise-first — so it is written promise-style, and covered
+// here against a promise-only runtime as well as a callback-accepting one.
+//
+// (Measured against Firefox 153: browser.runtime.getPlatformInfo(cb) does NOT throw and the callback does
+// fire, so the older Chrome-style call was not broken there. What WAS broken is below: a heartbeat that
+// stopped itself after a fixed six minutes, less than a full sweep takes.)
+
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHeartbeat, stopHeartbeat } from '../src/lib/keepalive.js';

@@ -1,9 +1,12 @@
-// The external-hooks bridge relays a site's postMessage to the background and posts the reply back.
-// It asked for that reply Chrome-style — sendMessage(msg, callback) — but Firefox's browser.* APIs are
-// promise-only and read a second argument as `options`, so a function there is a type error. The bridge
-// caught it and answered the page `{ ok: false, error: … }`, which means every site integration failed
-// on Firefox while working on Chrome. Same shape as the keepalive bug: a Chrome-style callback silently
-// lost under the browser/chrome shim.
+// The external-hooks bridge relays a site's postMessage to the background and posts the reply back. It
+// asked for that reply Chrome-style — sendMessage(msg, callback) — under a namespace that lib/ext.js
+// resolves to `browser` on Firefox.
+//
+// Measured against Firefox 153: that call does NOT throw and the callback DOES fire, so this was not the
+// breakage it was first taken for. It is written promise-style anyway — that is the form both browsers
+// document under MV3 — and covered here against a promise-only runtime, a rejecting one, and a
+// callback-accepting one, so the bridge cannot depend on which it gets.
+
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

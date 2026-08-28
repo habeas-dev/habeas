@@ -13,6 +13,7 @@
 import { chrome } from './ext.js';
 
 const KEY = 'habeas:run';
+const ABANDONED = KEY + ':abandoned';
 // The marker only has to survive a suspension, so it is written on a coarse cadence — a per-document
 // caller must be free to mark every document without turning progress into a write storm.
 const MIN_WRITE_MS = 5000;
@@ -32,7 +33,7 @@ export async function beginRun(info = {}) {
     const prev = (await chrome.storage.local.get(KEY))[KEY];
     if (prev && !prev.abandoned) {
       // Preserve the corpse under its own key; the live marker takes KEY.
-      await chrome.storage.local.set({ [KEY + ':abandoned']: { ...prev, abandoned: true } });
+      await chrome.storage.local.set({ [ABANDONED]: { ...prev, abandoned: true } });
     }
   } catch (e) {}
   current = { ...info, phase: 'starting', startedAt: new Date().toISOString(), lastBeat: Date.now() };
@@ -59,9 +60,11 @@ export async function endRun() {
 export async function takeUnfinishedRun() {
   let rec = null;
   try {
-    const o = await chrome.storage.local.get(null);
-    rec = o[KEY + ':abandoned'] || (o[KEY] && !current ? o[KEY] : null);
-    if (o[KEY + ':abandoned']) await chrome.storage.local.remove(KEY + ':abandoned');
+    // Only the two keys. Asking for the whole of storage.local would deserialize every ledger, log and
+    // document index on the way past — at start-up, which is the one moment that must stay cheap.
+    const o = await chrome.storage.local.get([KEY, ABANDONED]);
+    rec = o[ABANDONED] || (o[KEY] && !current ? o[KEY] : null);
+    if (o[ABANDONED]) await chrome.storage.local.remove(ABANDONED);
     else if (rec) await chrome.storage.local.remove(KEY);
   } catch (e) { return null; }
   if (!rec) return null;

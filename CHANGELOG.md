@@ -19,6 +19,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   and because it happens before anything is listed, the screen sat on "Listing…" as though the *service*
   were slow. Dropbox is now read the way Google Drive already was: the folder is listed once for the whole
   operation, and a file is downloaded only when that listing says it is really there.
+- **Firefox: looking up a folder destination could hang, and take the sync with it.** Folder destinations
+  are stored in a browser database, and opening that database has a third outcome besides success and
+  failure: it can be *blocked*, when the open needs to create the database and something else still holds
+  it. Nothing handled that case, so the lookup never finished — no error, no log entry, nothing to see. It
+  only bites on Firefox, and only by accident: a folder destination is set up in Chrome, so the database
+  already exists there, while on Firefox it has to be created — and creating is the only kind of open that
+  can block. Opening now gives up after five seconds, and connections are closed after use so they cannot
+  block the next one.
 - **A destination this browser cannot use is no longer treated as one that works.** A folder destination
   only works in Chrome, and configuration syncs between browsers, so a folder set up there arrives in
   Firefox intact. Settings already marked it unavailable — but the background did not, and went on counting
@@ -34,17 +42,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 - **A run that the browser cuts short now appears in the activity log.** If Habeas is stopped mid-run, the
   next launch notices the unfinished run and records what it was doing when it went — the one failure that
   until now left no trace anywhere.
-- **Firefox: a long sync could stop halfway with no error at all.** The background is kept awake during an
-  operation by calling a browser API on a timer — otherwise Firefox suspends it (and Chrome recycles it)
-  mid-run, taking the operation with it: the status line keeps its last words, nothing reaches the activity
-  log, no notification arrives. That call was written in Chrome's older style, which Firefox rejects, and
-  the rejection was being swallowed — so on Firefox the heartbeat never beat, while the identical build was
-  fine on Chrome. It now also renews on every document and every page of a listing, so a long run is held
-  open by its own progress rather than by a fixed six-minute allowance that a sweep across sixteen sources
-  would outlast anyway.
-- **Firefox: site integrations always failed.** A page asking Habeas to collect its data got an error back
-  every time, for the same reason as the heartbeat above — the reply was requested in a style Firefox does
-  not accept, and the resulting type error was reported to the page as though the request itself had failed.
+- **A long run is no longer cut off by a fixed time allowance.** The background is kept awake during an
+  operation by calling a browser API on a timer, otherwise the browser reclaims it mid-run and the operation
+  goes with it. That heartbeat stopped itself after six minutes — less than a sweep across sixteen sources
+  takes — silently withdrawing the very thing keeping the run alive. It is now renewed by progress instead:
+  every document, and every page of a listing.
 - **A stalled run now reports itself instead of looking busy forever.** Nothing bounded how long a request
   could take, so one that never came back left the run apparently in progress — no error, no entry in the
   activity log, no notification. A sync could go days producing nothing and give no sign it had stopped.

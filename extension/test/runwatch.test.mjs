@@ -12,7 +12,8 @@ import assert from 'node:assert/strict';
 
 const LOCAL = {};
 globalThis.chrome = { storage: { local: {
-  get: async (k) => (k == null ? { ...LOCAL } : { [k]: LOCAL[k] }),
+  // Mirrors the real API: a key, an ARRAY of keys, or null for everything.
+  get: async (k) => (k == null ? { ...LOCAL } : Array.isArray(k) ? Object.fromEntries(k.map((x) => [x, LOCAL[x]])) : { [k]: LOCAL[k] }),
   set: async (o) => { Object.assign(LOCAL, o); },
   remove: async (k) => { delete LOCAL[k]; },
 } } };
@@ -86,4 +87,18 @@ test('marking a phase is cheap enough to call in a per-document loop', async () 
   for (let i = 0; i < 500; i++) await markPhase('retrieving ' + i + '/500');
   globalThis.chrome.storage.local.set = realSet;
   assert.ok(writes - before <= 20, `a per-document marker must not write 500 times (wrote ${writes - before})`);
+});
+
+test('start-up reads only its own keys, never the whole of storage', async () => {
+  // A whole-storage read deserializes every ledger, log and document index on the way past. Doing that at
+  // start-up would add cost to the exact moment this is meant to protect.
+  reset();
+  await beginRun({ kind: 'auto', datasource: 'wizink', sink: 'dbx1' });
+  const asked = [];
+  const realGet = globalThis.chrome.storage.local.get;
+  globalThis.chrome.storage.local.get = async (k) => { asked.push(k); return realGet(k); };
+  try { await (await restart()).takeUnfinishedRun(); }
+  finally { globalThis.chrome.storage.local.get = realGet; }
+  assert.ok(asked.length > 0, 'it must read something');
+  for (const k of asked) assert.notEqual(k, null, 'never a whole-storage read');
 });
