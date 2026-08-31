@@ -3850,5 +3850,39 @@
   },
   "archive_partial": {
     "message": "Part of your archive could not be read just now, so some documents may be missing from these counts. Nothing has been lost — reopen this page to try again."
+  },
+  "opt_tidy_title": {
+    "message": "Tidy up the archive"
+  },
+  "opt_tidy_help": {
+    "message": "When a source changes how it identifies a document, everything it lists again is stored a second time under the new identity, and your archive shows it twice. Habeas clears that up on its own once, but you can ask for it here — after it has already run, or if it stopped part-way. It checks each source, retires the copies that a newer one has replaced, and removes them from your destination's index too. A document with no newer copy is never touched."
+  },
+  "opt_tidy_btn": {
+    "message": "Tidy up now"
+  },
+  "opt_tidy_running": {
+    "message": "Working… this can take several minutes when your archive is in the cloud."
+  },
+  "opt_tidy_done": {
+    "message": "Done: retired $N$ duplicate document(s), and removed $M$ from your destination's index.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "m": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_tidy_none": {
+    "message": "Nothing to tidy up — no duplicates found."
+  },
+  "opt_tidy_failed": {
+    "message": "It could not finish: $ERR$",
+    "placeholders": {
+      "err": {
+        "content": "$1"
+      }
+    }
   }
 }

@@ -250,7 +250,9 @@ export async function runStoreMigration(adapters, opts = {}) {
   // start over at the NEXT start-up, and again after that: the same never-finishing loop already diagnosed
   // in the startup recovery, reintroduced here by making the pass heavy. Three attempts, then it stops
   // asking and says so.
-  const claim = await claimOnce(MARK_KEY, CURRENT, { maxTries: 3 });
+  // opts.force: asked for by hand from Settings. A deliberate request is not something to ration — it is
+  // also the way back for someone whose automatic attempts were used up.
+  const claim = opts.force ? { run: true, tries: 0, lastAttempt: false } : await claimOnce(MARK_KEY, CURRENT, { maxTries: 3 });
   if (!claim.run) return { skipped: true, exhausted: claim.tries >= 3 };
   const say = typeof opts.onStatus === 'function' ? opts.onStatus : () => {};
   let ok = false;

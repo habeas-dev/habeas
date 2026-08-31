@@ -428,6 +428,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true; // async response
   }
+  if (msg.type === 'habeas:tidyArchive') { // Settings → Advanced → "tidy up my archive now"
+    // The same tidy-up the background runs once by itself, but asked for deliberately — so it ignores the
+    // once-only gate entirely. That matters twice over: it is how someone repeats it after it gave up, and
+    // it is the answer to needing a console to run it at all.
+    (async () => {
+      const adapters = await getAdapters();
+      keepAlive();
+      try {
+        const r = await runStoreMigration(adapters, { force: true, onStatus: (m) => setStatus(m) });
+        return { ok: true, retired: r.retired || 0, purged: r.purged || 0, sources: r.retiredIn || [] };
+      } catch (e) { return { ok: false, error: (e && e.message) || String(e) }; }
+      finally { stopKeepAlive(); setStatus(''); }
+    })().then(sendResponse);
+    return true;
+  }
   if (msg.type === 'habeas:archiveCopy' && msg.sink) { // Settings → "copy my archive to another destination"
     (async () => {
       const cfg = await getConfig();

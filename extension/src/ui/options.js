@@ -619,6 +619,20 @@ async function renderPlanner(cfg) {
   }).join('');
   $('#pl-list').querySelectorAll('[data-pl-toggle]').forEach((b) => b.onclick = async () => { const c = await getConfig(); const s = (c.schedules || []).find((x) => x.id === b.dataset.plToggle); if (s) { s.enabled = !s.enabled; await saveConfig(c); render(); } });
   $('#pl-list').querySelectorAll('[data-pl-del]').forEach((b) => b.onclick = async () => { await remove('schedules', b.dataset.plDel); render(); });
+  const tidy = $('#tidy-run');
+  if (tidy) tidy.onclick = async () => {
+    // Long and cloud-bound: disable while it runs, and say what came of it rather than leaving the user to
+    // guess from an unchanged screen. The live per-source progress arrives on the popup's status line.
+    tidy.disabled = true;
+    $('#tidy-status').textContent = t('opt_tidy_running');
+    try {
+      const r = await chrome.runtime.sendMessage({ type: 'habeas:tidyArchive' });
+      $('#tidy-status').textContent = !r || !r.ok ? t('opt_tidy_failed', [(r && r.error) || '?'])
+        : r.retired ? t('opt_tidy_done', [String(r.retired), String(r.purged || 0)])
+          : t('opt_tidy_none');
+    } catch (e) { $('#tidy-status').textContent = t('opt_tidy_failed', [(e && e.message) || '?']); }
+    tidy.disabled = false;
+  };
   $('#pl-list').querySelectorAll('[data-pl-run]').forEach((b) => b.onclick = () => { chrome.runtime.sendMessage({ type: 'habeas:sched-run', id: b.dataset.plRun }); b.textContent = t('sched_running'); });
 }
 

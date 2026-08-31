@@ -3850,5 +3850,39 @@
   },
   "archive_partial": {
     "message": "No se ha podido leer una parte de tu archivo ahora mismo, así que pueden faltar documentos en estos recuentos. No se ha perdido nada: vuelve a abrir esta página para reintentarlo."
+  },
+  "opt_tidy_title": {
+    "message": "Ordenar el archivo"
+  },
+  "opt_tidy_help": {
+    "message": "Cuando una fuente cambia la forma de identificar un documento, todo lo que vuelve a listar se guarda una segunda vez con la identidad nueva y tu archivo lo muestra por duplicado. Habeas lo ordena solo una vez, pero puedes pedirlo aquí — cuando ya se hizo, o si se quedó a medias. Revisa cada fuente, retira las copias que otra más nueva ha sustituido y las quita también del índice de tu destino. Un documento sin copia más nueva no se toca nunca."
+  },
+  "opt_tidy_btn": {
+    "message": "Ordenar ahora"
+  },
+  "opt_tidy_running": {
+    "message": "Trabajando… puede tardar varios minutos si tu archivo está en la nube."
+  },
+  "opt_tidy_done": {
+    "message": "Hecho: retirados $N$ documento(s) duplicado(s), y quitados $M$ del índice de tu destino.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "m": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_tidy_none": {
+    "message": "Nada que ordenar: no se han encontrado duplicados."
+  },
+  "opt_tidy_failed": {
+    "message": "No ha podido terminar: $ERR$",
+    "placeholders": {
+      "err": {
+        "content": "$1"
+      }
+    }
   }
 }
