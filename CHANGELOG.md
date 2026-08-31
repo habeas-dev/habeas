@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.10.4] — 2026-08-31
+
 ### Fixed
 - **Tidying up the archive now says what it is doing, and cannot run for ever.** Clearing the duplicates
   walks every source in your archive, and when that archive lives in the cloud it means reading every month
