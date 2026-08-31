@@ -119,7 +119,9 @@ export async function renormalizeStore(adapters) {
     for (const entry of Object.values(data.items)) {
       if (!entry || !entry.record || entry.gone) continue;
       let out; try { out = renormalizeRecord(entry.record, eff); } catch (e) { continue; }
-      if (out.changed) { entry.record = out.record; if (ver) entry.srcVersion = ver; dirty = true; records++; }
+      // Keep the version that ORIGINALLY wrote this record. Overwriting it with the current one erases the
+      // only thing distinguishing a copy left behind by an identity change from the copy that replaced it.
+      if (out.changed) { entry.record = out.record; if (ver) { if (!entry.srcVersionOrig && entry.srcVersion && entry.srcVersion !== ver) entry.srcVersionOrig = entry.srcVersion; entry.srcVersion = ver; } dirty = true; records++; }
     }
     if (dirty) {
       data.meta = { ...(data.meta || {}), adapterVersion: base.version || '', renormalizedAt: new Date().toISOString() };
@@ -153,7 +155,23 @@ const sigOf = (r) => [
 ].join('\u0000');
 // Compared as plain strings: source versions are YYYY-MM-DD[.N], which sorts correctly that way, and an
 // entry written before versions were stamped must count as the OLDEST rather than beat the current one.
-const verOf = (e) => (e && e.srcVersion ? String(e.srcVersion) : '');
+const verOf = (e) => (e && e.srcVersionOrig ? String(e.srcVersionOrig) : (e && e.srcVersion ? String(e.srcVersion) : ''));
+
+// A SECOND, independent signal, because the first one can be erased: re-normalization stamps every record
+// it touches with the current source version, and it runs immediately before this — so on an archive that
+// has already been through it, both copies tie and the version tells us nothing. (That is not a
+// hypothetical: it is what made the tidy-up report "nothing to do" over a visibly doubled archive.)
+//
+// The identity itself is the other signal. A key built the current way carries the record's own date as a
+// segment; one built from whatever the page printed does not. So within a group of entries describing the
+// same movement, an id that does not carry the date while a sibling's does is an identity the source can
+// no longer produce — stale by construction. Returns null when there is nothing to compare, and a null is
+// never acted on: no signal means no change.
+function carriesDate(id, record) {
+  const d = String((record && record.date) || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null; // nothing to recognise → stay silent
+  return String(id).split('|').includes(d);
+}
 
 // The ids to retire. Pure function over a store's items — no I/O, so it is trivially testable and its
 // behaviour on the dangerous cases is pinned rather than argued about.
@@ -162,14 +180,22 @@ export function supersededIds(items) {
   for (const [id, e] of Object.entries(items || {})) {
     if (!e || !e.record || e.gone) continue; // an already-retired entry is neither retired again nor revived
     const k = sigOf(e.record);
-    (groups.get(k) || groups.set(k, []).get(k)).push([id, verOf(e)]);
+    (groups.get(k) || groups.set(k, []).get(k)).push([id, verOf(e), e.record]);
   }
   const out = [];
   for (const rows of groups.values()) {
-    if (rows.length < 2) continue;
+    if (rows.length < 2) continue; // alone in its signature → untouchable, whatever it looks like
     const newest = rows.reduce((a, b) => (b[1] > a ? b[1] : a), rows[0][1]);
-    if (rows.every(([, v]) => v === newest)) continue; // one version wrote them all → genuinely distinct
-    for (const [id, v] of rows) if (v !== newest) out.push(id);
+    if (!rows.every(([, v]) => v === newest)) { // the version still separates them
+      for (const [id, v] of rows) if (v !== newest) out.push(id);
+      continue;
+    }
+    // Versions tie. Fall back to the identity: retire only those that do NOT carry the current shape while
+    // a sibling does. All-current (two real identical charges) and all-stale both leave everything alone.
+    const shaped = rows.map(([id, , rec]) => carriesDate(id, rec));
+    if (shaped.some((x) => x === null)) continue;         // no signal at all → no change
+    if (!shaped.some(Boolean) || shaped.every(Boolean)) continue; // nothing to choose between
+    for (let i = 0; i < rows.length; i++) if (!shaped[i]) out.push(rows[i][0]);
   }
   return out;
 }

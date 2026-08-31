@@ -11,7 +11,7 @@
 const ts = (e) => (e && (e.goneAt && e.goneAt > (e.at || '') ? e.goneAt : e.at)) || '';
 
 // Keep only the known entry fields (drop anything a caller passed by accident).
-function cleanEntry(e) {
+export function cleanEntry(e) {
   const o = { record: e.record, at: e.at || '' };
   if (e.docAvailable != null) o.docAvailable = !!e.docAvailable;
   if (e.gone) { o.gone = true; o.goneReason = e.goneReason || 'unknown'; o.goneAt = e.goneAt || e.at || ''; }
@@ -19,6 +19,10 @@ function cleanEntry(e) {
   // of the delivered record), so a future migration knows what normalization each record was last touched with
   // — e.g. whether a field is in an older scale — without re-deriving. Absent = unknown/legacy (treat as oldest).
   if (e.srcVersion != null && e.srcVersion !== '') o.srcVersion = String(e.srcVersion);
+  // The version that ORIGINALLY wrote this record, kept once re-normalization has overwritten srcVersion
+  // with the current one. Without it, a copy left behind by an identity change is indistinguishable from
+  // the copy that replaced it — which is exactly how a doubled archive reported nothing to tidy up.
+  if (e.srcVersionOrig != null && e.srcVersionOrig !== '') o.srcVersionOrig = String(e.srcVersionOrig);
   return o;
 }
 

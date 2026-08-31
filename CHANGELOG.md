@@ -18,6 +18,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   browser part-way meant it started again from scratch on the next launch, and the one after that. It now
   names each source as it checks it, holds the extension awake while it works, clears the message when it
   finishes, and gives up after three attempts with a line in the activity log rather than retrying for ever.
+- **Tidying up now recognises duplicates it was previously blind to.** It told copies apart by which version
+  of the source had written them — but the step that runs immediately before it re-normalizes records and
+  stamps each one with the *current* version, erasing exactly that difference. On an archive that had
+  already been through it, the tidy-up truthfully reported "nothing to do" while the archive was plainly
+  doubled. It now also recognises a copy by its identity: an identifier the source could not produce today
+  is a stale one. The original version is preserved from now on as well, so the simpler signal stops being
+  destroyed. The guarantees are unchanged — a document with no newer copy is never touched, and two genuinely
+  separate identical charges are never merged.
 - **Settings → "Where things are saved" has a "Tidy up now" button.** Clearing the duplicates could only be triggered by
   the extension itself, once, at startup — and if it had already run, or had given up part-way, there was no
   way to ask for it again short of editing storage from a developer console. Now you can press a button. It
