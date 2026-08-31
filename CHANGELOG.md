@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.10.3] — 2026-08-31
+
 ### Fixed
 - **The duplicates left by the previous update are cleared automatically.** 0.10.2 changed how WiZink and
   Revolut movements are identified, which is what stopped the same movement being saved over and over — but
