@@ -23,8 +23,18 @@ function cleanEntry(e) {
 }
 
 // Merge two entries for the same id: the one with the later timestamp wins wholesale (LWW register). A
-// later tombstone wins over an older capture; a genuinely-later re-capture un-tombstones (item reappeared).
-function mergeEntry(a, b) { return ts(b) >= ts(a) ? cleanEntry(b) : cleanEntry(a); }
+// later tombstone wins over an older capture; a genuinely-later re-capture un-tombstones (item reappeared)
+// — EXCEPT for a `superseded` tombstone, which is permanent. That one records
+// a judgement about identity: the source changed how it names a movement, so this id is one it can never
+// produce again. The old copy also survives in the manifest already delivered to the destination, which is
+// additive and is read back by "recover data from destination"; read back with a fresh timestamp it would
+// beat its own tombstone and the duplicates would return. Ordinary tombstones stay last-write-wins: a
+// document that disappeared from a listing and genuinely comes back is an event, not a judgement.
+const isSuperseded = (e) => !!(e && e.gone && e.goneReason === 'superseded');
+function mergeEntry(a, b) {
+  if (isSuperseded(a) && !isSuperseded(b)) return cleanEntry(a); // permanent: never revived by a later write
+  return ts(b) >= ts(a) ? cleanEntry(b) : cleanEntry(a);
+}
 
 export function emptySource(meta) { return { meta: meta || {}, items: {} }; }
 

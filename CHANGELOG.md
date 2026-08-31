@@ -22,6 +22,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   not hand over statements older than 90 days: past that window the older entry is the only copy in
   existence. Two genuinely separate identical charges recorded by the same version of a source are also left
   alone. The old copies are marked as retired rather than erased, so the record of what happened survives.
+  Retiring one of these is permanent: the copy also survives in the index already written to your
+  destination, which only ever grows, and "recover data from destination" reads that index back — without
+  this the cleanup would undo itself the next time anyone asked for a recovery, or the moment a second
+  computer that had not updated yet synced its own view.
 
 ## [0.10.2] — 2026-08-28
 
