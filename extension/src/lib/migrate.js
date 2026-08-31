@@ -9,6 +9,8 @@
 // changed sources so the next Sync re-pushes the corrected records. Ephemeral/one-way sinks (download, http)
 // are deliberately left alone — resetting them would re-trigger a pile of downloads / duplicate POSTs.
 import { chrome } from './ext.js';
+import { claimOnce, settleOnce } from './oncegate.js';
+import { t as t2 } from './i18n.js';
 import { activeBackend } from './store.js';
 import { getConfig } from './config.js';
 import { forgetDelivered } from './state.js';
@@ -200,11 +202,16 @@ async function purgeSupersededFromSinks(retiredBySource) {
 
 // Retire superseded duplicates across every source in the store. Marks them `gone` (a tombstone) rather than
 // deleting: the archive stops showing them, and the record of what happened survives for anyone who looks.
-export async function retireSupersededDuplicates() {
+export async function retireSupersededDuplicates(opts = {}) {
+  const say = typeof opts.onStatus === 'function' ? opts.onStatus : () => {};
   let backend, ids = [], retired = 0;
   try { backend = await activeBackend(); ids = await backend.listSources(); } catch (e) { return { retired: 0, sources: [], purged: 0 }; }
   const sources = [], retiredBySource = new Map();
+  let n = 0;
   for (const storeKey of ids) {
+    // Say WHICH source and how far along. On a cloud-backed store this reads every month of every source's
+    // history, which takes real time — and work with nothing on screen is indistinguishable from a hang.
+    say(t2('migrating_checking', [String(++n), String(ids.length), String(storeKey)]));
     let data; try { data = await backend.loadSource(storeKey); } catch (e) { continue; }
     if (!data || !data.items || data.__partial) continue; // a partial read must never drive a pruning pass
     const gone = supersededIds(data.items);
@@ -214,6 +221,7 @@ export async function retireSupersededDuplicates() {
     try { await backend.saveSource(storeKey, data); retired += gone.length; sources.push(storeKey); retiredBySource.set(storeKey, new Set(gone)); } catch (e) {}
   }
   // Only after the store is safely written: the destination is a projection of it, never the other way.
+  if (retiredBySource.size) say(t2('migrating_cleaning'));
   let purged = 0;
   try { purged = await purgeSupersededFromSinks(retiredBySource); } catch (e) { /* best-effort */ }
   return { retired, sources, purged };
@@ -235,15 +243,26 @@ export async function resetReadWriteLedgers(changedAdapters) {
 }
 
 // One-shot orchestrator (background startup). Gated by a marker so it runs exactly once per migration version.
-export async function runStoreMigration(adapters) {
-  let o; try { o = await chrome.storage.local.get(MARK_KEY); } catch (e) { o = {}; }
-  if (o[MARK_KEY] === CURRENT) return { skipped: true };
-  const { changedAdapters, records } = await renormalizeStore(adapters);
-  const resets = await resetReadWriteLedgers(changedAdapters);
-  // Retire the copies left behind when a source changed how it identifies a movement (0.10.2 did, for
-  // WiZink and Revolut). Runs after re-normalization so both copies are compared in their final shape.
-  let dupes = { retired: 0, sources: [], purged: 0 };
-  try { dupes = await retireSupersededDuplicates(); } catch (e) { /* best-effort; never blocks startup */ }
-  try { await chrome.storage.local.set({ [MARK_KEY]: CURRENT }); } catch (e) {}
-  return { records, changed: [...changedAdapters], resets, retired: dupes.retired, retiredIn: dupes.sources, purged: dupes.purged };
+export async function runStoreMigration(adapters, opts = {}) {
+  // The attempt is claimed BEFORE the work, not marked after it. Marking only on success is safe for a pass
+  // that takes a moment; this one walks every source in the store, and on a cloud backend that is a request
+  // per month of history per source. Interrupted — the browser closed, the background recycled — it would
+  // start over at the NEXT start-up, and again after that: the same never-finishing loop already diagnosed
+  // in the startup recovery, reintroduced here by making the pass heavy. Three attempts, then it stops
+  // asking and says so.
+  const claim = await claimOnce(MARK_KEY, CURRENT, { maxTries: 3 });
+  if (!claim.run) return { skipped: true, exhausted: claim.tries >= 3 };
+  const say = typeof opts.onStatus === 'function' ? opts.onStatus : () => {};
+  let ok = false;
+  try {
+    say(t2('migrating_records'));
+    const { changedAdapters, records } = await renormalizeStore(adapters);
+    const resets = await resetReadWriteLedgers(changedAdapters);
+    // Retire the copies left behind when a source changed how it identifies a movement (0.10.2 did, for
+    // WiZink and Revolut). Runs after re-normalization so both copies are compared in their final shape.
+    let dupes = { retired: 0, sources: [], purged: 0 };
+    try { dupes = await retireSupersededDuplicates({ onStatus: say }); } catch (e) { /* best-effort */ }
+    ok = true;
+    return { records, changed: [...changedAdapters], resets, retired: dupes.retired, retiredIn: dupes.sources, purged: dupes.purged, lastAttempt: claim.lastAttempt };
+  } finally { await settleOnce(MARK_KEY, CURRENT, ok); say(''); }
 }

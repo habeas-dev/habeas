@@ -3827,5 +3827,25 @@
         "example": "listando WiZink página 3"
       }
     }
+  },
+  "migrating_records": {
+    "message": "Ordenando tu archivo…"
+  },
+  "migrating_checking": {
+    "message": "Revisando $N$ de $TOTAL$: $SOURCE$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      },
+      "source": {
+        "content": "$3"
+      }
+    }
+  },
+  "migrating_cleaning": {
+    "message": "Quitando duplicados de tu destino…"
   }
 }

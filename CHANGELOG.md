@@ -10,6 +10,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **Tidying up the archive now says what it is doing, and cannot run for ever.** Clearing the duplicates
+  walks every source in your archive, and when that archive lives in the cloud it means reading every month
+  of every source's history — minutes, not moments. It did that with nothing on screen, which is
+  indistinguishable from being stuck; and because it only recorded success at the very end, closing the
+  browser part-way meant it started again from scratch on the next launch, and the one after that. It now
+  names each source as it checks it, holds the extension awake while it works, clears the message when it
+  finishes, and gives up after three attempts with a line in the activity log rather than retrying for ever.
+
 ## [0.10.3] — 2026-08-31
 
 ### Fixed
