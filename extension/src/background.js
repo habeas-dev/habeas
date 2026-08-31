@@ -55,7 +55,7 @@ import { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isL
       if (r && r.records) appendLog({ kind: 'migrate', ok: true, msg: `Re-normalized ${r.records} stored record(s) across ${r.changed.length} source(s); reset ${r.resets} delivery ledger(s).` });
       // Say how many duplicates were cleared, and where: a silent tidy-up of someone's archive is not a
       // tidy-up they can check.
-      if (r && r.retired) appendLog({ kind: 'migrate', ok: true, msg: `Retired ${r.retired} duplicate record(s) left by a source changing how it identifies a movement, in: ${(r.retiredIn || []).join(', ')}. Nothing without a newer copy was touched.` });
+      if (r && r.retired) appendLog({ kind: 'migrate', ok: true, msg: `Retired ${r.retired} duplicate record(s) left by a source changing how it identifies a movement, in: ${(r.retiredIn || []).join(', ')}${r.purged ? `, and removed ${r.purged} of them from your destination's index` : ''}. Nothing without a newer copy was touched.` });
     }).catch(() => {});
   } catch (e) {}
   // Cross-device config: adopt a NEWER config snapshot from the (cloud-backed) canonical store, so this machine

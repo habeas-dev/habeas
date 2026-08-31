@@ -316,6 +316,26 @@ export function mergeRecords(existing, incoming) {
   for (const r of incoming) map.set(r.internalId, r);
   return [...map.values()].sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : (a.date || '') > (b.date || '') ? 1 : 0)); // oldest → newest
 }
+// Remove retired ids from a destination's cumulative index. mergeRecords only ever ADDS, so an id retired
+// in the canonical store goes on being listed in the destination for ever unless the index is REPLACED —
+// and replacing is the one operation here that can lose an archive, so it is guarded rather than trusted:
+//
+//   • nothing matched → no write at all (no needless rewrite of someone's archive, no round trip per source)
+//   • everything matched → REFUSE. An emptied index is indistinguishable from a wiped archive, and no
+//     cleanup is worth that risk; better to leave duplicates than to leave nothing.
+//   • a record with no id is preserved — it cannot be matched, so it is none of this operation's business
+//
+// Returns { records, removed, changed, refused? } and never mutates the input.
+export function purgeRecords(existing, retiredIds) {
+  const src = Array.isArray(existing) ? existing : null;
+  if (!src || !src.length || !retiredIds || !retiredIds.size) return { records: src || [], removed: 0, changed: false };
+  const kept = src.filter((r) => !(r && r.internalId != null && retiredIds.has(String(r.internalId))));
+  const removed = src.length - kept.length;
+  if (!removed) return { records: src, removed: 0, changed: false };
+  if (!kept.length) return { records: src, removed: 0, changed: false, refused: 'would-empty' };
+  return { records: kept, removed, changed: true };
+}
+
 export function buildManifest(docs, files, opts) {
   return JSON.stringify(toRecords(docs, files, opts), null, 2);
 }

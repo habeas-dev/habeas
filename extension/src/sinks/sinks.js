@@ -8,7 +8,7 @@ import { resolveSinkExtraHeaders } from '../lib/sinkheaders.js';
 import { makeZip } from '../lib/zip.js';
 import { pathFor, buildManifest, toRecords, mergeRecords, jsonBlob, today } from './format.js';
 import { driveWrite, driveRead } from './drive.js';
-import { dropboxWrite, dropboxRetrieve } from './dropbox.js';
+import { dropboxWrite, dropboxRetrieve, dropboxPutJson } from './dropbox.js';
 import { emailWrite } from './email.js';
 import { makeShardedStore, pathPrim } from '../lib/store/sharded.js';
 
@@ -252,6 +252,28 @@ export async function readSinkRecords(sink, opts = {}) {
   if (!blob) return [];
   try { const j = JSON.parse(await blob.text()); return Array.isArray(j) ? j : []; } catch (e) { return []; }
 }
+// Replace a source's cumulative index in a destination. The counterpart of readSinkRecords: that one exists
+// so the store can be rehydrated from what was delivered, this one so a retirement in the store actually
+// reaches the destination instead of stopping at the archive on this machine. Returns true if it wrote.
+//
+// local-folder is reachable only through a directory handle a PAGE holds, so a service worker passes none
+// and the write is skipped there rather than failing; Settings does the folder half, as with every other
+// folder operation.
+export async function writeSinkRecords(sink, records, opts = {}) {
+  const service = opts.service || 'documents';
+  const rel = service + '/' + manifestName(opts);
+  if (sink.type === 'local-folder') {
+    const root = opts.dirHandle; if (!root) return false;
+    const svc = await openDir(root, [service]); if (!svc) return false; // navigates without creating: a purge only ever rewrites an index that already exists
+    await writeFile(svc, manifestName(opts), jsonBlob(JSON.stringify(records, null, 2)));
+    return true;
+  }
+  if (sink.type === 'dropbox') { await dropboxPutJson(sink, rel, records); return true; }
+  if (sink.type === 'webdav') { await webdavPut(String(sink.url || '').replace(/\/+$/, '') + '/' + encodePath(rel), jsonBlob(JSON.stringify(records, null, 2)), await webdavAuthHeader(sink)); return true; }
+  if (sink.type === 's3') { const c = await s3Config(sink); await s3Put(c, s3Key(c, rel), jsonBlob(JSON.stringify(records, null, 2))); return true; }
+  return false; // drive addresses by id, not path — its index is rewritten by its own writer
+}
+
 async function writeFile(dir, name, blob) {
   const fh = await dir.getFileHandle(name, { create: true });
   const w = await fh.createWritable(); await w.write(blob); await w.close();

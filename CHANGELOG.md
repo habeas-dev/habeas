@@ -26,6 +26,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   destination, which only ever grows, and "recover data from destination" reads that index back — without
   this the cleanup would undo itself the next time anyone asked for a recovery, or the moment a second
   computer that had not updated yet synced its own view.
+- **Your destination is cleaned too, not just the archive on this machine.** Each source keeps an index of
+  what it delivered in Dropbox (or WebDAV, or S3), and that index only ever grows — so the copies retired
+  here would have gone on being listed there for ever. They are now removed from it as well. Replacing that
+  index is the one operation that could cost you an archive, so it is guarded: an index with nothing to
+  remove is not rewritten at all, and one where *everything* matched is refused outright rather than
+  emptied. Records without an identifier are kept untouched, and the store is always written first — the
+  destination is a copy of it, never the other way round.
+
 
 ## [0.10.2] — 2026-08-28
 

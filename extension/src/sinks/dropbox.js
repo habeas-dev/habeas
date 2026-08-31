@@ -210,6 +210,13 @@ async function cachedHas(sink, path, cache) {
   return idx ? idx.has(path.toLowerCase()) : null;
 }
 
+// Replace a JSON file at a sink-relative path. Used to rewrite a source's cumulative index after retiring
+// duplicates — the index only ever grows otherwise (see format.js#purgeRecords for the guards).
+export async function dropboxPutJson(sink, relPath, obj) {
+  const token = await dropboxToken(sink);
+  await dbxUpload(token, dbxPath(sink.rootFolderName || '', relPath), jsonBlob(JSON.stringify(obj, null, 2)));
+}
+
 // Retrieve a previously-delivered artifact (relative path under the sink root) as a Blob, for the in-app
 // document viewer. null if the file isn't there (409). Needs files.content.read (same scope as store read).
 // opts.cache (dropboxCache()): skip the download entirely for a path the folder listing doesn't hold.

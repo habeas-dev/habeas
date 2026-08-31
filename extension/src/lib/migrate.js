@@ -13,7 +13,8 @@ import { activeBackend } from './store.js';
 import { getConfig } from './config.js';
 import { forgetDelivered } from './state.js';
 import { resolveOutput } from './outputs.js';
-import { buildRecord } from '../sinks/format.js';
+import { buildRecord, purgeRecords } from '../sinks/format.js';
+import { readSinkRecords, writeSinkRecords } from '../sinks/sinks.js';
 import { applyNormalize } from './normalize.js';
 import { normalizeDate, normalizeAmount, minorExp } from '../runtime/inventory.js';
 
@@ -171,12 +172,38 @@ export function supersededIds(items) {
   return out;
 }
 
+// Carry a retirement through to the DESTINATIONS. A source's index there only ever grows (mergeRecords adds
+// and overwrites, never removes), so without this the archive in Dropbox goes on listing both copies for
+// ever — the tidy-up would stop at this machine. Guarded in format.js#purgeRecords: no write when nothing
+// matches, and a flat refusal to write an empty index. Drive is skipped (addressed by id, not path) and so
+// is local-folder in the background, which has no directory handle.
+async function purgeSupersededFromSinks(retiredBySource) {
+  let purged = 0;
+  let cfg; try { cfg = await getConfig(); } catch (e) { return 0; }
+  const sinks = (cfg.sinks || []).filter((s) => RW_SINK_TYPES.has(s.type) && s.type !== 'local-folder' && s.type !== 'drive');
+  if (!sinks.length) return 0;
+  for (const [storeKey, ids] of retiredBySource) {
+    if (!ids || !ids.size) continue;
+    const ci = String(storeKey).indexOf(':');
+    const adapterId = ci >= 0 ? storeKey.slice(0, ci) : storeKey;
+    const ds = (cfg.datasources || []).find((d) => d.adapter === adapterId);
+    const service = (ds && ds.adapter) || adapterId; // the service folder the sink wrote under
+    for (const sink of sinks) {
+      let recs; try { recs = await readSinkRecords(sink, { service, source: storeKey }); } catch (e) { continue; }
+      const out = purgeRecords(recs, ids);
+      if (!out.changed) continue;
+      try { if (await writeSinkRecords(sink, out.records, { service, source: storeKey })) purged += out.removed; } catch (e) { /* a destination that refuses is left as it was */ }
+    }
+  }
+  return purged;
+}
+
 // Retire superseded duplicates across every source in the store. Marks them `gone` (a tombstone) rather than
 // deleting: the archive stops showing them, and the record of what happened survives for anyone who looks.
 export async function retireSupersededDuplicates() {
   let backend, ids = [], retired = 0;
-  try { backend = await activeBackend(); ids = await backend.listSources(); } catch (e) { return { retired: 0, sources: [] }; }
-  const sources = [];
+  try { backend = await activeBackend(); ids = await backend.listSources(); } catch (e) { return { retired: 0, sources: [], purged: 0 }; }
+  const sources = [], retiredBySource = new Map();
   for (const storeKey of ids) {
     let data; try { data = await backend.loadSource(storeKey); } catch (e) { continue; }
     if (!data || !data.items || data.__partial) continue; // a partial read must never drive a pruning pass
@@ -184,9 +211,12 @@ export async function retireSupersededDuplicates() {
     if (!gone.length) continue;
     const at = new Date().toISOString();
     for (const id of gone) { const e = data.items[id]; if (e) { e.gone = true; e.goneReason = 'superseded'; e.goneAt = e.goneAt || at; } }
-    try { await backend.saveSource(storeKey, data); retired += gone.length; sources.push(storeKey); } catch (e) {}
+    try { await backend.saveSource(storeKey, data); retired += gone.length; sources.push(storeKey); retiredBySource.set(storeKey, new Set(gone)); } catch (e) {}
   }
-  return { retired, sources };
+  // Only after the store is safely written: the destination is a projection of it, never the other way.
+  let purged = 0;
+  try { purged = await purgeSupersededFromSinks(retiredBySource); } catch (e) { /* best-effort */ }
+  return { retired, sources, purged };
 }
 
 // Reset the delivery ledgers of READ/WRITE sinks for datasources whose adapter changed, so the next Sync
@@ -212,8 +242,8 @@ export async function runStoreMigration(adapters) {
   const resets = await resetReadWriteLedgers(changedAdapters);
   // Retire the copies left behind when a source changed how it identifies a movement (0.10.2 did, for
   // WiZink and Revolut). Runs after re-normalization so both copies are compared in their final shape.
-  let dupes = { retired: 0, sources: [] };
+  let dupes = { retired: 0, sources: [], purged: 0 };
   try { dupes = await retireSupersededDuplicates(); } catch (e) { /* best-effort; never blocks startup */ }
   try { await chrome.storage.local.set({ [MARK_KEY]: CURRENT }); } catch (e) {}
-  return { records, changed: [...changedAdapters], resets, retired: dupes.retired, retiredIn: dupes.sources };
+  return { records, changed: [...changedAdapters], resets, retired: dupes.retired, retiredIn: dupes.sources, purged: dupes.purged };
 }
