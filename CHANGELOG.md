@@ -18,7 +18,7 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   browser part-way meant it started again from scratch on the next launch, and the one after that. It now
   names each source as it checks it, holds the extension awake while it works, clears the message when it
   finishes, and gives up after three attempts with a line in the activity log rather than retrying for ever.
-- **Settings → Advanced has a "Tidy up now" button.** Clearing the duplicates could only be triggered by
+- **Settings → "Where things are saved" has a "Tidy up now" button.** Clearing the duplicates could only be triggered by
   the extension itself, once, at startup — and if it had already run, or had given up part-way, there was no
   way to ask for it again short of editing storage from a developer console. Now you can press a button. It
   ignores the once-only limit, since a deliberate request is not something to ration, and it tells you what

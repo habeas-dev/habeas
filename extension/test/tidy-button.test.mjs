@@ -1,6 +1,11 @@
 // Clearing the duplicates was reachable only by clearing a storage key from a developer console, which is
 // not a thing anyone can be asked to do — and there was no way back at all once the automatic attempts were
-// spent. Settings → Advanced now has a button for it.
+// spent. Settings now has a button for it.
+//
+// It belongs on the tab about the archive ("Where things are saved"), beside moving and inspecting the
+// store. It was first put under `data-sec="advanced"` — which is not a tab called "Advanced" at all, but
+// the one shown as "Record & contribute", about authoring sources. Nobody looking to tidy their archive
+// would ever open that, and the section a control lives in is part of whether it can be found.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -11,11 +16,13 @@ const HTML = read('ui/options.html'), JS = read('ui/options.js'), BG = read('bac
 const EN = JSON.parse(readFileSync(new URL('../_locales/en/messages.json', import.meta.url), 'utf8'));
 const ES = JSON.parse(readFileSync(new URL('../_locales/es/messages.json', import.meta.url), 'utf8'));
 
-test('the button exists in Advanced, with a place to report the outcome', () => {
+test('the button sits with the other archive controls, with a place to report the outcome', () => {
   const $ = load(HTML);
   const btn = $('#tidy-run');
   assert.equal(btn.length, 1, 'a button');
-  assert.equal($('#tidy-run').closest('section').attr('data-sec'), 'advanced', 'in Advanced');
+  assert.equal($('#tidy-run').closest('section').attr('data-sec'), 'storage',
+    'on the tab about the archive — not under "Record & contribute", where nobody would look for it');
+  assert.ok($('#store-browse').closest('section').attr('data-sec') === 'storage', 'beside the other store controls');
   assert.equal($('#tidy-status').length, 1, 'and somewhere to say what happened');
 });
 
