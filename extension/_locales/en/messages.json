@@ -3847,5 +3847,8 @@
   },
   "migrating_cleaning": {
     "message": "Removing duplicates from your destination…"
+  },
+  "archive_partial": {
+    "message": "Part of your archive could not be read just now, so some documents may be missing from these counts. Nothing has been lost — reopen this page to try again."
   }
 }

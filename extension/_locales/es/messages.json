@@ -3847,5 +3847,8 @@
   },
   "migrating_cleaning": {
     "message": "Quitando duplicados de tu destino…"
+  },
+  "archive_partial": {
+    "message": "No se ha podido leer una parte de tu archivo ahora mismo, así que pueden faltar documentos en estos recuentos. No se ha perdido nada: vuelve a abrir esta página para reintentarlo."
   }
 }

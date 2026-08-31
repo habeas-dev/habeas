@@ -265,11 +265,16 @@ async function hydrateIndex() {
   const seq = ++hydrateSeq;
   $('#astatus').textContent = t('archive_loading');
   const grid = document.querySelector('.idx-grid'); if (grid) grid.classList.add('hydrating');
+  // A shard that fails to load is not an empty month. Counting what came back without saying the reading
+  // was incomplete is how a month of someone's archive appears to vanish and then come back — the numbers
+  // must never be presented as final when they are known to be short.
+  let incomplete = false;
   for (const s of INDEX) {
     if (seq !== hydrateSeq) return; // a newer refresh started
     let count = 0, lastDate = ''; const accSet = new Set();
     for (const key of s.keys) {
       const src = await getSource(key).catch(() => null); if (!src || !src.items) continue;
+      if (src.__partial) incomplete = true;
       for (const e of Object.values(src.items)) { if (e.gone) continue; const g = e.record && e.record.group; if (!groupAllowed(s.ds, g)) continue; count++; const dt = (e.record && e.record.date) || ''; if (dt > lastDate) lastDate = dt; if (g) accSet.add(g); }
     }
     s.count = count; s.lastDate = lastDate; s.accounts = [...accSet].sort();
@@ -280,9 +285,9 @@ async function hydrateIndex() {
   // Keep sources with documents AND every configured source (even at 0 docs — the user can Refresh it); drop
   // only orphan store keys that have no live docs and no datasource. Docs-first by recency, then empties by name.
   INDEX = INDEX.filter((s) => isRenderable(s.base) && (s.count > 0 || s.ds)).sort((a, b) => (b.lastDate || '').localeCompare(a.lastDate || '') || (b.count || 0) - (a.count || 0) || a.name.localeCompare(b.name));
-  $('#astatus').textContent = '';
+  $('#astatus').textContent = incomplete ? t('archive_partial') : '';
   if (CUR === null) renderIndex(); else renderRail(); // reflect final order (index) / final counts (rail)
-  await saveCache(); // persist the fresh numbers + accounts for an instant next open
+  if (!incomplete) await saveCache(); // never cache short numbers as if they were the truth
 }
 // Refresh ONLY the current source in place: recompute its stored docs + its own tree count/date and re-render,
 // WITHOUT re-hydrating (re-counting) every other source. A single-source action (Refresh, Save, Send, Accounts)

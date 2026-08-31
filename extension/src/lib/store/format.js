@@ -62,8 +62,13 @@ export function mergeSources(into, from) {
 
 // Project a source's live records for a sink: not gone, not already delivered (ledger map), and accepted
 // (predicate over the record). Newest first by record.date. This is the data a projection/consumer gets.
+// The result is an ARRAY, as every caller expects, carrying one extra non-enumerable mark: `partial`, set
+// when the assembly it came from could not be read in full. A shard that fails to load is not an empty
+// month — but shown without saying so, that is exactly what it looks like, and someone watches a month of
+// their archive vanish. Non-enumerable so nothing that iterates, spreads or serializes the array changes.
 export function project(sourceData, { delivered, accepts } = {}) {
-  if (!sourceData || !sourceData.items) return [];
+  const mark = (arr) => Object.defineProperty(arr, 'partial', { value: !!(sourceData && sourceData.__partial), enumerable: false, configurable: true });
+  if (!sourceData || !sourceData.items) return mark([]);
   const out = [];
   for (const [id, e] of Object.entries(sourceData.items)) {
     if (e.gone) continue;
@@ -71,7 +76,7 @@ export function project(sourceData, { delivered, accepts } = {}) {
     if (accepts && !accepts(e.record)) continue;
     out.push(e.record);
   }
-  return out.sort((a, b) => ((a && a.date) || '') < ((b && b.date) || '') ? 1 : -1);
+  return mark(out.sort((a, b) => ((a && a.date) || '') < ((b && b.date) || '') ? 1 : -1));
 }
 
 // Per-sink derived views over a source (gone × ledger). Computed, never stored.

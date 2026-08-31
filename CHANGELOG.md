@@ -18,6 +18,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   browser part-way meant it started again from scratch on the next launch, and the one after that. It now
   names each source as it checks it, holds the extension awake while it works, clears the message when it
   finishes, and gives up after three attempts with a line in the activity log rather than retrying for ever.
+- **A month of your archive can no longer appear to vanish because the cloud hiccuped.** Habeas already knew
+  when it had failed to read part of an archive, but nothing acted on it: the documents it *had* read were
+  shown as if that were all of them, and the short count was even cached for next time. With the archive in
+  Dropbox and something busy hammering it, that reads as documents disappearing — and then coming back once
+  the next read succeeds. The page now says plainly that part of the archive could not be read and that
+  nothing has been lost, and a short count is never saved as though it were the truth.
+
 
 ## [0.10.3] — 2026-08-31
 
