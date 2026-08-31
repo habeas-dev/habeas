@@ -18,7 +18,7 @@ import { applyNormalize } from './normalize.js';
 import { normalizeDate, normalizeAmount, minorExp } from '../runtime/inventory.js';
 
 const MARK_KEY = 'habeas:storeMigration';
-const CURRENT = 'renormalize-2'; // bump to force a re-run when normalization changes again (2: Trade Republic units/price/commission)
+const CURRENT = 'renormalize-3'; // bump to force a re-run when normalization changes again (3: retire the duplicates left by the 0.10.2 identity change)
 
 // Read/write sinks: cumulative-manifest, re-projectable, overwrite-safe. NOT download (ephemeral ZIP) / http
 // (POST-only push) — those are one-way, so re-delivering would spam downloads / duplicate ingest POSTs.
@@ -126,6 +126,69 @@ export async function renormalizeStore(adapters) {
   return { changedAdapters, records };
 }
 
+// ---------------------------------------------------------------- superseded duplicates
+//
+// When a source changes HOW it identifies a movement, everything it re-lists lands in the store a second
+// time under the new identity. The store is additive on purpose — nothing prunes, which is what stops a bad
+// read from emptying an archive — so the old copies stay and the archive shows everything twice.
+//
+// The cleanup must NOT be "delete the old-looking ids". WiZink never requests a statement older than 90 days
+// (that request is what triggers its SMS), so a movement past that window is never re-listed and its
+// old-identity entry is the ONLY copy there is. Deleting by shape would destroy it for good.
+//
+// The rule is therefore about content: entries describing the SAME movement — account, day, amount, currency,
+// concept — that were written by DIFFERENT source versions are one movement recorded twice, so what the
+// NEWEST version wrote is kept and the rest retired. Entries from a single version are left completely alone:
+// there they are what the source genuinely listed, including two real identical charges on one day. An entry
+// with no newer twin is alone in its signature and is never touched, which is what protects the old archive.
+const sigOf = (r) => [
+  r.group == null ? '' : String(r.group),
+  String(r.date || '').slice(0, 10),
+  r.amount == null ? (r.total == null ? '' : String(r.total)) : String(r.amount),
+  String(r.currency || ''),
+  String(r.description || '').trim().toLowerCase().replace(/\s+/g, ' '),
+].join('\u0000');
+// Compared as plain strings: source versions are YYYY-MM-DD[.N], which sorts correctly that way, and an
+// entry written before versions were stamped must count as the OLDEST rather than beat the current one.
+const verOf = (e) => (e && e.srcVersion ? String(e.srcVersion) : '');
+
+// The ids to retire. Pure function over a store's items — no I/O, so it is trivially testable and its
+// behaviour on the dangerous cases is pinned rather than argued about.
+export function supersededIds(items) {
+  const groups = new Map();
+  for (const [id, e] of Object.entries(items || {})) {
+    if (!e || !e.record || e.gone) continue; // an already-retired entry is neither retired again nor revived
+    const k = sigOf(e.record);
+    (groups.get(k) || groups.set(k, []).get(k)).push([id, verOf(e)]);
+  }
+  const out = [];
+  for (const rows of groups.values()) {
+    if (rows.length < 2) continue;
+    const newest = rows.reduce((a, b) => (b[1] > a ? b[1] : a), rows[0][1]);
+    if (rows.every(([, v]) => v === newest)) continue; // one version wrote them all → genuinely distinct
+    for (const [id, v] of rows) if (v !== newest) out.push(id);
+  }
+  return out;
+}
+
+// Retire superseded duplicates across every source in the store. Marks them `gone` (a tombstone) rather than
+// deleting: the archive stops showing them, and the record of what happened survives for anyone who looks.
+export async function retireSupersededDuplicates() {
+  let backend, ids = [], retired = 0;
+  try { backend = await activeBackend(); ids = await backend.listSources(); } catch (e) { return { retired: 0, sources: [] }; }
+  const sources = [];
+  for (const storeKey of ids) {
+    let data; try { data = await backend.loadSource(storeKey); } catch (e) { continue; }
+    if (!data || !data.items || data.__partial) continue; // a partial read must never drive a pruning pass
+    const gone = supersededIds(data.items);
+    if (!gone.length) continue;
+    const at = new Date().toISOString();
+    for (const id of gone) { const e = data.items[id]; if (e) { e.gone = true; e.goneReason = 'superseded'; e.goneAt = e.goneAt || at; } }
+    try { await backend.saveSource(storeKey, data); retired += gone.length; sources.push(storeKey); } catch (e) {}
+  }
+  return { retired, sources };
+}
+
 // Reset the delivery ledgers of READ/WRITE sinks for datasources whose adapter changed, so the next Sync
 // re-projects and overwrites their manifests with the corrected records. Returns how many ledgers were reset.
 export async function resetReadWriteLedgers(changedAdapters) {
@@ -147,6 +210,10 @@ export async function runStoreMigration(adapters) {
   if (o[MARK_KEY] === CURRENT) return { skipped: true };
   const { changedAdapters, records } = await renormalizeStore(adapters);
   const resets = await resetReadWriteLedgers(changedAdapters);
+  // Retire the copies left behind when a source changed how it identifies a movement (0.10.2 did, for
+  // WiZink and Revolut). Runs after re-normalization so both copies are compared in their final shape.
+  let dupes = { retired: 0, sources: [] };
+  try { dupes = await retireSupersededDuplicates(); } catch (e) { /* best-effort; never blocks startup */ }
   try { await chrome.storage.local.set({ [MARK_KEY]: CURRENT }); } catch (e) {}
-  return { records, changed: [...changedAdapters], resets };
+  return { records, changed: [...changedAdapters], resets, retired: dupes.retired, retiredIn: dupes.sources };
 }

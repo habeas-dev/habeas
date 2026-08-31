@@ -10,6 +10,19 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **The duplicates left by the previous update are cleared automatically.** 0.10.2 changed how WiZink and
+  Revolut movements are identified, which is what stopped the same movement being saved over and over — but
+  it also meant every movement re-listed after the update was stored a second time under its new identity,
+  so archives showed everything twice. Habeas now retires the superseded copies once, on its own, and says
+  in the activity log how many it cleared and where.
+  Nothing is removed on the basis of looking old. Two entries are only ever collapsed when they describe the
+  same movement — same account, day, amount, currency and description — *and* were written by different
+  versions of the source. A movement with no newer copy is never touched, which matters because WiZink will
+  not hand over statements older than 90 days: past that window the older entry is the only copy in
+  existence. Two genuinely separate identical charges recorded by the same version of a source are also left
+  alone. The old copies are marked as retired rather than erased, so the record of what happened survives.
+
 ## [0.10.2] — 2026-08-28
 
 ### Fixed
