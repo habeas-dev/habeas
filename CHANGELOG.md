@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.10.5] — 2026-09-01
+
 ### Fixed
 - **Firefox: Trade Republic could not list at all.** It reads your transactions over a WebSocket opened
   inside Trade Republic's own tab, so the connection carries your session. Firefox refuses to open it: the
