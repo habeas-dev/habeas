@@ -14,65 +14,102 @@ import { chrome } from './ext.js';
 // Phase 1 paginates the list (follow the `after` cursor). Phase 2 (optional `cfg.detail`) then subscribes
 // per item for its detail (Trade Republic's timelineDetailV2 — the asset, quantity × price, fees, docs)
 // and attaches it to the item, so the mapped record carries the full detail. Returns the flat items array.
+// The WebSocket exchange itself, as ONE implementation used in two places. It is deliberately
+// self-contained — it touches only its argument and globals that exist in a page and in the extension
+// alike (WebSocket, setTimeout, JSON) — because chrome.scripting.executeScript serializes a function to
+// inject it, and because the Firefox fallback below has to run the very same exchange outside the page.
+// Don't close over anything here: it would work in the background and silently do nothing when injected.
+export function wsSession(c) {
+  return new Promise((resolve) => {
+  const get = (o, p) => (p ? String(p).split('.').reduce((x, k) => (x == null ? x : x[k]), o) : o);
+  const items = []; let subId = 1, connected = false, done = false;
+  const pending = new Map(); // subId → callback(dataObj)
+  let ws; try { ws = new WebSocket(c.url); } catch (e) { return resolve({ items: [], error: String(e) }); }
+  const finish = (extra) => { if (done) return; done = true; clearTimeout(to); try { ws.close(); } catch (e) {} resolve({ items, ...(extra || {}) }); };
+  const to = setTimeout(() => finish({ timeout: true }), c.timeoutMs || 60000);
+  const isHeartbeat = (d) => d && typeof d === 'object' && ('status' in d) && !('items' in d) && !('sections' in d) && !('cursors' in d);
+  const send = (payload, cb) => { const id = ++subId; pending.set(id, cb); try { ws.send('sub ' + id + ' ' + JSON.stringify(payload)); } catch (e) { finish({ error: 'send' }); } };
+  ws.onopen = () => { try { ws.send('connect ' + (c.connectVersion || 31) + ' ' + JSON.stringify(c.connect || {})); } catch (e) { finish({ error: 'send connect' }); } };
+  ws.onmessage = (ev) => {
+    const s = String(ev.data);
+    if (!connected) { connected = true; timelinePage(); return; } // first frame after connect = "connected" ack
+    const m = s.match(/^(\d+) ([A-Z])(?: ([\s\S]*))?$/);
+    if (!m) return;
+    const id = +m[1], code = m[2], body = m[3];
+    if (code === 'A' && body) {
+      let d; try { d = JSON.parse(body); } catch (e) { return; }
+      if (isHeartbeat(d)) return;              // subscription-active heartbeat, keep waiting for data
+      const cb = pending.get(id); if (!cb) return;
+      pending.delete(id); try { ws.send('unsub ' + id); } catch (e) {}
+      cb(d);
+    } else if (code === 'E') { const cb = pending.get(id); pending.delete(id); if (cb) cb(null); }
+  };
+  ws.onerror = () => finish({ error: 'ws error' });
+  ws.onclose = () => finish({ closed: true });
+  // Phase 1: paginate the list by the `after` cursor.
+  let pages = 0;
+  const timelinePage = (after) => send({ type: c.sub.type, ...(c.sub.extra || {}), ...(after ? { [c.cursorParam || 'after']: after } : {}) }, (d) => {
+    if (!d) return finish({ error: 'sub failed' });
+    for (const it of (get(d, c.itemsPath) || [])) items.push(it);
+    const next = c.cursorPath ? get(d, c.cursorPath) : null;
+    if (next && ++pages < (c.maxPages || 100)) timelinePage(next);
+    else phase2();
+  });
+  // Phase 2: enrich each item with its detail subscription (optional).
+  const phase2 = () => {
+    if (!c.detail || !items.length) return finish();
+    let i = 0;
+    const nextDetail = () => {
+      if (i >= items.length || i >= (c.detail.max || 2000)) return finish();
+      const it = items[i++];
+      const detId = get(it, c.detail.idField || 'id');
+      if (detId == null || detId === '') return nextDetail();
+      send({ type: c.detail.subType, [c.detail.idParam || 'id']: detId }, (d) => { if (d) it[c.detail.attachAs || 'detail'] = d; nextDetail(); });
+    };
+    nextDetail();
+  };
+  });
+}
+
+// Firefox refuses to open this socket inside the page: the page's own CSP (connect-src) applies to a script
+// an extension injects — MAIN world and ISOLATED alike — so the constructor throws NS_ERROR_CONTENT_BLOCKED
+// before any handshake. Chrome exempts injected scripts from the page CSP, which is why the same source
+// works there. Measured against Firefox 153.
+export function isContentBlocked(err) {
+  return /NS_ERROR_CONTENT_BLOCKED|The load for this content was blocked/i.test(String(err || ''));
+}
+
+// Try the page first — that is what works today, and a handshake made inside the tab carries the session
+// most faithfully. Fall back to the extension's own context ONLY when the page refused to open the socket
+// at all. Any other failure is a real one and is reported as such: quietly changing context on an auth
+// error or a rejected subscription would hide it.
+export function wsWithFallback(pageWs, bgWs) {
+  return async (cfg) => {
+    const out = (await pageWs(cfg)) || { items: [] };
+    if (!isContentBlocked(out.error)) return out;
+    const alt = (await bgWs(cfg)) || { items: [] };
+    if (alt.error) return { ...alt, error: out.error + ' — and outside the page: ' + alt.error };
+    return { ...alt, viaBackground: true };
+  };
+}
+
 export function makePageWs(tabId) {
   return async (cfg) => {
     let out;
     try {
-      const [res] = await chrome.scripting.executeScript({
-        target: { tabId }, world: 'MAIN', args: [cfg],
-        func: (c) => new Promise((resolve) => {
-          const get = (o, p) => (p ? String(p).split('.').reduce((x, k) => (x == null ? x : x[k]), o) : o);
-          const items = []; let subId = 1, connected = false, done = false;
-          const pending = new Map(); // subId → callback(dataObj)
-          let ws; try { ws = new WebSocket(c.url); } catch (e) { return resolve({ items: [], error: String(e) }); }
-          const finish = (extra) => { if (done) return; done = true; clearTimeout(to); try { ws.close(); } catch (e) {} resolve({ items, ...(extra || {}) }); };
-          const to = setTimeout(() => finish({ timeout: true }), c.timeoutMs || 60000);
-          const isHeartbeat = (d) => d && typeof d === 'object' && ('status' in d) && !('items' in d) && !('sections' in d) && !('cursors' in d);
-          const send = (payload, cb) => { const id = ++subId; pending.set(id, cb); try { ws.send('sub ' + id + ' ' + JSON.stringify(payload)); } catch (e) { finish({ error: 'send' }); } };
-          ws.onopen = () => { try { ws.send('connect ' + (c.connectVersion || 31) + ' ' + JSON.stringify(c.connect || {})); } catch (e) { finish({ error: 'send connect' }); } };
-          ws.onmessage = (ev) => {
-            const s = String(ev.data);
-            if (!connected) { connected = true; timelinePage(); return; } // first frame after connect = "connected" ack
-            const m = s.match(/^(\d+) ([A-Z])(?: ([\s\S]*))?$/);
-            if (!m) return;
-            const id = +m[1], code = m[2], body = m[3];
-            if (code === 'A' && body) {
-              let d; try { d = JSON.parse(body); } catch (e) { return; }
-              if (isHeartbeat(d)) return;              // subscription-active heartbeat, keep waiting for data
-              const cb = pending.get(id); if (!cb) return;
-              pending.delete(id); try { ws.send('unsub ' + id); } catch (e) {}
-              cb(d);
-            } else if (code === 'E') { const cb = pending.get(id); pending.delete(id); if (cb) cb(null); }
-          };
-          ws.onerror = () => finish({ error: 'ws error' });
-          ws.onclose = () => finish({ closed: true });
-          // Phase 1: paginate the list by the `after` cursor.
-          let pages = 0;
-          const timelinePage = (after) => send({ type: c.sub.type, ...(c.sub.extra || {}), ...(after ? { [c.cursorParam || 'after']: after } : {}) }, (d) => {
-            if (!d) return finish({ error: 'sub failed' });
-            for (const it of (get(d, c.itemsPath) || [])) items.push(it);
-            const next = c.cursorPath ? get(d, c.cursorPath) : null;
-            if (next && ++pages < (c.maxPages || 100)) timelinePage(next);
-            else phase2();
-          });
-          // Phase 2: enrich each item with its detail subscription (optional).
-          const phase2 = () => {
-            if (!c.detail || !items.length) return finish();
-            let i = 0;
-            const nextDetail = () => {
-              if (i >= items.length || i >= (c.detail.max || 2000)) return finish();
-              const it = items[i++];
-              const detId = get(it, c.detail.idField || 'id');
-              if (detId == null || detId === '') return nextDetail();
-              send({ type: c.detail.subType, [c.detail.idParam || 'id']: detId }, (d) => { if (d) it[c.detail.attachAs || 'detail'] = d; nextDetail(); });
-            };
-            nextDetail();
-          };
-        }),
-      });
+      const [res] = await chrome.scripting.executeScript({ target: { tabId }, world: 'MAIN', args: [cfg], func: wsSession });
       out = res && res.result;
     } catch (e) { out = { items: [], error: String((e && e.message) || e) }; }
     return out || { items: [] };
+  };
+}
+
+// The same exchange, run from the extension's own context, where no page CSP applies. The session rides on
+// the cookies the browser attaches to the target host, exactly as it does for the page's own socket.
+export function makeBackgroundWs() {
+  return async (cfg) => {
+    try { return (await wsSession(cfg)) || { items: [] }; }
+    catch (e) { return { items: [], error: String((e && e.message) || e) }; }
   };
 }
 
@@ -267,7 +304,8 @@ export function makePageFetch(tabId, adapter) {
       },
     };
   };
-  pf.ws = makePageWs(tabId); // WebSocket-API sources (Trade Republic) list through this same tab
+  // Page first, extension context only if the page's CSP refuses the socket (Firefox) — see wsWithFallback.
+  pf.ws = wsWithFallback(makePageWs(tabId), makeBackgroundWs());
   pf.mtop = makePageMtop(tabId); // Alibaba mtop-API sources (AliExpress…) list through this same tab
   pf.tabId = tabId; // so a user-initiated op that FAILS on auth can surface THIS tab for re-login
   return pf;

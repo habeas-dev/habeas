@@ -10,6 +10,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **Firefox: Trade Republic could not list at all.** It reads your transactions over a WebSocket opened
+  inside Trade Republic's own tab, so the connection carries your session. Firefox refuses to open it: the
+  site's own security policy applies to a script an extension injects — which is right of Firefox, and is
+  something Chrome does not do — so the connection was blocked before it began, and the same source worked
+  in one browser and not the other. When, and only when, the page refuses the connection outright, Habeas
+  now runs the same exchange from the extension itself, where the page's policy does not apply. Any other
+  failure is still reported as a failure rather than quietly retried somewhere else.
+
 ## [0.10.4] — 2026-08-31
 
 ### Fixed
