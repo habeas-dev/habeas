@@ -17,7 +17,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   something Chrome does not do — so the connection was blocked before it began, and the same source worked
   in one browser and not the other. When, and only when, the page refuses the connection outright, Habeas
   now runs the same exchange from the extension itself, where the page's policy does not apply. Any other
-  failure is still reported as a failure rather than quietly retried somewhere else.
+  failure is still reported as a failure rather than quietly retried somewhere else. This applies on Firefox
+  only: Chrome, which has no such problem, keeps exactly the path it already had.
 
 ## [0.10.4] — 2026-08-31
 

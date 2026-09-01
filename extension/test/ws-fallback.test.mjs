@@ -10,7 +10,8 @@
 // context on, say, an auth error would hide it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { wsSession, isContentBlocked, wsWithFallback } from '../src/lib/pagefetch.js';
+import { readFileSync } from 'node:fs';
+import { wsSession, isContentBlocked, wsWithFallback, isFirefox, makePageWs } from '../src/lib/pagefetch.js';
 
 // A WebSocket that speaks the server's side of the protocol, so the exchange is exercised for real.
 function installFakeWs(frames) {
@@ -79,4 +80,46 @@ test('if the fallback is blocked too, the original refusal is what gets reported
   const out = await ws({ url: 'wss://x.test' });
   assert.match(out.error, /CONTENT_BLOCKED/);
   assert.match(out.error, /ws error/, 'and what the fallback then hit, so both are visible');
+});
+
+// ---------------------------------------------------------------- Chrome must not be touched
+
+test('Chrome keeps the path it already had; only Firefox gets the fallback', () => {
+  // A problem in one browser must not change the browser that does not have it — and this one cannot be
+  // tested against the real service from here, which is exactly when not touching it matters most.
+  const src = readFileSync(new URL('../src/lib/pagefetch.js', import.meta.url), 'utf8');
+  assert.match(src, /pf\.ws = isFirefox\(\) \? wsWithFallback\(makePageWs\(tabId\), makeBackgroundWs\(\)\) : makePageWs\(tabId\)/,
+    'the fallback is reached only on Firefox');
+  assert.equal(isFirefox(), false, 'and node, like Chrome, is not Firefox');
+});
+
+test('Firefox is recognised by a Firefox-only API, not by sniffing a user agent', () => {
+  const saved = globalThis.browser;
+  globalThis.browser = { runtime: { getBrowserInfo: () => {} } };
+  try { assert.equal(isFirefox(), true); } finally { if (saved) globalThis.browser = saved; else delete globalThis.browser; }
+  globalThis.browser = { runtime: {} }; // Chrome's shim shape: present, but no getBrowserInfo
+  try { assert.equal(isFirefox(), false, 'a browser namespace alone is not Firefox'); }
+  finally { if (saved) globalThis.browser = saved; else delete globalThis.browser; }
+});
+
+test('the injected protocol and the shared one stay identical', () => {
+  // Chrome's path keeps its own inline copy so it cannot be disturbed. The cost of that is two copies, and
+  // the risk of two copies is that they drift. Compare them instead of trusting they will not.
+  const src = readFileSync(new URL('../src/lib/pagefetch.js', import.meta.url), 'utf8');
+  // The promise body of each, delimited by matching braces rather than by guesswork about where it ends.
+  const bodyAfter = (text, marker) => {
+    const from = text.indexOf(marker); if (from < 0) return null;
+    let i = text.indexOf('{', from), depth = 0;
+    for (let k = i; k < text.length; k++) {
+      if (text[k] === '{') depth++;
+      else if (text[k] === '}' && --depth === 0) return text.slice(i + 1, k);
+    }
+    return null;
+  };
+  const strip = (t) => t.replace(/\/\/[^\n]*/g, '').replace(/\s+/g, ' ').trim();
+  const inline = bodyAfter(src, 'func: (c) => new Promise((resolve) => {');
+  const shared = bodyAfter(wsSession.toString(), 'new Promise((resolve) => {');
+  assert.ok(inline && shared, 'both bodies must be locatable');
+  assert.equal(strip(shared), strip(inline),
+    'the two copies of the WebSocket exchange have drifted — change both or neither');
 });
