@@ -31,13 +31,14 @@ function detailOf(e) {
   return e.status === 'none' ? t('st_none')
     : e.status === 'nosession' ? t('st_nosession')
     : e.status === 'notab' ? t('st_notab')
+    : e.status === 'notready' ? t('st_notready')
     : e.status === 'challenged' ? t('st_challenged')
     : e.status === 'listing' ? t('st_listing')
     : e.status === 'stopped' ? t('st_stopped')
     : e.status === 'interrupted' ? t('st_interrupted', [e.phase || '?'])
     : t('st_ok', [String(n ?? ''), e.sink || '']);
 }
-const STATUS_CLASS = { error: 'err', none: 'muted', nosession: 'warn', notab: 'warn', challenged: 'warn', stopped: 'muted', listing: 'muted', interrupted: 'warn' };
+const STATUS_CLASS = { error: 'err', none: 'muted', nosession: 'warn', notab: 'warn', notready: 'muted', challenged: 'warn', stopped: 'muted', listing: 'muted', interrupted: 'warn' };
 
 // A plain-language summary of an error, keyed off the HTTP status the runtime attached (never the raw HTML body).
 function humanError(e) {

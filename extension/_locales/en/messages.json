@@ -3884,5 +3884,16 @@
         "content": "$1"
       }
     }
+  },
+  "status_notready": {
+    "message": "$NAME$: open your data page on the site and it will sync",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "st_notready": {
+    "message": "waiting for the source's own data page to be open"
   }
 }

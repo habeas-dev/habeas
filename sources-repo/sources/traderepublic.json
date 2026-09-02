@@ -19,8 +19,8 @@
     "banking",
     "investment"
   ],
-  "version": "2026-08-26.1",
-  "minVersion": "0.3.0.24",
+  "version": "2026-09-02",
+  "minVersion": "0.10.6",
   "keepRaw": true,
   "match": [
     "https://app.traderepublic.com/*"
@@ -28,7 +28,9 @@
   "openUrl": "https://app.traderepublic.com/",
   "auth": {
     "mode": "cookie",
-    "replayHeaders": []
+    "replayHeaders": [],
+    "readyUrl": "https://app.traderepublic.com/boards",
+    "readyStrict": true
   },
   "api": {
     "host": "https://api.traderepublic.com"
@@ -173,6 +175,13 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-09-02",
+      "changes": {
+        "en": "Habeas now waits until your portfolio board is actually open before asking Trade Republic for anything. Your transactions only exist behind that page, so an attempt from the login screen or from anywhere else could never work — and asking anyway disturbs a session you have just opened. Nothing is requested until you are on it.",
+        "es": "Habeas espera ahora a que tu cartera esté realmente abierta antes de pedirle nada a Trade Republic. Tus movimientos sólo existen detrás de esa página, así que un intento desde la pantalla de acceso o desde cualquier otro sitio no podía funcionar — y hacerlo igualmente molesta a una sesión recién abierta. No se pide nada hasta que estés en ella."
+      }
+    },
     {
       "version": "2026-08-26.1",
       "changes": {

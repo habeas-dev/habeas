@@ -386,6 +386,7 @@ export async function resolveSiteFetch(adapter, ds) {
   if (!tab) return null;
   const pf = makePageFetch(tab.id, adapter);
   try { pf.origin = new URL(tab.url).origin; } catch (e) {} // the domain this session is on — for brand (multi-TLD) sources
+  pf.url = tab.url || ''; // the FULL url, so a source gated on its data view (auth.readyStrict) can be checked
   return pf;
 }
 
@@ -460,6 +461,9 @@ export async function ensureSiteFetch(adapter, { open = false, ds } = {}) {
   await waitTabComplete(tab.id);
   const pf = makePageFetch(tab.id, adapter);
   try { pf.origin = new URL(tab.url || url).origin; } catch (e) {}
+  // Re-read the tab AFTER it finished loading: a freshly opened site usually redirects (a login, or straight
+  // to the data view), so the url captured at creation time is not where the user ended up.
+  try { const t2 = await chrome.tabs.get(tab.id); pf.url = (t2 && t2.url) || tab.url || url; } catch (e) { pf.url = tab.url || url; }
   return pf;
 }
 

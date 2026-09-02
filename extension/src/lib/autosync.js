@@ -100,6 +100,22 @@ function readyUrlMatch(url, pattern) {
   } catch (e) { return false; }
 }
 
+// Should this run be refused outright because the source's data view is not open?
+//
+// `auth.readyUrl` on its own gates only the run TRIGGERED by a navigation (isReadyNavigation): a sweep or a
+// manual run still went ahead through whatever tab was open on the site, the login screen included. For a
+// source whose data exists only behind one view — Trade Republic's board, whose URL carries a per-session id
+// — attempting from anywhere else is worthless at best, and pokes at a freshly-opened session at worst.
+//
+// Strictness is OPT-IN (`auth.readyStrict`) rather than implied by declaring readyUrl, because four sources
+// already declare one and list perfectly well from other screens. Turning it on for them would be changing
+// what works in order to fix what does not.
+export function readyGateBlocks(adapter, tabUrl) {
+  const au = (adapter && adapter.auth) || {};
+  if (!au.readyStrict || !au.readyUrl) return false;
+  return !isReadyNavigation(adapter, tabUrl); // no URL visible → not confirmed ready → blocked
+}
+
 // The INVERSE of the login gate. Some SPAs fire authenticated (capturable) requests on EARLY screens too,
 // but a source's real data only exists once a specific view has fully loaded. Running auto-sync on those
 // early captures asks the API for data before the session/view is ready (ING is "too eager": its movements

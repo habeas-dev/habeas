@@ -10,6 +10,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **A source can now insist on its own data page being open before anything is requested.** Trade Republic
+  keeps your transactions behind your portfolio board, whose address carries a per-session id, so an attempt
+  made from the login screen — or from any other page on the site — could never have worked, and asking
+  anyway pokes at a session you have only just opened. Habeas now waits: nothing is requested until that page
+  is actually open, and the activity log says so plainly instead of recording a failure. This is opt-in per
+  source, so the sources that already list happily from any of their pages are unaffected.
+
 ## [0.10.5] — 2026-09-01
 
 ### Fixed

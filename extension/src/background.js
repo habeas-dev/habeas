@@ -38,7 +38,7 @@ import { validateProposal, validateSink, originHost, enabledSources, sinkIdForOr
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant, revokeGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
 import { runStoreMigration } from './lib/migrate.js';
-import { autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isLoginNavigation, isReadyNavigation, needsTabEscalation, wantsCookieReset, loginErrorNeedsCookieReset, sweepSinkId, orderedSweepSources, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
+import { readyGateBlocks, autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isLoginNavigation, isReadyNavigation, needsTabEscalation, wantsCookieReset, loginErrorNeedsCookieReset, sweepSinkId, orderedSweepSources, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
 
 // On startup, (re)register the in-session capture bridge for every enabled source (dynamic content
 // scripts can be dropped on an extension update). Idempotent; needs the host permission already granted.
@@ -1007,6 +1007,15 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     // 'notab' (NOT a hard failure): the sweep escalates by opening the site tab and retrying in-page, and a manual
     // run already opens the tab. Never leak a cross-origin SW fetch that would come back as a misleading 401.
     if (!net && needsPageContext(adapter)) { await appendLog({ ...base, status: 'notab' }); await badgeClear(); setStatus(t('status_notab', [name])); return { status: 'notab' }; }
+    // A source that only has data behind ONE view (Trade Republic's board, whose URL carries a per-session
+    // id) must not be asked from anywhere else — the attempt is worthless and pokes at a fresh session. Soft
+    // status, like nosession: no error, no notification; it runs the moment the user is on that page.
+    if (readyGateBlocks(adapter, net && net.url)) {
+      await appendLog({ ...base, status: 'notready' }); await badgeClear();
+      setStatus(t('status_notready', [name]));
+      if (kind === 'manual' && netRef && netRef.tabId != null) foregroundTab(netRef.tabId); // show them where to go
+      return { status: 'notready' };
+    }
     adapter = withBrandHost(adapter, net, countryDs); // brand (multi-TLD) source → api.host = the tab's domain, or the pinned country
     const brandCountry = (Array.isArray(adapter.domains) ? adapter.domains.find((d) => (adapter.api.host || '').includes(d)) : null) || null; // tag records with the country they came from
     const delivered = await deliveredSet(ds.id, sink.id);

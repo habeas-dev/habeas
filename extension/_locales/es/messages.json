@@ -3884,5 +3884,16 @@
         "content": "$1"
       }
     }
+  },
+  "status_notready": {
+    "message": "$NAME$: abre tu página de datos en el sitio y se sincronizará",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "st_notready": {
+    "message": "esperando a que esté abierta la página de datos de la fuente"
   }
 }
