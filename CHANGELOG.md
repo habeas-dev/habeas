@@ -18,6 +18,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   is actually open, and the activity log says so plainly instead of recording a failure. This is opt-in per
   source, so the sources that already list happily from any of their pages are unaffected.
 
+### Fixed
+- **Receipts and invoices no longer arrive at a destination labelled as money coming in.** When a destination
+  asks for the uniform record shape, each entry says whether it is money in or money out. A till receipt or
+  an invoice states its total the way it is printed on paper, without a sign, and Habeas was reading that as
+  money received — so an app importing your shopping could have filed it as income. Habeas now reports this
+  only when the service itself states it, and leaves it unanswered otherwise, for the receiving app to decide.
+  Bank and card entries are unaffected: those always carry it.
+
 ## [0.10.5] — 2026-09-01
 
 ### Fixed

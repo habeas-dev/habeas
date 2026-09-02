@@ -78,7 +78,9 @@ test('bank transaction@1 promotes account / valueDate / balanceAfter only when p
 });
 
 test('canonicalize builds a structured account { iban, last4, currency } for a bank movement', () => {
-  const c = canonicalize({ internalId: 'M1', date: '2026-03-01', amount: -12.5, currency: 'EUR', account: 'ES9121000418450200051332', group: 'ACC-1', valueDate: '2026-03-02', balanceAfter: 1234.56, source: 'demo-bank' });
+  // `direction` as buildRecord actually emits it for transaction@1 — always set there, so canonicalize
+  // only carries it through and never has to guess (see normalize.test.mjs for the documents case).
+  const c = canonicalize({ internalId: 'M1', date: '2026-03-01', amount: -12.5, currency: 'EUR', direction: 'debit', account: 'ES9121000418450200051332', group: 'ACC-1', valueDate: '2026-03-02', balanceAfter: 1234.56, source: 'demo-bank' });
   assert.deepEqual(c.account, { iban: 'ES9121000418450200051332', last4: '1332', groupId: 'ACC-1', currency: 'EUR' });
   assert.equal(c.valueDate, '2026-03-02');
   assert.equal(c.balanceAfter, 1234.56);

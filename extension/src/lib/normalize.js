@@ -91,7 +91,11 @@ export function canonicalize(record) {
     date: record.date, // the booked date — Cuéntamo maps this to Transaction.bookedDate
     amount,
     currency: record.currency || 'EUR',
-    direction: record.direction || (typeof amount === 'number' ? (amount < 0 ? 'debit' : 'credit') : undefined),
+    // Only ever what the source stated. A movement is signed and its adapter sets this upstream
+    // (format.js#buildRecord), so nothing is lost; a DOCUMENT's total is positive on paper, and inferring
+    // from that sign used to make every receipt and invoice claim to be a credit — the one field a finance
+    // consumer keys on. `null` (not absent) keeps the shape uniform: "not stated" is itself an answer.
+    direction: record.direction || null,
     description: record.description || '',
     counterparty,
     category: record.category,
