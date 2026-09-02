@@ -401,6 +401,10 @@
           ],
           "description": "Hold auto-sync until the tab is on the source's data view — a single https URL or an array of them (ready when ANY matches by host + path prefix + hash-route prefix, ignoring the trailing id). For SPAs that fire capturable requests on earlier screens (e.g. ING's data only exists at https://ing.ingdirect.es/pfm/#producto/<session-uuid>). Omit → every navigation is treated as ready."
         },
+        "readyStrict": {
+          "type": "boolean",
+          "description": "Refuse to run AT ALL unless a tab is open on `readyUrl`. Without this, readyUrl only gates the run triggered by a navigation, and a sweep or a manual run still proceeds through any tab open on the site. Use it when the data exists solely behind one view (Trade Republic's board, whose URL carries a per-session id), so an attempt from anywhere else cannot succeed and only disturbs a fresh session. Needs extension 0.10.6+."
+        },
         "replayHeaders": {
           "type": "array",
           "items": {
