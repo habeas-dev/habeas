@@ -141,6 +141,8 @@ await habeas('collect', { grantId });</code></pre>
     <li><strong>Confirmación por registro.</strong> Tu endpoint responde con los identificadores que ha incorporado realmente; lo demás queda pendiente y se reintenta. Sin pérdidas silenciosas.</li>
     </ul>
 
+    <p>Para ver la forma exacta antes de escribir nada, hay un ejemplo trabajado: <a href="https://github.com/habeas-dev/habeas/blob/main/examples/canonical-record.json">canonical-record.json</a>. Ocho movimientos —una cuenta española con IBAN, una tarjeta, un número de cuenta estadounidense y un sort code británico— que muestran qué campos están siempre, cuáles son condicionales y cómo se identifica una cuenta allí donde no existe el IBAN. Las reglas campo a campo están en <a href="https://github.com/habeas-dev/habeas/blob/main/docs/RECORD-CONTRACT.md">RECORD-CONTRACT.md</a>.</p>
+
     <h2 id="las-reglas-que-hacen-que-esto-sea-seguro">Las reglas que hacen que esto sea seguro</h2>
     <p>Están implementadas en el código, no prometidas en un contrato:</p>
     <ul>

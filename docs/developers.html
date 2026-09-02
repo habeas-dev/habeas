@@ -141,6 +141,8 @@ await habeas('collect', { grantId });</code></pre>
     <li><strong>Per-record acknowledgment.</strong> Your endpoint replies with the ids it actually incorporated; anything else stays pending and is retried. No silent data loss.</li>
     </ul>
 
+    <p>To see the exact shape before writing anything, there is a worked sample: <a href="https://github.com/habeas-dev/habeas/blob/main/examples/canonical-record.json">canonical-record.json</a>. Eight movements — a Spanish IBAN account, a card, a US routing-and-account number and a UK sort code — showing which fields are always present, which are conditional, and how an account identifies itself where IBANs do not exist. The field-by-field rules are in <a href="https://github.com/habeas-dev/habeas/blob/main/docs/RECORD-CONTRACT.md">RECORD-CONTRACT.md</a>.</p>
+
     <h2 id="the-rules-that-make-this-safe">The rules that make this safe</h2>
     <p>These are enforced in code, not promised in a contract:</p>
     <ul>

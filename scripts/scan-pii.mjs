@@ -18,7 +18,7 @@ import { execSync } from 'node:child_process';
 const ROOT = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
 
 // Directories where a real capture is most likely to leak (fixtures, authored sources, adapters).
-const SCOPE_DIRS = ['extension/test', 'sources-repo/sources', 'extension/src/adapters'];
+const SCOPE_DIRS = ['extension/test', 'sources-repo/sources', 'extension/src/adapters', 'examples'];
 const SCAN_EXT = new Set(['.js', '.mjs', '.cjs', '.json', '.ts', '.md', '.html']);
 // Self-tests that deliberately plant fake, PII-SHAPED values to prove a detector/redactor fires —
 // skip them (their content is synthetic by construction and asserted to be stripped).
@@ -39,6 +39,9 @@ const ALLOWLIST = new Set([
   '9900000000000000000001',    // ikea-graphql-pdf.test.mjs — fake receipt id
   '0000000000000000000000',    // investment2.test.mjs — fictitious broker settlement IBAN (all zeros)
   '0000000000000000000001',    // investment2.test.mjs — fictitious broker cash IBAN (all zeros + 1)
+  '3500000000000000001234',    // examples/canonical-record — fictitious ES IBAN, built for the published
+                               // sample: body all zeros bar the "1234" tail, check digits then computed so
+                               // it passes canonicalize's mod-97 guard. Invented here, not from a capture.
   // infer-currency.test.mjs — a hand-built unsigned JWT used to test that the drafter can locate the
   // bearer in the storage snapshot. Decodes to {"alg":"HS256"} / {"sub":"demo"} / the literal word
   // "signature"; it carries no claim from any real session and verifies against nothing.

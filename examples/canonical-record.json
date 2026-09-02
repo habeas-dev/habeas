@@ -1,0 +1,165 @@
+[
+  {
+    "id": "mv-2026-04-10-01",
+    "date": "2026-04-10",
+    "amount": 1850,
+    "currency": "EUR",
+    "direction": "credit",
+    "description": "Incoming transfer SALARY APRIL",
+    "counterparty": "Vela Studio Ltd",
+    "category": "income",
+    "type": "TRANSFER",
+    "account": {
+      "iban": "ES3500000000000000001234",
+      "last4": "1234",
+      "currency": "EUR"
+    },
+    "source": "demo-bank:movements",
+    "valueDate": "2026-04-10",
+    "balanceAfter": 2406.18,
+    "pdf": false
+  },
+  {
+    "id": "mv-2026-04-14-01",
+    "date": "2026-04-14",
+    "amount": -42.5,
+    "currency": "EUR",
+    "direction": "debit",
+    "description": "Instant transfer sent to Laura Bennett",
+    "counterparty": "Laura Bennett",
+    "category": "transfer",
+    "type": "INSTANT_TRANSFER",
+    "account": {
+      "iban": "ES3500000000000000001234",
+      "last4": "1234",
+      "currency": "EUR"
+    },
+    "source": "demo-bank:movements",
+    "valueDate": "2026-04-14",
+    "balanceAfter": 2363.68,
+    "pdf": false
+  },
+  {
+    "id": "mv-2026-04-16-01",
+    "date": "2026-04-16",
+    "amount": -68.9,
+    "currency": "EUR",
+    "direction": "debit",
+    "description": "Direct debit electricity March",
+    "counterparty": "Hidrolux Energy",
+    "category": "utilities",
+    "type": "DIRECT_DEBIT",
+    "account": {
+      "iban": "ES3500000000000000001234",
+      "last4": "1234",
+      "currency": "EUR"
+    },
+    "source": "demo-bank:movements",
+    "valueDate": "2026-04-17",
+    "balanceAfter": 2294.78,
+    "extra": {
+      "reference": "REC-4471-0093",
+      "mandate": "ES91ZZZA00000000"
+    },
+    "pdf": true
+  },
+  {
+    "id": "cd-2026-04-15-07",
+    "date": "2026-04-15",
+    "amount": -23.4,
+    "currency": "EUR",
+    "direction": "debit",
+    "description": "THE CORNER BAKERY",
+    "counterparty": "The Corner Bakery",
+    "category": "retail",
+    "type": "PURCHASE",
+    "account": {
+      "last4": "4417",
+      "groupId": "Classic Card 4417",
+      "currency": "EUR"
+    },
+    "source": "demo-card:movements",
+    "extra": {
+      "location": "BRISTOL"
+    },
+    "pdf": false
+  },
+  {
+    "id": "cd-2026-04-18-02",
+    "date": "2026-04-18",
+    "amount": 12.75,
+    "currency": "EUR",
+    "direction": "credit",
+    "description": "REFUND THE CORNER BAKERY",
+    "counterparty": "The Corner Bakery",
+    "category": "retail",
+    "type": "REFUND",
+    "account": {
+      "last4": "4417",
+      "groupId": "Classic Card 4417",
+      "currency": "EUR"
+    },
+    "source": "demo-card:movements",
+    "extra": {
+      "location": "BRISTOL"
+    },
+    "pdf": false
+  },
+  {
+    "id": "mv-2026-04-19-01",
+    "date": "2026-04-19",
+    "amount": -15,
+    "currency": "EUR",
+    "direction": "debit",
+    "description": "Account maintenance fee",
+    "counterparty": "Demo Bank",
+    "category": "fee",
+    "type": "FEE",
+    "account": {
+      "iban": "ES3500000000000000001234",
+      "last4": "1234",
+      "currency": "EUR"
+    },
+    "source": "demo-bank:movements",
+    "balanceAfter": 2279.78,
+    "idStable": false,
+    "pdf": false
+  },
+  {
+    "id": "us-2026-04-12-01",
+    "date": "2026-04-12",
+    "amount": -85.2,
+    "currency": "USD",
+    "direction": "debit",
+    "description": "ACH DEBIT CITY WATER DEPT",
+    "counterparty": "City Water Dept",
+    "category": "utilities",
+    "type": "ACH_DEBIT",
+    "account": {
+      "routingNumber": "021000021",
+      "accountNumber": "1234567890",
+      "type": "checking"
+    },
+    "source": "demo-us-bank:movements",
+    "balanceAfter": 1204.55,
+    "pdf": false
+  },
+  {
+    "id": "gb-2026-04-13-01",
+    "date": "2026-04-13",
+    "amount": -19.99,
+    "currency": "GBP",
+    "direction": "debit",
+    "description": "CARD PAYMENT NORTHGATE BOOKS",
+    "counterparty": "Northgate Books",
+    "category": "retail",
+    "type": "CARD_PAYMENT",
+    "account": {
+      "last4": "5678",
+      "currency": "GBP"
+    },
+    "source": "demo-gb-bank:movements",
+    "balanceAfter": 640.1,
+    "pdf": false
+  }
+]
