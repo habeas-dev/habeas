@@ -204,7 +204,7 @@
     "@type": "WebPage",
     "@id": "https://habeas.dev/es/descargar/extractos-trade-republic.html"
   },
-  "dateModified": "2026-08-26",
+  "dateModified": "2026-09-02",
   "author": {
     "@type": "Person",
     "name": "David Marín",
@@ -270,7 +270,7 @@
       <div class="card">
         <h2>Sobre esta fuente</h2>
         <dl>
-          <dt>Versión</dt><dd>2026-08-26.1</dd>
+          <dt>Versión</dt><dd>2026-09-02</dd>
           <dt>Confianza</dt><dd>first-party</dd>
           <dt>Cobertura</dt><dd>global</dd>
           <dt>Licencia</dt><dd>CC0-1.0</dd>
@@ -313,8 +313,8 @@
     &quot;banking&quot;,
     &quot;investment&quot;
   ],
-  &quot;version&quot;: &quot;2026-08-26.1&quot;,
-  &quot;minVersion&quot;: &quot;0.3.0.24&quot;,
+  &quot;version&quot;: &quot;2026-09-02&quot;,
+  &quot;minVersion&quot;: &quot;0.10.6&quot;,
   &quot;keepRaw&quot;: true,
   &quot;match&quot;: [
     &quot;https://app.traderepublic.com/*&quot;
@@ -322,7 +322,9 @@
   &quot;openUrl&quot;: &quot;https://app.traderepublic.com/&quot;,
   &quot;auth&quot;: {
     &quot;mode&quot;: &quot;cookie&quot;,
-    &quot;replayHeaders&quot;: []
+    &quot;replayHeaders&quot;: [],
+    &quot;readyUrl&quot;: &quot;https://app.traderepublic.com/boards&quot;,
+    &quot;readyStrict&quot;: true
   },
   &quot;api&quot;: {
     &quot;host&quot;: &quot;https://api.traderepublic.com&quot;
@@ -468,6 +470,13 @@
   ],
   &quot;changelog&quot;: [
     {
+      &quot;version&quot;: &quot;2026-09-02&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Habeas now waits until your portfolio board is actually open before asking Trade Republic for anything. Your transactions only exist behind that page, so an attempt from the login screen or from anywhere else could never work — and asking anyway disturbs a session you have just opened. Nothing is requested until you are on it.&quot;,
+        &quot;es&quot;: &quot;Habeas espera ahora a que tu cartera esté realmente abierta antes de pedirle nada a Trade Republic. Tus movimientos sólo existen detrás de esa página, así que un intento desde la pantalla de acceso o desde cualquier otro sitio no podía funcionar — y hacerlo igualmente molesta a una sesión recién abierta. No se pide nada hasta que estés en ella.&quot;
+      }
+    },
+    {
       &quot;version&quot;: &quot;2026-08-26.1&quot;,
       &quot;changes&quot;: {
         &quot;en&quot;: &quot;Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.&quot;,
@@ -601,11 +610,11 @@
       <h2>Qué ha cambiado en esta fuente</h2>
       <p>Esta fuente es una definición pública y cada cambio queda registrado. De lo más reciente a lo más antiguo:</p>
       <ul class="changelog">
+        <li class="rev"><span class="ver">2026-09-02</span> — Habeas espera ahora a que tu cartera esté realmente abierta antes de pedirle nada a Trade Republic. Tus movimientos sólo existen detrás de esa página, así que un intento desde la pantalla de acceso o desde cualquier otro sitio no podía funcionar — y hacerlo igualmente molesta a una sesión recién abierta. No se pide nada hasta que estés en ella.</li>
         <li class="rev"><span class="ver">2026-08-26.1</span> — Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga.</li>
         <li class="rev"><span class="ver">2026-08-26</span> — Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.</li>
         <li class="rev"><span class="ver">2026-08-08</span> — Sin cambios en lo que extrae esta fuente. Esta versión le dio su página de guía en habeas.dev.</li>
         <li class="rev"><span class="ver">2026-07-17</span> — Las operaciones llegan ahora con el número de títulos, el precio y la comisión como cifras separadas, en vez de solo como texto. Requiere Habeas 0.3.0.24 o posterior.</li>
-        <li class="rev"><span class="ver">2026-07-16</span> — Tu timeline llega ya como registros de inversión: cada uno indica si fue una operación o un movimiento de efectivo, sobre qué instrumento y en qué cuenta se liquidó. La cantidad, el precio y las comisiones de una operación siguen llegando solo como el texto que muestra Trade Republic. Requiere Habeas 0.3.0.24 o posterior.</li>
       </ul>
       <p class="lead"><a href="undefined#traderepublic">Ver el historial completo en el catálogo →</a></p>
 
