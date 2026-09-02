@@ -116,6 +116,22 @@ export function canonicalize(record) {
   return out;
 }
 
+// Is this string an IBAN? The shape alone is not enough: "two letters, two digits, then anything" also
+// describes no end of internal account codes, and labelling one `iban` hands a consumer a key it will match
+// accounts on. So check what the standard actually defines — 15-34 characters (ISO 13616) and the mod-97
+// check digits (ISO 7064) — and say no otherwise. Letters count as 10..35, and the remainder is taken
+// digit by digit because the number is far past Number.MAX_SAFE_INTEGER.
+function isIban(s) {
+  if (!/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(s)) return false;
+  const rearranged = s.slice(4) + s.slice(0, 4);
+  let rem = 0;
+  for (const ch of rearranged) {
+    const part = ch >= 'A' && ch <= 'Z' ? String(ch.charCodeAt(0) - 55) : ch;
+    for (const d of part) rem = (rem * 10 + Number(d)) % 97;
+  }
+  return rem === 1;
+}
+
 // Structured account for the canonical finance shape (Cuéntamo): { iban?, last4?, groupId?, currency? }.
 // Derives `last4` from an IBAN / masked-PAN string and `groupId` from the source's group id. A record that
 // already carries a structured account object is passed through untouched. When nothing structured can be
@@ -126,7 +142,7 @@ function acctObj(record) {
   if (raw && typeof raw === 'object') return raw;
   const str = typeof raw === 'string' ? raw : '';
   const compact = str.replace(/\s+/g, '').toUpperCase();
-  const iban = /^[A-Z]{2}\d{2}[A-Z0-9]*$/.test(compact) ? compact : undefined;
+  const iban = isIban(compact) ? compact : undefined;
   // last4, most-reliable first: (1) the IBAN's own last digits; (2) the group label's trailing 4 digits —
   // a grouped card/bank label renders "<name> <last4>" from the group mask, i.e. the number the user
   // recognizes (a card's last four, not an opaque internal account id); (3) the account string's own last

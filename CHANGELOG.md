@@ -25,6 +25,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   money received — so an app importing your shopping could have filed it as income. Habeas now reports this
   only when the service itself states it, and leaves it unanswered otherwise, for the receiving app to decide.
   Bank and card entries are unaffected: those always carry it.
+- **An account code that merely looked like an IBAN is no longer reported as one.** When a destination asks
+  for the uniform record shape, an entry can name the account it belongs to. Habeas accepted anything that
+  started with two letters and two digits — a shape plenty of internal bank codes share — so a receiving app
+  matching your accounts by IBAN could have been handed something that was not one, and quietly paired the
+  entry with the wrong account. The number is now properly checked, and when it does not check out Habeas
+  says nothing rather than something wrong. Accounts from countries that do not use IBANs at all are
+  unaffected, and still identified by their last four digits.
 
 ## [0.10.5] — 2026-09-01
 

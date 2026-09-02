@@ -98,6 +98,39 @@ test('canonicalize passes through an already-structured account object untouched
   assert.deepEqual(c.account, acc);
 });
 
+// A field named `iban` is a promise a consumer matches accounts on. The shape alone ("two letters, two
+// digits, then anything") is met by no end of internal codes, so it cannot be the test — an IBAN is
+// 15-34 characters AND carries its own mod-97 check digits. Failing that, the value is not an IBAN and
+// must not be labelled one; it degrades to whatever else can be derived, exactly as before.
+test('canonicalize only calls something an IBAN when it actually checks out', () => {
+  const iban = (account) => canonicalize({ internalId: 'x', date: '2026-01-01', amount: -1, currency: 'EUR', direction: 'debit', source: 's', account }).account;
+  // real IBANs, two countries, different lengths
+  assert.equal(iban('ES9121000418450200051332').iban, 'ES9121000418450200051332');
+  assert.equal(iban('NL91ABNA0417164300').iban, 'NL91ABNA0417164300');
+  assert.equal(iban('ES91 2100 0418 4502 0005 1332').iban, 'ES9121000418450200051332', 'spaces are tolerated');
+  // right shape, wrong check digits → not an IBAN
+  assert.equal(iban('ES0000000000000000000000').iban, undefined, 'mod-97 must reject it');
+  // right shape, far too short → not an IBAN (an internal code, a sort code, a stub)
+  assert.equal(iban('ES11'), 'ES11', 'nothing derivable → the historical string, not a 2-digit "last4"');
+  assert.equal(iban('XX99NOTANIBAN'), 'XX99NOTANIBAN');
+});
+
+// Non-IBAN countries: nothing claims to be an IBAN, and `last4` still comes from the account's own digits.
+test('canonicalize degrades cleanly for non-IBAN account schemes', () => {
+  const acct = (account) => canonicalize({ internalId: 'x', date: '2026-01-01', amount: -1, currency: 'EUR', direction: 'debit', source: 's', account }).account;
+  assert.deepEqual(acct('021000021 1234567890'), { last4: '7890', currency: 'EUR' }, 'US routing + account');
+  assert.deepEqual(acct('12-34-56 12345678'), { last4: '5678', currency: 'EUR' }, 'UK sort code + account');
+});
+
+// The escape hatch for every scheme the runtime does not model: an adapter maps `account` to an object and
+// it travels untouched, so a country's own identifiers are never forced through iban/last4.
+test('canonicalize passes an adapter-supplied account object through with its own fields', () => {
+  const acct = (account) => canonicalize({ internalId: 'x', date: '2026-01-01', amount: -1, currency: 'EUR', direction: 'debit', source: 's', account }).account;
+  assert.deepEqual(acct({ routingNumber: '021000021', accountNumber: '1234567890', type: 'checking' }),
+    { routingNumber: '021000021', accountNumber: '1234567890', type: 'checking' });
+  assert.deepEqual(acct({ sortCode: '12-34-56', accountNumber: '12345678' }), { sortCode: '12-34-56', accountNumber: '12345678' });
+});
+
 test('canonicalize keeps the historical string account when nothing structured can be derived', () => {
   const c = canonicalize({ internalId: 'x', date: '2026-03-01', amount: 1, currency: 'EUR', group: 'GRP-9', source: 's' });
   assert.deepEqual(c.account, { groupId: 'GRP-9', currency: 'EUR' });
