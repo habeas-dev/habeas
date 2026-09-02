@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.10.6] — 2026-09-02
+
 ### Added
 - **A source can now insist on its own data page being open before anything is requested.** Trade Republic
   keeps your transactions behind your portfolio board, whose address carries a per-session id, so an attempt
