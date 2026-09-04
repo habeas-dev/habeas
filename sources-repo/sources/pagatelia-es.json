@@ -80,7 +80,7 @@
     "es": {
       "slug": "facturas-pagatelia",
       "docs": "facturas de peaje",
-      "h1": "Descarga todos tus facturas de Pagatelia de una vez",
+      "h1": "Descarga todas tus facturas de Pagatelia de una vez",
       "intro": "Pagatelia acumula una factura por periodo de peajes y parkings. Recuperar el histórico completo significa descargarlas una a una.",
       "title": "Cómo descargar tus facturas de Pagatelia"
     }

@@ -177,8 +177,13 @@ the registry clone's `scripts/validate.js` (it's a zero-dependency copy) before 
 
 Per-source fields that matter:
 - **`version`** — a date string (`YYYY-MM-DD`, or `YYYY-MM-DD.N` for a same-day re-publish). **A version
-  identifies one exact content, permanently — never publish different bytes under one that already
-  exists.** Take the suffix from the LIVE catalog, not from the local file
+  identifies one BEHAVIOUR, permanently — never publish a changed definition under one that already
+  exists.** Prose is the deliberate exception: `content` (guide copy), `changelog`, `brand`, `credit` and
+  `contributors` may be corrected **under the published version**, no bump. Those are the `PRESENTATION`
+  set excluded from the `behaviourHash` (`scripts/behaviour-hash.mjs`), and `check-versions.mjs` allows a
+  same-version republish whose hash did not move. They are served from `index.json`, so the correction
+  reaches the site and the in-extension marketplace immediately, without offering every user an update
+  whose only difference is a sentence. Take the suffix from the LIVE catalog, not from the local file
   (`node scripts/check-versions.mjs next <id>`): deriving it locally is how the same `.N` gets used twice,
   and a repeated version updates the catalog while reaching nobody. Compared
   **lexicographically** (`marketplace.js#isOutdated` uses `String(a) > String(b)`), so bump it or the

@@ -26,19 +26,39 @@ operate. Every decision must preserve this.
 
 ## Status — working beta (published on Chrome Web Store + Firefox AMO)
 
-**16 sources published** to the community registry (Carrefour, Dia, Hover, Decathlon, Bip&Drive,
-Leroy Merlín, WiZink, CaixaBank Consumer, IKEA, Amazon, AliExpress, Openbank, Revolut, Trade Republic,
-**ING España** — a 3-output bank source: movements + per-account monthly statements PDF/Excel + integrated
-monthly statement PDF — and **Financiera El Corte Inglés** — a 3-output store-card source: movements +
-aplazamientos + monthly statement PDFs, cookie session + a rotating WSO2 bearer scoped to `/dashboard/*` via
-`auth.capturePaths`). Implemented:
+**24 sources published** to the community registry — 21 API-verified + 3 experimental (`beta: true`):
+
+- **Retail / everyday** — Carrefour, Dia, Decathlon, IKEA, Leroy Merlin, Amazon, AliExpress, Hover
+- **Utilities / telco** — Pepe Energy, Pepephone
+- **Tolls** — Bip&Drive, Pagatelia
+- **Cards / consumer credit** — WiZink, CaixaBank Consumer, **Financiera El Corte Inglés** (a 3-output
+  store-card source: movements + aplazamientos + monthly statement PDFs, cookie session + a rotating WSO2
+  bearer scoped to `/dashboard/*` via `auth.capturePaths`)
+- **Banks** — **ING España** (a 3-output bank source: movements + per-account monthly statements PDF/Excel
+  + integrated monthly statement PDF), Openbank
+- **Payments / investment** — PayPal, Revolut, Trade Republic, Raisin
+- **Experimental (`beta: true`)** — American Express, DEGIRO, N26
+
+Implemented:
 capture → inventory → sinks (download / local-folder / **native Google Drive** / http / **WebDAV** /
-**S3 (+compatible)** / **Dropbox**), per-sink dedupe, **automatic mode** (sync new docs on login) +
+**S3 (+compatible)** / **Dropbox** / **email**), per-sink dedupe, **automatic mode** (sync new docs on login) +
 **Sync all** (sweep every source), activity log + badge + notifications, **source categories + sink
 `accepts` filtering**, a **persistent per-account filter** for grouped bank sources, a cross-source
 **Documents browser** + a **canonical-store inspector** (with delete), a light **declarative
 normalization** layer (counterparty extraction + a uniform `canonicalize` output, opt-in per sink) with
 **`record.extra` keepRaw**, full **i18n (en default + es)**, a **landing site**, and **CI packaging**.
+
+**The canonical store and its projections** (`docs/canonical-store.md`) — the governing idea is *extract
+once → canonical store → project to anything*. The store holds the normalized RECORD; the file itself lives
+in whichever sink received it. From that one store: `lib/csv.js` and `lib/qif.js` are pure projections (no
+I/O, no DOM) — QIF exists because desktop finance apps (GnuCash, HomeBank, KMyMoney, Quicken) cannot receive
+a push and a file is their only inlet. `lib/retrieve.js` fetches a delivered artifact back OUT of its sink
+for the in-app viewer, which only works for sinks you can read an arbitrary file back from (download is an
+ephemeral ZIP and http is POST-only — neither is retrievable). `lib/schedule.js` is a declarative recurring
+-schedule engine for the download planner (a spec is a small auditable object, data not code; times are
+local). `lib/configsync.js` writes a copy of the user's setup — datasources, sinks (secrets by `secret://`
+ref only, never values), routes — into the canonical store, so a cloud-backed store carries the setup to
+another machine and merges it there.
 
 **Consumer-facing extras**: a sink may declare `accepts:{artifacts:[]}` to receive **records with no
 files** (an empty list means "these kinds, and there are none"), and `show-document` then displays one in
@@ -58,7 +78,7 @@ mints a **grant** (`storage.local habeas:grants`, one origin→one route) revoca
 Site integrations. `collect` always runs in a **dedicated tab** (foregrounded only for manual login;
 never handles credentials), debounced + logged, no notification. See `docs/external-hooks.md`.
 
-**Community sources system** (LIVE — 16 sources published): a **generalized runtime**
+**Community sources system** (LIVE — 24 sources published): a **generalized runtime**
 (declarative pager `offsets|offset|page|cursor|none|years|synthetic`, dotted field paths **+ array
 selectors** `key[field=value].sub`, schemas `receipt|invoice|transaction|investment`, optional PDF/Excel;
 `synthetic` = documents that exist once per period/account, e.g. monthly statements); an **adapter loader
@@ -89,14 +109,17 @@ habeas/
 │   └── src/
 │       ├── background.js    # captured auth (storage.session) + auto-sync runner + sample buffer
 │       ├── lib/             # ext.js (browser??chrome shim), config, secrets, state, fs, zip,
-│       │                    #   naming, badge, theme-icon, i18n, consent, learn (record mode)
+│       │                    #   naming, badge, theme-icon, i18n, consent, learn (record mode),
+│       │                    #   store, normalize, csv/qif (projections), retrieve, schedule,
+│       │                    #   autosync, configsync, outputs, esc, exthooks/grants
 │       ├── adapters/        # loader.js (built-in + community from storage.local, validated),
 │       │                    #   validate.js (schema + same-domain guard), carrefour-es.js,
 │       │                    #   (test-only skeletons live in extension/test/fixtures/, never shipped)
 │       ├── content/         # bridge.js (isolated) + hook.js (page): capture JWT+CSRF; learn-mode samples
-│       ├── runtime/         # inventory.js (declarative pager: offsets|page|cursor|none) + infer.js (auto-draft)
+│       ├── runtime/         # inventory.js + lister.js (declarative pager: offsets|offset|page|cursor|
+│       │                    #   none|years|synthetic) + infer.js/inferextras.js (auto-draft)
 │       ├── registry/        # share.js (export/import + PR) · client.js (index.json + ratings API)
-│       ├── sinks/           # sinks.js · format.js (schema-aware records) · drive.js
+│       ├── sinks/           # sinks.js · format.js (schema-aware records) · drive.js · dropbox.js · email.js
 │       └── ui/              # popup · options · author (record mode) · marketplace · theme.css
 ├── docs/                   # habeas.dev landing (GitHub Pages) + FUNCTIONAL-SPEC.md + CNAME
 ├── package.json            # npm scripts: lint/build/package via web-ext
@@ -156,6 +179,14 @@ scaffolding kept as design notes (safe to consolidate later).
   `streams` is a single implicit output (fully backward-compatible). WiZink is the reference multi-output
   source (one source = movimientos + extractos-PDF + extractos-Excel). Validation is **per output**
   (`validate.js#checkExtraction`).
+- **Auth gating** (`lib/autosync.js`) — beyond `auth.tokenMatch`/`replayHeaders`, a source can say *when*
+  it is safe to run. `auth.capturePaths` scopes which endpoint paths a token is captured from (Financiera
+  El Corte Inglés's rotating WSO2 bearer is only valid for `/dashboard/*`). `auth.readyUrl` (one pattern or
+  an array) holds an auto-run until the trigger URL matches the view where the data actually exists — ING's
+  movements only materialize once the PFM product view is open. `auth.readyStrict` additionally refuses
+  sweeps and manual runs from any other screen, for a source whose data view carries a per-session id
+  (Trade Republic's board). Strictness is **opt-in** on purpose: several sources declare a `readyUrl` and
+  still list fine from elsewhere, so it is not implied by `readyUrl` alone.
 - **Config** (`lib/config.js`, storage.local): `{datasources[], sinks[], routes[]}`. **Secrets**
   (`lib/secrets.js`, separate store, `secret://` refs). **Delivery ledger + activity log**
   (`lib/state.js`). Directory handles for local-folder in IndexedDB (`lib/fs.js`).
@@ -273,7 +304,10 @@ The LIVE catalog is a separate repo `git@github.com:habeas-dev/sources.git` (ser
 `habeas-dev.github.io/sources`) with its **own independent history** — **never subtree-split / force-push it**;
 publish by applying the changes in a clone and pushing **non-force (fast-forward)** (full steps in
 `docs/RELEASING.md`). Bump the source's `version` (compared lexicographically → the marketplace offers the
-update; `YYYY-MM-DD`, or `YYYY-MM-DD.N` same day). `minVersion` gates by extension version
+update; `YYYY-MM-DD`, or `YYYY-MM-DD.N` same day) — **except for prose**: `content`, `changelog`, `brand`,
+`credit` and `contributors` are the `PRESENTATION` set excluded from the `behaviourHash`, so a wording fix
+republishes under the SAME version (`check-versions.mjs` permits it) and reaches the site and marketplace
+without offering everyone a pointless update. `minVersion` gates by extension version
 (`lib/version.js#cmpVersion`); if a source needs a runtime feature only present in a newer build, set
 `minVersion` to that build so older installs stay gated.
 
@@ -290,11 +324,11 @@ update; `YYYY-MM-DD`, or `YYYY-MM-DD.N` same day). `minVersion` gates by extensi
 
 - ~~Stand up community infra~~ DONE: `habeas-dev/sources` (Pages, LIVE) + `api.habeas.dev`
   (Cloudflare Worker + D1, LIVE). Optional: add CF secrets to `habeas-dev/api` for CI auto-deploy.
-- **Author real sources** (ONGOING) — **11 published** so far (Carrefour, Dia, Hover, Decathlon,
-  Bip&Drive, Leroy Merlín, WiZink, CaixaBank Consumer, IKEA, Amazon, **ING España**), all API-verified
-  against real services. Keep going via record mode / community PRs (the fictional test fixtures must
-  never be published or shipped). Pending targets: obramat, AliExpress, Pepe Energy, Pepephone,
-  Financiera El Corte Inglés, Revolut, TradeRepublic, Openbank, Raisin, Telepizza.
+- **Author real sources** (ONGOING) — **24 published** (see Status above for the full list): 21
+  API-verified against real services + 3 experimental drafts flagged `beta: true` (American Express,
+  DEGIRO, N26) awaiting a real in-session capture from someone who holds the account. Keep going via
+  record mode / community PRs (the fictional test fixtures must never be published or shipped).
+  Pending targets: obramat, Telepizza.
 - **AEAT (Agencia Tributaria) — EVALUATED AND REJECTED** (2026-08-27), so nobody spends a capture on it
   again. The eTLD+1 rule is NOT the obstacle: `gob.es` is a public suffix, so every sede host shares
   `agenciatributaria.gob.es`. Three independent findings, any one of them sufficient:
@@ -328,9 +362,14 @@ update; `YYYY-MM-DD`, or `YYYY-MM-DD.N` same day). `minVersion` gates by extensi
 - ~~Harden dynamic HTML~~ DONE: all network/source/OS-derived values in `ui/popup.js` + `ui/options.js`
   now escaped via a single shared `lib/esc.js` (was 7 duplicated inline helpers). web-ext/AMO still
   flags `innerHTML` structurally, but no unescaped dynamic sink remains.
-- ~~AMO + Chrome Web Store submission~~ DONE: **published on both** (AMO approved/live; CWS live, a new
-  milestone waits its turn while the previous one is in review — `ITEM_NOT_UPDATABLE` until it clears).
+- ~~AMO + Chrome Web Store submission~~ DONE: **published on both**, and as of 2026-09 CWS review turns
+  around in ~a day (three consecutive milestones published 1–3 Sep without hitting `ITEM_NOT_UPDATABLE`;
+  that error only appears when a submission is queued behind one still in review). Verify what is actually
+  being served with `node scripts/cws-live-version.mjs pbpehhngeidokhaokgloaneiibhceiog`.
   Firefox Drive OAuth redirect still per-user. MV3 review note: `scripting` +
   `optional_host_permissions: https://*/*` (record mode) needed justification at store review.
+- **Microsoft Edge — submitted, NOT published.** `microsoftedge.microsoft.com/addons/detail/clcjdklighbiegknodicfogkeahjmaoa`
+  still 404s and the product API returns 404 (checked 2026-09-04). `scripts/build-edge.mjs` +
+  `scripts/edge-publish.mjs` exist for it. Do not link it publicly until the listing resolves.
 - **Consumers** — build the Tiquetera/Cuéntamo ingest endpoints (the `sink.normalize` canonical output +
   `record.extra` are ready on the Habeas side).
