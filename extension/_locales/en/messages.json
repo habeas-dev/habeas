@@ -3897,16 +3897,16 @@
     "message": "waiting for the source's own data page to be open"
   },
   "authz_query_intro": {
-    "message": "A website wants to SEARCH your Habeas documents and receive the ones you choose. Habeas shows the matches in its own window; only the documents you pick are sent to this destination — never the rest of your documents."
+    "message": "A website wants to SEARCH your Habeas documents. Matches are shown in Habeas's own window; for the ones you pick it receives only a reference to re-open them here — never their contents."
   },
   "authz_query_note": {
-    "message": "The destination is on the requesting site's own domain — your picks can only go back to it, server to server. The site never sees your documents, only what you hand over. Revoke anytime in Settings, Site integrations."
+    "message": "The reference goes to the requesting site's own domain, server to server. The site can re-open a picked document in Habeas, but never holds its contents. Revoke anytime in Settings, Site integrations."
   },
   "query_tagline": {
     "message": "Search & hand over"
   },
   "query_intro": {
-    "message": "$DEST$ asked to find matching documents. Pick the ones to send it — the rest stay with you.",
+    "message": "$DEST$ asked to find matching documents. Pick the ones to link — it gets a reference to re-open them here, not their contents.",
     "placeholders": {
       "dest": {
         "content": "$1"
@@ -3917,16 +3917,16 @@
     "message": "No matching documents found."
   },
   "query_note": {
-    "message": "Only the documents you tick are sent, to this site's own destination. It never sees the rest."
+    "message": "Only a reference to the documents you tick is sent, to this site's own destination. The documents themselves stay in Habeas."
   },
   "query_cancel": {
     "message": "Cancel"
   },
   "query_route": {
-    "message": "Send selected"
+    "message": "Link selected"
   },
   "query_route_n": {
-    "message": "Send $N$ selected",
+    "message": "Link $N$ selected",
     "placeholders": {
       "n": {
         "content": "$1"
@@ -3945,10 +3945,10 @@
     "message": "This request has expired. Ask the site to try again."
   },
   "query_routing": {
-    "message": "Sending…"
+    "message": "Linking…"
   },
   "query_done": {
-    "message": "Sent $N$. You can close this window.",
+    "message": "Linked $N$. You can close this window.",
     "placeholders": {
       "n": {
         "content": "$1"

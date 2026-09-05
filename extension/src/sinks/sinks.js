@@ -14,6 +14,20 @@ import { makeShardedStore, pathPrim } from '../lib/store/sharded.js';
 
 export function listSinkTypes() { return ['download', 'local-folder', 'drive', 'http', 'webdav', 's3', 'dropbox', 'email']; }
 
+// POST a bare `records` array to an http sink, with its pairing auth, and no files. Used by the `query`
+// read hook to deliver POINTERS (not document content) to a consumer's origin sink — the same wire shape
+// and Authorization the normal http sink uses, so the consumer's ingest reads it the same way. The caller
+// decides the record shape; nothing here reshapes it (unlike the manifest builders).
+export async function postRecordsToHttpSink(sink, records) {
+  const token = await getSecret(sink.tokenRef);
+  const form = new FormData();
+  form.append('records', JSON.stringify(records));
+  const headers = { ...(await resolveSinkExtraHeaders(sink)), ...(token ? { Authorization: 'Bearer ' + token } : {}) };
+  const res = await fetch(sink.url, { method: 'POST', headers, body: form });
+  if (!res.ok) throw new Error('http sink ' + res.status);
+  return await res.json().catch(() => ({}));
+}
+
 export async function writeToSink(sink, docs, files, opts = {}) {
   const impl = IMPL[sink.type];
   if (!impl) throw new Error('unknown sink type: ' + sink.type);

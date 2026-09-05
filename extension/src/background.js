@@ -20,7 +20,7 @@ import { usableSinks } from './lib/folderavail.js';
 import { claimOnce, settleOnce } from './lib/oncegate.js';
 import { beginRun, markPhase, endRun, takeUnfinishedRun } from './lib/runwatch.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
-import { writeToSink, readSinkRecords } from './sinks/sinks.js';
+import { writeToSink, readSinkRecords, postRecordsToHttpSink } from './sinks/sinks.js';
 import { recordDelivered, putItems, getRecords } from './lib/store.js';
 import { getHandle } from './lib/fs.js';
 import { nextOccurrence } from './lib/schedule.js';
@@ -498,23 +498,25 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true;
   }
-  if (msg.type === 'habeas:query-route' && msg.req && Array.isArray(msg.pick)) { // deliver the USER-picked docs to the consumer's origin sink (server-to-server)
+  if (msg.type === 'habeas:query-route' && msg.req && Array.isArray(msg.pick)) { // hand the consumer a POINTER to each USER-picked doc (never the content)
     (async () => {
       const o = await chrome.storage.session.get('queryreq:' + msg.req);
       const req = o['queryreq:' + msg.req];
       if (!req) return { ok: false, error: 'expired' };
-      // The picker is our own page, but the routing decision is security-relevant: verify the origin STILL
-      // holds a query grant against the grant store, don't trust it from the UI.
+      // The picker is our own page, but the decision to hand anything over is security-relevant: verify the
+      // origin STILL holds a query grant against the grant store, don't trust it from the UI.
       const grant = (await grantsForOrigin(req.origin)).find((g) => g.kind === 'query');
       if (!grantUsableBy(grant, req.origin)) return { ok: false, error: 'denied' };
       const cfg = await getConfig();
       const adapters = await getAdapters();
       const sink = (cfg.sinks || []).find((s) => s.id === req.sinkId);
       if (!sink) return { ok: false, error: 'no sink' };
-      // Group picks by source; each source delivers its own stored records to the one origin sink. The
-      // routed record is rebuilt from the store (the real one), never the UI's copy.
+      // Group picks by source. For each we send the consumer a POINTER — enough to remember the receipt
+      // exists and to re-open it later (via show-document or its own URL), but NOT its content: no amount,
+      // no lines, no counterparty beyond the merchant name. The document stays in Habeas.
       const bySource = new Map();
       for (const p of msg.pick) { if (!p || p.source == null || p.internalId == null) continue; (bySource.get(p.source) || bySource.set(p.source, []).get(p.source)).push(String(p.internalId)); }
+      const pointers = [];
       let routed = 0;
       for (const [sourceId, ids] of bySource) {
         const ds = (cfg.datasources || []).find((d) => d.id === sourceId);
@@ -522,15 +524,36 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         if (!ds || !adapter) continue;
         const wanted = new Set(ids);
         const streams = [...new Set(outputsOf(adapter).map((o) => o.stream))];
-        const docs = [];
+        const deliveredIds = [];
         for (const sid of streams) {
           const sk = storeKeyOf(storeIdOf(ds, adapter), sid);
           let recs; try { recs = await getRecords(sk, {}); } catch (e) { continue; }
-          for (const r of recs || []) { if (r.internalId != null && wanted.has(String(r.internalId))) docs.push({ internalId: r.internalId, record: r, stream: sid }); }
+          for (const r of recs || []) {
+            if (r.internalId == null || !wanted.has(String(r.internalId))) continue;
+            pointers.push({
+              _schema: 'purchase-pointer@1',
+              ref: req.ref,
+              source: ds.id,
+              merchantName: adapter.name || ds.id,
+              externalId: r.externalId != null ? r.externalId : (r.number != null ? r.number : null),
+              internalId: r.internalId,       // what show-document keys on to re-open it in Habeas
+              sourceUrl: r.sourceUrl || r.url || null,
+              date: r.date || null,
+              docType: r.type || null,
+            });
+            deliveredIds.push(r.internalId);
+          }
         }
-        if (!docs.length) continue;
-        const r = await sendStoredDocs(ds, adapter, sink, docs, { signal: startOp() });
-        routed += (r && r.sent) || 0;
+        if (!deliveredIds.length) continue;
+        // Mark delivered so a later show-document({source, internalId}) can re-open the full doc in
+        // Habeas's OWN viewer — the content is bounded to what the user handed a pointer for, and even then
+        // never crosses to the page. Only the pointer ledger, not the document, records this.
+        try { await markDelivered(ds.id, sink.id, deliveredIds); } catch (e) {}
+        routed += deliveredIds.length;
+      }
+      if (pointers.length) {
+        try { await postRecordsToHttpSink(sink, pointers); }
+        catch (e) { return { ok: false, error: (e && e.message) || String(e) }; }
       }
       await touchGrant(grant.id, new Date().toISOString());
       await appendLog({ kind: 'ext-query-route', origin: req.origin, sink: originHost(req.origin), status: 'ok', count: routed });
@@ -1459,7 +1482,11 @@ async function queryForGrant(origin, payload) {
     if (!sink) return { ok: false, status: 'denied' }; // routing target gone → refuse identically, reveal nothing
     await touchGrant(grant.id, new Date().toISOString());
     const reqId = 'q_' + crypto.randomUUID();
-    await chrome.storage.session.set({ ['queryreq:' + reqId]: { origin, sinkId, query: sanitizeQuery(payload && payload.query), at: Date.now() } });
+    // `ref` is an OPAQUE correlation token the consumer supplies (e.g. the id of the movement it is
+    // asking about). Habeas doesn't interpret it — it just hands it back with the pointer so the consumer
+    // can link the pick to its own context. Capped; never parsed.
+    const ref = typeof (payload && payload.ref) === 'string' ? payload.ref.slice(0, 200) : undefined;
+    await chrome.storage.session.set({ ['queryreq:' + reqId]: { origin, sinkId, ref, query: sanitizeQuery(payload && payload.query), at: Date.now() } });
     const url = chrome.runtime.getURL('src/ui/query.html?req=' + reqId);
     try { await chrome.windows.create({ url, type: 'popup', width: 640, height: 660 }); }
     catch (e) { try { await chrome.tabs.create({ url }); } catch (e2) {} }

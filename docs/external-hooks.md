@@ -249,20 +249,21 @@ it is the same set the user sees in Habeas. Revocable anytime under **Settings �
 
 Full spec (schema, status semantics, polling helper, security model): [`list-sources.md`](list-sources.md).
 
-## E. Search the user's documents and receive the ones they pick (`query`)
+## E. Search the user's documents and get a pointer to the ones they pick (`query`)
 
 Ask Habeas to **search** the user's own documents (any schema — receipts, invoices, transactions,
-investments) for ones matching a filter, and receive the records **the user chooses to hand over**. It
-is the read vein — but there is **no channel out to your page**: the matches are shown in **Habeas's own
-window**, your page only ever learns `{ status:'shown' }`, and only the documents the user ticks are
-delivered — to your origin-bound destination, server to server, exactly like a collection. Your page
-never sees the candidates, the count, or anything the user doesn't pick.
+investments) for ones matching a filter. The matches are shown in **Habeas's own window**; for the ones
+the user picks, you receive **only a pointer** — enough to remember the document exists and to re-open it
+later, **never its contents**. There is no channel out to your page: it only ever learns
+`{ status:'shown' }` (identical whether zero or many matched, so it can't probe what a user owns), and the
+document itself stays in Habeas.
 
 ```js
 // First call from a new origin opens Habeas's consent screen (and registers your destination if you
 // pass one, or reuses the one you already registered). Retry once allowed.
 let res = await habeas('query', {
   sink: { type: 'http', url: 'https://yourapp.example/ingest' }, // omit if already registered
+  ref: 'txn_abc123',              // opaque; Habeas hands it back with the pointer so you can link the pick
   query: {
     source: 'amazon.es',          // optional — restrict to one source
     dateFrom: '2026-08-13',       // optional — booked-date range (YYYY-MM-DD)
@@ -277,12 +278,21 @@ let res = await habeas('query', {
 // once allowed → { ok:true, status:'shown' }      (Habeas opened its picker; the user chooses there)
 ```
 
-The user picks inside Habeas; the selected documents arrive at your `ingest` endpoint like any other
-routed records (see **B. Request collection** for the delivery shape and the per-record acknowledgment).
-The response is deliberately uniform — `shown` whether zero or many matched, `denied` whether the origin
-lacks a grant or the destination is gone — so it can never be used to probe what a user owns. Bounded by
-the user in the loop: nothing leaves without an explicit tick. Revocable under **Settings → Site
-integrations**.
+For each document the user ticks, Habeas POSTs a **pointer** to your origin-bound destination (server to
+server, same auth as a collection), shaped:
+
+```json
+{ "_schema": "purchase-pointer@1", "ref": "txn_abc123", "source": "amazon.es",
+  "merchantName": "Amazon", "externalId": "405-1234567-8901234", "internalId": "…",
+  "sourceUrl": "https://…", "date": "2026-08-14", "docType": "order" }
+```
+
+No amount, no line items, no counterparty beyond the merchant name. Match it to your own context by
+`ref`. **To re-open the document later**, call `show-document` with its `{ source, internalId }` — Habeas
+displays it in its **own** viewer (the contents never cross to you); if the user keeps no re-readable
+archive, fall back to opening `sourceUrl`. The `query` response is deliberately uniform — `shown` whether
+zero or many matched, `denied` whether the origin lacks a grant or the destination is gone. Bounded by the
+user in the loop: nothing leaves without an explicit tick. Revocable under **Settings → Site integrations**.
 
 ## What Habeas will never do
 
