@@ -84,3 +84,46 @@ test('enabledSources returns only enabled datasources, as public metadata (no ac
   assert.equal(enabledSources({}, adapters).length, 0);
   assert.equal(enabledSources(null, null).length, 0);
 });
+
+test('sanitizeQuery: caps strings, keeps numbers, drops junk', async () => {
+  const { sanitizeQuery } = await import('../src/lib/exthooks.js');
+  const q = sanitizeQuery({
+    schema: 'receipt', source: 'amazon.es', text: 'x'.repeat(500),
+    dateFrom: '2026-08-13', dateTo: '2026-08-25', amount: -47.85, amountTolerance: 0.02,
+    currency: 'EUR', evil: 'ignored', amountEvil: NaN,
+  });
+  assert.equal(q.schema, 'receipt');
+  assert.equal(q.source, 'amazon.es');
+  assert.equal(q.text.length, 200, 'free text capped');
+  assert.equal(q.amount, -47.85);
+  assert.equal(q.amountTolerance, 0.02);
+  assert.equal('evil' in q, false, 'unexpected keys dropped');
+  const bad = sanitizeQuery({ amount: 'not-a-number', dateFrom: 123 });
+  assert.equal(bad.amount, undefined, 'non-numeric amount dropped');
+  assert.equal(bad.dateFrom, undefined, 'non-string date dropped');
+  assert.deepEqual(sanitizeQuery(null), sanitizeQuery({}), 'null query is the empty query');
+});
+
+test('queryAccepts: date range, absolute-amount tolerance, free text', async () => {
+  const { queryAccepts } = await import('../src/lib/exthooks.js');
+  const rec = { date: '2026-08-15T09:00:00Z', total: 47.85, currency: 'EUR', number: 'A-1', description: 'Books' };
+
+  // A consumer's SIGNED charge (-47.85) matches a receipt's positive total: absolute value + tolerance.
+  assert.ok(queryAccepts(rec, { amount: -47.85, amountTolerance: 0.02 }, 'Amazon'));
+  assert.ok(queryAccepts(rec, { amount: -47.86, amountTolerance: 0.02 }, 'Amazon'), 'within tolerance');
+  assert.ok(!queryAccepts(rec, { amount: -47.90, amountTolerance: 0.02 }, 'Amazon'), 'outside tolerance rejected');
+
+  // Date range (booked-date string compare).
+  assert.ok(queryAccepts(rec, { dateFrom: '2026-08-13', dateTo: '2026-08-25' }, ''));
+  assert.ok(!queryAccepts(rec, { dateFrom: '2026-08-16' }, ''), 'before range rejected');
+  assert.ok(!queryAccepts(rec, { dateTo: '2026-08-14' }, ''), 'after range rejected');
+
+  // Free text hits counterparty, description or number; case-insensitive.
+  assert.ok(queryAccepts(rec, { text: 'amaz' }, 'Amazon'), 'matches counterparty');
+  assert.ok(queryAccepts(rec, { text: 'books' }, 'Amazon'), 'matches description');
+  assert.ok(!queryAccepts(rec, { text: 'zzz' }, 'Amazon'), 'no match rejected');
+
+  // Empty query accepts anything; a missing record never matches.
+  assert.ok(queryAccepts(rec, {}, ''));
+  assert.ok(!queryAccepts(null, { amount: 1 }, ''));
+});

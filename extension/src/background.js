@@ -34,7 +34,8 @@ import { badgeWorking, badgeCount, badgeError, badgeClear, badgeRecording, setSt
 import { t } from './lib/i18n.js';
 import { getSubmitter } from './lib/submitter.js';
 import { getMyHandoffs } from './registry/client.js';
-import { validateProposal, validateSink, originHost, enabledSources, sinkIdForOrigin } from './lib/exthooks.js';
+import { validateProposal, validateSink, originHost, enabledSources, sinkIdForOrigin, sanitizeQuery, queryAccepts } from './lib/exthooks.js';
+import { canonicalize } from './lib/normalize.js';
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant, revokeGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
 import { runStoreMigration } from './lib/migrate.js';
@@ -486,6 +487,56 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       return { ok: true, ...r };
     })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
     return true; // async response
+  }
+  if (msg.type === 'habeas:query-candidates' && msg.req) { // Habeas's OWN picker asks for the candidates of a stored query request (never reaches the consumer page)
+    (async () => {
+      const o = await chrome.storage.session.get('queryreq:' + msg.req);
+      const req = o['queryreq:' + msg.req];
+      if (!req) return { ok: false, error: 'expired' };
+      const candidates = await searchStoreCandidates(req.query);
+      return { ok: true, origin: req.origin, dest: originHost(req.origin), candidates };
+    })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
+    return true;
+  }
+  if (msg.type === 'habeas:query-route' && msg.req && Array.isArray(msg.pick)) { // deliver the USER-picked docs to the consumer's origin sink (server-to-server)
+    (async () => {
+      const o = await chrome.storage.session.get('queryreq:' + msg.req);
+      const req = o['queryreq:' + msg.req];
+      if (!req) return { ok: false, error: 'expired' };
+      // The picker is our own page, but the routing decision is security-relevant: verify the origin STILL
+      // holds a query grant against the grant store, don't trust it from the UI.
+      const grant = (await grantsForOrigin(req.origin)).find((g) => g.kind === 'query');
+      if (!grantUsableBy(grant, req.origin)) return { ok: false, error: 'denied' };
+      const cfg = await getConfig();
+      const adapters = await getAdapters();
+      const sink = (cfg.sinks || []).find((s) => s.id === req.sinkId);
+      if (!sink) return { ok: false, error: 'no sink' };
+      // Group picks by source; each source delivers its own stored records to the one origin sink. The
+      // routed record is rebuilt from the store (the real one), never the UI's copy.
+      const bySource = new Map();
+      for (const p of msg.pick) { if (!p || p.source == null || p.internalId == null) continue; (bySource.get(p.source) || bySource.set(p.source, []).get(p.source)).push(String(p.internalId)); }
+      let routed = 0;
+      for (const [sourceId, ids] of bySource) {
+        const ds = (cfg.datasources || []).find((d) => d.id === sourceId);
+        const adapter = ds && adapters[ds.adapter];
+        if (!ds || !adapter) continue;
+        const wanted = new Set(ids);
+        const streams = [...new Set(outputsOf(adapter).map((o) => o.stream))];
+        const docs = [];
+        for (const sid of streams) {
+          const sk = storeKeyOf(storeIdOf(ds, adapter), sid);
+          let recs; try { recs = await getRecords(sk, {}); } catch (e) { continue; }
+          for (const r of recs || []) { if (r.internalId != null && wanted.has(String(r.internalId))) docs.push({ internalId: r.internalId, record: r, stream: sid }); }
+        }
+        if (!docs.length) continue;
+        const r = await sendStoredDocs(ds, adapter, sink, docs, { signal: startOp() });
+        routed += (r && r.sent) || 0;
+      }
+      await touchGrant(grant.id, new Date().toISOString());
+      await appendLog({ kind: 'ext-query-route', origin: req.origin, sink: originHost(req.origin), status: 'ok', count: routed });
+      return { ok: true, routed };
+    })().then(sendResponse, (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
+    return true;
   }
   if (msg.type === 'habeas:sched-run' && msg.id) { onScheduleAlarm(msg.id).then(() => sendResponse({ ok: true }), (e) => sendResponse({ ok: false, error: (e && e.message) || String(e) })); return true; } // run a schedule now
   if (msg.type === 'habeas:auth' && msg.host) {
@@ -1242,6 +1293,7 @@ async function handleExt(api, payload, origin) {
   if (api === 'collect') return collectForGrant(origin, payload);
   if (api === 'list-groups') return listGroupsForGrant(origin, payload);
   if (api === 'list-sources') return listSourcesForOrigin(origin);
+  if (api === 'query') return queryForGrant(origin, payload);
   if (api === 'status') return extStatus(origin);
   if (api === 'show-document') return showDocumentForOrigin(origin, payload);
   if (api === 'revoke-grant') return revokeGrantForOrigin(origin, payload);
@@ -1357,6 +1409,91 @@ async function listSourcesForOrigin(origin) {
   catch (e) { try { await chrome.tabs.create({ url }); } catch (e2) {} }
   await chrome.storage.session.set({ [pendKey]: { reqId, at: Date.now(), windowId: (win && win.id != null) ? win.id : null } });
   await appendLog({ kind: 'authz-listsources', origin, status: 'pending' });
+  return { ok: true, status: 'pending' };
+}
+
+// Search the user's canonical store for records matching a consumer's query. Runs ONLY in the background
+// / Habeas's own picker (never returns to the requesting page). Spans the enabled sources; the query
+// narrows by source, free text (counterparty/description/number), date range and amount±tolerance
+// (via the pure `queryAccepts`). Projected through `canonicalize` to a bounded field set, capped so a
+// wide query can't stall.
+async function searchStoreCandidates(query) {
+  const [cfg, adapters] = await Promise.all([getConfig(), getAdapters()]);
+  const q = query || {};
+  const wantSource = (q.source || '').toLowerCase();
+  const accepts = (r) => queryAccepts(r, q, r ? canonicalize(r).counterparty : '');
+  const out = [];
+  const CAP = 60;
+  for (const ds of (cfg.datasources || [])) {
+    if (!ds || !ds.enabled) continue;
+    const adapter = adapters[ds.adapter];
+    if (!adapter) continue;
+    if (wantSource && ds.id.toLowerCase() !== wantSource && String(adapter.id || '').toLowerCase() !== wantSource) continue;
+    const streams = [...new Set(outputsOf(adapter).map((o) => o.stream))];
+    for (const sid of streams) {
+      const sk = storeKeyOf(storeIdOf(ds, adapter), sid);
+      let recs; try { recs = await getRecords(sk, { accepts }); } catch (e) { continue; }
+      for (const r of recs || []) {
+        if (r.internalId == null) continue;
+        const c = canonicalize(r);
+        out.push({ source: ds.id, sourceName: adapter.name || ds.id, stream: sid, internalId: r.internalId, date: c.date, amount: c.amount, currency: c.currency, counterparty: c.counterparty, category: c.category, number: c.number, type: c.type });
+        if (out.length >= CAP) return out;
+      }
+    }
+  }
+  return out;
+}
+
+// A consumer asks Habeas to SEARCH the user's canonical store and route the records the user picks back to
+// the consumer's own origin-bound sink. The read vein — but with NO channel out to the page: candidates are
+// shown in Habeas's OWN picker window (like show-document), the page only ever learns `{status:'shown'}`
+// (identical whether 0 or many matched, so it can't be used as an oracle), and only the documents the USER
+// selects are delivered — server-to-server through the already-consented sink, never through page JS.
+// Generic over every schema in the store; Cuéntamo's purchase-justificante case is one caller.
+async function queryForGrant(origin, payload) {
+  const grant = (await grantsForOrigin(origin)).find((g) => g.kind === 'query');
+  if (grant) {
+    const cfg = await getConfig();
+    const sinkId = grant.sinkId || sinkIdForOrigin(origin);
+    const sink = (cfg.sinks || []).find((s) => s.id === sinkId);
+    if (!sink) return { ok: false, status: 'denied' }; // routing target gone → refuse identically, reveal nothing
+    await touchGrant(grant.id, new Date().toISOString());
+    const reqId = 'q_' + crypto.randomUUID();
+    await chrome.storage.session.set({ ['queryreq:' + reqId]: { origin, sinkId, query: sanitizeQuery(payload && payload.query), at: Date.now() } });
+    const url = chrome.runtime.getURL('src/ui/query.html?req=' + reqId);
+    try { await chrome.windows.create({ url, type: 'popup', width: 640, height: 660 }); }
+    catch (e) { try { await chrome.tabs.create({ url }); } catch (e2) {} }
+    await appendLog({ kind: 'ext-query', origin, status: 'shown' });
+    return { ok: true, status: 'shown' }; // a picker was opened — the count never leaves Habeas
+  }
+  // No grant yet → open the consent screen, deduped per origin so polling can't stack windows.
+  const pendKey = 'extq:' + origin;
+  const o = await chrome.storage.session.get(pendKey);
+  const pend = o[pendKey];
+  if (pend && pend.windowId != null) {
+    try { await chrome.windows.get(pend.windowId); return { ok: true, status: 'pending' }; } catch (e) { /* window gone → open a new one */ }
+  }
+  // Reuse an already-registered origin sink if the consumer omits one; else require a valid origin-bound
+  // sink proposal (validateSink enforces host === origin: a site can only route data back to itself).
+  const cfg = await getConfig();
+  const existing = (cfg.sinks || []).find((s) => s.id === sinkIdForOrigin(origin));
+  let sinkForReq = null;
+  if (existing) sinkForReq = { url: existing.url };
+  else if (payload && payload.sink) {
+    const v = validateSink(origin, payload.sink);
+    if (!v.ok) return { ok: false, status: 'error', error: v.error };
+    sinkForReq = { url: payload.sink.url, ...(payload.sink.name ? { name: payload.sink.name } : {}), ...(payload.sink.headers ? { headers: payload.sink.headers } : {}) };
+  } else {
+    return { ok: false, status: 'error', error: 'no destination: register one first or include a sink' };
+  }
+  const reqId = 'qz_' + crypto.randomUUID();
+  await chrome.storage.session.set({ ['extreq:' + reqId]: { kind: 'query', origin, sink: sinkForReq, at: Date.now() } });
+  const url = chrome.runtime.getURL('src/ui/authorize.html?req=' + reqId);
+  let win = null;
+  try { win = await chrome.windows.create({ url, type: 'popup', width: 540, height: 560 }); }
+  catch (e) { try { await chrome.tabs.create({ url }); } catch (e2) {} }
+  await chrome.storage.session.set({ [pendKey]: { reqId, at: Date.now(), windowId: (win && win.id != null) ? win.id : null } });
+  await appendLog({ kind: 'authz-query', origin, status: 'pending' });
   return { ok: true, status: 'pending' };
 }
 

@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Habeas · Search</title>
+  <link rel="stylesheet" href="theme.css" />
+  <style>
+    body { min-width: 480px; max-width: 640px; }
+    .muted { color: var(--muted); }
+    .warn { color: #c0392b; }
+    #list { margin: 12px 0; display: flex; flex-direction: column; gap: 6px; max-height: 380px; overflow: auto; }
+    .cand { display: grid; grid-template-columns: 24px 1fr auto; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--border, #0002); border-radius: 8px; }
+    .cand:hover { background: #00000008; }
+    .cand .cp { font-weight: 600; }
+    .cand .meta { font-size: 12px; }
+    .cand .amt { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+    [hidden] { display: none !important; }
+    @media (prefers-color-scheme: dark) { .cand:hover { background: #ffffff10; } }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <img class="logo" src="../../icon-dark-128.png" alt="" />
+    <div class="brandwrap"><span class="brand">Habeas</span><span class="tagline" data-i18n="query_tagline"></span></div>
+  </div>
+  <div class="app">
+    <div class="card">
+      <p id="intro"></p>
+      <div id="empty" class="muted" hidden data-i18n="query_empty"></div>
+      <div id="list"></div>
+      <div class="row" style="margin-top:6px;justify-content:space-between;align-items:center">
+        <span id="count" class="muted"></span>
+        <div class="row" style="gap:8px">
+          <button id="cancel" data-i18n="query_cancel"></button>
+          <button id="route" class="primary" disabled></button>
+        </div>
+      </div>
+      <p class="muted" id="note" data-i18n="query_note" style="margin-top:10px"></p>
+      <div id="status" class="muted" style="margin-top:8px"></div>
+    </div>
+  </div>
+  <script type="module" src="query.js"></script>
+</body>
+</html>

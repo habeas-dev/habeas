@@ -3895,5 +3895,67 @@
   },
   "st_notready": {
     "message": "esperando a que esté abierta la página de datos de la fuente"
+  },
+  "authz_query_intro": {
+    "message": "Una web quiere BUSCAR en tus documentos de Habeas y recibir los que tú elijas. Habeas muestra las coincidencias en su propia ventana; solo se envían a este destino los documentos que selecciones, nunca el resto de tus documentos."
+  },
+  "authz_query_note": {
+    "message": "El destino está en el propio dominio del sitio que lo pide: tus elecciones solo pueden volver a él, de servidor a servidor. El sitio nunca ve tus documentos, solo lo que le entregas. Revócalo cuando quieras en Ajustes, Integraciones de sitios."
+  },
+  "query_tagline": {
+    "message": "Buscar y entregar"
+  },
+  "query_intro": {
+    "message": "$DEST$ pidió buscar documentos que encajen. Elige los que enviarle; el resto se quedan contigo.",
+    "placeholders": {
+      "dest": {
+        "content": "$1"
+      }
+    }
+  },
+  "query_empty": {
+    "message": "No se encontraron documentos que encajen."
+  },
+  "query_note": {
+    "message": "Solo se envían los documentos que marques, al destino del propio sitio. Nunca ve el resto."
+  },
+  "query_cancel": {
+    "message": "Cancelar"
+  },
+  "query_route": {
+    "message": "Enviar selección"
+  },
+  "query_route_n": {
+    "message": "Enviar $N$ seleccionados",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "query_found": {
+    "message": "$N$ encontrados",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "query_expired": {
+    "message": "Esta petición ha caducado. Pide al sitio que lo intente de nuevo."
+  },
+  "query_routing": {
+    "message": "Enviando…"
+  },
+  "query_done": {
+    "message": "Enviados $N$. Puedes cerrar esta ventana.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "query_error": {
+    "message": "No se pudo enviar. Inténtalo de nuevo."
   }
 }

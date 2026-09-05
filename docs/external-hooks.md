@@ -249,6 +249,41 @@ it is the same set the user sees in Habeas. Revocable anytime under **Settings �
 
 Full spec (schema, status semantics, polling helper, security model): [`list-sources.md`](list-sources.md).
 
+## E. Search the user's documents and receive the ones they pick (`query`)
+
+Ask Habeas to **search** the user's own documents (any schema — receipts, invoices, transactions,
+investments) for ones matching a filter, and receive the records **the user chooses to hand over**. It
+is the read vein — but there is **no channel out to your page**: the matches are shown in **Habeas's own
+window**, your page only ever learns `{ status:'shown' }`, and only the documents the user ticks are
+delivered — to your origin-bound destination, server to server, exactly like a collection. Your page
+never sees the candidates, the count, or anything the user doesn't pick.
+
+```js
+// First call from a new origin opens Habeas's consent screen (and registers your destination if you
+// pass one, or reuses the one you already registered). Retry once allowed.
+let res = await habeas('query', {
+  sink: { type: 'http', url: 'https://yourapp.example/ingest' }, // omit if already registered
+  query: {
+    source: 'amazon.es',          // optional — restrict to one source
+    dateFrom: '2026-08-13',       // optional — booked-date range (YYYY-MM-DD)
+    dateTo:   '2026-08-25',
+    amount: -47.85,               // optional — matched on ABSOLUTE value ± tolerance
+    amountTolerance: 0.02,        //            (so your signed charge matches a positive receipt total)
+    text: 'amazon',               // optional — free text over counterparty / description / number
+    currency: 'EUR',
+  },
+});
+// first time   → { ok:true, status:'pending' }   (Habeas opened its consent screen; retry shortly)
+// once allowed → { ok:true, status:'shown' }      (Habeas opened its picker; the user chooses there)
+```
+
+The user picks inside Habeas; the selected documents arrive at your `ingest` endpoint like any other
+routed records (see **B. Request collection** for the delivery shape and the per-record acknowledgment).
+The response is deliberately uniform — `shown` whether zero or many matched, `denied` whether the origin
+lacks a grant or the destination is gone — so it can never be used to probe what a user owns. Bounded by
+the user in the loop: nothing leaves without an explicit tick. Revocable under **Settings → Site
+integrations**.
+
 ## What Habeas will never do
 
 - Send your users' data anywhere but your own origin.

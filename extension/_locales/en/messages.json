@@ -3895,5 +3895,67 @@
   },
   "st_notready": {
     "message": "waiting for the source's own data page to be open"
+  },
+  "authz_query_intro": {
+    "message": "A website wants to SEARCH your Habeas documents and receive the ones you choose. Habeas shows the matches in its own window; only the documents you pick are sent to this destination — never the rest of your documents."
+  },
+  "authz_query_note": {
+    "message": "The destination is on the requesting site's own domain — your picks can only go back to it, server to server. The site never sees your documents, only what you hand over. Revoke anytime in Settings, Site integrations."
+  },
+  "query_tagline": {
+    "message": "Search & hand over"
+  },
+  "query_intro": {
+    "message": "$DEST$ asked to find matching documents. Pick the ones to send it — the rest stay with you.",
+    "placeholders": {
+      "dest": {
+        "content": "$1"
+      }
+    }
+  },
+  "query_empty": {
+    "message": "No matching documents found."
+  },
+  "query_note": {
+    "message": "Only the documents you tick are sent, to this site's own destination. It never sees the rest."
+  },
+  "query_cancel": {
+    "message": "Cancel"
+  },
+  "query_route": {
+    "message": "Send selected"
+  },
+  "query_route_n": {
+    "message": "Send $N$ selected",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "query_found": {
+    "message": "$N$ found",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "query_expired": {
+    "message": "This request has expired. Ask the site to try again."
+  },
+  "query_routing": {
+    "message": "Sending…"
+  },
+  "query_done": {
+    "message": "Sent $N$. You can close this window.",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "query_error": {
+    "message": "Couldn't send. Please try again."
   }
 }
