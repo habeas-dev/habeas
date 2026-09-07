@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>How to download your PayPal transaction history — Habeas</title>
-  <meta name="description" content="PayPal does let you download activity reports, but they arrive separately from everything else you are trying to keep, and pulling them regularly is a manual chore you have to remember. Habeas downloads them from inside your own browser session, without ever storing your password." />
+  <meta name="description" content="Download your whole PayPal transaction history — every payment sent and received — from your own browser session, with no password stored." />
   <link rel="canonical" href="https://habeas.dev/download/paypal-transactions.html" />
   <link rel="alternate" hreflang="en" href="https://habeas.dev/download/paypal-transactions.html" />
   <link rel="alternate" hreflang="es" href="https://habeas.dev/es/descargar/movimientos-paypal.html" />
@@ -60,7 +60,7 @@
   <meta property="og:type" content="article" />
   <meta property="og:url" content="https://habeas.dev/download/paypal-transactions.html" />
   <meta property="og:title" content="How to download your PayPal transaction history — Habeas" />
-  <meta property="og:description" content="PayPal does let you download activity reports, but they arrive separately from everything else you are trying to keep, and pulling them regularly is a manual chore you have to remember. Habeas downloads them from inside your own browser session, without ever storing your password." />
+  <meta property="og:description" content="Download your whole PayPal transaction history — every payment sent and received — from your own browser session, with no password stored." />
   <meta property="og:image" content="https://habeas.dev/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -72,6 +72,14 @@
   "@type": "FAQPage",
   "inLanguage": "en",
   "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is PayPal activity the same as my transaction history?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. PayPal calls it Activity in its own menus, while most people search for their transaction history, purchase history or order history. It is the same record: every payment in and out of your account, in both directions. Habeas reads that record, so whichever name you know it by, that is what you get."
+      }
+    },
     {
       "@type": "Question",
       "name": "How far back do PayPal records go?",
@@ -223,7 +231,7 @@
   "@type": "TechArticle",
   "inLanguage": "en",
   "headline": "Download all your PayPal transaction history at once",
-  "description": "PayPal does let you download activity reports, but they arrive separately from everything else you are trying to keep, and pulling them regularly is a manual chore you have to remember. Habeas downloads them from inside your own browser session, without ever storing your password.",
+  "description": "Download your whole PayPal transaction history — every payment sent and received — from your own browser session, with no password stored.",
   "mainEntityOfPage": {
     "@type": "WebPage",
     "@id": "https://habeas.dev/download/paypal-transactions.html"
@@ -505,6 +513,8 @@
 
 
     <h2>Frequently asked questions</h2>
+    <h3>Is PayPal activity the same as my transaction history?</h3>
+    <p>Yes. PayPal calls it Activity in its own menus, while most people search for their transaction history, purchase history or order history. It is the same record: every payment in and out of your account, in both directions. Habeas reads that record, so whichever name you know it by, that is what you get.</p>
     <h3>How far back do PayPal records go?</h3>
     <p>As far back as your own account does. Unlike services that cut you off after three or five years, there is no retention cliff here: the query takes a wide date window and walks a cursor until the history runs out. What usually limits people is the range they pick on the export screen, not the record itself.</p>
     <h3>How do I download my PayPal purchase history?</h3>

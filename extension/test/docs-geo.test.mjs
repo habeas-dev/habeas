@@ -280,3 +280,37 @@ test('one person credited for both roles is named once', () => {
     }
   }
 });
+
+// Google cuts a result snippet around 155 characters, and a description assembled from the intro's first
+// sentence routinely runs well past it — so the reason to click is truncated away. It is worst where the
+// intro opens by conceding what the service already does ("PayPal does let you download activity
+// reports, but…"): the concession becomes the entire snippet. `desc` in source-pages.json overrides that.
+// The three places a description is emitted must agree, or the snippet and the structured data tell a
+// reader two different things about the same page.
+test('a guide given its own description uses it everywhere, within the snippet budget', () => {
+  const overrides = JSON.parse(read('docs/source-pages.json'));
+  const slugs = JSON.parse(read('docs/guides.json'));
+  const unescape = (s) => s.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  const DIR = { en: 'docs/download', es: 'docs/es/descargar' };
+  let checked = 0;
+  for (const [id, entry] of Object.entries(overrides)) {
+    if (id.startsWith('_')) continue;
+    for (const lang of Object.keys(DIR)) {
+      const desc = entry?.[lang]?.desc;
+      const slug = slugs[id]?.[lang];
+      if (!desc || !slug) continue;
+      const f = `${DIR[lang]}/${slug}.html`;
+      if (!existsSync(join(ROOT, f))) continue;
+      assert.ok(desc.length <= 155, `${f}: description is ${desc.length} chars, past the ~155 Google renders`);
+      const h = read(f);
+      for (const re of [/<meta name="description" content="([^"]*)"/,
+                        /<meta property="og:description" content="([^"]*)"/]) {
+        const m = h.match(re);
+        assert.ok(m, `${f}: no description emitted`);
+        assert.equal(unescape(m[1]), desc, `${f}: emitted description is not the declared one`);
+      }
+      checked++;
+    }
+  }
+  assert.ok(checked > 0, 'no guide declares its own description — the override has stopped being wired up');
+});

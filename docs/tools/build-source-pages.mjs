@@ -281,7 +281,12 @@ function page({ lang, meta, full, entry, siblings, isBeta }) {
   // while the extraction is unverified would be selling something that may not exist; and structured data
   // is a claim made to a machine, so an unrun procedure gets no HowTo and no FAQ.
   const robots = isBeta ? '\n  <meta name="robots" content="noindex,follow" />' : '';
-  const desc = `${copy.intro.split('.')[0]}. ${t.descTail}`;
+  // Google cuts a snippet around 155 characters, and the intro's first sentence is routinely longer than
+  // that — so the description gets truncated mid-thought and the reason to click never renders. It is worse
+  // where the intro opens by conceding what the service already does ("PayPal does let you download activity
+  // reports, but…"): the concession IS the whole snippet. `desc` lets a page state the result in one line.
+  // Without one the derived sentence stands, so a page that has not been given a `desc` is unaffected.
+  const desc = copy.desc || `${copy.intro.split('.')[0]}. ${t.descTail}`;
 
   const rows = outputs.map((o) => {
     const what = schemaText(L, lang, o.schema);
