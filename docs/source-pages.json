@@ -478,12 +478,24 @@
     }
   },
   "pepeenergy-es": {
+    "en": {
+      "desc": "Download years of Pepe Energy bills as PDF in one pass — for a tax return, a subsidy or comparing consumption. No password stored."
+    },
+    "es": {
+      "desc": "Descarga años de facturas de Pepe Energy en PDF de una sola vez: para la declaración, una ayuda o comparar consumos. Sin guardar tu contraseña."
+    },
     "mark": {
       "initials": "PE",
       "tint": "#CC0000"
     }
   },
   "pepephone-es": {
+    "en": {
+      "desc": "Download every Pepephone monthly bill as PDF in one pass instead of one at a time, from your own browser session. No password stored."
+    },
+    "es": {
+      "desc": "Descarga de una vez todas tus facturas mensuales de Pepephone en PDF, en lugar de una a una, desde tu propia sesión. Sin guardar tu contraseña."
+    },
     "mark": {
       "initials": "PP",
       "tint": "#E30613"
