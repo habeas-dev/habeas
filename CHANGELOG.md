@@ -10,6 +10,19 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.10.7] — 2026-09-07
+
+### Added
+- **A website can ask to *search* your documents and receive only a pointer to the ones you pick.** The new
+  `query` hook is the read counterpart to the existing collection hooks: a consumer (Cuéntamo's
+  "justificantes" feature is the first) asks Habeas to find documents matching a movement — by date, amount
+  (±a tolerance, so a signed charge matches a receipt's positive total) or free text — and Habeas shows the
+  candidates **in its own window**, never on the asking site. Only the documents you tick are handed over,
+  and only as a pointer: the merchant, the date, an id to re-open it — never the amount, the line items, or
+  the contents. The document stays in Habeas. It is grant-gated and origin-bound like every other hook: a
+  site can only ever route your data back to itself, and you can revoke it under Settings → Site
+  integrations. Works for any document in your archive, not just receipts.
+
 ## [0.10.6] — 2026-09-02
 
 ### Added
