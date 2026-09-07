@@ -6,7 +6,10 @@ const KEY = 'habeas:state';
 
 async function getState() {
   const o = await chrome.storage.local.get(KEY);
-  return o[KEY] || { delivered: {} };
+  const st = o[KEY] || {};
+  if (!st.delivered) st.delivered = {};
+  if (!st.pointed) st.pointed = {}; // pointer handovers (query hook) — SEPARATE from content delivery, see markPointed
+  return st;
 }
 function keyFor(datasourceId, sinkId) { return datasourceId + '::' + sinkId; }
 
@@ -39,6 +42,39 @@ export async function forgetDeliveredItems(datasourceId, sinkId, ids) {
   if (!set) return;
   for (const id of ids || []) delete set[String(id)];
   await chrome.storage.local.set({ [KEY]: st });
+}
+
+// POINTER ledger — records that a document was handed to a consumer as a POINTER (the `query` read hook),
+// NOT as content. Kept apart from the content ledger on purpose: `deliveredSet` drives what the collect
+// path skips as already-sent, and a pointer must never suppress a real content delivery. show-document
+// authorizes on EITHER ledger (a doc the consumer may re-open is one it was given a pointer for OR received
+// as content). Same "<datasource>::<sink>" key, its own map.
+export async function pointedSet(datasourceId, sinkId) {
+  const st = await getState();
+  return st.pointed[keyFor(datasourceId, sinkId)] || {};
+}
+
+export async function markPointed(datasourceId, sinkId, internalIds) {
+  const st = await getState();
+  const k = keyFor(datasourceId, sinkId);
+  const set = st.pointed[k] || {};
+  const now = new Date().toISOString();
+  for (const id of internalIds || []) set[id] = now;
+  st.pointed[k] = set;
+  await chrome.storage.local.set({ [KEY]: st });
+}
+
+// Revoking a query grant should drop the origin's pointer ledger, so a consumer whose access is withdrawn
+// can no longer re-open previously-pointed documents.
+// Drop EVERY pointer entry for an origin's sink, across all sources — a query grant spans every enabled
+// source, so its handovers are scattered over many "<ds>::<sink>" keys sharing the one sink. Called when
+// that grant is revoked. Other sinks and the content ledger are untouched.
+export async function forgetPointedForSink(sinkId) {
+  const st = await getState();
+  const suffix = '::' + sinkId;
+  let changed = false;
+  for (const k of Object.keys(st.pointed)) if (k.endsWith(suffix)) { delete st.pointed[k]; changed = true; }
+  if (changed) await chrome.storage.local.set({ [KEY]: st });
 }
 
 // Learned per-document metadata (SOURCE level, not per sink): facts we discovered by fetching a

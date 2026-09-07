@@ -37,6 +37,19 @@ async function init() {
     $('#allow').onclick = () => resolve(true, req);
     return;
   }
+  if (req.kind === 'query') {
+    // Consent to SEARCH-and-return-picks: the site may ask Habeas to search the user's documents; results
+    // are shown in Habeas's own window and only the ones the USER picks get routed to this destination.
+    // No source is named (a query spans the enabled sources) and no scope, so those rows stay hidden.
+    $('#intro').textContent = t('authz_query_intro');
+    $('#note').textContent = t('authz_query_note');
+    $('#dest').textContent = req.sink.url;
+    $('#namein').value = (req.sink && req.sink.name) || originHost(req.origin);
+    for (const id of ['row-source', 'row-scope']) { const el = document.getElementById(id); if (el) el.hidden = true; }
+    $('#deny').onclick = () => resolve(false, req);
+    $('#allow').onclick = () => resolve(true, req);
+    return;
+  }
   const adapters = await getAdapters();
   const adapter = adapters[req.source];
   $('#source').textContent = (adapter && adapter.name) || req.source;
@@ -49,7 +62,7 @@ async function init() {
 }
 
 async function resolve(allow, req, adapter) {
-  const cleanup = () => chrome.storage.session.remove(['extreq:' + reqId, 'extls:' + req.origin]);
+  const cleanup = () => chrome.storage.session.remove(['extreq:' + reqId, 'extls:' + req.origin, 'extq:' + req.origin]);
   if (!allow) {
     await appendLog({ kind: req.kind === 'list-sources' ? 'authz-listsources' : (req.kind === 'register-sink' ? 'authz-sink' : 'authz'), origin: req.origin, source: req.source, status: 'denied' });
     await cleanup();
@@ -82,6 +95,28 @@ async function resolve(allow, req, adapter) {
     // A capability grant to see the enabled-source list — origin only, no route/sink/datasource.
     await addGrant({ id: 'g_' + crypto.randomUUID(), origin: req.origin, kind: 'list-sources', createdAt: new Date().toISOString(), lastUsedAt: null });
     await appendLog({ kind: 'authz-listsources', origin: req.origin, status: 'granted' });
+    await cleanup();
+    $('#status').textContent = t('authz_granted'); disable();
+    setTimeout(() => window.close(), 900);
+    return;
+  }
+  if (req.kind === 'query') {
+    // Register the origin-bound destination (so the user's picks have somewhere to go) AND mint the
+    // query capability grant. One consent covers both: search-and-return-picks needs a place to return to.
+    const sinkId = sinkIdForOrigin(req.origin);
+    const editedName = (($('#namein') && $('#namein').value) || '').trim();
+    const sink = { id: sinkId, name: editedName || originHost(req.origin), type: 'http', url: req.sink.url };
+    if (req.sink.headers) sink.headers = req.sink.headers;
+    else {
+      // Re-approval WITHOUT headers keeps a previously-paired credential (same rule as re-proposal).
+      const cfg = await getConfig();
+      const prev = (cfg.sinks || []).find((s) => s.id === sinkId);
+      if (prev && prev.headersRef) sink.headersRef = prev.headersRef;
+      else if (prev && prev.headers) sink.headers = prev.headers;
+    }
+    await upsert('sinks', await secureSinkHeaders(sink));
+    await addGrant({ id: 'g_' + crypto.randomUUID(), origin: req.origin, kind: 'query', sinkId, createdAt: new Date().toISOString(), lastUsedAt: null });
+    await appendLog({ kind: 'authz-query', origin: req.origin, sink: originHost(req.origin), status: 'granted' });
     await cleanup();
     $('#status').textContent = t('authz_granted'); disable();
     setTimeout(() => window.close(), 900);

@@ -40,8 +40,12 @@ test('it may only show what was routed to that consumer', () => {
   const i = bg.indexOf('async function showDocumentForOrigin');
   const body = bg.slice(i, bg.indexOf('\nasync function routesForOrigin', i));
   assert.match(body, /const sinkId = sinkIdForOrigin\(origin\)/, 'origin-bound');
+  // Authorized on EITHER ledger: content delivered to the sink, or a pointer handed to the origin by the
+  // query hook. Refused only when the document is in neither — a pointer and a content delivery are kept
+  // apart (see pointer-ledger.test.mjs) so one never masks the other.
   assert.match(body, /deliveredSet\(ds\.id, sinkId\)/, 'checked against what that sink was delivered');
-  assert.match(body, /if \(!delivered\[internalId\]\) return denied/, 'and refused otherwise');
+  assert.match(body, /pointedSet\(ds\.id, sinkId\)/, 'or what it was pointed to');
+  assert.match(body, /if \(!delivered\[internalId\] && !pointed\[internalId\]\) return denied/, 'and refused only when in neither');
 });
 
 test('every refusal is the same refusal, so it cannot be used to guess', () => {

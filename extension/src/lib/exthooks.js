@@ -79,3 +79,50 @@ export function enabledSources(cfg, adapters) {
   }
   return out;
 }
+
+// ── query hook (read vein) — pure helpers, kept here so they can be unit-tested apart from the
+// background's storage/message plumbing. See docs/external-hooks.md and background.js#queryForGrant. ──
+
+// Trim a consumer's query to a known, bounded shape before it ever touches the store. The requesting
+// page controls these strings, so cap their length and drop anything unexpected.
+export function sanitizeQuery(q) {
+  q = (q && typeof q === 'object') ? q : {};
+  const str = (v, n) => (typeof v === 'string' ? v.slice(0, n) : undefined);
+  const numOr = (v) => (typeof v === 'number' && isFinite(v) ? v : undefined);
+  return {
+    schema: str(q.schema, 20),
+    source: str(q.source, 80),
+    text: str(q.text, 200),
+    dateFrom: str(q.dateFrom, 32),
+    dateTo: str(q.dateTo, 32),
+    amount: numOr(q.amount),
+    amountTolerance: numOr(q.amountTolerance),
+    currency: str(q.currency, 8),
+  };
+}
+
+// Does one canonical-store record match a (sanitized) query? Pure predicate.
+//  · date range on the booked date (YYYY-MM-DD string compare)
+//  · amount on ABSOLUTE value ±tolerance, so a consumer's signed charge (-47.85) matches a receipt's
+//    positive total; default tolerance 0.02 absorbs rounding
+//  · free text against counterparty + description + number (case-insensitive substring)
+// `counterparty` is passed in (the caller resolves it via canonicalize) to keep this dependency-free.
+export function queryAccepts(record, query, counterparty = '') {
+  if (!record) return false;
+  const q = query || {};
+  const date = String(record.date || '').slice(0, 10);
+  if (q.dateFrom && date < q.dateFrom) return false;
+  if (q.dateTo && date > q.dateTo) return false;
+  if (typeof q.amount === 'number') {
+    const raw = record.total != null ? record.total : record.amount;
+    const a = Number(raw);
+    if (!isFinite(a)) return false;
+    const tol = typeof q.amountTolerance === 'number' ? Math.abs(q.amountTolerance) : 0.02;
+    if (Math.abs(Math.abs(a) - Math.abs(q.amount)) > tol) return false;
+  }
+  if (q.text) {
+    const hay = ((counterparty || '') + ' ' + (record.description || '') + ' ' + (record.number || '')).toLowerCase();
+    if (!hay.includes(String(q.text).toLowerCase())) return false;
+  }
+  return true;
+}
