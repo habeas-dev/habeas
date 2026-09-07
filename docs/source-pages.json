@@ -102,30 +102,8 @@
     }
   },
   "traderepublic": {
-    "es": {
-      "whatYouGet": "Trade Republic da dos conjuntos distintos que aquí se tratan por separado: por un lado el histórico de operaciones, con cada posición y su instrumento; por otro los extractos, que son documentos periódicos y se pueden obtener tanto en PDF como en CSV. Puedes activar solo uno de los dos o los dos a la vez.",
-      "retention": "Los dos conjuntos no llegan igual de atrás. Los extractos se generan uno por mes y alcanzan unos tres años, así que el más antiguo que puedes recuperar tiene unos treinta y seis meses. El histórico de operaciones no tiene esa ventana: se recorre hacia atrás página a página hasta agotarlo, así que llega hasta donde llegue tu propia cuenta.",
-      "quirks": [
-        "La app de Trade Republic no llama a una API REST: mantiene abierto un WebSocket y se suscribe a su propio timeline. Habeas habla ese mismo protocolo sobre la sesión que has abierto tú, y por eso la definición de esta fuente no se parece a las demás.",
-        "El extracto se ofrece en dos formatos sobre los mismos datos: el PDF sirve como justificante y el CSV para meterlo en una hoja de cálculo, y eliges cuál quieres al configurar la fuente.",
-        "Las operaciones y los extractos se llevan la cuenta por separado, así que activar el segundo más tarde no te obliga a volver a descargar lo primero."
-      ],
-      "faq": [
-        {
-          "q": "¿Trade Republic tiene una API que pueda usar?",
-          "a": "Pública no. No hay nada documentado ni a lo que pedir acceso, y justo por eso existe esta fuente. La propia app habla con un endpoint WebSocket privado, y Habeas habla ese mismo protocolo usando la sesión que ya tienes abierta. No se concede acceso a ningún tercero y no cambian de manos tus credenciales."
-        },
-        {
-          "q": "¿Me bajo las operaciones o los extractos?",
-          "a": "Son cosas distintas y puedes tener las dos. Las operaciones son el detalle movimiento a movimiento, útil para cuadrar cuentas; los extractos son el documento periódico, que es lo que normalmente te piden como justificante."
-        },
-        {
-          "q": "¿El extracto en CSV trae lo mismo que el PDF?",
-          "a": "Sí: los dos formatos salen del mismo conjunto de operaciones. Cambia el envoltorio, no el contenido."
-        }
-      ]
-    },
     "en": {
+      "desc": "Download your full Trade Republic transaction history and statements as PDF or CSV at once, positions included. No password stored.",
       "whatYouGet": "Trade Republic exposes two distinct sets, handled separately here: on one side the transaction history, with each position and its instrument; on the other the statements, which are periodic documents available as either PDF or CSV. You can enable just one of the two, or both.",
       "retention": "The two sets do not reach back equally far. Statements are generated one per month and go back about three years, so the oldest one you can pull is roughly thirty-six months old. The transaction timeline has no such window: it is walked backwards page by page until it runs out, so it reaches as far as your own account's history does.",
       "quirks": [
@@ -148,37 +126,38 @@
         }
       ]
     },
+    "es": {
+      "desc": "Descarga de una vez todo tu histórico de operaciones y extractos de Trade Republic en PDF o CSV, con tus posiciones. Sin guardar tu contraseña.",
+      "whatYouGet": "Trade Republic da dos conjuntos distintos que aquí se tratan por separado: por un lado el histórico de operaciones, con cada posición y su instrumento; por otro los extractos, que son documentos periódicos y se pueden obtener tanto en PDF como en CSV. Puedes activar solo uno de los dos o los dos a la vez.",
+      "retention": "Los dos conjuntos no llegan igual de atrás. Los extractos se generan uno por mes y alcanzan unos tres años, así que el más antiguo que puedes recuperar tiene unos treinta y seis meses. El histórico de operaciones no tiene esa ventana: se recorre hacia atrás página a página hasta agotarlo, así que llega hasta donde llegue tu propia cuenta.",
+      "quirks": [
+        "La app de Trade Republic no llama a una API REST: mantiene abierto un WebSocket y se suscribe a su propio timeline. Habeas habla ese mismo protocolo sobre la sesión que has abierto tú, y por eso la definición de esta fuente no se parece a las demás.",
+        "El extracto se ofrece en dos formatos sobre los mismos datos: el PDF sirve como justificante y el CSV para meterlo en una hoja de cálculo, y eliges cuál quieres al configurar la fuente.",
+        "Las operaciones y los extractos se llevan la cuenta por separado, así que activar el segundo más tarde no te obliga a volver a descargar lo primero."
+      ],
+      "faq": [
+        {
+          "q": "¿Trade Republic tiene una API que pueda usar?",
+          "a": "Pública no. No hay nada documentado ni a lo que pedir acceso, y justo por eso existe esta fuente. La propia app habla con un endpoint WebSocket privado, y Habeas habla ese mismo protocolo usando la sesión que ya tienes abierta. No se concede acceso a ningún tercero y no cambian de manos tus credenciales."
+        },
+        {
+          "q": "¿Me bajo las operaciones o los extractos?",
+          "a": "Son cosas distintas y puedes tener las dos. Las operaciones son el detalle movimiento a movimiento, útil para cuadrar cuentas; los extractos son el documento periódico, que es lo que normalmente te piden como justificante."
+        },
+        {
+          "q": "¿El extracto en CSV trae lo mismo que el PDF?",
+          "a": "Sí: los dos formatos salen del mismo conjunto de operaciones. Cambia el envoltorio, no el contenido."
+        }
+      ]
+    },
     "mark": {
       "initials": "TR",
       "tint": "#000000"
     }
   },
   "carrefour-es": {
-    "es": {
-      "whatYouGet": "Entran tanto los tickets de la tienda física como los pedidos online, en la misma lista y con el mismo formato. Cada compra trae su fecha, importe, moneda y establecimiento, y además queda clasificada según de dónde venga: la compra de hipermercado como alimentación y el repostaje como combustible, que es la distinción que suele hacer falta luego.",
-      "retention": "Aquí está la trampa, y conviene saberla antes de empezar: solo los tickets recientes conservan su PDF. Los antiguos ya no lo tienen y el servidor responde con un 406 al pedirlo. Eso no es un fallo ni se salda con un reintento: esos tickets se exportan igualmente, pero solo con sus datos, sin el documento. Cuanto antes empieces, más PDFs conservas.",
-      "quirks": [
-        "La web va detrás de Cloudflare y el acceso se hace con un código de un solo uso que te llega por correo; ese paso lo das tú, como siempre, y Habeas no interviene.",
-        "Es una fuente auditada por el proyecto y verificada contra el servicio real, no una aportación sin revisar.",
-        "La clasificación por tipo de compra es automática, así que un destino que solo acepte alimentación se queda con la compra y descarta el repostaje sin que tengas que separarlos a mano."
-      ],
-      "faq": [
-        {
-          "q": "¿Por qué algunos tickets antiguos salen sin PDF?",
-          "a": "Porque Carrefour deja de servirlo pasado un tiempo: al pedirlo devuelve un 406. Habeas conserva de todos modos los datos de esa compra —fecha, importe, establecimiento y categoría—, pero el documento en sí ya no existe del lado del servicio y no hay forma de recuperarlo."
-        },
-        {
-          "q": "¿Incluye los pedidos que hice por internet o solo los de la tienda?",
-          "a": "Los dos. La lista mezcla los tickets de la tienda física y los pedidos online, y cada uno queda identificado."
-        },
-        {
-          "q": "¿Puedo mandar solo la compra de alimentación a un sitio y el combustible a otro?",
-          "a": "Sí. Cada compra se clasifica al recogerla, y los destinos pueden filtrar por categoría, así que la compra de hipermercado y el repostaje pueden acabar en sitios distintos sin intervención tuya."
-        }
-      ],
-      "note": ""
-    },
     "en": {
+      "desc": "Download all your Carrefour receipts at once — shop, petrol station and online orders — each filed as groceries or fuel. No password stored.",
       "whatYouGet": "Both in-store receipts and online orders come through, in the same list and the same shape. Each purchase carries its date, amount, currency and store, and is filed by where it came from: the hypermarket shop as groceries and refuelling as fuel, which is the distinction you usually need later.",
       "retention": "Here is the catch, and it is worth knowing before you start: only recent receipts still have their PDF. Older ones no longer do, and the server answers with a 406 when asked. That is not a failure and no retry fixes it: those receipts are still exported, but with their data only, no document. The sooner you start, the more PDFs you keep.",
       "quirks": [
@@ -202,6 +181,31 @@
       ],
       "note": ""
     },
+    "es": {
+      "desc": "Descarga todos tus tickets de Carrefour de una vez —hipermercado, gasolinera y pedidos online—, ya clasificados por tipo. Sin guardar tu contraseña.",
+      "whatYouGet": "Entran tanto los tickets de la tienda física como los pedidos online, en la misma lista y con el mismo formato. Cada compra trae su fecha, importe, moneda y establecimiento, y además queda clasificada según de dónde venga: la compra de hipermercado como alimentación y el repostaje como combustible, que es la distinción que suele hacer falta luego.",
+      "retention": "Aquí está la trampa, y conviene saberla antes de empezar: solo los tickets recientes conservan su PDF. Los antiguos ya no lo tienen y el servidor responde con un 406 al pedirlo. Eso no es un fallo ni se salda con un reintento: esos tickets se exportan igualmente, pero solo con sus datos, sin el documento. Cuanto antes empieces, más PDFs conservas.",
+      "quirks": [
+        "La web va detrás de Cloudflare y el acceso se hace con un código de un solo uso que te llega por correo; ese paso lo das tú, como siempre, y Habeas no interviene.",
+        "Es una fuente auditada por el proyecto y verificada contra el servicio real, no una aportación sin revisar.",
+        "La clasificación por tipo de compra es automática, así que un destino que solo acepte alimentación se queda con la compra y descarta el repostaje sin que tengas que separarlos a mano."
+      ],
+      "faq": [
+        {
+          "q": "¿Por qué algunos tickets antiguos salen sin PDF?",
+          "a": "Porque Carrefour deja de servirlo pasado un tiempo: al pedirlo devuelve un 406. Habeas conserva de todos modos los datos de esa compra —fecha, importe, establecimiento y categoría—, pero el documento en sí ya no existe del lado del servicio y no hay forma de recuperarlo."
+        },
+        {
+          "q": "¿Incluye los pedidos que hice por internet o solo los de la tienda?",
+          "a": "Los dos. La lista mezcla los tickets de la tienda física y los pedidos online, y cada uno queda identificado."
+        },
+        {
+          "q": "¿Puedo mandar solo la compra de alimentación a un sitio y el combustible a otro?",
+          "a": "Sí. Cada compra se clasifica al recogerla, y los destinos pueden filtrar por categoría, así que la compra de hipermercado y el repostaje pueden acabar en sitios distintos sin intervención tuya."
+        }
+      ],
+      "note": ""
+    },
     "mark": {
       "initials": "CA",
       "tint": "#004E9F"
@@ -209,6 +213,7 @@
   },
   "revolut": {
     "en": {
+      "desc": "Download your whole Revolut transaction history and monthly statements as PDF or CSV at once, from your own session. No password stored.",
       "whatYouGet": "Revolut holds two things worth keeping and they are handled separately here. One is the movement history: every payment, transfer and exchange, with the amount that actually moved and the counterparty behind it. The other is the monthly statement, the periodic document you are asked for as proof, available as a PDF or as a CSV over the same operations.",
       "retention": "Statements exist one per month and per pocket, and reach roughly a year back, so the oldest you can retrieve is around twelve months old. The movement history has no such ceiling: it is walked by cursor until there is nothing older left.",
       "quirks": [
@@ -218,6 +223,7 @@
       ]
     },
     "es": {
+      "desc": "Descarga de una vez todo tu historial de movimientos de Revolut y sus extractos mensuales en PDF o CSV, desde tu propia sesión.",
       "whatYouGet": "Revolut guarda dos cosas que merece la pena conservar y aquí se tratan por separado. Una es el histórico de movimientos: cada pago, transferencia y cambio de divisa, con el importe que de verdad se movió y la contraparte detrás. La otra es el extracto mensual, el documento periódico que te piden como justificante, disponible en PDF o en CSV sobre las mismas operaciones.",
       "retention": "Los extractos existen uno por mes y por bolsillo, y llegan alrededor de un año atrás, así que el más antiguo que puedes recuperar tiene unos doce meses. El histórico de movimientos no tiene ese techo: se recorre por cursor hasta que no queda nada más antiguo.",
       "quirks": [
@@ -233,6 +239,7 @@
   },
   "raisin": {
     "en": {
+      "desc": "Download your Raisin movements, fixed-term deposits, savings and documents at once — every product in one archive. No password stored.",
       "whatYouGet": "Raisin is really several products under one login, and the source keeps them apart instead of flattening them: the movements of your accounts, the fixed-term deposits you hold with each partner bank, the balance of the savings side, and the documents the platform issues — contracts, certificates and statements — which come down as files.",
       "quirks": [
         "Part of Raisin's API still answers on weltsparen.de, the brand it grew out of. That is a different registrable domain, so Habeas asks for your explicit consent before replaying your session there — the same boundary it applies to every source.",
@@ -241,6 +248,7 @@
       ]
     },
     "es": {
+      "desc": "Descarga de una vez tus movimientos, depósitos a plazo, ahorro y documentos de Raisin: cada producto en un archivo. Sin guardar tu contraseña.",
       "whatYouGet": "Raisin son en realidad varios productos bajo un mismo acceso, y la fuente los mantiene separados en vez de aplanarlos: los movimientos de tus cuentas, los depósitos a plazo que tienes con cada banco asociado, el saldo de la parte de ahorro, y los documentos que emite la plataforma —contratos, certificados y extractos— que bajan como ficheros.",
       "quirks": [
         "Parte de la API de Raisin sigue respondiendo en weltsparen.de, la marca de la que nació. Es un dominio registrable distinto, así que Habeas te pide consentimiento explícito antes de replicar allí tu sesión: la misma frontera que aplica a todas las fuentes.",
@@ -255,6 +263,7 @@
   },
   "amazon": {
     "en": {
+      "desc": "Download all your Amazon invoices and order history at once, with the seller's invoice PDF attached wherever one exists. No password stored.",
       "whatYouGet": "What Amazon has is your order history: every purchase with its date, total, currency and the store behind it, whether that store is Amazon or a marketplace seller. Where the seller issued a proper invoice there is also a PDF, and Habeas attaches it to the order rather than leaving you to hunt for it.",
       "quirks": [
         "Orders are listed a year at a time, exactly as Amazon's own orders page does it. There is no single call that returns your whole history, so a sweep walks year by year.",
@@ -262,6 +271,7 @@
       ]
     },
     "es": {
+      "desc": "Descarga de una vez todas tus facturas y pedidos de Amazon, con el PDF del vendedor adjunto cuando existe. Sin guardar tu contraseña.",
       "whatYouGet": "Lo que tiene Amazon es tu histórico de pedidos: cada compra con su fecha, total, divisa y la tienda que hay detrás, sea Amazon o un vendedor del marketplace. Donde el vendedor emitió factura de verdad hay además un PDF, y Habeas lo engancha al pedido en lugar de dejarte buscarlo.",
       "quirks": [
         "Los pedidos se listan año a año, exactamente como hace la propia página de pedidos de Amazon. No hay una sola llamada que devuelva todo tu histórico, así que el barrido avanza año por año.",
@@ -275,6 +285,7 @@
   },
   "aliexpress": {
     "en": {
+      "desc": "Download every AliExpress order receipt at once — date, total, currency and shop — from your own browser session, with no password stored.",
       "whatYouGet": "AliExpress records each order with its date, total, currency and the shop that sold it, and separately holds the receipt detail behind a second call. Habeas puts the two together, so an order arrives already carrying the receipt information rather than a bare line you would still have to open.",
       "quirks": [
         "AliExpress does not expose a REST API: its web app talks to Alibaba's mtop gateway with signed requests. Habeas issues those same signed calls from the session you already have open.",
@@ -283,6 +294,7 @@
       ]
     },
     "es": {
+      "desc": "Descarga de una vez los recibos de todos tus pedidos de AliExpress —fecha, total, divisa y tienda— desde tu propia sesión, sin guardar tu contraseña.",
       "whatYouGet": "AliExpress registra cada pedido con su fecha, total, divisa y la tienda que lo vendió, y guarda aparte el detalle del recibo tras una segunda llamada. Habeas junta las dos cosas, así que un pedido llega ya con la información del recibo y no como una línea suelta que aún tendrías que abrir.",
       "quirks": [
         "AliExpress no expone una API REST: su web habla con la pasarela mtop de Alibaba mediante peticiones firmadas. Habeas emite esas mismas llamadas firmadas desde la sesión que ya tienes abierta.",
@@ -297,6 +309,7 @@
   },
   "hover-com": {
     "en": {
+      "desc": "Download every Hover domain receipt at once — number, date and total — so your billing history is filed before you need it. No password stored.",
       "whatYouGet": "Hover charges you for domain registrations and renewals, so what there is to keep is the billing history: each receipt with its number, date and total. They are small documents, but they are the ones an accountant asks for and the ones that vanish quietly if the account ever lapses.",
       "quirks": [
         "Hover does not paginate. The receipts arrive embedded in the same control-panel call the site makes to draw the page, so the whole history comes back in a single request.",
@@ -305,6 +318,7 @@
       ]
     },
     "es": {
+      "desc": "Descarga de una vez todos tus recibos de dominios de Hover —número, fecha y total— y ten listo el histórico de facturación. Sin guardar contraseñas.",
       "whatYouGet": "Hover te cobra por registrar y renovar dominios, así que lo que hay que conservar es el histórico de facturación: cada recibo con su número, fecha y total. Son documentos pequeños, pero son los que te pide un asesor y los que desaparecen sin ruido si alguna vez se te cae la cuenta.",
       "quirks": [
         "Hover no pagina. Los recibos llegan incrustados en la misma llamada del panel de control que la web usa para pintar la página, así que todo el histórico vuelve en una sola petición.",
@@ -332,18 +346,36 @@
     }
   },
   "bipdrive-es": {
+    "en": {
+      "desc": "Download every Bip&Drive toll and parking invoice as PDF in one pass, straight from your own browser session. No password stored."
+    },
+    "es": {
+      "desc": "Descarga en una sola pasada todas tus facturas de peajes y parkings de Bip&Drive en PDF, desde tu propia sesión. Sin guardar tu contraseña."
+    },
     "mark": {
       "initials": "BD",
       "tint": ""
     }
   },
   "caixabank-consumer-es": {
+    "en": {
+      "desc": "Download every CaixaBank Consumer card statement as PDF in one pass instead of one period at a time. From your own session, no password stored."
+    },
+    "es": {
+      "desc": "Descarga todos los extractos en PDF de tu tarjeta CaixaBank Consumer de una vez, en lugar de periodo a periodo. Sin guardar tu contraseña."
+    },
     "mark": {
       "initials": "CC",
       "tint": "#007DC5"
     }
   },
   "decathlon-es": {
+    "en": {
+      "desc": "Download your whole Decathlon purchase history at once: every receipt with its date, amount and store, from your own browser session."
+    },
+    "es": {
+      "desc": "Descarga de una vez todo tu historial de compras de Decathlon: cada ticket con su fecha, importe y tienda, desde tu propia sesión."
+    },
     "mark": {
       "initials": "DE",
       "tint": "#0082C3"
@@ -356,30 +388,60 @@
     }
   },
   "dia-es": {
+    "en": {
+      "desc": "Download your whole Dia purchase history at once and take it to a spreadsheet — every receipt with its date, amount and store. No password stored."
+    },
+    "es": {
+      "desc": "Descarga de una vez todo tu historial de compras de Dia y llévalo a una hoja de cálculo: cada ticket con su fecha, importe y tienda."
+    },
     "mark": {
       "initials": "DI",
       "tint": "#E30613"
     }
   },
   "financiera-elcorteingles-es": {
+    "en": {
+      "desc": "Download your El Corte Inglés card transactions, instalments and monthly statement PDFs at once — three screens in one pass. No password stored."
+    },
+    "es": {
+      "desc": "Descarga de una vez los movimientos, aplazamientos y extractos mensuales en PDF de tu tarjeta de El Corte Inglés. Sin guardar tu contraseña."
+    },
     "mark": {
       "initials": "FEC",
       "tint": "#00694E"
     }
   },
   "ikea-es": {
+    "en": {
+      "desc": "Download all your IKEA receipts and purchases at once, each with its date, amount and store, from the session you already have open."
+    },
+    "es": {
+      "desc": "Descarga de una vez todos tus tiquets y compras de IKEA, cada uno con su fecha, importe y tienda, desde la sesión que ya tienes abierta."
+    },
     "mark": {
       "initials": "IK",
       "tint": "#0058A3"
     }
   },
   "ing-es": {
+    "en": {
+      "desc": "Download your ING transactions and monthly statements as PDF or Excel at once, across every account, from your own session. No password stored."
+    },
+    "es": {
+      "desc": "Descarga de una vez tus movimientos y extractos mensuales de ING en PDF o Excel, de todas tus cuentas, desde tu propia sesión."
+    },
     "mark": {
       "initials": "ING",
       "tint": "#FF6200"
     }
   },
   "leroymerlin-es": {
+    "en": {
+      "desc": "Download your Leroy Merlin in-store receipts and online orders together in one pass, instead of two separate screens. No password stored."
+    },
+    "es": {
+      "desc": "Descarga a la vez tus tickets de tienda y tus pedidos online de Leroy Merlin, en lugar de en dos pantallas distintas. Sin guardar tu contraseña."
+    },
     "mark": {
       "initials": "LM",
       "tint": "#78BE20"
@@ -392,12 +454,24 @@
     }
   },
   "openbank-es": {
+    "en": {
+      "desc": "Download your Openbank transactions and statements at once as PDF or Excel, gathered into one archive instead of loose files. No password stored."
+    },
+    "es": {
+      "desc": "Descarga de una vez tus movimientos y extractos de Openbank en PDF o Excel, reunidos en un archivo y no sueltos. Sin guardar tu contraseña."
+    },
     "mark": {
       "initials": "OB",
       "tint": "#EC0000"
     }
   },
   "pagatelia-es": {
+    "en": {
+      "desc": "Download your full Pagatelia invoice history for tolls and car parks in one pass, instead of one at a time. From your own browser session."
+    },
+    "es": {
+      "desc": "Descarga en una sola pasada todo tu histórico de facturas de peajes y parkings de Pagatelia, en vez de una a una. Desde tu propia sesión."
+    },
     "mark": {
       "initials": "PA",
       "tint": ""
@@ -416,6 +490,12 @@
     }
   },
   "wizink-es": {
+    "en": {
+      "desc": "Download your WiZink card transactions and every monthly statement as PDF or Excel in one pass. From your own session, no password stored."
+    },
+    "es": {
+      "desc": "Descarga de una vez los movimientos de tu tarjeta WiZink y todos los extractos mensuales en PDF o Excel, desde tu propia sesión."
+    },
     "mark": {
       "initials": "WI",
       "tint": "#E5007E"
