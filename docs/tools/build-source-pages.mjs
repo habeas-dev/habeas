@@ -193,7 +193,11 @@ const LANGS = {
       asideLicence: 'Licencia', asideLicenceBody: 'La definición, de dominio público (CC0-1.0); el texto de esta página, CC-BY-4.0.',
       asideDefinition: 'La definición en sí', asideDefinitionBody: 'Una fuente son datos, nunca código — esto es todo lo que hay.',
       asideRaw: 'Abrir el fichero original', asideCountry: 'Cobertura',
-      descTail: 'Habeas los descarga desde tu propia sesión del navegador, sin guardar tu contraseña.',
+      // Neutral on purpose. This tail is appended to whatever the source calls its documents, and "los
+      // descarga" put a masculine pronoun in front of "facturas" and "tickets" alike — Pepephone read
+      // "Habeas los descarga" about facturas. Agreeing properly would mean knowing each noun's gender,
+      // so the sentence avoids needing to.
+      descTail: 'Habeas lo descarga todo desde tu propia sesión del navegador, sin guardar tu contraseña.',
       faq: (brand, fmts) => [
         [`¿Habeas guarda mi contraseña de ${brand}?`,
          'No. Inicias sesión tú, en la web de siempre, incluido cualquier código de verificación. Habeas reutiliza la sesión que tu navegador ya tiene abierta y nunca lee ni almacena tus credenciales.'],
