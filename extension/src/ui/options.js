@@ -16,6 +16,7 @@ import { exportSource, buildShareUrl, importFromFile } from '../registry/share.j
 import { saveSource } from '../adapters/index.js';
 import { editJson } from './jsoneditor.js';
 import { getGrants, revokeGrant } from '../lib/grants.js';
+import { forgetPointedForSink } from '../lib/state.js';
 import { getStoreConfig, moveStoreTo, putItems } from '../lib/store.js';
 import { copyArchivePageSide } from '../lib/foldercopy.js';
 import { RETRIEVABLE } from '../lib/retrieve.js';
@@ -505,7 +506,14 @@ async function render() {
     return `<div class="card row"><b style="flex:1">${esc(t('grant_line_listsources', [originHost]))}</b><button data-revoke="${esc(g.id)}">${t('grant_revoke')}</button></div>`;
   }).join('');
   $('#grants').innerHTML = (siteCards.join('') + capRows) || `<p class="muted">${t('no_grants')}</p>`;
-  $('#grants').querySelectorAll('[data-revoke]').forEach((b) => b.onclick = async () => { await revokeGrant(b.dataset.revoke); render(); });
+  $('#grants').querySelectorAll('[data-revoke]').forEach((b) => b.onclick = async () => {
+    const g = grants.find((x) => x.id === b.dataset.revoke);
+    await revokeGrant(b.dataset.revoke);
+    // A revoked query grant leaves its pointer ledger behind otherwise → clear it, so a re-paired origin
+    // can't re-open documents it was pointed to under the withdrawn consent.
+    if (g && g.kind === 'query' && g.sinkId) { try { await forgetPointedForSink(g.sinkId); } catch (e) {} }
+    render();
+  });
   await renderPlanner(cfg);
   await renderSweep(cfg);
 }

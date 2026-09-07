@@ -19,6 +19,7 @@ import { startHeartbeat, stopHeartbeat } from './lib/keepalive.js';
 import { usableSinks } from './lib/folderavail.js';
 import { claimOnce, settleOnce } from './lib/oncegate.js';
 import { beginRun, markPhase, endRun, takeUnfinishedRun } from './lib/runwatch.js';
+import { markPointed, pointedSet, forgetPointedForSink } from './lib/state.js';
 import { renderPage, isChallenged, challengeUrlOf } from './lib/render.js';
 import { writeToSink, readSinkRecords, postRecordsToHttpSink } from './sinks/sinks.js';
 import { recordDelivered, putItems, getRecords } from './lib/store.js';
@@ -545,10 +546,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           }
         }
         if (!deliveredIds.length) continue;
-        // Mark delivered so a later show-document({source, internalId}) can re-open the full doc in
-        // Habeas's OWN viewer — the content is bounded to what the user handed a pointer for, and even then
-        // never crosses to the page. Only the pointer ledger, not the document, records this.
-        try { await markDelivered(ds.id, sink.id, deliveredIds); } catch (e) {}
+        // Record a POINTER handover in its OWN ledger (NOT the content ledger): it authorizes a later
+        // show-document({source, internalId}) to re-open the doc in Habeas's own viewer, bounded to what the
+        // user handed a pointer for. Keeping it out of the content ledger means a pointer never makes a
+        // collect route think it has already sent the document.
+        try { await markPointed(ds.id, sink.id, deliveredIds); } catch (e) {}
         routed += deliveredIds.length;
       }
       if (pointers.length) {
@@ -1355,8 +1357,13 @@ async function showDocumentForOrigin(origin, payload) {
   const cfg = await getConfig();
   const ds = (cfg.datasources || []).find((d) => d.id === base || d.adapter === base);
   if (!ds) return denied;
-  const delivered = await deliveredSet(ds.id, sinkId).catch(() => ({}));
-  if (!delivered[internalId]) return denied;                  // the record was never routed here
+  // Authorized to re-open if the doc was routed here as CONTENT or handed to this origin as a POINTER
+  // (the query hook). Two ledgers, either one grants access; neither → it was never routed here.
+  const [delivered, pointed] = await Promise.all([
+    deliveredSet(ds.id, sinkId).catch(() => ({})),
+    pointedSet(ds.id, sinkId).catch(() => ({})),
+  ]);
+  if (!delivered[internalId] && !pointed[internalId]) return denied;
 
   // Rendered from a destination that can actually be read back — never the consumer's own, which is
   // typically an HTTP endpoint and holds nothing retrievable.
@@ -1400,6 +1407,9 @@ async function revokeGrantForOrigin(origin, payload) {
   const grant = await getGrant(payload && payload.grantId);
   if (!grantUsableBy(grant, origin)) return { ok: false, status: 'denied', error: 'no grant for this origin' };
   await revokeGrant(grant.id);
+  // A query grant's pointer ledger is meaningless once the grant is gone — clear it so a re-paired origin
+  // can't re-open documents it was pointed to under a withdrawn consent.
+  if (grant.kind === 'query') { try { await forgetPointedForSink(grant.sinkId || sinkIdForOrigin(origin)); } catch (e) {} }
   await appendLog({ kind: 'ext-revoke', origin, source: grant.datasourceId || grant.kind || '', status: 'ok' });
   return { ok: true, status: 'ok' };
 }

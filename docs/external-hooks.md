@@ -138,9 +138,11 @@ return channel is what makes the capability safe to grant at all.
 
 Two rules, both enforced:
 
-- **You may only show what was routed to you.** The record must appear in the delivery ledger for your
-  own sink. A consumer can display something it holds; it cannot go fishing through documents the user
-  never sent it.
+- **You may only show what was routed to you.** The record must have been routed to your own sink —
+  either delivered to it as content, or handed to you as a pointer by the `query` hook. (These are two
+  separate ledgers: a pointer never counts as a content delivery, so being pointed to a document does not
+  suppress a later content delivery of it, and vice versa.) A consumer can display something it was given;
+  it cannot go fishing through documents the user never sent it.
 - **Every refusal is identical.** `denied` covers "not yours", "no such document", "no readable copy" and
   "you are not a paired integration" alike. If they read differently you could walk ids and learn what
   somebody owns without receiving a byte, and the refusal would become the leak.
@@ -290,7 +292,10 @@ server, same auth as a collection), shaped:
 No amount, no line items, no counterparty beyond the merchant name. Match it to your own context by
 `ref`. **To re-open the document later**, call `show-document` with its `{ source, internalId }` — Habeas
 displays it in its **own** viewer (the contents never cross to you); if the user keeps no re-readable
-archive, fall back to opening `sourceUrl`. The `query` response is deliberately uniform — `shown` whether
+archive, fall back to opening `sourceUrl`. A pointer you were handed is recorded in a **pointer ledger**
+kept separate from content deliveries — it authorizes exactly this re-open and nothing more, and it is
+dropped when the user revokes your `query` grant, after which `show-document` for those documents returns
+`denied` again. The `query` response is deliberately uniform — `shown` whether
 zero or many matched, `denied` whether the origin lacks a grant or the destination is gone. Bounded by the
 user in the loop: nothing leaves without an explicit tick. Revocable under **Settings → Site integrations**.
 
