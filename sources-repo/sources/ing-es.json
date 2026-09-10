@@ -15,7 +15,7 @@
   },
   "domain": "ingdirect.es",
   "country": "ES",
-  "version": "2026-08-26.1",
+  "version": "2026-09-10",
   "minVersion": "0.9.11.4",
   "categories": [
     "banking"
@@ -48,6 +48,12 @@
       "x-ing-extendedsessioncontext",
       "baggage"
     ],
+    "tokenFromStorage": {
+      "key": "TokenManager.profiles",
+      "field": "0.accessToken",
+      "scheme": "Bearer",
+      "header": "authorization"
+    },
     "pageOnly": true,
     "readyUrl": [
       "https://ing.ingdirect.es/pfm/#producto/",
@@ -211,6 +217,13 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-09-10",
+      "changes": {
+        "en": "Fixes ING syncs that failed with an authorisation error, most often on Firefox left open for a long time. Habeas now reads your current access token straight from the page on each request, instead of a saved one that ING may have already rotated.",
+        "es": "Corrige las sincronizaciones de ING que fallaban con un error de autorización, sobre todo en Firefox si llevaba mucho tiempo abierto. Habeas ahora lee tu token de acceso actual directamente de la página en cada petición, en vez de uno guardado que ING puede haber rotado ya."
+      }
+    },
     {
       "version": "2026-08-26.1",
       "changes": {
