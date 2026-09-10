@@ -180,7 +180,7 @@
     "@type": "WebPage",
     "@id": "https://habeas.dev/es/descargar/movimientos-ing.html"
   },
-  "dateModified": "2026-08-26",
+  "dateModified": "2026-09-10",
   "author": {
     "@type": "Person",
     "name": "David Marín",
@@ -246,7 +246,7 @@
       <div class="card">
         <h2>Sobre esta fuente</h2>
         <dl>
-          <dt>Versión</dt><dd>2026-08-26.1</dd>
+          <dt>Versión</dt><dd>2026-09-10</dd>
           <dt>Confianza</dt><dd>first-party</dd>
           <dt>Cobertura</dt><dd>ES</dd>
           <dt>Licencia</dt><dd>CC0-1.0</dd>
@@ -285,7 +285,7 @@
   },
   &quot;domain&quot;: &quot;ingdirect.es&quot;,
   &quot;country&quot;: &quot;ES&quot;,
-  &quot;version&quot;: &quot;2026-08-26.1&quot;,
+  &quot;version&quot;: &quot;2026-09-10&quot;,
   &quot;minVersion&quot;: &quot;0.9.11.4&quot;,
   &quot;categories&quot;: [
     &quot;banking&quot;
@@ -318,6 +318,12 @@
       &quot;x-ing-extendedsessioncontext&quot;,
       &quot;baggage&quot;
     ],
+    &quot;tokenFromStorage&quot;: {
+      &quot;key&quot;: &quot;TokenManager.profiles&quot;,
+      &quot;field&quot;: &quot;0.accessToken&quot;,
+      &quot;scheme&quot;: &quot;Bearer&quot;,
+      &quot;header&quot;: &quot;authorization&quot;
+    },
     &quot;pageOnly&quot;: true,
     &quot;readyUrl&quot;: [
       &quot;https://ing.ingdirect.es/pfm/#producto/&quot;,
@@ -482,6 +488,13 @@
   ],
   &quot;changelog&quot;: [
     {
+      &quot;version&quot;: &quot;2026-09-10&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Fixes ING syncs that failed with an authorisation error, most often on Firefox left open for a long time. Habeas now reads your current access token straight from the page on each request, instead of a saved one that ING may have already rotated.&quot;,
+        &quot;es&quot;: &quot;Corrige las sincronizaciones de ING que fallaban con un error de autorización, sobre todo en Firefox si llevaba mucho tiempo abierto. Habeas ahora lee tu token de acceso actual directamente de la página en cada petición, en vez de uno guardado que ING puede haber rotado ya.&quot;
+      }
+    },
+    {
       &quot;version&quot;: &quot;2026-08-26.1&quot;,
       &quot;changes&quot;: {
         &quot;en&quot;: &quot;Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.&quot;,
@@ -611,11 +624,11 @@
       <h2>Qué ha cambiado en esta fuente</h2>
       <p>Esta fuente es una definición pública y cada cambio queda registrado. De lo más reciente a lo más antiguo:</p>
       <ul class="changelog">
+        <li class="rev"><span class="ver">2026-09-10</span> — Corrige las sincronizaciones de ING que fallaban con un error de autorización, sobre todo en Firefox si llevaba mucho tiempo abierto. Habeas ahora lee tu token de acceso actual directamente de la página en cada petición, en vez de uno guardado que ING puede haber rotado ya.</li>
         <li class="rev"><span class="ver">2026-08-26.1</span> — Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga.</li>
         <li class="rev"><span class="ver">2026-08-26</span> — Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.</li>
         <li class="rev"><span class="ver">2026-08-09</span> — La guía dice ahora claramente que ING solo sirve unos 90 días de histórico, para que nadie llegue esperando todo su archivo de extractos. Corrige además el mes que queda a caballo de ese límite: sus extractos ya se descargan.</li>
         <li class="rev"><span class="ver">2026-08-08.2</span> — Corrige la ventana de histórico en un día, para que Habeas no pida a ING un día que va a rechazar. Requiere Habeas 0.9.11.4 o posterior.</li>
-        <li class="rev"><span class="ver">2026-08-08.1</span> — Sin cambios en lo que extrae esta fuente. Esta versión le dio su página de guía en habeas.dev.</li>
       </ul>
       <p class="lead"><a href="undefined#ing-es">Ver el historial completo en el catálogo →</a></p>
 
