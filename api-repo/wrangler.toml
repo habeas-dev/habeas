@@ -1,4 +1,10 @@
 name = "habeas-api"
+# The token can read your memberships, so wrangler sees several accounts and refuses to guess in CI:
+#   "More than one account available but unable to select one in non-interactive mode."
+# An account id is an identifier, not a credential, and Cloudflare documents committing it. If you
+# would rather it not sit in a public repo, move it to a CLOUDFLARE_ACCOUNT_ID secret and pass it
+# as an env var from the workflow instead.
+account_id = "7c636d71260f91bd91ad092f4d5c6012"
 main = "worker.mjs"
 compatibility_date = "2024-11-01"
 workers_dev = false

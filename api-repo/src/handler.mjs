@@ -26,7 +26,13 @@ const MAX_AUTHOR = 60;
 const MAX_HANDOFF_BYTES = 2_000_000;   // a redacted recording is ~300KB; cap generously
 const MAX_HANDOFFS_PER_HOUR = 20;
 
-const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', ...CORS } });
+// This is an API, not a site. Google had crawled the root and filed it under "crawled, currently not
+// indexed" — a JSON endpoint sitting in the index of a project whose whole argument is that it has no
+// servers holding your data. There is nothing here for a search result to be about, so say so on every
+// response rather than hoping a crawler infers it from the content type.
+const NOINDEX = { 'x-robots-tag': 'noindex, nofollow' };
+
+const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', ...NOINDEX, ...CORS } });
 const err = (status, message) => json({ error: message }, status);
 
 // Best-effort push to the team when a handoff needs attention: a NEW recording, or a contributor REPLY.
@@ -57,7 +63,7 @@ function fireNotify(env, event) {
 }
 
 export async function handleRequest(request, env) {
-  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { ...NOINDEX, ...CORS } });
 
   const url = new URL(request.url);
   const parts = url.pathname.split('/').filter(Boolean); // ['sources', ':id', 'ratings'|'comments']

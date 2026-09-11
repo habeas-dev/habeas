@@ -73,6 +73,22 @@ test('rate limit kicks in after the hourly cap', async () => {
 // ---- handoff collaboration workflow ----
 const BUNDLE = { habeasHandoff: 1, kind: 'redacted-recording', domain: 'financieraelcorteingles.es', counts: { samples: 2 }, samples: [{ url: 'https://x/api?type=CLOSE', json: { movements: [{ amount: '[amount:EUR]' }] } }] };
 
+// REGRESSION GUARD — do not delete. For two weeks (2026-08-28 → 09-11) api.habeas.dev served a build with
+// no handoff routes at all: this service had drifted into two copies, and the one that CI deployed was an
+// older ratings-only handler. Its tests passed because they only ever asked about ratings, so nothing failed
+// and nobody noticed. Meanwhile the shipped extension kept POSTing to /handoff and getting a 404, and it
+// degrades quietly on an unreachable service — every recording a contributor sent was lost without a trace.
+// This test asks the one question those tests never did: are the routes wired at all? A handler that answers
+// "unknown route" for the handoff surface must fail CI, never deploy.
+test('routing: the handoff surface is wired (not answered as an unknown route)', async () => {
+  const s = memoryStore();
+  // A malformed body reaching route-level validation (400/401) proves the route EXISTS. A 404 here means the
+  // handler has no idea what /handoff is — which is exactly the build that went to production.
+  assert.equal((await call(s, 'POST', '/handoff', { submitter: 'sub1', bundle: { nope: 1 } })).status, 400);
+  assert.equal((await call(s, 'GET', '/handoff')).status, 401);              // token-gated, but present
+  assert.equal((await call(s, 'GET', '/submitter/sub1/handoffs')).status, 200);
+});
+
 test('handoff: submit validates the bundle + submitter', async () => {
   const s = memoryStore();
   assert.equal((await call(s, 'POST', '/handoff', { submitter: 'sub1', bundle: { nope: 1 } })).status, 400);
