@@ -122,6 +122,7 @@ habeas/
 │       ├── sinks/           # sinks.js · format.js (schema-aware records) · drive.js · dropbox.js · email.js
 │       └── ui/              # popup · options · author (record mode) · marketplace · theme.css
 ├── docs/                   # habeas.dev landing (GitHub Pages) + FUNCTIONAL-SPEC.md + CNAME
+├── api-repo/               # SUBMODULE → habeas-dev/api (api.habeas.dev Worker). NOT a copy — see below
 ├── package.json            # npm scripts: lint/build/package via web-ext
 ├── .github/workflows/build.yml   # CI: build MV3 zip on push, attach to releases on v* tags
 └── adapters/ schemas/ core/ …    # EARLY-SKELETON design artifacts (spec docs), NOT the runtime code
@@ -299,7 +300,21 @@ Author new/updated sources from a real API capture kept **outside the repo**, an
 (they hold real user data) — validate with `validateAdapter` and run the runtime against the captured
 response (mock `net` into `listInventory`) before publishing; only real, API-verified sources ship.
 
-**Community-sources registry (a SEPARATE repo).** `sources-repo/` is a staging copy tracked in THIS repo.
+**The API (`api-repo/`) is a SUBMODULE, not a copy.** `api.habeas.dev` (the ratings/comments service + the
+whole handoff collaboration workflow) lives in `habeas-dev/api`, and `api-repo/` is a git submodule pointing
+at it. It used to be a tracked copy, and on 2026-08-28 that cost two weeks of silent downtime: the handoff
+code existed only in the copy here and was deployed by hand, so when CI auto-deploy was enabled in the public
+repo it published an older ratings-only handler over it. `POST /handoff` returned 404 while ratings stayed up,
+the extension degrades quietly on an unreachable service, and nothing surfaced it. Working on the API means:
+edit inside `api-repo/`, commit and push THERE (its CI deploys on push to main), then commit the new submodule
+pointer here. Forgetting that last step is harmless to production — the deployed code is whatever the API repo
+holds — which is the point of the arrangement. `git status` shows any drift instead of hiding it.
+Fresh clone: `git clone --recurse-submodules`, or `git submodule update --init` in an existing one.
+Its tests do NOT run in this repo's `npm test`; they run in its own CI.
+
+**Community-sources registry (a SEPARATE repo).** `sources-repo/` is a staging copy tracked in THIS repo —
+the same shape that broke the API above, so treat drift as expected and check it. (Known benign drift: the
+generated `sources/index.json` here goes stale whenever a source is published live without a resync.)
 The LIVE catalog is a separate repo `git@github.com:habeas-dev/sources.git` (served at
 `habeas-dev.github.io/sources`) with its **own independent history** — **never subtree-split / force-push it**;
 publish by applying the changes in a clone and pushing **non-force (fast-forward)** (full steps in

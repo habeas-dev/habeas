@@ -1,0 +1,3 @@
+[submodule "api-repo"]
+	path = api-repo
+	url = https://github.com/habeas-dev/api.git

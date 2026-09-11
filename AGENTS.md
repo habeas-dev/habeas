@@ -58,6 +58,7 @@ extension/                 # THE EXTENSION — the code that ships
   test/                    # node:test unit tests (*.test.mjs) + e2e/
 docs/                      # deep docs (see the map below)
 sources-repo/              # STAGING copy of the community source catalog (separate live repo)
+api-repo/                  # SUBMODULE → habeas-dev/api (api.habeas.dev). Not a copy: push there, CI deploys
 CLAUDE.md                  # full project context (rich); AGENTS.md is its neutral summary
 ```
 

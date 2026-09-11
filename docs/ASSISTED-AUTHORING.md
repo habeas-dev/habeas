@@ -47,7 +47,8 @@ Contributor (in the extension)                 Team (api.habeas.dev + repo)
 
 ## 5. The submission thread (backend)
 
-`api-repo/` is a Cloudflare Worker + D1 (`handler.mjs`, `store-d1.mjs`; `store-memory.mjs` for tests).
+`api-repo/` is a Cloudflare Worker + D1 (`handler.mjs`, `store-d1.mjs`; `store-memory.mjs` for tests) — a
+**submodule** pointing at `habeas-dev/api`, whose CI deploys on push to main. Changes go in there, not here.
 Everything is a **pure** `handleRequest(request, env)`. The handoff endpoints:
 
 | endpoint | who | what |
