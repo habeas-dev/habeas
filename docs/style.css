@@ -249,6 +249,20 @@ footer a { color: var(--ink); }
 .install-cta { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: var(--surface); }
 .install-cta .btn { display: block; text-align: center; margin-bottom: 8px; }
 .install-cta .note { font-size: 12.5px; line-height: 1.5; color: var(--muted); margin: 10px 0 0; }
+/* The other browsers' buttons, folded away by install-cta.js. Styled as quiet text rather than a fourth
+   button: it is a way out for the minority on another browser, not a competing call to action. Only
+   reachable once the script has run, so no no-JS state to design for. */
+.install-others { margin-bottom: 8px; }
+/* A closed <details> hides its content through the UA stylesheet, and `.install-cta .btn { display: block }`
+   above overrides exactly that — so without this rule the folded buttons stay on screen and the disclosure
+   does nothing. Wrapping them in a container does NOT help: the override applies to the button itself. */
+.install-others:not([open]) .btn { display: none; }
+.install-others > summary { font-size: 12.5px; color: var(--muted); cursor: pointer; padding: 6px 2px;
+                            list-style: revert; }
+.install-others > summary:hover { color: var(--ink); }
+.install-others > summary:focus-visible { outline: 2px solid var(--accent, currentColor); outline-offset: 2px;
+                                          border-radius: 4px; }
+.install-others[open] > summary { margin-bottom: 8px; }
 .withaside { display: grid; grid-template-columns: minmax(0, 1fr) 268px; gap: 40px; align-items: start; }
 .withaside > .install-cta { position: sticky; top: 78px; }
 @media (max-width: 860px) {
