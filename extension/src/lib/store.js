@@ -18,7 +18,23 @@ export async function getStoreConfig() { const o = await chrome.storage.local.ge
 export async function setStoreConfig(cfg) { await chrome.storage.local.set({ [CFG_KEY]: cfg }); }
 
 let override = null;               // tests inject an in-memory backend
-export function setBackend(b) { override = b; }
+export function setBackend(b) { override = b; inflight.clear(); }
+
+// Coalesce CONCURRENT identical reads. On a big store hosted on a cloud backend (Dropbox), one loadSource is
+// one download per month shard; several surfaces (the Archive, the popup, a viewer) rendering the same source
+// at once each triggered a full re-download — the read amplification behind a "source timed out after 90s".
+// This shares the SINGLE in-flight load between overlapping callers, then forgets it the moment it settles, so
+// it is never a stale memo (a read that STARTS after the prior one finished still loads fresh). Only the
+// default interactive read is shared; a passive probe (interactive:false) never heals/writes and stays separate.
+const inflight = new Map(); // sourceId -> Promise<data|null>
+function loadShared(sourceId, opts) {
+  if (opts && opts.interactive === false) return backendFor().then((b) => b.loadSource(sourceId, opts));
+  const hit = inflight.get(sourceId);
+  if (hit) return hit;
+  const p = backendFor().then((b) => b.loadSource(sourceId, opts)).finally(() => { inflight.delete(sourceId); });
+  inflight.set(sourceId, p);
+  return p;
+}
 
 // A backend implements { loadSource(id)->data|null, saveSource(id,data), appendItems, listSources()->[id], … }.
 // `local` is a static module; the others are factories bound to their config (dir handle / Drive folder / URL).
@@ -81,7 +97,7 @@ export async function getSecretsBlob() { try { const b = await backendFor(); ret
 // can surface the real failure reason (see ui/store-browser.js).
 export async function getSource(sourceId) {
   try {
-    const data = (await (await backendFor()).loadSource(sourceId)) || null;
+    const data = (await loadShared(sourceId)) || null;
     // Remember it for the next open. Best-effort and after the fact, so a cache problem can never turn a
     // successful read into a failed one.
     if (data) { const cfg = await getStoreConfig().catch(() => null); writeCache(cfg && cfg.backend, sourceId, data); }
@@ -93,6 +109,7 @@ export async function getSource(sourceId) {
 // why this must never decide what gets written, deleted or marked delivered.
 // Forget a source's cached copy. Fire-and-forget: it is a cache.
 function invalidate(sourceId) {
+  inflight.delete(sourceId); // a read that STARTS after this write must not join a load begun before it
   getStoreConfig().then((cfg) => dropCache(cfg && cfg.backend, sourceId)).catch(() => {});
 }
 export async function getSourceCached(sourceId) {
@@ -127,8 +144,8 @@ export async function deleteSource(sourceId) {
   if (typeof backend.clearSource === 'function') { try { return await backend.clearSource(sourceId); } catch (e) { /* fall through to empty */ } }
   try { await backend.saveSource(sourceId, { meta: {}, items: {} }, { prune: true }); } catch (e) {} // explicit delete fallback
 }
-export async function getRecords(sourceId, opts) { try { return project(await (await backendFor()).loadSource(sourceId), opts); } catch (e) { return project(null, opts); } }
-export async function getViews(sourceId, delivered) { try { return views(await (await backendFor()).loadSource(sourceId), delivered); } catch (e) { return views(null, delivered); } }
+export async function getRecords(sourceId, opts) { try { return project(await loadShared(sourceId), opts); } catch (e) { return project(null, opts); } }
+export async function getViews(sourceId, delivered) { try { return views(await loadShared(sourceId), delivered); } catch (e) { return views(null, delivered); } }
 // Passive UI hint (the "Load from store" button badge) → never pop an OAuth window just to count; a Drive
 // backend reads this silently (interactive:false) and returns null if no token is available yet.
 export async function countLive(sourceId) { try { const b = await backendFor(); if (typeof b.hasItems === 'function') return (await b.hasItems(sourceId)) ? 1 : 0; const s = await b.loadSource(sourceId, { interactive: false }); return s ? Object.values(s.items).filter((e) => !e.gone).length : 0; } catch (e) { return 0; } }

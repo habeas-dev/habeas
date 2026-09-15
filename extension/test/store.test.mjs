@@ -41,6 +41,32 @@ test('markGone tombstones items; they drop out of projections but views count th
   assert.equal(v.live, 1); assert.equal(v.gone, 1); assert.deepEqual(v.missed, ['y']);
 });
 
+test('concurrent reads of the same source coalesce into ONE backend load (store-on-Dropbox read amplification)', async () => {
+  let loads = 0;
+  const b = mem();
+  const slow = { ...b, async loadSource(id) { loads++; await new Promise((r) => setTimeout(r, 5)); return b.db[id] || null; } };
+  setBackend(slow);
+  await putItems('s', [{ internalId: '1', record: rec('1', '2026-01-01', 5) }]);
+  loads = 0; // ignore the read-merge inside putItems
+  // Two surfaces (Archive + popup) render the same source at the same time → must not both hit the backend.
+  const [a, c] = await Promise.all([getRecords('s'), getRecords('s')]);
+  assert.deepEqual(a.map((r) => r.internalId), ['1']);
+  assert.deepEqual(c.map((r) => r.internalId), ['1']);
+  assert.equal(loads, 1, 'the two concurrent reads should share a single backend load');
+});
+
+test('a read AFTER the prior one settled loads fresh (coalescing is in-flight only, never a stale memo)', async () => {
+  let loads = 0;
+  const b = mem();
+  const counted = { ...b, async loadSource(id) { loads++; return b.db[id] || null; } };
+  setBackend(counted);
+  await putItems('s', [{ internalId: '1', record: rec('1', '2026-01-01', 5) }]);
+  loads = 0;
+  await getRecords('s');
+  await getRecords('s'); // sequential → a genuinely fresh read, not served from an in-flight promise
+  assert.equal(loads, 2, 'sequential reads each load fresh (no TTL memo that could serve stale data)');
+});
+
 test('migrate: union every source from one backend into another (moving the store between backends)', async () => {
   const a = mem(); const b = mem();
   setBackend(a);

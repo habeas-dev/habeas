@@ -10,6 +10,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **A large archive kept on a cloud-hosted store (e.g. Dropbox) no longer gets re-read many times over when
+  several screens open at once.** When the popup, the Archive and a viewer render the same source
+  simultaneously, they now share a single fetch instead of each re-downloading it — a first step against
+  syncs that ended in “a source timed out after 90 s” because reading the store, not the bank, was eating the
+  time. (More to come: painting those screens from the local cache first, and not scanning every source to
+  open one document.)
+
 ## [0.10.7] — 2026-09-07
 
 ### Added
