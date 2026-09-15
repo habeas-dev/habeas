@@ -273,7 +273,13 @@ async function hydrateIndex() {
     if (seq !== hydrateSeq) return; // a newer refresh started
     let count = 0, lastDate = ''; const accSet = new Set();
     for (const key of s.keys) {
-      const src = await getSource(key).catch(() => null); if (!src || !src.items) continue;
+      // Cache-FIRST: on a big store hosted on a cloud backend (Dropbox), a fresh getSource here is a download
+      // per month shard, and this sweep runs over EVERY source on every Archive open — the read amplification
+      // behind "a source timed out after 90s". A write (any sync) calls invalidate(), which DROPS this cache,
+      // so a source that actually changed has no cache and is read fresh below; unchanged sources are served
+      // from IndexedDB with no network. Opening a source (loadDocs) and Sync-all still read fresh.
+      const src = (await getSourceCached(key).catch(() => null)) || (await getSource(key).catch(() => null));
+      if (!src || !src.items) continue;
       if (src.__partial) incomplete = true;
       for (const e of Object.values(src.items)) { if (e.gone) continue; const g = e.record && e.record.group; if (!groupAllowed(s.ds, g)) continue; count++; const dt = (e.record && e.record.date) || ''; if (dt > lastDate) lastDate = dt; if (g) accSet.add(g); }
     }

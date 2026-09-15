@@ -15,8 +15,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   several screens open at once.** When the popup, the Archive and a viewer render the same source
   simultaneously, they now share a single fetch instead of each re-downloading it — a first step against
   syncs that ended in “a source timed out after 90 s” because reading the store, not the bank, was eating the
-  time. (More to come: painting those screens from the local cache first, and not scanning every source to
-  open one document.)
+  time.
+- **Opening the Archive no longer re-downloads every source from a cloud-hosted store.** The source list now
+  fills its document counts from the local cache and only re-reads a source that actually changed (any sync
+  drops that source’s cache), instead of fetching every source’s whole history on each open — the main cause
+  of the store, not the bank, exhausting a sync’s time budget. Opening a source and “Sync all” still read
+  fresh.
 
 ## [0.10.7] — 2026-09-07
 
