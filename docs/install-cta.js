@@ -24,8 +24,10 @@
   const EDGE_URL = 'https://microsoftedge.microsoft.com/addons/detail/habeas-%E2%80%94-descarga-tickets/clcjdklighbiegkncdicfbgkeahjmaoa';
 
   const STRINGS = {
-    en: { edge: 'Install on Edge', others: 'Install on other browsers' },
-    es: { edge: 'Instalar en Edge', others: 'Instalar en otros navegadores' },
+    en: { edge: 'Install on Edge', others: 'Install on other browsers',
+      othersMethods: 'Other browsers and ways to install' },
+    es: { edge: 'Instalar en Edge', others: 'Instalar en otros navegadores',
+      othersMethods: 'Otros navegadores y formas de instalar' },
   };
   const t = STRINGS[(document.documentElement.lang || 'en').slice(0, 2)] || STRINGS.en;
 
@@ -44,9 +46,16 @@
   for (const aside of asides) {
     const chrome = aside.querySelector('[data-browser="chrome"]');
 
+    // Two shapes share this logic. The guide aside is a bare list of buttons, so the unit that gets
+    // promoted or folded IS the button. The home panel wraps each button in an `.opt` that also carries
+    // its icon, heading, description and caveats — there the unit is the whole block, so an option never
+    // gets separated from the copy that explains it, and the Chrome trust notes fold away with Chrome.
+    const opts = [...aside.querySelectorAll('.opt')];
+
     // Build the Edge anchor from the Chrome one so it inherits the page's own classes and, crucially,
-    // its data-umami-event-source — the per-page attribution the funnel report is keyed on.
-    if (chrome && !aside.querySelector('[data-browser="edge"]')) {
+    // its data-umami-event-source — the per-page attribution the funnel report is keyed on. Skipped
+    // wherever an Edge option is already written into the markup, copy and all.
+    if (chrome && !opts.length && !aside.querySelector('[data-browser="edge"]')) {
       const edge = chrome.cloneNode(true);
       edge.setAttribute('data-browser', 'edge');
       edge.href = EDGE_URL;
@@ -60,19 +69,28 @@
       chrome.insertAdjacentElement('afterend', edge);
     }
 
-    const buttons = [...aside.querySelectorAll('[data-browser]')];
-    const mine = buttons.find((b) => b.getAttribute('data-browser') === here);
+    // `units` are what moves; `mine` is the one to promote. An option with no [data-browser] — the
+    // unpacked build — matches no browser and so is always an alternative, which is correct: it is a
+    // method, not a store.
+    const units = opts.length ? opts : [...aside.querySelectorAll('[data-browser]')];
+    const mine = units.find((u) => (u.matches('[data-browser]') ? u : u.querySelector('[data-browser]'))
+      ?.getAttribute('data-browser') === here);
     if (!mine) continue;
 
-    mine.classList.add('primary');
+    (mine.matches('[data-browser]') ? mine : mine.querySelector('[data-browser]')).classList.add('primary');
 
-    const others = buttons.filter((b) => b !== mine);
+    const others = units.filter((u) => u !== mine);
     if (!others.length) continue;
 
     const details = document.createElement('details');
     details.className = 'install-others';
     const summary = document.createElement('summary');
-    summary.textContent = t.others;
+    const methods = aside.dataset.othersLabel === 'methods';
+    summary.textContent = methods ? t.othersMethods : t.others;
+    // Guides are static per language and carry no i18n runtime, so the text above is final there. The
+    // home does translate at DOMContentLoaded — after this deferred script — so it needs the key too, or
+    // a Spanish reader gets an English summary over Spanish buttons.
+    summary.setAttribute('data-i18n', methods ? 'install_others_methods_h' : 'install_others_h');
     details.append(summary, ...others);
     mine.insertAdjacentElement('afterend', details);
   }

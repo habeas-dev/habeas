@@ -252,11 +252,30 @@ footer a { color: var(--ink); }
 /* The other browsers' buttons, folded away by install-cta.js. Styled as quiet text rather than a fourth
    button: it is a way out for the minority on another browser, not a competing call to action. Only
    reachable once the script has run, so no no-JS state to design for. */
+/* The home install section: one option at full size, the rest folded underneath. It reuses .install-cta
+   so install-cta.js drives both, but it is a centred panel rather than a sidebar card — hence the width
+   and the flat background. Each .opt keeps its own icon, heading, copy and caveats, so whatever is
+   promoted arrives explained and whatever is folded takes its explanation with it. */
+.install-panel { max-width: 560px; margin: 0 auto; border: 0; background: none; padding: 0; }
+.install-panel .opt { background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+                      padding: 22px; text-align: center; }
+.install-panel .opt + .opt { margin-top: 10px; }
+.install-panel .opt h3 { font-size: 18px; margin-bottom: 8px; }
+.install-panel .opt > p { color: var(--muted); margin: 0 0 16px; font-size: 15px; }
+.install-panel .ic { font-size: 22px; margin-bottom: 10px; }
+.install-panel .trust-note { font-size: 13px; line-height: 1.55; color: var(--muted); text-align: left;
+                             margin: 26px 0 0; }
+.install-panel .trust-note + .trust-note { margin-top: 10px; }
+.install-panel .btn { margin-bottom: 0; }
+.install-panel > .install-others { margin-top: 10px; }
+@media (max-width: 560px) { .install-panel .opt { padding: 18px; } }
+
 .install-others { margin-bottom: 8px; }
 /* A closed <details> hides its content through the UA stylesheet, and `.install-cta .btn { display: block }`
    above overrides exactly that — so without this rule the folded buttons stay on screen and the disclosure
    does nothing. Wrapping them in a container does NOT help: the override applies to the button itself. */
-.install-others:not([open]) .btn { display: none; }
+.install-others:not([open]) .btn,
+.install-others:not([open]) > .opt { display: none; }
 .install-others > summary { font-size: 12.5px; color: var(--muted); cursor: pointer; padding: 6px 2px;
                             list-style: revert; }
 .install-others > summary:hover { color: var(--ink); }

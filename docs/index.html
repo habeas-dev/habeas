@@ -225,23 +225,37 @@
     <div class="wrap">
       <h2 data-i18n="install_h2">Install</h2>
       <p class="lead" data-i18n="install_lead">Install from the Chrome Web Store or Firefox Add-ons — or grab the raw build from GitHub Releases.</p>
-      <div class="grid">
-        <div class="card">
+      <!-- Every option ships visible and neutral. install-cta.js promotes the one matching the reader's
+           browser and folds the rest into the disclosure; each option carries its own copy, so whatever
+           gets promoted arrives with its own explanation and its own caveats. The Chrome trust notes live
+           INSIDE the Chrome option on purpose — they are about the Chrome Web Store, and they travel with
+           it into the fold when the reader is on Firefox or Edge, where they would just be noise. -->
+      <div class="install-cta install-panel" data-others-label="methods">
+        <div class="opt">
           <div class="ic">🌐</div>
           <h3 data-i18n="install_chrome_h">Chrome &amp; Chromium</h3>
           <p data-i18n="install_chrome_b">Chrome, Brave, Opera and other Chromium browsers.</p>
-          <a class="btn primary" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-i18n="install_chrome_cta" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="home">Add to Chrome</a>
-          <p class="lead" style="font-size:.82rem;opacity:.6;margin-top:10px"><a href="https://microsoftedge.microsoft.com/addons/detail/habeas-%E2%80%94-descarga-tickets/clcjdklighbiegkncdicfbgkeahjmaoa" data-i18n="install_edge_cta" data-umami-event="install" data-umami-event-store="edge" data-umami-event-source="home">On Microsoft Edge, install from Edge Add-ons instead</a></p>
-          <p class="lead" style="font-size:.82rem;opacity:.6;margin-top:10px"><a href="https://github.com/habeas-dev/habeas/releases" data-i18n="install_soon_chrome" data-umami-event="install" data-umami-event-store="releases-chrome" data-umami-event-source="home">Or get the unpacked build on GitHub Releases</a></p>
+          <a class="btn" data-browser="chrome" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-i18n="install_chrome_cta" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="home">Add to Chrome</a>
           <p class="trust-note" data-i18n="trust_body">Chrome will show a notice that the extension is not trusted. It applies to any developer account recently registered on the Chrome Web Store, it takes a few months to fade, and it says nothing about the code, which you can read in full.</p>
           <p class="trust-note" data-i18n="trust_irony">There is some irony in an extension whose thesis is that your data should not depend on an intermediary’s goodwill receiving a mark of distrust from an intermediary that neither explains its criteria nor allows any appeal.</p>
         </div>
-        <div class="card">
+        <div class="opt">
+          <div class="ic">🌊</div>
+          <h3 data-i18n="install_edge_h">Microsoft Edge</h3>
+          <p data-i18n="install_edge_b">Edge on Windows or macOS — from Edge Add-ons, with no cross-store warning.</p>
+          <a class="btn" data-browser="edge" href="https://microsoftedge.microsoft.com/addons/detail/habeas-%E2%80%94-descarga-tickets/clcjdklighbiegkncdicfbgkeahjmaoa" data-i18n="install_edge_cta" data-umami-event="install" data-umami-event-store="edge" data-umami-event-source="home">Add to Edge</a>
+        </div>
+        <div class="opt">
           <div class="ic">🦊</div>
           <h3 data-i18n="install_firefox_h">Firefox</h3>
           <p data-i18n="install_firefox_b">Firefox 128 or newer.</p>
-          <a class="btn primary" href="https://addons.mozilla.org/firefox/addon/habeas/" data-i18n="install_firefox_cta" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="home">Add to Firefox</a>
-          <p class="lead" style="font-size:.82rem;opacity:.6;margin-top:10px"><a href="https://github.com/habeas-dev/habeas/releases" data-i18n="install_soon_firefox" data-umami-event="install" data-umami-event-store="releases-firefox" data-umami-event-source="home">Or get the unpacked build on GitHub Releases</a></p>
+          <a class="btn" data-browser="firefox" href="https://addons.mozilla.org/firefox/addon/habeas/" data-i18n="install_firefox_cta" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="home">Add to Firefox</a>
+        </div>
+        <div class="opt">
+          <div class="ic">📦</div>
+          <h3 data-i18n="install_releases_h">Unpacked build</h3>
+          <p data-i18n="install_releases_b">The same package, straight from the repository — load it yourself, or read it before you do.</p>
+          <a class="btn" href="https://github.com/habeas-dev/habeas/releases" data-i18n="install_releases_cta" data-umami-event="install" data-umami-event-store="releases" data-umami-event-source="home">Get it on GitHub Releases</a>
         </div>
       </div>
     </div>
@@ -297,5 +311,6 @@
   <script type="module" src="source-rank.js"></script>
   <script src="nav-i18n.js"></script>
   <script src="i18n.js"></script>
+  <script defer src="install-cta.js"></script>
 </body>
 </html>
