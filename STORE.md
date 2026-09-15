@@ -308,17 +308,32 @@ So Edge gets its **own build** (`npm run build:edge` → `dist/edge/`, and CI at
 The shared manifest is never edited to please Edge: removing `scripts` would leave Firefox with no
 background at all.
 
-**Live ids (submitted 2026-08-24, in review — Microsoft quotes 7 working days):**
+**Live ids (submitted 2026-08-24, PUBLISHED — confirmed live 2026-09-15, serving 0.10.7):**
 
 | | |
 |---|---|
-| CRX id (Edge) | `clcjdklighbiegknodicfogkeahjmaoa` |
+| CRX id (Edge) | `clcjdklighbiegkncdicfbgkeahjmaoa` |
 | Store id | `0RDCKFL9DKWN` |
 | Product id | `13590b8f-a250-48e0-a91a-732bba0372f3` |
 
-`https://clcjdklighbiegknodicfogkeahjmaoa.chromiumapp.org/` was added to the OAuth client
+> **The CRX id was recorded with two wrong characters** (`…knodicfogke…` instead of `…kncdicfbgke…`) from
+> 2026-08-24 to 2026-09-15, and the typo propagated to BOTH places that consume the id:
+>
+> - every check of the public listing used it, got a 404, and concluded the item was still unpublished —
+>   for three weeks after it had actually gone live (CI published it automatically with the `v0.10.7` tag);
+> - the Path-B redirect registered on the OAuth client pointed at an extension that does not exist, so
+>   **Google Drive could not have connected on Edge at all** during that window. Corrected 2026-09-15.
+>   Blast radius: none — the listing had 0 installs, so no user ever hit it.
+>
+> Verify an id by fetching `https://microsoftedge.microsoft.com/addons/getproductdetailsbycrxid/<id>` and
+> matching `storeProductId` against the Store id above, rather than by eye: the alphabet is a–p, so a typo
+> stays plausible-looking. A store id is load-bearing in more than one system — check it where it is USED,
+> not only where it is written down.
+
+`https://clcjdklighbiegkncdicfbgkeahjmaoa.chromiumapp.org/` is registered on the OAuth client
 `246972215385-rd4fbb1s…` (type *Web application* — NOT the *Chrome extension* client of the same name,
-which is the manifest's `oauth2` one and plays no part here) on 2026-08-24, so Drive connects on Edge.
+which is the manifest's `oauth2` one and plays no part here), so Drive connects on Edge. Registered
+2026-08-24 with the wrong id; corrected 2026-09-15.
 
 **⚠️ The dropped `key` changes the extension ID, and that has a consequence.** The Chrome ID is derived
 from that key; without it Edge assigns its own. So `chrome.identity.getRedirectURL()` returns a *different*

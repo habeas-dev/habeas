@@ -383,8 +383,19 @@ without offering everyone a pointless update. `minVersion` gates by extension ve
   being served with `node scripts/cws-live-version.mjs pbpehhngeidokhaokgloaneiibhceiog`.
   Firefox Drive OAuth redirect still per-user. MV3 review note: `scripting` +
   `optional_host_permissions: https://*/*` (record mode) needed justification at store review.
-- **Microsoft Edge — submitted, NOT published.** `microsoftedge.microsoft.com/addons/detail/clcjdklighbiegknodicfogkeahjmaoa`
-  still 404s and the product API returns 404 (checked 2026-09-04). `scripts/build-edge.mjs` +
-  `scripts/edge-publish.mjs` exist for it. Do not link it publicly until the listing resolves.
+- ~~Microsoft Edge — submitted, NOT published~~ **PUBLISHED.** Live at
+  `microsoftedge.microsoft.com/addons/detail/habeas-—-descarga-tickets/clcjdklighbiegkncdicfbgkeahjmaoa`,
+  serving **0.10.7** (same as CWS and AMO), 0 installs, 0 ratings. CI publishes it automatically on `v*`
+  tags via `scripts/build-edge.mjs` + `scripts/edge-publish.mjs`; the v0.10.7 submission of 2026-09-07
+  17:22 was approved and is what the store serves. **It was believed unpublished until 2026-09-15 only
+  because the CRX id was recorded with two wrong characters** (`…knodicfogke…` vs the real
+  `…kncdicfbgke…`), so three weeks of daily 404 checks were querying an id that never existed. Never take
+  a store id from a transcription: confirm it with
+  `curl https://microsoftedge.microsoft.com/addons/getproductdetailsbycrxid/<id>` and match `storeProductId`.
+  The typo had also reached the Google OAuth **Web application** client: the Path-B redirect registered on
+  2026-08-24 pointed at the non-existent id, so Drive could not have connected on Edge at all. Corrected
+  2026-09-15 to `https://clcjdklighbiegkncdicfbgkeahjmaoa.chromiumapp.org/`; no user was affected (0
+  installs). Lesson: a store id is load-bearing in several systems at once — when one is found wrong,
+  check every place it is USED, not just the docs that record it.
 - **Consumers** — build the Tiquetera/Cuéntamo ingest endpoints (the `sink.normalize` canonical output +
   `record.extra` are ready on the Habeas side).

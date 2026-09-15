@@ -82,7 +82,7 @@ store therefore needs its own entry on the **Web application** client `246972215
 | Where | Redirect URI |
 |---|---|
 | Chrome Web Store | `https://pbpehhngeidokhaokgloaneiibhceiog.chromiumapp.org/` |
-| Microsoft Edge | `https://clcjdklighbiegknodicfogkeahjmaoa.chromiumapp.org/` |
+| Microsoft Edge | `https://clcjdklighbiegkncdicfbgkeahjmaoa.chromiumapp.org/` |
 | Local unpacked (dev) | `https://fdaldgfnnlgaljejigkfipjemaoibikm.chromiumapp.org/` |
 
 Careful: the project has TWO OAuth clients named "Habeas extension". The one that matters here is the
