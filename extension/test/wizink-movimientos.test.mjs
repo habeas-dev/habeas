@@ -53,12 +53,23 @@ function payRow(concept, date, amount) {
 }
 const wrap = (rows) => `<div class="card-movements"><ul>${rows.join('')}</ul></div>`;
 
-// Current (UNBILLED) month. Kept as a fixture precisely so the test can prove it is never requested:
-// pending charges are provisional and are listed again inside the statement that bills them.
-const CURRENT = wrap([
-  movRow('restaurante', 'MC DONALD\'S ALGETE', '02 JUL', 'SAN SEBASTIAN', '9,90 €', true),
-  movRow('coche', 'REPSOL E.S.', '20 jun', 'MADRID', '55,00 €', true),
-]);
+// Current (UNBILLED) view (CardDetail/NewToday). WiZink lists "Operaciones por confirmar" (provisional
+// pre-authorisations — amount, date and wording can all still change until they settle) ABOVE "Movimientos
+// a día de hoy" (already-settled charges of the current period). The source's periods.current.after trims to
+// the confirmed header, so a pending charge is never collected — even here, where it is given the SAME
+// movItem markup as a settled one, to prove the exclusion is by position, not by luck of markup. Settled
+// current movements ARE collected; each also appears in the statement that later bills it, and the stable
+// natural-key id (account|date|amount|description) makes the two one record.
+const CURRENT =
+  '<div class="card-movement-detail"><header><h3>Operaciones por confirmar</h3></header>'
+  + wrap([movRow('alimentacion', 'PENDIENTE SUPER SL', '15 sep', 'BILBAO', '236,55 €', false)]) // provisional → must be dropped
+  + '</div>'
+  + '<div class="card-movement-detail"><header class="has-action-panel"><h3>Movimientos a día de hoy</h3></header>'
+  + wrap([
+    movRow('restaurante', 'MC DONALD\'S ALGETE', '13 sep', 'SAN SEBASTIAN', '9,90 €', true),
+    movRow('coche', 'REPSOL E.S.', '10 sep', 'MADRID', '55,00 €', false),
+  ])
+  + '</div>';
 const DATES = `<script>callOperations('${D30}'); callOperations('${D60}'); callOperations('${D120}');</script>`;
 const PAST = {
   [D30]: wrap([
@@ -85,7 +96,7 @@ function mockNet() {
     const reply = (text, ok = true, status = 200) => ({ ok, status, text: async () => text, json: async () => JSON.parse(text) });
     if (u.pathname === '/clientes/posicion-global') return reply(CSRF);
     if (pn.endsWith('NewGlobalPosition')) return reply(GROUPS);
-    if (pn.endsWith('CardDetail/NewToday')) { net.pending = true; return reply(CURRENT); } // must never happen
+    if (pn.endsWith('CardDetail/NewToday')) { net.current = true; return reply(CURRENT); } // the unbilled/current view
     if (pn.endsWith('Today/ListExtracts')) return reply(DATES);
     if (pn.endsWith('ExtractOnScreenDetail')) {
       const d = (body.match(/statementDate=([0-9-]+)/) || [])[1];
@@ -112,13 +123,16 @@ test('multi-period pipeline: reachable past statements only; >90-day statement n
   const net = mockNet();
   const docs = await listInventory(SRC, { byPath: {}, merged: {} }, net, { log: (m) => logs.push(m) });
 
-  // Unbilled movements are deliberately NOT listed (see the source's `periods`): a pending charge is
-  // provisional — amount, date and wording can all still change — and it is listed a second time inside
-  // the statement that bills it, which is how one charge became two records at the consumer.
-  // D30(3: 2 gastos + 1 pago) + D60(4) = 7; D120 is filtered BEFORE fetching (no SMS trigger).
-  assert.equal(docs.length, 7, 'expected 3 (2 gastos + 1 pago) + 4 past = 7 movements, none of them pending');
-  assert.ok(!docs.some((d) => d._raw._period === 'current'), 'nothing pending may be listed');
-  assert.ok(!net.pending, 'the unbilled-movements endpoint must never be requested at all');
+  // The current (unbilled) view IS listed now — its SETTLED movements ("Movimientos a día de hoy"), never the
+  // provisional "Operaciones por confirmar" section (excluded by periods.current.after). current(2 settled) +
+  // D30(3: 2 gastos + 1 pago) + D60(4) = 9; the pending charge and D120 are both excluded.
+  assert.ok(net.current, 'the current/unbilled view IS requested');
+  assert.equal(docs.length, 9, 'expected 2 current (settled) + 3 (2 gastos + 1 pago) + 4 past = 9');
+  assert.ok(docs.some((d) => d._raw._period === 'current'), 'settled current-period movements ARE listed');
+  // The provisional pre-authorisation ("Operaciones por confirmar", above the confirmed header) must be gone.
+  assert.ok(!docs.some((d) => d.record.amount === 236.55), 'a pending pre-authorisation is never collected');
+  assert.ok(!docs.some((d) => d.record.description === 'PENDIENTE SUPER SL'), 'the pending charge is excluded by position');
+  assert.ok(docs.some((d) => d.record.amount === 55 && d._raw._period === 'current'), 'a settled current movement IS collected');
 
   for (const d of docs) {
     assert.match(d.date, /^\d{4}-\d{2}-\d{2}$/, 'date normalized: ' + d.date);
@@ -157,7 +171,7 @@ test('multi-period pipeline: reachable past statements only; >90-day statement n
 test('per-period tagging carries the period into each movement', async () => {
   const docs = await listInventory(SRC, { byPath: {}, merged: {} }, mockNet());
   const periods = new Set(docs.map((d) => d._raw._period));
-  assert.deepEqual([...periods].sort(), [D60, D30].sort(), 'only billed statement periods');
+  assert.deepEqual([...periods].sort(), ['current', D60, D30].sort(), 'the current period plus the billed statements');
 });
 
 test('internalId is synthesized, unique, and stable across re-runs (delivery ledger dedupes)', async () => {
@@ -174,7 +188,7 @@ test('runtime synthesizes an internalId even when the source omits fields.intern
   const bare = JSON.parse(JSON.stringify(SRC));
   delete bare.fields.internalId;
   const docs = await listInventory(bare, { byPath: {}, merged: {} }, mockNet());
-  assert.equal(docs.length, 7);
+  assert.equal(docs.length, 9);
   assert.ok(docs.every((d) => d.internalId && d.internalId.startsWith('ACC1|')), 'fallback id built');
-  assert.equal(new Set(docs.map((d) => d.internalId)).size, 7, 'fallback ids unique');
+  assert.equal(new Set(docs.map((d) => d.internalId)).size, 9, 'fallback ids unique');
 });

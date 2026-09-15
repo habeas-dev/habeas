@@ -592,7 +592,16 @@ async function pageListPeriods(adapter, auth, net, group, opts) {
 
   // 1. current (unbilled) month — every movement is in this one response (no server pagination).
   if (P.current) {
-    try { tag(parseHtmlItems(await fetchPeriodHtml(adapter, await refresh(), net, group, P.current), rows), 'current'); }
+    try {
+      let html = await fetchPeriodHtml(adapter, await refresh(), net, group, P.current);
+      // `after`: drop everything before this marker so a section that PRECEDES the confirmed movements is never
+      // parsed — WiZink's current view lists "Operaciones por confirmar" (provisional pre-authorisations, which
+      // change or vanish once they settle) above "Movimientos a día de hoy". Excluding them by design keeps a
+      // volatile charge out of the store instead of relying on it happening to lack the row markup. No match →
+      // parse the whole response (safe: nothing is dropped by mistake).
+      if (P.current.after) { const mk = html.search(new RegExp(P.current.after)); if (mk > 0) html = html.slice(mk); }
+      tag(parseHtmlItems(html, rows), 'current');
+    }
     catch (e) { log(`${adapter.service || 'source'} ${gname}: current-month movements failed — ${e.message}`); }
   }
   // 2. past statement dates (each a callOperations('YYYY-MM-DD') on the card page).

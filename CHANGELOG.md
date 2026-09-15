@@ -10,6 +10,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **A card source can collect the current, not-yet-billed period while skipping charges still pending
+  confirmation.** A period's `current` fetch gains an `after` marker: the response is trimmed to start at that
+  marker before parsing, so a section listed above it — a card's provisional pre-authorisations — is never
+  read. This is what lets WiZink pick up this month's settled movements again without re-collecting volatile
+  pending charges.
+
 ### Fixed
 - **A large archive kept on a cloud-hosted store (e.g. Dropbox) no longer gets re-read many times over when
   several screens open at once.** When the popup, the Archive and a viewer render the same source

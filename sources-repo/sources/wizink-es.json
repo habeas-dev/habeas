@@ -15,7 +15,8 @@
   },
   "domain": "wizink.es",
   "country": "ES",
-  "version": "2026-08-28",
+  "version": "2026-09-15",
+  "minVersion": "0.10.7.3",
   "currency": "EUR",
   "categories": [
     "card",
@@ -87,6 +88,13 @@
           "method": "POST",
           "maxPeriods": 24,
           "periods": {
+            "current": {
+              "params": {
+                "pagename": "ECOM_SiteEntry/WZPRI/CardDetail/NewToday"
+              },
+              "body": "accountNumber={group.accountNumber}&cardNumber={group.cardNumber}&option=today&securityToken={csrf}",
+              "after": "Movimientos a d"
+            },
             "dates": {
               "params": {
                 "pagename": "ECOM_SiteEntry/WZPRI/CardDetail/Today/ListExtracts"
@@ -220,6 +228,13 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-09-15",
+      "changes": {
+        "en": "This month's card movements are collected again. They had stopped appearing: the change that removed provisional pending charges also dropped the whole current, not-yet-billed period, so a purchase only showed up once its monthly statement closed. Now the current period is read again — its settled movements only, never the ones still 'pending confirmation', which remain provisional until they settle. A movement still counts once: when this month's charge later lands in its statement, its stable identity makes the two one. Needs Habeas 0.10.7.3 or newer.",
+        "es": "Vuelven a recogerse los movimientos de tarjeta de este mes. Habían dejado de aparecer: el cambio que quitó los cargos pendientes provisionales se llevó por delante todo el periodo actual sin facturar, así que una compra no aparecía hasta que cerraba su extracto mensual. Ahora el periodo actual se lee de nuevo — solo sus movimientos ya confirmados, nunca los que están «pendientes de confirmar», que siguen siendo provisionales hasta que se liquidan. Un movimiento sigue contando una sola vez: cuando el cargo de este mes aparezca luego en su extracto, su identidad estable hace que los dos sean uno. Requiere Habeas 0.10.7.3 o posterior."
+      }
+    },
     {
       "version": "2026-08-28",
       "changes": {
