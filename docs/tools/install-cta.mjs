@@ -21,7 +21,7 @@ export function installAside(t, where) {
       <a class="btn" data-browser="chrome" href="${CWS}" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="${esc(where)}">${esc(t.installChrome)}</a>
       <a class="btn" data-browser="firefox" href="${AMO}" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="${esc(where)}">${esc(t.installFirefox)}</a>
       <p class="note">${esc(t.installLead)}</p>
-      <p class="note">${esc(t.chromeNote)}</p>
+      <p class="note" data-browser-note="chrome">${esc(t.chromeNote)}</p>
     </aside>
     <script defer src="/install-cta.js"></script>`;
 }

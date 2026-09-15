@@ -93,5 +93,15 @@
     summary.setAttribute('data-i18n', methods ? 'install_others_methods_h' : 'install_others_h');
     details.append(summary, ...others);
     mine.insertAdjacentElement('afterend', details);
+
+    // A caveat belongs to the option it is about. In the home panel that is structural — the note lives
+    // inside its `.opt` and folds with it. The guide aside is flat, so the note says which button it
+    // belongs to and follows it in: a Firefox reader should not be warned about a Chrome Web Store
+    // notice they will never see. A note whose browser IS the promoted one simply stays put.
+    for (const note of aside.querySelectorAll('[data-browser-note]')) {
+      const owner = note.getAttribute('data-browser-note');
+      if (owner === here) continue;
+      details.querySelector(`[data-browser="${owner}"]`)?.insertAdjacentElement('afterend', note);
+    }
   }
 })();

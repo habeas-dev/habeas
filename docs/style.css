@@ -274,8 +274,7 @@ footer a { color: var(--ink); }
 /* A closed <details> hides its content through the UA stylesheet, and `.install-cta .btn { display: block }`
    above overrides exactly that — so without this rule the folded buttons stay on screen and the disclosure
    does nothing. Wrapping them in a container does NOT help: the override applies to the button itself. */
-.install-others:not([open]) .btn,
-.install-others:not([open]) > .opt { display: none; }
+.install-others:not([open]) > *:not(summary) { display: none; }
 .install-others > summary { font-size: 12.5px; color: var(--muted); cursor: pointer; padding: 6px 2px;
                             list-style: revert; }
 .install-others > summary:hover { color: var(--ink); }
