@@ -18,10 +18,10 @@ import { resolveOutput } from './outputs.js';
 import { buildRecord, purgeRecords } from '../sinks/format.js';
 import { readSinkRecords, writeSinkRecords } from '../sinks/sinks.js';
 import { applyNormalize } from './normalize.js';
-import { normalizeDate, normalizeAmount, minorExp } from '../runtime/inventory.js';
+import { normalizeDate, normalizeAmount, minorExp, keepFilter } from '../runtime/inventory.js';
 
 const MARK_KEY = 'habeas:storeMigration';
-const CURRENT = 'renormalize-3'; // bump to force a re-run when normalization changes again (3: retire the duplicates left by the 0.10.2 identity change)
+const CURRENT = 'renormalize-4'; // bump to force a re-run when normalization changes again (4: retire records a source's new list.keep would no longer collect — ING still-authorised card charges)
 
 // Read/write sinks: cumulative-manifest, re-projectable, overwrite-safe. NOT download (ephemeral ZIP) / http
 // (POST-only push) — those are one-way, so re-delivering would spam downloads / duplicate ingest POSTs.
@@ -253,6 +253,63 @@ export async function retireSupersededDuplicates(opts = {}) {
   return { retired, sources, purged };
 }
 
+// ---- retire records a source would NO LONGER COLLECT (its list.keep now excludes them) -----------------
+// When a source adds/changes a `list.keep`, records captured BEFORE the rule stay in the store. Re-applying
+// the rule to what's stored tidies them. ING is the first case: a still-AUTHORISED card charge (operationId a
+// plain number, no "seq|batch") churns a fresh id/date every sync and piled up as duplicates; the source now
+// keeps only posted operationIds (with a "|"), so the stored authorisations should retire. Tombstoned, not
+// deleted; anything the rule leaves in scope — and every source WITHOUT a keep — is untouched.
+
+// A stored record's raw fields live under record.extra (keepRaw). keepFilter uses the RAW field names
+// (operationId, status), so re-expose extra at the top level for it; the record's own fields stay too.
+const rawView = (record) => ({ ...(record || {}), ...((record && record.extra) || {}) });
+
+// PURE: ids whose record the keep rule would now drop. No I/O → unit-tested. `null` keep → nothing.
+export function nowExcludedIds(items, keep) {
+  if (!keep) return [];
+  const out = [];
+  for (const [id, e] of Object.entries(items || {})) {
+    if (!e || !e.record || e.gone) continue; // already retired → leave it
+    if (keepFilter([rawView(e.record)], keep).length === 0) out.push(id);
+  }
+  return out;
+}
+
+// The effective list.keep for a store key ("id" or "id:stream"), via the resolved output — or null.
+function keepForStoreKey(storeKey, adapters) {
+  const ci = String(storeKey).indexOf(':');
+  const id = ci >= 0 ? storeKey.slice(0, ci) : storeKey;
+  const stream = ci >= 0 ? storeKey.slice(ci + 1) : '';
+  const base = adapters && adapters[id];
+  if (!base) return null;
+  let eff; try { eff = resolveOutput(base, stream || (base.streams && base.streams[0] && base.streams[0].id) || ''); } catch (e) { eff = base; }
+  return (eff && eff.api && eff.api.list && eff.api.list.keep) || null;
+}
+
+export async function retireNowExcluded(adapters, opts = {}) {
+  const say = typeof opts.onStatus === 'function' ? opts.onStatus : () => {};
+  let backend, ids = [];
+  try { backend = await activeBackend(); ids = await backend.listSources(); } catch (e) { return { retired: 0, sources: [], purged: 0 }; }
+  const sources = [], retiredBySource = new Map();
+  let retired = 0, n = 0;
+  for (const storeKey of ids) {
+    const keep = keepForStoreKey(storeKey, adapters);
+    if (!keep) continue; // only sources with a keep rule can have now-excluded records
+    say(t2('migrating_checking', [String(++n), String(ids.length), String(storeKey)]));
+    let data; try { data = await backend.loadSource(storeKey); } catch (e) { continue; }
+    if (!data || !data.items || data.__partial) continue; // a partial read must never drive a pruning pass
+    const gone = nowExcludedIds(data.items, keep);
+    if (!gone.length) continue;
+    const at = new Date().toISOString();
+    for (const id of gone) { const e = data.items[id]; if (e) { e.gone = true; e.goneReason = 'no-longer-collected'; e.goneAt = e.goneAt || at; } }
+    try { await backend.saveSource(storeKey, data); retired += gone.length; sources.push(storeKey); retiredBySource.set(storeKey, new Set(gone)); } catch (e) {}
+  }
+  if (retiredBySource.size) say(t2('migrating_cleaning'));
+  let purged = 0;
+  try { purged = await purgeSupersededFromSinks(retiredBySource); } catch (e) { /* best-effort */ }
+  return { retired, sources, purged };
+}
+
 // Reset the delivery ledgers of READ/WRITE sinks for datasources whose adapter changed, so the next Sync
 // re-projects and overwrites their manifests with the corrected records. Returns how many ledgers were reset.
 export async function resetReadWriteLedgers(changedAdapters) {
@@ -290,7 +347,12 @@ export async function runStoreMigration(adapters, opts = {}) {
     // WiZink and Revolut). Runs after re-normalization so both copies are compared in their final shape.
     let dupes = { retired: 0, sources: [], purged: 0 };
     try { dupes = await retireSupersededDuplicates({ onStatus: say }); } catch (e) { /* best-effort */ }
+    // Retire records a source's list.keep now excludes (ING still-authorised card charges that piled up before
+    // the rule existed). Separate from superseded-duplicate retirement: an authorisation that never posted has
+    // no newer copy to be superseded by, so only re-applying the keep catches it.
+    let excl = { retired: 0, sources: [], purged: 0 };
+    try { excl = await retireNowExcluded(adapters, { onStatus: say }); } catch (e) { /* best-effort */ }
     ok = true;
-    return { records, changed: [...changedAdapters], resets, retired: dupes.retired, retiredIn: dupes.sources, purged: dupes.purged, lastAttempt: claim.lastAttempt };
+    return { records, changed: [...changedAdapters], resets, retired: dupes.retired, retiredIn: dupes.sources, purged: dupes.purged, excluded: excl.retired, excludedIn: excl.sources, excludedPurged: excl.purged, lastAttempt: claim.lastAttempt };
   } finally { await settleOnce(MARK_KEY, CURRENT, ok); say(''); }
 }

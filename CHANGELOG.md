@@ -17,6 +17,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   posted movement's operationId as `seq|batch` and a still-authorised one as a plain number; keeping only
   operationIds with a `|` drops the authorisation — which ING re-lists under a fresh id and date every sync and
   so piled up as duplicates — and keeps the single posted movement.
+- **One-time archive tidy-up removes charges a source no longer collects.** On update, Habeas re-applies each
+  source's current collection rule to what is already stored and retires records it would now leave out — so
+  the ING card authorisations that piled up before the rule existed are cleared (tombstoned, and removed from
+  the cloud destination's index too), not just prevented going forward. Anything still in scope is untouched.
 
 ## [0.10.8] — 2026-09-16
 

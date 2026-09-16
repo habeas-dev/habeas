@@ -63,6 +63,8 @@ import { readyGateBlocks, autoDebounced, retainAutoDebounce, autoBackoffMs, need
       // Say how many duplicates were cleared, and where: a silent tidy-up of someone's archive is not a
       // tidy-up they can check.
       if (r && r.retired) appendLog({ kind: 'migrate', ok: true, msg: `Retired ${r.retired} duplicate record(s) left by a source changing how it identifies a movement, in: ${(r.retiredIn || []).join(', ')}${r.purged ? `, and removed ${r.purged} of them from your destination's index` : ''}. Nothing without a newer copy was touched.` });
+      // Records a source no longer collects (ING still-authorised card charges that piled up before the rule).
+      if (r && r.excluded) appendLog({ kind: 'migrate', ok: true, msg: `Retired ${r.excluded} record(s) a source no longer collects (e.g. card charges still awaiting confirmation), in: ${(r.excludedIn || []).join(', ')}${r.excludedPurged ? `, and removed ${r.excludedPurged} of them from your destination's index` : ''}.` });
     }).catch(() => { stopKeepAlive(); });
   } catch (e) {}
   // Cross-device config: adopt a NEWER config snapshot from the (cloud-backed) canonical store, so this machine

@@ -140,3 +140,28 @@ test('the original version survives being written to the store', async () => {
   const out = cleanEntry({ internalId: 'x', record: {}, srcVersion: '2026-08-28', srcVersionOrig: '2026-08-26' });
   assert.equal(out.srcVersionOrig, '2026-08-26');
 });
+
+// nowExcludedIds: retire records the source's CURRENT list.keep would no longer collect. ING keeps only card
+// operationIds with a "|" (posted); a still-authorised charge has a plain operationId and must retire, even
+// when it has NO posted twin yet (a released authorisation never gets one — supersededIds can't catch it).
+// Account movements have no status → the card-scoped rule leaves them alone. All values SYNTHETIC.
+import { nowExcludedIds } from '../src/lib/migrate.js';
+const ING_KEEP = { field: 'operationId', when: { field: 'status', present: true }, match: '\\|' };
+const store = (list) => Object.fromEntries(list.map(([id, extra]) => [id, { record: { date: '2026-09-06', amount: -9.9, description: 'X', extra } }]));
+
+test('nowExcludedIds retires authorised card charges (plain operationId), keeps posted + account movements', () => {
+  const items = store([
+    ['posted', { operationId: '8|208', status: { description: 'Pendiente de liquidar' } }], // keep
+    ['auth1', { operationId: '276215', status: { description: 'Pendiente de liquidar' } }], // retire
+    ['auth2', { operationId: '813595', status: { description: 'Pendiente de liquidar' } }], // retire (no posted twin)
+    ['acct', { transactionCode: 'PURCH' }], // no status → out of scope → keep
+  ]);
+  assert.deepEqual(nowExcludedIds(items, ING_KEEP).sort(), ['auth1', 'auth2']);
+});
+
+test('nowExcludedIds is a no-op without a keep, and skips already-retired entries', () => {
+  const items = store([['auth1', { operationId: '276215', status: { description: 'x' } }]]);
+  assert.deepEqual(nowExcludedIds(items, null), []);
+  items.auth1.gone = true;
+  assert.deepEqual(nowExcludedIds(items, ING_KEEP), []); // already gone → left alone
+});
