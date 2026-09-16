@@ -16,7 +16,6 @@
   "domain": "wizink.es",
   "country": "ES",
   "version": "2026-09-15",
-  "minVersion": "0.10.7.3",
   "currency": "EUR",
   "categories": [
     "card",
@@ -271,7 +270,7 @@
       }
     }
   ],
-  "minVersion": "0.10.2",
+  "minVersion": "0.10.7.3",
   "content": {
     "en": {
       "slug": "wizink-statements",
