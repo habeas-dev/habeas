@@ -15,7 +15,7 @@
   },
   "domain": "ingdirect.es",
   "country": "ES",
-  "version": "2026-09-16",
+  "version": "2026-09-17",
   "minVersion": "0.10.8.1",
   "categories": [
     "banking"
@@ -108,13 +108,6 @@
               "present": true
             },
             "match": "\\|"
-          },
-          "idOverride": {
-            "when": {
-              "field": "status",
-              "present": true
-            },
-            "template": "card|{transactionDate}|{amount}|{transactionId.productId}"
           }
         }
       },
@@ -226,10 +219,10 @@
   ],
   "changelog": [
     {
-      "version": "2026-09-16",
+      "version": "2026-09-17",
       "changes": {
-        "en": "Stops a card charge from being saved twice. A card purchase first appears only *authorised* (its date, wording and internal id still shifting each day) and later posts for good; ING was saving both. Now only the posted movement is kept — the authorisation is left out until it confirms, then imported once. Nothing is lost: a charge simply appears when it posts, with its final details. Needs Habeas 0.10.8.1 or newer.",
-        "es": "Evita que un cargo de tarjeta se guarde dos veces. Una compra con tarjeta aparece primero solo *autorizada* (con la fecha, el texto y el id interno cambiando cada día) y más tarde se contabiliza en firme; ING guardaba las dos. Ahora solo se queda el movimiento contabilizado — la autorización se deja fuera hasta que se confirma, y entonces se importa una sola vez. No se pierde nada: el cargo aparece cuando se contabiliza, con sus datos definitivos. Requiere Habeas 0.10.8.1 o posterior."
+        "en": "Stops card charges from being saved twice or under a made-up identity. A purchase first appears only *authorised* and later posts for good; only the posted one is now kept (the authorisation is left out until it confirms, then imported once). And each movement is now identified by its own stable id from ING rather than a date+amount key, which had been storing the same charge more than once. Nothing is lost: a charge appears when it posts, with its final details. On the first sync after this update your card movements are re-identified, so they count as new once. Needs Habeas 0.10.8.1 or newer.",
+        "es": "Evita que los cargos de tarjeta se guarden dos veces o con una identidad inventada. Una compra aparece primero solo *autorizada* y más tarde se contabiliza en firme; ahora solo se queda la contabilizada (la autorización se deja fuera hasta que se confirma, y entonces se importa una vez). Y cada movimiento se identifica por su id estable propio de ING en vez de por una clave fecha+importe, que estaba guardando el mismo cargo más de una vez. No se pierde nada: el cargo aparece cuando se contabiliza, con sus datos definitivos. En la primera sincronización tras esta actualización tus movimientos de tarjeta se reidentifican, así que cuentan como nuevos una vez. Requiere Habeas 0.10.8.1 o posterior."
       }
     },
     {
