@@ -17,6 +17,10 @@
        instead (a div honours width) and ellipsise it to one line; the full id is on hover (title). */
     .idcell { font-family: ui-monospace, monospace; font-size: 11px; }
     .idbox { width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .idbox:hover { text-decoration: underline; }
+    /* Expanded full-data view for one entry (click its internalId). */
+    tr.detail > td { background: color-mix(in srgb, var(--line) 25%, transparent); }
+    .rawjson { font-family: ui-monospace, monospace; font-size: 11px; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; max-height: 340px; overflow: auto; }
     .muted { color: var(--muted); }
     .pill { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11px; border: 1px solid var(--line); }
     .pill.ok { background: #16833522; border-color: #16833555; }

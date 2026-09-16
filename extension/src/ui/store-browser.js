@@ -212,6 +212,23 @@ async function render() {
     </tr>`;
   }).join('') || '<tr><td colspan="9" class="muted">sin items</td></tr>';
   document.querySelectorAll('.sel').forEach((c) => { c.onchange = updateCounts; });
+  // Click an internalId to expand the FULL stored data of that entry (record + raw `extra` + tombstone info +
+  // internalId). It's the only place a RETIRED (gone) record's complete data can be read — the Archive hides
+  // gone records, and its columns are a summary anyway.
+  const byId = new Map(rows.map((x) => [String(x.id), x]));
+  document.querySelectorAll('#tbody .idbox').forEach((box) => {
+    box.style.cursor = 'pointer'; box.title = box.title + '\n(clic: ver datos completos)';
+    box.onclick = () => {
+      const tr = box.closest('tr');
+      const nx = tr.nextElementSibling;
+      if (nx && nx.classList.contains('detail')) { nx.remove(); return; } // toggle off
+      const id = tr.querySelector('.sel') && tr.querySelector('.sel').dataset.id;
+      const row = byId.get(String(id)); if (!row) return;
+      const dr = document.createElement('tr'); dr.className = 'detail';
+      dr.innerHTML = `<td colspan="9"><pre class="rawjson">${esc(JSON.stringify({ internalId: id, ...row.e }, null, 2))}</pre></td>`;
+      tr.after(dr);
+    };
+  });
   $('#sel-all').checked = false;
   updateCounts();
 }
