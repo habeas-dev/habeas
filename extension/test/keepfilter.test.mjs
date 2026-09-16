@@ -47,3 +47,44 @@ test('exclude: drop matching values but KEEP items where the field is absent (IN
   const byMat = keepFilter(items, { field: 'maturity', exclude: ['2027-01-01'] });
   assert.equal(byMat.length, 4); // the one 2027 item dropped; the other fixed + all field-absent items kept
 });
+
+// match / excludeMatch (regex on the field) + `when` (scope the rule to some items, pass the rest through).
+// This is how ING drops still-authorised (unconfirmed) CARD charges: a posted movement's operationId is
+// "seq|batch" (e.g. "8|208"), an authorisation's is a plain number ("276215"); the authorisation churns a
+// fresh id every sync and piles up as duplicates. Keep only operationIds with a "|", scoped to card
+// movements (status present) so account movements (no status, maybe no operationId) are never touched.
+// All values SYNTHETIC.
+const ingItems = [
+  { operationId: '8|208', status: { description: 'x' }, note: 'posted card' },
+  { operationId: '276215', status: { description: 'x' }, note: 'authorised card (drop)' },
+  { operationId: '813595', status: { description: 'x' }, note: 'authorised card (drop)' },
+  { operationId: '1|208', status: { description: 'x' }, note: 'posted card' },
+  { note: 'account movement — no status, no operationId (must pass)' },
+  { operationId: 'ABC', note: 'account movement with a plain op but NO status (must pass)' },
+];
+
+test('match + when: keep only card movements whose operationId has a "|"; account movements untouched', () => {
+  const kept = keepFilter(ingItems, { field: 'operationId', when: { field: 'status', present: true }, match: '\\|' });
+  assert.deepEqual(kept.map((x) => x.note), [
+    'posted card',
+    'posted card',
+    'account movement — no status, no operationId (must pass)',
+    'account movement with a plain op but NO status (must pass)',
+  ]);
+});
+
+test('excludeMatch + when: the inverse — drop card movements whose operationId is a plain number', () => {
+  const kept = keepFilter(ingItems, { field: 'operationId', when: { field: 'status', present: true }, excludeMatch: '^\\d+$' });
+  assert.deepEqual(kept.filter((x) => x.status).map((x) => x.operationId), ['8|208', '1|208']);
+  assert.equal(kept.length, 4); // 2 posted card + 2 account movements
+});
+
+test('when scope with values: rule applies only to items whose scope field is in the list', () => {
+  const kept = keepFilter(ingItems, { field: 'operationId', when: { field: 'status.description', values: ['x'] }, match: '\\|' });
+  assert.equal(kept.length, 4); // same as present:true here
+});
+
+test('match without when applies to ALL items (a field-absent value becomes "" and fails a required match)', () => {
+  const kept = keepFilter(ingItems, { field: 'operationId', match: '\\|' });
+  assert.deepEqual(kept.map((x) => x.operationId), ['8|208', '1|208']); // everything else dropped, incl. account movements
+});

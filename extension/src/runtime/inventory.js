@@ -1617,15 +1617,28 @@ export function keepFilter(items, keep) {
   if (Array.isArray(keep)) return keep.reduce((acc, k) => keepFilter(acc, k), items);
   if (!keep || !keep.field) return items;
   const val = (p) => get(p, keep.field);
+  // `when` {field, present? | values?}: apply this rule ONLY to items matching the scope; every out-of-scope
+  // item passes through untouched. Lets a card-only rule (status present) leave account movements — which have
+  // no status, and maybe no operationId — completely alone.
+  const scoped = keep.when && keep.when.field
+    ? (p) => { const w = get(p, keep.when.field); const has = w != null && w !== ''; return typeof keep.when.present === 'boolean' ? has === keep.when.present : Array.isArray(keep.when.values) ? keep.when.values.map(String).includes(String(w)) : has; }
+    : () => true;
+  const pass = (p, ok) => !scoped(p) || ok; // out of scope → always kept, whatever the rule says
   let out = items;
-  if (Array.isArray(keep.values)) { const vals = new Set(keep.values.map(String)); out = out.filter((p) => vals.has(String(val(p)))); }
+  if (Array.isArray(keep.values)) { const vals = new Set(keep.values.map(String)); out = out.filter((p) => pass(p, vals.has(String(val(p))))); }
   // `exclude`: DROP items whose field value is in the list, keeping items where the field is absent/other (a
   // blacklist). ING re-lists a still-PENDING card charge with a fresh id/sequence/balance every sync → it never
   // dedups and piles up; excluding "Pendiente de liquidar" keeps only the stable SETTLED record (account
   // movements have no status field, so they're untouched).
-  if (Array.isArray(keep.exclude)) { const ex = new Set(keep.exclude.map(String)); out = out.filter((p) => { const v = val(p); return v == null || v === '' || !ex.has(String(v)); }); }
-  if (typeof keep.present === 'boolean') out = out.filter((p) => { const v = val(p); return (v != null && v !== '') === keep.present; });
-  if (keep.prefix) { const pre = Array.isArray(keep.prefix) ? keep.prefix : [keep.prefix]; out = out.filter((p) => { const v = String(val(p) ?? ''); return pre.some((x) => v.startsWith(x)); }); }
+  if (Array.isArray(keep.exclude)) { const ex = new Set(keep.exclude.map(String)); out = out.filter((p) => pass(p, (() => { const v = val(p); return v == null || v === '' || !ex.has(String(v)); })())); }
+  if (typeof keep.present === 'boolean') out = out.filter((p) => pass(p, (val(p) != null && val(p) !== '') === keep.present));
+  if (keep.prefix) { const pre = Array.isArray(keep.prefix) ? keep.prefix : [keep.prefix]; out = out.filter((p) => pass(p, pre.some((x) => String(val(p) ?? '').startsWith(x)))); }
+  // `match` / `excludeMatch` (regex on the field): ING marks a still-AUTHORISED (unconfirmed) card charge with
+  // a PLAIN operationId, while a POSTED one is "seq|batch" (e.g. "8|208"). Keep only operationIds with a "|"
+  // (match "\\|"), scoped to card movements via `when` — so authorisations, which churn a fresh id every sync
+  // and pile up as duplicates, are dropped, and account movements are never touched.
+  if (keep.match) { let re; try { re = new RegExp(keep.match); } catch (e) { re = null; } if (re) out = out.filter((p) => pass(p, re.test(String(val(p) ?? '')))); }
+  if (keep.excludeMatch) { let re; try { re = new RegExp(keep.excludeMatch); } catch (e) { re = null; } if (re) out = out.filter((p) => pass(p, !re.test(String(val(p) ?? '')))); }
   return out;
 }
 // list.expand {path}: replace each item that has a non-empty sub-array at `path` with one item PER sub-element,

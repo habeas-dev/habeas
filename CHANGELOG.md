@@ -10,6 +10,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **A card source can drop a charge that is only *authorised*, not yet posted, and keep it once it confirms.**
+  A list `keep` rule gains `when` (apply the rule only to matching items — e.g. card movements, which carry a
+  status — leaving account movements untouched) and `match`/`excludeMatch` (a regex on the field). ING marks a
+  posted movement's operationId as `seq|batch` and a still-authorised one as a plain number; keeping only
+  operationIds with a `|` drops the authorisation — which ING re-lists under a fresh id and date every sync and
+  so piled up as duplicates — and keeps the single posted movement.
+
 ## [0.10.8] — 2026-09-16
 
 ### Added

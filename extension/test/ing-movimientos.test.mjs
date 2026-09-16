@@ -134,3 +134,48 @@ test('ING extracto-mensual: one PER-MONTH integrated statement; PDF URL on the a
   const u = await docUrl(eff, docs[0]);
   assert.match(u, /^https:\/\/ing\.ingdirect\.es\/genoma_api\/rest\/products\/statement\?year=\d{4}&month=\d{1,2}$/);
 });
+
+// A still-AUTHORISED (unconfirmed) card charge churns a fresh id/date every sync and piles up as a duplicate.
+// ING marks a POSTED movement's operationId as "seq|batch" (e.g. "8|208") and an AUTHORISATION's as a plain
+// number — so the source keeps only card movements whose operationId has a "|". The SAME purchase shows first
+// as an authorisation (plain op, shorter wording) and later posted (seq|batch, enriched wording); only the
+// posted one must survive. Account movements have no status → the rule never touches them. All SYNTHETIC.
+test('ING drops still-authorised card charges (plain operationId), keeps posted ones (seq|batch)', async () => {
+  const POS = { products: [{ uuid: 'card-1', type: 'CREDIT_CARD', commercialName: 'Tarjeta Crédito', denominationCurrency: 'EUR',
+    identifiers: [{ type: 'PRODUCT_NUMBER', value: '4111111111111111' }, { type: 'UUID', value: 'card-1' }] }] };
+  const CARD = { 'card-1': [
+    { transactionLocalUUID: 'u-posted', transactionDate: iso(2), amount: -9.9, description: 'CAFE CENTRAL MADRID', transactionCode: 'TCTPV', status: { code: 1, description: 'Pendiente de liquidar' }, transactionId: { productId: 'card-1' }, operationId: '8|208' },
+    { transactionLocalUUID: 'u-auth', transactionDate: iso(1), amount: -9.9, description: 'CAFE CENTRAL', transactionCode: 'TCTPV', status: { code: 1, description: 'Pendiente de liquidar' }, transactionId: { productId: 'card-1' }, operationId: '276215' },
+  ] };
+  const cnet = async (url) => {
+    const u = new URL(url);
+    if (u.pathname === '/position-keeping') return { ok: true, status: 200, json: async () => POS };
+    const m = u.pathname.match(/^\/v2\/products\/([^/]+)\/transactions$/);
+    if (m) { const off = +(u.searchParams.get('offset') || 0); return { ok: true, status: 200, json: async () => ({ transactions: off === 0 ? (CARD[m[1]] || []) : [] }) }; }
+    return { ok: false, status: 404, json: async () => ({}) };
+  };
+  const docs = await listInventory(MOV, auth, cnet);
+  assert.equal(docs.length, 1, 'only the posted charge survives, the authorisation is dropped');
+  assert.equal(docs[0].record.description, 'CAFE CENTRAL MADRID', 'the kept one is the posted (enriched) movement');
+  assert.ok(!docs.some((d) => d.record.description === 'CAFE CENTRAL'), 'the authorisation (plain operationId) is excluded');
+});
+
+// The rule is scoped to CARD movements (status present): an account movement with no status — and no
+// operationId — must never be dropped by it.
+test('ING keep rule leaves account movements (no status) untouched', async () => {
+  const POS = { products: [{ uuid: 'acc-1', type: 'CURRENT_ACCOUNT', commercialName: 'Cuenta', denominationCurrency: 'EUR',
+    identifiers: [{ type: 'PRODUCT_NUMBER', value: 'ES0000000000000000000000' }, { type: 'UUID', value: 'acc-1' }] }] };
+  const ACC = { 'acc-1': [
+    { transactionLocalUUID: 'a1', transactionDate: iso(3), amount: -20, description: 'Compra', transactionCode: 'PURCH' }, // no status, no operationId
+    { transactionLocalUUID: 'a2', transactionDate: iso(4), amount: 1500, description: 'Nomina', transactionCode: 'PAYROLL' },
+  ] };
+  const anet = async (url) => {
+    const u = new URL(url);
+    if (u.pathname === '/position-keeping') return { ok: true, status: 200, json: async () => POS };
+    const m = u.pathname.match(/^\/v2\/products\/([^/]+)\/transactions$/);
+    if (m) { const off = +(u.searchParams.get('offset') || 0); return { ok: true, status: 200, json: async () => ({ transactions: off === 0 ? (ACC[m[1]] || []) : [] }) }; }
+    return { ok: false, status: 404, json: async () => ({}) };
+  };
+  const docs = await listInventory(MOV, auth, anet);
+  assert.equal(docs.length, 2, 'both account movements kept — the card-only keep rule never touched them');
+});

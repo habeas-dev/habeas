@@ -15,8 +15,8 @@
   },
   "domain": "ingdirect.es",
   "country": "ES",
-  "version": "2026-09-10",
-  "minVersion": "0.9.11.4",
+  "version": "2026-09-16",
+  "minVersion": "0.10.8.1",
   "categories": [
     "banking"
   ],
@@ -100,6 +100,14 @@
           "params": {
             "limit": 100,
             "filterEru": "false"
+          },
+          "keep": {
+            "field": "operationId",
+            "when": {
+              "field": "status",
+              "present": true
+            },
+            "match": "\\|"
           },
           "idOverride": {
             "when": {
@@ -217,6 +225,13 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-09-16",
+      "changes": {
+        "en": "Stops a card charge from being saved twice. A card purchase first appears only *authorised* (its date, wording and internal id still shifting each day) and later posts for good; ING was saving both. Now only the posted movement is kept — the authorisation is left out until it confirms, then imported once. Nothing is lost: a charge simply appears when it posts, with its final details. Needs Habeas 0.10.8.1 or newer.",
+        "es": "Evita que un cargo de tarjeta se guarde dos veces. Una compra con tarjeta aparece primero solo *autorizada* (con la fecha, el texto y el id interno cambiando cada día) y más tarde se contabiliza en firme; ING guardaba las dos. Ahora solo se queda el movimiento contabilizado — la autorización se deja fuera hasta que se confirma, y entonces se importa una sola vez. No se pierde nada: el cargo aparece cuando se contabiliza, con sus datos definitivos. Requiere Habeas 0.10.8.1 o posterior."
+      }
+    },
     {
       "version": "2026-09-10",
       "changes": {
