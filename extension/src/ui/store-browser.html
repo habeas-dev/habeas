@@ -12,7 +12,11 @@
     th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
     th { color: var(--muted); font-weight: 600; position: sticky; top: 0; background: var(--bg); }
     td.r { text-align: right; font-variant-numeric: tabular-nums; }
-    .idcell { font-family: ui-monospace, monospace; font-size: 11px; max-width: 220px; overflow-wrap: anywhere; }
+    /* A <td> ignores max-width under table-layout:auto, so a 340-char internalId (an account movement's raw
+       transactionLocalUUID) blew the column open and pushed the table off-screen. Constrain a BLOCK child
+       instead (a div honours width) and ellipsise it to one line; the full id is on hover (title). */
+    .idcell { font-family: ui-monospace, monospace; font-size: 11px; }
+    .idbox { width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .muted { color: var(--muted); }
     .pill { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11px; border: 1px solid var(--line); }
     .pill.ok { background: #16833522; border-color: #16833555; }

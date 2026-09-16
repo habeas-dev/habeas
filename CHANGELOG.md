@@ -10,6 +10,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **The canonical-store inspector's table no longer breaks when an internalId is very long.** A raw
+  transactionLocalUUID (hundreds of characters) used to stretch the internalId column off-screen and make the
+  table unusable; the id is now shown in a fixed-width cell, truncated with an ellipsis and the full value on
+  hover.
+
 ### Added
 - **A card source can drop a charge that is only *authorised*, not yet posted, and keep it once it confirms.**
   A list `keep` rule gains `when` (apply the rule only to matching items — e.g. card movements, which carry a

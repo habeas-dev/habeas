@@ -191,7 +191,7 @@ async function render() {
       : '<span class="pill">—</span>';
     return `<tr>
       <td><input type="checkbox" class="sel" data-id="${esc(id)}"></td>
-      <td class="idcell">${esc(id)}</td>
+      <td class="idcell"><div class="idbox" title="${esc(id)}">${esc(id)}</div></td>
       <td>${esc((r.date || '').slice(0, 10))}</td>
       <td>${esc(storeName(r))}${r.group ? ' <span class="muted">· ' + esc(r.group) + '</span>' : ''}</td>
       <td class="r">${esc(money(r.total ?? r.amount, r.currency))}</td>
