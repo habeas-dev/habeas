@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.10.8] — 2026-09-16
+
 ### Added
 - **A card source can collect the current, not-yet-billed period while skipping charges still pending
   confirmation.** A period's `current` fetch gains an `after` marker: the response is trimmed to start at that
