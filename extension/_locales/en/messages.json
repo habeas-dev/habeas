@@ -3855,7 +3855,7 @@
     "message": "Tidy up the archive"
   },
   "opt_tidy_help": {
-    "message": "When a source changes how it identifies a document, everything it lists again is stored a second time under the new identity, and your archive shows it twice. Habeas clears that up on its own once, but you can ask for it here — after it has already run, or if it stopped part-way. It checks each source, retires the copies that a newer one has replaced, and removes them from your destination's index too. A document with no newer copy is never touched."
+    "message": "When a source changes how it identifies a document, everything it lists again is stored a second time under the new identity, and your archive shows it twice. Habeas clears that up on its own once, but you can ask for it here — after it has already run, or if it stopped part-way. It checks each source, retires the copies that a newer one has replaced, and also any a source no longer collects (e.g. card charges still awaiting confirmation), and removes them from your destination's index too. A document with no newer copy, and anything a source still collects, is never touched."
   },
   "opt_tidy_btn": {
     "message": "Tidy up now"

@@ -441,7 +441,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       keepAlive();
       try {
         const r = await runStoreMigration(adapters, { force: true, onStatus: (m) => setStatus(m) });
-        return { ok: true, retired: r.retired || 0, purged: r.purged || 0, sources: r.retiredIn || [] };
+        const retired = (r.retired || 0) + (r.excluded || 0), purged = (r.purged || 0) + (r.excludedPurged || 0); // both retirements
+        return { ok: true, retired, purged, sources: [...new Set([...(r.retiredIn || []), ...(r.excludedIn || [])])] };
       } catch (e) { return { ok: false, error: (e && e.message) || String(e) }; }
       finally { stopKeepAlive(); setStatus(''); }
     })().then(sendResponse);

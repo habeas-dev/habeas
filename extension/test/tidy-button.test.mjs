@@ -36,7 +36,7 @@ test('asking for it by hand ignores the once-only gate', () => {
 
 test('it holds the extension awake and clears the status line afterwards', () => {
   const at = BG.indexOf("habeas:tidyArchive");
-  const body = BG.slice(at, at + 900);
+  const body = BG.slice(at, at + 1000); // the handler grew when the tidy started counting both kinds of retirement
   assert.match(body, /keepAlive\(\)/, 'a pass measured in minutes must not be recycled halfway');
   assert.match(body, /finally \{ stopKeepAlive\(\); setStatus\(''\)/, 'and must leave no stale message behind');
 });

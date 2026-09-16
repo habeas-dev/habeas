@@ -3855,7 +3855,7 @@
     "message": "Ordenar el archivo"
   },
   "opt_tidy_help": {
-    "message": "Cuando una fuente cambia la forma de identificar un documento, todo lo que vuelve a listar se guarda una segunda vez con la identidad nueva y tu archivo lo muestra por duplicado. Habeas lo ordena solo una vez, pero puedes pedirlo aquí — cuando ya se hizo, o si se quedó a medias. Revisa cada fuente, retira las copias que otra más nueva ha sustituido y las quita también del índice de tu destino. Un documento sin copia más nueva no se toca nunca."
+    "message": "Cuando una fuente cambia la forma de identificar un documento, todo lo que vuelve a listar se guarda una segunda vez con la identidad nueva y tu archivo lo muestra por duplicado. Habeas lo ordena solo una vez, pero puedes pedirlo aquí — cuando ya se hizo, o si se quedó a medias. Revisa cada fuente, retira las copias que otra más nueva ha sustituido, y también lo que una fuente ya no recoge (p. ej. cargos de tarjeta aún pendientes de confirmar), y las quita también del índice de tu destino. Un documento sin copia más nueva, y lo que una fuente sigue recogiendo, no se toca nunca."
   },
   "opt_tidy_btn": {
     "message": "Ordenar ahora"
