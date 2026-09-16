@@ -10,11 +10,19 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.10.9] — 2026-09-17
+
 ### Fixed
 - **The canonical-store inspector's table no longer breaks when an internalId is very long.** A raw
   transactionLocalUUID (hundreds of characters) used to stretch the internalId column off-screen and make the
   table unusable; the id is now shown in a fixed-width cell, truncated with an ellipsis and the full value on
   hover.
+- **The store inspector now says why a record was retired, in plain words.** A tombstoned row showed raw
+  jargon (“gone · superseded”); it now reads e.g. “retirado · duplicado sustituido” with a hover explanation,
+  so the two retirement kinds are distinguishable.
+- **You can read an entry's full data in the store inspector.** Click an internalId to expand the complete
+  stored record — its raw `extra` fields, tombstone info and id — the only place a retired record's full data
+  can be seen (the Archive hides retired records).
 
 ### Added
 - **A card source can drop a charge that is only *authorised*, not yet posted, and keep it once it confirms.**
