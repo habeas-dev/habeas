@@ -185,8 +185,18 @@ async function render() {
   $('#summary').textContent = `${items.length} items · ${live} vivos · ${gone} tombstones · ${withDoc} con documento`
     + (delivered ? ` · ${deliveredN} entregados · ${pending} pendientes → ${sinkId}` : '');
 
+  // Human-readable reason a record was retired (tombstoned), + a hover explanation. The raw goneReason is
+  // internal jargon; this says which situation each "gone" row is.
+  const GONE = {
+    superseded: ['duplicado sustituido', 'Copia antigua: la fuente cambió cómo identifica el movimiento y una versión más reciente lo sustituyó. Es permanente.'],
+    'no-longer-collected': ['ya no se recoge', 'La regla actual de la fuente ya no recoge este registro (p. ej. una autorización de tarjeta aún pendiente de confirmar). Reaparece cuando se contabiliza.'],
+    retention: ['fuera de retención', 'El servicio ya no lo lista: cae fuera de su ventana de histórico.'],
+    rescan: ['no reapareció', 'No apareció en el último re-escaneo de la fuente.'],
+  };
+  const goneLabel = (reason) => GONE[reason] || [reason || 'desconocido', 'Retirado del archivo.'];
   $('#tbody').innerHTML = rows.map(({ id, e, r, isGone, isDelivered }) => {
-    const status = isGone ? `<span class="pill gone">gone${e.goneReason ? ' · ' + esc(e.goneReason) : ''}</span>`
+    const [gLbl, gHelp] = isGone ? goneLabel(e.goneReason) : [];
+    const status = isGone ? `<span class="pill gone" title="${esc(gHelp)}">retirado · ${esc(gLbl)}</span>`
       : delivered ? (isDelivered ? '<span class="pill ok">entregado</span>' : '<span class="pill pend">pendiente</span>')
       : '<span class="pill">—</span>';
     return `<tr>
