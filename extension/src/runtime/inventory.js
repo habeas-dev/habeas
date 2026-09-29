@@ -249,7 +249,9 @@ const csrfKey = (adapter) => adapter.id || adapter.api.host;
 const groupsCache = new Map(); // adapter id + groups config → { groups, at }
 const GROUPS_TTL_MS = 2 * 60 * 1000;
 const groupsKey = (adapter) => csrfKey(adapter) + '|' + JSON.stringify(adapter.api.groups || null);
+// Only for a CSRF source (WiZink), where the saving was measured and a stale list is dropped with the token.
 async function keptGroups(adapter, auth, net) {
+  if (!adapter.api.csrf) return listGroups(adapter, auth, net);
   const k = groupsKey(adapter), c = groupsCache.get(k);
   if (c && Date.now() - c.at < GROUPS_TTL_MS) return c.groups.slice();
   const groups = await listGroups(adapter, auth, net);
