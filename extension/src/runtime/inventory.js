@@ -120,6 +120,20 @@ function withinAgeDays(dateStr, days) {
 }
 
 export async function listInventory(adapter, auth, net, opts) {
+  // A CSRF source starts from the run's kept token (see fetchCsrf) — one sync lists several outputs, and each
+  // used to load the token page again. A kept token can have died since (a new login): if the site refuses the
+  // listing with a 400, load a fresh one and list once more.
+  if (!(adapter.api && adapter.api.csrf) || (auth && auth.__csrf)) return listInventoryOnce(adapter, auth, net, opts);
+  const kept = await fetchCsrf(adapter, auth, net, { cached: true });
+  try { return await listInventoryOnce(adapter, { ...(auth || {}), __csrf: kept }, net, opts); }
+  catch (e) {
+    if (!/\b400\b/.test((e && e.message) || '')) throw e;
+    csrfCache.delete(csrfKey(adapter)); groupsCache.delete(groupsKey(adapter)); // both came from the dead session
+    return listInventoryOnce(adapter, { ...(auth || {}), __csrf: await fetchCsrf(adapter, auth, net) }, net, opts);
+  }
+}
+
+async function listInventoryOnce(adapter, auth, net, opts) {
   const list = (adapter.api && adapter.api.list) || {};
   if (list.idOverride) adapter._idxState = new Map(); // fresh per-IMPORT ordinal state (the Nth same-key item in THIS run)
   const byDate = (x, y) => (x.date < y.date ? 1 : -1);
@@ -185,9 +199,9 @@ export async function listInventory(adapter, auth, net, opts) {
   }
   // CSRF prelude (AEM/WiZink): fetch a page, extract the securityToken, expose it as {csrf} in every
   // subsequent list/group/pdf template via auth.__csrf.
-  const a = adapter.api.csrf ? { ...(auth || {}), __csrf: await fetchCsrf(adapter, auth, net) } : auth;
+  const a = adapter.api.csrf && !(auth && auth.__csrf) ? { ...(auth || {}), __csrf: await fetchCsrf(adapter, auth, net) } : auth;
   if (adapter.api.groups) {
-    let groups = await listGroups(adapter, a, net);
+    let groups = await keptGroups(adapter, a, net);
     // opts.groupId restricts to one account (a consumer's collect{group} asks for a single account).
     if (opts && opts.groupId != null) groups = groups.filter((g) => String(g.id) === String(opts.groupId));
     // opts.groups: a persisted per-datasource allow-list — only these accounts are offered/listed. Absent
@@ -230,6 +244,20 @@ function withStats(arr, skippedNoAmount) {
 const csrfCache = new Map(); // adapter id → { tok, at }
 const CSRF_TTL_MS = 10 * 60 * 1000;
 const csrfKey = (adapter) => adapter.id || adapter.api.host;
+// The card/account list, kept briefly for the same reason: every output of a grouped source asks for it, and on
+// WiZink that is ~2 s each time. Keyed by the groups definition too, since a stream may route other products.
+const groupsCache = new Map(); // adapter id + groups config → { groups, at }
+const GROUPS_TTL_MS = 2 * 60 * 1000;
+const groupsKey = (adapter) => csrfKey(adapter) + '|' + JSON.stringify(adapter.api.groups || null);
+async function keptGroups(adapter, auth, net) {
+  const k = groupsKey(adapter), c = groupsCache.get(k);
+  if (c && Date.now() - c.at < GROUPS_TTL_MS) return c.groups.slice();
+  const groups = await listGroups(adapter, auth, net);
+  if (groups.length) groupsCache.set(k, { groups, at: Date.now() });
+  return groups.slice();
+}
+// Tests start every case without a kept token or card list.
+export function _resetSessionCaches() { csrfCache.clear(); groupsCache.clear(); }
 async function fetchCsrf(adapter, auth, net, opts = {}) {
   if (opts.cached) { const c = csrfCache.get(csrfKey(adapter)); if (c && Date.now() - c.at < CSRF_TTL_MS) return c.tok; }
   const tok = await loadCsrf(adapter, auth, net);

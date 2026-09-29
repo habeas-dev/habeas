@@ -1,9 +1,9 @@
-import { test } from 'node:test';
+import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { listInventory, fetchPdf } from '../src/runtime/inventory.js';
+import { listInventory, fetchPdf, _resetSessionCaches } from '../src/runtime/inventory.js';
 import { validateAdapter } from '../src/adapters/validate.js';
 import { resolveOutput } from '../src/lib/outputs.js';
 
@@ -12,6 +12,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 // `movimientos` stream. Validate the whole source, but list against the resolved stream adapter.
 const FULL = JSON.parse(readFileSync(join(here, '../../sources-repo/sources/wizink-es.json'), 'utf8'));
 const SRC = resolveOutput(FULL, 'movimientos');
+
+// The token and the card list are kept in memory for the run (see fetchCsrf); start every test without them.
+beforeEach(() => _resetSessionCaches());
 
 // Statement dates are computed RELATIVE TO NOW so the maxAgeDays (90) cut is exercised deterministically
 // regardless of when the suite runs: two within the window, one well beyond it.
@@ -103,7 +106,8 @@ function mockNet({ valid } = {}) {
     }
     const tok = (body.match(/securityToken=([A-Za-z0-9]*)/) || [])[1];
     if (valid && tok != null && !valid(tok)) return reply('<html>Bad Request</html>', false, 400);
-    if (pn.endsWith('NewGlobalPosition')) return reply(GROUPS);
+    if (pn.endsWith('NewGlobalPosition')) { net.groupPosts++; return reply(GROUPS); }
+    if (pn.endsWith('CardDetail/ExtractOnScreen')) return reply(`<option data-statementDate="${D30}" data-inRepository="true" data-docId="DOC1" data-fileName="f1.pdf">`);
     if (pn.endsWith('CardDetail/NewToday')) { net.current = true; return reply(CURRENT); } // the unbilled/current view
     if (pn.endsWith('Today/ListExtracts')) return reply(DATES);
     if (pn.endsWith('ExtractOnScreenDetail')) {
@@ -116,6 +120,7 @@ function mockNet({ valid } = {}) {
   };
   net.requested = requested;
   net.csrfGets = 0;
+  net.groupPosts = 0;
   return net;
 }
 
@@ -291,4 +296,26 @@ test('a document refused with HTTP 400 renews the token once and retries', async
   assert.equal(seen.length, 2, 'one refusal, one retry');
   assert.equal(seen[0], 'TOKSTALE00000');
   assert.notEqual(seen[1], 'TOKSTALE00000', 'the retry used a fresh token');
+});
+
+// One sync lists BOTH outputs — statements and movements — and each listing used to load the CSRF page and ask
+// for the card list again: ~3 s of pure repetition per sync. Both are shared now for the run.
+test('listing statements and then movements loads the token and the card list only once', async () => {
+  const net = mockNet();
+  const stm = await listInventory(resolveOutput(FULL, 'extractos'), { byPath: {}, merged: {} }, net);
+  const mov = await listInventory(SRC, { byPath: {}, merged: {} }, net);
+  assert.equal(stm.length, 1, 'the statement is listed');
+  assert.equal(mov.length, 9, 'the movements are listed');
+  assert.equal(net.csrfGets, 1, `one CSRF page load for the whole sync; got ${net.csrfGets}`);
+  assert.equal(net.groupPosts, 1, `one card list for the whole sync; got ${net.groupPosts}`);
+});
+
+test('a kept token the site no longer accepts (new session) is replaced and the listing still completes', async () => {
+  // First sync mints token 0001; then the user logs in again and 0001 dies. The next listing starts from the
+  // kept token, gets a 400 on the card list, and must load a fresh one instead of failing the whole sync.
+  await listInventory(SRC, { byPath: {}, merged: {} }, mockNet());
+  const net = mockNet({ valid: (t) => t !== 'TOK123450001' });
+  net.csrfGets = 1; // the new session's page mints 0002 next
+  const docs = await listInventory(resolveOutput(FULL, 'extractos'), { byPath: {}, merged: {} }, net);
+  assert.equal(docs.length, 1, 'listed with the renewed token');
 });

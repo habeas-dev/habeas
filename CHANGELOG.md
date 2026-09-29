@@ -17,6 +17,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   token (the token can in fact be reused, and is now renewed only if WiZink rejects it), and it re-read every
   closed monthly statement on every sync. A statement never changes once it closes, so a sync now stops at
   the first one that brings nothing new.
+- **WiZink statements and movements now share one security token and one card list per sync**, instead of
+  each output fetching both again (about 3 seconds saved per sync). If WiZink no longer accepts the kept token
+  — you logged in again in between — a fresh one is fetched and the sync carries on.
 - **Automatic sync no longer runs the same source twice at once.** Logging in fires two triggers almost
   together, and both could start the same run in parallel, doubling every request to the bank. Two
   destinations fed by the same source now also take turns instead of querying it side by side.
