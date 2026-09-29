@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.10.10] — 2026-09-29
+
 ### Fixed
 - **WiZink syncs much faster, and no longer asks the bank for what you already have.** Measured on the live
   site, every WiZink request takes about a second, and a sync was making several times more of them than it
