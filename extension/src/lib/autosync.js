@@ -13,6 +13,18 @@ export const AUTO_DEBOUNCE_MS = 10 * 60 * 1000;
 // captures into a single run once activity quiets.
 export const AUTO_CAPTURE_SETTLE_MS = 6 * 1000;
 
+// Run an async function one call at a time: each call starts only once the previous one has settled (a failure
+// included). For a check-then-claim that spans awaits — runAutoRoutes reads its debounce from storage before it
+// marks a route as running, so two triggers arriving together would otherwise both pass the check.
+export function serialized(fn) {
+  let tail = Promise.resolve();
+  return (...args) => {
+    const run = tail.then(() => fn(...args));
+    tail = run.catch(() => {});
+    return run;
+  };
+}
+
 // May a route run now? `lastAt` is the epoch-ms of its last held run, or null/undefined when it never
 // ran (or the debounce was released). Returns true while still inside the debounce window.
 export function autoDebounced(lastAt, now, debounceMs = AUTO_DEBOUNCE_MS) {

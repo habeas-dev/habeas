@@ -10,6 +10,23 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **WiZink syncs much faster, and no longer asks the bank for what you already have.** Measured on the live
+  site, every WiZink request takes about a second, and a sync was making several times more of them than it
+  needed: it reloaded the whole global-position page before every single request to get a fresh security
+  token (the token can in fact be reused, and is now renewed only if WiZink rejects it), and it re-read every
+  closed monthly statement on every sync. A statement never changes once it closes, so a sync now stops at
+  the first one that brings nothing new.
+- **Automatic sync no longer runs the same source twice at once.** Logging in fires two triggers almost
+  together, and both could start the same run in parallel, doubling every request to the bank. Two
+  destinations fed by the same source now also take turns instead of querying it side by side.
+- **Syncing only lists what the destination doesn't have yet**, for every source: the listing stops at the
+  first page with nothing new for that destination, instead of walking the whole history and discarding it
+  afterwards. A forced re-download still lists everything.
+- **A document already saved in another destination is copied from there instead of being downloaded from
+  the site again.** A statement or invoice already in your Dropbox (or WebDAV, S3, Drive) is read back from
+  it when a second destination needs it; only a forced re-download goes back to the source.
+
 ## [0.10.9] — 2026-09-17
 
 ### Fixed

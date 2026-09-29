@@ -40,7 +40,7 @@ import { canonicalize } from './lib/normalize.js';
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant, revokeGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
 import { runStoreMigration } from './lib/migrate.js';
-import { readyGateBlocks, autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isLoginNavigation, isReadyNavigation, needsTabEscalation, wantsCookieReset, loginErrorNeedsCookieReset, sweepSinkId, orderedSweepSources, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
+import { serialized, readyGateBlocks, autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isLoginNavigation, isReadyNavigation, needsTabEscalation, wantsCookieReset, loginErrorNeedsCookieReset, sweepSinkId, orderedSweepSources, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
 
 // On startup, (re)register the in-session capture bridge for every enabled source (dynamic content
 // scripts can be dropped on an extension update). Idempotent; needs the host permission already granted.
@@ -629,8 +629,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 });
 
 const running = new Set();
+// Routes of the SAME source run one after another, never side by side: two destinations for one bank would
+// otherwise ask the bank for everything twice at once (and a burst like that is what an anti-bot edge stalls).
+const sourceQueue = new Map(); // datasource id → the tail of its queued runs
 
-async function runAutoRoutes(matches, tabId, triggerUrl) {
+// One pass at a time (serialized): a login fires two triggers together, and the "already running?" check below
+// sits several awaits before the route is claimed, so both used to pass it and run the same route in parallel.
+const runAutoRoutes = serialized(async function runAutoRoutesOnce(matches, tabId, triggerUrl) {
   const cfg = await getConfig();
   if (!(cfg.routes || []).some((r) => r.mode === 'auto')) return;
   const adapters = await getAdapters();
@@ -672,12 +677,14 @@ async function runAutoRoutes(matches, tabId, triggerUrl) {
     // On a completed run: hold the 10-min debounce + clear the failure backoff. On a transient/auth failure:
     // release the debounce (a real login can retry) BUT bump a growing backoff cooldown so a persistently-failing
     // source (ING's 401 loop) stops hammering — the first failure still retries at once, each further one waits longer.
-    runRoute(ds, adapter, sink)
+    const job = (sourceQueue.get(ds.id) || Promise.resolve())
+      .then(() => runRoute(ds, adapter, sink))
       .then((res) => onAutoResult(route.id, res && res.status))
       .catch(() => onAutoResult(route.id, 'error'))
-      .finally(() => running.delete(route.id));
+      .finally(() => { running.delete(route.id); if (sourceQueue.get(ds.id) === job) sourceQueue.delete(ds.id); });
+    sourceQueue.set(ds.id, job);
   }
-}
+});
 // Record an auto-run's outcome: a completed run clears the failure backoff; a failure releases the run debounce
 // (a fresh login can retry) and bumps a growing per-route cooldown so a source that keeps failing stops hammering.
 async function onAutoResult(routeId, status) {
@@ -914,6 +921,34 @@ function ackAccepted(res, batch) {
   return batch.filter((d) => ok.has(String(d.internalId)));
 }
 
+// GENERAL RULE: only touch the SOURCE when a file isn't already available elsewhere. A document may already sit
+// in a readable store it was delivered to (Dropbox/WebDAV/S3/Drive — the default sink or any other) → read it back
+// from there instead of re-fetching it from the source. A closed statement or an issued invoice never changes, so
+// asking the bank again only costs time and draws attention from its anti-bot edge. Returns retrieveArt(d, ext) →
+// { blob, ext } | null. local-folder needs a page handle the service worker lacks; the TARGET sink is skipped;
+// opts.force ("Re-download from site") disables retrieval so everything is fetched fresh.
+async function storeRetriever(adapter, sink, opts = {}) {
+  const cfg = await getConfig();
+  // local-folder is absent because the service worker has no directory handle — only a page does, so a
+  // folder-backed archive is copied page-side instead (see the Settings migration).
+  const SW_RETRIEVABLE = new Set(['dropbox', 'webdav', 's3', 'drive']);
+  // opts.originId pins the copy to ONE destination: chosen explicitly, the operation reads as
+  // "A → B" and cannot silently pull a file from somewhere the user did not name. Left unset,
+  // every readable destination is tried, which is what handles an archive spread across two.
+  const stores = opts.force ? [] : usableSinks(cfg.sinks).filter((s) =>
+    s.id !== sink.id && SW_RETRIEVABLE.has(s.type) && (!opts.originId || s.id === opts.originId));
+  // One cache per remote store for the whole send. Drive resolves names to ids, so without this every
+  // file costs an extra lookup and a few thousand documents run into rate limits. Dropbox is worse: a
+  // read there is a full download, so probing document by document pulls the entire archive over the
+  // wire and the pass simply stops finishing once the archive is big enough. One folder listing each.
+  const dcache = driveCache(), bcache = dropboxCache();
+  return async (d, ext) => {
+    const rec = { ...(d.record || {}), internalId: d.internalId, date: d.date ?? (d.record && d.record.date), group: d.group ?? (d.record && d.record.group) };
+    for (const st of stores) { try { const r = await retrieveDelivered(st, adapter, rec, ext, { only: true, driveCache: dcache, dropboxCache: bcache }); if (r && r.blob) return { blob: r.blob, ext: r.ext || ext }; } catch (e) {} }
+    return null;
+  };
+}
+
 async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
   const name = adapter.name || ds.adapter;
   const found = (picked || []).length;
@@ -924,30 +959,9 @@ async function sendStoredDocs(ds, adapter, sink, picked, opts = {}) {
   try {
     const auth = await authFor(adapter);
     const wantsDocs = opts.force || outputsOf(adapter).some((o) => artifactKinds(resolveOutput(adapter, o.id)).length);
-    // GENERAL RULE: only touch the SOURCE when a file isn't already available elsewhere. The records came from the
-    // archive; each file may already sit in a retrievable store it was delivered to (Dropbox/WebDAV/S3 — the
-    // default sink or any other) → read it back from there instead of re-fetching from the source (which would
-    // open the site and need its live session). local-folder needs a page handle the service worker lacks; the
-    // TARGET sink is skipped; opts.force ("Re-download from site") bypasses retrieval to fetch fresh.
-    const cfg = await getConfig();
-    // local-folder is absent because the service worker has no directory handle — only a page does, so a
-    // folder-backed archive is copied page-side instead (see the Settings migration).
-    const SW_RETRIEVABLE = new Set(['dropbox', 'webdav', 's3', 'drive']);
-    // opts.originId pins the copy to ONE destination: chosen explicitly, the operation reads as
-    // "A → B" and cannot silently pull a file from somewhere the user did not name. Left unset,
-    // every readable destination is tried, which is what handles an archive spread across two.
-    const stores = opts.force ? [] : usableSinks(cfg.sinks).filter((s) =>
-      s.id !== sink.id && SW_RETRIEVABLE.has(s.type) && (!opts.originId || s.id === opts.originId));
-    // One cache per remote store for the whole send. Drive resolves names to ids, so without this every
-    // file costs an extra lookup and a few thousand documents run into rate limits. Dropbox is worse: a
-    // read there is a full download, so probing document by document pulls the entire archive over the
-    // wire and the pass simply stops finishing once the archive is big enough. One folder listing each.
-    const dcache = driveCache(), bcache = dropboxCache();
-    const retrieveArt = async (d, ext) => {
-      const rec = { ...(d.record || {}), internalId: d.internalId, date: d.date ?? (d.record && d.record.date), group: d.group ?? (d.record && d.record.group) };
-      for (const st of stores) { try { const r = await retrieveDelivered(st, adapter, rec, ext, { only: true, driveCache: dcache, dropboxCache: bcache }); if (r && r.blob) return { blob: r.blob, ext: r.ext || ext }; } catch (e) {} }
-      return null;
-    };
+    // The records came from the archive; read each file back from a destination that holds it before ever
+    // opening the source (see storeRetriever).
+    const retrieveArt = await storeRetriever(adapter, sink, opts);
     // The source page-fetch, opened LAZILY — only when a file genuinely can't be read back from a store. So a
     // send of documents already in Dropbox never opens the source. undefined = unresolved, null = resolved-none.
     let net;
@@ -1105,12 +1119,14 @@ async function runRoute(ds, adapter, sink, opts = {}) {
     const streamIds = [...new Set(outs.map((o) => o.stream))];
     const fmtsFor = (sid) => outs.filter((o) => o.stream === sid).map((o) => o.format);
     let totalNew = 0;
+    let retrieveArt = null;
     for (const sid of streamIds) {
       if (opts.signal && opts.signal.aborted) break; // Sync-all was stopped
       const eff = resolveOutput(adapter, sid); const sk = storeKeyOf(storeIdOf(ds, adapter), sid); const fmts = fmtsFor(sid);
       // onProgress → live per-page status (visible in an open popup during a Sync-all sweep). signal → stop.
       // ds.groups = the user's saved account allow-list (grouped sources): auto/sweep only ever touch those.
-      const all = await listInventory(eff, auth, net, { groupId: opts.groupId, groups: (ds.groups && ds.groups.length) ? ds.groups : undefined, signal: opts.signal, onProgress: (p) => { keepAlive(); markPhase('listing ' + name + ' page ' + (p.page || '')); setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])); } }); // opts.groupId → one account; opts.groups → allow-list
+      // knownIds = this sink's ledger → the lister stops at the first page/statement with nothing new for it.
+      const all = await listInventory(eff, auth, net, { groupId: opts.groupId, groups: (ds.groups && ds.groups.length) ? ds.groups : undefined, signal: opts.signal, knownIds: opts.force ? null : Object.keys(delivered), onProgress: (p) => { keepAlive(); markPhase('listing ' + name + ' page ' + (p.page || '')); setStatus(t('status_listing_page', [name, String(p.page || ''), String((p.docs && p.docs.length) || '')])); } }); // opts.groupId → one account; opts.groups → allow-list
       if (brandCountry) for (const d of all) if (d.record) d.record.country = brandCountry; // which country each record came from (mixed multi-country store)
       const fresh = opts.force ? all : all.filter((d) => !delivered[d.internalId]); // force → re-deliver everything
       // Deliver oldest → newest (the list comes newest-first) — files written + manifest appended + store
@@ -1119,6 +1135,7 @@ async function runRoute(ds, adapter, sink, opts = {}) {
         .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : (a.date || '') > (b.date || '') ? 1 : 0));
       if (!eligible.length) continue;
       setStatus(t('status_fetching', [String(eligible.length), name]));
+      if (!retrieveArt) retrieveArt = await storeRetriever(adapter, sink, opts); // only built when something is owed
       const files = new Map();
       let fetched = 0, anyArts = false, pending = [];
       // Checkpoint every CHUNK docs so a long download persists incrementally (sink files + delivery ledger +
@@ -1152,6 +1169,8 @@ async function runRoute(ds, adapter, sink, opts = {}) {
           const avail = artifactKinds(oeff, d); // per-doc: drops the document (e.g. invoice PDF) if this doc lacks it
           for (const k of kinds) {
             if (!avail.some((a) => a.kind === k.kind)) continue; // this ticket has no such artifact (no invoice) → skip cleanly
+            const kept = await retrieveArt(d, k.ext || documentExt(oeff) || 'pdf'); // already in another destination → never ask the source again
+            if (kept) { arts.push(kept); continue; }
             const rec = recordingNet(net); // remember which request fails inside a multi-step fetch
             try { arts.push(await fetchArtifact(oeff, auth, d, rec.net, renderPage, k.kind)); }
             catch (e) {

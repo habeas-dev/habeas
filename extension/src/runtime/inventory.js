@@ -223,7 +223,20 @@ function withStats(arr, skippedNoAmount) {
 
 // CSRF prelude: GET a page and extract a token (e.g. WiZink's securityToken hidden input / JS var) with
 // a regex (adapter.api.csrf.match, capture group 1). Reused as {csrf} in POST bodies and PDF URLs.
-async function fetchCsrf(adapter, auth, net) {
+// The token is reusable: measured on WiZink, one securityToken served five POSTs in a row and still worked after
+// three more page loads, while a bad one gets a plain HTTP 400. So a run fetches it ONCE and keeps it here —
+// callers that send it renew on a 400 (`{ cached: true }` reads, a plain call always refetches). Memory only,
+// like the captured session: gone when the background restarts, never written anywhere.
+const csrfCache = new Map(); // adapter id → { tok, at }
+const CSRF_TTL_MS = 10 * 60 * 1000;
+const csrfKey = (adapter) => adapter.id || adapter.api.host;
+async function fetchCsrf(adapter, auth, net, opts = {}) {
+  if (opts.cached) { const c = csrfCache.get(csrfKey(adapter)); if (c && Date.now() - c.at < CSRF_TTL_MS) return c.tok; }
+  const tok = await loadCsrf(adapter, auth, net);
+  csrfCache.set(csrfKey(adapter), { tok, at: Date.now() });
+  return tok;
+}
+async function loadCsrf(adapter, auth, net) {
   const NET = netFetch(net, adapter);
   const c = adapter.api.csrf;
   const host = c.host ? absHost(c.host) : adapter.api.host;
@@ -576,7 +589,7 @@ async function pageListYears(adapter, auth, net, group, opts) {
 //     dates:   { params, body, rows },              // → the past statement dates (rows extracts them)
 //     past:    { params, body /* body may use {period} = a statement date */ },
 //   }
-// The CSRF token is single-use, so it's refetched before every period fetch. Statements older than the
+// One CSRF token serves the whole walk (renewed only on a 400). Statements older than the
 // site's ~90-day extra-auth wall fail / return nothing → those fetches are skipped (logged via opts.log),
 // never fatal; we stop after 2 consecutive misses. list.maxPeriods caps the fan-out (default 24).
 async function pageListPeriods(adapter, auth, net, group, opts) {
@@ -586,50 +599,21 @@ async function pageListPeriods(adapter, auth, net, group, opts) {
   const maxPeriods = list.maxPeriods || 24;
   const log = (opts && typeof opts.log === 'function') ? opts.log : () => {};
   const gname = (group && (group.accountNumber != null ? group.accountNumber : group.id)) || '';
-  const raw = [];
-  const refresh = async () => (adapter.api.csrf ? { ...(auth || {}), __csrf: await fetchCsrf(adapter, auth, net) } : (auth || {}));
-  const tag = (items, period) => items.forEach((it, i) => { it._period = period; it._idx = i; raw.push(it); });
-
-  // 1. current (unbilled) month — every movement is in this one response (no server pagination).
-  if (P.current) {
-    try {
-      let html = await fetchPeriodHtml(adapter, await refresh(), net, group, P.current);
-      // `after`: drop everything before this marker so a section that PRECEDES the confirmed movements is never
-      // parsed — WiZink's current view lists "Operaciones por confirmar" (provisional pre-authorisations, which
-      // change or vanish once they settle) above "Movimientos a día de hoy". Excluding them by design keeps a
-      // volatile charge out of the store instead of relying on it happening to lack the row markup. No match →
-      // parse the whole response (safe: nothing is dropped by mistake).
-      if (P.current.after) { const mk = html.search(new RegExp(P.current.after)); if (mk > 0) html = html.slice(mk); }
-      tag(parseHtmlItems(html, rows), 'current');
+  // One CSRF token for the whole walk (the prelude's), renewed only when the site refuses it with a 400 — see
+  // fetchCsrf. Refetching it before every period used to cost a full page load (~1 s on WiZink) per request.
+  let a = auth || {};
+  if (adapter.api.csrf && !a.__csrf) a = { ...a, __csrf: await fetchCsrf(adapter, auth, net) };
+  const fetchPeriod = async (cfg, extra) => {
+    try { return await fetchPeriodHtml(adapter, a, net, group, cfg, extra); }
+    catch (e) {
+      if (!adapter.api.csrf || !/^period 400\b/.test(e.message)) throw e;
+      a = { ...a, __csrf: await fetchCsrf(adapter, auth, net) };
+      return await fetchPeriodHtml(adapter, a, net, group, cfg, extra);
     }
-    catch (e) { log(`${adapter.service || 'source'} ${gname}: current-month movements failed — ${e.message}`); }
-  }
-  // 2. past statement dates (each a callOperations('YYYY-MM-DD') on the card page).
-  let dates = [];
-  if (P.dates) {
-    try { dates = parseHtmlItems(await fetchPeriodHtml(adapter, await refresh(), net, group, P.dates), P.dates.rows || rows).map((r) => r.statementDate).filter(Boolean); }
-    catch (e) { log(`${adapter.service || 'source'} ${gname}: statement-date list failed — ${e.message}`); }
-  }
-  dates = [...new Set(dates)].slice(0, maxPeriods); // newest-first as the site returns them; cap fan-out
-  if (list.maxAgeDays) { // proactively drop statements past the extra-auth wall — requesting them is what triggers the SMS
-    const before = dates.length;
-    dates = dates.filter((d) => withinAgeDays(d, list.maxAgeDays));
-    if (dates.length < before) log(`${adapter.service || 'source'} ${gname}: skipping ${before - dates.length} statement(s) older than ${list.maxAgeDays}d (avoids extra-auth SMS)`);
-  }
-  // 3. one fetch per past statement. Stop after 2 consecutive empty/failed fetches — the ~90-day
-  //    extra-auth wall makes older statements unreachable; skip gracefully rather than abort the list.
-  let misses = 0;
-  for (const d of dates) {
-    if (misses >= 2) { log(`${adapter.service || 'source'} ${gname}: stopping past statements at ${d} (hit the ~90-day auth wall)`); break; }
-    let items = null;
-    try { items = parseHtmlItems(await fetchPeriodHtml(adapter, await refresh(), net, group, P.past, { period: d }), rows); }
-    catch (e) { log(`${adapter.service || 'source'} ${gname}: statement ${d} skipped — ${e.message}`); }
-    if (!items || !items.length) { if (items) log(`${adapter.service || 'source'} ${gname}: statement ${d} had no movements — skipped`); misses++; continue; }
-    misses = 0;
-    tag(items, d);
-  }
-  // Map + dedup exactly like the paged path (collect builds each doc's record + internalId).
-  const seen = new Set(opts && opts.knownIds ? opts.knownIds : []), all = []; // incremental: seed with store ids → known items dedup out + paging stops early
+  };
+  // Map + dedup exactly like the paged path (collect builds each doc's record + internalId), one period at a
+  // time so the walk can tell whether a statement brought anything new.
+  const seen = new Set(opts && opts.knownIds ? opts.knownIds : []), all = []; // incremental: seed with store ids → known items dedup out
   // Counted, not silent: a movement dropped for having no amount must be visible somewhere, or the fix
   // for one bug (records arriving at 0) becomes the cause of another (records quietly vanishing).
   // Attached to the array at birth rather than at each return: these listers exit from several places
@@ -638,7 +622,51 @@ async function pageListPeriods(adapter, auth, net, group, opts) {
   // the property because it sorts in place.
   const stats = { skippedNoAmount: 0 };
   all.stats = stats;
-  collect(adapter, { __items: raw }, seen, all, group, stats);
+  const take = (items, period) => {
+    items.forEach((it, i) => { it._period = period; it._idx = i; });
+    return collect(adapter, { __items: items }, seen, all, group, stats);
+  };
+
+  // 1. current (unbilled) month — every movement is in this one response (no server pagination).
+  if (P.current) {
+    try {
+      let html = await fetchPeriod(P.current);
+      // `after`: drop everything before this marker so a section that PRECEDES the confirmed movements is never
+      // parsed — WiZink's current view lists "Operaciones por confirmar" (provisional pre-authorisations, which
+      // change or vanish once they settle) above "Movimientos a día de hoy". Excluding them by design keeps a
+      // volatile charge out of the store instead of relying on it happening to lack the row markup. No match →
+      // parse the whole response (safe: nothing is dropped by mistake).
+      if (P.current.after) { const mk = html.search(new RegExp(P.current.after)); if (mk > 0) html = html.slice(mk); }
+      take(parseHtmlItems(html, rows), 'current');
+    }
+    catch (e) { log(`${adapter.service || 'source'} ${gname}: current-month movements failed — ${e.message}`); }
+  }
+  // 2. past statement dates (each a callOperations('YYYY-MM-DD') on the card page).
+  let dates = [];
+  if (P.dates) {
+    try { dates = parseHtmlItems(await fetchPeriod(P.dates), P.dates.rows || rows).map((r) => r.statementDate).filter(Boolean); }
+    catch (e) { log(`${adapter.service || 'source'} ${gname}: statement-date list failed — ${e.message}`); }
+  }
+  dates = [...new Set(dates)].slice(0, maxPeriods); // newest-first as the site returns them; cap fan-out
+  if (list.maxAgeDays) { // proactively drop statements past the extra-auth wall — requesting them is what triggers the SMS
+    const before = dates.length;
+    dates = dates.filter((d) => withinAgeDays(d, list.maxAgeDays));
+    if (dates.length < before) log(`${adapter.service || 'source'} ${gname}: skipping ${before - dates.length} statement(s) older than ${list.maxAgeDays}d (avoids extra-auth SMS)`);
+  }
+  // 3. one fetch per past statement, newest first. Stop after 2 consecutive empty/failed fetches — the ~90-day
+  //    extra-auth wall makes older statements unreachable; skip gracefully rather than abort the list.
+  //    Incremental (knownIds): a closed statement never changes, so the first one that brings nothing new means
+  //    every older one was read by an earlier sync too — stop there instead of re-reading them all each time.
+  let misses = 0;
+  for (const d of dates) {
+    if (misses >= 2) { log(`${adapter.service || 'source'} ${gname}: stopping past statements at ${d} (hit the ~90-day auth wall)`); break; }
+    let items = null;
+    try { items = parseHtmlItems(await fetchPeriod(P.past, { period: d }), rows); }
+    catch (e) { log(`${adapter.service || 'source'} ${gname}: statement ${d} skipped — ${e.message}`); }
+    if (!items || !items.length) { if (items) log(`${adapter.service || 'source'} ${gname}: statement ${d} had no movements — skipped`); misses++; continue; }
+    misses = 0;
+    if (!take(items, d) && opts && opts.knownIds) break; // fully known → so are the older ones
+  }
   return all;
 }
 
@@ -1069,10 +1097,10 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
   const pdf = adapter.api.pdf;
   if (!pdf) throw new Error('no PDF for this source');
   const host = pdf.host ? absHost(pdf.host) : adapter.api.host;
-  // WiZink's securityToken is single-use/short-lived — the prelude token is stale by download time.
-  // Refresh it right before each document fetch so the download carries a valid {csrf}.
+  // A CSRF source's token is reused (see fetchCsrf): the one on auth, else the run's cached one. A download the
+  // site refuses with a 400 is retried once below with a freshly loaded token.
   let csrf = auth && auth.__csrf;
-  if (adapter.api.csrf) { try { csrf = await fetchCsrf(adapter, auth, net); } catch (e) {} }
+  if (adapter.api.csrf && !csrf) { try { csrf = await fetchCsrf(adapter, auth, net, { cached: true }); } catch (e) {} }
   // Async-generated document (Revolut statements): a `prepare` endpoint kicks off generation and returns
   // {state}; poll it until `readyValue`, read the signed download URL out of the READY response, then GET
   // that URL (typically a cross-domain object store — guarded by crossDomainHosts + consent, fetched with
@@ -1180,6 +1208,10 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
   }
   const referer = pdf.referer ? fillDocTmpl(pdf.referer, doc, internalId, csrf, auth) : null;
   const res = await withReferer(url, referer, () => NET(url, init));
+  if (res.status === 400 && adapter.api.csrf && !(auth && auth.__csrfRetried)) {
+    let fresh; try { fresh = await fetchCsrf(adapter, auth, net); } catch (e) {}
+    if (fresh) return fetchPdf(adapter, { ...(auth || {}), __csrf: fresh, __csrfRetried: true }, docOrId, net);
+  }
   if (!res.ok) {
     const hint = res.status === 406 ? ' (sin PDF disponible — típico en tickets antiguos)' : '';
     throw new Error('pdf ' + res.status + hint + ' ' + (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));

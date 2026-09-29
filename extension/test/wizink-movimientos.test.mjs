@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { listInventory } from '../src/runtime/inventory.js';
+import { listInventory, fetchPdf } from '../src/runtime/inventory.js';
 import { validateAdapter } from '../src/adapters/validate.js';
 import { resolveOutput } from '../src/lib/outputs.js';
 
@@ -86,7 +86,10 @@ const PAST = {
   // D120 is intentionally absent — but with maxAgeDays it must never be requested in the first place.
 };
 
-function mockNet() {
+// `valid` (optional): a predicate over the securityToken a POST carries. WiZink answers an invalid token with
+// HTTP 400 (measured against the live site), so the mock does too. Every page load mints a new token
+// (TOK…0001, TOK…0002, …) — and, as measured, an earlier one stays valid unless `valid` says otherwise.
+function mockNet({ valid } = {}) {
   const requested = []; // statementDates actually fetched (to prove the >90-day one is never asked for)
   const net = async (url, init) => {
     const u = new URL(url);
@@ -94,7 +97,12 @@ function mockNet() {
     const body = (init && init.body) || '';
     if (body.includes('{csrf}')) throw new Error('unfilled {csrf} in body');
     const reply = (text, ok = true, status = 200) => ({ ok, status, text: async () => text, json: async () => JSON.parse(text) });
-    if (u.pathname === '/clientes/posicion-global') return reply(CSRF);
+    if (u.pathname === '/clientes/posicion-global') {
+      net.csrfGets++;
+      return reply(CSRF.replace('TOK1234567890', 'TOK12345' + String(net.csrfGets).padStart(4, '0')));
+    }
+    const tok = (body.match(/securityToken=([A-Za-z0-9]*)/) || [])[1];
+    if (valid && tok != null && !valid(tok)) return reply('<html>Bad Request</html>', false, 400);
     if (pn.endsWith('NewGlobalPosition')) return reply(GROUPS);
     if (pn.endsWith('CardDetail/NewToday')) { net.current = true; return reply(CURRENT); } // the unbilled/current view
     if (pn.endsWith('Today/ListExtracts')) return reply(DATES);
@@ -107,6 +115,7 @@ function mockNet() {
     return reply('', false, 404);
   };
   net.requested = requested;
+  net.csrfGets = 0;
   return net;
 }
 
@@ -191,4 +200,95 @@ test('runtime synthesizes an internalId even when the source omits fields.intern
   assert.equal(docs.length, 9);
   assert.ok(docs.every((d) => d.internalId && d.internalId.startsWith('ACC1|')), 'fallback id built');
   assert.equal(new Set(docs.map((d) => d.internalId)).size, 9, 'fallback ids unique');
+});
+
+// ---- speed: WiZink answers each request in ~1 s, so every avoidable one is felt ----------------------------
+// Measured on the live site (2026-09-29): the securityToken is NOT single-use — one token served five POSTs in a
+// row and still worked after three more page loads — and a bad one gets a plain HTTP 400. Fetching the whole
+// global-position page before EVERY request (the old assumption) was roughly a third of all traffic.
+
+test('the CSRF page is loaded once per listing, not before every period request', async () => {
+  const net = mockNet();
+  const docs = await listInventory(SRC, { byPath: {}, merged: {} }, net);
+  assert.equal(docs.length, 9, 'same movements as before');
+  assert.equal(net.csrfGets, 1, `one token for current + dates + 2 statements; got ${net.csrfGets} page loads`);
+});
+
+test('a rejected token (HTTP 400) is renewed once and the request retried', async () => {
+  // The prelude's token (0001) serves the groups and the current month, then the site stops accepting it:
+  // the walk must notice the 400, load a new token once, and carry on with that one.
+  let uses = 0;
+  const net = mockNet({ valid: (t) => t !== 'TOK123450001' || ++uses <= 2 });
+  const docs = await listInventory(SRC, { byPath: {}, merged: {} }, net);
+  assert.equal(docs.length, 9, 'nothing lost to the stale token');
+  assert.equal(net.csrfGets, 2, 'renewed exactly once, then reused');
+});
+
+test('incremental: a closed statement with nothing new stops the walk — older ones are never re-read', async () => {
+  // A closed statement never changes. If the newest one holds only movements already known, every older one
+  // was read by an earlier sync too, so asking for them again is a wasted ~1 s round trip each.
+  const first = await listInventory(SRC, { byPath: {}, merged: {} }, mockNet());
+  const known = first.map((d) => d.internalId);
+  const net = mockNet();
+  const docs = await listInventory(SRC, { byPath: {}, merged: {} }, net, { knownIds: known });
+  assert.equal(docs.length, 0, 'nothing new');
+  assert.deepEqual(net.requested, [D30], `only the newest statement is checked; got ${JSON.stringify(net.requested)}`);
+});
+
+test('incremental: a statement that still brings something new keeps the walk going', async () => {
+  const first = await listInventory(SRC, { byPath: {}, merged: {} }, mockNet());
+  // The newest statement's movements are unknown (it closed since the last sync) → it brings news, so the
+  // walk must go on to the next one rather than assume the rest is known.
+  const known = first.filter((d) => d._raw._period !== D30).map((d) => d.internalId);
+  const net = mockNet();
+  const docs = await listInventory(SRC, { byPath: {}, merged: {} }, net, { knownIds: known });
+  assert.equal(docs.length, 3, 'the three movements of the newest statement');
+  assert.deepEqual(net.requested, [D30, D60], 'the newest had news → the next one is checked too');
+});
+
+test('a full re-scan (no knownIds) still reads every reachable statement', async () => {
+  const net = mockNet();
+  await listInventory(SRC, { byPath: {}, merged: {} }, net);
+  assert.deepEqual(net.requested, [D30, D60]);
+});
+
+test('statement downloads reuse the token instead of reloading the CSRF page per document', async () => {
+  const PDF = resolveOutput(FULL, 'extractos/pdf');
+  const XLS = resolveOutput(FULL, 'extractos/excel');
+  const docTokens = [];
+  const base = mockNet();
+  const net = async (url, init) => {
+    if (/DownloadIC2File|DownloadXLSFileExtract/.test(url)) {
+      docTokens.push(new URL(url).searchParams.get('securityToken'));
+      return { ok: true, status: 200, text: async () => '', blob: async () => new Blob(['%PDF']) };
+    }
+    return base(url, init);
+  };
+  const mk = (d) => ({ internalId: 'ACC1|' + d, date: d, _group: { accountNumber: 'ACC1', cardNumber: 'CARD1' },
+    _raw: { statementDate: d, docId: 'DOC' + d, fileName: 'f' + d + '.pdf' } });
+  for (const d of [D30, D60]) { await fetchPdf(PDF, {}, mk(d), net); await fetchPdf(XLS, {}, mk(d), net); }
+  assert.equal(docTokens.length, 4);
+  assert.ok(docTokens.every((t) => /^TOK/.test(t)), 'every download carries a token');
+  assert.ok(base.csrfGets <= 1, `four documents, at most one CSRF page load; got ${base.csrfGets}`);
+});
+
+test('a document refused with HTTP 400 renews the token once and retries', async () => {
+  const PDF = resolveOutput(FULL, 'extractos/pdf');
+  const base = mockNet();
+  let seen = [];
+  const net = async (url, init) => {
+    if (/DownloadIC2File/.test(url)) {
+      const t = new URL(url).searchParams.get('securityToken'); seen.push(t);
+      if (seen.length === 1) return { ok: false, status: 400, text: async () => 'Bad Request', blob: async () => new Blob([]) };
+      return { ok: true, status: 200, text: async () => '', blob: async () => new Blob(['%PDF']) };
+    }
+    return base(url, init);
+  };
+  const doc = { internalId: 'ACC1|' + D30, date: D30, _group: { accountNumber: 'ACC1', cardNumber: 'CARD1' },
+    _raw: { statementDate: D30, docId: 'DOCX', fileName: 'x.pdf' } };
+  const blob = await fetchPdf(PDF, { __csrf: 'TOKSTALE00000' }, doc, net);
+  assert.ok(blob, 'the retry delivered the document');
+  assert.equal(seen.length, 2, 'one refusal, one retry');
+  assert.equal(seen[0], 'TOKSTALE00000');
+  assert.notEqual(seen[1], 'TOKSTALE00000', 'the retry used a fresh token');
 });
