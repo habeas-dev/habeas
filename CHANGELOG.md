@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.10.11] — 2026-09-30
+
 ### Added
 - **Fixed-term deposits reach finance apps as deposits, not as income.** A source can now declare that a record
   is a term deposit (`kind: "term_deposit"` on an investment@2 cash record) and send its terms: the amount put
