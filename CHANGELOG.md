@@ -10,6 +10,15 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **Fixed-term deposits reach finance apps as deposits, not as income.** A source can now declare that a record
+  is a term deposit (`kind: "term_deposit"` on an investment@2 cash record) and send its terms: the amount put
+  in, the interest rate and whether it is nominal or effective, the term in months and the maturity date. Raisin
+  is the first source to do it; before, a finance app received each deposit as a plain cash movement and could
+  book it as income.
+- **A source field can be a fixed value** (`{ "const": … }`) instead of a path into the service's response, for
+  what a source knows about every record it lists rather than reads from it.
+
 ## [0.10.10] — 2026-09-29
 
 ### Fixed

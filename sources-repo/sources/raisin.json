@@ -19,8 +19,8 @@
     "banking",
     "investment"
   ],
-  "version": "2026-08-26.1",
-  "minVersion": "0.5.0.32",
+  "version": "2026-09-30",
+  "minVersion": "0.10.10.1",
   "keepRaw": true,
   "contributors": [
     "David Marín Carreño"
@@ -147,8 +147,24 @@
       "fields": {
         "internalId": "accounting.deposit_id",
         "date": "deposit.opening_date",
-        "amount": "accounting.balance.amount.denomination",
+        "recordType": {
+          "const": "cash"
+        },
+        "kind": {
+          "const": "term_deposit"
+        },
+        "amount": [
+          "accounting.initial_investment.denomination",
+          "deposit.opening_order_amount"
+        ],
         "currency": "accounting.balance.amount.currency",
+        "interestRate": "accounting.interest_rate",
+        "rateKind": {
+          "const": "tin"
+        },
+        "termMonths": "product.term_normalized.months",
+        "maturityDate": "deposit.maturity_date",
+        "account": "accounting.customer_id",
         "description": "{i18n:deposit} {product.deposit_taking_bank.name} {accounting.effective_interest_rate:num}% {accounting.term:duration} - {deposit.opening_date:date}",
         "counterparty": "{product.deposit_taking_bank.name}",
         "group": "{i18n:deposit} {product.deposit_taking_bank.name} {accounting.effective_interest_rate:num}% {accounting.term:duration} - {deposit.opening_date:date}"
@@ -329,6 +345,13 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-09-30",
+      "changes": {
+        "en": "Fixed-term deposits now say what they are: a finance app receives each one as a term deposit, with the amount you put in, its nominal rate, its term and its maturity date, instead of a cash movement it could mistake for income. A matured deposit now reports the amount it held, not 0. Needs Habeas 0.10.10.1 or newer.",
+        "es": "Los depósitos a plazo dicen ya lo que son: una app de finanzas recibe cada uno como depósito a plazo, con el importe que pusiste, su tipo nominal, su plazo y su vencimiento, en vez de como un movimiento de efectivo que podía confundir con un ingreso. Un depósito vencido indica ya el importe que tuvo, no 0. Requiere Habeas 0.10.10.1 o posterior."
+      }
+    },
     {
       "version": "2026-08-26.1",
       "changes": {

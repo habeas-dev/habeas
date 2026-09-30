@@ -139,11 +139,25 @@ recordType: "trade" | "cash"
 | `date` | **MUST** | date | `Transaction.date` | — |
 | `amount` | **MUST** | decimal | `Transaction.amount` | Unidades mayores, con signo o + `direction`. |
 | `currency` | **MUST** | ISO 4217 | — | — |
-| `kind` | **MUST** | enum | categoría/tipo | `interest` \| `deposit` \| `withdrawal` \| `fee` \| `tax` \| `other`. |
+| `kind` | **MUST** | enum | categoría/tipo | `interest` \| `deposit` \| `withdrawal` \| `fee` \| `tax` \| `term_deposit` \| `other`. |
 | `description` | **MUST** | string | `Transaction.concept` | — |
 | `account` | **MUST** | objeto | cuenta de efectivo | Forma de §A.1. |
 | `direction` | MUST\* | `debit`\|`credit` | signo | \*si `amount` viene sin signo. |
 | `counterparty` / `extra` | MAY | — | — | — |
+
+**`kind: "term_deposit"` — depósito a plazo.** No es un movimiento de efectivo sino una inversión en renta fija:
+el consumidor la da de alta (o la reconoce si ya existe), nunca la registra como ingreso. `date` es la fecha de
+apertura, `amount` el **principal** invertido (positivo, no el saldo con intereses: un depósito vencido tiene saldo
+0) y `counterparty` el banco depositario. Campos propios, todos SHOULD y presentes solo si la fuente los mapea:
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `interestRate` | decimal | Tipo en **porcentaje** (`2.65`, no `0.0265`). |
+| `rateKind` | `"tin"`\|`"tae"` | Si `interestRate` es nominal (TIN) o efectivo (TAE). Preferible el nominal. |
+| `termMonths` | entero | Plazo en meses. |
+| `maturityDate` | date | Vencimiento; si viene, manda sobre `termMonths`. |
+
+Fuente de referencia: Raisin (stream `depositos`), desde su versión `2026-09-30`.
 
 ### B.3 `side` — semántica esperada
 
@@ -312,8 +326,8 @@ Pasos (1) y (2) del camino recomendado **implementados** (v0.3.0.22):
 - **Bróker.** Nuevo schema **`investment@2`** en `sinks/format.js#buildRecord`: discriminador
   `recordType:"trade"|"cash"` (inferido si falta), `side` enum (buy/sell/dividend/split/transfer_in/transfer_out),
   `instrument{isin,ticker,mic,name,assetClass}` estructurado, y `grossAmount/commission/taxWithheld/netAmount/
-  exchangeRate/assetClass/settlementAccount` (trade) · `kind` enum (interest/deposit/withdrawal/fee/tax/other),
-  `amount`, `description`, `account`, `direction` (cash). Un `side`/`kind` no reconocido se conserva verbatim.
+  exchangeRate/assetClass/settlementAccount` (trade) · `kind` enum (interest/deposit/withdrawal/fee/tax/term_deposit/other),
+  `amount`, `description`, `account`, `direction` (cash) + `interestRate/rateKind/termMonths/maturityDate` (term_deposit). Un `side`/`kind` no reconocido se conserva verbatim.
   `investment@1` mantiene su forma plana histórica.
 
 Cobertura de tests: `extension/test/investment2.test.mjs` (datos 100% sintéticos). Pendiente

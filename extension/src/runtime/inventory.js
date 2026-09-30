@@ -902,6 +902,10 @@ function resolveField(value, item, group, i18n) {
     for (const v of value) { const r = resolveField(v, item, group, i18n); if (r != null && r !== '') return r; }
     return undefined;
   }
+  // `{ const: v }` — a literal, not a path. For what a source KNOWS about every record of a stream rather
+  // than reads from it: Raisin's deposits stream only ever lists fixed-term deposits, so it declares
+  // `kind: { const: "term_deposit" }` instead of leaving the consumer to guess from an id prefix.
+  if (value && typeof value === 'object' && Object.prototype.hasOwnProperty.call(value, 'const')) return value.const;
   if (typeof value !== 'string' || value.indexOf('{') < 0) return get(item, value);
   const pick = (spec) => {
     if (spec.indexOf('i18n:') === 0) return i18nWord(i18n, spec.slice(5)); // {i18n:key} → per-locale word
@@ -1976,8 +1980,9 @@ function mapDoc(adapter, p, group) {
     }
   }
   // Date fields → ISO (textual/locale, also epoch ms/s). `valueDate` is the bank movement's value date
-  // (distinct from the booked `date`), promoted to a canonical field when a source maps it.
-  for (const k of ['date', 'valueDate']) if (doc[k] != null && doc[k] !== '') doc[k] = normalizeDate(doc[k]);
+  // (distinct from the booked `date`), promoted to a canonical field when a source maps it; `maturityDate`
+  // is a term deposit's end date (investment@2 cash, kind term_deposit).
+  for (const k of ['date', 'valueDate', 'maturityDate']) if (doc[k] != null && doc[k] !== '') doc[k] = normalizeDate(doc[k]);
   // Amount fields → Number. `balanceAfter` is the running balance a bank movement leaves behind.
   for (const k of ['total', 'amount', 'balanceAfter']) if (typeof doc[k] === 'string' && doc[k] !== '') doc[k] = normalizeAmount(doc[k]); // "21,00 €" → 21
   // Minor-unit amounts: some APIs return integer minor units. `amountScale` is a FIXED factor (e.g. 0.01);

@@ -75,6 +75,8 @@ const RESERVED = new Set([
   // broker (investment@2) trade/cash fields
   'recordType', 'side', 'kind', 'ticker', 'mic', 'instrumentName', 'assetClass', 'grossAmount', 'commission',
   'taxWithheld', 'netAmount', 'exchangeRate', 'settlementAccount',
+  // investment@2 cash, kind term_deposit: the deposit's terms
+  'interestRate', 'rateKind', 'termMonths', 'maturityDate',
 ]);
 
 export function buildRecord(d, adapter) {
@@ -210,7 +212,9 @@ function dirOf(v) { const n = typeof v === 'number' ? v : Number(money(v)); retu
 // `side`/`kind` are normalized to the contract enums when they match (spaces/hyphens → underscore, lower-cased);
 // an unrecognized value is kept verbatim so nothing captured is silently dropped.
 const TRADE_SIDES = new Set(['buy', 'sell', 'dividend', 'split', 'transfer_in', 'transfer_out']);
-const CASH_KINDS = new Set(['interest', 'deposit', 'withdrawal', 'fee', 'tax', 'other']);
+// `term_deposit` is money placed in a fixed-term deposit: an investment the consumer registers as fixed
+// income, never a movement. Distinct from `deposit` (cash paid INTO the account).
+const CASH_KINDS = new Set(['interest', 'deposit', 'withdrawal', 'fee', 'tax', 'term_deposit', 'other']);
 const enumOf = (set, v) => { if (v == null || v === '') return undefined; const s = String(v).toLowerCase().replace(/[\s-]+/g, '_'); return set.has(s) ? s : v; };
 function pruneScalars(o) { const r = {}; for (const [k, v] of Object.entries(o)) if (v != null && v !== '') r[k] = v; return r; }
 function instrumentOf(d) {
@@ -232,6 +236,10 @@ function buildInvestment2(d, currency) {
       counterparty: d.counterparty ?? d.party,
       account: d.account ?? d.settlementAccount,
       category: d.category, source: d.source,
+      // A term deposit's terms, only when the source maps them (absent → the historical cash shape). The rate
+      // is a percentage (2.65, not 0.0265); `rateKind` says whether it is nominal (tin) or effective (tae).
+      interestRate: num(d.interestRate), rateKind: d.rateKind != null && d.rateKind !== '' ? String(d.rateKind).toLowerCase() : undefined,
+      termMonths: num(d.termMonths), maturityDate: d.maturityDate,
     });
   }
   const out = pruneScalars({

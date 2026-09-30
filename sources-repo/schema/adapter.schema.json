@@ -1219,6 +1219,17 @@
             },
             "minItems": 1,
             "description": "Several candidate paths: the first that resolves to a non-empty value wins. For a quantity a service reports under two names, put the authoritative one first (Revolut: amountWithCharges before amount). Needs an extension with array-path support — gate it with minVersion."
+          },
+          {
+            "type": "object",
+            "required": [
+              "const"
+            ],
+            "properties": {
+              "const": {}
+            },
+            "additionalProperties": false,
+            "description": "A literal value, not a path: what the source knows about every record of this output rather than reads from it (Raisin's deposits stream: kind {const: \"term_deposit\"}). Needs Habeas 0.10.10.1 or newer — gate it with minVersion."
           }
         ]
       },

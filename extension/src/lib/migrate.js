@@ -28,7 +28,7 @@ const CURRENT = 'renormalize-4'; // bump to force a re-run when normalization ch
 export const RW_SINK_TYPES = new Set(['local-folder', 'drive', 'dropbox', 'webdav', 's3']);
 
 const MONEY = new Set(['total', 'amount', 'balanceAfter', 'price', 'grossAmount', 'commission', 'taxWithheld', 'netAmount', 'units']);
-const DATES = new Set(['date', 'valueDate']);
+const DATES = new Set(['date', 'valueDate', 'maturityDate']);
 // Resolve a dotted path with optional array selectors `key[field=value].sub` — mirrors the runtime's get()
 // so migration backfills can read nested/selected raw values (e.g. Trade Republic's units/price out of
 // record.extra.detail.sections[title=Transaction].data[title=Shares].detail.text).
@@ -72,6 +72,7 @@ export function renormalizeRecord(record, eff) {
   const fromRaw = []; // ONLY the fields pulled from record.extra (raw) — these still need normalizing/scaling
   for (const [norm, spec] of Object.entries(fields)) {
     if (doc[norm] != null && doc[norm] !== '') continue;
+    if (spec && typeof spec === 'object' && Object.prototype.hasOwnProperty.call(spec, 'const')) { doc[norm] = spec.const; continue; } // a literal (kind: term_deposit)
     if (typeof spec !== 'string' || spec.indexOf('{') >= 0) continue; // templated path ({group.*}): not invertible offline
     const raw = getPath(extra, spec);
     if (raw != null && raw !== '') { doc[norm] = raw; fromRaw.push(norm); continue; }
