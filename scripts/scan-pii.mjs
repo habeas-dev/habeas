@@ -36,6 +36,7 @@ const ALLOWLIST = new Set([
   '2222222222222222222222',
   '4111111111111111',          // canonical test Visa
   '9121000418450200051332',    // ES9121000418450200051332 — canonical ES example IBAN
+  '7921000813610123456789',    // ES7921000813610123456789 — public example IBAN; the fake bank's savings account (e2e/mock-bank.mjs)
   '9900000000000000000001',    // ikea-graphql-pdf.test.mjs — fake receipt id
   '0000000000000000000000',    // investment2.test.mjs — fictitious broker settlement IBAN (all zeros)
   '0000000000000000000001',    // investment2.test.mjs — fictitious broker cash IBAN (all zeros + 1)

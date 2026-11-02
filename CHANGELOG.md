@@ -10,6 +10,18 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Added
+- **A fake bank for end-to-end tests of apps that consume Habeas.** `extension/test/e2e/mock-bank.mjs` serves a
+  logged-in bank and broker on loopback (three accounts with paginated movements, value dates and running
+  balances; a portfolio with buys, a sell, a dividend with tax withheld, interest, a fee and cash in/out) plus
+  its source, and `harness.mjs` launches Chromium with the real extension, the source installed and its session
+  captured. An app's suite then drives the bridge for real. Test only: never shipped nor published.
+
+### Fixed
+- **A source whose API lives on loopback http could never run.** The validator accepts `http://localhost` for
+  local and test sources, but the host permission asked for was always `https://…`, so every run stopped at
+  "no permission".
+
 ## [0.10.11] — 2026-09-30
 
 ### Added

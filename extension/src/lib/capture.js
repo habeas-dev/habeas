@@ -4,7 +4,15 @@
 // user logs in. Cookie sources don't need a token, but running the bridge there is harmless.
 import { chrome } from './ext.js';
 
-const asOrigin = (h) => 'https://' + String(h).replace(/^https?:\/\//, '').replace(/[/:*].*$/, '') + '/*';
+// Host permission pattern for an API host. https, except loopback http — the one exception the validator
+// allows (local dev / testing sources) — whose pattern must keep its scheme, or the permission asked for
+// (https://localhost/*) never covers the API the source actually calls and every run stops at `noperm`.
+const LOOPBACK_HTTP = /^http:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/;
+const asOrigin = (h) => {
+  const s = String(h);
+  const scheme = LOOPBACK_HTTP.test(s) ? 'http://' : 'https://';
+  return scheme + s.replace(/^https?:\/\//, '').replace(/^(\[[^\]]+\]|[^/:*]+).*$/, '$1') + '/*';
+};
 
 // Host permissions a source needs: its login site(s) (match), its API host, and any cross-domain hosts —
 // so the capture script runs on the login site AND the page-context fetch can reach the API.
