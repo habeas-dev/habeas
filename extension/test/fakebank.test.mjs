@@ -22,7 +22,7 @@ after(() => bank.server.close());
 test('fake bank source validates, with one output per stream', () => {
   const v = validateAdapter(source);
   assert.deepEqual(v.errors || [], [], JSON.stringify(v.errors));
-  assert.deepEqual(outputsOf(source).map((o) => o.id), ['movements', 'portfolio']);
+  assert.deepEqual(outputsOf(source).map((o) => o.id), ['movements', 'statements', 'portfolio']);
 });
 
 test('the API refuses a request without the captured session', async () => {
@@ -84,6 +84,17 @@ test('broker: trades and cash movements are built as investment@2 records', asyn
   assert.ok(interest, 'interest as a cash record');
   assert.equal(interest.amount, 4.21);
   assert.equal(recs.filter((r) => r.recordType === 'cash').length, 4);
+});
+
+test('statements: one per account and completed month, as invoice@1 with the account and a PDF', async () => {
+  const docs = await listInventory(resolveOutput(source, 'statements'), AUTH, net, {});
+  assert.ok(docs.length >= FAKE_ACCOUNTS.length, 'at least one completed month per account');
+  assert.equal(docs.length % FAKE_ACCOUNTS.length, 0, 'the same months for every account');
+  const r = docs[0].record;
+  assert.match(r.number, /^\d{4}-\d{2}$/);
+  assert.equal(r.amount, undefined, 'a statement is a document, not a movement');
+  const pdf = await fetch(`${bank.origin}/api/accounts/ACC-CURRENT/statement?from=2026-09-01&to=2026-09-30`, { headers: AUTH.merged });
+  assert.equal(pdf.headers.get('content-type'), 'application/pdf');
 });
 
 test('control API: an appended movement shows up on the next listing, with its balance', async () => {

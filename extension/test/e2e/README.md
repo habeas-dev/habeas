@@ -59,11 +59,13 @@ What the bank serves:
 - **Accounts** (`/api/accounts`): a current and a savings account with valid IBANs, and a card (`**** 4242`).
 - **Movements** (`/api/accounts/{id}/movements?page=N`): newest first, 10 per page, each with a value date and
   the running balance. The current account needs three pages.
+- **Statements** (`/api/accounts/{id}/statement?from&to`): a PDF per account and completed month.
 - **Portfolio** (`/api/broker/timeline`): buys, a sell, a dividend with tax withheld, interest, a fee, and
   cash in and out of the broker account.
 - **Control API**, so a test can simulate new activity: `POST /__control/movement`, `POST /__control/trade`,
   `POST /__control/reset`, `GET /__control/state`. No session needed.
 
 The API speaks its own field names, like any bank; `fakeBankSource()` maps them the way a published source
-does (two outputs: `movements`, transaction@1, grouped by account; `portfolio`, investment@2). Everything is
+does (three outputs: `movements`, transaction@1, grouped by account; `statements`, invoice@1 with a PDF;
+`portfolio`, investment@2). Everything is
 fictional and in English. The source is never shipped in the extension nor published to the registry.

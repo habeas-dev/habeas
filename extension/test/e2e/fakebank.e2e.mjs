@@ -19,7 +19,7 @@ function startApp() {
         req.on('data', (c) => chunks.push(c));
         req.on('end', async () => {
           const form = await new Request('http://x/', { method: 'POST', headers: req.headers, body: Buffer.concat(chunks) }).formData();
-          received.push({ source: form.get('source'), auth: req.headers.authorization, records: JSON.parse(form.get('records') || '[]') });
+          received.push({ source: form.get('source'), auth: req.headers.authorization, records: JSON.parse(form.get('records') || '[]'), files: form.getAll('files[]').length });
           res.writeHead(200, { 'content-type': 'application/json' });
           res.end(JSON.stringify({ ok: true }));
         });
@@ -45,7 +45,7 @@ const h = await launchHabeasWithFakeBank();
 try {
   check('extension loaded, fake bank seeded and its session captured', !!h.extensionId, h.extensionId);
   const state = await (await fetch(`${h.bank.origin}/__control/state`)).json();
-  const expected = Object.values(state.movements).reduce((a, b) => a + b, 0) + state.broker;
+  const expected = Object.values(state.movements).reduce((a, b) => a + b, 0) + state.broker; // statements are counted apart
 
   const page = await h.context.newPage();
   await page.goto(`${app.origin}/`);
@@ -64,12 +64,14 @@ try {
 
   const collected = await bridge(page, 'collect', { grantId });
   check('collect starts', collected && collected.ok !== false, JSON.stringify(collected));
-  const count = () => app.received.reduce((n, r) => n + r.records.length, 0);
+  const count = () => app.received.filter((r) => !r.source.endsWith(':statements')).reduce((n, r) => n + r.records.length, 0);
   for (let i = 0; i < 120 && count() < expected; i++) await page.waitForTimeout(500);
   check('the app receives every movement and broker record', count() === expected, `${count()}/${expected}`);
   // `source` names the source AND the stream that produced the batch ("<id>:<stream>").
   const sources = new Set(app.received.map((r) => r.source));
-  check('each delivery names its source and stream', sources.has(`${h.source.id}:movements`) && sources.has(`${h.source.id}:portfolio`) && sources.size === 2, [...sources].join(', '));
+  check('each delivery names its source and stream', ['movements', 'statements', 'portfolio'].every((s) => sources.has(`${h.source.id}:${s}`)) && sources.size === 3, [...sources].join(', '));
+  const statements = app.received.filter((r) => r.source.endsWith(':statements'));
+  check('statements arrive with their PDFs', statements.length > 0 && statements.every((r) => r.records.length > 0 && r.files === r.records.length), statements.map((r) => `${r.records.length} records, ${r.files} PDFs`).join('; '));
   check('each delivery carries the pairing header the app proposed', app.received.length > 0 && app.received.every((r) => r.auth === 'Bearer e2e-pairing'));
   if (count() < expected) {
     // On failure, show what Habeas itself logged about the run.

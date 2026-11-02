@@ -1,8 +1,8 @@
 // A fake BANK + BROKER for end-to-end tests of Habeas, and of the apps that consume it, against something
 // that behaves like a real service: a logged-in SPA that sends a JWT to its own API (so the in-session hook
 // captures it), an accounts endpoint, paginated movements per account (newest first, with value date and
-// running balance), and a broker timeline (buys, a sell, a dividend with tax withheld, cash in/out, interest,
-// a fee). Its API speaks its OWN field names, like any bank; the source maps them to Habeas's schemas.
+// running balance), a monthly PDF statement per account, and a broker timeline (buys, a sell, a dividend
+// with tax withheld, cash in/out, interest, a fee). Its API speaks its OWN field names, like any bank; the source maps them to Habeas's schemas.
 //
 // TEST ONLY. The service, its data and `fakeBankSource()` are fictional and loopback-bound: they are never
 // shipped in the extension nor published to the registry (the validator allows http only for localhost).
@@ -16,6 +16,7 @@
 import http from 'node:http';
 
 const PAGE_SIZE = 10;
+const PDF = Buffer.from('%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF');
 const TOKEN = 'bearer eyJmYWtlYmFuaw.e2e.token';
 
 // The IBANs are valid (ISO 13616 mod-97), like a real bank's.
@@ -162,6 +163,12 @@ export function startMockBank({ port = 0 } = {}) {
           const desc = list.slice().reverse();
           return json({ movements: desc.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), page, pageSize: PAGE_SIZE, total: desc.length });
         }
+        // A month's statement for an account, as a PDF (the period comes in the query, like a real report endpoint).
+        const st = p.match(/^\/api\/accounts\/([^/]+)\/statement$/);
+        if (st) {
+          if (!state.movements[decodeURIComponent(st[1])] || !u.searchParams.get('from') || !u.searchParams.get('to')) return json({ error: 'bad request' }, 400);
+          res.writeHead(200, { 'content-type': 'application/pdf' }); return res.end(PDF);
+        }
         if (p === '/api/broker/timeline') return json({ events: state.broker.slice().reverse() });
         res.writeHead(404); res.end();
       } catch (e) {
@@ -172,8 +179,9 @@ export function startMockBank({ port = 0 } = {}) {
   });
 }
 
-// The source for the fake bank, written the way a published source is: two outputs, bank/card movements
-// grouped by account (transaction@1) and the broker timeline (investment@2).
+// The source for the fake bank, written the way a published source is: bank/card movements grouped by
+// account (transaction@1), a monthly statement per account (invoice@1 + PDF, like a bank's statements) and the
+// broker timeline (investment@2).
 export function fakeBankSource(port) {
   return {
     id: 'fakebank-e2e',
@@ -206,6 +214,24 @@ export function fakeBankSource(port) {
           description: 'concept',
           balanceAfter: 'balance',
           account: '{group.number}',
+        },
+      },
+      {
+        id: 'statements',
+        name: 'Statements',
+        schema: 'invoice@1',
+        categories: ['banking'],
+        api: {
+          groups: { path: '/api/accounts', itemsPath: 'accounts', fields: { id: 'id', name: 'name', number: 'number', currency: 'currency' } },
+          list: { paging: 'synthetic', synthetic: { each: 'group-months' }, maxAgeDays: 70 },
+          pdf: { path: '/api/accounts/{group.id}/statement?from={fromDate}&to={toDate}', method: 'GET', ext: 'pdf' },
+        },
+        fields: {
+          internalId: '{group.id}-{period}',
+          date: '{date}',
+          number: '{period}',
+          account: '{group.number}',
+          description: 'Statement {group.name} {period}',
         },
       },
       {
