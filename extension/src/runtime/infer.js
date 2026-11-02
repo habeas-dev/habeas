@@ -532,7 +532,7 @@ function fieldByKeyVal(item, key, val) {
   return null;
 }
 
-export function inferDetail(samples, items, domTexts) {
+export function inferDetail(samples, items, domTexts, { pages = true } = {}) {
   const vf = valueFields(items);
   if (!vf.size) return null;
   const vals = [...vf.keys()].sort((a, b) => b.length - a.length);
@@ -561,6 +561,7 @@ export function inferDetail(samples, items, domTexts) {
     if (id) return { host: u.host, path: templ(u, id, itemFor(id)), method: (s.method || 'GET').toUpperCase(), idField: vf.get(id), headers: appHeaders(s.reqHeaders), referer: refererForId(domTexts, id) };
   }
   // Fallback: a server-rendered detail page the user opened (URL carries the id) — no XHR captured.
+  if (!pages) return null;
   for (const d of domTexts || []) {
     let u; try { u = new URL(d.url); } catch (e) { continue; }
     const id = vals.find((v) => full(u).includes(v));
@@ -899,18 +900,21 @@ export function draftAdapterFromSamples(samples, ctx = {}, chosen = null) {
     }
   }
 
-  // Per-document artifact: prefer the JSON detail (captured passively when the user opens an order);
-  // fall back to a captured PDF request. Auto-carry the detail's app headers + detail-page Referer.
-  const detail = inferDetail(samples, best.items, ctx.domTexts);
+  // Per-document artifact: prefer the JSON detail (captured passively when the user opens an order), then a
+  // captured PDF request, and only then the detail PAGE the user opened — on an SPA that page is an empty shell
+  // and the PDF it fetched is the real document. Auto-carry the detail's app headers + detail-page Referer.
+  const pdfInfo = ctx.assets ? inferPdf(ctx.assets, best.items) : null;
+  const detail = inferDetail(samples, best.items, ctx.domTexts, { pages: !pdfInfo });
   if (detail) {
     draft.api.detail = { path: detail.path, method: detail.method };
     if (detail.host && detail.host !== host) draft.api.detail.host = detail.host;
     if (detail.headers && Object.keys(detail.headers).length) draft.api.detail.headers = detail.headers;
     if (detail.referer) draft.api.detail.referer = detail.referer;
     if (detail.idField) fields.internalId = detail.idField; // the internal id used in the URL
-  } else if (ctx.assets) {
-    const p = inferPdf(ctx.assets, best.items);
-    if (p) { draft.api.pdf = p.pdf; if (p.host && p.host !== host) draft.api.pdf.host = p.host; if (p.idField) fields.internalId = p.idField; }
+  } else if (pdfInfo) {
+    draft.api.pdf = pdfInfo.pdf;
+    if (pdfInfo.host && pdfInfo.host !== host) draft.api.pdf.host = pdfInfo.host;
+    if (pdfInfo.idField) fields.internalId = pdfInfo.idField;
   }
 
   // A stable personal id the SPA puts in URLs → capture it as {ctx.*} and template the list/detail

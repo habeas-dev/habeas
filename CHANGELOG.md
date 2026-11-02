@@ -16,8 +16,22 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   balances; a monthly PDF statement per account; a portfolio with buys, a sell, a dividend with tax withheld, interest, a fee and cash in/out) plus
   its source, and `harness.mjs` launches Chromium with the real extension, the source installed and its session
   captured. An app's suite then drives the bridge for real. Test only: never shipped nor published.
+- **The end-to-end suites run in CI** on every push and pull request, one step per suite. They had only ever
+  been run by hand, and had been failing since July (0.1.48) without anyone noticing.
 
 ### Fixed
+- **Listing from Settings → Advanced tools failed for every source** with "Cannot read properties of undefined"
+  since 0.9.2: it read a page of documents from a progress update that carries none.
+- **Sending from Advanced tools ended in "Destination error: files is not defined"** (since 0.8.0), after the files had
+  already been delivered, so the real dates and amounts, the copy in the store and the activity log were
+  skipped.
+- **The recorder opened in its own tab was a blank page** — from the popup's "Habeas doesn't know this site yet" and the marketplace's "Complete": its
+  start-up script was inline, which the extension's security policy blocks (since 0.9.2).
+- **Recording an order page could keep the page instead of its PDF.** When the order page itself was opened
+  and it fetched the order's PDF, the draft took the page (an empty shell on most shops) as the document. A
+  captured PDF now wins, and it keeps the page it was requested from as its Referer.
+- **A document captured during recording could lose its Referer** when the network observer reported it after
+  the page did; both reports are now merged.
 - **A source whose API lives on loopback http could never run.** The validator accepts `http://localhost` for
   local and test sources, but the host permission asked for was always `https://…`, so every run stopped at
   "no permission".

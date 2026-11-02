@@ -448,7 +448,10 @@ async function onList(mode, opts = {}) {
       auth, net, ds, mode, outputs: outs, signal: aborter.signal,
       pickGroup: (eff, a, n) => pickGroup(eff, a, n),
       onStream: (sid) => { listSid = sid; },
-      onProgress: (sid, eff, sk, { year, page, docs }) => {
+      onProgress: (sid, eff, sk, { phase, count, year, page, docs }) => {
+        // Phase-only events (before the call, and while saving) carry no page of docs.
+        if (phase === 'save') { $('#status').textContent = t('archive_saving_n', [String(count || 0), adapter.name || adapter.id]); return; }
+        if (!docs) { $('#status').textContent = t('listing'); return; }
         $('#status').textContent = year != null ? t('listing_year_page', [String(year), String(page), String(docs.length)]) : t('listing_page', [String(page), String(docs.length)]);
         for (const d of docs) acc.set(key(tag(d, sid, sk)), d);
         rebuild(); bars(); render(delivered);
@@ -617,6 +620,7 @@ async function onSend() {
   // one ZIP, http = one POST) are a single operation → accumulate then write once.
   const streaming = sink.type === 'local-folder' || sink.type === 'drive';
   let written = 0; const noPdf = []; const failed = [];
+  const files = new Map(); // internalId → its fetched artifacts, in either mode (rememberDocMeta reads their formats)
   // Live table: fetching a doc's detail reveals its real date + amount (encrypted in Amazon's list) — reflect
   // that in the row AS it downloads, and flip the row to "sent". liveDelivered starts from this sink's ledger.
   const liveDelivered = await deliveredSet($('#ds').value, sink.id);
@@ -646,6 +650,7 @@ async function onSend() {
         try {
           const arts = await allArts(d); // every selected format; refines d.date / d.total from the detail
           if (arts.length) {
+            files.set(d.internalId, arts);
             render(liveDelivered); // show the newly-learned date + amount immediately
             const r = await writeToSink(sink, [d], new Map([[d.internalId, arts]]), { ...opts, source: sk }); // this doc's files + its record
             written += r.written;
@@ -658,7 +663,6 @@ async function onSend() {
       await flushBatch();
       render(liveDelivered); // reflect the batched docs as sent
     } else {
-      const files = new Map();
       for (const d of eligible) { const arts = await allArts(d); if (arts.length) files.set(d.internalId, arts); else noPdf.push(d.internalId); render(liveDelivered); } // dates/amounts fill in as they download
       const r = await writeToSink(sink, eligible, files, opts);
       written = r.written;

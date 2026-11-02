@@ -1,7 +1,7 @@
 // Real check of the Phase-4 registry loop against LIVE infra: load the shipped extension and open
 // the marketplace, which fetches https://habeas-dev.github.io/sources/index.json and renders it.
-// (The only published source today is carrefour-es, which is also a built-in, so it shows as
-// already installed — this proves fetchIndex + render + installed-detection against real Pages.)
+// carrefour-es is also a built-in, so it must show as installed rather than installable — this proves
+// fetchIndex + render + installed-detection against real Pages.
 import { chromium } from 'playwright';
 
 const EXT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
@@ -24,16 +24,17 @@ try {
   check('carrefour-es appears from the live index', (await carrefour.count()) === 1);
   const status = (await page.locator('#status').textContent())?.trim();
   check('status reflects a loaded registry', /\d/.test(status || ''), status || '');
-  const disabled = await carrefour.locator('[data-install]').isDisabled();
-  const btn = (await carrefour.locator('[data-install]').textContent())?.trim();
-  check('built-in source shown as already installed (button disabled)', disabled, btn || '');
+  // Installed shows "Installed" (disabled) or, when the catalog has a newer version, "Update (a → b)". The
+  // built-in carries no version, so the catalog's is always newer — and offering it is intended.
+  const btn = (await carrefour.locator('[data-install]').textContent())?.trim() || '';
+  check('built-in source detected as installed (offered as installed or update, not install)', /→|^(Installed|Instalada)$/.test(btn), btn);
 
-  // Social panel must render fail-soft even though api.habeas.dev isn't deployed yet.
+  // The ratings/comments panel must render, and fail soft if api.habeas.dev is unreachable.
   await carrefour.locator('[data-more]').click();
   const panel = carrefour.locator('[data-panel]');
   await panel.locator('[data-star]').first().waitFor({ timeout: 8000 }).catch(() => {});
   const stars = await panel.locator('[data-star]').count();
-  check('ratings/comments panel renders (fail-soft, service offline)', stars === 5, `${stars} stars, comments box present`);
+  check('ratings/comments panel renders', stars === 5, `${stars} stars, comments box present`);
 } finally {
   await ctx.close();
 }

@@ -7,12 +7,6 @@
 </head>
 <body>
   <div class="app rec" id="rec-root"></div>
-  <script type="module">
-    import { RECORDER_HTML, initAuthor } from './author.js';
-    const root = document.getElementById('rec-root');
-    root.innerHTML = RECORDER_HTML;
-    const p = new URLSearchParams(location.search);
-    initAuthor(root, { url: p.get('url'), guide: p.get('guide'), endpoint: p.get('endpoint'), base: p.get('base'), handoff: p.get('handoff') });
-  </script>
+  <script type="module" src="author-page.js"></script>
 </body>
 </html>

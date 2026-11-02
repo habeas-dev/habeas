@@ -470,6 +470,19 @@ test('detail endpoint from a navigated (SSR) page with the id in a query param',
   assert.equal(r.draft.fields.number, 'number');             // 12345 is rendered → public
 });
 
+test('a captured PDF beats the opened detail page as the per-item document', () => {
+  // An SPA: the user opened an order page (an empty shell — its data comes by XHR) and the page fetched the
+  // order's PDF. The PDF is the document; the page alone is only a guess for server-rendered sites.
+  const samples = [{ url: 'https://www.shop.example/api/orders', status: 200, reqHeaders: {},
+    json: { items: [{ id: 'ORD-7', date: '2026-01-05', total: 12 }] } }];
+  const domTexts = [{ url: 'https://www.shop.example/orders/ORD-7', text: 'Pedido · 12€' }];
+  const assets = [{ url: 'https://www.shop.example/api/orders/ORD-7/pdf', method: 'GET', referer: 'https://www.shop.example/orders/ORD-7', status: 200 }];
+  const r = draftAdapterFromSamples(samples, { domain: 'shop.example', pageHost: 'www.shop.example', domTexts, assets });
+  assert.ok(!r.draft.api.detail, 'the opened page is not taken as the detail when a PDF was captured');
+  assert.equal(r.draft.api.pdf.path, '/api/orders/{internalId}/pdf');
+  assert.equal(r.draft.api.pdf.referer, 'https://www.shop.example/orders/{internalId}');
+});
+
 test('infers a POST-generated PDF (body templated by id) from captured assets', () => {
   const samples = [{ url: 'https://api.shop.es/v1/orders', status: 200, reqHeaders: { authorization: 'eyJ' },
     json: { items: [{ id: 'ORD-8', total: 9 }] } }];

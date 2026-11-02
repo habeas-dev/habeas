@@ -329,15 +329,26 @@ function isDocResponse(details) {
   const ct = g('content-type').toLowerCase(), cd = g('content-disposition').toLowerCase();
   return /application\/pdf|application\/octet-stream|application\/vnd\.|spreadsheet|ms-?excel|\bcsv\b/.test(ct) || /attachment/.test(cd) || /\.(pdf|xlsx?|csv)(\?|$)/i.test(details.url);
 }
+// Both this observer and the page hook report the same document request, in either order. MERGE them by URL
+// rather than letting the later one replace the earlier: the hook's entry carries what the observer cannot see
+// (the Referer page, request type and body), and losing it drops a Referer-gated PDF's path template.
+const assetChain = new Map(); // key → the pending write, so two reports of one request can't interleave
+function mergeAsset(key, asset, cap) {
+  const run = (assetChain.get(key) || Promise.resolve()).then(async () => {
+    const o = await chrome.storage.session.get(key);
+    const arr = o[key] || [];
+    const prev = arr.find((x) => x.url === asset.url) || {};
+    const merged = { ...prev };
+    for (const [k, v] of Object.entries(asset)) if (v != null && v !== '' && v !== 0) merged[k] = v;
+    await chrome.storage.session.set({ [key]: [merged, ...arr.filter((x) => x.url !== asset.url)].slice(0, cap) });
+  }).catch(() => {});
+  assetChain.set(key, run);
+  return run;
+}
 function onLearnHeaders(details) {
   try {
     if (!LEARN_ASSET || !isDocResponse(details)) return;
-    const key = 'assets:' + LEARN_ASSET.domain;
-    chrome.storage.session.get(key).then((o) => {
-      const arr = (o[key] || []).filter((x) => x.url !== details.url);
-      arr.unshift({ url: details.url, method: details.method, status: details.statusCode, via: 'webRequest' });
-      chrome.storage.session.set({ [key]: arr.slice(0, 60) });
-    });
+    mergeAsset('assets:' + LEARN_ASSET.domain, { url: details.url, method: details.method, status: details.statusCode, via: 'webRequest' }, 60);
   } catch (e) {}
 }
 // Show REC on the toolbar icon for as long as record mode is armed, and say so in the tooltip. The
@@ -598,12 +609,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     });
   } else if (msg.type === 'habeas:asset' && msg.domain && msg.asset) {
     // Record-mode: remember document (PDF) request URLs so we can infer the PDF path.
-    const key = 'assets:' + msg.domain;
-    chrome.storage.session.get(key).then((o) => {
-      const arr = (o[key] || []).filter((x) => x.url !== msg.asset.url);
-      arr.unshift(msg.asset);
-      chrome.storage.session.set({ [key]: arr.slice(0, SAMPLE_CAP) });
-    });
+    mergeAsset('assets:' + msg.domain, msg.asset, SAMPLE_CAP);
   } else if (msg.type === 'habeas:dom' && msg.domain && msg.text) {
     // Record-mode: rendered page text, to tell public (visible) ids from internal ones.
     const key = 'dom:' + msg.domain;
