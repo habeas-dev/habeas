@@ -53,13 +53,18 @@ async function readStorage(page, area, key) {
  *   headless   — default false: an MV3 extension needs a real browser context (run under xvfb-run on CI).
  *   bankPort   — fixed port for the fake bank (default: any free one).
  *   sinks      — extra sinks to seed (default none: a consumer adds its own through propose-workflow).
+ *   contextOptions — extra Playwright options for the browser context (baseURL, locale, timezoneId…), so a
+ *                consumer's suite can keep using its own relative-URL helpers in this browser.
+ *   browserType — the consumer's own `chromium` (from its @playwright/test), so its `expect` recognises the
+ *                pages and locators; defaults to the one Habeas depends on.
  * Returns { context, extensionId, bank, source, approveConsent, capturedAuth, close }.
  */
-export async function launchHabeasWithFakeBank({ headless = false, bankPort = 0, sinks = [] } = {}) {
+export async function launchHabeasWithFakeBank({ headless = false, bankPort = 0, sinks = [], contextOptions = {}, browserType = chromium } = {}) {
   const bank = await startMockBank({ port: bankPort });
   const source = fakeBankSource(bank.port);
   const extDir = buildTestExtension();
-  const context = await chromium.launchPersistentContext('', {
+  const context = await browserType.launchPersistentContext('', {
+    ...contextOptions,
     headless,
     args: [`--disable-extensions-except=${extDir}`, `--load-extension=${extDir}`, '--no-sandbox'],
   });

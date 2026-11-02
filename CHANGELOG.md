@@ -18,6 +18,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   captured. An app's suite then drives the bridge for real. Test only: never shipped nor published.
 - **The end-to-end suites run in CI** on every push and pull request, one step per suite. They had only ever
   been run by hand, and had been failing since July (0.1.48) without anyone noticing.
+- **The harness runs inside an app's own Playwright suite.** `launchHabeasWithFakeBank()` takes `browserType` (the
+  app's `chromium`, so its `expect` recognises the pages) and `contextOptions` (`baseURL`, locale…, so the app's
+  relative-URL helpers keep working). Cuéntamo's end-to-end test of its Habeas page is built on it.
 
 ### Fixed
 - **Listing from Settings → Advanced tools failed for every source** with "Cannot read properties of undefined"
