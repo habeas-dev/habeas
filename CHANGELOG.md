@@ -33,6 +33,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 - **Recording an order page could keep the page instead of its PDF.** When the order page itself was opened
   and it fetched the order's PDF, the draft took the page (an empty shell on most shops) as the document. A
   captured PDF now wins, and it keeps the page it was requested from as its Referer.
+- **A recording could miss some of the lists a page loads at once**, and a captured login could lose part of
+  what it captured: requests that arrive together each updated the same in-memory record and the last one
+  won. Updates are now queued per site, so a page loading three lists records all three, and every endpoint's
+  headers and captured values (such as an account id) are kept.
 - **A document captured during recording could lose its Referer** when the network observer reported it after
   the page did; both reports are now merged.
 - **A source whose API lives on loopback http could never run.** The validator accepts `http://localhost` for

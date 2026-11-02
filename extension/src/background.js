@@ -39,6 +39,7 @@ import { validateProposal, validateSink, originHost, enabledSources, sinkIdForOr
 import { canonicalize } from './lib/normalize.js';
 import { getGrant, grantsForOrigin, grantUsableBy, touchGrant, revokeGrant } from './lib/grants.js';
 import { migrateSinkHeaders } from './lib/sinkheaders.js';
+import { makeSessionUpdater } from './lib/sessionupdate.js';
 import { runStoreMigration } from './lib/migrate.js';
 import { serialized, readyGateBlocks, autoDebounced, retainAutoDebounce, autoBackoffMs, needsPageContext, isLoginNavigation, isReadyNavigation, needsTabEscalation, wantsCookieReset, loginErrorNeedsCookieReset, sweepSinkId, orderedSweepSources, AUTO_CAPTURE_SETTLE_MS } from './lib/autosync.js';
 
@@ -108,24 +109,29 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   else if (alarm && alarm.name === 'contrib:poll') checkContribReplies();
 });
 
+// Read → modify → write on storage.session from messages that arrive together: an SPA sends several
+// authenticated requests at once, a page loads three lists at once. Each key's updates are queued, so one
+// never overwrites another's (lost byPath entries, a lost {ctx.*} value, a list missing from a recording).
+const updateSession = makeSessionUpdater(chrome.storage.session);
+
 // ---- auth/context capture (shared by the page hook messages AND the webRequest observer) ----------
 async function saveAuth(host, path, headers) {
-  const key = 'auth:' + host;
-  const o = await chrome.storage.session.get(key);
-  const cur = o[key] || { merged: {}, byPath: {}, ctx: {}, at: {} };
-  cur.merged = { ...cur.merged, ...headers };
-  cur.at = cur.at || {};
-  const nowIso = new Date().toISOString(); // when this token/headers were (re)captured — so a 401 can show its age
-  cur.at.__merged = nowIso;
-  if (path) { cur.byPath[path] = { ...(cur.byPath[path] || {}), ...headers }; cur.at[path] = nowIso; }
-  await chrome.storage.session.set({ [key]: cur });
+  await updateSession('auth:' + host, (prev) => {
+    const cur = prev || { merged: {}, byPath: {}, ctx: {}, at: {} };
+    cur.merged = { ...cur.merged, ...headers };
+    cur.at = cur.at || {};
+    const nowIso = new Date().toISOString(); // when this token/headers were (re)captured — so a 401 can show its age
+    cur.at.__merged = nowIso;
+    if (path) { cur.byPath[path] = { ...(cur.byPath[path] || {}), ...headers }; cur.at[path] = nowIso; }
+    return cur;
+  });
 }
 async function saveContext(host, name, value) {
-  const key = 'auth:' + host;
-  const o = await chrome.storage.session.get(key);
-  const cur = o[key] || { merged: {}, byPath: {}, ctx: {} };
-  cur.ctx = { ...(cur.ctx || {}), [name]: value };
-  await chrome.storage.session.set({ [key]: cur });
+  await updateSession('auth:' + host, (prev) => {
+    const cur = prev || { merged: {}, byPath: {}, ctx: {} };
+    cur.ctx = { ...(cur.ctx || {}), [name]: value };
+    return cur;
+  });
 }
 
 // webRequest-based capture: observe request headers (Authorization) + URLs (context values, e.g. a DNI)
@@ -332,18 +338,12 @@ function isDocResponse(details) {
 // Both this observer and the page hook report the same document request, in either order. MERGE them by URL
 // rather than letting the later one replace the earlier: the hook's entry carries what the observer cannot see
 // (the Referer page, request type and body), and losing it drops a Referer-gated PDF's path template.
-const assetChain = new Map(); // key → the pending write, so two reports of one request can't interleave
 function mergeAsset(key, asset, cap) {
-  const run = (assetChain.get(key) || Promise.resolve()).then(async () => {
-    const o = await chrome.storage.session.get(key);
-    const arr = o[key] || [];
-    const prev = arr.find((x) => x.url === asset.url) || {};
-    const merged = { ...prev };
+  return updateSession(key, (arr = []) => {
+    const merged = { ...(arr.find((x) => x.url === asset.url) || {}) };
     for (const [k, v] of Object.entries(asset)) if (v != null && v !== '' && v !== 0) merged[k] = v;
-    await chrome.storage.session.set({ [key]: [merged, ...arr.filter((x) => x.url !== asset.url)].slice(0, cap) });
+    return [merged, ...arr.filter((x) => x.url !== asset.url)].slice(0, cap);
   }).catch(() => {});
-  assetChain.set(key, run);
-  return run;
 }
 function onLearnHeaders(details) {
   try {
@@ -592,41 +592,28 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     // Record-mode: WebSocket/SSE frames go in their OWN buffer — they share one wss:// URL (so the
     // by-url dedupe would keep only the last frame) and shouldn't crowd the HTTP sample cap. Dedupe
     // exact-duplicate frames (url+event+frame); keep a generous cap so the protocol + data are visible.
-    const key = 'wsframes:' + msg.domain;
-    chrome.storage.session.get(key).then((o) => {
-      const s = msg.sample;
-      const arr = (o[key] || []).filter((x) => !(x.url === s.url && x.event === s.event && x.frame === s.frame));
+    const s = msg.sample;
+    updateSession('wsframes:' + msg.domain, (prev = []) => {
+      const arr = prev.filter((x) => !(x.url === s.url && x.event === s.event && x.frame === s.frame));
       arr.push(s); // chronological — the subscription/handshake order matters for authoring
-      chrome.storage.session.set({ [key]: arr.slice(-WS_FRAME_CAP) });
-    });
+      return arr.slice(-WS_FRAME_CAP);
+    }).catch(() => {});
   } else if (msg.type === 'habeas:sample' && msg.domain && msg.sample) {
     // Record-mode: keep a rolling, de-duplicated (by path) buffer of observed responses.
-    const key = 'samples:' + msg.domain;
-    chrome.storage.session.get(key).then((o) => {
-      const arr = (o[key] || []).filter((x) => x.url !== msg.sample.url);
-      arr.unshift(msg.sample);
-      chrome.storage.session.set({ [key]: arr.slice(0, SAMPLE_CAP) });
-    });
+    updateSession('samples:' + msg.domain, (prev = []) => [msg.sample, ...prev.filter((x) => x.url !== msg.sample.url)].slice(0, SAMPLE_CAP)).catch(() => {});
   } else if (msg.type === 'habeas:asset' && msg.domain && msg.asset) {
     // Record-mode: remember document (PDF) request URLs so we can infer the PDF path.
     mergeAsset('assets:' + msg.domain, msg.asset, SAMPLE_CAP);
   } else if (msg.type === 'habeas:dom' && msg.domain && msg.text) {
     // Record-mode: rendered page text, to tell public (visible) ids from internal ones.
-    const key = 'dom:' + msg.domain;
-    chrome.storage.session.get(key).then((o) => {
-      const arr = (o[key] || []).filter((x) => x.url !== msg.url);
-      arr.unshift({ url: msg.url, text: msg.text });
-      chrome.storage.session.set({ [key]: arr.slice(0, 12) });
-    });
+    updateSession('dom:' + msg.domain, (prev = []) => [{ url: msg.url, text: msg.text }, ...prev.filter((x) => x.url !== msg.url)].slice(0, 12)).catch(() => {});
   } else if (msg.type === 'habeas:seen' && msg.domain) {
     // Record-mode diagnostic: count requests observed per host (did the recorder run at all?).
-    const key = 'seen:' + msg.domain;
-    chrome.storage.session.get(key).then((o) => {
-      const seen = o[key] || { total: 0, hosts: {} };
+    updateSession('seen:' + msg.domain, (seen = { total: 0, hosts: {} }) => {
       seen.total++;
       if (msg.host) seen.hosts[msg.host] = (seen.hosts[msg.host] || 0) + 1;
-      chrome.storage.session.set({ [key]: seen });
-    });
+      return seen;
+    }).catch(() => {});
   } else if (msg.type === 'habeas:storage' && msg.domain) {
     // Record-mode: keep the LATEST client-storage snapshot (local + session). SPAs stash session/entity
     // ids here that never hit the network; a redacted, correlated copy in the handoff traces them.
