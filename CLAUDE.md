@@ -392,6 +392,9 @@ without offering everyone a pointless update. `minVersion` gates by extension ve
   `…kncdicfbgke…`), so three weeks of daily 404 checks were querying an id that never existed. Never take
   a store id from a transcription: confirm it with
   `curl https://microsoftedge.microsoft.com/addons/getproductdetailsbycrxid/<id>` and match `storeProductId`.
+  Read the answer by its status, not by whether it parses: a **404 (`text/plain`) means the id does not
+  exist**; a 200 with an empty or non-JSON body is a transient glitch of that endpoint (seen 2026-11-11 and
+  -13, fine on retry) and says nothing about the listing — retry before concluding anything.
   The typo had also reached the Google OAuth **Web application** client: the Path-B redirect registered on
   2026-08-24 pointed at the non-existent id, so Drive could not have connected on Edge at all. Corrected
   2026-09-15 to `https://clcjdklighbiegkncdicfbgkeahjmaoa.chromiumapp.org/`; no user was affected (0

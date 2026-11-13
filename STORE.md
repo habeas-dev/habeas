@@ -327,7 +327,9 @@ background at all.
 >
 > Verify an id by fetching `https://microsoftedge.microsoft.com/addons/getproductdetailsbycrxid/<id>` and
 > matching `storeProductId` against the Store id above, rather than by eye: the alphabet is a–p, so a typo
-> stays plausible-looking. A store id is load-bearing in more than one system — check it where it is USED,
+> stays plausible-looking. Only a **404** means the id does not exist; a 200 with an empty or non-JSON body
+> is a transient glitch of that endpoint (seen 2026-11-11 and -13, fine on retry), so retry before reading
+> anything into it. A store id is load-bearing in more than one system — check it where it is USED,
 > not only where it is written down.
 
 `https://clcjdklighbiegkncdicfbgkeahjmaoa.chromiumapp.org/` is registered on the OAuth client
