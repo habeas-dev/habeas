@@ -598,7 +598,7 @@
     "message": "Asunto"
   },
   "email_hint": {
-    "message": "Envía un correo por lote con los documentos adjuntos, usando TU cuenta de proveedor — la clave se guarda cifrada y los datos van directos al proveedor. El remitente debe estar verificado en ese proveedor. Clave de API: Resend/Postmark/Brevo/SMTP2GO/Mailgun. Dominio: solo Mailgun. Clave de acceso + secreto + región: solo Amazon SES."
+    "message": "Envía un correo por lote con los documentos adjuntos, usando TU cuenta de proveedor — la clave se guarda cifrada y los datos van directos al proveedor. El remitente debe estar verificado en ese proveedor. Clave de API: Hermaily/Resend/Postmark/Brevo/SMTP2GO/Mailgun. Dominio: solo Mailgun. Clave de acceso + secreto + región: solo Amazon SES."
   },
   "connect_dropbox": {
     "message": "Conectar Dropbox"

@@ -55,6 +55,12 @@ function summarize(records, service, n) {
 // ---- Providers. Each returns a plain request { url, method, headers, body } from a common message shape.
 // (SES is handled separately below — it needs SigV4 signing + a raw MIME message.)
 const PROVIDERS = {
+  // https://hermaily.com/en/docs/ (POST /v1/send) — 202 = queued; sender domain must be verified in the account.
+  hermaily: (sink, key, m) => ({
+    url: 'https://api.hermaily.com/v1/send', method: 'POST',
+    headers: { authorization: 'Bearer ' + key, 'content-type': 'application/json', accept: 'application/json' },
+    body: JSON.stringify({ from: m.from, to: m.to, subject: m.subject, html: m.html, text: m.text, stream: 'transactional', tag: 'habeas', attachments: m.attachments.map((a) => ({ filename: a.filename, content: a.base64, content_type: a.contentType })) }),
+  }),
   // https://resend.com/docs/api-reference/emails/send-email
   resend: (sink, key, m) => ({
     url: 'https://api.resend.com/emails', method: 'POST',
@@ -95,7 +101,7 @@ export function emailHostFor(sink) {
   const p = sink.provider || 'resend';
   if (p === 'mailgun') return sink.region === 'eu' ? 'https://api.eu.mailgun.net' : 'https://api.mailgun.net';
   if (p === 'ses') return 'https://email.' + (sink.region || 'eu-west-1') + '.amazonaws.com';
-  return ({ resend: 'https://api.resend.com', postmark: 'https://api.postmarkapp.com', brevo: 'https://api.brevo.com', smtp2go: 'https://api.smtp2go.com' })[p] || '';
+  return ({ hermaily: 'https://api.hermaily.com', resend: 'https://api.resend.com', postmark: 'https://api.postmarkapp.com', brevo: 'https://api.brevo.com', smtp2go: 'https://api.smtp2go.com' })[p] || '';
 }
 
 // ---- Amazon SES (SendRawEmail): build a MIME message, base64 it, POST SigV4-signed (service 'ses'). ----

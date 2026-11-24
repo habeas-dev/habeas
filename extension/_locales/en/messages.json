@@ -598,7 +598,7 @@
     "message": "Subject"
   },
   "email_hint": {
-    "message": "Sends one email per batch with the documents attached, using YOUR provider account — the key is stored encrypted and data goes straight to the provider. The sender must be verified with that provider. API key: Resend/Postmark/Brevo/SMTP2GO/Mailgun. Domain: Mailgun only. Access key + secret + region: Amazon SES only."
+    "message": "Sends one email per batch with the documents attached, using YOUR provider account — the key is stored encrypted and data goes straight to the provider. The sender must be verified with that provider. API key: Hermaily/Resend/Postmark/Brevo/SMTP2GO/Mailgun. Domain: Mailgun only. Access key + secret + region: Amazon SES only."
   },
   "connect_dropbox": {
     "message": "Connect Dropbox"

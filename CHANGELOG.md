@@ -11,6 +11,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Hermaily as an email provider**, now the default choice when adding an email destination. Documents go
+  from your browser to your Hermaily account with your own API key, like the other providers; Resend, Postmark,
+  Brevo, SMTP2GO, Mailgun and Amazon SES stay available, and existing email destinations keep theirs.
 - **A fake bank for end-to-end tests of apps that consume Habeas.** `extension/test/e2e/mock-bank.mjs` serves a
   logged-in bank and broker on loopback (three accounts with paginated movements, value dates and running
   balances; a monthly PDF statement per account; a portfolio with buys, a sell, a dividend with tax withheld, interest, a fee and cash in/out) plus

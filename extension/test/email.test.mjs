@@ -63,6 +63,43 @@ test('email (postmark): maps to Postmark shape + token header', async () => {
   restore();
 });
 
+test('email (hermaily): native /v1/send, bearer key, attachments with content_type', async () => {
+  const { calls, restore } = mockFetch();
+  const sink = { id: 'mailer', type: 'email', provider: 'hermaily', from: 'me@ex.com', to: 'a@b.com, c@d.com', apiKeyRef: 'secret://mailer' };
+  const { docs, files } = batch();
+  const res = await writeToSink(sink, docs, files, { service: 'documents', source: 'ing-es' });
+  assert.equal(res.written, 2);
+  assert.equal(calls.length, 1);
+  const c = calls[0];
+  assert.equal(c.url, 'https://api.hermaily.com/v1/send');
+  assert.equal(c.init.method, 'POST');
+  assert.equal(c.init.headers.authorization, 'Bearer KEY123');
+  assert.equal(c.init.headers['content-type'], 'application/json');
+  const body = JSON.parse(c.init.body);
+  assert.equal(body.from, 'me@ex.com');
+  assert.deepEqual(body.to, ['a@b.com', 'c@d.com']);
+  assert.ok(body.html && body.text && body.subject);
+  assert.equal(body.stream, 'transactional');
+  assert.equal(body.tag, 'habeas');
+  assert.equal(body.attachments.length, 3);
+  assert.ok(body.attachments.every((a) => a.filename && a.content && a.content_type));
+  assert.equal(body.attachments.find((a) => a.filename === 'ing-es.json').content_type, 'application/json');
+  restore();
+});
+
+test('email (hermaily): host for the permission prompt', async () => {
+  const { emailHostFor } = await import('../src/sinks/email.js');
+  assert.equal(emailHostFor({ provider: 'hermaily' }), 'https://api.hermaily.com');
+});
+
+test('email (hermaily): a rejected send surfaces the status and the reason', async () => {
+  globalThis.fetch = async () => ({ ok: false, status: 403, text: async () => '{"error":"sender domain not verified"}' });
+  const sink = { id: 'mailer', type: 'email', provider: 'hermaily', from: 'me@ex.com', to: 'a@b.com', apiKeyRef: 'secret://mailer' };
+  const { docs, files } = batch();
+  await assert.rejects(() => writeToSink(sink, docs, files, { service: 'documents', source: 'ing-es' }), /hermaily 403.*not verified/);
+  delete globalThis.fetch;
+});
+
 test('email: refuses to send with no recipient', async () => {
   const { restore } = mockFetch();
   const sink = { id: 'mailer', type: 'email', provider: 'resend', from: 'me@ex.com', to: '', apiKeyRef: 'secret://mailer' };

@@ -41,7 +41,7 @@ export function renderSinkFields(type) {
       + `<div style="flex-basis:100%;margin-top:6px"><small>${t('redirect_hint')}</small><br><code>${redirectUri()}</code></div>`;
   } else if (type === 'email') {
     return `id:<input id="sid" size="6"> <label>${t('email_provider')}</label><select id="emprov">`
-      + `<option value="resend">Resend</option><option value="postmark">Postmark</option><option value="brevo">Brevo</option><option value="smtp2go">SMTP2GO</option><option value="mailgun">Mailgun</option><option value="ses">Amazon SES</option></select>`
+      + `<option value="hermaily">Hermaily</option><option value="resend">Resend</option><option value="postmark">Postmark</option><option value="brevo">Brevo</option><option value="smtp2go">SMTP2GO</option><option value="mailgun">Mailgun</option><option value="ses">Amazon SES</option></select>`
       + ` <label>${t('email_from')}</label><input id="emfrom" size="16" placeholder="you@yourdomain.com">`
       + ` <label>${t('email_to')}</label><input id="emto" size="16" placeholder="a@b.com, c@d.com">`
       + ` <label>${t('email_key')}</label><input id="emkey" type="password" size="12">`
@@ -87,7 +87,7 @@ export async function buildSinkFromForm(root, type) {
     sink.clientId = val('sclient').trim() || undefined;
     sink.rootFolderName = 'Habeas';
   } else if (type === 'email') {
-    sink.provider = val('emprov') || 'resend';
+    sink.provider = val('emprov') || 'hermaily';
     sink.from = val('emfrom').trim();
     sink.to = val('emto').trim();
     const sub = val('emsubject').trim(); if (sub) sink.subject = sub;
