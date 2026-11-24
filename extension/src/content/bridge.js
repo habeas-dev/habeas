@@ -23,7 +23,7 @@
       const sources = o['habeas:sources'] || [];
       const cfg = o['habeas:config'] || {};
       const enabled = new Set((cfg.datasources || []).filter((d) => d.enabled).map((d) => d.id));
-      const hosts = [], context = []; let tokenMatch = '';
+      const hosts = [], context = [], tokenMatch = [], replay = [];
       for (const a of sources) {
         if (!enabled.has(a.id)) continue;
         const matchesPage = regDomain(a.domain || '') === PAGE_DOMAIN
@@ -32,10 +32,13 @@
         for (const ch of a.crossDomainHosts || []) hosts.push(bareHost(ch));
         const au = a.auth || {};
         if (Array.isArray(au.context)) for (const c of au.context) context.push(c);
-        if (au.tokenMatch) tokenMatch = au.tokenMatch;
+        if (au.tokenMatch) tokenMatch.push(au.tokenMatch);
+        // Companion headers the source replays with its token (Stripe's stripe-account / stripe-livemode): the
+        // hook copies them from the same request, so a capture does not depend on the webRequest observer.
+        if (Array.isArray(au.replayHeaders)) for (const h of au.replayHeaders) replay.push(String(h).toLowerCase());
       }
-      if (hosts.length || context.length || tokenMatch) {
-        window.postMessage({ __habeas: true, type: 'config', hosts, context, tokenMatch }, '*');
+      if (hosts.length || context.length || tokenMatch.length || replay.length) {
+        window.postMessage({ __habeas: true, type: 'config', hosts, context, tokenMatch, replay }, '*');
       }
     }).catch(() => {});
   }

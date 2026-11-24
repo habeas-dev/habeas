@@ -14,6 +14,7 @@ that is the whole product. Everything else is the code as shipped.
 ```
 npm run e2e            # e2e.test + author-flow + author-flow-complex + mixed-auth + marketplace-live
 npm run e2e:fakebank   # the fake bank through the external-hooks bridge
+npm run e2e:fakestripe # the fake Stripe dashboard: fee invoices as invoice@2 received invoices + PDFs
 ```
 
 Requirements: `playwright` (devDependency) + its Chromium (`npx playwright install chromium`), and
@@ -48,6 +49,13 @@ for real (propose-workflow, consent, status, collect).
 ```
 npm run e2e:fakebank     # = xvfb-run -a node extension/test/e2e/fakebank.e2e.mjs
 ```
+
+`launchHabeasWithFakeBank({ stripe: true })` also starts a fake Stripe dashboard (`mock-stripe.mjs`) on its own
+port, installs the Stripe fee-invoice source pointed at it and captures its session (an opaque `Bearer uk_…`
+key plus `Stripe-Account` and `Stripe-Livemode`, as the real dashboard sends). It lists three fee invoices
+with no amounts — the real list has none — and serves each PDF through a redirect. The handle carries
+`stripe: { origin, port, source }`; `POST /__control/invoice {month: "2026-10"}` adds one, `/__control/reset`
+restores the set. `npm run e2e:fakestripe` is the smoke test of that path.
 
 That smoke test is itself a minimal app: it proposes a workflow to its own http endpoint, approves the consent
 screen, collects, and checks that every movement and broker record arrives.

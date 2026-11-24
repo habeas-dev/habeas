@@ -23,14 +23,21 @@ function sourceDomains(adapter) {
 export async function loadAuth(adapter, all) {
   const cookie = adapter.auth && adapter.auth.mode === 'cookie';
   const apiHost = stripHost(adapter.api && adapter.api.host);
+  // Captures are stored under the host AS SEEN, port included (auth:localhost:4242). A port names a different
+  // service on the same machine — the e2e fake bank and fake dashboard both live on localhost — so the api.host's
+  // own key keeps its port, and the same hostname on ANOTHER port is never merged in as a sibling.
+  const apiHostPort = String((adapter.api && adapter.api.host) || '').replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  const hasPort = apiHostPort !== apiHost;
   const domains = sourceDomains(adapter);
   const store = all || (await chrome.storage.session.get(null));
-  const keys = Object.keys(store).filter((k) => k.startsWith('auth:') && domains.has(registrableDomain(k.slice(5))));
+  const otherPort = (k) => hasPort && stripHost(k.slice(5)) === apiHost && k.slice(5) !== apiHostPort;
+  const keys = Object.keys(store).filter((k) => k.startsWith('auth:') && domains.has(registrableDomain(k.slice(5))) && !otherPort(k));
   if (!keys.length) return cookie ? { byPath: {}, merged: {}, ctx: {} } : null;
-  const primary = store['auth:' + apiHost];
+  const primaryKey = store['auth:' + apiHostPort] ? 'auth:' + apiHostPort : 'auth:' + apiHost;
+  const primary = store[primaryKey];
   const merged = {}, ctx = {};
   // siblings first, then the api.host's own capture LAST so it wins on conflicts
-  for (const k of keys) { if (k === 'auth:' + apiHost) continue; Object.assign(merged, store[k].merged || {}); Object.assign(ctx, store[k].ctx || {}); }
+  for (const k of keys) { if (k === primaryKey) continue; Object.assign(merged, store[k].merged || {}); Object.assign(ctx, store[k].ctx || {}); }
   if (primary) { Object.assign(merged, primary.merged || {}); Object.assign(ctx, primary.ctx || {}); }
   return { byPath: (primary && primary.byPath) || {}, merged, ctx };
 }

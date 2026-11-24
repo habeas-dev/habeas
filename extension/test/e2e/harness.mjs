@@ -18,6 +18,7 @@ import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:f
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { startMockBank, fakeBankSource } from './mock-bank.mjs';
+import { startMockStripe, fakeStripeSource } from './mock-stripe.mjs';
 
 const SRC_EXT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
 
@@ -57,11 +58,17 @@ async function readStorage(page, area, key) {
  *                consumer's suite can keep using its own relative-URL helpers in this browser.
  *   browserType — the consumer's own `chromium` (from its @playwright/test), so its `expect` recognises the
  *                pages and locators; defaults to the one Habeas depends on.
- * Returns { context, extensionId, bank, source, approveConsent, capturedAuth, close }.
+ *   stripe     — also run the fake Stripe dashboard (mock-stripe.mjs) with its fee-invoice source installed
+ *                and its session captured (invoice@2 received invoices + PDFs). Returned as `stripe:
+ *                { origin, port, source }`.
+ * Returns { context, extensionId, bank, source, stripe, approveConsent, capturedAuth, close }.
  */
-export async function launchHabeasWithFakeBank({ headless = false, bankPort = 0, sinks = [], contextOptions = {}, browserType = chromium } = {}) {
+export async function launchHabeasWithFakeBank({ headless = false, bankPort = 0, sinks = [], contextOptions = {}, browserType = chromium, stripe: withStripe = false } = {}) {
   const bank = await startMockBank({ port: bankPort });
   const source = fakeBankSource(bank.port);
+  const stripeSrv = withStripe ? await startMockStripe() : null;
+  const stripeSource = stripeSrv ? fakeStripeSource(stripeSrv.port, JSON.parse(readFileSync(new URL('../../../sources-repo/sources/stripe-fees.json', import.meta.url), 'utf8'))) : null;
+  const sources = stripeSource ? [source, stripeSource] : [source];
   const extDir = buildTestExtension();
   const context = await browserType.launchPersistentContext('', {
     ...contextOptions,
@@ -71,6 +78,7 @@ export async function launchHabeasWithFakeBank({ headless = false, bankPort = 0,
   const close = async () => {
     await context.close().catch(() => {});
     bank.server.close();
+    if (stripeSrv) stripeSrv.server.close();
     rmSync(extDir, { recursive: true, force: true });
   };
 
@@ -81,15 +89,15 @@ export async function launchHabeasWithFakeBank({ headless = false, bankPort = 0,
     // capture scripts registered — what enabling a source in Settings does.
     const opts = await context.newPage();
     await opts.goto(`chrome-extension://${id}/src/ui/options.html`);
-    await opts.evaluate(async ([src, extraSinks]) => {
+    await opts.evaluate(async ([srcs, extraSinks]) => {
       const c = globalThis.browser ?? globalThis.chrome;
       await c.storage.local.set({
-        'habeas:config': { version: 1, datasources: [{ id: src.id, adapter: src.id, enabled: true, options: {} }], sinks: extraSinks, routes: [] },
-        'habeas:sources': [src],
+        'habeas:config': { version: 1, datasources: srcs.map((s) => ({ id: s.id, adapter: s.id, enabled: true, options: {} })), sinks: extraSinks, routes: [] },
+        'habeas:sources': srcs,
       });
       const { registerCapture } = await import(c.runtime.getURL('src/lib/capture.js'));
-      await registerCapture(src);
-    }, [source, sinks]);
+      for (const s of srcs) await registerCapture(s);
+    }, [sources, sinks]);
 
     // Log into the fake bank: its SPA calls its API with a JWT and the page hook captures it.
     const site = await context.newPage();
@@ -102,6 +110,19 @@ export async function launchHabeasWithFakeBank({ headless = false, bankPort = 0,
       if (!auth) await opts.waitForTimeout(250);
     }
     if (!auth || !/eyJ/.test((auth.merged || {}).authorization || '')) throw new Error('Habeas did not capture the fake bank session');
+    if (stripeSrv) {
+      // Log into the fake Stripe dashboard: an opaque `uk_` session key, the account and the livemode flag.
+      const dash = await context.newPage();
+      await dash.goto(`${stripeSrv.origin}/`);
+      await dash.waitForFunction(() => document.getElementById('t')?.textContent.startsWith('loaded'), null, { timeout: 15000 });
+      const sKey = 'auth:localhost:' + stripeSrv.port;
+      let sAuth = null;
+      for (let i = 0; i < 60 && !(sAuth && /^Bearer uk_/.test((sAuth.merged || {}).authorization || '')); i++) {
+        sAuth = await readStorage(opts, 'session', sKey);
+        if (!(sAuth && /^Bearer uk_/.test((sAuth.merged || {}).authorization || ''))) await opts.waitForTimeout(250);
+      }
+      if (!sAuth || !/^Bearer uk_/.test((sAuth.merged || {}).authorization || '')) throw new Error('Habeas did not capture the fake Stripe session');
+    }
     await opts.close();
 
     // Approve the next consent screen Habeas opens (propose-workflow, register-sink, off-site consent…).
@@ -117,7 +138,8 @@ export async function launchHabeasWithFakeBank({ headless = false, bankPort = 0,
     };
 
     const capturedAuth = () => readStorageFromNewPage(context, id, 'session', authKey);
-    return { context, extensionId: id, bank, source, approveConsent, capturedAuth, close };
+    const stripe = stripeSrv ? { origin: stripeSrv.origin, port: stripeSrv.port, source: stripeSource } : null;
+    return { context, extensionId: id, bank, source, stripe, approveConsent, capturedAuth, close };
   } catch (e) {
     await close();
     throw e;

@@ -27,15 +27,15 @@
   // Per-source capture config for THIS page, supplied by bridge.js from the enabled sources:
   //   hosts: extra (cross-domain) API hosts whose auth/context we may capture (a source's
   //          crossDomainHosts). context: [{name, from:'url', match}] values to capture from a request
-  //          URL (e.g. a DNI). tokenMatch: regex the Authorization must match for those hosts (a
-  //          non-JWT opaque bearer token won't match the default 'eyJ').
-  let CAP = { hosts: [], context: [], tokenMatch: '' };
+  //          URL (e.g. a DNI). tokenMatch: regexes (one per source) the Authorization must match on the page's
+  //          own domain and those hosts (a non-JWT opaque bearer token won't match the default 'eyJ').
+  let CAP = { hosts: [], context: [], tokenMatch: [], replay: [] };
 
   // Arm/disarm learn mode + receive the capture config (bridge relays chrome.storage signals in).
   window.addEventListener('message', (ev) => {
     if (ev.source !== window || !ev.data || !ev.data.__habeas) return;
     if (ev.data.type === 'arm') LEARN = !!ev.data.on;
-    else if (ev.data.type === 'config') CAP = { hosts: ev.data.hosts || [], context: ev.data.context || [], tokenMatch: ev.data.tokenMatch || '' };
+    else if (ev.data.type === 'config') CAP = { hosts: ev.data.hosts || [], context: ev.data.context || [], tokenMatch: [].concat(ev.data.tokenMatch || []), replay: [].concat(ev.data.replay || []) };
   });
 
   function hostOf(url) { try { return new URL(url, location.href).host; } catch (e) { return ''; } }
@@ -43,11 +43,15 @@
   // Is this request host one of the source's declared (cross-domain) API hosts?
   function hostAllowed(url) { const h = hostOf(url); if (!h) return false; return CAP.hosts.some((x) => h === x || regDomain(h) === regDomain(x)); }
   // Whether an Authorization value is a real user token worth keeping. Default is a JWT (eyJ…); a source
-  // with an opaque bearer token declares auth.tokenMatch, applied only to its own declared API hosts.
+  // with an opaque bearer token declares auth.tokenMatch, applied to its page domain and its declared API hosts.
   function tokenOk(url, authz) {
     if (!authz) return false;
-    const tm = (hostAllowed(url) && CAP.tokenMatch) ? CAP.tokenMatch : 'eyJ';
-    try { return new RegExp(tm).test(authz); } catch (e) { return authz.indexOf(tm) >= 0; }
+    // The declared patterns apply to the source's own API (the page's domain) as well as its cross-domain hosts:
+    // Stripe's dashboard sends an opaque `Bearer uk_…` session key to its own origin. Several enabled sources
+    // can share a page domain, so CAP.tokenMatch is a list and any of them will do.
+    const declared = [].concat(CAP.tokenMatch || []).filter(Boolean);
+    const pats = (declared.length && (hostAllowed(url) || sameDomain(url))) ? declared : ['eyJ'];
+    return pats.some((tm) => { try { return new RegExp(tm).test(authz); } catch (e) { return authz.indexOf(tm) >= 0; } });
   }
   function normalize(h) {
     const o = {};
@@ -62,6 +66,8 @@
   function postAuth(url, h) {
     const out = {};
     KEYS.forEach((k) => { if (h[k]) out[k] = h[k]; });
+    // + the companion headers an enabled source declared it replays (only kept when the token check passes).
+    (CAP.replay || []).forEach((k) => { if (h[k]) out[k] = h[k]; });
     // Outside learn mode only keep a real user token (JWT by default, or a source-declared pattern for
     // its own hosts). During authoring we also capture the headers that ride alongside COOKIE auth.
     if (!LEARN && !tokenOk(url, out.authorization)) return;

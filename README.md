@@ -93,7 +93,7 @@ A Source knows how to retrieve data from one specific website.
 service. Most are Spanish (where the project started), plus international ones including **Revolut,
 Amazon, PayPal, Trade Republic, AliExpress, Raisin and Hover**.
 
-A further 3 are published as **experimental**: drafted but never confirmed against a real account. The
+A further 4 are published as **experimental**: drafted but never confirmed against a real account. The
 catalogue flags them, and the extension hides them unless you ask for them.
 
 Browse the whole catalogue — every definition is public and reviewable — at
@@ -198,7 +198,7 @@ The project already includes:
 - a Manifest V3 extension;
 - Chrome/Chromium support;
 - Firefox support;
-- **21 verified Sources** (supermarkets, retail, utilities, banks, brokers) plus 3 experimental, and growing;
+- **21 verified Sources** (supermarkets, retail, utilities, banks, brokers) plus 4 experimental, and growing;
 - multiple Sinks (download / local folder / native Google Drive / HTTP / WebDAV / S3 / Dropbox);
 - automatic synchronization on login, plus a "Sync all" sweep across every source;
 - duplicate detection;

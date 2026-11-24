@@ -199,6 +199,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: xvfb-run -a node extension/test/e2e/fakebank.e2e.mjs
 
+      - name: E2E — fake Stripe dashboard (fee invoices, invoice@2)
+        if: ${{ !cancelled() }}
+        run: xvfb-run -a node extension/test/e2e/fakestripe.e2e.mjs
+
       # Against the LIVE catalog (habeas-dev.github.io/sources) — a failure can be the network or Pages, not
       # this commit.
       - name: E2E — marketplace against the live catalog

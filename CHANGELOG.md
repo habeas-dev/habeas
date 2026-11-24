@@ -11,6 +11,12 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Stripe fee invoices (experimental source).** Stripe bills its fees with a monthly invoice that only exists
+  as a PDF in its dashboard. The new source downloads them all, with their number, issue date, billed period and
+  the account they belong to. Marked experimental until it has been run end to end against a real account.
+- **A fake Stripe dashboard for end-to-end tests** (`extension/test/e2e/mock-stripe.mjs`), and the option
+  `launchHabeasWithFakeBank({ stripe: true })` in the harness, so an app that consumes Habeas can test its
+  received-invoice import. Test only: never shipped nor published.
 - **Received invoices with their tax details (`invoice@2`).** For documents from services that offer no API,
   such as Stripe's monthly fee invoices: who issued them (name, tax id, country), the billed period, your tax id
   as it appears on the invoice, whether it is a reverse-charge invoice or has been corrected, and the account it
@@ -35,6 +41,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   relative-URL helpers keep working). Cuéntamo's end-to-end test of its Habeas page is built on it.
 
 ### Fixed
+- **Sources whose session key is not a JWT on the site's own domain were never captured by the page.** The
+  declared key pattern was only applied to other domains, and with several sources active on one site only the
+  last one's pattern counted. The page also now keeps the extra headers a source says it needs with the key.
+- **Two local services on different ports could hand each other their sessions** (only seen in tests, where
+  everything runs on localhost).
 - **Listing from Settings → Advanced tools failed for every source** with "Cannot read properties of undefined"
   since 0.9.2: it read a page of documents from a progress update that carries none.
 - **Sending from Advanced tools ended in "Destination error: files is not defined"** (since 0.8.0), after the files had
