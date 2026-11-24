@@ -84,6 +84,10 @@ const nameOf = (v) => (v && typeof v === 'object') ? (v.name || v.nombre || '') 
 // collapses account/group. Keeps `extra` (the raw passthrough) so nothing captured is lost.
 export function canonicalize(record) {
   if (!record || typeof record !== 'object') return record;
+  // A record that names its own schema (`_schema`, e.g. invoice@2) IS already the consumer's contract: the
+  // movement-shaped canonical form has no place for an issuer, a billed period or a tax breakdown, so flattening
+  // it would throw those away. Pass it through untouched.
+  if (typeof record._schema === 'string' && record._schema) return record;
   const amount = record.amount != null ? num(record.amount) : (record.total != null ? num(record.total) : num(record.netAmount));
   const counterparty = record.counterparty || nameOf(record.store) || nameOf(record.issuer) || nameOf(record.party) || record.storeName || nameOf(record.instrument) || record.instrument || '';
   const out = {

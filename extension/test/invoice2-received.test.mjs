@@ -88,3 +88,9 @@ test('invoice@1 is untouched by the new schema', () => {
   assert.ok(!('_schema' in r) && !('flow' in r));
   assert.deepEqual(r.issuer, { name: 'Shop', address: '' });
 });
+
+test('invoice@2 survives a sink that asks for the canonical shape: a self-describing record passes through', async () => {
+  const { canonicalize } = await import('../src/lib/normalize.js');
+  const r = buildRecord(base, ADP);
+  assert.deepEqual(canonicalize(r), r);
+});

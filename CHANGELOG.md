@@ -16,6 +16,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   as it appears on the invoice, whether it is a reverse-charge invoice or has been corrected, and the account it
   belongs to. Amounts and taxes are included when the service provides them, and left out rather than guessed when
   it does not. Existing invoice sources are unchanged.
+  Destinations that ask for the uniform record format receive these invoices whole, instead of flattened into a
+  movement that would lose the issuer, the period and the tax details.
 - **Sources can read the account you have open.** A source can now take its account from an endpoint that returns
   a single account (as Stripe's dashboard does), not only from a list of accounts.
 - **Hermaily as an email provider**, now the default choice when adding an email destination. Documents go
