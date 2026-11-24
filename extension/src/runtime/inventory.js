@@ -338,7 +338,10 @@ async function fetchGroupItems(adapter, auth, net) {
       err.http = res.status; err.op = 'groups'; err.url = url; err.token = res.sentToken || null; err.authForm = res.authForm || null;
       throw err;
     }
-    const items = isHtml ? extractListItems(await res.text(), g) : (get(await res.json(), g.itemsPath) || []);
+    // A JSON endpoint may return ONE object (the account the user has open — Stripe's /v1/accounts/{id}) rather
+    // than a list: a lone object is a one-group list.
+    const got = isHtml ? extractListItems(await res.text(), g) : get(await res.json(), g.itemsPath);
+    const items = Array.isArray(got) ? got : (got && typeof got === 'object' ? [got] : []);
     for (const it of items) out.push(it);
   }
   return out;

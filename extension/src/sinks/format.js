@@ -77,6 +77,10 @@ const RESERVED = new Set([
   'taxWithheld', 'netAmount', 'exchangeRate', 'settlementAccount',
   // investment@2 cash, kind term_deposit: the deposit's terms
   'interestRate', 'rateKind', 'termMonths', 'maturityDate',
+  // invoice@2 (received invoices: issuer as a party, billed period, tax breakdown, the account it came from)
+  'issueDate', 'operationDate', 'periodStart', 'periodEnd', 'reverseCharge', 'corrected', 'recipientTaxId',
+  'issuerName', 'issuerTaxId', 'issuerCountry', 'subtotal', 'taxes', 'correctsNumber', 'correctsDate',
+  'accountId', 'accountLabel',
 ]);
 
 export function buildRecord(d, adapter) {
@@ -171,6 +175,7 @@ export function buildRecord(d, adapter) {
     if (ver >= 2) return done(buildInvestment2(d, currency));
     return done({ internalId: d.internalId, date: d.date, instrument: d.instrument ?? d.label ?? '', isin: d.isin ?? '', units: num(d.units), price: money(d.price), amount: money(d.amount ?? d.total), currency, category: d.category, operation: d.operation ?? d.type, source: d.source });
   }
+  if (kind === 'invoice' && ver >= 2) return withIdStable(withExtra(withPdfUrl(buildInvoice2(d, adapter, gl))));
   if (kind === 'invoice') {
     const r = { internalId: d.internalId, date: d.date, total: money(d.total), currency, category: d.category, issuer: { name: d.issuer ?? d.storeName ?? d.party ?? '', address: d.issuerAddress ?? d.storeAddress ?? '' }, number: d.number ?? d.internalId, source: d.source, type: d.type };
     // A human display label (e.g. "Extracto 2026-06-23") when the source provides one — carried so a
@@ -216,6 +221,55 @@ const TRADE_SIDES = new Set(['buy', 'sell', 'dividend', 'split', 'transfer_in', 
 // income, never a movement. Distinct from `deposit` (cash paid INTO the account).
 const CASH_KINDS = new Set(['interest', 'deposit', 'withdrawal', 'fee', 'tax', 'term_deposit', 'other']);
 const enumOf = (set, v) => { if (v == null || v === '') return undefined; const s = String(v).toLowerCase().replace(/[\s-]+/g, '_'); return set.has(s) ? s : v; };
+// invoice@2 — a RECEIVED invoice (the only flow so far: documents from services with no API, such as Stripe's
+// monthly fee invoices). Shape agreed with Cuéntamo: `_schema` on every record so the consumer never guesses
+// from the shape; amounts, currency and taxes only when the source has them (absent, never zero or a default
+// EUR — the consumer reads them from the PDF otherwise); the billed period with an INCLUSIVE end.
+function buildInvoice2(d, adapter, groupLabel) {
+  const issueDate = d.issueDate ?? d.date;
+  const g = d._group && typeof d._group === 'object' ? d._group : null;
+  const accId = d.accountId ?? (g ? g.id : undefined);
+  const accLabel = d.accountLabel ?? (g ? (g.label ?? groupLabel) : undefined);
+  const account = pruneScalars({ id: accId != null ? String(accId) : undefined, label: accLabel });
+  const issuer = pruneScalars({ name: d.issuerName ?? (typeof d.issuer === 'string' ? d.issuer : undefined), taxId: d.issuerTaxId, country: d.issuerCountry, address: d.issuerAddress });
+  const amt = d.total ?? d.subtotal;
+  const currency = d.currency || (adapter && adapter.currency) || curOf(amt) || undefined;
+  const r = pruneScalars({
+    _schema: 'invoice@2', internalId: d.internalId, flow: 'received',
+    number: d.number ?? d.internalId, issueDate, date: issueDate,
+    operationDate: d.operationDate != null && d.operationDate !== '' ? dayOf(d.operationDate) : undefined,
+    recipientTaxId: d.recipientTaxId,
+    currency, subtotal: money(d.subtotal), total: money(d.total), exchangeRate: num(d.exchangeRate),
+    correctsNumber: d.correctsNumber, correctsDate: d.correctsDate != null && d.correctsDate !== '' ? dayOf(d.correctsDate) : undefined,
+    description: d.description, category: d.category, source: d.source, type: d.type,
+  });
+  if (Object.keys(issuer).length) r.issuer = issuer;
+  if (typeof d.reverseCharge === 'boolean') r.reverseCharge = d.reverseCharge;
+  if (typeof d.corrected === 'boolean') r.corrected = d.corrected;
+  if (Array.isArray(d.taxes) && d.taxes.length) r.taxes = d.taxes;
+  const sp = servicePeriodOf(d.periodStart, d.periodEnd);
+  if (sp) r.servicePeriod = sp;
+  if (account.id || account.label) r.account = account;
+  return r;
+}
+// A date-ish value (epoch s/ms, or a string starting YYYY-MM-DD) → its UTC day "YYYY-MM-DD".
+function dayOf(v) {
+  if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0, 10);
+  const n = Number(v); if (!Number.isFinite(n)) return String(v);
+  return new Date(n < 1e12 ? n * 1000 : n).toISOString().slice(0, 10);
+}
+// {start, end} with an INCLUSIVE end. Services state the end either as the last billed day or as the start of the
+// next one (an exclusive bound: midnight of the 1st). Only that exact shape — 00:00 UTC on the first of a month,
+// after the start — steps back one day; a plain last-day date ("2026-09-30") is kept. Both seen shapes are covered by invoice2-received.test.
+function servicePeriodOf(start, end) {
+  if (start == null || start === '' || end == null || end === '') return null;
+  const s = dayOf(start);
+  const ms = (typeof end === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(end)) ? Date.parse(end + 'T00:00:00Z') : (Number(end) < 1e12 ? Number(end) * 1000 : Number(end));
+  if (!Number.isFinite(ms)) return null;
+  let e = new Date(ms).toISOString().slice(0, 10);
+  if (ms % 86400000 === 0 && e.slice(8) === '01' && e > s) e = new Date(ms - 86400000).toISOString().slice(0, 10);
+  return { start: s, end: e };
+}
 function pruneScalars(o) { const r = {}; for (const [k, v] of Object.entries(o)) if (v != null && v !== '') r[k] = v; return r; }
 function instrumentOf(d) {
   const base = d.instrument && typeof d.instrument === 'object' ? d.instrument : {};

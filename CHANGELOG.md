@@ -11,6 +11,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Received invoices with their tax details (`invoice@2`).** For documents from services that offer no API,
+  such as Stripe's monthly fee invoices: who issued them (name, tax id, country), the billed period, your tax id
+  as it appears on the invoice, whether it is a reverse-charge invoice or has been corrected, and the account it
+  belongs to. Amounts and taxes are included when the service provides them, and left out rather than guessed when
+  it does not. Existing invoice sources are unchanged.
+- **Sources can read the account you have open.** A source can now take its account from an endpoint that returns
+  a single account (as Stripe's dashboard does), not only from a list of accounts.
 - **Hermaily as an email provider**, now the default choice when adding an email destination. Documents go
   from your browser to your Hermaily account with your own API key, like the other providers; Resend, Postmark,
   Brevo, SMTP2GO, Mailgun and Amazon SES stay available, and existing email destinations keep theirs.
