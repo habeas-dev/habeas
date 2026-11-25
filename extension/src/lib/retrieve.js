@@ -21,11 +21,18 @@ export const isRetrievable = (sink) => !!sink && RETRIEVABLE.has(sink.type);
 // The relative paths a delivered doc could occupy. Mirrors delivery: service = adapter.service||id, ext
 // variants (a source may emit pdf and/or html/json), and BOTH with- and without the account/group folder —
 // a row loaded from the store may have lost/changed its group label vs the folder it was written under.
-function candidatePaths(adapter, sink, record, preferExt) {
+export function candidatePaths(adapter, sink, record, preferExt) {
   const service = (adapter && adapter.service) || (adapter && adapter.id) || 'documents';
   const exts = [...new Set([preferExt, documentExt(adapter), 'pdf', 'xls', 'xlsx', 'html', 'json'].filter(Boolean))];
   const variants = [{ date: record.date, internalId: record.internalId, _group: record.group ? { name: record.group } : null }];
-  if (record.group) variants.push({ date: record.date, internalId: record.internalId, _group: null }); // no-group fallback
+  // invoice@2 keeps its account as `account {id,label}` (the consumer contract), not as `group`. The folder it was
+  // delivered to is groupLabelOf(the live group): by id (Stripe's groups carry an id + label, no name) or by name.
+  const acc = !record.group && record.account && typeof record.account === 'object' && record.account.id != null ? record.account : null;
+  if (acc) {
+    variants.length = 0;
+    for (const g of [{ id: acc.id }, { id: acc.id, name: acc.label }]) variants.push({ date: record.date, internalId: record.internalId, _group: g });
+  }
+  if (record.group || acc) variants.push({ date: record.date, internalId: record.internalId, _group: null }); // no-group fallback
   const out = [];
   for (const d of variants) for (const ext of exts) out.push({ ext, path: pathFor(sink, d, { service, ext }, ext) });
   return out;

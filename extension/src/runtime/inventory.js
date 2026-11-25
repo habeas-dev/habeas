@@ -807,6 +807,14 @@ const tmplGroup = (str, group) => (group ? String(str).replace(/\{group\.([^}]+)
 // captured header of the same name — Stripe's captured Stripe-Account is whichever account was open, while
 // each account's list/PDF must carry its own. Unresolved (no group: a loose doc) → the captured value stays.
 const groupOwned = (tmpl, filled) => { const o = {}; for (const k of Object.keys(tmpl || {})) if (/\{group\./.test(String(tmpl[k])) && !/\{group\./.test(String(filled[k]))) o[k] = filled[k]; return o; };
+// The group of a row loaded from the store (no live `_group`): its persisted scalar fields, or — for invoice@2,
+// whose contract carries the account as `account {id,label}` instead — that account.
+const storedGroup = (rec) => {
+  if (!rec) return null;
+  if (rec.groupFields) return rec.groupFields;
+  const a = rec.account;
+  return a && typeof a === 'object' && a.id != null ? { id: a.id, label: a.label } : null;
+};
 const tmplGroupRaw = (str, group) => (group ? String(str).replace(/\{group\.([^}]+)\}/g, (m, k) => { const v = get(group, k); return v == null ? m : String(v); }) : String(str));
 // Computed calendar-date tokens for path/param/body values, with an optional format. Some SPAs stamp the
 // CURRENT billing/period date into a request (e.g. FECI's statement list wants ?date_bill=31/07/2026):
@@ -899,7 +907,7 @@ function fillDocTmpl(str, doc, id, csrf, auth) {
     // Store re-download of a synthetic/grouped doc: the transient _group/_raw are gone — recover the value from the
     // persisted record: the group's scalar fields (record.groupFields, so {group.*} resolves off the Archive), then
     // the record (+ keepRaw `extra`), then DERIVE the monthly period tokens ({year}/{month}/…) from the record's date.
-    if (v == null && isGroup && doc && doc.record && doc.record.groupFields) v = get(doc.record.groupFields, rk);
+    if (v == null && isGroup && doc && doc.record) { const sg = storedGroup(doc.record); if (sg) v = get(sg, rk); }
     if (v == null && doc && doc.record) { v = get(doc.record, rk); if (v == null && doc.record.extra) v = get(doc.record.extra, rk); if (v == null) v = derivedPeriodField(rk, doc.record); }
     return v == null ? m : tid(fmt ? fmtDateStr(v, fmt) : v);
   });
@@ -1102,7 +1110,7 @@ function tmplResolvable(str, doc) {
     let v = isGroup ? (doc && doc._group ? get(doc._group, rk) : undefined) : (doc && doc._raw ? get(doc._raw, k) : undefined);
     // Match fillDocTmpl: a doc loaded from the store has no _group/_raw but its persisted record carries the same
     // values — the group's scalars (record.groupFields), the record (+ keepRaw `extra`), or a date-derived period.
-    if (v == null && isGroup && doc && doc.record && doc.record.groupFields) v = get(doc.record.groupFields, rk);
+    if (v == null && isGroup && doc && doc.record) { const sg = storedGroup(doc.record); if (sg) v = get(sg, rk); }
     if (v == null && doc && doc.record) { v = get(doc.record, rk); if (v == null && doc.record.extra) v = get(doc.record.extra, rk); if (v == null) v = derivedPeriodField(rk, doc.record); }
     if (v == null || v === '') return false;
   }
@@ -1295,7 +1303,7 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
   const wantBlob = !pdf.base64Field;
   // pdf.headers may carry {group.*} (RAW, like list.headers — a per-card encrypted-PAN header must not be
   // URL-encoded), so a document endpoint that needs the card's own header (FECI statements) can send it.
-  const phdr = {}; for (const k of Object.keys(pdf.headers || {})) phdr[k] = tmplGroupRaw(pdf.headers[k], doc && doc._group);
+  const phdr = {}; for (const k of Object.keys(pdf.headers || {})) phdr[k] = tmplGroupRaw(pdf.headers[k], doc && (doc._group || storedGroup(doc.record)));
   const init = { method: pdf.method || 'GET', headers: { accept: wantBlob ? '*/*' : 'application/json', ...phdr, ...headersFor(auth, path.split('?')[0]), ...groupOwned(pdf.headers, phdr) }, credentials: credOf(adapter), wantBlob };
   if (init.method !== 'GET' && pdf.body != null) {
     init.body = fillDocTmpl(pdf.body, doc, internalId, csrf, auth);

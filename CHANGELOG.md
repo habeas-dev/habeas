@@ -16,6 +16,10 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   every account in your Stripe profile (choose which in the account list) and downloads each invoice with its
   own account. Behind it, two runtime additions: a source can read its accounts from several lists in one
   response, and a per-account header now takes precedence over the captured one of the same name.
+- **Stripe invoices open in the viewer, and re-download from the right account.** An invoice delivered to a
+  destination (Dropbox, WebDAV, S3, a folder…) could not be opened from the Archive: the viewer looked for it
+  without its account folder. «Re-download from the site» had the same gap and would ask Stripe with whichever
+  account was open. Both now use the account the invoice belongs to.
 
 ## [0.10.12] — 2026-11-25
 
