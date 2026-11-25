@@ -11,6 +11,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Payoneer movements (experimental source).** Payoneer offers no API for your own account and only exports one
+  balance and one month at a time. The new source downloads the movements of every currency balance at once, each
+  balance as its own account, with the payer or bank of each movement and the balance after it.
 - **Self-billing invoices (`invoice@2`, issued).** Some platforms that pay you (Freemius, Paddle) issue an invoice
   in your name for each payout. A source can now deliver those as invoices you issued, with the platform as the
   customer and the billed period, so a bookkeeping app files them on the right side.

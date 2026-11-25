@@ -1,0 +1,100 @@
+{
+  "id": "payoneer",
+  "name": "Payoneer",
+  "service": "payoneer",
+  "trust": "first-party",
+  "beta": true,
+  "credit": {
+    "author": { "name": "David Marín", "url": "https://davefx.com" },
+    "capture": { "name": "David Marín", "url": "https://davefx.com" }
+  },
+  "domain": "payoneer.com",
+  "country": "global",
+  "categories": ["banking"],
+  "keepRaw": true,
+  "throttle": { "minMs": 300, "jitterMs": 300 },
+  "match": ["https://account.payoneer.com/*", "https://myaccount.payoneer.com/*"],
+  "openUrl": "https://account.payoneer.com/ma/manage/transactions",
+  "auth": {
+    "mode": "bearer",
+    "tokenMatch": "^Bearer [A-Za-z0-9]{20,64}$",
+    "replayHeaders": ["authorization"],
+    "capturePaths": ["/api-v1/"],
+    "tokenFromStorage": { "key": "ui-auth", "field": "accessToken", "scheme": "Bearer", "header": "authorization" },
+    "loginUrl": "https://login.payoneer.com/"
+  },
+  "api": {
+    "host": "https://account.payoneer.com",
+    "groups": {
+      "path": "/api-v1/gw-statementapi/api/v1/statements/MonthlyStatementData",
+      "itemsPath": "BalanceOption",
+      "keep": { "field": "GroupId", "values": ["0", "1"] },
+      "fields": { "id": "Value", "name": "Text.ResParams.Currency", "currency": "Text.ResParams.Currency", "mask": "Text.ResParams.CardMaskedNumber" }
+    },
+    "list": {
+      "path": "/api-v1/gw-activity/api/activity/getMainTransactions",
+      "itemsPath": "Transactions",
+      "paging": "none",
+      "params": {
+        "fromDate": "2000-01-01",
+        "toDate": "2099-12-31",
+        "numberOfResults": "1000",
+        "returnFilters": "false",
+        "locale": "en",
+        "paymentMethodIds[]": "{group.id}"
+      },
+      "keep": { "field": "ActivityItemStatus", "values": ["2"] }
+    }
+  },
+  "fields": {
+    "internalId": "ActivityId",
+    "date": "Date",
+    "amount": "SplitAmount.Amount",
+    "currency": "SplitAmount.Currency",
+    "balanceAfter": "SplitBalance.Amount",
+    "description": [
+      "Description.ResParams.sender_email",
+      "Description.ResParams.Payment_from",
+      "Description.ResParams.BankName",
+      "Description.ResParams.Merchant_name",
+      "Description.ResParams.ActivityItemDescription"
+    ],
+    "counterparty": [
+      "Description.ResParams.sender_email",
+      "Description.ResParams.Payment_from",
+      "Description.ResParams.BankName",
+      "Description.ResParams.Merchant_name"
+    ],
+    "type": "TypeId"
+  },
+  "schema": "transaction@1",
+  "minVersion": "0.10.11.8",
+  "version": "2026-11-25",
+  "notes": "Payoneer's dashboard API gives no plain-text description: `Description` is a translation key (ResKey) plus parameters, so the source maps the parameter that names the other party (payer, bank, merchant) and leaves fees (TypeId 24) with none. TypeId seen: 15 incoming payment, 6 payment received (older), 1 withdrawal to bank, 24 fee, 2 outgoing payment, 10 bank-verification deposit, 13 credit. `Date` is the dashboard's local time (US Eastern, no zone), about 5 h behind the UTC time in Payoneer's CSV. A withdrawal's amount already includes its fee; the fee itself is only in the per-item detail (getItemDetailsRawData → activityMainData.Fee). Balances come from the monthly-statement picker (currency balances and the USD card balance); a closed old balance that no longer appears there is not listed.",
+  "changelog": [
+    {
+      "version": "2026-11-25",
+      "changes": {
+        "en": "First version: the movements of every Payoneer currency balance, each balance as its own account.",
+        "es": "Primera versión: los movimientos de cada saldo en divisa de Payoneer, cada saldo como una cuenta."
+      }
+    }
+  ],
+  "content": {
+    "en": {
+      "slug": "payoneer-transactions",
+      "docs": "transactions",
+      "h1": "Download your Payoneer transactions",
+      "intro": "Payoneer only lets you export your movements one balance and one month at a time, and offers no API for your own account.",
+      "title": "How to download your Payoneer transactions"
+    },
+    "es": {
+      "slug": "movimientos-payoneer",
+      "docs": "movimientos",
+      "h1": "Descarga tus movimientos de Payoneer",
+      "intro": "Payoneer solo permite exportar tus movimientos saldo a saldo y mes a mes, y no ofrece una API para tu propia cuenta.",
+      "title": "Cómo descargar tus movimientos de Payoneer"
+    }
+  },
+  "brand": "Payoneer"
+}
