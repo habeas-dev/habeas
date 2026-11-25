@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.10.12] — 2026-11-25
+
 ### Added
 - **Movements with their exact time, and withdrawal fees on their own line.** A source can now say which time
   zone a service shows its times in, so each movement carries its full timestamp with the right offset (summer
