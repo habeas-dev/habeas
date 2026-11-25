@@ -59,7 +59,7 @@ ES: 14 · global: 7
 - [Trade Republic](https://habeas.dev/download/trade-republic-statements.html)
 - [WiZink España](https://habeas.dev/download/wizink-statements.html)
 
-## Experimental drafts (3)
+## Experimental drafts (5)
 
 Definitions written from public documentation and never run against a real account. They are not
 supported, may not work at all, and exist so that someone who holds such an account can test them
@@ -68,6 +68,8 @@ and report back. Do not present these as services Habeas can extract from.
 - [American Express](https://habeas.dev/download/americanexpress-beta.html) — unverified draft
 - [DeGiro](https://habeas.dev/download/degiro-beta.html) — unverified draft
 - [N26](https://habeas.dev/download/n26-beta.html) — unverified draft
+- [Payoneer](https://habeas.dev/download/payoneer-transactions.html) — unverified draft
+- [Stripe — facturas de comisiones](https://habeas.dev/download/stripe-fee-invoices.html) — unverified draft
 
 ## Key pages
 

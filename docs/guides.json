@@ -67,6 +67,10 @@
     "en": "pagatelia-invoices",
     "es": "facturas-pagatelia"
   },
+  "payoneer": {
+    "en": "payoneer-transactions",
+    "es": "movimientos-payoneer"
+  },
   "paypal": {
     "en": "paypal-transactions",
     "es": "movimientos-paypal"
@@ -86,6 +90,10 @@
   "revolut": {
     "en": "revolut-statements",
     "es": "extractos-revolut"
+  },
+  "stripe-fees": {
+    "en": "stripe-fee-invoices",
+    "es": "facturas-comisiones-stripe"
   },
   "traderepublic": {
     "en": "trade-republic-statements",

@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cómo descargar tus movimientos de Payoneer — Habeas</title>
+  <meta name="robots" content="noindex,follow" />
+  <meta name="description" content="Un borrador de definición para Payoneer. Habeas lo descarga todo desde tu propia sesión del navegador, sin guardar tu contraseña." />
+  <link rel="canonical" href="https://habeas.dev/es/descargar/movimientos-payoneer.html" />
+  <link rel="alternate" hreflang="en" href="https://habeas.dev/download/payoneer-transactions.html" />
+  <link rel="alternate" hreflang="es" href="https://habeas.dev/es/descargar/movimientos-payoneer.html" />
+  <link rel="alternate" hreflang="x-default" href="https://habeas.dev/download/payoneer-transactions.html" />
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    /* Two columns: the prose reads at its own width, and everything ABOUT the source — what it is, which
+       version, who wrote it, how to install it, and the definition itself — sits beside it instead of
+       interrupting it. One column below 1000px, sidebar FIRST, so a phone gets the install buttons
+       before the essay. */
+    .doc { max-width: 1100px; margin: 0 auto; padding: 8px 20px 64px;
+           display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 40px; align-items: start; }
+    /* The columns are assigned EXPLICITLY because the aside comes first in the DOM — which is what puts
+       the install buttons above the essay on a phone. Left to source order it would take the wide
+       column and squeeze the prose into 300px, which is exactly what it did. */
+    .doc > .body { min-width: 0; grid-column: 1; }
+    .doc > aside { grid-column: 2; grid-row: 1; position: sticky; top: 78px; display: flex; flex-direction: column; gap: 14px; }
+    @media (max-width: 1000px) { .doc { grid-template-columns: 1fr; gap: 22px; }
+      .doc > .body, .doc > aside { grid-column: 1; grid-row: auto; }
+      .doc > aside { position: static; } }
+    .card { border: 1px solid var(--line, #3333); border-radius: 14px; padding: 15px 16px; }
+    .card h2 { font-size: .78rem !important; text-transform: uppercase; letter-spacing: .6px;
+               color: var(--muted, #888); margin: 0 0 10px !important; }
+    .card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13.5px; }
+    .card dt { color: var(--muted, #888); }
+    .card dd { margin: 0; word-break: break-word; }
+    .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
+                 border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
+    .box.warn { border-color: #c2410c66; background: #c2410c14; }
+    .box.warn strong { color: #c2410c; }
+    .rev .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em;
+                white-space: nowrap; color: var(--muted, #888); }
+    .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
+    aside .cta { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+    aside .cta .btn { text-align: center; }
+    /* The definition, in full. It is the project's whole security claim — adapters are data, never code —
+       and a claim you cannot read is a claim you are asked to take on faith. */
+    .defn summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+    .defn pre { max-height: 420px; overflow: auto; margin: 10px 0 0; padding: 11px 12px; font-size: 11.5px;
+                line-height: 1.5; border-radius: 9px; background: var(--surface-2, #0001); }
+    header nav .langlink { display: inline-flex; align-items: center; border: 1px solid var(--line);
+      border-radius: 999px; padding: 4px 10px; font-size: 13px; color: var(--muted); text-decoration: none; }
+    header nav .langlink:hover { color: var(--ink); border-color: var(--muted); }
+    .doc h1 { font-size: 2rem; margin: 24px 0 10px; }
+    .doc h2 { font-size: 1.25rem; margin: 32px 0 8px; }
+    .doc h3 { font-size: 1.02rem; margin: 20px 0 6px; }
+    .doc p, .doc li { line-height: 1.65; }
+    .doc ul { padding-left: 1.2em; }
+    .doc .lead { color: var(--muted, #888); margin: 0 0 24px; }
+    .doc .box { border: 1px solid var(--line, #3333); border-radius: 10px; padding: 14px 16px; margin: 18px 0; }
+    .doc .cta { display: flex; gap: 10px; flex-wrap: wrap; margin: 24px 0 8px; }
+    .doc a { color: inherit; }
+  </style>
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://habeas.dev/es/descargar/movimientos-payoneer.html" />
+  <meta property="og:title" content="Cómo descargar tus movimientos de Payoneer — Habeas" />
+  <meta property="og:description" content="Un borrador de definición para Payoneer. Habeas lo descarga todo desde tu propia sesión del navegador, sin guardar tu contraseña." />
+  <meta property="og:image" content="https://habeas.dev/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:site_name" content="Habeas" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Inicio",
+      "item": "https://habeas.dev/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Guías",
+      "item": "https://habeas.dev/es/descargar/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Payoneer — fuente experimental, sin verificar",
+      "item": "https://habeas.dev/es/descargar/movimientos-payoneer.html"
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "inLanguage": "es",
+  "headline": "Payoneer — fuente experimental, sin verificar",
+  "description": "Un borrador de definición para Payoneer. Habeas lo descarga todo desde tu propia sesión del navegador, sin guardar tu contraseña.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://habeas.dev/es/descargar/movimientos-payoneer.html"
+  },
+  "dateModified": "2026-11-25",
+  "author": {
+    "@type": "Person",
+    "name": "David Marín",
+    "url": "https://davefx.com"
+  },
+  "contributor": {
+    "@type": "Person",
+    "name": "David Marín",
+    "url": "https://davefx.com"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Habeas",
+    "url": "https://habeas.dev"
+  },
+  "about": {
+    "@type": "Thing",
+    "name": "Payoneer"
+  },
+  "isAccessibleForFree": true,
+  "license": "https://www.gnu.org/licenses/agpl-3.0.html"
+}
+  </script>
+  <!-- Analytics: self-hosted Umami (cookieless, no PII) — first-party under habeas.dev -->
+  <script defer src="https://analytics.habeas.dev/script.js" data-website-id="84a75f7a-c014-4ce8-a3be-1f8dd1899a28" data-domains="habeas.dev"></script>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="/logo-light.svg" />
+        <img class="logo" src="/logo.svg" alt="Habeas" />
+      </picture>
+      <span class="name">Habeas</span>
+      <nav>
+        <a href="/">Inicio</a>
+        <a href="/es/por-que-habeas.html">¿Por qué Habeas?</a>
+        <a href="/sources.html?lang=es">Fuentes</a>
+        <a href="/es/desarrolladores.html">Desarrolladores</a>
+        <a href="/architecture.html">Arquitectura</a>
+        <a href="/es/privacidad.html">Privacidad</a>
+        <a href="/es/terminos.html">Términos</a>
+        <a href="https://github.com/habeas-dev/habeas">GitHub</a>
+        <a class="langlink" href="/download/payoneer-transactions.html" hreflang="en" rel="alternate">EN</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="band">
+    <div class="wrap">
+      <p class="kicker">Payoneer</p>
+      <h1>Payoneer — fuente experimental, sin verificar</h1>
+      <p class="lead">Un borrador de definición para Payoneer. Nadie la ha ejecutado todavía contra una cuenta real, así que puede no extraer nada. Esta página existe para que quien SÍ tenga cuenta pueda probarla y contar qué pasó.</p>
+    </div>
+  </section>
+
+  <main class="doc">
+    <aside>
+      <div class="srcmark" style="--tint:#3b5b8c;--ink:#ffffff">
+        <span class="mark" aria-hidden="true">🏦</span>
+        <span class="nm">Payoneer</span>
+      </div>
+      <div class="card">
+        <h2>Sobre esta fuente</h2>
+        <dl>
+          <dt>Versión</dt><dd>2026-11-25</dd>
+          <dt>Confianza</dt><dd>first-party</dd>
+          <dt>Cobertura</dt><dd>global</dd>
+          <dt>Licencia</dt><dd>CC0-1.0</dd>
+        </dl>
+        <p class="who"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella.</p>
+        <p class="note">La definición, de dominio público (CC0-1.0); el texto de esta página, CC-BY-4.0.</p>
+      </div>
+
+      <aside class="install-cta" aria-label="Instalar en Chrome">
+      <a class="btn" data-browser="chrome" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="payoneer">Instalar en Chrome</a>
+      <a class="btn" data-browser="firefox" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="payoneer">Instalar en Firefox</a>
+      <p class="note">Libre y de código abierto (AGPL-3.0). Instálala y activa en Ajustes → Explorar fuentes la que necesites.</p>
+      <p class="note" data-browser-note="chrome">Chrome te avisará de que la extensión no es de confianza. Le ocurre a cualquier cuenta de desarrollador registrada hace poco en la Chrome Web Store, se disipa en unos meses y no dice nada del código, que puedes leer entero.</p>
+    </aside>
+    <script defer src="/install-cta.js"></script>
+
+      <div class="card defn">
+        <h2>La definición en sí</h2>
+        <p class="note">Una fuente son datos, nunca código — esto es todo lo que hay.</p>
+        <details>
+          <summary>payoneer.json</summary>
+          <pre>{
+  &quot;id&quot;: &quot;payoneer&quot;,
+  &quot;name&quot;: &quot;Payoneer&quot;,
+  &quot;service&quot;: &quot;payoneer&quot;,
+  &quot;trust&quot;: &quot;first-party&quot;,
+  &quot;beta&quot;: true,
+  &quot;credit&quot;: {
+    &quot;author&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    },
+    &quot;capture&quot;: {
+      &quot;name&quot;: &quot;David Marín&quot;,
+      &quot;url&quot;: &quot;https://davefx.com&quot;
+    }
+  },
+  &quot;domain&quot;: &quot;payoneer.com&quot;,
+  &quot;country&quot;: &quot;global&quot;,
+  &quot;categories&quot;: [
+    &quot;banking&quot;
+  ],
+  &quot;keepRaw&quot;: true,
+  &quot;timeZone&quot;: &quot;America/New_York&quot;,
+  &quot;throttle&quot;: {
+    &quot;minMs&quot;: 300,
+    &quot;jitterMs&quot;: 300
+  },
+  &quot;match&quot;: [
+    &quot;https://account.payoneer.com/*&quot;,
+    &quot;https://myaccount.payoneer.com/*&quot;
+  ],
+  &quot;openUrl&quot;: &quot;https://account.payoneer.com/ma/manage/transactions&quot;,
+  &quot;auth&quot;: {
+    &quot;mode&quot;: &quot;bearer&quot;,
+    &quot;tokenMatch&quot;: &quot;^Bearer [A-Za-z0-9]{20,64}$&quot;,
+    &quot;replayHeaders&quot;: [
+      &quot;authorization&quot;
+    ],
+    &quot;capturePaths&quot;: [
+      &quot;/api-v1/&quot;
+    ],
+    &quot;tokenFromStorage&quot;: {
+      &quot;key&quot;: &quot;ui-auth&quot;,
+      &quot;field&quot;: &quot;accessToken&quot;,
+      &quot;scheme&quot;: &quot;Bearer&quot;,
+      &quot;header&quot;: &quot;authorization&quot;
+    },
+    &quot;loginUrl&quot;: &quot;https://login.payoneer.com/&quot;
+  },
+  &quot;api&quot;: {
+    &quot;host&quot;: &quot;https://account.payoneer.com&quot;,
+    &quot;groups&quot;: {
+      &quot;path&quot;: &quot;/api-v1/gw-statementapi/api/v1/statements/MonthlyStatementData&quot;,
+      &quot;itemsPath&quot;: &quot;BalanceOption&quot;,
+      &quot;keep&quot;: {
+        &quot;field&quot;: &quot;GroupId&quot;,
+        &quot;values&quot;: [
+          &quot;0&quot;,
+          &quot;1&quot;
+        ]
+      },
+      &quot;fields&quot;: {
+        &quot;id&quot;: &quot;Value&quot;,
+        &quot;name&quot;: &quot;Text.ResParams.Currency&quot;,
+        &quot;currency&quot;: &quot;Text.ResParams.Currency&quot;,
+        &quot;mask&quot;: &quot;Text.ResParams.CardMaskedNumber&quot;
+      }
+    },
+    &quot;list&quot;: {
+      &quot;path&quot;: &quot;/api-v1/gw-activity/api/activity/getMainTransactions&quot;,
+      &quot;itemsPath&quot;: &quot;Transactions&quot;,
+      &quot;paging&quot;: &quot;none&quot;,
+      &quot;params&quot;: {
+        &quot;fromDate&quot;: &quot;2000-01-01&quot;,
+        &quot;toDate&quot;: &quot;2099-12-31&quot;,
+        &quot;numberOfResults&quot;: &quot;1000&quot;,
+        &quot;returnFilters&quot;: &quot;false&quot;,
+        &quot;locale&quot;: &quot;en&quot;,
+        &quot;paymentMethodIds[]&quot;: &quot;{group.id}&quot;
+      },
+      &quot;keep&quot;: {
+        &quot;field&quot;: &quot;ActivityItemStatus&quot;,
+        &quot;values&quot;: [
+          &quot;2&quot;
+        ]
+      },
+      &quot;feeSplit&quot;: {
+        &quot;when&quot;: {
+          &quot;field&quot;: &quot;TypeId&quot;,
+          &quot;values&quot;: [
+            &quot;1&quot;
+          ]
+        },
+        &quot;detail&quot;: {
+          &quot;path&quot;: &quot;/api-v1/gw-activity/api/activity/getItemDetailsRawData&quot;,
+          &quot;params&quot;: {
+            &quot;activityItemId&quot;: &quot;{ActivityId}&quot;,
+            &quot;activityType&quot;: &quot;{TypeId}&quot;
+          }
+        },
+        &quot;feeField&quot;: &quot;activityMainData.Fee&quot;,
+        &quot;type&quot;: &quot;fee&quot;,
+        &quot;description&quot;: &quot;Payoneer withdrawal fee&quot;,
+        &quot;counterparty&quot;: &quot;Payoneer&quot;
+      }
+    }
+  },
+  &quot;fields&quot;: {
+    &quot;internalId&quot;: &quot;ActivityId&quot;,
+    &quot;date&quot;: &quot;Date&quot;,
+    &quot;dateTime&quot;: &quot;Date&quot;,
+    &quot;amount&quot;: &quot;SplitAmount.Amount&quot;,
+    &quot;currency&quot;: &quot;SplitAmount.Currency&quot;,
+    &quot;balanceAfter&quot;: &quot;SplitBalance.Amount&quot;,
+    &quot;description&quot;: [
+      &quot;Description.ResParams.sender_email&quot;,
+      &quot;Description.ResParams.Payment_from&quot;,
+      &quot;Description.ResParams.BankName&quot;,
+      &quot;Description.ResParams.Merchant_name&quot;,
+      &quot;Description.ResParams.ActivityItemDescription&quot;
+    ],
+    &quot;counterparty&quot;: [
+      &quot;Description.ResParams.sender_email&quot;,
+      &quot;Description.ResParams.Payment_from&quot;,
+      &quot;Description.ResParams.BankName&quot;,
+      &quot;Description.ResParams.Merchant_name&quot;
+    ],
+    &quot;type&quot;: &quot;TypeId&quot;
+  },
+  &quot;schema&quot;: &quot;transaction@1&quot;,
+  &quot;minVersion&quot;: &quot;0.10.11.10&quot;,
+  &quot;version&quot;: &quot;2026-11-25&quot;,
+  &quot;notes&quot;: &quot;Payoneer's dashboard API gives no plain-text description: `Description` is a translation key (ResKey) plus parameters, so the source maps the parameter that names the other party (payer, bank, merchant) and leaves fees (TypeId 24) with none. TypeId seen: 15 incoming payment, 6 payment received (older), 1 withdrawal to bank, 24 fee, 2 outgoing payment, 10 bank-verification deposit, 13 credit. `Date` is the dashboard's local time with no zone; verified against Payoneer's UTC CSV as US Eastern with daylight saving (5 h behind UTC in November, 4 h in August), so the source declares timeZone America/New_York and records carry dateTime with the offset. A withdrawal's amount already includes its fee; the fee is only in the per-item detail (getItemDetailsRawData → activityMainData.Fee), so feeSplit fetches it for each withdrawal and delivers the net transfer plus the fee as a separate movement (`&lt;id&gt;|fee`). Balances come from the monthly-statement picker (currency balances and the USD card balance); a closed old balance that no longer appears there is not listed.&quot;,
+  &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-11-25&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;First version: the movements of every Payoneer currency balance, each balance as its own account.&quot;,
+        &quot;es&quot;: &quot;Primera versión: los movimientos de cada saldo en divisa de Payoneer, cada saldo como una cuenta.&quot;
+      }
+    }
+  ],
+  &quot;content&quot;: {
+    &quot;en&quot;: {
+      &quot;slug&quot;: &quot;payoneer-transactions&quot;,
+      &quot;docs&quot;: &quot;transactions&quot;,
+      &quot;h1&quot;: &quot;Download your Payoneer transactions&quot;,
+      &quot;intro&quot;: &quot;Payoneer only lets you export your movements one balance and one month at a time, and offers no API for your own account.&quot;,
+      &quot;title&quot;: &quot;How to download your Payoneer transactions&quot;
+    },
+    &quot;es&quot;: {
+      &quot;slug&quot;: &quot;movimientos-payoneer&quot;,
+      &quot;docs&quot;: &quot;movimientos&quot;,
+      &quot;h1&quot;: &quot;Descarga tus movimientos de Payoneer&quot;,
+      &quot;intro&quot;: &quot;Payoneer solo permite exportar tus movimientos saldo a saldo y mes a mes, y no ofrece una API para tu propia cuenta.&quot;,
+      &quot;title&quot;: &quot;Cómo descargar tus movimientos de Payoneer&quot;
+    }
+  },
+  &quot;brand&quot;: &quot;Payoneer&quot;
+}</pre>
+        </details>
+        <p class="note"><a href="https://habeas-dev.github.io/sources/payoneer.json" rel="noopener">Abrir el fichero original -></a></p>
+      </div>
+    </aside>
+
+    <div class="body">
+    <div class="box warn">
+      <strong>No des por hecho que funciona</strong>
+      <p>Esta fuente se redactó a partir de a published reference — un mapa de qué endpoints usa el servicio y qué devuelven — y nunca se ha validado contra una sesión real. Los endpoints se mueven, las respuestas cambian de forma, y una definición escrita desde una referencia y no desde una captura es una hipótesis. Instalarla es seguro: se le aplican las mismas reglas que a cualquier otra. Simplemente puede no encontrar nada.</p>
+    </div>
+
+    <h2>Qué pretende extraer</h2>
+    <ul>
+      <li>cada movimiento con su fecha, importe, moneda, concepto y contraparte</li>
+    </ul>
+
+    <h2>Si tienes cuenta aquí</h2>
+    <p>Instálala, ejecútala una vez y abre una incidencia contando qué pasó — incluido «nada en absoluto», que de las tres respuestas es la más útil. Así es como un borrador se convierte en fuente verificada, y es la única forma: el proyecto no puede probar una cuenta que no tiene.</p>
+
+
+
+      <h2>Qué ha cambiado en esta fuente</h2>
+      <p>Esta fuente es una definición pública y cada cambio queda registrado. De lo más reciente a lo más antiguo:</p>
+      <ul class="changelog">
+        <li class="rev"><span class="ver">2026-11-25</span> — Primera versión: los movimientos de cada saldo en divisa de Payoneer, cada saldo como una cuenta.</li>
+      </ul>
+
+    <h2>Más guías de bancos, tarjetas e inversión</h2>
+    <ul>
+      <li><a href="/es/descargar/americanexpress-beta.html">American Express — fuente experimental, sin verificar</a></li>
+      <li><a href="/es/descargar/extractos-caixabank-consumer.html">Descarga todos tus extractos de CaixaBank Consumer de una vez</a></li>
+      <li><a href="/es/descargar/degiro-beta.html">DeGiro — fuente experimental, sin verificar</a></li>
+      <li><a href="/es/descargar/extractos-financiera-el-corte-ingles.html">Descarga todos tus movimientos y extractos de Financiera El Corte Inglés de una vez</a></li>
+      <li><a href="/es/descargar/movimientos-ing.html">Descarga todos tus movimientos y extractos de ING de una vez</a></li>
+      <li><a href="/es/descargar/n26-beta.html">N26 — fuente experimental, sin verificar</a></li>
+      <li><a href="/es/descargar/movimientos-openbank.html">Descarga todos tus movimientos y extractos de Openbank de una vez</a></li>
+      <li><a href="/es/descargar/movimientos-paypal.html">Descarga todos tus movimientos de PayPal de una vez</a></li>
+      <li><a href="/es/descargar/extractos-raisin.html">Descarga todos tus movimientos, depósitos y documentos de Raisin de una vez</a></li>
+      <li><a href="/es/descargar/extractos-revolut.html">Descarga todos tus movimientos y extractos de Revolut de una vez</a></li>
+      <li><a href="/es/descargar/facturas-comisiones-stripe.html">Stripe — fuente experimental, sin verificar</a></li>
+      <li><a href="/es/descargar/extractos-trade-republic.html">Descarga todos tus movimientos y extractos de Trade Republic de una vez</a></li>
+      <li><a href="/es/descargar/extractos-wizink.html">Descarga todos tus movimientos y extractos de WiZink de una vez</a></li>
+    </ul>
+
+    <h2>¿Tu servicio no está en la lista?</h2>
+    <p>Habeas puede aprender uno nuevo <strong>sin programar nada</strong>. El modo grabación observa la propia API del sitio mientras navegas con normalidad y te redacta la fuente; la pruebas contra tu propia cuenta y luego te la quedas o la compartes para que la tenga todo el mundo. De ahí sale la mayor parte del catálogo.</p>
+
+    <h2>Otras fuentes</h2>
+    <p>Habeas funciona con más servicios españoles e internacionales. <a href="/sources.html?lang=es">Mira el catálogo completo</a> o lee <a href="/es/por-que-habeas.html">por qué existe Habeas</a>.</p>
+    </div>
+  </main>
+</body>
+</html>
