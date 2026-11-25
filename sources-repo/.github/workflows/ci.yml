@@ -60,5 +60,11 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+      # deploy-pages looks the artifact up ~0.5 s after the upload finalizes and, since 2026-11-25, finds
+      # nothing ("No artifacts named github-pages") although the upload reports success — a lookup that is
+      # not yet consistent. A short pause lets it settle; re-running only the failed job does not help (it
+      # then finds two artifacts and refuses).
+      - name: Let the uploaded artifact settle
+        run: sleep 20
       - id: deploy
         uses: actions/deploy-pages@v4

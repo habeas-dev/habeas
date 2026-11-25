@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-04T04:15:51.014Z",
+  "generated": "2026-11-25T13:10:18.955Z",
   "sources": [
     {
       "id": "aliexpress",
@@ -92,7 +92,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/amazon.json",
-      "updated": "2026-08-27T16:51:51+02:00",
+      "updated": "2026-09-04T06:16:16+02:00",
       "behaviourHash": "c7146f552e1247da"
     },
     {
@@ -160,7 +160,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/bipdrive-es.json",
-      "updated": "2026-08-27T16:51:51+02:00",
+      "updated": "2026-09-04T06:16:16+02:00",
       "behaviourHash": "3af13d40acf79399"
     },
     {
@@ -606,13 +606,27 @@
       "country": "ES",
       "formats": [],
       "crossDomain": [],
-      "version": "2026-08-26.1",
-      "minVersion": "0.9.11.4",
+      "version": "2026-09-17",
+      "minVersion": "0.10.8.1",
       "gaps": [
         "inversión"
       ],
       "contributors": [],
       "changelog": [
+        {
+          "version": "2026-09-17",
+          "changes": {
+            "en": "Stops card charges from being saved twice or under a made-up identity. A purchase first appears only *authorised* and later posts for good; only the posted one is now kept (the authorisation is left out until it confirms, then imported once). And each movement is now identified by its own stable id from ING rather than a date+amount key, which had been storing the same charge more than once. Nothing is lost: a charge appears when it posts, with its final details. On the first sync after this update your card movements are re-identified, so they count as new once. Needs Habeas 0.10.8.1 or newer.",
+            "es": "Evita que los cargos de tarjeta se guarden dos veces o con una identidad inventada. Una compra aparece primero solo *autorizada* y más tarde se contabiliza en firme; ahora solo se queda la contabilizada (la autorización se deja fuera hasta que se confirma, y entonces se importa una vez). Y cada movimiento se identifica por su id estable propio de ING en vez de por una clave fecha+importe, que estaba guardando el mismo cargo más de una vez. No se pierde nada: el cargo aparece cuando se contabiliza, con sus datos definitivos. En la primera sincronización tras esta actualización tus movimientos de tarjeta se reidentifican, así que cuentan como nuevos una vez. Requiere Habeas 0.10.8.1 o posterior."
+          }
+        },
+        {
+          "version": "2026-09-10",
+          "changes": {
+            "en": "Fixes ING syncs that failed with an authorisation error, most often on Firefox left open for a long time. Habeas now reads your current access token straight from the page on each request, instead of a saved one that ING may have already rotated.",
+            "es": "Corrige las sincronizaciones de ING que fallaban con un error de autorización, sobre todo en Firefox si llevaba mucho tiempo abierto. Habeas ahora lee tu token de acceso actual directamente de la página en cada petición, en vez de uno guardado que ING puede haber rotado ya."
+          }
+        },
         {
           "version": "2026-08-26.1",
           "changes": {
@@ -685,8 +699,8 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/ing-es.json",
-      "updated": "2026-08-27T16:51:51+02:00",
-      "behaviourHash": "250c771b4746608e"
+      "updated": "2026-09-16T18:04:38+02:00",
+      "behaviourHash": "c66c4fdbfda66a22"
     },
     {
       "id": "leroymerlin-es",
@@ -896,8 +910,38 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/pagatelia-es.json",
-      "updated": "2026-08-27T16:51:51+02:00",
+      "updated": "2026-09-04T06:16:16+02:00",
       "behaviourHash": "a3445d821787542f"
+    },
+    {
+      "id": "payoneer",
+      "name": "Payoneer",
+      "service": "payoneer",
+      "categories": [
+        "banking"
+      ],
+      "trust": "first-party",
+      "beta": true,
+      "domain": "payoneer.com",
+      "country": "global",
+      "formats": [],
+      "crossDomain": [],
+      "version": "2026-11-25",
+      "minVersion": "0.10.11.10",
+      "gaps": [],
+      "contributors": [],
+      "changelog": [
+        {
+          "version": "2026-11-25",
+          "changes": {
+            "en": "First version: the movements of every Payoneer currency balance, each balance as its own account.",
+            "es": "Primera versión: los movimientos de cada saldo en divisa de Payoneer, cada saldo como una cuenta."
+          }
+        }
+      ],
+      "url": "https://habeas-dev.github.io/sources/payoneer.json",
+      "updated": "2026-11-25T13:10:18.955Z",
+      "behaviourHash": "908a4ce2901b18a0"
     },
     {
       "id": "paypal",
@@ -990,7 +1034,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/pepeenergy-es.json",
-      "updated": "2026-08-27T16:51:51+02:00",
+      "updated": "2026-09-04T06:16:16+02:00",
       "behaviourHash": "ece1fe023254272a"
     },
     {
@@ -1029,7 +1073,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/pepephone-es.json",
-      "updated": "2026-08-27T16:51:51+02:00",
+      "updated": "2026-09-04T06:16:16+02:00",
       "behaviourHash": "57acad32816ff973"
     },
     {
@@ -1048,13 +1092,20 @@
       "crossDomain": [
         "api2.weltsparen.de"
       ],
-      "version": "2026-08-26.1",
-      "minVersion": "0.5.0.32",
+      "version": "2026-09-30",
+      "minVersion": "0.10.10.1",
       "gaps": [],
       "contributors": [
         "David Marín Carreño"
       ],
       "changelog": [
+        {
+          "version": "2026-09-30",
+          "changes": {
+            "en": "Fixed-term deposits now say what they are: a finance app receives each one as a term deposit, with the amount you put in, its nominal rate, its term and its maturity date, instead of a cash movement it could mistake for income. A matured deposit now reports the amount it held, not 0. Needs Habeas 0.10.10.1 or newer.",
+            "es": "Los depósitos a plazo dicen ya lo que son: una app de finanzas recibe cada uno como depósito a plazo, con el importe que pusiste, su tipo nominal, su plazo y su vencimiento, en vez de como un movimiento de efectivo que podía confundir con un ingreso. Un depósito vencido indica ya el importe que tuvo, no 0. Requiere Habeas 0.10.10.1 o posterior."
+          }
+        },
         {
           "version": "2026-08-26.1",
           "changes": {
@@ -1218,8 +1269,8 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/raisin.json",
-      "updated": "2026-08-27T16:51:51+02:00",
-      "behaviourHash": "906bed24463093d2"
+      "updated": "2026-09-30T10:53:20+02:00",
+      "behaviourHash": "374d4e86f75cdf92"
     },
     {
       "id": "revolut",
@@ -1331,6 +1382,40 @@
       "behaviourHash": "7232204f9f330738"
     },
     {
+      "id": "stripe-fees",
+      "name": "Stripe — facturas de comisiones",
+      "service": "stripe",
+      "categories": [
+        "banking"
+      ],
+      "trust": "first-party",
+      "beta": true,
+      "domain": "stripe.com",
+      "country": null,
+      "formats": [
+        "pdf"
+      ],
+      "crossDomain": [
+        "stripe-tax-docs.s3.amazonaws.com"
+      ],
+      "version": "2026-11-25",
+      "minVersion": "0.10.11.8",
+      "gaps": [],
+      "contributors": [],
+      "changelog": [
+        {
+          "version": "2026-11-25",
+          "changes": {
+            "en": "First version: Stripe's monthly fee invoices (PDF), for the account open in the dashboard.",
+            "es": "Primera versión: las facturas mensuales de comisiones de Stripe (PDF), de la cuenta abierta en el panel."
+          }
+        }
+      ],
+      "url": "https://habeas-dev.github.io/sources/stripe-fees.json",
+      "updated": "2026-11-25T13:10:18.955Z",
+      "behaviourHash": "73a0d91ecd6b3741"
+    },
+    {
       "id": "traderepublic",
       "name": "Trade Republic",
       "service": "traderepublic",
@@ -1438,11 +1523,18 @@
       "country": "ES",
       "formats": [],
       "crossDomain": [],
-      "version": "2026-08-28",
-      "minVersion": "0.10.2",
+      "version": "2026-09-15",
+      "minVersion": "0.10.7.3",
       "gaps": [],
       "contributors": [],
       "changelog": [
+        {
+          "version": "2026-09-15",
+          "changes": {
+            "en": "This month's card movements are collected again. They had stopped appearing: the change that removed provisional pending charges also dropped the whole current, not-yet-billed period, so a purchase only showed up once its monthly statement closed. Now the current period is read again — its settled movements only, never the ones still 'pending confirmation', which remain provisional until they settle. A movement still counts once: when this month's charge later lands in its statement, its stable identity makes the two one. Needs Habeas 0.10.7.3 or newer.",
+            "es": "Vuelven a recogerse los movimientos de tarjeta de este mes. Habían dejado de aparecer: el cambio que quitó los cargos pendientes provisionales se llevó por delante todo el periodo actual sin facturar, así que una compra no aparecía hasta que cerraba su extracto mensual. Ahora el periodo actual se lee de nuevo — solo sus movimientos ya confirmados, nunca los que están «pendientes de confirmar», que siguen siendo provisionales hasta que se liquidan. Un movimiento sigue contando una sola vez: cuando el cargo de este mes aparezca luego en su extracto, su identidad estable hace que los dos sean uno. Requiere Habeas 0.10.7.3 o posterior."
+          }
+        },
         {
           "version": "2026-08-28",
           "changes": {
@@ -1480,8 +1572,8 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/wizink-es.json",
-      "updated": "2026-08-28T17:15:35+02:00",
-      "behaviourHash": "6e437127a24f9028"
+      "updated": "2026-09-16T05:34:26+02:00",
+      "behaviourHash": "74408fa89da06b38"
     }
   ]
 }

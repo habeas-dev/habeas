@@ -650,6 +650,26 @@
                 "type": "string"
               },
               "description": "Group field names to mask before exposing to a consumer (e.g. ['iban'] → ES12 **** 3456)."
+            },
+            "keep": {
+              "type": "object",
+              "description": "Optional item filter: keep only items whose dotted-path field value is in values[] (e.g. keep ONLINE orders from a list that mixes ONLINE and IN_STORE).",
+              "required": [
+                "field",
+                "values"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
             }
           }
         },
@@ -935,6 +955,50 @@
                 }
               },
               "description": "Expand each item into its sub-array elements (one document per sub-item), inheriting parent fields."
+            },
+            "feeSplit": {
+              "type": "object",
+              "description": "Split a movement whose amount includes a fee into the net movement plus the fee as its own movement (`<id>|fee`). The fee is read from a per-item detail endpoint, requested only for items matching `when`.",
+              "required": [
+                "detail",
+                "feeField"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "when": {
+                  "type": "object"
+                },
+                "detail": {
+                  "type": "object",
+                  "required": [
+                    "path"
+                  ],
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "params": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "feeField": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "counterparty": {
+                  "type": "string"
+                }
+              }
             }
           }
         },
