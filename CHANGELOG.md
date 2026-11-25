@@ -10,6 +10,13 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **Stripe fee invoices from every account in your profile.** The source only looked at the account open in the
+  dashboard, so with several accounts it could find nothing while the invoices sat in another one. It now lists
+  every account in your Stripe profile (choose which in the account list) and downloads each invoice with its
+  own account. Behind it, two runtime additions: a source can read its accounts from several lists in one
+  response, and a per-account header now takes precedence over the captured one of the same name.
+
 ## [0.10.12] — 2026-11-25
 
 ### Added

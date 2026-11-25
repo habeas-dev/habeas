@@ -36,32 +36,48 @@
     "capturePaths": [
       "/v1/"
     ],
-    "context": [
-      {
-        "name": "acct",
-        "from": "url",
-        "match": "/v1/accounts/(acct_[A-Za-z0-9]+)"
-      }
-    ],
     "loginUrl": "https://dashboard.stripe.com/login"
   },
   "api": {
     "host": "https://dashboard.stripe.com",
     "groups": {
-      "path": "/v1/accounts/{ctx.acct}",
-      "itemsPath": "",
+      "path": "/graphql/multiregion?name=V2GetUserAccessibleAccountsQuery",
+      "method": "POST",
+      "contentType": "application/json",
+      "headers": {
+        "x-requested-with": "XMLHttpRequest",
+        "stripe-version": "2024-06-20"
+      },
+      "body": "{\"operationName\":\"V2GetUserAccessibleAccountsQuery\",\"variables\":{\"v2Context\":{\"id\":null,\"liveMode\":\"FORCE_LIVE\"}},\"query\":\"query V2GetUserAccessibleAccountsQuery($v2Context: StripeContextInput!) { v2GetUserAccessibleAccounts(context: $v2Context) { organizations { name workspaces { name merchant_id dashboard_type } } standalone_merchants { name merchant_id dashboard_type } standalone_workspaces { name merchant_id dashboard_type } } }\"}",
+      "itemsPaths": [
+        "data.v2GetUserAccessibleAccounts.standalone_workspaces",
+        "data.v2GetUserAccessibleAccounts.organizations[].workspaces",
+        "data.v2GetUserAccessibleAccounts.standalone_merchants"
+      ],
+      "keep": {
+        "field": "dashboard_type",
+        "values": [
+          "full"
+        ]
+      },
       "fields": {
-        "id": "id",
-        "label": "settings.dashboard.display_name"
+        "id": "merchant_id",
+        "label": "name"
       }
     },
     "list": {
       "path": "/v1/settings/plans_and_fees/invoice_history_documents",
       "paging": "none",
-      "itemsPath": "data"
+      "itemsPath": "data",
+      "headers": {
+        "stripe-account": "{group.id}"
+      }
     },
     "pdf": {
-      "path": "/download/tax/vat/{internalId}"
+      "path": "/download/tax/vat/{internalId}",
+      "headers": {
+        "stripe-account": "{group.id}"
+      }
     }
   },
   "fields": {
@@ -93,9 +109,16 @@
     }
   },
   "schema": "invoice@2",
-  "minVersion": "0.10.11.8",
-  "version": "2026-11-25",
+  "minVersion": "0.10.12.1",
+  "version": "2026-11-25.1",
   "changelog": [
+    {
+      "version": "2026-11-25.1",
+      "changes": {
+        "en": "Finds the fee invoices of every account in your Stripe profile, not only the one open in the dashboard; pick which ones in the account list.",
+        "es": "Encuentra las facturas de comisiones de todas las cuentas de tu perfil de Stripe, no solo la que tienes abierta en el panel; elige cuáles en la lista de cuentas."
+      }
+    },
     {
       "version": "2026-11-25",
       "changes": {

@@ -75,6 +75,8 @@ try {
     sep && sep.issueDate === '2026-09-30' && sep.issuer && sep.issuer.taxId === 'IE3206488LH' && sep.servicePeriod && sep.servicePeriod.start === '2026-09-01' && sep.servicePeriod.end === '2026-09-30' && sep.reverseCharge === true,
     JSON.stringify(sep && { number: sep.number, issueDate: sep.issueDate, servicePeriod: sep.servicePeriod, reverseCharge: sep.reverseCharge }));
   check('each record names the account it came from', recs.length > 0 && recs.every((r) => r.account && /^acct_/.test(r.account.id) && r.account.label), JSON.stringify(recs[0] && recs[0].account));
+  // The dashboard was open on another account (no invoices): they must still be found, in the one that has them.
+  check('invoices are found in the account that holds them, not only the one open', recs.length > 0 && recs.every((r) => r.account.id === 'acct_000000FAKEE2E1' && r.account.label === 'Fake Shop (E2E)'), JSON.stringify(recs[0] && recs[0].account));
   check('no amounts are invented (the list has none)', recs.every((r) => !('total' in r) && !('currency' in r) && !('taxes' in r)));
   const files = app.received.flatMap((r) => r.files);
   check('every invoice arrives with its PDF, named after its internalId', recs.length > 0 && recs.every((r) => r.pdf === true && files.includes(r.internalId + '.pdf')), files.join(', '));

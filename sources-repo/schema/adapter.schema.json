@@ -670,6 +670,15 @@
                   }
                 }
               }
+            },
+            "itemsPaths": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": "Several lists in ONE response, concatenated in order (e.g. standalone accounts + organizations[].workspaces). A `key[]` segment fans out over that array. Takes precedence over itemsPath."
             }
           }
         },

@@ -1,10 +1,14 @@
 // A fake STRIPE DASHBOARD for end-to-end tests of the Stripe fee-invoice source and of the apps that consume
 // it (Cuéntamo's received-invoices inbox). It behaves like the real dashboard where it matters to Habeas:
 //  - a logged-in SPA that calls its API with an opaque session key (`Bearer uk_…`), `Stripe-Account` and
-//    `Stripe-Livemode` — the three headers the real endpoint needs — and loads the open account from
-//    /v1/accounts/{id};
-//  - GET /v1/settings/plans_and_fees/invoice_history_documents → every fee invoice, no pagination, NO amounts
-//    (the real list carries none: they are only in the PDF);
+//    `Stripe-Livemode` — the three headers the real endpoint needs. The account OPEN in it is NOT the one with
+//    the invoices (the case that broke the first version: the real profile had five accounts, and the
+//    invoices were in another one);
+//  - POST /graphql/multiregion?name=V2GetUserAccessibleAccountsQuery → every account in the profile (two
+//    full-dashboard accounts and an Express one), refusing like the real one without X-Requested-With or
+//    Stripe-Version;
+//  - GET /v1/settings/plans_and_fees/invoice_history_documents → the fee invoices of the account named by
+//    Stripe-Account, no pagination, NO amounts (the real list carries none: they are only in the PDF);
 //  - GET /download/tax/vat/{token} → a redirect to the stored PDF (the real one redirects to a signed S3 URL;
 //    here it stays on loopback, so the off-site hop itself is not exercised).
 // Same field names as the real responses; every value is invented.
@@ -16,6 +20,16 @@ import http from 'node:http';
 
 export const FAKE_STRIPE_ACCOUNT = 'acct_000000FAKEE2E1';
 export const FAKE_STRIPE_ACCOUNT_NAME = 'Fake Shop (E2E)';
+export const FAKE_OPEN_ACCOUNT = 'acct_000000FAKEE2E2'; // open in the dashboard, no invoices
+const FAKE_EXPRESS_ACCOUNT = 'acct_000000FAKEE2E3';
+const ACCESSIBLE = { data: { v2GetUserAccessibleAccounts: {
+  organizations: [],
+  standalone_merchants: [{ name: 'Fake person (E2E)', merchant_id: FAKE_EXPRESS_ACCOUNT, dashboard_type: 'express', platform_nickname: 'Fake platform' }],
+  standalone_workspaces: [
+    { name: 'Fake Other (E2E)', merchant_id: FAKE_OPEN_ACCOUNT, dashboard_type: 'full' },
+    { name: FAKE_STRIPE_ACCOUNT_NAME, merchant_id: FAKE_STRIPE_ACCOUNT, dashboard_type: 'full' },
+  ],
+} } };
 export const FAKE_STRIPE_TAX_ID = 'ESX0000000X';
 const KEY = 'Bearer uk_FAKEE2EFAKEE2EFAKEE2EFAKEE2EFAKE';
 const PDF = Buffer.from('%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF');
@@ -44,8 +58,8 @@ const initial = () => [invoice('2026-04'), invoice('2026-05'), invoice('2026-09'
 
 const SPA = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Fake Stripe Dashboard</title></head>
 <body><h1>Fake Stripe Dashboard</h1><p id="t">loading</p><script>
-var H={authorization:${JSON.stringify(KEY)},'stripe-account':${JSON.stringify(FAKE_STRIPE_ACCOUNT)},'stripe-livemode':'true'};
-function go(){return fetch('/v1/accounts/${FAKE_STRIPE_ACCOUNT}',{headers:H}).then(function(){return fetch('/v1/settings/plans_and_fees/invoice_history_documents',{headers:H})})
+var H={authorization:${JSON.stringify(KEY)},'stripe-account':${JSON.stringify(FAKE_OPEN_ACCOUNT)},'stripe-livemode':'true'};
+function go(){return fetch('/v1/accounts/${FAKE_OPEN_ACCOUNT}',{headers:H}).then(function(){return fetch('/v1/settings/plans_and_fees/invoice_history_documents',{headers:H})})
   .then(function(r){return r.json()}).then(function(d){document.getElementById('t').textContent='loaded '+d.data.length;}).catch(function(){});}
 go(); var n=0; var iv=setInterval(function(){ if(++n>8){clearInterval(iv);return;} go(); },500);
 </script></body></html>`;
@@ -84,11 +98,20 @@ export function startMockStripe({ port = 0 } = {}) {
         // The API wants exactly what the real one wants: the session key, the account and the livemode flag.
         if (!/^Bearer uk_/.test(req.headers.authorization || '')) return json({ error: { message: 'no session' } }, 401);
         if (!req.headers['stripe-livemode']) return json({ error: { message: 'When using session-based authentication, the Stripe-Livemode header is required.' } }, 400);
-        if (req.headers['stripe-account'] !== FAKE_STRIPE_ACCOUNT) return json({ error: { message: 'unknown account' } }, 403);
-        if (p === '/v1/accounts/' + FAKE_STRIPE_ACCOUNT) return json({ id: FAKE_STRIPE_ACCOUNT, object: 'account', country: 'ES', settings: { dashboard: { display_name: FAKE_STRIPE_ACCOUNT_NAME } }, business_profile: { name: FAKE_STRIPE_ACCOUNT_NAME } });
+        // The accounts query: the session key, plus the two headers the real one refuses without.
+        if (p === '/graphql/multiregion' && req.method === 'POST') {
+          if (req.headers['x-requested-with'] !== 'XMLHttpRequest') return json({ error: { code: 'wsp_400_csrf_invalid_request' } }, 400);
+          if (!req.headers['stripe-version']) return json({ errors: [{ message: 'Please specify an API version via the Stripe-Version header' }] }, 400);
+          const q = await readJson(req);
+          if (q.operationName !== 'V2GetUserAccessibleAccountsQuery') return json({ errors: [{ message: 'unknown operation' }] }, 400);
+          return json(ACCESSIBLE);
+        }
+        const acct = req.headers['stripe-account'];
+        if (acct !== FAKE_STRIPE_ACCOUNT && acct !== FAKE_OPEN_ACCOUNT) return json({ error: { message: 'unknown account' } }, 403);
+        if (p === '/v1/accounts/' + FAKE_OPEN_ACCOUNT) return json({ id: FAKE_OPEN_ACCOUNT, object: 'account', country: 'ES', settings: { dashboard: { display_name: 'Fake Other (E2E)' } } });
         if (p === '/v1/settings/plans_and_fees/invoice_history_documents') {
           if ([...u.searchParams.keys()].some((k) => k !== 'include_only[]')) return json({ error: { code: 'parameter_unknown' } }, 400);
-          const data = invoices.slice().sort((a, b) => b.created - a.created);
+          const data = acct === FAKE_STRIPE_ACCOUNT ? invoices.slice().sort((a, b) => b.created - a.created) : [];
           return json({ data, has_more: false, total_count: data.length, url: '/v1/settings/plans_and_fees/invoice_history_documents' });
         }
         res.writeHead(404); res.end();

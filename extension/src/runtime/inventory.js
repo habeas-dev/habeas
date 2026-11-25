@@ -387,6 +387,13 @@ async function fetchGroupItems(adapter, auth, net) {
     }
     // A JSON endpoint may return ONE object (the account the user has open — Stripe's /v1/accounts/{id}) rather
     // than a list: a lone object is a one-group list.
+    if (!isHtml && Array.isArray(g.itemsPaths) && g.itemsPaths.length) {
+      // groups.itemsPaths: ONE response, the accounts spread over several lists (Stripe: standalone accounts and
+      // accounts inside organizations) — read every path and concatenate; `key[]` flattens an array's children.
+      const body = await res.json();
+      for (const ip of g.itemsPaths) for (const it of getAll(body, ip)) out.push(it);
+      continue;
+    }
     const got = isHtml ? extractListItems(await res.text(), g) : get(await res.json(), g.itemsPath);
     const items = Array.isArray(got) ? got : (got && typeof got === 'object' ? [got] : []);
     for (const it of items) out.push(it);
@@ -796,6 +803,10 @@ const applyTmpl = (str, doc, id) => String(str).replace(/\{([^}]+)\}/g, (m, k) =
 const tmplGroup = (str, group) => (group ? String(str).replace(/\{group\.([^}]+)\}/g, (m, k) => { const v = get(group, k); return v == null ? m : tid(v); }) : String(str));
 // RAW variant for HEADER values: no URL-encoding — a header carries the value verbatim (e.g. a base64
 // encrypted-PAN with +/=; tid()'s encodeURIComponent would corrupt it → the server can't base64-decode).
+// The headers that belong to the GROUP (their template names {group.*} and it resolved): they override a
+// captured header of the same name — Stripe's captured Stripe-Account is whichever account was open, while
+// each account's list/PDF must carry its own. Unresolved (no group: a loose doc) → the captured value stays.
+const groupOwned = (tmpl, filled) => { const o = {}; for (const k of Object.keys(tmpl || {})) if (/\{group\./.test(String(tmpl[k])) && !/\{group\./.test(String(filled[k]))) o[k] = filled[k]; return o; };
 const tmplGroupRaw = (str, group) => (group ? String(str).replace(/\{group\.([^}]+)\}/g, (m, k) => { const v = get(group, k); return v == null ? m : String(v); }) : String(str));
 // Computed calendar-date tokens for path/param/body values, with an optional format. Some SPAs stamp the
 // CURRENT billing/period date into a request (e.g. FECI's statement list wants ?date_bill=31/07/2026):
@@ -1285,7 +1296,7 @@ export async function fetchPdf(adapter, auth, docOrId, net) {
   // pdf.headers may carry {group.*} (RAW, like list.headers — a per-card encrypted-PAN header must not be
   // URL-encoded), so a document endpoint that needs the card's own header (FECI statements) can send it.
   const phdr = {}; for (const k of Object.keys(pdf.headers || {})) phdr[k] = tmplGroupRaw(pdf.headers[k], doc && doc._group);
-  const init = { method: pdf.method || 'GET', headers: { accept: wantBlob ? '*/*' : 'application/json', ...phdr, ...headersFor(auth, path.split('?')[0]) }, credentials: credOf(adapter), wantBlob };
+  const init = { method: pdf.method || 'GET', headers: { accept: wantBlob ? '*/*' : 'application/json', ...phdr, ...headersFor(auth, path.split('?')[0]), ...groupOwned(pdf.headers, phdr) }, credentials: credOf(adapter), wantBlob };
   if (init.method !== 'GET' && pdf.body != null) {
     init.body = fillDocTmpl(pdf.body, doc, internalId, csrf, auth);
     init.headers['content-type'] = pdf.contentType || 'application/json';
@@ -1569,7 +1580,7 @@ async function fetchList(adapter, auth, params, net, group) {
   const method = (list.method || 'GET').toUpperCase();
   // Per-group header values: {group.*} templated so e.g. a card's own encrypted-PAN header rides its list.
   const gheaders = {}; for (const k of Object.keys(list.headers || {})) gheaders[k] = tmplGroupRaw(list.headers[k], group);
-  const init = { method, headers: { accept: html ? htmlAccept : 'application/json', ...gheaders, ...headersFor(auth, path.split('?')[0], true /*allow captured replay headers (cookie sources only ever capture replayHeaders like x-device-id, never a token)*/) }, credentials: credOf(adapter) };
+  const init = { method, headers: { accept: html ? htmlAccept : 'application/json', ...gheaders, ...headersFor(auth, path.split('?')[0], true /*allow captured replay headers (cookie sources only ever capture replayHeaders like x-device-id, never a token)*/), ...groupOwned(list.headers, gheaders) }, credentials: credOf(adapter) };
   // POST list (AEM/WiZink send params in the body; CaixaBank posts a JSON body with a date window):
   // fill {group.*} + {ctx.*} + {csrf} + {paramName} + the {fromDate}/{toDate} window (from list.window).
   if (method === 'POST' && list.body != null) {
@@ -2109,6 +2120,25 @@ function rangeParams(list) {
   return out;
 }
 // Safe dotted-path getter: get(obj, 'a.b.c'); falls back to a plain key when there's no dot.
+// Every item a path reaches, as a flat list: a `key[]` segment fans out over that array (Stripe's
+// organizations[].workspaces → all workspaces of all organizations). A final array is spread; a lone object
+// is one item; nothing found is an empty list.
+function getAll(obj, path) {
+  let cur = [obj];
+  for (const seg of String(path).split('.')) {
+    const fan = seg.endsWith('[]');
+    const key = fan ? seg.slice(0, -2) : seg;
+    const next = [];
+    for (const o of cur) {
+      const v = o == null ? undefined : get(o, key);
+      if (fan) { if (Array.isArray(v)) next.push(...v); } else if (v !== undefined) next.push(v);
+    }
+    cur = next;
+  }
+  const out = [];
+  for (const v of cur) { if (Array.isArray(v)) out.push(...v); else if (v && typeof v === 'object') out.push(v); }
+  return out;
+}
 function get(obj, path) {
   if (obj == null || path == null) return undefined;
   if (path === '$' || path === '') return obj; // the response itself (e.g. a top-level array — no wrapper object)

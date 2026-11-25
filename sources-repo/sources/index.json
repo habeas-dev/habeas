@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-25T13:10:18.955Z",
+  "generated": "2026-11-25T17:59:09.060Z",
   "sources": [
     {
       "id": "aliexpress",
@@ -45,7 +45,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/aliexpress.json",
-      "updated": "2026-08-27T16:51:51+02:00",
+      "updated": "2026-08-27T16:55:40+02:00",
       "behaviourHash": "98e9b859b1efed48"
     },
     {
@@ -92,7 +92,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/amazon.json",
-      "updated": "2026-09-04T06:16:16+02:00",
+      "updated": "2026-09-04T06:29:28+02:00",
       "behaviourHash": "c7146f552e1247da"
     },
     {
@@ -114,7 +114,7 @@
       "contributors": [],
       "changelog": [],
       "url": "https://habeas-dev.github.io/sources/americanexpress.json",
-      "updated": "2026-08-24T19:57:30+02:00",
+      "updated": "2026-08-24T20:03:35+02:00",
       "behaviourHash": "0cd3f46c39b6dbf0"
     },
     {
@@ -160,7 +160,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/bipdrive-es.json",
-      "updated": "2026-09-04T06:16:16+02:00",
+      "updated": "2026-09-04T06:29:28+02:00",
       "behaviourHash": "3af13d40acf79399"
     },
     {
@@ -208,7 +208,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/caixabank-consumer-es.json",
-      "updated": "2026-08-27T16:51:51+02:00",
+      "updated": "2026-08-27T16:55:40+02:00",
       "behaviourHash": "85a15cc6be7d34ed"
     },
     {
@@ -256,7 +256,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/carrefour-es.json",
-      "updated": "2026-08-27T16:51:51+02:00",
+      "updated": "2026-08-27T16:55:40+02:00",
       "behaviourHash": "d250117a4b6f1246"
     },
     {
@@ -302,7 +302,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/decathlon-es.json",
-      "updated": "2026-08-27T16:51:51+02:00",
+      "updated": "2026-08-27T16:55:40+02:00",
       "behaviourHash": "573802f8e8b2134a"
     },
     {
@@ -324,7 +324,7 @@
       "contributors": [],
       "changelog": [],
       "url": "https://habeas-dev.github.io/sources/degiro.json",
-      "updated": "2026-08-24T19:57:30+02:00",
+      "updated": "2026-08-24T20:03:35+02:00",
       "behaviourHash": "e8f819112073dc24"
     },
     {
@@ -371,7 +371,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/dia-es.json",
-      "updated": "2026-08-27T16:51:51+02:00",
+      "updated": "2026-08-27T16:55:40+02:00",
       "behaviourHash": "31c6cd917ab353eb"
     },
     {
@@ -488,7 +488,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/financiera-elcorteingles-es.json",
-      "updated": "2026-08-27T16:51:51+02:00",
+      "updated": "2026-08-27T16:55:40+02:00",
       "behaviourHash": "7f82d12f04f0e9d4"
     },
     {
@@ -542,7 +542,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/hover-com.json",
-      "updated": "2026-08-27T16:51:51+02:00",
+      "updated": "2026-08-27T16:55:40+02:00",
       "behaviourHash": "e1ac558d1e5ee029"
     },
     {
@@ -590,7 +590,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/ikea-es.json",
-      "updated": "2026-08-27T16:51:51+02:00",
+      "updated": "2026-08-27T16:55:40+02:00",
       "behaviourHash": "266b3983f4125a18"
     },
     {
@@ -699,7 +699,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/ing-es.json",
-      "updated": "2026-09-16T18:04:38+02:00",
+      "updated": "2026-09-16T12:21:49+02:00",
       "behaviourHash": "c66c4fdbfda66a22"
     },
     {
@@ -771,7 +771,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/leroymerlin-es.json",
-      "updated": "2026-08-27T16:51:51+02:00",
+      "updated": "2026-08-27T16:55:40+02:00",
       "behaviourHash": "428015c7f5e5803e"
     },
     {
@@ -795,7 +795,7 @@
       "contributors": [],
       "changelog": [],
       "url": "https://habeas-dev.github.io/sources/n26.json",
-      "updated": "2026-08-24T19:57:30+02:00",
+      "updated": "2026-08-24T20:03:35+02:00",
       "behaviourHash": "4d859f0996f58744"
     },
     {
@@ -869,7 +869,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/openbank-es.json",
-      "updated": "2026-08-27T16:51:51+02:00",
+      "updated": "2026-08-27T16:55:40+02:00",
       "behaviourHash": "4b06808638f531d0"
     },
     {
@@ -910,7 +910,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/pagatelia-es.json",
-      "updated": "2026-09-04T06:16:16+02:00",
+      "updated": "2026-09-04T06:29:28+02:00",
       "behaviourHash": "a3445d821787542f"
     },
     {
@@ -940,7 +940,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/payoneer.json",
-      "updated": "2026-11-25T13:10:18.955Z",
+      "updated": "2026-11-25T10:26:12+01:00",
       "behaviourHash": "908a4ce2901b18a0"
     },
     {
@@ -993,7 +993,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/paypal.json",
-      "updated": "2026-08-27T16:51:51+02:00",
+      "updated": "2026-08-27T16:55:40+02:00",
       "behaviourHash": "296abe9ffd4bdebb"
     },
     {
@@ -1034,7 +1034,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/pepeenergy-es.json",
-      "updated": "2026-09-04T06:16:16+02:00",
+      "updated": "2026-09-04T06:29:28+02:00",
       "behaviourHash": "ece1fe023254272a"
     },
     {
@@ -1073,7 +1073,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/pepephone-es.json",
-      "updated": "2026-09-04T06:16:16+02:00",
+      "updated": "2026-09-04T06:29:28+02:00",
       "behaviourHash": "57acad32816ff973"
     },
     {
@@ -1269,7 +1269,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/raisin.json",
-      "updated": "2026-09-30T10:53:20+02:00",
+      "updated": "2026-09-30T10:52:34+02:00",
       "behaviourHash": "374d4e86f75cdf92"
     },
     {
@@ -1378,7 +1378,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/revolut.json",
-      "updated": "2026-08-28T17:15:35+02:00",
+      "updated": "2026-08-28T17:07:00+02:00",
       "behaviourHash": "7232204f9f330738"
     },
     {
@@ -1398,11 +1398,18 @@
       "crossDomain": [
         "stripe-tax-docs.s3.amazonaws.com"
       ],
-      "version": "2026-11-25",
-      "minVersion": "0.10.11.8",
+      "version": "2026-11-25.1",
+      "minVersion": "0.10.12.1",
       "gaps": [],
       "contributors": [],
       "changelog": [
+        {
+          "version": "2026-11-25.1",
+          "changes": {
+            "en": "Finds the fee invoices of every account in your Stripe profile, not only the one open in the dashboard; pick which ones in the account list.",
+            "es": "Encuentra las facturas de comisiones de todas las cuentas de tu perfil de Stripe, no solo la que tienes abierta en el panel; elige cuáles en la lista de cuentas."
+          }
+        },
         {
           "version": "2026-11-25",
           "changes": {
@@ -1412,8 +1419,8 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/stripe-fees.json",
-      "updated": "2026-11-25T13:10:18.955Z",
-      "behaviourHash": "73a0d91ecd6b3741"
+      "updated": "2026-11-25T10:30:58+01:00",
+      "behaviourHash": "67248d47a8dc37f7"
     },
     {
       "id": "traderepublic",
@@ -1506,7 +1513,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/traderepublic.json",
-      "updated": "2026-09-02T14:02:23+02:00",
+      "updated": "2026-09-02T05:33:07+02:00",
       "behaviourHash": "3682c9c4d4c51cd4"
     },
     {
@@ -1572,7 +1579,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/wizink-es.json",
-      "updated": "2026-09-16T05:34:26+02:00",
+      "updated": "2026-09-16T05:34:00+02:00",
       "behaviourHash": "74408fa89da06b38"
     }
   ]
