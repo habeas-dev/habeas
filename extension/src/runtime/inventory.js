@@ -215,24 +215,71 @@ async function listInventoryOnce(adapter, auth, net, opts) {
     // on the per-group array, and capAge returns a filtered copy. Losing the count would leave the drop
     // silent again, which is the exact failure the guard exists to end.
     let skipped = 0;
+    const fx = { skippedFeeDetail: 0 };
     for (const g of groups) {
-      try { const part = await pageList(adapter, a, net, g, opts); skipped += (part.stats && part.stats.skippedNoAmount) || 0; all.push(...part); }
+      try { const part = await pageList(adapter, a, net, g, opts); skipped += (part.stats && part.stats.skippedNoAmount) || 0; all.push(...await splitFees(adapter, a, net, part, fx)); }
       catch (e) { errs++; lastErr = e; }
     }
     if (groups.length && errs === groups.length) throw lastErr;
     all.sort(byDate);
-    return withStats(capAge(all), skipped);
+    return withStats(capAge(all), skipped, fx);
   }
-  const all = await pageList(adapter, a, net, null, opts);
-  const skipped = (all.stats && all.stats.skippedNoAmount) || 0;
+  const listed = await pageList(adapter, a, net, null, opts);
+  const skipped = (listed.stats && listed.stats.skippedNoAmount) || 0;
+  const fx = { skippedFeeDetail: 0 };
+  const all = await splitFees(adapter, a, net, listed, fx);
   all.sort(byDate);
-  return withStats(capAge(all), skipped);
+  return withStats(capAge(all), skipped, fx);
 }
 
 // Re-attach the run's counters to whatever array is finally handed back.
-function withStats(arr, skippedNoAmount) {
-  if (skippedNoAmount) arr.stats = { skippedNoAmount };
+function withStats(arr, skippedNoAmount, fx) {
+  const st = {};
+  if (skippedNoAmount) st.skippedNoAmount = skippedNoAmount;
+  if (fx && fx.skippedFeeDetail) st.skippedFeeDetail = fx.skippedFeeDetail;
+  if (Object.keys(st).length) arr.stats = st;
   return arr;
+}
+
+// `list.feeSplit` — a movement whose amount silently includes a fee (Payoneer's withdrawal: -87 leaves the
+// balance, 83.52 reaches the bank) is split into the net transfer and the fee as a movement of its own, so the
+// transfer matches the bank's credit to the cent and the fee can be booked as an expense. The fee is only in a
+// per-item detail endpoint, so only items matching `when` cost a request. A detail that fails drops that
+// movement from THIS run (counted in stats.skippedFeeDetail) rather than delivering it whole: once delivered
+// unsplit its id would be known and it would never be split. Next run lists it again and retries.
+//   { when:{field,values[]}, detail:{path, params{k:"{rawField}"}}, feeField, type?, description?, counterparty? }
+async function splitFees(adapter, auth, net, docs, fx) {
+  const cfg = adapter.api && adapter.api.list && adapter.api.list.feeSplit;
+  if (!cfg || !cfg.detail || !cfg.feeField) return docs;
+  const NET = netFetch(net, adapter);
+  const host = adapter.api.host;
+  const fill = (v, raw) => String(v).replace(/\{([^}]+)\}/g, (_, k) => { const x = get(raw, k); return x == null ? '' : String(x); });
+  const out = [];
+  for (const doc of docs) {
+    const raw = doc._raw || {};
+    const w = cfg.when;
+    const match = !w || !w.field || (Array.isArray(w.values) ? w.values.map(String).includes(String(get(raw, w.field))) : get(raw, w.field) != null);
+    if (!match || typeof doc.amount !== 'number') { out.push(doc); continue; }
+    let fee;
+    try {
+      const path = fill(cfg.detail.path, raw);
+      const pp = {}; for (const k of Object.keys(cfg.detail.params || {})) pp[k] = fill(cfg.detail.params[k], raw);
+      const qs = new URLSearchParams(pp).toString();
+      const res = await NET(host + path + (qs ? '?' + qs : ''), { method: 'GET', headers: { accept: 'application/json', ...headersFor(auth, path) }, credentials: credOf(adapter) });
+      if (!res.ok) throw new Error('fee detail ' + res.status);
+      fee = Number(get(JSON.parse(await res.text()), cfg.feeField));
+    } catch (e) { fx.skippedFeeDetail++; continue; }
+    if (!Number.isFinite(fee) || fee === 0) { out.push(doc); continue; }
+    const sign = doc.amount < 0 ? -1 : 1;
+    const feeAbs = Math.abs(fee);
+    const r2 = (n) => Math.round(n * 100) / 100;
+    const net1 = { ...doc, amount: r2(sign * (Math.abs(doc.amount) - feeAbs)) };
+    const feeDoc = { ...doc, internalId: doc.internalId + '|fee', amount: r2(sign * feeAbs), type: cfg.type || 'fee', description: cfg.description ?? '', counterparty: cfg.counterparty ?? '' };
+    // Running balance stays continuous: the transfer comes first and leaves the fee still in the balance.
+    if (typeof doc.balanceAfter === 'number') net1.balanceAfter = r2(doc.balanceAfter - sign * feeAbs);
+    for (const d of [net1, feeDoc]) { d.label = d.description || d.counterparty || d.label; d.record = buildRecord(d, adapter); out.push(d); }
+  }
+  return out;
 }
 
 // CSRF prelude: GET a page and extract a token (e.g. WiZink's securityToken hidden input / JS var) with
@@ -1820,6 +1867,22 @@ export function keySegment(path, v) {
   return collapsed.indexOf(' ') >= 0 ? collapsed.toLowerCase() : collapsed;
 }
 
+// A zone-less wall-clock timestamp ("2026-11-05T09:55:38.51") in IANA zone `tz` → ISO 8601 with that zone's
+// offset on that instant ("2026-11-05T09:55:38.510-05:00"). Anything already carrying a zone, or not a
+// timestamp, or with no zone declared, is returned unchanged — never guessed.
+export function zonedToIso(v, tz) {
+  const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3})\d*)?)?$/);
+  if (!tz || !m) return v;
+  const [Y, Mo, D, h, mi, sec = '0', frac = '0'] = m.slice(1);
+  const ms = Number((frac + '00').slice(0, 3));
+  const wall = Date.UTC(+Y, +Mo - 1, +D, +h, +mi, +sec, ms);
+  let fmt; try { fmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }); } catch (e) { return v; }
+  const offsetAt = (utc) => { const p = {}; for (const x of fmt.formatToParts(new Date(utc))) p[x.type] = x.value; return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second) - Math.floor(utc / 1000) * 1000; };
+  let off = offsetAt(wall); off = offsetAt(wall - off); // two passes settle a guess near a DST switch
+  const mins = Math.round(off / 60000), sg = mins < 0 ? '-' : '+', a = Math.abs(mins);
+  const pad = (n, w = 2) => String(n).padStart(w, '0');
+  return `${Y}-${Mo}-${D}T${h}:${mi}:${pad(+sec)}.${pad(ms, 3)}${sg}${pad(Math.floor(a / 60))}:${pad(a % 60)}`;
+}
 export function normalizeDate(v) {
   if (v == null || v === '') return v;
   const s = String(v).trim();
@@ -1986,6 +2049,10 @@ function mapDoc(adapter, p, group) {
   // (distinct from the booked `date`), promoted to a canonical field when a source maps it; `maturityDate`
   // is a term deposit's end date (investment@2 cash, kind term_deposit).
   for (const k of ['date', 'valueDate', 'maturityDate']) if (doc[k] != null && doc[k] !== '') doc[k] = normalizeDate(doc[k]);
+  // `dateTime`: the full timestamp. A service that gives a wall-clock time WITHOUT a zone gets the source's
+  // declared `timeZone` (Payoneer's dashboard: America/New_York, daylight saving included) → ISO 8601 with the
+  // offset in force that day, so a consumer can place the movement on the right day in its own zone.
+  if (doc.dateTime != null && doc.dateTime !== '') doc.dateTime = zonedToIso(String(doc.dateTime), adapter.timeZone);
   // Amount fields → Number. `balanceAfter` is the running balance a bank movement leaves behind.
   for (const k of ['total', 'amount', 'balanceAfter']) if (typeof doc[k] === 'string' && doc[k] !== '') doc[k] = normalizeAmount(doc[k]); // "21,00 €" → 21
   // Minor-unit amounts: some APIs return integer minor units. `amountScale` is a FIXED factor (e.g. 0.01);

@@ -71,7 +71,7 @@ const RESERVED = new Set([
   'isin', 'units', 'price', 'operation', 'location', 'card', 'source', 'account', 'pdfUrl', 'returnStatus',
   'refundTotal', 'paymentMethod', 'paymentLast4',
   // bank movement extras promoted to first-class canonical fields (transaction@1)
-  'valueDate', 'balanceAfter',
+  'valueDate', 'balanceAfter', 'dateTime',
   // broker (investment@2) trade/cash fields
   'recordType', 'side', 'kind', 'ticker', 'mic', 'instrumentName', 'assetClass', 'grossAmount', 'commission',
   'taxWithheld', 'netAmount', 'exchangeRate', 'settlementAccount',
@@ -167,6 +167,7 @@ export function buildRecord(d, adapter) {
     // byte-identical.
     if (d.account != null && d.account !== '') r.account = d.account;
     if (d.valueDate != null && d.valueDate !== '') r.valueDate = d.valueDate;
+    if (d.dateTime != null && d.dateTime !== '') r.dateTime = d.dateTime; // full timestamp with offset (source timeZone)
     if (d.balanceAfter != null && d.balanceAfter !== '') r.balanceAfter = money(d.balanceAfter);
     return done(r);
   }

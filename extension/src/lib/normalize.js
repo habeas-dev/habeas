@@ -111,6 +111,7 @@ export function canonicalize(record) {
   // Bank movement extras (Cuéntamo contract) — added only when the source captured them, so canonical
   // records that don't carry them keep the same key set.
   if (record.valueDate != null && record.valueDate !== '') out.valueDate = record.valueDate;
+  if (record.dateTime != null && record.dateTime !== '') out.dateTime = record.dateTime; // ISO 8601 with offset (source timeZone)
   if (record.balanceAfter != null && record.balanceAfter !== '') out.balanceAfter = num(record.balanceAfter);
   if (record.extra != null) out.extra = record.extra;
   // Carried through when present: the source has declared this id is NOT stable across syncs, so the

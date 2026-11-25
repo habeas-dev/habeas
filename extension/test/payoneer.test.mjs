@@ -51,6 +51,7 @@ function net() {
   const fn = async (url, init = {}) => {
     calls.push({ url, init });
     if (url.includes('/statements/MonthlyStatementData')) return ok(PICKER);
+    if (url.includes('/activity/getItemDetailsRawData')) return ok({ activityMainData: { ActivityItemId: new URL(url).searchParams.get('activityItemId'), Amount: -100, Fee: -4, Currency: 'USD' }, activityDetails: [] });
     if (url.includes('/activity/getMainTransactions')) {
       const acc = new URL(url).searchParams.get('paymentMethodIds[]');
       return ok({ Filters: null, TransactionsDataState: 2, TotalMainTransactionsCount: (BY_ACCOUNT[acc] || []).length, Transactions: BY_ACCOUNT[acc] || [] });
@@ -77,7 +78,7 @@ test('payoneer: one listing per currency balance (not bank accounts), filtered s
     assert.equal(c.init.headers.authorization, AUTH.merged.authorization);
   }
   // Completed movements only: the EUR verification deposit (status 3) is dropped.
-  assert.deepEqual(docs.map((d) => d.internalId).sort(), ['1000000001', '1000000003', '1000000011', '7000000102']);
+  assert.deepEqual(docs.map((d) => d.internalId).sort(), ['1000000001', '1000000003', '1000000003|fee', '1000000011', '7000000102']);
 });
 
 test('payoneer: a movement becomes a transaction with signed amount, balance, the other party and its type', async () => {
@@ -93,7 +94,13 @@ test('payoneer: a movement becomes a transaction with signed amount, balance, th
   assert.equal(String(pay.type), '15');
   assert.equal(pay.date.slice(0, 10), '2026-03-07');
   const w = rec('1000000003');
-  assert.equal(w.amount, -100);
+  assert.equal(w.amount, -96); // the net that reaches the bank
+  const wf = rec('1000000003|fee');
+  assert.equal(wf.amount, -4);
+  assert.equal(wf.type, 'fee');
+  assert.equal(wf.counterparty, 'Payoneer');
+  assert.equal(w.balanceAfter, 4);
+  assert.equal(wf.balanceAfter, 0);
   assert.equal(w.direction, 'debit');
   assert.equal(w.counterparty, 'My Bank USD');
   const fee = rec('7000000102');
@@ -109,4 +116,17 @@ test('payoneer: each record names the balance it belongs to', async () => {
   assert.equal(g('1000000001').id, USD);
   assert.equal(g('1000000001').currency, 'USD');
   assert.equal(g('1000000011').id, EUR);
+});
+
+test('payoneer: only withdrawals cost a detail request, and every movement carries its New York timestamp', async () => {
+  const n = net();
+  const docs = await listInventory(SRC, AUTH, n.fn);
+  const det = n.calls.filter((c) => c.url.includes('getItemDetailsRawData'));
+  assert.equal(det.length, 1);
+  const q = new URL(det[0].url).searchParams;
+  assert.equal(q.get('activityItemId'), '1000000003');
+  assert.equal(q.get('activityType'), '1');
+  const rec = (id) => buildRecord(docs.find((d) => d.internalId === id), SRC);
+  assert.equal(rec('1000000001').dateTime, '2026-03-07T13:40:12.300-05:00');
+  assert.equal(rec('1000000011').dateTime, '2026-01-15T10:00:00.000-05:00');
 });

@@ -11,6 +11,11 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Movements with their exact time, and withdrawal fees on their own line.** A source can now say which time
+  zone a service shows its times in, so each movement carries its full timestamp with the right offset (summer
+  time included). And a withdrawal whose amount silently includes a fee is delivered as the transfer that
+  actually reaches your bank plus the fee as a separate movement, so both match your bank to the cent. Payoneer
+  is the first source to use both.
 - **Payoneer movements (experimental source).** Payoneer offers no API for your own account and only exports one
   balance and one month at a time. The new source downloads the movements of every currency balance at once, each
   balance as its own account, with the payer or bank of each movement and the balance after it.
