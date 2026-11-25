@@ -84,4 +84,6 @@ test('stripe-fees: the PDF is fetched through the dashboard /download link with 
   const dl = n.calls.find((c) => c.url.includes('/download/'));
   assert.equal(dl.url, 'https://dashboard.stripe.com/download/tax/vat/' + docs[0].internalId);
   assert.equal(dl.init.credentials, 'include'); // the redirect to the signed S3 URL needs the dashboard cookies
+  // Verified live: without Stripe-Account the download answers 404 {"code":"not_found"}; with it, 302 to S3.
+  assert.equal(dl.init.headers['stripe-account'], ACCT);
 });

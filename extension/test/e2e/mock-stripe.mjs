@@ -73,10 +73,11 @@ export function startMockStripe({ port = 0 } = {}) {
         if (p === '/__control/state') return json({ invoices: invoices.length });
         // The stored PDF the download link redirects to (stands in for the signed S3 URL).
         if (p.startsWith('/__s3/')) { res.writeHead(200, { 'content-type': 'application/pdf' }); return res.end(PDF); }
-        // The download link: like the real one, the dashboard session cookie is not checked here, only the
-        // document must exist.
+        // The download link: like the real one, it answers 404 unless the request names the account
+        // (Stripe-Account header) — a plain navigation to it fails on the real dashboard too.
         const dl = p.match(/^\/download\/tax\/vat\/([^/]+)$/);
         if (dl) {
+          if (req.headers['stripe-account'] !== FAKE_STRIPE_ACCOUNT) return json({ error: { message: 'There was an error', code: 'not_found' } }, 404);
           if (!invoices.some((i) => i.token === dl[1])) { res.writeHead(404); return res.end(); }
           res.writeHead(302, { location: '/__s3/vat/' + dl[1] + '.pdf' }); return res.end();
         }
