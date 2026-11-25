@@ -11,6 +11,9 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 ## [Unreleased]
 
 ### Added
+- **Self-billing invoices (`invoice@2`, issued).** Some platforms that pay you (Freemius, Paddle) issue an invoice
+  in your name for each payout. A source can now deliver those as invoices you issued, with the platform as the
+  customer and the billed period, so a bookkeeping app files them on the right side.
 - **Stripe fee invoices (experimental source).** Stripe bills its fees with a monthly invoice that only exists
   as a PDF in its dashboard. The new source downloads them all, with their number, issue date, billed period and
   the account they belong to. Marked experimental until it has been run end to end against a real account.

@@ -81,6 +81,8 @@ const RESERVED = new Set([
   'issueDate', 'operationDate', 'periodStart', 'periodEnd', 'reverseCharge', 'corrected', 'recipientTaxId',
   'issuerName', 'issuerTaxId', 'issuerCountry', 'subtotal', 'taxes', 'correctsNumber', 'correctsDate',
   'accountId', 'accountLabel',
+  // invoice@2 issued (self-billing): the flow and the platform as recipient {name,taxId,country,address}
+  'flow', 'recipientName', 'recipientCountry', 'recipientAddress',
 ]);
 
 export function buildRecord(d, adapter) {
@@ -221,8 +223,9 @@ const TRADE_SIDES = new Set(['buy', 'sell', 'dividend', 'split', 'transfer_in', 
 // income, never a movement. Distinct from `deposit` (cash paid INTO the account).
 const CASH_KINDS = new Set(['interest', 'deposit', 'withdrawal', 'fee', 'tax', 'term_deposit', 'other']);
 const enumOf = (set, v) => { if (v == null || v === '') return undefined; const s = String(v).toLowerCase().replace(/[\s-]+/g, '_'); return set.has(s) ? s : v; };
-// invoice@2 — a RECEIVED invoice (the only flow so far: documents from services with no API, such as Stripe's
-// monthly fee invoices). Shape agreed with Cuéntamo: `_schema` on every record so the consumer never guesses
+// invoice@2 — a RECEIVED invoice (documents from services with no API, such as Stripe's monthly fee invoices),
+// or an ISSUED one when the source declares `flow: 'issued'` (a self-billing invoice a platform issues in the
+// user's name: the platform goes in `recipient`, the user in `issuer` only if the dashboard states it). Shape agreed with Cuéntamo: `_schema` on every record so the consumer never guesses
 // from the shape; amounts, currency and taxes only when the source has them (absent, never zero or a default
 // EUR — the consumer reads them from the PDF otherwise); the billed period with an INCLUSIVE end.
 function buildInvoice2(d, adapter, groupLabel) {
@@ -234,16 +237,19 @@ function buildInvoice2(d, adapter, groupLabel) {
   const issuer = pruneScalars({ name: d.issuerName ?? (typeof d.issuer === 'string' ? d.issuer : undefined), taxId: d.issuerTaxId, country: d.issuerCountry, address: d.issuerAddress });
   const amt = d.total ?? d.subtotal;
   const currency = d.currency || (adapter && adapter.currency) || curOf(amt) || undefined;
+  const flow = d.flow === 'issued' ? 'issued' : 'received';
+  const recipient = flow === 'issued' ? pruneScalars({ name: d.recipientName, taxId: d.recipientTaxId, country: d.recipientCountry, address: d.recipientAddress }) : {};
   const r = pruneScalars({
-    _schema: 'invoice@2', internalId: d.internalId, flow: 'received',
+    _schema: 'invoice@2', internalId: d.internalId, flow,
     number: d.number ?? d.internalId, issueDate, date: issueDate,
     operationDate: d.operationDate != null && d.operationDate !== '' ? dayOf(d.operationDate) : undefined,
-    recipientTaxId: d.recipientTaxId,
+    recipientTaxId: flow === 'received' ? d.recipientTaxId : undefined,
     currency, subtotal: money(d.subtotal), total: money(d.total), exchangeRate: num(d.exchangeRate),
     correctsNumber: d.correctsNumber, correctsDate: d.correctsDate != null && d.correctsDate !== '' ? dayOf(d.correctsDate) : undefined,
     description: d.description, category: d.category, source: d.source, type: d.type,
   });
   if (Object.keys(issuer).length) r.issuer = issuer;
+  if (Object.keys(recipient).length) r.recipient = recipient;
   if (typeof d.reverseCharge === 'boolean') r.reverseCharge = d.reverseCharge;
   if (typeof d.corrected === 'boolean') r.corrected = d.corrected;
   if (Array.isArray(d.taxes) && d.taxes.length) r.taxes = d.taxes;
