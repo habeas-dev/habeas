@@ -62,7 +62,11 @@ test('stripe-fees: lists the open account\'s fee invoices as invoice@2 received 
   assert.equal(r._schema, 'invoice@2');
   assert.equal(r.flow, 'received');
   assert.equal(r.number, 'EXAMPLE1-2026-09');
-  assert.equal(r.issueDate, '2026-10-05');
+  // The PDF's Invoice Date is the LAST day of the service month (verified on three real invoices), not the day
+  // Stripe generates it (createdString, the 5th of the next month) — which matters for the VAT quarter.
+  assert.equal(r.issueDate, '2026-09-30');
+  assert.equal(r.extra.generatedDate, '2026-10-05');
+  assert.equal(r.issuer.taxId, 'IE3206488LH');
   assert.deepEqual(r.servicePeriod, { start: '2026-09-01', end: '2026-09-30' });
   assert.equal(r.recipientTaxId, 'ESX0000000X');
   assert.equal(r.reverseCharge, false);

@@ -5,20 +5,44 @@
   "trust": "first-party",
   "beta": true,
   "credit": {
-    "author": { "name": "David Marín", "url": "https://davefx.com" },
-    "capture": { "name": "David Marín", "url": "https://davefx.com" }
+    "author": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    },
+    "capture": {
+      "name": "David Marín",
+      "url": "https://davefx.com"
+    }
   },
   "domain": "stripe.com",
-  "categories": ["banking"],
-  "crossDomainHosts": ["stripe-tax-docs.s3.amazonaws.com"],
-  "match": ["https://dashboard.stripe.com/*"],
+  "categories": [
+    "banking"
+  ],
+  "crossDomainHosts": [
+    "stripe-tax-docs.s3.amazonaws.com"
+  ],
+  "match": [
+    "https://dashboard.stripe.com/*"
+  ],
   "openUrl": "https://dashboard.stripe.com/settings/plans-and-fees/invoice-history",
   "auth": {
     "mode": "bearer",
     "tokenMatch": "^Bearer uk_[A-Za-z0-9_]{20,}$",
-    "replayHeaders": ["authorization", "stripe-account", "stripe-livemode"],
-    "capturePaths": ["/v1/"],
-    "context": [{ "name": "acct", "from": "url", "match": "/v1/accounts/(acct_[A-Za-z0-9]+)" }],
+    "replayHeaders": [
+      "authorization",
+      "stripe-account",
+      "stripe-livemode"
+    ],
+    "capturePaths": [
+      "/v1/"
+    ],
+    "context": [
+      {
+        "name": "acct",
+        "from": "url",
+        "match": "/v1/accounts/(acct_[A-Za-z0-9]+)"
+      }
+    ],
     "loginUrl": "https://dashboard.stripe.com/login"
   },
   "api": {
@@ -26,19 +50,25 @@
     "groups": {
       "path": "/v1/accounts/{ctx.acct}",
       "itemsPath": "",
-      "fields": { "id": "id", "label": "settings.dashboard.display_name" }
+      "fields": {
+        "id": "id",
+        "label": "settings.dashboard.display_name"
+      }
     },
     "list": {
       "path": "/v1/settings/plans_and_fees/invoice_history_documents",
       "paging": "none",
       "itemsPath": "data"
     },
-    "pdf": { "path": "/download/tax/vat/{internalId}" }
+    "pdf": {
+      "path": "/download/tax/vat/{internalId}"
+    }
   },
   "fields": {
     "internalId": "token",
     "number": "invoiceNumber",
-    "date": "createdString",
+    "date": "periodEndExclusive",
+    "generatedDate": "createdString",
     "description": "description",
     "periodStart": "periodStartInclusive",
     "periodEnd": "periodEndExclusive",
@@ -46,10 +76,21 @@
     "corrected": "corrected",
     "credited": "credited",
     "recipientTaxId": "regenerationDetails.vatId",
-    "issuerName": { "const": "Stripe Payments Europe, Limited" },
-    "issuerCountry": { "const": "IE" },
-    "type": { "const": "fee_invoice" },
-    "category": { "const": "banking" }
+    "issuerName": {
+      "const": "Stripe Payments Europe, Limited"
+    },
+    "issuerTaxId": {
+      "const": "IE3206488LH"
+    },
+    "issuerCountry": {
+      "const": "IE"
+    },
+    "type": {
+      "const": "fee_invoice"
+    },
+    "category": {
+      "const": "banking"
+    }
   },
   "schema": "invoice@2",
   "minVersion": "0.10.11.8",

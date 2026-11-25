@@ -72,7 +72,7 @@ try {
   check('each record is an invoice@2 received invoice', recs.length > 0 && recs.every((r) => r._schema === 'invoice@2' && r.flow === 'received'));
   const sep = recs.find((r) => /-2026-09$/.test(r.number || ''));
   check('number, issue date, inclusive billed period and reverse charge come through',
-    sep && sep.issueDate === '2026-10-05' && sep.servicePeriod && sep.servicePeriod.start === '2026-09-01' && sep.servicePeriod.end === '2026-09-30' && sep.reverseCharge === true,
+    sep && sep.issueDate === '2026-09-30' && sep.issuer && sep.issuer.taxId === 'IE3206488LH' && sep.servicePeriod && sep.servicePeriod.start === '2026-09-01' && sep.servicePeriod.end === '2026-09-30' && sep.reverseCharge === true,
     JSON.stringify(sep && { number: sep.number, issueDate: sep.issueDate, servicePeriod: sep.servicePeriod, reverseCharge: sep.reverseCharge }));
   check('each record names the account it came from', recs.length > 0 && recs.every((r) => r.account && /^acct_/.test(r.account.id) && r.account.label), JSON.stringify(recs[0] && recs[0].account));
   check('no amounts are invented (the list has none)', recs.every((r) => !('total' in r) && !('currency' in r) && !('taxes' in r)));
