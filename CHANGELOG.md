@@ -10,6 +10,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+## [0.10.13] — 2026-11-26
+
 ### Fixed
 - **Stripe fee invoices from every account in your profile.** The source only looked at the account open in the
   dashboard, so with several accounts it could find nothing while the invoices sat in another one. It now lists
