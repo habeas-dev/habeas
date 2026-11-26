@@ -204,7 +204,7 @@
     "@type": "WebPage",
     "@id": "https://habeas.dev/es/descargar/extractos-trade-republic.html"
   },
-  "dateModified": "2026-09-02",
+  "dateModified": "2026-11-26",
   "author": {
     "@type": "Person",
     "name": "David Marín",
@@ -270,7 +270,7 @@
       <div class="card">
         <h2>Sobre esta fuente</h2>
         <dl>
-          <dt>Versión</dt><dd>2026-09-02</dd>
+          <dt>Versión</dt><dd>2026-11-26.1</dd>
           <dt>Confianza</dt><dd>first-party</dd>
           <dt>Cobertura</dt><dd>global</dd>
           <dt>Licencia</dt><dd>CC0-1.0</dd>
@@ -313,8 +313,8 @@
     &quot;banking&quot;,
     &quot;investment&quot;
   ],
-  &quot;version&quot;: &quot;2026-09-02&quot;,
-  &quot;minVersion&quot;: &quot;0.10.6&quot;,
+  &quot;version&quot;: &quot;2026-11-26.1&quot;,
+  &quot;minVersion&quot;: &quot;0.10.13.1&quot;,
   &quot;keepRaw&quot;: true,
   &quot;match&quot;: [
     &quot;https://app.traderepublic.com/*&quot;
@@ -348,7 +348,8 @@
             &quot;from&quot;: &quot;type&quot;,
             &quot;map&quot;: {
               &quot;TRADING_SAVINGSPLAN_EXECUTED&quot;: &quot;buy&quot;,
-              &quot;SAVINGS_PLAN_EXECUTED&quot;: &quot;buy&quot;
+              &quot;SAVINGS_PLAN_EXECUTED&quot;: &quot;buy&quot;,
+              &quot;IPO_SUBSCRIPTION_ALLOCATION&quot;: &quot;buy&quot;
             }
           },
           &quot;kind&quot;: {
@@ -386,6 +387,12 @@
             &quot;idParam&quot;: &quot;id&quot;,
             &quot;attachAs&quot;: &quot;detail&quot;,
             &quot;max&quot;: 2000
+          },
+          &quot;keep&quot;: {
+            &quot;field&quot;: &quot;eventType&quot;,
+            &quot;exclude&quot;: [
+              &quot;IPO_SUBSCRIPTION_CREATED&quot;
+            ]
           }
         }
       },
@@ -398,10 +405,23 @@
         &quot;counterparty&quot;: &quot;title&quot;,
         &quot;instrumentName&quot;: &quot;title&quot;,
         &quot;type&quot;: &quot;eventType&quot;,
+        &quot;side&quot;: [
+          &quot;detail.sections[title=Overview].data[title=Buy].title&quot;,
+          &quot;detail.sections[title=Overview].data[title=Sell].title&quot;
+        ],
         &quot;settlementAccount&quot;: &quot;cashAccountNumber&quot;,
-        &quot;units&quot;: &quot;detail.sections[title=Transaction].data[title=Shares].detail.text&quot;,
-        &quot;price&quot;: &quot;detail.sections[title=Transaction].data[title=Share price].detail.text&quot;,
-        &quot;commission&quot;: &quot;detail.sections[title=Transaction].data[title=Fee].detail.text&quot;
+        &quot;units&quot;: [
+          &quot;detail.sections[title=Transaction].data[title=Shares].detail.text&quot;,
+          &quot;detail.sections[title=Overview].data[title=Transaction].detail.action.payload.sections[type=table].data[title=Shares].detail.text&quot;
+        ],
+        &quot;price&quot;: [
+          &quot;detail.sections[title=Transaction].data[title=Share price].detail.text&quot;,
+          &quot;detail.sections[title=Overview].data[title=Transaction].detail.action.payload.sections[type=table].data[title=Share price].detail.text&quot;
+        ],
+        &quot;commission&quot;: [
+          &quot;detail.sections[title=Transaction].data[title=Fee].detail.text&quot;,
+          &quot;detail.sections[title=Overview].data[title=Fee].detail.text&quot;
+        ]
       }
     },
     {
@@ -469,6 +489,13 @@
     }
   ],
   &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-11-26.1&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Buy and sell orders and IPO allocations now arrive as trades, with their shares, price and fee; until now only savings plans did. An IPO subscription request is no longer delivered on its own: it only reserves cash, and what you are actually charged comes with the allocation. Orders from before the current Trade Republic layout are left as they were, so that what your app already imported from Trade Republic's own export is not booked twice.&quot;,
+        &quot;es&quot;: &quot;Las órdenes de compra y venta y las asignaciones de una OPV llegan ahora como operaciones, con sus acciones, precio y comisión; hasta ahora solo llegaban los planes de ahorro. La solicitud de suscripción a una OPV ya no se envía por separado: solo reserva efectivo, y lo que realmente se te cobra llega con la asignación. Las órdenes anteriores al formato actual de Trade Republic se quedan como estaban, para que lo que tu aplicación ya importó del propio export de Trade Republic no se apunte dos veces.&quot;
+      }
+    },
     {
       &quot;version&quot;: &quot;2026-09-02&quot;,
       &quot;changes&quot;: {
@@ -610,11 +637,11 @@
       <h2>Qué ha cambiado en esta fuente</h2>
       <p>Esta fuente es una definición pública y cada cambio queda registrado. De lo más reciente a lo más antiguo:</p>
       <ul class="changelog">
+        <li class="rev"><span class="ver">2026-11-26.1</span> — Las órdenes de compra y venta y las asignaciones de una OPV llegan ahora como operaciones, con sus acciones, precio y comisión; hasta ahora solo llegaban los planes de ahorro. La solicitud de suscripción a una OPV ya no se envía por separado: solo reserva efectivo, y lo que realmente se te cobra llega con la asignación. Las órdenes anteriores al formato actual de Trade Republic se quedan como estaban, para que lo que tu aplicación ya importó del propio export de Trade Republic no se apunte dos veces.</li>
         <li class="rev"><span class="ver">2026-09-02</span> — Habeas espera ahora a que tu cartera esté realmente abierta antes de pedirle nada a Trade Republic. Tus movimientos sólo existen detrás de esa página, así que un intento desde la pantalla de acceso o desde cualquier otro sitio no podía funcionar — y hacerlo igualmente molesta a una sesión recién abierta. No se pide nada hasta que estés en ella.</li>
         <li class="rev"><span class="ver">2026-08-26.1</span> — Confianza elevada a first-party: escrita y verificada contra el servicio real por el proyecto, no una aportación sin revisar. La etiqueta describe procedencia, no permisos — la guardia de mismo dominio, la pantalla de consentimiento y las demás reglas se aplican igual diga lo que diga.</li>
         <li class="rev"><span class="ver">2026-08-26</span> — Registra la autoría: la sesión la grabó y la definición la escribió el mantenedor. No cambia la extracción.</li>
         <li class="rev"><span class="ver">2026-08-08</span> — Sin cambios en lo que extrae esta fuente. Esta versión le dio su página de guía en habeas.dev.</li>
-        <li class="rev"><span class="ver">2026-07-17</span> — Las operaciones llegan ahora con el número de títulos, el precio y la comisión como cifras separadas, en vez de solo como texto. Requiere Habeas 0.3.0.24 o posterior.</li>
       </ul>
       <p class="lead"><a href="undefined#traderepublic">Ver el historial completo en el catálogo →</a></p>
 

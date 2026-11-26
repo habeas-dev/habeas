@@ -204,7 +204,7 @@
     "@type": "WebPage",
     "@id": "https://habeas.dev/download/trade-republic-statements.html"
   },
-  "dateModified": "2026-09-02",
+  "dateModified": "2026-11-26",
   "author": {
     "@type": "Person",
     "name": "David Marín",
@@ -270,7 +270,7 @@
       <div class="card">
         <h2>About this source</h2>
         <dl>
-          <dt>Version</dt><dd>2026-09-02</dd>
+          <dt>Version</dt><dd>2026-11-26.1</dd>
           <dt>Trust</dt><dd>first-party</dd>
           <dt>Coverage</dt><dd>global</dd>
           <dt>Licence</dt><dd>CC0-1.0</dd>
@@ -313,8 +313,8 @@
     &quot;banking&quot;,
     &quot;investment&quot;
   ],
-  &quot;version&quot;: &quot;2026-09-02&quot;,
-  &quot;minVersion&quot;: &quot;0.10.6&quot;,
+  &quot;version&quot;: &quot;2026-11-26.1&quot;,
+  &quot;minVersion&quot;: &quot;0.10.13.1&quot;,
   &quot;keepRaw&quot;: true,
   &quot;match&quot;: [
     &quot;https://app.traderepublic.com/*&quot;
@@ -348,7 +348,8 @@
             &quot;from&quot;: &quot;type&quot;,
             &quot;map&quot;: {
               &quot;TRADING_SAVINGSPLAN_EXECUTED&quot;: &quot;buy&quot;,
-              &quot;SAVINGS_PLAN_EXECUTED&quot;: &quot;buy&quot;
+              &quot;SAVINGS_PLAN_EXECUTED&quot;: &quot;buy&quot;,
+              &quot;IPO_SUBSCRIPTION_ALLOCATION&quot;: &quot;buy&quot;
             }
           },
           &quot;kind&quot;: {
@@ -386,6 +387,12 @@
             &quot;idParam&quot;: &quot;id&quot;,
             &quot;attachAs&quot;: &quot;detail&quot;,
             &quot;max&quot;: 2000
+          },
+          &quot;keep&quot;: {
+            &quot;field&quot;: &quot;eventType&quot;,
+            &quot;exclude&quot;: [
+              &quot;IPO_SUBSCRIPTION_CREATED&quot;
+            ]
           }
         }
       },
@@ -398,10 +405,23 @@
         &quot;counterparty&quot;: &quot;title&quot;,
         &quot;instrumentName&quot;: &quot;title&quot;,
         &quot;type&quot;: &quot;eventType&quot;,
+        &quot;side&quot;: [
+          &quot;detail.sections[title=Overview].data[title=Buy].title&quot;,
+          &quot;detail.sections[title=Overview].data[title=Sell].title&quot;
+        ],
         &quot;settlementAccount&quot;: &quot;cashAccountNumber&quot;,
-        &quot;units&quot;: &quot;detail.sections[title=Transaction].data[title=Shares].detail.text&quot;,
-        &quot;price&quot;: &quot;detail.sections[title=Transaction].data[title=Share price].detail.text&quot;,
-        &quot;commission&quot;: &quot;detail.sections[title=Transaction].data[title=Fee].detail.text&quot;
+        &quot;units&quot;: [
+          &quot;detail.sections[title=Transaction].data[title=Shares].detail.text&quot;,
+          &quot;detail.sections[title=Overview].data[title=Transaction].detail.action.payload.sections[type=table].data[title=Shares].detail.text&quot;
+        ],
+        &quot;price&quot;: [
+          &quot;detail.sections[title=Transaction].data[title=Share price].detail.text&quot;,
+          &quot;detail.sections[title=Overview].data[title=Transaction].detail.action.payload.sections[type=table].data[title=Share price].detail.text&quot;
+        ],
+        &quot;commission&quot;: [
+          &quot;detail.sections[title=Transaction].data[title=Fee].detail.text&quot;,
+          &quot;detail.sections[title=Overview].data[title=Fee].detail.text&quot;
+        ]
       }
     },
     {
@@ -469,6 +489,13 @@
     }
   ],
   &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-11-26.1&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Buy and sell orders and IPO allocations now arrive as trades, with their shares, price and fee; until now only savings plans did. An IPO subscription request is no longer delivered on its own: it only reserves cash, and what you are actually charged comes with the allocation. Orders from before the current Trade Republic layout are left as they were, so that what your app already imported from Trade Republic's own export is not booked twice.&quot;,
+        &quot;es&quot;: &quot;Las órdenes de compra y venta y las asignaciones de una OPV llegan ahora como operaciones, con sus acciones, precio y comisión; hasta ahora solo llegaban los planes de ahorro. La solicitud de suscripción a una OPV ya no se envía por separado: solo reserva efectivo, y lo que realmente se te cobra llega con la asignación. Las órdenes anteriores al formato actual de Trade Republic se quedan como estaban, para que lo que tu aplicación ya importó del propio export de Trade Republic no se apunte dos veces.&quot;
+      }
+    },
     {
       &quot;version&quot;: &quot;2026-09-02&quot;,
       &quot;changes&quot;: {
@@ -610,11 +637,11 @@
       <h2>What has changed in this source</h2>
       <p>This source is a public definition, and every change to it is on the record. Most recent first:</p>
       <ul class="changelog">
+        <li class="rev"><span class="ver">2026-11-26.1</span> — Buy and sell orders and IPO allocations now arrive as trades, with their shares, price and fee; until now only savings plans did. An IPO subscription request is no longer delivered on its own: it only reserves cash, and what you are actually charged comes with the allocation. Orders from before the current Trade Republic layout are left as they were, so that what your app already imported from Trade Republic's own export is not booked twice.</li>
         <li class="rev"><span class="ver">2026-09-02</span> — Habeas now waits until your portfolio board is actually open before asking Trade Republic for anything. Your transactions only exist behind that page, so an attempt from the login screen or from anywhere else could never work — and asking anyway disturbs a session you have just opened. Nothing is requested until you are on it.</li>
         <li class="rev"><span class="ver">2026-08-26.1</span> — Trust level raised to first-party: written and verified against the real service by the project, not contributed unreviewed. The label describes provenance, not permission — the same-domain guard, the consent screen and every other rule apply identically whatever it says.</li>
         <li class="rev"><span class="ver">2026-08-26</span> — Records authorship: the session was recorded and the definition written by the maintainer. No change to extraction.</li>
         <li class="rev"><span class="ver">2026-08-08</span> — No change to what this source extracts. This version gave it its guide page on habeas.dev.</li>
-        <li class="rev"><span class="ver">2026-07-17</span> — Trades now arrive with the number of shares, the price and the commission as separate figures instead of only as text. Needs Habeas 0.3.0.24 or newer.</li>
       </ul>
       <p class="lead"><a href="undefined#traderepublic">See the full history in the catalog →</a></p>
 
