@@ -158,7 +158,10 @@ async function listInventoryOnce(adapter, auth, net, opts) {
   // the property because it sorts in place.
   const stats = { skippedNoAmount: 0 };
   all.stats = stats;
-    for (const it of (res && res.items) || []) {
+    // `ws.keep`: the same item filter an HTTP list has (list.keep), on the RAW items. Trade Republic's timeline
+    // carries an IPO subscription REQUEST — cash only reserved, netted later in the allocation — which is not
+    // a movement of its own and must not be delivered beside the allocation.
+    for (const it of keepFilter((res && res.items) || [], adapter.api.ws.keep)) {
       const doc = mapDoc(adapter, it, null);
       const id = doc.internalId;
       if (id != null && seen.has(id)) continue;

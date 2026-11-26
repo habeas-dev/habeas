@@ -10,6 +10,14 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
 
 ## [Unreleased]
 
+### Fixed
+- **Trade Republic buy and sell orders and IPO allocations reach your finance app.** Only savings plans were
+  delivered as trades: a one-off order or an IPO allocation arrived without saying whether it was a buy or a sell,
+  so an app such as Cuéntamo could not book it and turned it down. They now arrive as buys or sells with their
+  shares, price and fee. An IPO subscription request is no longer delivered on its own: it only reserves cash, and
+  what you are actually charged comes with the allocation. Behind it, a WebSocket source can now filter its items,
+  as an HTTP one already could.
+
 ## [0.10.13] — 2026-11-26
 
 ### Fixed

@@ -498,6 +498,43 @@
             }
           }
         },
+        "ws": {
+          "type": "object",
+          "description": "WebSocket-API list (Trade Republic): the page-context executor connects to `url`, subscribes with `sub`, follows `cursorPath`/`cursorParam` for up to `maxPages`, optionally fetches one `detail` per item, and returns a flat items array mapped like list rows.",
+          "properties": {
+            "keep": {
+              "description": "Optional filter on the RAW items, the same rules as an HTTP list's keep (values / exclude / present / prefix / match, or an array of rules). E.g. exclude an event that is not a movement of its own.",
+              "oneOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "field"
+                  ],
+                  "properties": {
+                    "field": {
+                      "type": "string"
+                    }
+                  }
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "field"
+                    ],
+                    "properties": {
+                      "field": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "minItems": 1
+                }
+              ]
+            }
+          }
+        },
         "itemsFromKeys": {
           "type": "object",
           "additionalProperties": false,

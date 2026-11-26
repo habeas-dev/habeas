@@ -19,8 +19,8 @@
     "banking",
     "investment"
   ],
-  "version": "2026-09-02",
-  "minVersion": "0.10.6",
+  "version": "2026-11-26",
+  "minVersion": "0.10.13.1",
   "keepRaw": true,
   "match": [
     "https://app.traderepublic.com/*"
@@ -47,6 +47,13 @@
             "re": [
               "^logos/([A-Z]{2}[A-Z0-9]{9}[0-9])/"
             ]
+          },
+          "side": {
+            "from": "subtitle",
+            "re": [
+              "\\b(Buy|Sell)\\b"
+            ],
+            "flags": "i"
           }
         },
         "map": {
@@ -54,7 +61,8 @@
             "from": "type",
             "map": {
               "TRADING_SAVINGSPLAN_EXECUTED": "buy",
-              "SAVINGS_PLAN_EXECUTED": "buy"
+              "SAVINGS_PLAN_EXECUTED": "buy",
+              "IPO_SUBSCRIPTION_ALLOCATION": "buy"
             }
           },
           "kind": {
@@ -92,6 +100,12 @@
             "idParam": "id",
             "attachAs": "detail",
             "max": 2000
+          },
+          "keep": {
+            "field": "eventType",
+            "exclude": [
+              "IPO_SUBSCRIPTION_CREATED"
+            ]
           }
         }
       },
@@ -105,9 +119,18 @@
         "instrumentName": "title",
         "type": "eventType",
         "settlementAccount": "cashAccountNumber",
-        "units": "detail.sections[title=Transaction].data[title=Shares].detail.text",
-        "price": "detail.sections[title=Transaction].data[title=Share price].detail.text",
-        "commission": "detail.sections[title=Transaction].data[title=Fee].detail.text"
+        "units": [
+          "detail.sections[title=Transaction].data[title=Shares].detail.text",
+          "detail.sections[title=Overview].data[title=Transaction].detail.action.payload.sections[type=table].data[title=Shares].detail.text"
+        ],
+        "price": [
+          "detail.sections[title=Transaction].data[title=Share price].detail.text",
+          "detail.sections[title=Overview].data[title=Transaction].detail.action.payload.sections[type=table].data[title=Share price].detail.text"
+        ],
+        "commission": [
+          "detail.sections[title=Transaction].data[title=Fee].detail.text",
+          "detail.sections[title=Overview].data[title=Fee].detail.text"
+        ]
       }
     },
     {
@@ -175,6 +198,13 @@
     }
   ],
   "changelog": [
+    {
+      "version": "2026-11-26",
+      "changes": {
+        "en": "Buy and sell orders and IPO allocations now arrive as trades, with their shares, price and fee; until now only savings plans did. An IPO subscription request is no longer delivered on its own: it only reserves cash, and what you are actually charged comes with the allocation.",
+        "es": "Las órdenes de compra y venta y las asignaciones de una OPV llegan ahora como operaciones, con sus acciones, precio y comisión; hasta ahora solo llegaban los planes de ahorro. La solicitud de suscripción a una OPV ya no se envía por separado: solo reserva efectivo, y lo que realmente se te cobra llega con la asignación."
+      }
+    },
     {
       "version": "2026-09-02",
       "changes": {

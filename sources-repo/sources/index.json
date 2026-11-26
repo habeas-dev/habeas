@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-26T04:35:05.466Z",
+  "generated": "2026-11-26T12:56:50.663Z",
   "sources": [
     {
       "id": "aliexpress",
@@ -947,7 +947,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/payoneer.json",
-      "updated": "2026-11-25T14:10:47+01:00",
+      "updated": "2026-11-26T05:35:18+01:00",
       "behaviourHash": "0c6b61ff72bf137c"
     },
     {
@@ -1433,7 +1433,7 @@
         }
       ],
       "url": "https://habeas-dev.github.io/sources/stripe-fees.json",
-      "updated": "2026-11-25T18:59:44+01:00",
+      "updated": "2026-11-26T05:35:18+01:00",
       "behaviourHash": "937152e5f2034186"
     },
     {
@@ -1450,11 +1450,18 @@
       "country": "global",
       "formats": [],
       "crossDomain": [],
-      "version": "2026-09-02",
-      "minVersion": "0.10.6",
+      "version": "2026-11-26",
+      "minVersion": "0.10.13.1",
       "gaps": [],
       "contributors": [],
       "changelog": [
+        {
+          "version": "2026-11-26",
+          "changes": {
+            "en": "Buy and sell orders and IPO allocations now arrive as trades, with their shares, price and fee; until now only savings plans did. An IPO subscription request is no longer delivered on its own: it only reserves cash, and what you are actually charged comes with the allocation.",
+            "es": "Las órdenes de compra y venta y las asignaciones de una OPV llegan ahora como operaciones, con sus acciones, precio y comisión; hasta ahora solo llegaban los planes de ahorro. La solicitud de suscripción a una OPV ya no se envía por separado: solo reserva efectivo, y lo que realmente se te cobra llega con la asignación."
+          }
+        },
         {
           "version": "2026-09-02",
           "changes": {
@@ -1528,7 +1535,7 @@
       ],
       "url": "https://habeas-dev.github.io/sources/traderepublic.json",
       "updated": "2026-09-02T14:02:23+02:00",
-      "behaviourHash": "3682c9c4d4c51cd4"
+      "behaviourHash": "6b47e850caa88c12"
     },
     {
       "id": "wizink-es",

@@ -62,7 +62,8 @@ test('Trade Republic declares the gate, on the board page', async () => {
   assert.equal(src.auth.readyStrict, true);
   assert.equal(readyGateBlocks(src, 'https://app.traderepublic.com/boards/abc-123'), false, 'the board is ready');
   assert.equal(readyGateBlocks(src, 'https://app.traderepublic.com/login'), true, 'the login screen is not');
-  assert.ok(src.minVersion >= '0.10.6', 'gated to the build that understands readyStrict, or older installs ignore it');
+  const { cmpVersion } = await import('../src/lib/version.js'); // numerically: as text, "0.10.13" < "0.10.6"
+  assert.ok(cmpVersion(src.minVersion, '0.10.6') >= 0, 'gated to the build that understands readyStrict, or older installs ignore it');
 });
 
 test('the run is refused softly, and the sweep does not try to fix it by opening a tab', async () => {
