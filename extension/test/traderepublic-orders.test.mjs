@@ -64,6 +64,9 @@ const ITEMS = [
   item('ipo-req', 'IPO_SUBSCRIPTION_CREATED', 'Subscription', -101, undefined),
   item('ipo-alloc', 'IPO_SUBSCRIPTION_ALLOCATION', 'IPO', -13.123456, orderDetail('ipo-alloc', 'IPO Subscription', 1, '€12.123456', '€1.00', '€13.12')),
   item('plan1', 'TRADING_SAVINGSPLAN_EXECUTED', 'Savings Plan executed', -25, undefined),
+  // The OLDER layout (2024): TRADE_INVOICE, Overview { Status, Order Type, Asset }, same "Buy Order" subtitle.
+  item('old1', 'TRADE_INVOICE', 'Buy Order', -60, { id: 'old1', sections: [{ type: 'table', title: 'Overview',
+    data: [row('Status', 'Executed'), row('Order Type', 'Buy'), row('Asset', 'Example Corp')] }] }),
 ];
 
 const byId = async () => Object.fromEntries((await listInventory(EFF, auth, mkNet(ITEMS), {})).map((d) => [d.internalId, d.record]));
@@ -106,4 +109,12 @@ test('savings plans keep working as before', async () => {
   const r = (await byId()).plan1;
   assert.equal(r.side, 'buy');
   assert.equal(r.netAmount, -25);
+});
+
+test('an older-layout order keeps its previous behaviour: not turned into a trade by this change', async () => {
+  // Those events predate the WebSocket source and a consumer may already hold them from Trade Republic's own
+  // CSV export, under that file's references (split per execution lot), which a Habeas id can never match:
+  // turning them into trades now would book every one of them twice. Only the current layout is read.
+  const r = (await byId()).old1;
+  assert.notEqual(r.side, 'buy');
 });

@@ -16,7 +16,8 @@ Older detail (0.1.x public beta) lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.m
   so an app such as Cuéntamo could not book it and turned it down. They now arrive as buys or sells with their
   shares, price and fee. An IPO subscription request is no longer delivered on its own: it only reserves cash, and
   what you are actually charged comes with the allocation. Behind it, a WebSocket source can now filter its items,
-  as an HTTP one already could.
+  as an HTTP one already could. Orders in Trade Republic's older layout are left as they were, so that what an app
+  already imported from Trade Republic's own export is not booked twice.
 
 ## [0.10.13] — 2026-11-26
 

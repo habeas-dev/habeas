@@ -19,7 +19,7 @@
     "banking",
     "investment"
   ],
-  "version": "2026-11-26",
+  "version": "2026-11-26.1",
   "minVersion": "0.10.13.1",
   "keepRaw": true,
   "match": [
@@ -47,13 +47,6 @@
             "re": [
               "^logos/([A-Z]{2}[A-Z0-9]{9}[0-9])/"
             ]
-          },
-          "side": {
-            "from": "subtitle",
-            "re": [
-              "\\b(Buy|Sell)\\b"
-            ],
-            "flags": "i"
           }
         },
         "map": {
@@ -118,6 +111,10 @@
         "counterparty": "title",
         "instrumentName": "title",
         "type": "eventType",
+        "side": [
+          "detail.sections[title=Overview].data[title=Buy].title",
+          "detail.sections[title=Overview].data[title=Sell].title"
+        ],
         "settlementAccount": "cashAccountNumber",
         "units": [
           "detail.sections[title=Transaction].data[title=Shares].detail.text",
@@ -199,10 +196,10 @@
   ],
   "changelog": [
     {
-      "version": "2026-11-26",
+      "version": "2026-11-26.1",
       "changes": {
-        "en": "Buy and sell orders and IPO allocations now arrive as trades, with their shares, price and fee; until now only savings plans did. An IPO subscription request is no longer delivered on its own: it only reserves cash, and what you are actually charged comes with the allocation.",
-        "es": "Las órdenes de compra y venta y las asignaciones de una OPV llegan ahora como operaciones, con sus acciones, precio y comisión; hasta ahora solo llegaban los planes de ahorro. La solicitud de suscripción a una OPV ya no se envía por separado: solo reserva efectivo, y lo que realmente se te cobra llega con la asignación."
+        "en": "Buy and sell orders and IPO allocations now arrive as trades, with their shares, price and fee; until now only savings plans did. An IPO subscription request is no longer delivered on its own: it only reserves cash, and what you are actually charged comes with the allocation. Orders from before the current Trade Republic layout are left as they were, so that what your app already imported from Trade Republic's own export is not booked twice.",
+        "es": "Las órdenes de compra y venta y las asignaciones de una OPV llegan ahora como operaciones, con sus acciones, precio y comisión; hasta ahora solo llegaban los planes de ahorro. La solicitud de suscripción a una OPV ya no se envía por separado: solo reserva efectivo, y lo que realmente se te cobra llega con la asignación. Las órdenes anteriores al formato actual de Trade Republic se quedan como estaban, para que lo que tu aplicación ya importó del propio export de Trade Republic no se apunte dos veces."
       }
     },
     {
