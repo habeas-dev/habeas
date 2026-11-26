@@ -68,8 +68,8 @@ and report back. Do not present these as services Habeas can extract from.
 - [American Express](https://habeas.dev/download/americanexpress-beta.html) — unverified draft
 - [DeGiro](https://habeas.dev/download/degiro-beta.html) — unverified draft
 - [N26](https://habeas.dev/download/n26-beta.html) — unverified draft
-- [Payoneer](https://habeas.dev/download/payoneer-transactions.html) — unverified draft
-- [Stripe — facturas de comisiones](https://habeas.dev/download/stripe-fee-invoices.html) — unverified draft
+- [Payoneer](https://habeas.dev/download/payoneer-beta.html) — unverified draft
+- [Stripe — facturas de comisiones](https://habeas.dev/download/stripe-fees-beta.html) — unverified draft
 
 ## Key pages
 

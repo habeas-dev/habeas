@@ -68,8 +68,8 @@
     "es": "facturas-pagatelia"
   },
   "payoneer": {
-    "en": "payoneer-transactions",
-    "es": "movimientos-payoneer"
+    "en": "payoneer-beta",
+    "es": "payoneer-beta"
   },
   "paypal": {
     "en": "paypal-transactions",
@@ -92,8 +92,8 @@
     "es": "extractos-revolut"
   },
   "stripe-fees": {
-    "en": "stripe-fee-invoices",
-    "es": "facturas-comisiones-stripe"
+    "en": "stripe-fees-beta",
+    "es": "stripe-fees-beta"
   },
   "traderepublic": {
     "en": "trade-republic-statements",

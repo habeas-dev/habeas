@@ -777,9 +777,10 @@ for (const meta of index) {
     const ref = full.attribution?.derivedFrom || 'a published reference';
     for (const lang of Object.keys(LANGS)) {
       const t = LANGS[lang].t, brand = entry.brand;
-      entry[lang] = { ...(entry[lang] || {}), // A slug of its own: the id is already unique and readable, and prefixing it keeps a draft's URL
-        // visibly distinct from a verified guide's.
-        slug: (entry[lang]?.slug) || `${meta.id}-beta`,
+      entry[lang] = { ...(entry[lang] || {}), // A slug of its own, ALWAYS: the id is already unique and readable, and prefixing it keeps a
+        // draft's URL visibly distinct from a verified guide's. A beta source that already carries its future guide
+        // copy (`content.<lang>.slug`) must not take that URL — the guide's slot stays free until it is verified.
+        slug: `${meta.id}-beta`,
         h1: t.betaH1(brand), intro: t.betaIntro(brand), _beta: ref };
     }
   }
