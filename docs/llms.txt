@@ -33,9 +33,9 @@ Every host a source touches must share one registrable domain (eTLD+1), so a ses
 a site can only ever be replayed to that same site. Crossing domains requires an explicit allow-list
 and a consent screen. Sources are declarative data, never code — remote code is impossible under MV3.
 
-## Supported services (21)
+## Supported services (23)
 
-ES: 14 · global: 7
+ES: 14 · global: 9
 
 - [AliExpress](https://habeas.dev/download/aliexpress-orders.html)
 - [Amazon](https://habeas.dev/download/amazon-invoices.html)
@@ -51,15 +51,17 @@ ES: 14 · global: 7
 - [Leroy Merlin España](https://habeas.dev/download/leroy-merlin-receipts.html)
 - [Openbank España](https://habeas.dev/download/openbank-transactions.html)
 - [Pagatelia — facturas](https://habeas.dev/download/pagatelia-invoices.html)
+- [Payoneer](https://habeas.dev/download/payoneer-transactions.html)
 - [PayPal](https://habeas.dev/download/paypal-transactions.html)
 - [Pepe Energy — facturas](https://habeas.dev/download/pepe-energy-invoices.html)
 - [Pepephone — facturas](https://habeas.dev/download/pepephone-invoices.html)
 - [Raisin](https://habeas.dev/download/raisin-statements.html)
 - [Revolut](https://habeas.dev/download/revolut-statements.html)
+- [Stripe — facturas de comisiones](https://habeas.dev/download/stripe-fee-invoices.html)
 - [Trade Republic](https://habeas.dev/download/trade-republic-statements.html)
 - [WiZink España](https://habeas.dev/download/wizink-statements.html)
 
-## Experimental drafts (5)
+## Experimental drafts (3)
 
 Definitions written from public documentation and never run against a real account. They are not
 supported, may not work at all, and exist so that someone who holds such an account can test them
@@ -68,8 +70,6 @@ and report back. Do not present these as services Habeas can extract from.
 - [American Express](https://habeas.dev/download/americanexpress-beta.html) — unverified draft
 - [DeGiro](https://habeas.dev/download/degiro-beta.html) — unverified draft
 - [N26](https://habeas.dev/download/n26-beta.html) — unverified draft
-- [Payoneer](https://habeas.dev/download/payoneer-beta.html) — unverified draft
-- [Stripe — facturas de comisiones](https://habeas.dev/download/stripe-fees-beta.html) — unverified draft
 
 ## Key pages
 

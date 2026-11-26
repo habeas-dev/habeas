@@ -1,15 +1,14 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>How to download your Payoneer transactions — Habeas</title>
-  <meta name="robots" content="noindex,follow" />
-  <meta name="description" content="A draft definition for Payoneer. Habeas downloads them from inside your own browser session, without ever storing your password." />
-  <link rel="canonical" href="https://habeas.dev/download/payoneer-beta.html" />
-  <link rel="alternate" hreflang="en" href="https://habeas.dev/download/payoneer-beta.html" />
-  <link rel="alternate" hreflang="es" href="https://habeas.dev/es/descargar/payoneer-beta.html" />
-  <link rel="alternate" hreflang="x-default" href="https://habeas.dev/download/payoneer-beta.html" />
+  <title>Cómo descargar tus movimientos de Payoneer — Habeas</title>
+  <meta name="description" content="Payoneer solo permite exportar tus movimientos saldo a saldo y mes a mes, y no ofrece una API para tu propia cuenta. Habeas lo descarga todo desde tu propia sesión del navegador, sin guardar tu contraseña." />
+  <link rel="canonical" href="https://habeas.dev/es/descargar/movimientos-payoneer.html" />
+  <link rel="alternate" hreflang="en" href="https://habeas.dev/download/payoneer-transactions.html" />
+  <link rel="alternate" hreflang="es" href="https://habeas.dev/es/descargar/movimientos-payoneer.html" />
+  <link rel="alternate" hreflang="x-default" href="https://habeas.dev/download/payoneer-transactions.html" />
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="stylesheet" href="/style.css" />
   <style>
@@ -35,8 +34,6 @@
     .card dd { margin: 0; word-break: break-word; }
     .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
                  border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
-    .box.warn { border-color: #c2410c66; background: #c2410c14; }
-    .box.warn strong { color: #c2410c; }
     .rev .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em;
                 white-space: nowrap; color: var(--muted, #888); }
     .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
@@ -61,15 +58,91 @@
     .doc a { color: inherit; }
   </style>
   <meta property="og:type" content="article" />
-  <meta property="og:url" content="https://habeas.dev/download/payoneer-beta.html" />
-  <meta property="og:title" content="How to download your Payoneer transactions — Habeas" />
-  <meta property="og:description" content="A draft definition for Payoneer. Habeas downloads them from inside your own browser session, without ever storing your password." />
+  <meta property="og:url" content="https://habeas.dev/es/descargar/movimientos-payoneer.html" />
+  <meta property="og:title" content="Cómo descargar tus movimientos de Payoneer — Habeas" />
+  <meta property="og:description" content="Payoneer solo permite exportar tus movimientos saldo a saldo y mes a mes, y no ofrece una API para tu propia cuenta. Habeas lo descarga todo desde tu propia sesión del navegador, sin guardar tu contraseña." />
   <meta property="og:image" content="https://habeas.dev/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:site_name" content="Habeas" />
   <meta name="twitter:card" content="summary_large_image" />
-
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "inLanguage": "es",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "¿Habeas guarda mi contraseña de Payoneer?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Inicias sesión tú, en la web de siempre, incluido cualquier código de verificación. Habeas reutiliza la sesión que tu navegador ya tiene abierta y nunca lee ni almacena tus credenciales."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Se envían mis datos a algún servidor?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Todo ocurre dentro de tu navegador. Los documentos van solo al destino que tú elijas: una descarga, una carpeta de tu equipo, tu propio Google Drive o Dropbox, o un endpoint que configures."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿En qué formato obtengo los documentos?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Los datos normalizados en un manifiesto, junto con los documentos originales que el servicio ofrezca."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Es gratis?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Sí. Habeas es software libre con licencia AGPL-3.0 y su código es público en GitHub."
+      }
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "inLanguage": "es",
+  "name": "Descarga tus movimientos de Payoneer",
+  "description": "Payoneer solo permite exportar tus movimientos saldo a saldo y mes a mes, y no ofrece una API para tu propia cuenta.",
+  "totalTime": "PT2M",
+  "tool": [
+    {
+      "@type": "HowToTool",
+      "name": "Habeas"
+    }
+  ],
+  "step": [
+    {
+      "@type": "HowToStep",
+      "position": 1,
+      "name": "Inicias sesión tú",
+      "text": "Entras en payoneer.com y te identificas tú, como siempre, con tu MFA o el código que uses."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 2,
+      "name": "Habeas reutiliza esa sesión",
+      "text": "Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 3,
+      "name": "Eliges el destino",
+      "text": "Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio."
+    }
+  ]
+}
+  </script>
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -78,20 +151,20 @@
     {
       "@type": "ListItem",
       "position": 1,
-      "name": "Home",
+      "name": "Inicio",
       "item": "https://habeas.dev/"
     },
     {
       "@type": "ListItem",
       "position": 2,
-      "name": "Guides",
-      "item": "https://habeas.dev/download/"
+      "name": "Guías",
+      "item": "https://habeas.dev/es/descargar/"
     },
     {
       "@type": "ListItem",
       "position": 3,
-      "name": "Payoneer — experimental source, not yet verified",
-      "item": "https://habeas.dev/download/payoneer-beta.html"
+      "name": "Descarga tus movimientos de Payoneer",
+      "item": "https://habeas.dev/es/descargar/movimientos-payoneer.html"
     }
   ]
 }
@@ -100,14 +173,14 @@
 {
   "@context": "https://schema.org",
   "@type": "TechArticle",
-  "inLanguage": "en",
-  "headline": "Payoneer — experimental source, not yet verified",
-  "description": "A draft definition for Payoneer. Habeas downloads them from inside your own browser session, without ever storing your password.",
+  "inLanguage": "es",
+  "headline": "Descarga tus movimientos de Payoneer",
+  "description": "Payoneer solo permite exportar tus movimientos saldo a saldo y mes a mes, y no ofrece una API para tu propia cuenta. Habeas lo descarga todo desde tu propia sesión del navegador, sin guardar tu contraseña.",
   "mainEntityOfPage": {
     "@type": "WebPage",
-    "@id": "https://habeas.dev/download/payoneer-beta.html"
+    "@id": "https://habeas.dev/es/descargar/movimientos-payoneer.html"
   },
-  "dateModified": "2026-11-25",
+  "dateModified": "2026-11-26",
   "author": {
     "@type": "Person",
     "name": "David Marín",
@@ -143,15 +216,15 @@
       </picture>
       <span class="name">Habeas</span>
       <nav>
-        <a href="/">Home</a>
-        <a href="/why-habeas.html">Why Habeas?</a>
-        <a href="/sources.html">Sources</a>
-        <a href="/developers.html">Developers</a>
-        <a href="/architecture.html">Architecture</a>
-        <a href="/privacy.html">Privacy</a>
-        <a href="/terms.html">Terms</a>
+        <a href="/">Inicio</a>
+        <a href="/es/por-que-habeas.html">¿Por qué Habeas?</a>
+        <a href="/sources.html?lang=es">Fuentes</a>
+        <a href="/es/desarrolladores.html">Desarrolladores</a>
+        <a href="/architecture.html">Arquitectura</a>
+        <a href="/es/privacidad.html">Privacidad</a>
+        <a href="/es/terminos.html">Términos</a>
         <a href="https://github.com/habeas-dev/habeas">GitHub</a>
-        <a class="langlink" href="/es/descargar/payoneer-beta.html" hreflang="es" rel="alternate">ES</a>
+        <a class="langlink" href="/download/payoneer-transactions.html" hreflang="en" rel="alternate">EN</a>
       </nav>
     </div>
   </header>
@@ -159,8 +232,8 @@
   <section class="band">
     <div class="wrap">
       <p class="kicker">Payoneer</p>
-      <h1>Payoneer — experimental source, not yet verified</h1>
-      <p class="lead">A draft definition for Payoneer. Nobody has run it against a real account yet, so it may extract nothing at all. This page exists so that somebody who HAS an account can try it and say what happened.</p>
+      <h1>Descarga tus movimientos de Payoneer</h1>
+      <p class="lead">Payoneer solo permite exportar tus movimientos saldo a saldo y mes a mes, y no ofrece una API para tu propia cuenta.</p>
     </div>
   </section>
 
@@ -171,28 +244,28 @@
         <span class="nm">Payoneer</span>
       </div>
       <div class="card">
-        <h2>About this source</h2>
+        <h2>Sobre esta fuente</h2>
         <dl>
-          <dt>Version</dt><dd>2026-11-25</dd>
-          <dt>Trust</dt><dd>first-party</dd>
-          <dt>Coverage</dt><dd>global</dd>
-          <dt>Licence</dt><dd>CC0-1.0</dd>
+          <dt>Versión</dt><dd>2026-11-26</dd>
+          <dt>Confianza</dt><dd>first-party</dd>
+          <dt>Cobertura</dt><dd>global</dd>
+          <dt>Licencia</dt><dd>CC0-1.0</dd>
         </dl>
-        <p class="who"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> recorded their own session and wrote this source definition from it.</p>
-        <p class="note">Definition in the public domain (CC0-1.0); this page’s text CC-BY-4.0.</p>
+        <p class="who"><a href="https://davefx.com" rel="nofollow noopener">David Marín</a> grabó su propia sesión y escribió esta definición a partir de ella.</p>
+        <p class="note">La definición, de dominio público (CC0-1.0); el texto de esta página, CC-BY-4.0.</p>
       </div>
 
-      <aside class="install-cta" aria-label="Install on Chrome">
-      <a class="btn" data-browser="chrome" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="payoneer">Install on Chrome</a>
-      <a class="btn" data-browser="firefox" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="payoneer">Install on Firefox</a>
-      <p class="note">Free and open source (AGPL-3.0). Install it, then turn on the source you need from Settings → Browse sources.</p>
-      <p class="note" data-browser-note="chrome">Chrome will warn you that the extension is not trusted. That happens to any developer account recently registered on the Chrome Web Store, it fades after a few months, and it says nothing about the code — which you can read in full.</p>
+      <aside class="install-cta" aria-label="Instalar en Chrome">
+      <a class="btn" data-browser="chrome" href="https://chromewebstore.google.com/detail/pbpehhngeidokhaokgloaneiibhceiog" data-umami-event="install" data-umami-event-store="chrome" data-umami-event-source="payoneer">Instalar en Chrome</a>
+      <a class="btn" data-browser="firefox" href="https://addons.mozilla.org/firefox/addon/habeas/" data-umami-event="install" data-umami-event-store="firefox" data-umami-event-source="payoneer">Instalar en Firefox</a>
+      <p class="note">Libre y de código abierto (AGPL-3.0). Instálala y activa en Ajustes → Explorar fuentes la que necesites.</p>
+      <p class="note" data-browser-note="chrome">Chrome te avisará de que la extensión no es de confianza. Le ocurre a cualquier cuenta de desarrollador registrada hace poco en la Chrome Web Store, se disipa en unos meses y no dice nada del código, que puedes leer entero.</p>
     </aside>
     <script defer src="/install-cta.js"></script>
 
       <div class="card defn">
-        <h2>The definition itself</h2>
-        <p class="note">A source is data, never code — this is the whole of it.</p>
+        <h2>La definición en sí</h2>
+        <p class="note">Una fuente son datos, nunca código — esto es todo lo que hay.</p>
         <details>
           <summary>payoneer.json</summary>
           <pre>{
@@ -200,7 +273,6 @@
   &quot;name&quot;: &quot;Payoneer&quot;,
   &quot;service&quot;: &quot;payoneer&quot;,
   &quot;trust&quot;: &quot;first-party&quot;,
-  &quot;beta&quot;: true,
   &quot;credit&quot;: {
     &quot;author&quot;: {
       &quot;name&quot;: &quot;David Marín&quot;,
@@ -326,9 +398,16 @@
   },
   &quot;schema&quot;: &quot;transaction@1&quot;,
   &quot;minVersion&quot;: &quot;0.10.11.10&quot;,
-  &quot;version&quot;: &quot;2026-11-25&quot;,
+  &quot;version&quot;: &quot;2026-11-26&quot;,
   &quot;notes&quot;: &quot;Payoneer's dashboard API gives no plain-text description: `Description` is a translation key (ResKey) plus parameters, so the source maps the parameter that names the other party (payer, bank, merchant) and leaves fees (TypeId 24) with none. TypeId seen: 15 incoming payment, 6 payment received (older), 1 withdrawal to bank, 24 fee, 2 outgoing payment, 10 bank-verification deposit, 13 credit. `Date` is the dashboard's local time with no zone; verified against Payoneer's UTC CSV as US Eastern with daylight saving (5 h behind UTC in November, 4 h in August), so the source declares timeZone America/New_York and records carry dateTime with the offset. A withdrawal's amount already includes its fee; the fee is only in the per-item detail (getItemDetailsRawData → activityMainData.Fee), so feeSplit fetches it for each withdrawal and delivers the net transfer plus the fee as a separate movement (`&lt;id&gt;|fee`). Balances come from the monthly-statement picker (currency balances and the USD card balance); a closed old balance that no longer appears there is not listed.&quot;,
   &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-11-26&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Verified against a real account: no longer experimental.&quot;,
+        &quot;es&quot;: &quot;Verificada con una cuenta real: deja de ser experimental.&quot;
+      }
+    },
     {
       &quot;version&quot;: &quot;2026-11-25&quot;,
       &quot;changes&quot;: {
@@ -356,54 +435,66 @@
   &quot;brand&quot;: &quot;Payoneer&quot;
 }</pre>
         </details>
-        <p class="note"><a href="https://habeas-dev.github.io/sources/payoneer.json" rel="noopener">Open the raw file -></a></p>
+        <p class="note"><a href="https://habeas-dev.github.io/sources/payoneer.json" rel="noopener">Abrir el fichero original -></a></p>
       </div>
     </aside>
 
     <div class="body">
-    <div class="box warn">
-      <strong>Do not expect this to work</strong>
-      <p>This source was drafted from a published reference — a map of which endpoints the service uses and what they return — and has never been validated against a live session. Endpoints move, responses change shape, and a definition written from a reference rather than from a capture is a hypothesis. Installing it is safe; the same rules apply as to any other source. It simply may not find anything.</p>
-    </div>
 
-    <h2>What it is meant to extract</h2>
+    <h2>Qué obtienes</h2>
+    <p>Habeas es una extensión de navegador de código abierto que recoge tus documentos de Payoneer y los guarda donde tú digas. De esta fuente extrae:</p>
     <ul>
-      <li>each movement with its date, amount, currency, description and counterparty</li>
+        <li><strong>movimientos</strong> — cada movimiento con su fecha, importe, moneda, concepto y contraparte.</li>
     </ul>
+    <h2>Cómo funciona</h2>
+    <p>No es un servicio que se conecte a payoneer.com por su cuenta. Funciona <strong>dentro de tu propio navegador</strong>, aprovechando la sesión que ya tienes abierta:</p>
+    <ol class="steps">
+      <li class="step"><h3>Inicias sesión tú</h3><p>Entras en payoneer.com y te identificas tú, como siempre, con tu MFA o el código que uses.</p></li>
+      <li class="step"><h3>Habeas reutiliza esa sesión</h3><p>Habeas reutiliza esa sesión ya autenticada para pedir tus documentos igual que lo hace la propia web.</p></li>
+      <li class="step"><h3>Eliges el destino</h3><p>Eliges el destino: descarga, carpeta local, tu Google Drive, Dropbox, WebDAV, S3 o un endpoint propio.</p></li>
+    </ol>
+    <p><strong>Tu contraseña nunca se lee, ni se guarda, ni se envía a ningún sitio</strong>, y no hay ningún proceso trabajando en segundo plano mientras no estás. Es una fuente <strong>auditada</strong> por el proyecto y verificada contra el servicio real.</p>
 
-    <h2>If you have an account here</h2>
-    <p>Install it, run it once, and open an issue with what happened — including &quot;nothing at all&quot;, which is the most useful answer of the three. That is how a draft becomes a verified source, and it is the only way: the project cannot test an account it does not have.</p>
 
+    <h2>Preguntas frecuentes</h2>
+    <h3>¿Habeas guarda mi contraseña de Payoneer?</h3>
+    <p>No. Inicias sesión tú, en la web de siempre, incluido cualquier código de verificación. Habeas reutiliza la sesión que tu navegador ya tiene abierta y nunca lee ni almacena tus credenciales.</p>
+    <h3>¿Se envían mis datos a algún servidor?</h3>
+    <p>No. Todo ocurre dentro de tu navegador. Los documentos van solo al destino que tú elijas: una descarga, una carpeta de tu equipo, tu propio Google Drive o Dropbox, o un endpoint que configures.</p>
+    <h3>¿En qué formato obtengo los documentos?</h3>
+    <p>Los datos normalizados en un manifiesto, junto con los documentos originales que el servicio ofrezca.</p>
+    <h3>¿Es gratis?</h3>
+    <p>Sí. Habeas es software libre con licencia AGPL-3.0 y su código es público en GitHub.</p>
 
-
-      <h2>What has changed in this source</h2>
-      <p>This source is a public definition, and every change to it is on the record. Most recent first:</p>
+      <h2>Qué ha cambiado en esta fuente</h2>
+      <p>Esta fuente es una definición pública y cada cambio queda registrado. De lo más reciente a lo más antiguo:</p>
       <ul class="changelog">
-        <li class="rev"><span class="ver">2026-11-25</span> — First version: the movements of every Payoneer currency balance, each balance as its own account.</li>
+        <li class="rev"><span class="ver">2026-11-26</span> — Verificada con una cuenta real: deja de ser experimental.</li>
+        <li class="rev"><span class="ver">2026-11-25</span> — Primera versión: los movimientos de cada saldo en divisa de Payoneer, cada saldo como una cuenta.</li>
       </ul>
 
-    <h2>More banks, cards &amp; investments guides</h2>
+    <h2>Más guías de bancos, tarjetas e inversión</h2>
     <ul>
-      <li><a href="/download/americanexpress-beta.html">American Express — experimental source, not yet verified</a></li>
-      <li><a href="/download/caixabank-consumer-statements.html">Download all your CaixaBank Consumer statements at once</a></li>
-      <li><a href="/download/degiro-beta.html">DeGiro — experimental source, not yet verified</a></li>
-      <li><a href="/download/financiera-el-corte-ingles-statements.html">Download all your Financiera El Corte Inglés transactions and statements at once</a></li>
-      <li><a href="/download/ing-transactions.html">Download all your ING transactions and statements at once</a></li>
-      <li><a href="/download/n26-beta.html">N26 — experimental source, not yet verified</a></li>
-      <li><a href="/download/openbank-transactions.html">Download all your Openbank transactions and statements at once</a></li>
-      <li><a href="/download/paypal-transactions.html">Download all your PayPal transaction history at once</a></li>
-      <li><a href="/download/raisin-statements.html">Download all your Raisin transactions, deposits and documents at once</a></li>
-      <li><a href="/download/revolut-statements.html">Download all your Revolut transactions and statements at once</a></li>
-      <li><a href="/download/stripe-fees-beta.html">Stripe — experimental source, not yet verified</a></li>
-      <li><a href="/download/trade-republic-statements.html">Download all your Trade Republic transactions and statements at once</a></li>
-      <li><a href="/download/wizink-statements.html">Download all your WiZink transactions and statements at once</a></li>
+      <li><a href="/es/descargar/americanexpress-beta.html">American Express — fuente experimental, sin verificar</a></li>
+      <li><a href="/es/descargar/extractos-caixabank-consumer.html">Descarga todos tus extractos de CaixaBank Consumer de una vez</a></li>
+      <li><a href="/es/descargar/degiro-beta.html">DeGiro — fuente experimental, sin verificar</a></li>
+      <li><a href="/es/descargar/extractos-financiera-el-corte-ingles.html">Descarga todos tus movimientos y extractos de Financiera El Corte Inglés de una vez</a></li>
+      <li><a href="/es/descargar/movimientos-ing.html">Descarga todos tus movimientos y extractos de ING de una vez</a></li>
+      <li><a href="/es/descargar/n26-beta.html">N26 — fuente experimental, sin verificar</a></li>
+      <li><a href="/es/descargar/movimientos-openbank.html">Descarga todos tus movimientos y extractos de Openbank de una vez</a></li>
+      <li><a href="/es/descargar/movimientos-paypal.html">Descarga todos tus movimientos de PayPal de una vez</a></li>
+      <li><a href="/es/descargar/extractos-raisin.html">Descarga todos tus movimientos, depósitos y documentos de Raisin de una vez</a></li>
+      <li><a href="/es/descargar/extractos-revolut.html">Descarga todos tus movimientos y extractos de Revolut de una vez</a></li>
+      <li><a href="/es/descargar/facturas-comisiones-stripe.html">Descarga todas tus facturas de comisiones de Stripe de una vez</a></li>
+      <li><a href="/es/descargar/extractos-trade-republic.html">Descarga todos tus movimientos y extractos de Trade Republic de una vez</a></li>
+      <li><a href="/es/descargar/extractos-wizink.html">Descarga todos tus movimientos y extractos de WiZink de una vez</a></li>
     </ul>
 
-    <h2>Your service is not on the list?</h2>
-    <p>Habeas can learn a new one <strong>without any code</strong>. Record mode watches the site’s own API while you browse it normally and drafts the source for you; you test it against your own account, and then keep it to yourself or share it so everyone gets it. That is where most of the catalog came from.</p>
+    <h2>¿Tu servicio no está en la lista?</h2>
+    <p>Habeas puede aprender uno nuevo <strong>sin programar nada</strong>. El modo grabación observa la propia API del sitio mientras navegas con normalidad y te redacta la fuente; la pruebas contra tu propia cuenta y luego te la quedas o la compartes para que la tenga todo el mundo. De ahí sale la mayor parte del catálogo.</p>
 
-    <h2>Other sources</h2>
-    <p>Habeas works with more Spanish and international services. <a href="/sources.html">See the full catalog</a> or read <a href="/why-habeas.html">why Habeas exists</a>.</p>
+    <h2>Otras fuentes</h2>
+    <p>Habeas funciona con más servicios españoles e internacionales. <a href="/sources.html?lang=es">Mira el catálogo completo</a> o lee <a href="/es/por-que-habeas.html">por qué existe Habeas</a>.</p>
     </div>
   </main>
 </body>

@@ -4,12 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>How to download your Stripe fee invoices — Habeas</title>
-  <meta name="robots" content="noindex,follow" />
-  <meta name="description" content="A draft definition for Stripe. Habeas downloads them from inside your own browser session, without ever storing your password." />
-  <link rel="canonical" href="https://habeas.dev/download/stripe-fees-beta.html" />
-  <link rel="alternate" hreflang="en" href="https://habeas.dev/download/stripe-fees-beta.html" />
-  <link rel="alternate" hreflang="es" href="https://habeas.dev/es/descargar/stripe-fees-beta.html" />
-  <link rel="alternate" hreflang="x-default" href="https://habeas.dev/download/stripe-fees-beta.html" />
+  <meta name="description" content="Stripe bills its fees with a monthly tax invoice that is only available as a PDF in the dashboard, one by one, with no API. Habeas downloads them from inside your own browser session, without ever storing your password." />
+  <link rel="canonical" href="https://habeas.dev/download/stripe-fee-invoices.html" />
+  <link rel="alternate" hreflang="en" href="https://habeas.dev/download/stripe-fee-invoices.html" />
+  <link rel="alternate" hreflang="es" href="https://habeas.dev/es/descargar/facturas-comisiones-stripe.html" />
+  <link rel="alternate" hreflang="x-default" href="https://habeas.dev/download/stripe-fee-invoices.html" />
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="stylesheet" href="/style.css" />
   <style>
@@ -35,8 +34,6 @@
     .card dd { margin: 0; word-break: break-word; }
     .card .who { font-size: 13px; line-height: 1.55; margin: 12px 0 0; padding-top: 11px;
                  border-top: 1px solid var(--line, #3333); color: var(--muted, #888); }
-    .box.warn { border-color: #c2410c66; background: #c2410c14; }
-    .box.warn strong { color: #c2410c; }
     .rev .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em;
                 white-space: nowrap; color: var(--muted, #888); }
     .card .note { font-size: 12.5px; line-height: 1.5; color: var(--muted, #888); margin: 8px 0 0; }
@@ -61,15 +58,91 @@
     .doc a { color: inherit; }
   </style>
   <meta property="og:type" content="article" />
-  <meta property="og:url" content="https://habeas.dev/download/stripe-fees-beta.html" />
+  <meta property="og:url" content="https://habeas.dev/download/stripe-fee-invoices.html" />
   <meta property="og:title" content="How to download your Stripe fee invoices — Habeas" />
-  <meta property="og:description" content="A draft definition for Stripe. Habeas downloads them from inside your own browser session, without ever storing your password." />
+  <meta property="og:description" content="Stripe bills its fees with a monthly tax invoice that is only available as a PDF in the dashboard, one by one, with no API. Habeas downloads them from inside your own browser session, without ever storing your password." />
   <meta property="og:image" content="https://habeas.dev/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:site_name" content="Habeas" />
   <meta name="twitter:card" content="summary_large_image" />
-
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "inLanguage": "en",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Does Habeas store my Stripe password?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. You sign in yourself, on the usual website, including any verification code. Habeas reuses the session your browser already has open and never reads or stores your credentials."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is my data sent to a server?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Everything happens inside your browser. Documents only go to the destination you pick: a download, a folder on your machine, your own Google Drive or Dropbox, or an endpoint you configure."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What format do I get the documents in?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The original documents exactly as the service issues them (PDF), together with a manifest holding the normalised data."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is it free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Habeas is free software under the AGPL-3.0 licence and its code is public on GitHub."
+      }
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "inLanguage": "en",
+  "name": "Download all your Stripe fee invoices at once",
+  "description": "Stripe bills its fees with a monthly tax invoice that is only available as a PDF in the dashboard, one by one, with no API.",
+  "totalTime": "PT2M",
+  "tool": [
+    {
+      "@type": "HowToTool",
+      "name": "Habeas"
+    }
+  ],
+  "step": [
+    {
+      "@type": "HowToStep",
+      "position": 1,
+      "name": "Sign in yourself",
+      "text": "You go to stripe.com and sign in yourself, as always, with your MFA or whatever code you use."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 2,
+      "name": "Habeas reuses that session",
+      "text": "Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 3,
+      "name": "You choose where it goes",
+      "text": "You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own."
+    }
+  ]
+}
+  </script>
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -90,8 +163,8 @@
     {
       "@type": "ListItem",
       "position": 3,
-      "name": "Stripe — experimental source, not yet verified",
-      "item": "https://habeas.dev/download/stripe-fees-beta.html"
+      "name": "Download all your Stripe fee invoices at once",
+      "item": "https://habeas.dev/download/stripe-fee-invoices.html"
     }
   ]
 }
@@ -101,13 +174,13 @@
   "@context": "https://schema.org",
   "@type": "TechArticle",
   "inLanguage": "en",
-  "headline": "Stripe — experimental source, not yet verified",
-  "description": "A draft definition for Stripe. Habeas downloads them from inside your own browser session, without ever storing your password.",
+  "headline": "Download all your Stripe fee invoices at once",
+  "description": "Stripe bills its fees with a monthly tax invoice that is only available as a PDF in the dashboard, one by one, with no API. Habeas downloads them from inside your own browser session, without ever storing your password.",
   "mainEntityOfPage": {
     "@type": "WebPage",
-    "@id": "https://habeas.dev/download/stripe-fees-beta.html"
+    "@id": "https://habeas.dev/download/stripe-fee-invoices.html"
   },
-  "dateModified": "2026-11-25",
+  "dateModified": "2026-11-26",
   "author": {
     "@type": "Person",
     "name": "David Marín",
@@ -151,7 +224,7 @@
         <a href="/privacy.html">Privacy</a>
         <a href="/terms.html">Terms</a>
         <a href="https://github.com/habeas-dev/habeas">GitHub</a>
-        <a class="langlink" href="/es/descargar/stripe-fees-beta.html" hreflang="es" rel="alternate">ES</a>
+        <a class="langlink" href="/es/descargar/facturas-comisiones-stripe.html" hreflang="es" rel="alternate">ES</a>
       </nav>
     </div>
   </header>
@@ -159,8 +232,8 @@
   <section class="band">
     <div class="wrap">
       <p class="kicker">Stripe — facturas de comisiones</p>
-      <h1>Stripe — experimental source, not yet verified</h1>
-      <p class="lead">A draft definition for Stripe. Nobody has run it against a real account yet, so it may extract nothing at all. This page exists so that somebody who HAS an account can try it and say what happened.</p>
+      <h1>Download all your Stripe fee invoices at once</h1>
+      <p class="lead">Stripe bills its fees with a monthly tax invoice that is only available as a PDF in the dashboard, one by one, with no API.</p>
     </div>
   </section>
 
@@ -173,7 +246,7 @@
       <div class="card">
         <h2>About this source</h2>
         <dl>
-          <dt>Version</dt><dd>2026-11-25.1</dd>
+          <dt>Version</dt><dd>2026-11-26</dd>
           <dt>Trust</dt><dd>first-party</dd>
           <dt>Licence</dt><dd>CC0-1.0</dd>
         </dl>
@@ -199,7 +272,6 @@
   &quot;name&quot;: &quot;Stripe — facturas de comisiones&quot;,
   &quot;service&quot;: &quot;stripe&quot;,
   &quot;trust&quot;: &quot;first-party&quot;,
-  &quot;beta&quot;: true,
   &quot;credit&quot;: {
     &quot;author&quot;: {
       &quot;name&quot;: &quot;David Marín&quot;,
@@ -306,8 +378,15 @@
   },
   &quot;schema&quot;: &quot;invoice@2&quot;,
   &quot;minVersion&quot;: &quot;0.10.12.1&quot;,
-  &quot;version&quot;: &quot;2026-11-25.1&quot;,
+  &quot;version&quot;: &quot;2026-11-26&quot;,
   &quot;changelog&quot;: [
+    {
+      &quot;version&quot;: &quot;2026-11-26&quot;,
+      &quot;changes&quot;: {
+        &quot;en&quot;: &quot;Verified against a real account: no longer experimental.&quot;,
+        &quot;es&quot;: &quot;Verificada con una cuenta real: deja de ser experimental.&quot;
+      }
+    },
     {
       &quot;version&quot;: &quot;2026-11-25.1&quot;,
       &quot;changes&quot;: {
@@ -347,24 +426,36 @@
     </aside>
 
     <div class="body">
-    <div class="box warn">
-      <strong>Do not expect this to work</strong>
-      <p>This source was drafted from a published reference — a map of which endpoints the service uses and what they return — and has never been validated against a live session. Endpoints move, responses change shape, and a definition written from a reference rather than from a capture is a hypothesis. Installing it is safe; the same rules apply as to any other source. It simply may not find anything.</p>
-    </div>
 
-    <h2>What it is meant to extract</h2>
+    <h2>What you get</h2>
+    <p>Habeas is an open-source browser extension that collects your documents from Stripe and saves them wherever you choose. From this source it extracts:</p>
     <ul>
-      <li>each document with its date, amount, currency and numbering</li>
+        <li><strong>fee invoices</strong> — each document with its date, amount, currency and numbering.</li>
     </ul>
+    <h2>How it works</h2>
+    <p>It is not a service that connects to stripe.com on its own. It runs <strong>inside your own browser</strong>, reusing the session you already have open:</p>
+    <ol class="steps">
+      <li class="step"><h3>Sign in yourself</h3><p>You go to stripe.com and sign in yourself, as always, with your MFA or whatever code you use.</p></li>
+      <li class="step"><h3>Habeas reuses that session</h3><p>Habeas reuses that already-authenticated session to request your documents, exactly as the site itself does.</p></li>
+      <li class="step"><h3>You choose where it goes</h3><p>You choose the destination: a download, a local folder, your Google Drive, Dropbox, WebDAV, S3 or an endpoint of your own.</p></li>
+    </ol>
+    <p><strong>Your password is never read, never stored and never sent anywhere</strong>, and nothing runs in the background while you are away. This is an <strong>audited</strong> source, verified by the project against the real service.</p>
 
-    <h2>If you have an account here</h2>
-    <p>Install it, run it once, and open an issue with what happened — including &quot;nothing at all&quot;, which is the most useful answer of the three. That is how a draft becomes a verified source, and it is the only way: the project cannot test an account it does not have.</p>
 
-
+    <h2>Frequently asked questions</h2>
+    <h3>Does Habeas store my Stripe password?</h3>
+    <p>No. You sign in yourself, on the usual website, including any verification code. Habeas reuses the session your browser already has open and never reads or stores your credentials.</p>
+    <h3>Is my data sent to a server?</h3>
+    <p>No. Everything happens inside your browser. Documents only go to the destination you pick: a download, a folder on your machine, your own Google Drive or Dropbox, or an endpoint you configure.</p>
+    <h3>What format do I get the documents in?</h3>
+    <p>The original documents exactly as the service issues them (PDF), together with a manifest holding the normalised data.</p>
+    <h3>Is it free?</h3>
+    <p>Yes. Habeas is free software under the AGPL-3.0 licence and its code is public on GitHub.</p>
 
       <h2>What has changed in this source</h2>
       <p>This source is a public definition, and every change to it is on the record. Most recent first:</p>
       <ul class="changelog">
+        <li class="rev"><span class="ver">2026-11-26</span> — Verified against a real account: no longer experimental.</li>
         <li class="rev"><span class="ver">2026-11-25.1</span> — Finds the fee invoices of every account in your Stripe profile, not only the one open in the dashboard; pick which ones in the account list.</li>
         <li class="rev"><span class="ver">2026-11-25</span> — First version: Stripe's monthly fee invoices (PDF), for the account open in the dashboard.</li>
       </ul>
@@ -378,7 +469,7 @@
       <li><a href="/download/ing-transactions.html">Download all your ING transactions and statements at once</a></li>
       <li><a href="/download/n26-beta.html">N26 — experimental source, not yet verified</a></li>
       <li><a href="/download/openbank-transactions.html">Download all your Openbank transactions and statements at once</a></li>
-      <li><a href="/download/payoneer-beta.html">Payoneer — experimental source, not yet verified</a></li>
+      <li><a href="/download/payoneer-transactions.html">Download your Payoneer transactions</a></li>
       <li><a href="/download/paypal-transactions.html">Download all your PayPal transaction history at once</a></li>
       <li><a href="/download/raisin-statements.html">Download all your Raisin transactions, deposits and documents at once</a></li>
       <li><a href="/download/revolut-statements.html">Download all your Revolut transactions and statements at once</a></li>

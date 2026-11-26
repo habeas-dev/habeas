@@ -3,7 +3,6 @@
   "name": "Stripe — facturas de comisiones",
   "service": "stripe",
   "trust": "first-party",
-  "beta": true,
   "credit": {
     "author": {
       "name": "David Marín",
@@ -110,8 +109,15 @@
   },
   "schema": "invoice@2",
   "minVersion": "0.10.12.1",
-  "version": "2026-11-25.1",
+  "version": "2026-11-26",
   "changelog": [
+    {
+      "version": "2026-11-26",
+      "changes": {
+        "en": "Verified against a real account: no longer experimental.",
+        "es": "Verificada con una cuenta real: deja de ser experimental."
+      }
+    },
     {
       "version": "2026-11-25.1",
       "changes": {

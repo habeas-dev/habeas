@@ -26,7 +26,7 @@ operate. Every decision must preserve this.
 
 ## Status — working beta (published on Chrome Web Store + Firefox AMO)
 
-**24 sources published** to the community registry — 21 API-verified + 3 experimental (`beta: true`):
+**26 sources published** to the community registry — 23 API-verified + 3 experimental (`beta: true`):
 
 - **Retail / everyday** — Carrefour, Dia, Decathlon, IKEA, Leroy Merlin, Amazon, AliExpress, Hover
 - **Utilities / telco** — Pepe Energy, Pepephone
@@ -36,7 +36,7 @@ operate. Every decision must preserve this.
   bearer scoped to `/dashboard/*` via `auth.capturePaths`)
 - **Banks** — **ING España** (a 3-output bank source: movements + per-account monthly statements PDF/Excel
   + integrated monthly statement PDF), Openbank
-- **Payments / investment** — PayPal, Revolut, Trade Republic, Raisin
+- **Payments / investment** — PayPal, Payoneer, Stripe (fee invoices), Revolut, Trade Republic, Raisin
 - **Experimental (`beta: true`)** — American Express, DEGIRO, N26
 
 Implemented:
@@ -78,7 +78,7 @@ mints a **grant** (`storage.local habeas:grants`, one origin→one route) revoca
 Site integrations. `collect` always runs in a **dedicated tab** (foregrounded only for manual login;
 never handles credentials), debounced + logged, no notification. See `docs/external-hooks.md`.
 
-**Community sources system** (LIVE — 24 sources published): a **generalized runtime**
+**Community sources system** (LIVE — 26 sources published): a **generalized runtime**
 (declarative pager `offsets|offset|page|cursor|none|years|synthetic`, dotted field paths **+ array
 selectors** `key[field=value].sub`, schemas `receipt|invoice|transaction|investment`, optional PDF/Excel;
 `synthetic` = documents that exist once per period/account, e.g. monthly statements); an **adapter loader
@@ -339,7 +339,7 @@ without offering everyone a pointless update. `minVersion` gates by extension ve
 
 - ~~Stand up community infra~~ DONE: `habeas-dev/sources` (Pages, LIVE) + `api.habeas.dev`
   (Cloudflare Worker + D1, LIVE). Optional: add CF secrets to `habeas-dev/api` for CI auto-deploy.
-- **Author real sources** (ONGOING) — **24 published** (see Status above for the full list): 21
+- **Author real sources** (ONGOING) — **26 published** (see Status above for the full list): 23
   API-verified against real services + 3 experimental drafts flagged `beta: true` (American Express,
   DEGIRO, N26) awaiting a real in-session capture from someone who holds the account. Keep going via
   record mode / community PRs (the fictional test fixtures must never be published or shipped).
